@@ -99,7 +99,7 @@ export function useThreadDerived({
   const showLeave = !!(
     (contextType === 'GAME' && isParticipant && isGuest && game?.entityType !== 'LEAGUE') ||
     (isBugChatParticipant && !isBugCreator) ||
-    (contextType === 'GROUP' && groupChannel && !isBugChat && isChannelParticipant && !isChannelOwner)
+    (contextType === 'GROUP' && groupChannel && !isBugChat && !groupChannel.leagueGroupId && isChannelParticipant && !isChannelOwner)
   );
 
   const showHeaderActions = showMute || showLeave || contextType === 'GAME';

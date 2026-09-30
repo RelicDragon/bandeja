@@ -9,6 +9,7 @@ import {
 } from './leagueSportProjection.util';
 import { applyGroupStandingsTiebreakers } from './leagueGroupStandingsFixtures';
 import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
+import { queueLeagueGroupChatReconcile } from './leagueGroupChat.service';
 
 const participantInclude = {
   user: {
@@ -203,6 +204,7 @@ export class LeagueGroupManagementService {
       });
     }
 
+    queueLeagueGroupChatReconcile(leagueSeasonId);
     return this.buildPayload(leagueSeasonId);
   }
 
@@ -218,6 +220,7 @@ export class LeagueGroupManagementService {
       data: { name: name.trim() },
     });
 
+    queueLeagueGroupChatReconcile(group.leagueSeasonId);
     return this.buildPayload(group.leagueSeasonId);
   }
 
@@ -264,6 +267,7 @@ export class LeagueGroupManagementService {
 
     await prisma.$transaction(operations);
 
+    queueLeagueGroupChatReconcile(group.leagueSeasonId);
     return this.buildPayload(group.leagueSeasonId);
   }
 
@@ -292,6 +296,7 @@ export class LeagueGroupManagementService {
       data: { currentGroupId: groupId },
     });
 
+    queueLeagueGroupChatReconcile(group.leagueSeasonId);
     return this.buildPayload(group.leagueSeasonId);
   }
 
@@ -315,6 +320,7 @@ export class LeagueGroupManagementService {
       data: { currentGroupId: null },
     });
 
+    queueLeagueGroupChatReconcile(group.leagueSeasonId);
     return this.buildPayload(group.leagueSeasonId);
   }
 

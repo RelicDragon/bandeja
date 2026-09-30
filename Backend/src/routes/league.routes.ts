@@ -289,6 +289,12 @@ router.get(
   leagueController.getLeagueGroups
 );
 
+router.get(
+  '/:leagueSeasonId/group-chats',
+  authenticate,
+  leagueController.getMyLeagueGroupChats
+);
+
 router.post(
   '/:leagueSeasonId/groups',
   authenticate,

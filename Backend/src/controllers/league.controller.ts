@@ -12,6 +12,7 @@ import { LeagueStandingsRecalculateService } from '../services/league/leagueStan
 import { BracketPlayoffService } from '../services/league/bracketPlayoff.service';
 import { LeagueTeamPlayerSwapService } from '../services/league/leagueTeamPlayerSwap.service';
 import { LeagueTeamWithdrawalService } from '../services/league/leagueTeamWithdrawal.service';
+import { LeagueGroupChatService, queueLeagueGroupChatReconcile } from '../services/league/leagueGroupChat.service';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 
@@ -269,6 +270,17 @@ export const getLeagueGroups = asyncHandler(async (req: AuthRequest, res: Respon
   });
 });
 
+export const getMyLeagueGroupChats = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId } = req.params;
+
+  const data = await LeagueGroupChatService.getViewerGroupChats(leagueSeasonId, req.userId!);
+
+  res.json({
+    success: true,
+    data,
+  });
+});
+
 export const createManualLeagueGroup = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
   const { name } = req.body;
@@ -349,6 +361,7 @@ export const swapLeagueTeamPlayer = asyncHandler(async (req: AuthRequest, res: R
     outUserId,
     inUserId,
   });
+  queueLeagueGroupChatReconcile(leagueSeasonId);
 
   res.json({
     success: true,
@@ -380,6 +393,7 @@ export const withdrawLeagueTeam = asyncHandler(async (req: AuthRequest, res: Res
     participantId,
     actorUserId: req.userId!,
   });
+  queueLeagueGroupChatReconcile(leagueSeasonId);
 
   res.json({
     success: true,

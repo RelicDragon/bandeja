@@ -67,6 +67,10 @@ Vocabulary from root `CONTEXT.md`. Applies to **TEAM** franchises in **fixed-tea
 
 Avoid: DNS, delete participant, forfeit (alone), undo withdraw, USER/singles forfeit via this flow.
 
+## Group chats
+
+Seasons with **2+ groups** get one auto-managed private `GroupChannel` per `LeagueGroup` (`GroupChannel.leagueGroupId`, name `Season · Group`, season avatar). Members = non-withdrawn group participants (USER `userId` + TEAM `leagueTeam.players`) plus every season `OWNER`/`ADMIN` (same chat role). `LeagueGroupChatService.reconcileSeason` is idempotent; `queueLeagueGroupChatReconcile` (debounced, fire-and-forget) runs after group create/rename/delete/assign, sync, `ensure*LeagueParticipant`, swap, withdraw, and season admin/owner/kick changes. Existing chats keep syncing if the season drops back to one group; deleting a group deletes its chat. Members cannot leave/invite/edit (`assertNotLeagueGroupChat`); mute is allowed. FE: **Group chat** button on Standings group cards (`GET /leagues/:id/group-chats`). Backfill (Jesen-Zima 2026 only): `npm run backfill:league-group-chats [-- --apply]`.
+
 ## Code
 
 - BE: `Backend/src/services/league/` (`create.service.ts`, `groups.service.ts`, `planner.service.ts`, `bracketPlayoff.service.ts`, `bracketStructure.ts`, `leagueTeamWithdrawal.service.ts`, `sync.service.ts`, …)

@@ -1323,6 +1323,9 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 | GD-54 | User game note | Add private note from game info card, game card, or modal | Note saved; only visible to self |
 | GD-55 | Edit/delete game note | Update note content | Persisted / deleted |
 | GD-56 | Game settings panel | Toggle anyoneCanInvite, visibility, etc. | Each toggle saves immediately; no Edit/Save on settings card |
+| GD-233 | League group chat link | Season with 2+ groups; player (or season admin) → Standings | Each group card the viewer belongs to shows a **Group chat** button (also in single-group filter); tap opens `/group-chat/:id`. Admins see it on every group; non-members see none; season with 1 group shows none |
+| GD-234 | League group chat membership | Admin creates the 2nd group / moves a team between groups / swaps a player / withdraws a team / promotes a season admin | Within a few seconds the chats match: new chats appear in Chats inbox (Users filter) named `Season · Group`; moved players leave old chat and join new (join/leave system lines unless bulk); withdrawn team removed; new admin in every group chat |
+| GD-235 | League group chat is managed | Open a league group chat → header + settings as player and as owner | No Leave, Invite, rename/avatar edit, delete, promote/kick/transfer actions; mute works. Old app builds calling leave/invite get a 403 |
 | GD-108 | Game settings collapse | Owner on game details → Settings card | Collapsed by default (title + chevron only); tap header, padding, or chevron to expand/collapse; toggle rows only flip their switch (do not collapse); expand animates toggles and hints button in |
 | GD-57 | Manage users modal | Owner opens manage users | Roles/kick actions available |
 | GD-58 | Kick participant | Kick user from game | Removed from roster |

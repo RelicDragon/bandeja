@@ -73,7 +73,7 @@ Declined/cancelled invites that are **not** participants: `GameInviteOutcome`.
 | `ChatReadCursor` | Per user + context + `chatType`: `readMaxServerSyncSeq`. |
 | `UserUnreadState` / `UserContextUnreadState` | Unread revision clocks. |
 | `UserChat` | DM pair (`user1Id`/`user2Id`). |
-| `GroupChannel` | City groups, channels, bug threads, marketplace buyer chats (`bugId`, `marketItemId`, `isCityGroup`, `isChannel`). |
+| `GroupChannel` | City groups, channels, bug threads, marketplace buyer chats, league group chats (`bugId`, `marketItemId`, `leagueGroupId`, `isCityGroup`, `isChannel`). |
 | `GroupChannelParticipant` / `GroupChannelInvite` | Membership. |
 | `ChatDraft` | Server drafts. |
 | `MessageReaction`, `MessageReadReceipt`, `PinnedMessage`, `Poll`, translations, transcription | Side tables. |

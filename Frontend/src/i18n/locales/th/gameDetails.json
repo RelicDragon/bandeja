@@ -504,6 +504,7 @@
     "groupOrderSaved": "บันทึกคำสั่งซื้อแบบกลุ่มสำเร็จแล้ว",
     "noGroup": "ไม่มีกลุ่ม",
     "group": "กลุ่ม",
+    "groupChat": "แชทกลุ่ม",
     "groupFilter": "ตัวกรองกลุ่ม",
     "allGroups": "ทุกกลุ่ม",
     "roundTypeAll": "ทั้งหมด",

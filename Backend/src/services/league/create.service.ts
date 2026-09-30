@@ -42,6 +42,7 @@ import {
   sortedPlayerKey,
 } from './leagueParticipantResolve';
 import { playersPerTeamOf } from '../results/generation/matchUtils';
+import { queueLeagueGroupChatReconcile } from './leagueGroupChat.service';
 
 export class LeagueCreateService {
   private static getSeasonParticipantType(hasFixedTeams: boolean) {
@@ -1527,6 +1528,7 @@ export class LeagueCreateService {
       createdGroups.push(createdGroup);
     }
 
+    queueLeagueGroupChatReconcile(leagueSeasonId);
     return createdGroups;
   }
 

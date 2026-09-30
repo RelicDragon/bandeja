@@ -65,14 +65,17 @@ export const GroupChannelSettings = ({
   );
   const isOwner = useMemo(() => currentUserParticipant?.role === 'OWNER', [currentUserParticipant]);
   const isAdmin = useMemo(() => currentUserParticipant?.role === 'ADMIN', [currentUserParticipant]);
-  const canEdit = isOwner || isAdmin || (!!user?.isAdmin && !!groupChannel.isCityGroup);
+  const isLeagueGroupChat = !!(groupChannelData.leagueGroupId ?? groupChannel.leagueGroupId);
+  const canEdit = !isLeagueGroupChat
+    && (isOwner || isAdmin || (!!user?.isAdmin && !!groupChannel.isCityGroup));
   const canDeleteGroup = useMemo(
     () => isOwner
+      && !isLeagueGroupChat
       && !groupChannelData.isCityGroup
       && !groupChannelData.isChannel
       && !groupChannelData.bugId
       && !groupChannelData.marketItemId,
-    [isOwner, groupChannelData.isCityGroup, groupChannelData.isChannel, groupChannelData.bugId, groupChannelData.marketItemId]
+    [isOwner, isLeagueGroupChat, groupChannelData.isCityGroup, groupChannelData.isChannel, groupChannelData.bugId, groupChannelData.marketItemId]
   );
   const isParticipant = useMemo(() => !!currentUserParticipant || groupChannelData.isParticipant, [currentUserParticipant, groupChannelData.isParticipant]);
 
@@ -205,7 +208,8 @@ export const GroupChannelSettings = ({
 
   const getAvailableActions = (participant: GroupChannelParticipant) => {
     const actions = [];
-    
+    if (isLeagueGroupChat) return [];
+
     if (isOwner) {
       if (participant.role === 'ADMIN') {
         actions.push({ id: 'revoke-admin', label: t('games.revokeAdmin'), icon: Shield });

@@ -413,6 +413,8 @@ export interface GroupChannel {
   isPinned?: boolean;
   pinnedAt?: string | null;
   isCityGroup?: boolean;
+  /** Auto-managed league group chat; membership follows the league, no leave/invite/edit. */
+  leagueGroupId?: string | null;
   isMuted?: boolean;
 }
 

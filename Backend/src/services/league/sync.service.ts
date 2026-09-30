@@ -14,6 +14,7 @@ import { LEAGUE_USER_SELECT, projectLeagueParticipants } from './leagueSportProj
 import { applyGroupStandingsTiebreakers } from './leagueGroupStandingsFixtures';
 import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
 import { playersPerTeamOf } from '../results/generation/matchUtils';
+import { queueLeagueGroupChatReconcile } from './leagueGroupChat.service';
 
 type GameTeamWithPlayers = {
   players: { userId: string }[];
@@ -142,7 +143,7 @@ export class LeagueSyncService {
 
     const seasonSport = resolveLeagueSeasonSport(leagueSeason);
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${leagueSeasonId}::text))`);
 
       const standings = await tx.leagueParticipant.findMany({
@@ -332,5 +333,7 @@ export class LeagueSyncService {
 
       return projectLeagueParticipants(ordered, seasonSport);
     });
+    queueLeagueGroupChatReconcile(leagueSeasonId);
+    return result;
   }
 }

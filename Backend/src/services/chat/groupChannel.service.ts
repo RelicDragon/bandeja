@@ -16,6 +16,7 @@ import {
   mapGroupChannelToResponse,
   type GcWithParticipants,
 } from './groupChannel.mapper';
+import { assertNotLeagueGroupChat } from '../league/leagueGroupChat.service';
 
 async function emitPrivateGroupUserJoinedSystemMessage(
   groupChannelId: string,
@@ -552,6 +553,8 @@ export class GroupChannelService {
       throw new ApiError(404, 'Group/Channel not found');
     }
 
+    assertNotLeagueGroupChat(groupChannel);
+
     const canUpdate = groupChannel.isCityGroup && isGlobalAdmin
       ? true
       : await this.isGroupChannelAdminOrOwner(groupChannelId, userId);
@@ -572,11 +575,13 @@ export class GroupChannelService {
     isChannel: boolean;
     bugId: string | null;
     marketItemId: string | null;
+    leagueGroupId: string | null;
   }): boolean {
     return !groupChannel.isCityGroup
       && !groupChannel.isChannel
       && !groupChannel.bugId
-      && !groupChannel.marketItemId;
+      && !groupChannel.marketItemId
+      && !groupChannel.leagueGroupId;
   }
 
   static async deleteGroupChannel(groupChannelId: string, userId: string) {
@@ -666,6 +671,8 @@ export class GroupChannelService {
       throw new ApiError(404, 'Group/Channel not found');
     }
 
+    assertNotLeagueGroupChat(groupChannel);
+
     const participant = await prisma.groupChannelParticipant.findUnique({
       where: {
         groupChannelId_userId: {
@@ -723,6 +730,8 @@ export class GroupChannelService {
     if (!groupChannel) {
       throw new ApiError(404, 'Group/Channel not found');
     }
+
+    assertNotLeagueGroupChat(groupChannel);
 
     const senderParticipant = await prisma.groupChannelParticipant.findUnique({
       where: {
@@ -1049,6 +1058,8 @@ export class GroupChannelService {
       throw new ApiError(404, 'Group/Channel not found');
     }
 
+    assertNotLeagueGroupChat(groupChannel);
+
     const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
     if (!isOwner) {
       throw new ApiError(403, 'Only owner can promote to admin');
@@ -1099,6 +1110,8 @@ export class GroupChannelService {
       throw new ApiError(404, 'Group/Channel not found');
     }
 
+    assertNotLeagueGroupChat(groupChannel);
+
     const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
     if (!isOwner) {
       throw new ApiError(403, 'Only owner can remove admin');
@@ -1140,6 +1153,8 @@ export class GroupChannelService {
     if (!groupChannel) {
       throw new ApiError(404, 'Group/Channel not found');
     }
+
+    assertNotLeagueGroupChat(groupChannel);
 
     const targetParticipant = await prisma.groupChannelParticipant.findUnique({
       where: {
@@ -1213,6 +1228,8 @@ export class GroupChannelService {
     if (!groupChannel) {
       throw new ApiError(404, 'Group/Channel not found');
     }
+
+    assertNotLeagueGroupChat(groupChannel);
 
     const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
     if (!isOwner) {

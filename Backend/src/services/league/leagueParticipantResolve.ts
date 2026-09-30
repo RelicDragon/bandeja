@@ -1,5 +1,6 @@
 import { LeagueParticipantType, Prisma } from '@prisma/client';
 import { findLeagueTeamIdByRosterAlias } from './leagueTeamRosterAlias.util';
+import { queueLeagueGroupChatReconcile } from './leagueGroupChat.service';
 
 export function sortedPlayerKey(userIds: string[]): string {
   return [...userIds].sort().join(':');
@@ -152,6 +153,7 @@ export async function ensureTeamLeagueParticipant(
   },
 ): Promise<{ participantId: string; created: boolean }> {
   const { leagueId, leagueSeasonId, teamPlayerIds, leagueGroupId, stats, useIncrement } = params;
+  queueLeagueGroupChatReconcile(leagueSeasonId);
 
   let participant = await findTeamParticipantByRoster(tx, leagueSeasonId, teamPlayerIds);
   const leagueTeam =
@@ -227,6 +229,7 @@ export async function ensureUserLeagueParticipant(
   },
 ): Promise<{ participantId: string; created: boolean }> {
   const { leagueId, leagueSeasonId, userId, leagueGroupId, stats, useIncrement } = params;
+  queueLeagueGroupChatReconcile(leagueSeasonId);
 
   const existing = await findUserParticipant(tx, leagueSeasonId, userId);
 

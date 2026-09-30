@@ -352,6 +352,11 @@ export interface LeagueGroupWithParticipants extends LeagueGroup {
   participants: LeagueStanding[];
 }
 
+export interface LeagueGroupChatLink {
+  leagueGroupId: string;
+  groupChannelId: string;
+}
+
 export interface LeagueGroupManagementPayload {
   groups: LeagueGroupWithParticipants[];
   unassignedParticipants: LeagueStanding[];
@@ -480,6 +485,11 @@ export const leaguesApi = {
   },
   getGroups: async (leagueSeasonId: string) => {
     const response = await api.get<ApiResponse<LeagueGroupManagementPayload>>(`/leagues/${leagueSeasonId}/groups`);
+    return response.data;
+  },
+  /** Group chats of this season the viewer belongs to. */
+  getMyGroupChats: async (leagueSeasonId: string) => {
+    const response = await api.get<ApiResponse<LeagueGroupChatLink[]>>(`/leagues/${leagueSeasonId}/group-chats`);
     return response.data;
   },
   createManualGroup: async (leagueSeasonId: string, name: string) => {

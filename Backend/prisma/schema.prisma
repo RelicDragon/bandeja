@@ -2769,6 +2769,8 @@ model GroupChannel {
   buyerId             String?
   isChannel           Boolean                   @default(false)
   isPublic            Boolean                   @default(true)
+  /// Set iff this is the auto-managed chat of a league group (membership synced by leagueGroupChat.service).
+  leagueGroupId       String?                   @unique
   isCityGroup         Boolean                   @default(false)
   participantsCount   Int                       @default(0)
   lastMessagePreview  String?                   @db.VarChar(500)
@@ -2781,6 +2783,7 @@ model GroupChannel {
   buyer               User?                     @relation("GroupChannelBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
   lastMessageSender   User?                     @relation("GroupChannelLastMessageSender", fields: [lastMessageSenderId], references: [id], onDelete: SetNull)
   participants        GroupChannelParticipant[]
+  leagueGroup         LeagueGroup?              @relation(fields: [leagueGroupId], references: [id], onDelete: Cascade)
   invites             GroupChannelInvite[]
   pinnedByUsers       PinnedGroupChannel[]
   gameSeries          GameSeries[]
@@ -3142,6 +3145,7 @@ model LeagueGroup {
   bracketSlots   LeagueBracketSlot[]
 
   @@index([leagueSeasonId])
+  groupChannel   GroupChannel?
 }
 
 model LeagueTeam {

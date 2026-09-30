@@ -16,6 +16,7 @@ import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLife
 import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
 import { GameSeatService } from '../gameSeat/gameSeat.service';
+import { queueLeagueGroupChatReconcile } from '../league/leagueGroupChat.service';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -58,6 +59,7 @@ export class AdminService {
       }
     }
 
+    queueLeagueGroupChatReconcile(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, ownerId);
     return 'Admin added successfully';
   }
@@ -102,6 +104,7 @@ export class AdminService {
       }
     }
 
+    queueLeagueGroupChatReconcile(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, ownerId);
     return 'Admin privileges revoked successfully';
   }
@@ -224,6 +227,7 @@ export class AdminService {
       // PRD 347 — the kicked player's seat is now open.
       void GameSeatService.seatOpened(gameId, 1, 'KICK', { freedByUserId: targetUserId });
     }
+    queueLeagueGroupChatReconcile(gameId);
     return 'User kicked successfully';
   }
 

@@ -6,6 +6,7 @@ import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { invalidateAchievementStatsCache } from '../achievements/achievementStats.service';
+import { queueLeagueGroupChatReconcile } from '../league/leagueGroupChat.service';
 
 export class OwnershipService {
   static async transferOwnership(gameId: string, currentOwnerId: string, newOwnerId: string) {
@@ -78,6 +79,7 @@ export class OwnershipService {
 
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentOwnerId);
+    queueLeagueGroupChatReconcile(gameId);
     return 'Ownership transferred successfully';
   }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components';
 import {
   leaguesApi,
@@ -10,7 +11,7 @@ import {
   type BracketPlayoffResponse,
   type LeagueStandingsTieCluster,
 } from '@/api/leagues';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MessageCircle } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
@@ -71,6 +72,7 @@ export const LeagueStandingsTab = ({
   preserveApiOrder = false,
 }: LeagueStandingsTabProps) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const columns = useMemo(
     () => resolveLeagueStandingsColumns({ hasFixedTeams, playersPerMatch, ballsInGames }),
     [hasFixedTeams, playersPerMatch, ballsInGames]
@@ -78,6 +80,7 @@ export const LeagueStandingsTab = ({
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [tieClusters, setTieClusters] = useState<LeagueStandingsTieCluster[]>([]);
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
+  const [groupChatIdByGroupId, setGroupChatIdByGroupId] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
   const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
@@ -91,15 +94,19 @@ export const LeagueStandingsTab = ({
     setLoading(true);
     const fetchData = async () => {
       try {
-        const [standingsResponse, groupsResponse, roundsResponse] = await Promise.all([
+        const [standingsResponse, groupsResponse, roundsResponse, groupChatsResponse] = await Promise.all([
           leaguesApi.getStandings(leagueSeasonId),
           leaguesApi.getGroups(leagueSeasonId).catch(() => ({ data: { groups: [] } })),
           leaguesApi.getRounds(leagueSeasonId).catch(() => ({ data: [] })),
+          leaguesApi.getMyGroupChats(leagueSeasonId).catch(() => ({ data: [] })),
         ]);
         if (cancelled) return;
         setStandings(standingsResponse.data);
         setTieClusters(standingsResponse.meta?.tieClusters ?? []);
         setGroups(groupsResponse.data.groups);
+        setGroupChatIdByGroupId(
+          new Map((groupChatsResponse.data ?? []).map((c) => [c.leagueGroupId, c.groupChannelId]))
+        );
         const rounds = roundsResponse.data ?? [];
         setSelectedRoundType(findBracketRounds(rounds).length > 0 ? 'PLAYOFF' : 'REGULAR');
       } catch (error) {
@@ -442,22 +449,32 @@ export const LeagueStandingsTab = ({
             const soft = getLeagueGroupSoftColor(color, '1A');
             const groupClusters = tieClustersByGroupId.get(id) ?? [];
             const tieMeta = tieMetaByGroupKey.get(id);
+            const groupChatId = groupChatIdByGroupId.get(id);
             return (
               <Card key={id}>
-                {selectedGroupId === ALL_GROUP_ID && (
+                {(selectedGroupId === ALL_GROUP_ID || groupChatId) && (
                   <div
-                    className="px-4 py-3 border-b border-gray-200 dark:border-gray-700"
+                    className="px-4 py-2 min-h-11 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
                     style={{ backgroundColor: soft }}
                   >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full border"
-                        style={{ backgroundColor: accent, borderColor: accent }}
-                      />
-                      <h3 className="text-sm font-bold" style={{ color: accent }}>
-                        {name}
-                      </h3>
-                    </div>
+                    <span
+                      className="w-2.5 h-2.5 rounded-full border shrink-0"
+                      style={{ backgroundColor: accent, borderColor: accent }}
+                    />
+                    <h3 className="text-sm font-bold flex-1 min-w-0 truncate" style={{ color: accent }}>
+                      {name}
+                    </h3>
+                    {groupChatId && (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/group-chat/${groupChatId}`)}
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-white/80 dark:bg-gray-900/60 active:scale-95 transition-transform"
+                        style={{ color: accent }}
+                      >
+                        <MessageCircle size={14} />
+                        {t('gameDetails.groupChat')}
+                      </button>
+                    )}
                   </div>
                 )}
                 <LeagueStandingsTable
