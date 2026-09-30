@@ -718,6 +718,9 @@ export interface Game extends GameCardEnrichment {
     status?: GameStatus;
     resultsStatus?: 'NONE' | 'IN_PROGRESS' | 'FINAL';
     entityType?: EntityType;
+    /** League seasons carry the price their unpriced fixtures split by. */
+    priceType?: PriceType;
+    priceTotal?: number | null;
     participants?: GameParticipant[];
     leagueSeason?: {
       id: string;

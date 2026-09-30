@@ -1720,7 +1720,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               <GameCostCard
                 gameId={game.id}
                 viewerUserId={user.id}
-                expectCost={(game.priceTotal ?? 0) > 0}
+                expectCost={(
+                  (game.entityType === 'LEAGUE' && game.priceType === 'NOT_KNOWN'
+                    ? game.parent?.priceTotal
+                    : game.priceTotal) ?? 0
+                ) > 0}
               />
             </div>
           ) : null}

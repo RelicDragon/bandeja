@@ -72,11 +72,15 @@ export const COST_SHARE_MAX_AMOUNT_MINOR = 100_000_000;
 /** Manual "Remind unpaid" may be used at most once per this window, per game. */
 export const COST_REMIND_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
+/** A FINAL game without a ledger older than this never gets one (matches the auto-remind window). */
+const RETROACTIVE_LEDGER_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
 type GameCostRow = {
   id: string;
   entityType: string;
   name: string | null;
   startTime: Date | null;
+  endTime: Date | null;
   priceType: PriceType;
   priceTotal: number | null;
   priceCurrency: PriceCurrency | null;
@@ -95,6 +99,11 @@ type GameCostRow = {
   /** Set for LEAGUE fixtures: the season hub whose owner/admins organize it. */
   parent: {
     entityType: string;
+    priceType: PriceType;
+    priceTotal: number | null;
+    priceCurrency: PriceCurrency | null;
+    paymentHint: string | null;
+    paymentMethods: Prisma.JsonValue | null;
     participants: { userId: string; role: string }[];
   } | null;
 };
@@ -114,6 +123,7 @@ const GAME_COST_SELECT = {
   entityType: true,
   name: true,
   startTime: true,
+  endTime: true,
   priceType: true,
   priceTotal: true,
   priceCurrency: true,
@@ -130,6 +140,11 @@ const GAME_COST_SELECT = {
   parent: {
     select: {
       entityType: true,
+      priceType: true,
+      priceTotal: true,
+      priceCurrency: true,
+      paymentHint: true,
+      paymentMethods: true,
       participants: {
         where: { role: { in: ['OWNER', 'ADMIN'] as ParticipantRole[] } },
         select: { userId: true, role: true },
@@ -169,12 +184,35 @@ export function effectivePayerId(game: GameCostRow): string | null {
   return game.costPayerId ?? ownerUserId(game);
 }
 
+/**
+ * League seasons carry the price (e.g. PER_PERSON per fixture) while fixtures are
+ * created `NOT_KNOWN`. Such a fixture splits by its season's price and offers the
+ * season's payment methods; a fixture priced on its own keeps its own.
+ */
+export function applySeasonCostPricing<T extends Pick<
+  GameCostRow,
+  'entityType' | 'priceType' | 'priceTotal' | 'priceCurrency' | 'paymentHint' | 'paymentMethods' | 'parent'
+>>(game: T): T {
+  const season = game.parent;
+  if (game.entityType !== 'LEAGUE' || season?.entityType !== 'LEAGUE_SEASON') return game;
+  if (game.priceType === 'NOT_KNOWN') {
+    game.priceType = season.priceType;
+    game.priceTotal = season.priceTotal;
+    game.priceCurrency = season.priceCurrency;
+  }
+  if (game.paymentMethods == null && !game.paymentHint) {
+    game.paymentMethods = season.paymentMethods;
+    game.paymentHint = season.paymentHint;
+  }
+  return game;
+}
+
 async function loadGame(gameId: string): Promise<GameCostRow | null> {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: GAME_COST_SELECT,
   });
-  return game as unknown as GameCostRow | null;
+  return game ? applySeasonCostPricing(game as unknown as GameCostRow) : null;
 }
 
 function isCoinSettled(row: Pick<ShareRow, 'method' | 'transactionId'>): boolean {
@@ -230,6 +268,19 @@ export async function syncGameCostShares(
       await reverseOrphanedCoinShares(gameId, paidInCoins, coinLabel);
       if (options.emit !== false) await emitGameCostUpdated(gameId);
     }
+    return { game, shares: [] };
+  }
+
+  // Never open a ledger retroactively on a game that finished long ago (e.g. a
+  // past league season whose fixtures only now inherit the season price):
+  // freezing it now would put stale debts in Wallets and nudge players 24 h later.
+  if (
+    existing.length === 0 &&
+    game.costFrozenAt == null &&
+    game.resultsStatus === 'FINAL' &&
+    game.endTime != null &&
+    game.endTime.getTime() < Date.now() - RETROACTIVE_LEDGER_MAX_AGE_MS
+  ) {
     return { game, shares: [] };
   }
 

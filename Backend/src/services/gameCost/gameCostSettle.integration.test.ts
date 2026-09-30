@@ -277,6 +277,66 @@ void (async () => {
     await setShareConfirmed(fixture.id, seasonAdmin.id, player.id, true);
     assert.equal((await getGameCostSummary(fixture.id, player.id)).viewerShare?.state, 'SETTLED');
 
+    // Fixtures are created NOT_KNOWN; the season's price is what they split.
+    await prisma.game.update({
+      where: { id: season.id },
+      data: {
+        priceType: PriceType.PER_PERSON,
+        priceTotal: 3,
+        priceCurrency: PriceCurrency.EUR,
+        paymentMethods: [{ method: 'CASH' }],
+      },
+    });
+    const unpricedFixture = await makeGame(player.id, extraPlayers[0].id);
+    await prisma.game.update({
+      where: { id: unpricedFixture.id },
+      data: {
+        entityType: EntityType.LEAGUE,
+        parentId: season.id,
+        priceType: PriceType.NOT_KNOWN,
+        priceTotal: null,
+        priceCurrency: null,
+      },
+    });
+    const inherited = await getGameCostSummary(unpricedFixture.id, seasonOwner.id);
+    assert.equal(inherited.available, true, 'an unpriced fixture splits by its season price');
+    assert.equal(inherited.currency, 'EUR');
+    assert.equal(inherited.totalMinor, 600, '€3 per person, two players');
+    assert.deepEqual(inherited.shares.map((share) => share.amountMinor), [300, 300]);
+    assert.deepEqual(inherited.paymentMethods.map((entry) => entry.method), ['CASH'], 'season payment methods');
+    assert.equal((await getGameCostSummary(unpricedFixture.id, player.id)).viewerShare?.amountMinor, 300);
+    await prisma.game.update({
+      where: { id: unpricedFixture.id },
+      data: { priceType: PriceType.FREE },
+    });
+    assert.equal(
+      (await getGameCostSummary(unpricedFixture.id, seasonOwner.id)).available,
+      false,
+      'a fixture priced on its own (here: free) ignores the season price',
+    );
+    // A fixture of a long-finished season never grows a ledger retroactively.
+    const pastFixture = await makeGame(player.id, extraPlayers[0].id);
+    await prisma.game.update({
+      where: { id: pastFixture.id },
+      data: {
+        entityType: EntityType.LEAGUE,
+        parentId: season.id,
+        priceType: PriceType.NOT_KNOWN,
+        priceTotal: null,
+        priceCurrency: null,
+        resultsStatus: ResultsStatus.FINAL,
+        startTime: new Date(Date.now() - 30 * 24 * HOURS),
+        endTime: new Date(Date.now() - 30 * 24 * HOURS + HOURS),
+      },
+    });
+    assert.equal((await getGameCostSummary(pastFixture.id, seasonOwner.id)).available, false);
+    assert.equal(await prisma.gameCostShare.count({ where: { gameId: pastFixture.id } }), 0);
+    assert.equal(
+      (await prisma.game.findUniqueOrThrow({ where: { id: pastFixture.id } })).costFrozenAt,
+      null,
+      'no retroactive freeze either',
+    );
+
     // Even existing season shares cannot be read, settled, reminded or surfaced in Wallet.
     await prisma.game.update({ where: { id: accessGame.id }, data: { entityType: EntityType.LEAGUE_SEASON } });
     for (const actorId of [payer.id, player.id, staff.id]) {

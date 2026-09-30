@@ -189,12 +189,16 @@ export async function retryPendingCoinShareRefunds(limit = AUTO_REMIND_BATCH_SIZ
     SELECT DISTINCT s."gameId"
     FROM "GameCostShare" s
     JOIN "Game" g ON g.id = s."gameId"
+    -- A NOT_KNOWN league fixture splits by its season's price (applySeasonCostPricing).
+    LEFT JOIN "Game" season ON season.id = g."parentId"
+      AND g."entityType" = 'LEAGUE' AND g."priceType" = 'NOT_KNOWN'
+      AND season."entityType" = 'LEAGUE_SEASON'
     WHERE s.method = 'COINS'
       AND s."transactionId" IS NOT NULL
       AND g."costFrozenAt" IS NULL
       AND (
-        g."priceCurrency" IS NULL
-        OR g."priceTotal" IS NULL
+        COALESCE(season."priceCurrency", g."priceCurrency") IS NULL
+        OR COALESCE(season."priceTotal", g."priceTotal") IS NULL
         OR NOT EXISTS (
           SELECT 1 FROM "GameParticipant" p
           WHERE p."gameId" = s."gameId" AND p."userId" = s."userId" AND p.status = 'PLAYING'
@@ -237,8 +241,19 @@ export async function runCostShareReminderSweep(now: Date = new Date()): Promise
       entityType: { not: 'LEAGUE_SEASON' },
       resultsStatus: 'FINAL',
       costFrozenAt: null,
-      priceType: { in: ['TOTAL', 'PER_PERSON'] },
-      priceCurrency: { not: null },
+      OR: [
+        { priceType: { in: ['TOTAL', 'PER_PERSON'] }, priceCurrency: { not: null } },
+        // Unpriced league fixtures split by their season's price.
+        {
+          entityType: 'LEAGUE',
+          priceType: 'NOT_KNOWN',
+          parent: {
+            entityType: 'LEAGUE_SEASON',
+            priceType: { in: ['TOTAL', 'PER_PERSON'] },
+            priceCurrency: { not: null },
+          },
+        },
+      ],
       updatedAt: { gte: freezeCutoff },
     },
     select: { id: true },
