@@ -66,6 +66,8 @@
       "cannotLeaveResultsStarted": "Unos rezultata je počeo — zamolite organizatora za zamenu",
       "directJoinNotAllowed": "Direktno pridruživanje nije dozvoljeno za ovu igru",
       "cannotDeleteHasChildren": "Ne možete obrisati igru koja ima pod-igre (npr. turnir sa rundama). Prvo obrišite pod-igre.",
+      "cannotDeleteCoinShareUnrefundable": "Igrač je platio svoj deo novčićima, a primalac više nema dovoljno novčića da ih vrati, pa igra još ne može da se obriše.",
+      "cannotDeletePendingBetPayout": "Isplata opklade za ovu igru je još u toku. Pokušajte ponovo za nekoliko minuta.",
       "genderUnset": "Podesite pol da biste se pridružili ovoj igri",
       "genderUnsetOther": "Ovaj igrač još nije podesio pol",
       "genderIncompatibleMen": "Ovoj igri mogu da se pridruže samo muškarci",

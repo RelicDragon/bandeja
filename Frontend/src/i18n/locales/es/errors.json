@@ -66,6 +66,8 @@
       "cannotLeaveResultsStarted": "La anotación de resultados ya empezó: pide al organizador que te sustituya",
       "directJoinNotAllowed": "No se permite unirse directamente a este juego",
       "cannotDeleteHasChildren": "No se puede eliminar un juego que tiene juegos hijos (p. ej. torneo con rondas). Elimina o quita primero los juegos hijos.",
+      "cannotDeleteCoinShareUnrefundable": "Un jugador pagó su parte con monedas y quien las recibió ya no tiene suficientes para devolverlas, así que el partido aún no se puede eliminar.",
+      "cannotDeletePendingBetPayout": "Todavía se está pagando una apuesta de este partido. Inténtalo de nuevo en unos minutos.",
       "genderUnset": "Define tu género para unirte a esta partida",
       "genderUnsetOther": "Este jugador aún no ha definido su género",
       "genderIncompatibleMen": "Solo pueden unirse hombres",

@@ -1,4 +1,4 @@
-import type { PriceCurrency, Prisma } from '@prisma/client';
+import { Prisma, type PriceCurrency } from '@prisma/client';
 import prisma from '../../config/database';
 import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
@@ -173,6 +173,45 @@ export async function remindUnpaidShares(
 export async function getRemindAvailableAt(gameId: string): Promise<Date | null> {
   if (!config.costSplitEnabled) return null;
   return getCostReminderAvailableAt(manualRemindKey(gameId), COST_REMIND_COOLDOWN_MS);
+}
+
+/**
+ * Retry coin refunds the roster sync could not pay yet (the payer was short).
+ *
+ * The sync already retries on every read of the ledger; this catches games
+ * nobody opens. A candidate is an unfrozen game holding a coin-settled row
+ * whose user is no longer `PLAYING`, or whose price no longer splits — exactly
+ * the rows the sync reverses. Returns how many games were re-synced.
+ */
+export async function retryPendingCoinShareRefunds(limit = AUTO_REMIND_BATCH_SIZE): Promise<number> {
+  if (!config.costSplitEnabled) return 0;
+  const candidates = await prisma.$queryRaw<{ gameId: string }[]>(Prisma.sql`
+    SELECT DISTINCT s."gameId"
+    FROM "GameCostShare" s
+    JOIN "Game" g ON g.id = s."gameId"
+    WHERE s.method = 'COINS'
+      AND s."transactionId" IS NOT NULL
+      AND g."costFrozenAt" IS NULL
+      AND (
+        g."priceCurrency" IS NULL
+        OR g."priceTotal" IS NULL
+        OR NOT EXISTS (
+          SELECT 1 FROM "GameParticipant" p
+          WHERE p."gameId" = s."gameId" AND p."userId" = s."userId" AND p.status = 'PLAYING'
+        )
+      )
+    LIMIT ${limit}
+  `);
+  let synced = 0;
+  for (const { gameId } of candidates) {
+    try {
+      await syncGameCostShares(gameId);
+      synced += 1;
+    } catch (error) {
+      console.error('[CostShareReminder] coin refund retry failed', gameId, error);
+    }
+  }
+  return synced;
 }
 
 /**

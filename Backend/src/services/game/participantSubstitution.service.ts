@@ -113,7 +113,8 @@ export class GameParticipantSubstitutionService {
 
     // PRD 348 — the substitute inherits the seat's cost share *and* whether it
     // was already paid, before the roster sync would otherwise hand them a new
-    // unpaid row.
+    // unpaid row. A share paid in coins is refunded to the outgoing player
+    // instead, and the substitute owes a fresh one.
     await transferCostShareOnSubstitution(gameId, outUserId, inUserId).catch((error) =>
       console.error('Failed to move cost share to substitute:', error),
     );

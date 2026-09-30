@@ -1,5 +1,5 @@
 import * as cron from 'node-cron';
-import { runCostShareReminderSweep } from './costShareReminder.service';
+import { retryPendingCoinShareRefunds, runCostShareReminderSweep } from './costShareReminder.service';
 
 /**
  * PRD 348 — hourly sweep that reminds players about unconfirmed
@@ -35,6 +35,12 @@ export class CostShareReminderScheduler {
       }
     } catch (err) {
       console.error('[CostShareReminderScheduler] reminder error:', err);
+    }
+    try {
+      const retried = await retryPendingCoinShareRefunds();
+      if (retried > 0) console.log(`💶 Cost share sweep: retried coin refunds in ${retried} game(s)`);
+    } catch (err) {
+      console.error('[CostShareReminderScheduler] coin refund retry error:', err);
     } finally {
       this.running = false;
     }

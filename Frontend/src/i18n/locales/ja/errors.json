@@ -66,6 +66,8 @@
       "cannotLeaveResultsStarted": "結果の入力が始まっています。主催者に交代を依頼してください",
       "directJoinNotAllowed": "この試合は直接参加できません",
       "cannotDeleteHasChildren": "子試合がある試合は削除できません（例：ラウンドのあるトーナメント）。先に子試合を削除してください。",
+      "cannotDeleteCoinShareUnrefundable": "プレイヤーがコインで負担分を支払いましたが、受取人に返金できるだけのコインが残っていないため、まだこの試合は削除できません。",
+      "cannotDeletePendingBetPayout": "この試合のベットの支払いがまだ完了していません。数分後にもう一度お試しください。",
       "genderUnset": "この試合に参加するには性別を設定してください",
       "genderUnsetOther": "このプレイヤーはまだ性別を設定していません",
       "genderIncompatibleMen": "この試合は男性のみ参加できます",
