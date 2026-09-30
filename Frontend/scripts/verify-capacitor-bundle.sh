@@ -21,7 +21,9 @@ verify_capacitor_bundle() {
 		return 1
 	fi
 
-	if rg -q 'jsxDEV|jsx-dev-runtime|fileName:\s*["'\''][^"'\'']*/Frontend/src/' "$dist"/assets/*.js 2>/dev/null; then
+	# Match jsxDEV *calls*, not the bare name: react-markdown's hast-util-to-jsx-runtime ships
+	# a production-safe `typeof t.jsxDEV` option check.
+	if rg -q 'jsxDEV\)\(|\bjsxDEV\(|jsx-dev-runtime|fileName:\s*["'\''][^"'\'']*/Frontend/src/' "$dist"/assets/*.js 2>/dev/null; then
 		echo "❌ Bundle contains React development output/source paths. Ensure NODE_ENV=production for vite build." >&2
 		return 1
 	fi
