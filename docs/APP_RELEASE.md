@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.57 |
-| **Build** | 239 |
-| **Commit** | `f430e5aff813bc483f6c66603bd4f5aea2deb8ea` |
-| **Short** | `f430e5aff` |
-| **Date** | 2026-09-29 |
-| **Message** | Bump app release to 0.97.57 (build 239) |
+| **Version** | 0.97.58 |
+| **Build** | 240 |
+| **Commit** | `fc56d7708c8423293cc7acd7a33bb949802d4f69` |
+| **Short** | `fc56d7708` |
+| **Date** | 2026-09-30 |
+| **Message** | fix(release): don't flag react-markdown's jsxDEV option check as a dev bundle |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -70,6 +70,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.58 | 240 | `fc56d7708` | 2026-09-30 |
 | 0.97.57 | 239 | `f430e5aff` | 2026-09-29 |
 | 0.97.56 | 238 | `6f587981c` | 2026-09-27 |
 | 0.97.55 | 237 | `1c5a2e24a` | 2026-09-27 |
