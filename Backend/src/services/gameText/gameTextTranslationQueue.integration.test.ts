@@ -10,6 +10,16 @@ import { applyGameTextSourceChangeInTransaction } from './gameTextSourceChange.s
 import { GameTextTranslationQueueService } from './gameTextTranslationQueue.service';
 import { publishGameTextTranslationResult } from './gameTextTranslationPublish.service';
 import { reconcileGameTextTranslationJobs } from './gameTextTranslationReconcile.service';
+import { attachLocalizedTextToGame } from './gameTextLocalizedText.batch';
+import { retryGameTextTranslation } from './gameTextEditor.service';
+import type { GameLocalizedTextProjection } from './gameTextLocalizedText.types';
+
+type TextHost = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  localizedText?: GameLocalizedTextProjection;
+};
 import {
   setGameTextTranslateImplForTests,
   type GameTextTranslateFn,
@@ -380,6 +390,82 @@ async function run() {
       });
       assert.ok(stillPending >= 1);
       process.env.GAME_TEXT_LOCALIZATION_GENERATION_ENABLED = 'true';
+    }
+
+    // --- terminal failure marks rows failed; reads stop reporting pending; retry reuses job ---
+    {
+      const gameId = await createProbeGame(prisma, city.id, 'terminal');
+      gamesToDelete.push(gameId);
+      const jobId = await enqueueJob(prisma, gameId, 'hi');
+      // Existing stale pending row (source bump path) must flip to failed too.
+      await prisma.gameTextTranslation.create({
+        data: {
+          gameId,
+          field: 'description',
+          locale: 'hi',
+          sourceRevision: 1,
+          generationState: 'pending',
+        },
+      });
+      setGameTextTranslateImplForTests(async () => {
+        throw new GameTextTranslationError('dropped number', 'validation');
+      });
+      for (let i = 0; i < 3; i += 1) {
+        await prisma.gameTextTranslationJob.update({
+          where: { id: jobId },
+          data: { runAfter: new Date(Date.now() - 1000) },
+        });
+        const claimed = await GameTextTranslationQueueService.claimJobById(jobId);
+        assert.ok(claimed, `claim attempt ${i + 1}`);
+        await GameTextTranslationQueueService.runClaimedJob(claimed);
+      }
+      const job = await prisma.gameTextTranslationJob.findUnique({ where: { id: jobId } });
+      assert.equal(job?.status, 'failed');
+      const rows = await prisma.gameTextTranslation.findMany({
+        where: { gameId, locale: 'hi' },
+        orderBy: { field: 'asc' },
+      });
+      assert.deepEqual(
+        rows.map((r) => [r.field, r.generationState, r.sourceRevision]),
+        [
+          ['name', 'failed', 1],
+          ['description', 'failed', 1],
+        ],
+      );
+
+      const game: TextHost = await prisma.game.findUniqueOrThrow({
+        where: { id: gameId },
+        select: { id: true, name: true, description: true },
+      });
+      const read = await attachLocalizedTextToGame({ ...game }, 'hi');
+      assert.equal(read.localizedText?.name.state, 'failed');
+      assert.equal(read.localizedText?.description.state, 'failed');
+      assert.equal(read.localizedText?.name.text, 'Sunday social');
+
+      // Retry must reuse the failed job (same unique key), not throw P2002.
+      const retry = await retryGameTextTranslation({ gameId, locale: 'hi' });
+      assert.equal(retry.queued, true);
+      assert.equal(retry.jobId, jobId);
+      const requeued = await prisma.gameTextTranslationJob.findUnique({ where: { id: jobId } });
+      assert.equal(requeued?.status, 'pending');
+      assert.equal(requeued?.attempts, 0);
+      const afterRetry = await attachLocalizedTextToGame({ ...game }, 'hi');
+      assert.equal(afterRetry.localizedText?.name.state, 'pending');
+
+      // Legacy: name never tracked (rev 0, no rows, no job) → original, not pending.
+      const legacyId = await createProbeGame(prisma, city.id, 'legacy', 'Jesen-Zima 2026', '');
+      gamesToDelete.push(legacyId);
+      const legacyHost: TextHost = {
+        id: legacyId,
+        name: 'Jesen-Zima 2026',
+        description: null,
+      };
+      const legacy = await attachLocalizedTextToGame(
+        legacyHost,
+        'hi',
+      );
+      assert.equal(legacy.localizedText?.name.state, 'original');
+      assert.equal(legacy.localizedText?.name.text, 'Jesen-Zima 2026');
     }
 
     // --- reconcile does not touch terminal failures ---

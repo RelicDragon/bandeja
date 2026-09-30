@@ -364,7 +364,7 @@ export class GameTextTranslationQueueService {
     }
 
     if (attempts >= maxAttempts) {
-      await prisma.gameTextTranslationJob.updateMany({
+      const failed = await prisma.gameTextTranslationJob.updateMany({
         where: { id: job.id, claimToken, leaseOwner, status: 'running' },
         data: {
           status: 'failed',
@@ -375,6 +375,9 @@ export class GameTextTranslationQueueService {
           leaseExpiresAt: null,
         },
       });
+      if (failed.count === 1) {
+        await this.markTranslationRowsFailed(job);
+      }
       return;
     }
 
@@ -383,6 +386,84 @@ export class GameTextTranslationQueueService {
       lastError: msg,
       errorCategory: category,
       runAfter: new Date(Date.now() + backoffMs(attempts)),
+    });
+  }
+
+  /**
+   * Terminal failure: flip this job's rows (or create them) to `failed` at the job's source
+   * revision so reads stop reporting `pending`. Leaves rows of newer revisions untouched.
+   */
+  static async markTranslationRowsFailed(
+    job: Pick<
+      GameTextTranslationJob,
+      | 'gameId'
+      | 'targetLocale'
+      | 'includeName'
+      | 'includeDescription'
+      | 'nameSourceRevision'
+      | 'descriptionSourceRevision'
+    >,
+  ): Promise<void> {
+    const fields: { field: GameTextFieldKey; sourceRevision: number }[] = [];
+    if (job.includeName) {
+      fields.push({ field: 'name', sourceRevision: job.nameSourceRevision });
+    }
+    if (job.includeDescription) {
+      fields.push({
+        field: 'description',
+        sourceRevision: job.descriptionSourceRevision,
+      });
+    }
+    await prisma.$transaction(async (tx) => {
+      const meta = await tx.gameTextSourceMeta.findUnique({
+        where: { gameId: job.gameId },
+        select: { nameSourceRevision: true, descriptionSourceRevision: true },
+      });
+      if (!meta) return;
+      for (const { field, sourceRevision } of fields) {
+        const current =
+          field === 'name' ? meta.nameSourceRevision : meta.descriptionSourceRevision;
+        if (current !== sourceRevision) continue;
+        const existing = await tx.gameTextTranslation.findUnique({
+          where: {
+            gameId_field_locale: {
+              gameId: job.gameId,
+              field,
+              locale: job.targetLocale,
+            },
+          },
+          select: { id: true, sourceRevision: true, generationState: true },
+        });
+        if (!existing) {
+          await tx.gameTextTranslation.create({
+            data: {
+              gameId: job.gameId,
+              field,
+              locale: job.targetLocale,
+              sourceRevision,
+              generationState: 'failed',
+            },
+          });
+          continue;
+        }
+        // A ready/not_needed row at this revision already serves something useful.
+        if (
+          existing.sourceRevision === sourceRevision &&
+          existing.generationState !== 'pending'
+        ) {
+          continue;
+        }
+        await tx.gameTextTranslation.update({
+          where: { id: existing.id },
+          data: {
+            sourceRevision,
+            automaticText: null,
+            generationState: 'failed',
+            provenance: null,
+            recordRevision: { increment: 1 },
+          },
+        });
+      }
     });
   }
 

@@ -37,10 +37,19 @@ function run() {
 
   assert.equal(
     resolveGameTextEditorLocaleStatus({
-      name: field({ generationState: 'pending' }),
+      name: field({ generationState: 'pending', jobInFlight: true }),
       description: field(),
     }),
     'updating',
+  );
+
+  // Stuck pending row, job terminally failed → Retry, not Updating forever
+  assert.equal(
+    resolveGameTextEditorLocaleStatus({
+      name: field({ generationState: 'pending', jobInFlight: false }),
+      description: field(),
+    }),
+    'retry',
   );
 
   assert.equal(
@@ -78,7 +87,7 @@ function run() {
   assert.equal(
     resolveGameTextEditorLocaleStatus({
       name: field({ preserveAsOriginal: true }),
-      description: field({ generationState: 'pending' }),
+      description: field({ generationState: 'pending', jobInFlight: true }),
     }),
     'updating',
   );

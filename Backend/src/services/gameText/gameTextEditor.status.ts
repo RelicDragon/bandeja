@@ -36,10 +36,11 @@ function fieldPriorityStatus(
   }
   if (field.needsReview) return 'needs_review';
   if (field.hasActiveCorrection) return 'edited';
-  if (field.jobInFlight || field.generationState === 'pending') {
-    return 'updating';
+  if (field.jobInFlight) return 'updating';
+  // `pending` with no job left to run it = worker gave up; offer Retry instead of Updating forever.
+  if (field.generationState === 'failed' || field.generationState === 'pending') {
+    return 'retry';
   }
-  if (field.generationState === 'failed') return 'retry';
   if (field.generationState === 'not_needed') return 'not_needed';
   // Missing row (null) with no in-flight job → serving original; not stuck on Updating.
   return 'ready';

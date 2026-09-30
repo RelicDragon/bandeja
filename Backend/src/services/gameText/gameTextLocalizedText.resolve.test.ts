@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { resolveGameLocalizedText } from './gameTextLocalizedText.resolve';
 import { resolveRequestAppUiLocale } from './gameTextRequestLocale';
-import { collectGameIdsForLocalizedText } from './gameTextLocalizedText.batch';
+import {
+  collectGameIdsForLocalizedText,
+  gameTextFieldsInFlight,
+} from './gameTextLocalizedText.batch';
 import type { GameTextTranslationRowForResolve } from './gameTextLocalizedText.types';
 
 function row(
@@ -320,6 +323,140 @@ function run() {
     },
   ]);
   assert.deepEqual(ids.sort(), ['g1', 'season-1']);
+
+  // Legacy season (prod cmu2s0kkq…): name never tracked (rev 0, no rows, no job) →
+  // serve original, not pending forever.
+  const legacyNoJob = resolveGameLocalizedText({
+    locale: 'hi',
+    name: 'Jesen-Zima 2026',
+    description: 'Opis sezone',
+    meta: {
+      nameSourceRevision: 0,
+      descriptionSourceRevision: 3,
+      keepOriginalNameInAllLocales: false,
+    },
+    rows: [
+      // Description job failed terminally; row stuck at pending.
+      row({ field: 'description', locale: 'hi', sourceRevision: 3 }),
+    ],
+    inFlight: { name: false, description: false },
+  });
+  assert.equal(legacyNoJob.name.text, 'Jesen-Zima 2026');
+  assert.equal(legacyNoJob.name.state, 'original');
+  assert.equal(legacyNoJob.name.provenance, 'original');
+  assert.equal(legacyNoJob.description.text, 'Opis sezone');
+  assert.equal(legacyNoJob.description.state, 'failed');
+  assert.equal(legacyNoJob.description.provenance, 'original');
+
+  // Same rows while a job is still queued → pending (client keeps polling briefly)
+  const withJob = resolveGameLocalizedText({
+    locale: 'hi',
+    name: 'Jesen-Zima 2026',
+    description: 'Opis sezone',
+    meta: {
+      nameSourceRevision: 1,
+      descriptionSourceRevision: 3,
+      keepOriginalNameInAllLocales: false,
+    },
+    rows: [row({ field: 'description', locale: 'hi', sourceRevision: 3 })],
+    inFlight: { name: true, description: true },
+  });
+  assert.equal(withJob.name.state, 'pending');
+  assert.equal(withJob.description.state, 'pending');
+
+  // Stale row + no job (source bumped, generation disabled) → original, not pending
+  const staleNoJob = resolveGameLocalizedText({
+    locale: 'ru',
+    name: 'New name',
+    description: null,
+    meta: {
+      nameSourceRevision: 2,
+      descriptionSourceRevision: 0,
+      keepOriginalNameInAllLocales: false,
+    },
+    rows: [
+      row({
+        field: 'name',
+        sourceRevision: 1,
+        automaticText: 'Старое',
+        generationState: 'ready',
+        provenance: 'automatic',
+      }),
+    ],
+    inFlight: { name: false, description: false },
+  });
+  assert.equal(staleNoJob.name.text, 'New name');
+  assert.equal(staleNoJob.name.state, 'original');
+
+  // Ready rows are unaffected by in-flight flags
+  const readyNoJob = resolveGameLocalizedText({
+    locale: 'ru',
+    name: 'Sunday social',
+    description: null,
+    meta: {
+      nameSourceRevision: 1,
+      descriptionSourceRevision: 0,
+      keepOriginalNameInAllLocales: false,
+    },
+    rows: [
+      row({
+        field: 'name',
+        sourceRevision: 1,
+        automaticText: 'Воскресный сошиал',
+        generationState: 'ready',
+        provenance: 'automatic',
+      }),
+    ],
+    inFlight: { name: false, description: false },
+  });
+  assert.equal(readyNoJob.name.state, 'ready');
+  assert.equal(readyNoJob.name.text, 'Воскресный сошиал');
+
+  // In-flight detection only counts jobs at the current source revisions
+  const meta = {
+    nameSourceRevision: 0,
+    descriptionSourceRevision: 3,
+    keepOriginalNameInAllLocales: false,
+  };
+  assert.deepEqual(gameTextFieldsInFlight(meta, []), {
+    name: false,
+    description: false,
+  });
+  assert.deepEqual(
+    gameTextFieldsInFlight(meta, [
+      // Superseded-by-revision job (desc rev 2) does not count
+      {
+        includeName: false,
+        includeDescription: true,
+        nameSourceRevision: 0,
+        descriptionSourceRevision: 2,
+      },
+    ]),
+    { name: false, description: false },
+  );
+  assert.deepEqual(
+    gameTextFieldsInFlight(meta, [
+      {
+        includeName: true,
+        includeDescription: true,
+        nameSourceRevision: 0,
+        descriptionSourceRevision: 3,
+      },
+    ]),
+    { name: true, description: true },
+  );
+  // No meta row → revisions default to 0
+  assert.deepEqual(
+    gameTextFieldsInFlight(null, [
+      {
+        includeName: true,
+        includeDescription: false,
+        nameSourceRevision: 0,
+        descriptionSourceRevision: 0,
+      },
+    ]),
+    { name: true, description: false },
+  );
 
   console.log('gameTextLocalizedText.resolve tests passed');
 }

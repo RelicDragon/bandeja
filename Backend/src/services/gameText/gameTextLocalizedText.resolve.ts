@@ -24,7 +24,15 @@ export type ResolveGameLocalizedTextInput = {
   rows?: readonly GameTextTranslationRowForResolve[] | null;
   /** When false, description projection is empty_source without consulting rows. */
   includeDescription?: boolean;
+  /**
+   * Whether a pending/running job covers each field at its current source revision.
+   * Omitted = assume in flight (legacy callers). Without in-flight work a missing row
+   * serves the original and a stuck `pending` row reads as `failed`, so clients stop polling.
+   */
+  inFlight?: GameTextFieldsInFlight | null;
 };
+
+export type GameTextFieldsInFlight = { name: boolean; description: boolean };
 
 function fieldProjection(
   text: string | null,
@@ -40,6 +48,7 @@ function resolveOneField(input: {
   sourceRevision: number;
   preserveAsOriginal: boolean;
   row: GameTextTranslationRowForResolve | null | undefined;
+  inFlight: boolean;
 }): GameTextLocalizedFieldProjection {
   const original = normalizeAuthoredGameText(input.original);
   const revision = input.sourceRevision;
@@ -74,7 +83,13 @@ function resolveOneField(input: {
       return fieldProjection(row.automaticText, revision, 'ready', 'automatic');
     }
     if (row.generationState === 'pending') {
-      return fieldProjection(original, revision, 'pending', 'original');
+      // Pending row with no job left to finish it (terminal failure) → failed, not pending forever.
+      return fieldProjection(
+        original,
+        revision,
+        input.inFlight ? 'pending' : 'failed',
+        'original',
+      );
     }
     if (row.generationState === 'failed') {
       return fieldProjection(original, revision, 'failed', 'original');
@@ -90,8 +105,14 @@ function resolveOneField(input: {
     }
   }
 
-  // No current row (missing or stale revision) → show current original; pending until ready.
-  return fieldProjection(original, revision, 'pending', 'original');
+  // No current row (missing or stale revision) → show current original; pending only while a
+  // job is queued. Legacy games (source never tracked) and dropped jobs serve the original.
+  return fieldProjection(
+    original,
+    revision,
+    input.inFlight ? 'pending' : 'original',
+    'original',
+  );
 }
 
 function rowForField(
@@ -112,12 +133,14 @@ export function resolveGameLocalizedText(
   const locale = normalizeAppUiLanguage(input.locale);
   const meta = input.meta ?? DEFAULT_META;
   const includeDescription = input.includeDescription !== false;
+  const inFlight = input.inFlight ?? { name: true, description: true };
 
   const name = resolveOneField({
     original: input.name,
     sourceRevision: meta.nameSourceRevision,
     preserveAsOriginal: meta.keepOriginalNameInAllLocales,
     row: rowForField(input.rows, 'name'),
+    inFlight: inFlight.name,
   });
 
   const description = includeDescription
@@ -126,6 +149,7 @@ export function resolveGameLocalizedText(
         sourceRevision: meta.descriptionSourceRevision,
         preserveAsOriginal: false,
         row: rowForField(input.rows, 'description'),
+        inFlight: inFlight.description,
       })
     : fieldProjection(
         null,

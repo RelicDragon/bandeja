@@ -1,6 +1,10 @@
 import { normalizeAppUiLanguage, type AppUiLanguage } from '@bandeja/app-locale';
 import prisma from '../../config/database';
-import { resolveGameLocalizedText } from './gameTextLocalizedText.resolve';
+import { isGameTextLocalizationGenerationEnabled } from '../../config/env';
+import {
+  resolveGameLocalizedText,
+  type GameTextFieldsInFlight,
+} from './gameTextLocalizedText.resolve';
 import type {
   GameLocalizedTextProjection,
   GameTextSourceMetaForResolve,
@@ -11,7 +15,35 @@ export type GameLocalizedTextBatchMaps = {
   locale: AppUiLanguage;
   metaByGameId: Map<string, GameTextSourceMetaForResolve>;
   rowsByGameId: Map<string, GameTextTranslationRowForResolve[]>;
+  /** Pending/running jobs for the batch locale, keyed by game id. */
+  activeJobsByGameId: Map<string, GameTextActiveJobForResolve[]>;
 };
+
+export type GameTextActiveJobForResolve = {
+  includeName: boolean;
+  includeDescription: boolean;
+  nameSourceRevision: number;
+  descriptionSourceRevision: number;
+};
+
+/** Which fields still have queued work at the current source revisions. */
+export function gameTextFieldsInFlight(
+  meta: GameTextSourceMetaForResolve | null | undefined,
+  jobs: readonly GameTextActiveJobForResolve[] | null | undefined,
+): GameTextFieldsInFlight {
+  const nameRevision = meta?.nameSourceRevision ?? 0;
+  const descriptionRevision = meta?.descriptionSourceRevision ?? 0;
+  const list = jobs ?? [];
+  return {
+    name: list.some(
+      (j) => j.includeName && j.nameSourceRevision === nameRevision,
+    ),
+    description: list.some(
+      (j) =>
+        j.includeDescription && j.descriptionSourceRevision === descriptionRevision,
+    ),
+  };
+}
 
 type GameLikeForIds = {
   id?: string | null;
@@ -55,10 +87,14 @@ export async function loadGameLocalizedTextBatch(
       locale,
       metaByGameId: new Map(),
       rowsByGameId: new Map(),
+      activeJobsByGameId: new Map(),
     };
   }
 
-  const [metas, translations] = await Promise.all([
+  // Generation off → queued jobs never run; nothing counts as in flight.
+  const generationEnabled = isGameTextLocalizationGenerationEnabled();
+
+  const [metas, translations, activeJobs] = await Promise.all([
     prisma.gameTextSourceMeta.findMany({
       where: { gameId: { in: uniqueIds } },
       select: {
@@ -82,6 +118,22 @@ export async function loadGameLocalizedTextBatch(
         manualOverrideSourceRevision: true,
       },
     }),
+    generationEnabled
+      ? prisma.gameTextTranslationJob.findMany({
+          where: {
+            gameId: { in: uniqueIds },
+            targetLocale: locale,
+            status: { in: ['pending', 'running'] },
+          },
+          select: {
+            gameId: true,
+            includeName: true,
+            includeDescription: true,
+            nameSourceRevision: true,
+            descriptionSourceRevision: true,
+          },
+        })
+      : Promise.resolve([]),
   ]);
 
   const metaByGameId = new Map<string, GameTextSourceMetaForResolve>();
@@ -109,7 +161,19 @@ export async function loadGameLocalizedTextBatch(
     rowsByGameId.set(row.gameId, list);
   }
 
-  return { locale, metaByGameId, rowsByGameId };
+  const activeJobsByGameId = new Map<string, GameTextActiveJobForResolve[]>();
+  for (const job of activeJobs) {
+    const list = activeJobsByGameId.get(job.gameId) ?? [];
+    list.push({
+      includeName: job.includeName,
+      includeDescription: job.includeDescription,
+      nameSourceRevision: job.nameSourceRevision,
+      descriptionSourceRevision: job.descriptionSourceRevision,
+    });
+    activeJobsByGameId.set(job.gameId, list);
+  }
+
+  return { locale, metaByGameId, rowsByGameId, activeJobsByGameId };
 }
 
 export type AttachLocalizedTextOptions = {
@@ -129,13 +193,15 @@ function projectForHost(
   batch: GameLocalizedTextBatchMaps,
   includeDescription: boolean,
 ): GameLocalizedTextProjection {
+  const meta = batch.metaByGameId.get(host.id) ?? null;
   return resolveGameLocalizedText({
     locale: batch.locale,
     name: host.name,
     description: includeDescription ? host.description : null,
-    meta: batch.metaByGameId.get(host.id) ?? null,
+    meta,
     rows: batch.rowsByGameId.get(host.id) ?? null,
     includeDescription,
+    inFlight: gameTextFieldsInFlight(meta, batch.activeJobsByGameId.get(host.id)),
   });
 }
 

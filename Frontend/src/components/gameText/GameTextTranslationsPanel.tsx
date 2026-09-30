@@ -94,8 +94,9 @@ export function GameTextTranslationsPanel({
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose, selected]);
 
+  // Only in-flight work changes on its own; `retry` waits for the organizer.
   const hasUpdatingLocale = Boolean(
-    data?.locales.some((l) => l.status === 'updating' || l.status === 'retry'),
+    data?.locales.some((l) => l.status === 'updating'),
   );
 
   useEffect(() => {

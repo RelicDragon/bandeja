@@ -618,19 +618,37 @@ export async function retryGameTextTranslation(
       },
     });
 
-    const job = await tx.gameTextTranslationJob.create({
-      data: {
+    // A failed/done/superseded job at the same revisions already owns the unique key → reset it.
+    const retryData = {
+      includeName,
+      includeDescription,
+      status: 'pending' as const,
+      runAfter: new Date(),
+      attempts: 0,
+      lastError: null,
+      errorCategory: null,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+    };
+    const job = await tx.gameTextTranslationJob.upsert({
+      where: {
+        gameId_targetLocale_nameSourceRevision_descriptionSourceRevision_policyVersion: {
+          gameId: input.gameId,
+          targetLocale: locale,
+          nameSourceRevision: meta.nameSourceRevision,
+          descriptionSourceRevision: meta.descriptionSourceRevision,
+          policyVersion: GAME_TEXT_TRANSLATION_POLICY_VERSION,
+        },
+      },
+      create: {
         gameId: input.gameId,
         targetLocale: locale,
         nameSourceRevision: meta.nameSourceRevision,
         descriptionSourceRevision: meta.descriptionSourceRevision,
         policyVersion: GAME_TEXT_TRANSLATION_POLICY_VERSION,
-        includeName,
-        includeDescription,
-        status: 'pending',
-        runAfter: new Date(),
-        attempts: 0,
+        ...retryData,
       },
+      update: retryData,
     });
     return { queued: true, jobId: job.id };
   });
