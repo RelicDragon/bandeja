@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue, startTransition } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays, LayoutGrid } from 'lucide-react';
+import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays, LayoutGrid, Loader2 } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
 import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
@@ -209,6 +209,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoInitialTabId>('general');
   const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
+  // The switch reacts to `activeTab` at once; the tab body follows as an
+  // interruptible render, so a heavy General tab never holds the tap hostage.
+  const renderedTab = useDeferredValue(activeTab);
+  const tabContentPending = renderedTab !== activeTab;
 
   const persistLeagueSeasonTabInUrl = useCallback(
     (tab: LeagueSeasonShellTab) => {
@@ -551,7 +555,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         try {
           const response = await gamesApi.getById(id);
           if (cancelled) return;
-          setGame(response.data);
+          // Only the translated text is awaited here. Re-rendering the whole
+          // page every tick for an unchanged answer makes it stutter.
+          const current = gameRef.current;
+          if (!current || JSON.stringify(current.localizedText) !== JSON.stringify(response.data.localizedText)) {
+            startTransition(() => setGame(response.data));
+          }
           if (!isGameTextTranslationPending(response.data.localizedText)) {
             window.clearInterval(timer);
           }
@@ -1576,7 +1585,15 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   };
 
   const renderTabContent = () => {
-    if (!isLeagueSeason || activeTab === 'general') {
+    if (isLeagueSeason && tabContentPending) {
+      return (
+        <div key="league-tab-pending" className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+      );
+    }
+
+    if (!isLeagueSeason || renderedTab === 'general') {
       return (
         <>
           {/* PRD 345 — "Part of <series> · week N", directly under the title and
@@ -2017,7 +2034,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       );
     }
 
-    if (user && activeTab === 'schedule') {
+    if (user && renderedTab === 'schedule') {
       return (
         <div key="league-schedule" className="contents">
           <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} selectedGameChatId={selectedGameChatId} onChatGameSelect={onChatGameSelect} />
@@ -2025,7 +2042,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       );
     }
 
-    if (user && isLeagueSeasonParticipant && activeTab === 'planner') {
+    if (user && isLeagueSeasonParticipant && renderedTab === 'planner') {
       return (
         <div key="league-planner" className="contents">
           <LeaguePlannerTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} isVisible />
@@ -2033,7 +2050,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       );
     }
 
-    if (user && activeTab === 'standings') {
+    if (user && renderedTab === 'standings') {
       return (
         <div key="league-standings" className="contents">
           <LeagueStandingsTab
@@ -2047,7 +2064,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       );
     }
 
-    if (user && activeTab === 'faq') {
+    if (user && renderedTab === 'faq') {
       return (
         <div key="league-faq" className="contents">
           <FaqTab
