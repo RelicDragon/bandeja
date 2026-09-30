@@ -230,6 +230,53 @@ void (async () => {
     await getGameCostSummary(accessGame.id, player.id);
     assert.equal((await getOwedSummary(payer.id)).owedToMe.some((row) => row.gameId === accessGame.id), true);
 
+    // A LEAGUE fixture is organized by its season: the season owner/admins get
+    // the organizer view, the owner is the default payer, and a season member
+    // without an organizer role sees nothing.
+    const seasonOwner = await makeUser('season-owner', 0);
+    const seasonAdmin = await makeUser('season-admin', 0);
+    const seasonMember = await makeUser('season-member', 0);
+    const season = await prisma.game.create({
+      data: {
+        entityType: EntityType.LEAGUE_SEASON,
+        sport: Sport.PADEL,
+        gameType: GameType.CLASSIC,
+        cityId: city.id,
+        startTime: new Date(Date.now() - 48 * HOURS),
+        endTime: new Date(Date.now() - 47 * HOURS),
+        participants: {
+          create: [
+            { userId: seasonOwner.id, role: ParticipantRole.OWNER, status: ParticipantStatus.NON_PLAYING },
+            { userId: seasonAdmin.id, role: ParticipantRole.ADMIN, status: ParticipantStatus.PLAYING },
+            { userId: seasonMember.id, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.PLAYING },
+          ],
+        },
+      },
+    });
+    const fixture = await makeGame(player.id, extraPlayers[0].id);
+    gameIds.push(season.id);
+    await prisma.game.update({
+      where: { id: fixture.id },
+      data: { entityType: EntityType.LEAGUE, parentId: season.id },
+    });
+    await prisma.gameParticipant.update({
+      where: { userId_gameId: { gameId: fixture.id, userId: player.id } },
+      data: { role: ParticipantRole.PARTICIPANT },
+    });
+    const seasonOwnerView = await getGameCostSummary(fixture.id, seasonOwner.id);
+    assert.equal(seasonOwnerView.available, true, 'season owner sees the fixture ledger');
+    assert.equal(seasonOwnerView.canManage, true);
+    assert.equal(seasonOwnerView.payerUserId, seasonOwner.id, 'season owner is the default payer');
+    assert.equal(seasonOwnerView.shares.length, 2, 'all playing rows, no non-playing payer row');
+    assert.equal(seasonOwnerView.totalMinor, 400);
+    const seasonAdminView = await getGameCostSummary(fixture.id, seasonAdmin.id);
+    assert.equal(seasonAdminView.canManage, true, 'season admin manages the fixture ledger');
+    assert.equal(seasonAdminView.canConfirm, true);
+    await assert.rejects(() => getGameCostSummary(fixture.id, seasonMember.id), denied);
+    assert.equal((await getOwedSummary(seasonOwner.id)).owedToMe.some((row) => row.gameId === fixture.id), true);
+    await setShareConfirmed(fixture.id, seasonAdmin.id, player.id, true);
+    assert.equal((await getGameCostSummary(fixture.id, player.id)).viewerShare?.state, 'SETTLED');
+
     // Even existing season shares cannot be read, settled, reminded or surfaced in Wallet.
     await prisma.game.update({ where: { id: accessGame.id }, data: { entityType: EntityType.LEAGUE_SEASON } });
     for (const actorId of [payer.id, player.id, staff.id]) {

@@ -141,15 +141,18 @@ export function canViewGameCost(
   game: {
     entityType: string;
     participants: readonly { userId: string; status: string; role: string }[];
+    parent?: { participants?: readonly { userId: string; role: string }[] } | null;
   },
   viewer: { id: string; isAdmin?: boolean } | null | undefined,
 ): boolean {
   if (!viewer || game.entityType === 'LEAGUE_SEASON') return false;
+  const isOrganizer = (participant: { userId: string; role: string }) =>
+    participant.userId === viewer.id && (participant.role === 'OWNER' || participant.role === 'ADMIN');
   return Boolean(viewer.isAdmin) || game.participants.some(
-    (participant) => participant.userId === viewer.id && (
-      participant.status === 'PLAYING' ||
-      participant.role === 'OWNER' ||
-      participant.role === 'ADMIN'
-    ),
+    (participant) => isOrganizer(participant) ||
+      (participant.userId === viewer.id && participant.status === 'PLAYING'),
+  ) || (
+    // Season owner/admins organize every LEAGUE fixture of their season.
+    game.entityType === 'LEAGUE' && (game.parent?.participants ?? []).some(isOrganizer)
   );
 }

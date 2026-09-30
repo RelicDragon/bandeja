@@ -395,5 +395,15 @@ describe('cost tracker access', () => {
       expect(canViewGameCost(game, viewer)).toBe(false);
       expect(canViewGameCost(game, null)).toBe(false);
     });
+    for (const role of ['OWNER', 'ADMIN', 'PARTICIPANT']) {
+      it(`${entityType}: season ${role} via parent`, () => {
+        const game = {
+          entityType,
+          participants: [],
+          parent: { participants: [{ userId: viewer.id, role }] },
+        };
+        expect(canViewGameCost(game, viewer)).toBe(entityType === 'LEAGUE' && role !== 'PARTICIPANT');
+      });
+    }
   }
 });

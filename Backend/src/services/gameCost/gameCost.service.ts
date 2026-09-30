@@ -1,4 +1,4 @@
-import type { Prisma, PriceCurrency, PriceType } from '@prisma/client';
+import type { Prisma, PriceCurrency, PriceType, ParticipantRole } from '@prisma/client';
 import {
   resolvePaymentMethods,
   type PaymentMethodEntry,
@@ -91,6 +91,11 @@ type GameCostRow = {
     role: string;
     joinedAt: Date;
   }[];
+  /** Set for LEAGUE fixtures: the season hub whose owner/admins organize it. */
+  parent: {
+    entityType: string;
+    participants: { userId: string; role: string }[];
+  } | null;
 };
 
 type ShareRow = {
@@ -121,6 +126,15 @@ const GAME_COST_SELECT = {
   participants: {
     select: { userId: true, status: true, role: true, joinedAt: true },
   },
+  parent: {
+    select: {
+      entityType: true,
+      participants: {
+        where: { role: { in: ['OWNER', 'ADMIN'] as ParticipantRole[] } },
+        select: { userId: true, role: true },
+      },
+    },
+  },
 } as const;
 
 /**
@@ -135,11 +149,21 @@ function gameCountryIso2(game: GameCostRow): string | null {
   return iso2FromCityCountry(game.city?.country) ?? null;
 }
 
-function ownerUserId(game: GameCostRow): string | null {
-  return game.participants.find((p) => p.role === 'OWNER')?.userId ?? null;
+/** A LEAGUE fixture is organized by its season's owner/admins, not its own roster. */
+function seasonOrganizers(game: GameCostRow): { userId: string; role: string }[] {
+  if (game.entityType !== 'LEAGUE' || game.parent?.entityType !== 'LEAGUE_SEASON') return [];
+  return game.parent.participants.filter((p) => p.role === 'OWNER' || p.role === 'ADMIN');
 }
 
-/** `Game.costPayerId` when set, otherwise the owner. */
+function ownerUserId(game: GameCostRow): string | null {
+  return (
+    game.participants.find((p) => p.role === 'OWNER')?.userId ??
+    seasonOrganizers(game).find((p) => p.role === 'OWNER')?.userId ??
+    null
+  );
+}
+
+/** `Game.costPayerId` when set, otherwise the owner (the season owner for a LEAGUE fixture). */
 export function effectivePayerId(game: GameCostRow): string | null {
   return game.costPayerId ?? ownerUserId(game);
 }
@@ -337,17 +361,23 @@ async function loadActor(userId: string): Promise<ActorRow> {
   return user;
 }
 
-function buildActorContext(
+export function buildActorContext(
   game: GameCostRow,
-  shares: readonly ShareRow[],
-  actor: ActorRow,
+  shares: readonly Pick<ShareRow, 'userId'>[],
+  actor: Pick<ActorRow, 'id' | 'isAdmin'>,
 ): CostShareActorContext {
+  const owner = ownerUserId(game);
+  const adminIds = [
+    ...game.participants.filter((p) => p.role === 'ADMIN').map((p) => p.userId),
+    // Season owner/admins manage every fixture's ledger like its own organizers.
+    ...seasonOrganizers(game).map((p) => p.userId).filter((id) => id !== owner),
+  ];
   return {
     entityType: game.entityType,
     userId: actor.id,
     isPlatformAdmin: actor.isAdmin,
-    gameOwnerUserId: ownerUserId(game),
-    gameAdminUserIds: game.participants.filter((p) => p.role === 'ADMIN').map((p) => p.userId),
+    gameOwnerUserId: owner,
+    gameAdminUserIds: [...new Set(adminIds)],
     payerUserId: effectivePayerId(game),
     playingUserIds: game.participants.filter((p) => p.status === 'PLAYING').map((p) => p.userId),
     shareUserIds: shares.map((row) => row.userId),
@@ -533,7 +563,9 @@ export async function updateGameCostShares(
     if (input.payerUserId === null) {
       gameUpdate.costPayer = { disconnect: true };
     } else {
-      const onRoster = game.participants.some((p) => p.userId === input.payerUserId);
+      const onRoster =
+        game.participants.some((p) => p.userId === input.payerUserId) ||
+        seasonOrganizers(game).some((p) => p.userId === input.payerUserId);
       if (!onRoster) throw new ApiError(400, 'errors.cost.payerNotOnRoster');
       gameUpdate.costPayer = { connect: { id: input.payerUserId } };
     }
@@ -788,10 +820,19 @@ export async function getOwedSummary(userId: string): Promise<OwedSummaryDto> {
   const visibleGame: Prisma.GameWhereInput = {
     entityType: { not: 'LEAGUE_SEASON' },
     ...(actor.isAdmin ? {} : {
-      participants: { some: {
-        userId,
-        OR: [{ status: 'PLAYING' }, { role: { in: ['OWNER', 'ADMIN'] } }],
-      } },
+      OR: [
+        { participants: { some: {
+          userId,
+          OR: [{ status: 'PLAYING' }, { role: { in: ['OWNER', 'ADMIN'] } }],
+        } } },
+        {
+          entityType: 'LEAGUE',
+          parent: {
+            entityType: 'LEAGUE_SEASON',
+            participants: { some: { userId, role: { in: ['OWNER', 'ADMIN'] } } },
+          },
+        },
+      ],
     }),
   };
 

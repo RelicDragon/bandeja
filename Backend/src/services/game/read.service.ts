@@ -402,7 +402,14 @@ export class GameReadService {
     let paymentHint: string | null | undefined;
     let paymentMethods: PaymentMethodEntry[] | undefined;
     if (
-      isEntitledToGamePaymentHint(game.participants, {
+      isEntitledToGamePaymentHint([
+        ...game.participants,
+        // Season owner/admins organize (and may price) every LEAGUE fixture.
+        ...(game.entityType === EntityType.LEAGUE
+          ? ((game as { parent?: { participants?: { userId: string; role: string }[] } | null })
+              .parent?.participants ?? []).filter((p) => p.role === 'OWNER' || p.role === 'ADMIN')
+          : []),
+      ], {
         userId,
         isPlatformAdmin: viewerIsAdmin,
       })

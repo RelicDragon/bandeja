@@ -13,6 +13,7 @@ import {
 import { buildCostReminderCopy } from './costReminderCopy';
 import {
   COST_REMIND_COOLDOWN_MS,
+  buildActorContext,
   effectivePayerId,
   syncGameCostShares,
 } from './gameCost.service';
@@ -143,19 +144,7 @@ export async function remindUnpaidShares(
   });
   if (!actor) throw new ApiError(404, 'errors.users.notFound');
 
-  const allowed = canRemindCostShares({
-    entityType: synced.game.entityType,
-    userId: actor.id,
-    isPlatformAdmin: actor.isAdmin,
-    gameOwnerUserId:
-      synced.game.participants.find((p) => p.role === 'OWNER')?.userId ?? null,
-    gameAdminUserIds: synced.game.participants
-      .filter((p) => p.role === 'ADMIN')
-      .map((p) => p.userId),
-    payerUserId: effectivePayerId(synced.game),
-    playingUserIds: synced.game.participants.filter((p) => p.status === 'PLAYING').map((p) => p.userId),
-    shareUserIds: synced.shares.map((s) => s.userId),
-  });
+  const allowed = canRemindCostShares(buildActorContext(synced.game, synced.shares, actor));
   if (!allowed) throw new ApiError(403, 'errors.games.accessDenied');
 
   const ledger = await loadUnpaidLedger(gameId);
