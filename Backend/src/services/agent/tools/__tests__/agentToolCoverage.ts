@@ -56,6 +56,13 @@
  *                     `finish_results`: visibility + `canModifyResults` parity with the results routes,
  *                     forbidden entity types, stale `baseVersion`, critical finish
  *                     (`__tests__/agentResults.integration.test.ts`, `npm run test:agent-results`)
+ *   money-read-cases / money-write-cases — Phase 10 cost split tools: visibility + `getGameCostSummary`
+ *                     parity with `GET /games/:id/cost-shares`, `/transactions/owed` and `/wallet`, league
+ *                     season price, 7-day guard; writes `mark_my_share_paid` / `confirm_share_received` /
+ *                     `pay_my_share_with_coins` / `remind_unpaid_shares`: propose + confirm parity with the
+ *                     cost-share POST routes, `set_game_price` with `PUT /games/:id`; stale cards, trainer /
+ *                     season owner, frozen, coins (critical, `expect`), price locks and escalation, cooldown
+ *                     (`__tests__/agentMoney.integration.test.ts`, `npm run test:agent-money`)
  */
 export type AgentToolCoverageKind =
   | 'game-matrix'
@@ -80,7 +87,9 @@ export type AgentToolCoverageKind =
   | 'game-chat-write-cases'
   | 'weather-read-cases'
   | 'results-read-cases'
-  | 'results-write-cases';
+  | 'results-write-cases'
+  | 'money-read-cases'
+  | 'money-write-cases';
 
 export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = {
   list_my_games: 'game-matrix',
@@ -131,4 +140,12 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   get_game_results: 'results-read-cases',
   enter_match_score: 'results-write-cases',
   finish_results: 'results-write-cases',
+  list_my_cost_balances: 'money-read-cases',
+  get_game_cost: 'money-read-cases',
+  get_my_wallet: 'money-read-cases',
+  mark_my_share_paid: 'money-write-cases',
+  confirm_share_received: 'money-write-cases',
+  pay_my_share_with_coins: 'money-write-cases',
+  set_game_price: 'money-write-cases',
+  remind_unpaid_shares: 'money-write-cases',
 };

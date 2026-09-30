@@ -23,6 +23,7 @@ import {
   toAgentGameSummary,
   truncateUserText,
 } from '../dto/game.dto';
+import { agentEffectivePrice } from '../dto/cost.dto';
 import { AGENT_USER_CARD_SELECT, toAgentUserCard } from '../dto/user.dto';
 import { agentT } from '../i18n/agentI18n';
 import { defineTool, parseAgentDate } from './registry';
@@ -199,7 +200,17 @@ export const getGameTool = defineTool({
         genderTeams: true,
         trainerId: true,
         trainer: { select: AGENT_USER_CARD_SELECT },
-        parent: { select: { id: true, name: true, entityType: true, club: { select: { name: true } } } },
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            entityType: true,
+            priceType: true,
+            priceTotal: true,
+            priceCurrency: true,
+            club: { select: { name: true } },
+          },
+        },
         participants: {
           select: {
             role: true,
@@ -238,14 +249,16 @@ export const getGameTool = defineTool({
     }
 
     const summaryRow = { ...row, participants: mine ? [{ role: mine.role, status: mine.status }] : [] };
+    const price = agentEffectivePrice(row);
     return {
       data: {
         ...toAgentGameSummary(summaryRow),
         description: truncateUserText(row.description),
+        // A NOT_KNOWN league fixture is priced (and split) by its season: show that price.
         price:
-          row.priceTotal != null
-            ? { amount: row.priceTotal, type: row.priceType, currency: row.priceCurrency }
-            : { type: row.priceType },
+          price.priceTotal != null
+            ? { amount: price.priceTotal, type: price.priceType, currency: price.priceCurrency, priceSource: price.priceSource }
+            : { type: price.priceType, priceSource: price.priceSource },
         playersPerMatch: row.playersPerMatch,
         allowDirectJoin: row.allowDirectJoin,
         hasFixedTeams: row.hasFixedTeams,

@@ -386,6 +386,7 @@ void (async () => {
       if (kind === 'game-chat-read-cases' || kind === 'game-chat-write-cases') continue; // agentGameChat.integration.test.ts
       if (kind === 'weather-read-cases') continue; // __tests__/agentWeather.integration.test.ts
       if (kind === 'results-read-cases' || kind === 'results-write-cases') continue; // __tests__/agentResults.integration.test.ts
+      if (kind === 'money-read-cases' || kind === 'money-write-cases') continue; // __tests__/agentMoney.integration.test.ts
       assert.ok(covered.has(name), `${name} (${kind}) has no authorization cases in this test`);
     }
     console.log(`agentToolMatrix.integration.test.ts: ok (${covered.size} tools)`);

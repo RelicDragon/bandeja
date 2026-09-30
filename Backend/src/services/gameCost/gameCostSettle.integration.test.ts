@@ -350,6 +350,40 @@ void (async () => {
     assert.equal(await syncGameCostShares(emptySeason.id), null);
     assert.equal(await prisma.gameCostShare.count({ where: { gameId: emptySeason.id } }), 0);
 
+    // "Remind unpaid" authorizes before it syncs: a signed-in stranger's nudge
+    // on a game whose ledger was never opened writes nothing and stamps no payer.
+    const stranger = await makeUser('stranger', 0);
+    const remindGame = await makeGame(payer.id, player.id);
+    await assert.rejects(
+      () => remindUnpaidShares(remindGame.id, stranger.id),
+      (error: unknown) =>
+        error instanceof ApiError &&
+        error.statusCode === 403 &&
+        error.message === 'errors.games.accessDenied',
+    );
+    assert.equal(
+      await prisma.gameCostShare.count({ where: { gameId: remindGame.id } }),
+      0,
+      "a stranger's reminder must not create split rows",
+    );
+    assert.equal(
+      (await prisma.game.findUniqueOrThrow({ where: { id: remindGame.id } })).costPayerId,
+      null,
+      "a stranger's reminder must not stamp the payer",
+    );
+    // A playing non-payer may view but not nudge; the payer may, once per 24 h.
+    await assert.rejects(() => remindUnpaidShares(remindGame.id, player.id), denied);
+    const nudged = await remindUnpaidShares(remindGame.id, payer.id);
+    assert.equal(nudged.sent, 1, 'the payer nudges the one unpaid player');
+    assert.ok(nudged.availableAt, 'the cooldown starts');
+    await assert.rejects(
+      () => remindUnpaidShares(remindGame.id, payer.id),
+      (error: unknown) =>
+        error instanceof ApiError &&
+        error.statusCode === 429 &&
+        error.message === 'errors.cost.remindCooldown',
+    );
+
     // --- 1. a double tap pays once -----------------------------------------
     const taps = await Promise.allSettled([
       markOwnShareAsPaid(game.id, player.id, 'COINS'),

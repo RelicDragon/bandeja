@@ -602,7 +602,11 @@ async function buildSummary(
   }, ctx);
 }
 
-async function requireLedger(gameId: string, actorId: string) {
+export async function requireLedger(
+  gameId: string,
+  actorId: string,
+  options: { emit?: boolean } = {},
+) {
   if (!config.costSplitEnabled) throw new ApiError(404, 'errors.games.notFound');
 
   // Authorize *before* syncing: `syncGameCostShares` writes rows, stamps
@@ -614,7 +618,7 @@ async function requireLedger(gameId: string, actorId: string) {
   const preCtx = buildActorContext(game, [], actor);
   if (!canViewCostShares(preCtx)) throw new ApiError(403, 'errors.games.accessDenied');
 
-  const synced = await syncGameCostShares(gameId);
+  const synced = await syncGameCostShares(gameId, options);
   if (!synced) throw new ApiError(404, 'errors.games.notFound');
   const ctx = buildActorContext(synced.game, synced.shares, actor);
   if (!canViewCostShares(ctx)) throw new ApiError(403, 'errors.games.accessDenied');
@@ -735,6 +739,15 @@ export async function updateGameCostShares(
 
 export type MarkPaidMethod = 'MANUAL' | 'COINS';
 
+export type MarkOwnSharePaidOptions = {
+  /**
+   * `COINS` only (the AI agent's confirmation card; the HTTP route passes none):
+   * pay only this share amount, this many coins, to this payer. Otherwise
+   * `409 errors.cost.shareChanged` and no coin moves.
+   */
+  expect?: { amountMinor: number; coins: number; payerUserId: string };
+};
+
 const COIN_SETTLE_ERROR_KEYS: Record<CoinSettleRefusal, string> = {
   COINS_UNAVAILABLE: 'errors.cost.coinsUnavailable',
   ALREADY_SETTLED: 'errors.cost.alreadySettled',
@@ -760,6 +773,7 @@ export async function markOwnShareAsPaid(
   gameId: string,
   actorId: string,
   method: MarkPaidMethod,
+  options: MarkOwnSharePaidOptions = {},
 ): Promise<GameCostSummaryDto> {
   if (!config.costSplitEnabled) throw new ApiError(404, 'errors.games.notFound');
 
@@ -803,14 +817,45 @@ export async function markOwnShareAsPaid(
   });
   if (!plan.ok) throw new ApiError(400, COIN_SETTLE_ERROR_KEYS[plan.reason]);
 
+  // The agent's card pinned the amount, the coins and the payer it showed.
+  // Anything else (a re-split, a new rate, a new payer) is refused, not paid.
+  const expect = options.expect;
+  if (
+    expect &&
+    (share.amountCents !== expect.amountMinor ||
+      plan.coins !== expect.coins ||
+      plan.payerId !== expect.payerUserId)
+  ) {
+    throw new ApiError(409, 'errors.cost.shareChanged');
+  }
+
   // Claim the share first. The predicate is the guard: only a row that is still
   // unsettled can be stamped, and only one concurrent request can match it.
+  // With `expect`, only at the amount the card showed: a re-split between the
+  // read above and this claim matches nothing.
   const claimedAt = new Date();
   const claim = await prisma.gameCostShare.updateMany({
-    where: { gameId, userId: actorId, confirmedAt: null, transactionId: null },
+    where: {
+      gameId,
+      userId: actorId,
+      confirmedAt: null,
+      transactionId: null,
+      ...(expect ? { amountCents: expect.amountMinor } : {}),
+    },
     data: { markedPaidAt: claimedAt, confirmedAt: claimedAt, method: 'COINS' },
   });
-  if (claim.count !== 1) throw new ApiError(400, COIN_SETTLE_ERROR_KEYS.ALREADY_SETTLED);
+  if (claim.count !== 1) {
+    if (expect) {
+      const current = await prisma.gameCostShare.findUnique({
+        where: { gameId_userId: { gameId, userId: actorId } },
+        select: { amountCents: true, confirmedAt: true, transactionId: true },
+      });
+      if (current && current.confirmedAt == null && current.transactionId == null) {
+        throw new ApiError(409, 'errors.cost.shareChanged');
+      }
+    }
+    throw new ApiError(400, COIN_SETTLE_ERROR_KEYS.ALREADY_SETTLED);
+  }
 
   // Our claim, and only while it is still unstamped.
   const ownClaim = { gameId, userId: actorId, confirmedAt: claimedAt, transactionId: null };

@@ -13,8 +13,8 @@ import {
 import { buildCostReminderCopy } from './costReminderCopy';
 import {
   COST_REMIND_COOLDOWN_MS,
-  buildActorContext,
   effectivePayerId,
+  requireLedger,
   syncGameCostShares,
 } from './gameCost.service';
 import { canRemindCostShares } from './costSharePermissions';
@@ -135,17 +135,10 @@ export async function remindUnpaidShares(
 ): Promise<{ sent: number; availableAt: string | null }> {
   if (!config.costSplitEnabled) throw new ApiError(404, 'errors.games.notFound');
 
-  const synced = await syncGameCostShares(gameId, { emit: false });
-  if (!synced) throw new ApiError(404, 'errors.games.notFound');
-
-  const actor = await prisma.user.findUnique({
-    where: { id: actorId },
-    select: { id: true, isAdmin: true },
-  });
-  if (!actor) throw new ApiError(404, 'errors.users.notFound');
-
-  const allowed = canRemindCostShares(buildActorContext(synced.game, synced.shares, actor));
-  if (!allowed) throw new ApiError(403, 'errors.games.accessDenied');
+  // `requireLedger` authorizes (can view) before it syncs, so a stranger's
+  // request writes no rows, stamps no payer and emits nothing.
+  const { ctx } = await requireLedger(gameId, actorId, { emit: false });
+  if (!canRemindCostShares(ctx)) throw new ApiError(403, 'errors.games.accessDenied');
 
   const ledger = await loadUnpaidLedger(gameId);
   if (!ledger) return { sent: 0, availableAt: null };

@@ -130,7 +130,7 @@ Longer history comes from tools (`list_my_games {range:'past'}`), not the prompt
 
 **v3, admin tools** (`scope:'admin'`): find user by name/email, edit user flags, move a game between cities, approve EVENTs. They still go through confirmation, and the audit row records the admin.
 
-**Never:** delete game, change ownership, results reset / edit-FINAL (score entry and finish came later as slice 9b, §16.2, through the board's versioned services), payments or wallet, reading other people's chat messages.
+**Never:** delete game, change ownership, results reset / edit-FINAL (score entry and finish came later as slice 9b, §16.2, through the board's versioned services), payments or wallet (cost-split settling came later as Phase 10, §18; P2P coins and the shop stay out), reading other people's chat messages.
 
 ## 6. Confirmation flow
 
@@ -402,3 +402,29 @@ Backlog, not scheduled. Design: **[ai-agent-web-search.md](./ai-agent-web-search
 - Optional `read_page {url}`: only club websites and URLs from a search earlier in the same run; GET, SSRF-guarded, size-capped.
 - Web content is untrusted; a **taint rule** stops auto-approve for the rest of a run once web content is in it. No personal data in queries. EULA §1.10 needs a line.
 - Slices 10a (search) · 10b (read_page) · 10c (FE/TG citations) · 10d (taint, ships with 10a). Open: provider (Brave vs Tavily), whether read_page is needed.
+
+## 18. Phase 10 — money settling (added 2026-09-30)
+
+Design: **[ai-agent-money.md](./ai-agent-money.md)** (rules with file:line references, tools, cards, tests, open questions). Domain: [economy.md § Cost split ledger](../domains/economy.md#cost-split-ledger).
+
+This narrows the §5 "never payments or wallet" rule for the **cost split ledger only**. The agent can read debts, credits and splits, mark shares paid or received, pay a share with coins, set a casual game's price, and nudge unpaid players. P2P coin transfers, the shop, bets and payment-method handles stay excluded (§16.5). Numbering: the web-search backlog in §17 was also labelled Phase 10; money settling is the scheduled Phase 10, and web search takes the next free number when it is scheduled.
+
+Rules:
+- Every tool reuses the `services/gameCost/` function behind the HTTP route, and the permission is that service's own predicate (`costSharePermissions.ts`). The agent adds only `assertAgentCanViewGame` in front. It authorizes through `getGameCostSummary` before anything can sync.
+- The model invents no amounts. Every figure on a card comes from the server; the price is the number the user typed. Currencies are never added together or converted.
+- Plans pin what the card showed. At confirm, a changed amount, split, payer, price or coin cost refuses the card and writes nothing.
+- Coin-moving tools are **critical**. `set_game_price` escalates to critical when a share is already paid, a coin share exists, the currency changes, or the price is removed.
+- League fixtures inherit the season price (`applySeasonCostPricing`). `LEAGUE_SEASON` never has a ledger. Season owner/admins act as fixture organizers. The agent doesn't change fixture or season prices.
+- The 7-day retroactive guard holds: no tool creates a ledger on a FINAL game that ended more than 7 days ago.
+
+| Slice | Side | Scope | Deps |
+|---|---|---|---|
+| 10a | BE | reads `list_my_cost_balances` (`getOwedSummary`), `get_game_cost` (`getGameCostSummary`), `get_my_wallet` (`getUserWallet`); `get_game` shows a fixture's season price | none |
+| 10b | BE | `mark_my_share_paid` (standard, `markOwnShareAsPaid` MANUAL) | 10a |
+| 10c | BE | `confirm_share_received {playerId, received}` (standard, `setShareConfirmed`; also covers "mark Ana paid" and undo) | 10a |
+| 10d | BE | `pay_my_share_with_coins` (**critical**, `markOwnShareAsPaid` COINS with a new optional `expect` guard: the claim matches only the amount the card showed) | 10b |
+| 10e | BE | `set_game_price` (standard → critical, `GameUpdateService.updateGame`; casual types only) | 10a |
+| 10f | BE | `remind_unpaid_shares` (standard, `remindUnpaidShares`, 24 h cooldown) | 10a |
+| 10g | FE+TG | cost deep link on the game chip, if needed | 10a–10f |
+
+Tests: `npm run test:agent-money` (`__tests__/agentMoney.integration.test.ts`, also in `test:agent`). Coverage kinds `money-read-cases` / `money-write-cases`. Owner decisions (ai-agent-money.md §10.7): payment details are method names plus an app link, never handles; confirm received is one player per card; the agent never changes a league season price; manual reminders match the app (no extra 7-day refusal). **Status (2026-09-30): Phase 10 complete.** 10a–10f are built: reads; `mark_my_share_paid` / `confirm_share_received` (standard); `pay_my_share_with_coins` (critical, with the `expect` guard in `markOwnShareAsPaid`); `set_game_price` (standard, escalates to critical; casual types only); `remind_unpaid_shares` (standard, 24 h cooldown). Plans pin what the card showed and stale cards are refused on confirm. No FE change: the generic confirmation card renders critical and escalated cards (no Always allow), and money results carry a `handoff` entity to `/games/:id?section=cost` that `AgentEntityCard` renders, so 10g is not needed unless usage shows otherwise.

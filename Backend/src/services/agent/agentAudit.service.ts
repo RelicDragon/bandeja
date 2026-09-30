@@ -42,7 +42,7 @@ export async function listAgentActionsForAdmin(filter: {
   }));
 }
 
-type UsageRow = { day: Date; userId: string; runs: bigint; inputTokens: bigint | null; outputTokens: bigint | null };
+type UsageRow = { day: string; userId: string; runs: bigint; inputTokens: bigint | null; outputTokens: bigint | null };
 
 /** Daily (UTC) token sums per user from `AgentRun`, newest day first. */
 export async function agentUsageForAdmin(filter: { days: number; userId?: string; now?: Date }) {
@@ -51,7 +51,7 @@ export async function agentUsageForAdmin(filter: { days: number; userId?: string
   const since = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1)));
   const userClause = filter.userId ? Prisma.sql`AND "userId" = ${filter.userId}` : Prisma.empty;
   const rows = await prisma.$queryRaw<UsageRow[]>`
-    SELECT date_trunc('day', "createdAt" AT TIME ZONE 'UTC') AS day,
+    SELECT to_char("createdAt", 'YYYY-MM-DD') AS day,
            "userId",
            COUNT(*) AS runs,
            SUM("inputTokens") AS "inputTokens",
@@ -72,7 +72,7 @@ export async function agentUsageForAdmin(filter: { days: number; userId?: string
       const inputTokens = Number(row.inputTokens ?? 0);
       const outputTokens = Number(row.outputTokens ?? 0);
       return {
-        day: new Date(row.day).toISOString().slice(0, 10),
+        day: row.day,
         userId: row.userId,
         user: byId.get(row.userId) ?? null,
         runs: Number(row.runs),
