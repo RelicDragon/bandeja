@@ -21,6 +21,7 @@ import {
   formatDayKey,
   formatLocalTime,
   formatWeekdayName,
+  seriesCopyContext,
   weekdayOrderForLocale,
 } from './seriesFormat';
 
@@ -109,6 +110,8 @@ export interface SeriesRepeatSheetProps {
   /** `edit` mode only. */
   seriesId?: string;
   initial: SeriesRepeatSheetInitial;
+  /** Picks game / training / tournament wording. */
+  entityType?: string | null;
   /** `create`: current PLAYING roster. `edit`: the active regulars. */
   regulars: SeriesRepeatSheetRegular[];
   /** Owner cap state — disables saving when the cap is already reached. */
@@ -127,6 +130,7 @@ export const SeriesRepeatSheet = ({
   gameId,
   seriesId,
   initial,
+  entityType,
   regulars,
   activeSeriesCount,
   maxActiveSeries,
@@ -134,6 +138,7 @@ export const SeriesRepeatSheet = ({
   onSaved,
 }: SeriesRepeatSheetProps) => {
   const { t, i18n } = useTranslation();
+  const copyContext = seriesCopyContext(entityType);
   useBackButtonModal(open, onClose, MODAL_ID);
 
   const [cadence, setCadence] = useState<SeriesCadence>(initial.cadence);
@@ -264,7 +269,7 @@ export const SeriesRepeatSheet = ({
             id={`${MODAL_ID}-title`}
             className="min-w-0 flex-1 text-start text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
           >
-            {t('series.sheetTitle')}
+            {t('series.sheetTitle', { context: copyContext })}
           </h2>
           <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />
         </div>
@@ -276,7 +281,7 @@ export const SeriesRepeatSheet = ({
             </h3>
             <SegmentedSwitch
               layoutId={`${MODAL_ID}-cadence`}
-              ariaLabel={t('series.cadenceAriaLabel')}
+              ariaLabel={t('series.cadenceAriaLabel', { context: copyContext })}
               fullWidth
               size="sm"
               showOnlyActiveTabText={false}
@@ -321,7 +326,7 @@ export const SeriesRepeatSheet = ({
                 {t('series.timeLabel')}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('series.timeReadOnlyHint')}
+                {t('series.timeReadOnlyHint', { context: copyContext })}
               </p>
             </div>
             <span className="shrink-0 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold tabular-nums text-gray-900 dark:bg-gray-800 dark:text-white">
@@ -478,7 +483,7 @@ export const SeriesRepeatSheet = ({
             {saving ? t('series.saving') : t('series.save')}
           </button>
           <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-            {t('series.helper', { days: initial.horizonDays })}
+            {t('series.helper', { days: initial.horizonDays, context: copyContext })}
           </p>
         </div>
       </DrawerContent>

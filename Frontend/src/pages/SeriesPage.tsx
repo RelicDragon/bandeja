@@ -36,6 +36,7 @@ import {
   formatShortDate,
   formatShortDateTime,
   formatWeekdayName,
+  seriesCopyContext,
 } from '@/features/game-series/seriesFormat';
 import { useSeriesDetail } from '@/features/game-series/useSeries';
 import {
@@ -370,6 +371,7 @@ export const SeriesPage = () => {
 
   const { series, upcoming, past, regulars, stats, nextOccurrence, plannedDayKeys } = data;
   const isEnded = series.status === 'ENDED';
+  const copyContext = seriesCopyContext(series.entityType);
   const confirmedRegulars = regulars.filter((regular) => regular.confirmedForNext).length;
 
   return (
@@ -489,7 +491,7 @@ export const SeriesPage = () => {
       {/* Stats band */}
       <StatTileRow className="mt-3">
         <StatTile
-          label={t('series.statGames')}
+          label={t('series.statGames', { context: copyContext })}
           icon={CalendarDays}
           value={<CountUpNumber value={stats.games} />}
         />
@@ -606,7 +608,7 @@ export const SeriesPage = () => {
               <EmptyStateCard
                 icon={CalendarDays}
                 title={t('series.emptyUpcomingTitle')}
-                description={t('series.emptyUpcomingDescription', { days: series.horizonDays })}
+                description={t('series.emptyUpcomingDescription', { days: series.horizonDays, context: copyContext })}
               />
             )}
           </>
@@ -630,8 +632,9 @@ export const SeriesPage = () => {
                   nextOccurrence
                     ? t('series.emptyHistoryDescription', {
                         date: formatShortDate(nextOccurrence.startTime, { locale }),
+                        context: copyContext,
                       })
-                    : t('series.emptyHistoryDescriptionNoDate')
+                    : t('series.emptyHistoryDescriptionNoDate', { context: copyContext })
                 }
               />
             )}
@@ -709,7 +712,7 @@ export const SeriesPage = () => {
         onClose={() => setLeaveOpen(false)}
         onConfirm={handleLeaveRegulars}
         title={t('series.leaveRegularsTitle')}
-        message={t('series.leaveRegularsBody')}
+        message={t('series.leaveRegularsBody', { context: copyContext })}
         confirmText={t('series.leaveRegularsConfirm')}
         cancelText={t('common.cancel')}
         confirmVariant="danger"
@@ -721,7 +724,7 @@ export const SeriesPage = () => {
         onClose={() => setEndOpen(false)}
         onConfirm={handleEndSeries}
         title={t('series.endSeriesTitle')}
-        message={t('series.endSeriesBody')}
+        message={t('series.endSeriesBody', { context: copyContext })}
         confirmText={t('series.endSeriesConfirm')}
         cancelText={t('common.cancel')}
         confirmVariant="danger"

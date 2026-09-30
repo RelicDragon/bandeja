@@ -1397,6 +1397,7 @@ export const EditGameInfoModal = ({
         open
         seriesId={game.seriesId}
         templatePatch={seriesScopePatch}
+        entityType={game.entityType}
         onDone={() => {
           setSeriesScopePatch(null);
           onClose();

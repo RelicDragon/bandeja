@@ -6,7 +6,7 @@ import { CalendarClock, Check } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { seriesApi, type SeriesNextPrompt } from '@/api/series';
-import { formatShortDate } from './seriesFormat';
+import { formatShortDate, seriesCopyContext } from './seriesFormat';
 import { useSeriesConfirmationsLive } from './useSeries';
 
 /**
@@ -48,6 +48,8 @@ const SeriesRegularFace = ({ avatar, name }: { avatar: string | null; name: stri
 export interface SeriesOrganizerStripProps {
   prompt: SeriesNextPrompt;
   onEditSeries: () => void;
+  /** Picks game / training / tournament wording. */
+  entityType?: string | null;
   onSkipped?: () => void;
   className?: string;
 }
@@ -57,6 +59,7 @@ const MAX_AVATARS = 6;
 export const SeriesOrganizerStrip = ({
   prompt,
   onEditSeries,
+  entityType,
   onSkipped,
   className = '',
 }: SeriesOrganizerStripProps) => {
@@ -176,7 +179,7 @@ export const SeriesOrganizerStrip = ({
         onClose={() => setConfirmSkipOpen(false)}
         onConfirm={handleSkip}
         title={t('series.skipNextTitle', { date: nextDateLabel })}
-        message={t('series.skipNextBody')}
+        message={t('series.skipNextBody', { context: seriesCopyContext(entityType) })}
         confirmText={t('series.skipNextConfirm')}
         cancelText={t('common.cancel')}
         isLoading={skipping}

@@ -1,4 +1,4 @@
-import { GameSeriesStatus, Prisma } from '@prisma/client';
+import { EntityType, GameSeriesStatus, ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { GameCreateService } from '../game/create.service';
 import { GameDeleteService } from '../game/delete.service';
@@ -110,6 +110,49 @@ async function ownerIsRegular(seriesId: string, ownerId: string): Promise<boolea
     select: { removedAt: true },
   });
   return Boolean(row) && row?.removedAt == null;
+}
+
+/**
+ * Who coaches a TRAINING series' occurrences. The template carries it from the
+ * seed game; templates written before that field existed fall back to the
+ * latest occurrence's trainer, which is what the organizer last saw.
+ */
+async function resolveSeriesTrainerId(
+  seriesId: string,
+  template: GameSeriesTemplate,
+): Promise<string | null> {
+  if (template.entityType !== EntityType.TRAINING) return null;
+  if (template.trainerId !== undefined) return template.trainerId;
+  const latest = await prisma.game.findFirst({
+    where: { seriesId },
+    select: { trainerId: true },
+    orderBy: { startTime: 'desc' },
+  });
+  return latest?.trainerId ?? null;
+}
+
+/**
+ * Attach a trainer who is not the series owner, mirroring
+ * `GameAdminService.setTrainer`: `NON_PLAYING` (never takes a slot) and
+ * `ADMIN`. The owner-trainer case never reaches here — `creatorNonPlaying`
+ * already made the owner the trainer inside `createGame`.
+ */
+async function attachOccurrenceTrainer(gameId: string, trainerId: string): Promise<void> {
+  const trainer = await prisma.user.findUnique({ where: { id: trainerId }, select: { id: true } });
+  if (!trainer) return;
+  await prisma.$transaction([
+    prisma.game.update({ where: { id: gameId }, data: { trainerId } }),
+    prisma.gameParticipant.upsert({
+      where: { userId_gameId: { userId: trainerId, gameId } },
+      create: {
+        gameId,
+        userId: trainerId,
+        status: 'NON_PLAYING',
+        role: ParticipantRole.ADMIN,
+      },
+      update: { status: 'NON_PLAYING', role: ParticipantRole.ADMIN },
+    }),
+  ]);
 }
 
 function isUniqueViolation(error: unknown): boolean {
@@ -271,6 +314,7 @@ export class GameSeriesGenerationService {
     );
 
     const ownerPlays = await ownerIsRegular(seriesId, series.ownerId);
+    const trainerId = await resolveSeriesTrainerId(seriesId, template);
 
     for (const occurrenceDayKey of wanted) {
       if (existingDayKeys.has(occurrenceDayKey)) {
@@ -295,6 +339,7 @@ export class GameSeriesGenerationService {
         cityId,
         ownerParticipates: ownerPlays,
         ownerUserId: series.ownerId,
+        trainerUserId: trainerId,
       });
 
       let createdGameId: string | null = null;
@@ -328,6 +373,20 @@ export class GameSeriesGenerationService {
         if (!stamped) {
           result.skippedDayKeys.push(occurrenceDayKey);
           continue;
+        }
+
+        if (trainerId && trainerId !== series.ownerId) {
+          try {
+            await attachOccurrenceTrainer(createdGameId, trainerId);
+          } catch (trainerError) {
+            // The occurrence stands without its trainer; the organizer can set one by hand.
+            console.error('[GameSeriesGeneration] failed to attach trainer', {
+              seriesId,
+              gameId: createdGameId,
+              trainerId,
+              error: trainerError instanceof Error ? trainerError.message : String(trainerError),
+            });
+          }
         }
 
         runDeferredAnnouncement(announceOccurrence);

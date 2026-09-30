@@ -1349,6 +1349,7 @@ export const CreateGame = ({
             onEndsOnChange={setRepeatEndsOn}
             startDate={selectedDate}
             startTimeLocal={selectedTime}
+            entityType={entityType}
             onManageSeries={() => navigate('/profile')}
           />
         ) : null}
@@ -1364,6 +1365,7 @@ export const CreateGame = ({
       booktimeFixedDates,
       booktimeCompanyMeta.bookableDays,
       seriesEligibleEntityType,
+      entityType,
       repeatCadence,
       repeatEndsOn,
       navigate,

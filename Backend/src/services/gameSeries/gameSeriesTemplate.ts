@@ -31,6 +31,12 @@ export interface GameSeriesTemplate {
   cityId?: string | null;
   sport: string;
   entityType: EntityType;
+  /**
+   * TRAINING only — who coaches every occurrence (`Game.trainerId` of the seed).
+   * Absent on templates written before it existed; `null` means "no trainer".
+   * Never replayed as a create-game field: the generator resolves it itself.
+   */
+  trainerId?: string | null;
   gameType?: string | null;
   name?: string | null;
   description?: string | null;
@@ -106,6 +112,7 @@ const STRING_KEYS = [
   'cityId',
   'sport',
   'entityType',
+  'trainerId',
   'gameType',
   'name',
   'description',
@@ -262,6 +269,8 @@ export interface OccurrenceCreatePayloadInput {
   cityId: string | null;
   ownerParticipates: boolean;
   ownerUserId: string;
+  /** Resolved trainer for a TRAINING series (see `GameSeriesTemplate.trainerId`). */
+  trainerUserId?: string | null;
 }
 
 export function buildOccurrenceCreatePayload({
@@ -273,10 +282,14 @@ export function buildOccurrenceCreatePayload({
   cityId,
   ownerParticipates,
   ownerUserId,
+  trainerUserId = null,
 }: OccurrenceCreatePayloadInput): Record<string, unknown> {
   // `anchorDayKey` is series bookkeeping, not part of the create-game payload.
   const payload: Record<string, unknown> = { ...template };
   delete payload.anchorDayKey;
+  // Not a create-game field. An owner-trainer is expressed through
+  // `creatorNonPlaying` below; any other trainer is attached by the generator.
+  delete payload.trainerId;
 
   payload.startTime = startTime.toISOString();
   payload.endTime = endTime.toISOString();
@@ -296,6 +309,11 @@ export function buildOccurrenceCreatePayload({
   // A scheduler pass must never be blocked by the organizer's own calendar.
   payload.confirmOverlap = true;
   payload.participants = ownerParticipates ? [ownerUserId] : [];
+  if (template.entityType === 'TRAINING' && trainerUserId === ownerUserId) {
+    // Same path as "I coach, I don't play" on create: sets `trainerId` to the
+    // owner even when the owner's account is not flagged `isTrainer`.
+    payload.creatorNonPlaying = true;
+  }
 
   for (const key of Object.keys(payload)) {
     if (payload[key] === undefined) delete payload[key];

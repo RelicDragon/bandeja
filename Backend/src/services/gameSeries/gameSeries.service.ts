@@ -402,6 +402,7 @@ export class GameSeriesService {
         id: true,
         seriesId: true,
         entityType: true,
+        trainerId: true,
         sport: true,
         gameType: true,
         name: true,

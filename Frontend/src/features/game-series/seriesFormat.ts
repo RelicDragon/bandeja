@@ -70,6 +70,19 @@ export function weekdayOrderForLocale(locale: string): IsoWeekday[] {
   return ISO_WEEKDAYS.map((_, index) => (((index + offset) % 7) + 1) as IsoWeekday);
 }
 
+/**
+ * i18next `context` for series copy that names the thing that repeats.
+ * `training` / `tournament` pick the `_training` / `_tournament` variants;
+ * anything else falls back to the base ("game") string.
+ */
+export type SeriesCopyContext = 'training' | 'tournament' | undefined;
+
+export function seriesCopyContext(entityType?: string | null): SeriesCopyContext {
+  if (entityType === 'TRAINING') return 'training';
+  if (entityType === 'TOURNAMENT') return 'tournament';
+  return undefined;
+}
+
 export function cadenceLabelKey(cadence: SeriesCadence): string {
   return cadence === 'BIWEEKLY' ? 'series.cadenceBiweekly' : 'series.cadenceWeekly';
 }

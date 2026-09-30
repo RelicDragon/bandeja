@@ -1739,6 +1739,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               <SeriesGameSection
                 gameId={game.id}
                 isFinished={game.resultsStatus !== 'NONE' || game.status === 'FINISHED'}
+                entityType={game.entityType}
                 clubName={game.club?.name ?? null}
                 clubAvatarUrl={game.club?.avatar ?? null}
               />

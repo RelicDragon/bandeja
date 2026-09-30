@@ -12,6 +12,7 @@ import {
   formatWeekdayName,
   repeatSummaryKey,
   resolveLocale,
+  seriesCopyContext,
 } from './seriesFormat';
 import { useMySeries } from './useSeries';
 
@@ -38,6 +39,8 @@ export interface SeriesRepeatRowProps {
   startDate: Date;
   /** `HH:mm` the game starts at. */
   startTimeLocal: string;
+  /** Picks game / training / tournament wording. */
+  entityType?: string | null;
   onManageSeries?: () => void;
   className?: string;
 }
@@ -49,6 +52,7 @@ export const SeriesRepeatRow = ({
   onEndsOnChange,
   startDate,
   startTimeLocal,
+  entityType,
   onManageSeries,
   className = '',
 }: SeriesRepeatRowProps) => {
@@ -94,7 +98,7 @@ export const SeriesRepeatRow = ({
 
       <SegmentedSwitch
         layoutId="create-game-repeat"
-        ariaLabel={t('series.cadenceAriaLabel')}
+        ariaLabel={t('series.cadenceAriaLabel', { context: seriesCopyContext(entityType) })}
         fullWidth
         size="sm"
         showOnlyActiveTabText={false}

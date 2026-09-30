@@ -12,6 +12,7 @@ import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { isDocumentRtl, isRovingNavKey, nextRovingIndex } from '@/utils/rovingFocus';
 import { seriesApi, type SeriesEditScope } from '@/api/series';
 import { useSeriesDetail } from './useSeries';
+import { seriesCopyContext } from './seriesFormat';
 
 /**
  * PRD 345 — "Apply to · This game · This and future games".
@@ -29,6 +30,8 @@ export interface SeriesScopeSheetProps {
   seriesId: string;
   /** The same field patch that was just saved on this occurrence. */
   templatePatch: Record<string, unknown>;
+  /** Picks game / training / tournament wording. */
+  entityType?: string | null;
   onDone: () => void;
 }
 
@@ -38,6 +41,7 @@ export const SeriesScopeSheet = ({
   open,
   seriesId,
   templatePatch,
+  entityType,
   onDone,
 }: SeriesScopeSheetProps) => {
   const { t } = useTranslation();
@@ -82,8 +86,8 @@ export const SeriesScopeSheet = ({
   }, [onDone, scope, seriesId, t, templatePatch]);
 
   const options: { id: SeriesEditScope; label: string; icon: typeof CalendarDays }[] = [
-    { id: 'occurrence', label: t('series.scopeThisGame'), icon: CalendarDays },
-    { id: 'future', label: t('series.scopeThisAndFuture'), icon: CalendarRange },
+    { id: 'occurrence', label: t('series.scopeThisGame', { context: seriesCopyContext(entityType) }), icon: CalendarDays },
+    { id: 'future', label: t('series.scopeThisAndFuture', { context: seriesCopyContext(entityType) }), icon: CalendarRange },
   ];
 
   // PRD 345 — "scope switches support arrow keys". A `role="radiogroup"` is one

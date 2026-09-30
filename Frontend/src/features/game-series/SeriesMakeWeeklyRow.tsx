@@ -7,7 +7,7 @@ import { canMutateGameRoster } from '@shared/gameMutationLock';
 import type { Game } from '@/types';
 import { SeriesRepeatSheet } from './SeriesRepeatSheet';
 import { useMySeries } from './useSeries';
-import { isoWeekdayInTimeZone, localTimeInTimeZone } from './seriesFormat';
+import { isoWeekdayInTimeZone, localTimeInTimeZone, seriesCopyContext } from './seriesFormat';
 
 /**
  * PRD 345 — "Make this a weekly game" in game settings.
@@ -39,6 +39,7 @@ export const SeriesMakeWeeklyRow = ({ game, canEdit }: SeriesMakeWeeklyRowProps)
   const { data: mySeries } = useMySeries(eligible);
 
   const timezone = game.city?.timezone ?? null;
+  const copyContext = seriesCopyContext(game.entityType);
 
   const regulars = useMemo(
     () =>
@@ -67,7 +68,7 @@ export const SeriesMakeWeeklyRow = ({ game, canEdit }: SeriesMakeWeeklyRowProps)
         <Repeat className="h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">
-            {t('series.makeWeekly')}
+            {t('series.makeWeekly', { context: copyContext })}
           </span>
           <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
             {t('series.makeWeeklyDescription')}
@@ -80,6 +81,7 @@ export const SeriesMakeWeeklyRow = ({ game, canEdit }: SeriesMakeWeeklyRowProps)
         onClose={() => setOpen(false)}
         mode="create"
         gameId={game.id}
+        entityType={game.entityType}
         initial={{
           cadence: 'WEEKLY',
           weekday: isoWeekdayInTimeZone(game.startTime, timezone),

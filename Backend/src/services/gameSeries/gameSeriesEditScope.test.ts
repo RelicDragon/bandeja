@@ -319,6 +319,47 @@ check('buildOccurrenceCreatePayload omits courts and the owner when there are no
   assert.deepStrictEqual(payload.participants, []);
 });
 
+check('training template keeps the trainer and replays an owner-trainer as creatorNonPlaying', () => {
+  const template = buildGameSeriesTemplate(
+    { ...SOURCE_GAME, entityType: 'TRAINING', trainerId: 'owner-1' },
+    '2026-09-22',
+  );
+  assert.strictEqual(template.trainerId, 'owner-1');
+  const base = {
+    template,
+    startTime: new Date('2026-09-29T17:00:00.000Z'),
+    endTime: new Date('2026-09-29T18:30:00.000Z'),
+    clubId: null,
+    courtIds: [],
+    cityId: null,
+    ownerParticipates: false,
+    ownerUserId: 'owner-1',
+  };
+  const ownerCoaches = buildOccurrenceCreatePayload({ ...base, trainerUserId: 'owner-1' });
+  assert.strictEqual(ownerCoaches.creatorNonPlaying, true);
+  assert.strictEqual('trainerId' in ownerCoaches, false);
+
+  const otherCoaches = buildOccurrenceCreatePayload({ ...base, trainerUserId: 'coach-2' });
+  assert.strictEqual('creatorNonPlaying' in otherCoaches, false);
+  assert.strictEqual('trainerId' in otherCoaches, false);
+});
+
+check('non-training templates never mark the owner non-playing', () => {
+  const template = buildGameSeriesTemplate(SOURCE_GAME, '2026-09-22');
+  const payload = buildOccurrenceCreatePayload({
+    template,
+    startTime: new Date('2026-09-29T17:00:00.000Z'),
+    endTime: new Date('2026-09-29T18:30:00.000Z'),
+    clubId: null,
+    courtIds: [],
+    cityId: null,
+    ownerParticipates: true,
+    ownerUserId: 'owner-1',
+    trainerUserId: 'owner-1',
+  });
+  assert.strictEqual('creatorNonPlaying' in payload, false);
+});
+
 console.log('gameSeriesCarryOver');
 
 check('carry-over prompts regulars who played and are not seated yet', () => {

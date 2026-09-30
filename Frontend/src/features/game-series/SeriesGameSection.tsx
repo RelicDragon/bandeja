@@ -30,6 +30,8 @@ export interface SeriesGameSectionProps {
   gameId: string;
   /** `true` once the occurrence has results or is over — gates the prompt card. */
   isFinished: boolean;
+  /** Picks game / training / tournament wording. */
+  entityType?: string | null;
   clubName?: string | null;
   clubAvatarUrl?: string | null;
   className?: string;
@@ -38,6 +40,7 @@ export interface SeriesGameSectionProps {
 export const SeriesGameSection = ({
   gameId,
   isFinished,
+  entityType,
   clubName,
   clubAvatarUrl,
   className = '',
@@ -97,6 +100,7 @@ export const SeriesGameSection = ({
         <SeriesOrganizerStrip
           prompt={next}
           onEditSeries={() => setEditOpen(true)}
+          entityType={entityType}
           onSkipped={refresh}
         />
       )}
@@ -138,6 +142,7 @@ export const SeriesGameSection = ({
           onClose={() => setEditOpen(false)}
           mode="edit"
           seriesId={label.seriesId}
+          entityType={entityType}
           initial={{
             cadence: label.cadence,
             weekday: label.weekday,
