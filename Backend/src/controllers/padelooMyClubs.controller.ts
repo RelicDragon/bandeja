@@ -11,6 +11,9 @@ export const getMyPadelooClubs = asyncHandler(async (req: AuthRequest, res: Resp
 
 export const getLinkedGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { externalBookingId } = req.params;
-  const games = await booktimeGameLinkService.findLinkedGamesForBooking(externalBookingId.trim());
+  const games = await booktimeGameLinkService.findLinkedGamesForBooking(externalBookingId.trim(), {
+    userId: req.userId!,
+    isAdmin: req.user?.isAdmin ?? false,
+  });
   res.json({ success: true, data: games });
 });

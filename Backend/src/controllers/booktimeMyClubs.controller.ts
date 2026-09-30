@@ -21,7 +21,10 @@ export const getLinkedGames = asyncHandler(async (req: AuthRequest, res: Respons
   if (typeof externalBookingId !== 'string' || !externalBookingId.trim()) {
     throw new ApiError(400, 'externalBookingId is required');
   }
-  const games = await booktimeGameLinkService.findLinkedGamesForBooking(externalBookingId.trim());
+  const games = await booktimeGameLinkService.findLinkedGamesForBooking(externalBookingId.trim(), {
+    userId: req.userId!,
+    isAdmin: req.user?.isAdmin ?? false,
+  });
   res.json({ success: true, data: games });
 });
 
@@ -35,6 +38,9 @@ export const getLinkedGamesBatch = asyncHandler(async (req: AuthRequest, res: Re
   if (rawIds.length > LINKED_GAMES_BATCH_MAX) {
     throw new ApiError(400, `externalBookingIds cannot exceed ${LINKED_GAMES_BATCH_MAX}`);
   }
-  const data = await booktimeGameLinkService.findLinkedGamesForBookings(rawIds);
+  const data = await booktimeGameLinkService.findLinkedGamesForBookings(rawIds, {
+    userId: req.userId!,
+    isAdmin: req.user?.isAdmin ?? false,
+  });
   res.json({ success: true, data });
 });
