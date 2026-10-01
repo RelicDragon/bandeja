@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { EntityType, Sport } from '@prisma/client';
+import { EntityType, ParticipantRole, Sport } from '@prisma/client';
+import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
 import {
   ensureSportInEnabled,
@@ -12,13 +13,47 @@ import {
   readRatingUncertaintyMetadata,
 } from './results/outcomeStatsSnapshot';
 
-export async function finishTraining(gameId: string, _userId: string): Promise<void> {
+/**
+ * Who may manage a training's results (finish / set levels / undo): the game's
+ * trainer (`Game.trainerId`), an OWNER/ADMIN of the game or its parent, or a
+ * platform admin. A global `User.isTrainer` flag alone grants nothing here.
+ */
+async function isTrainingManager(
+  gameId: string,
+  trainerId: string | null,
+  userId: string,
+  isPlatformAdmin: boolean,
+): Promise<boolean> {
+  if (trainerId === userId) return true;
+  return hasParentGamePermission(
+    gameId,
+    userId,
+    [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+    isPlatformAdmin,
+  );
+}
+
+async function loadActorIsAdmin(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+  if (!user) throw new ApiError(404, 'User not found');
+  return user.isAdmin;
+}
+
+/**
+ * "Finish Training" — same rule as the button (`canUserEditResults`): results
+ * editors per `canModifyResults` (owner/admin incl. parent, platform admin,
+ * PLAYING participant when `resultsByAnyone`) plus the game's trainer.
+ * ARCHIVED is refused for everyone.
+ */
+export async function finishTraining(gameId: string, userId: string): Promise<void> {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
       id: true,
       entityType: true,
       resultsStatus: true,
+      status: true,
+      trainerId: true,
       sport: true,
       participants: {
         where: { status: 'PLAYING' },
@@ -33,6 +68,15 @@ export async function finishTraining(gameId: string, _userId: string): Promise<v
 
   if (game.entityType !== EntityType.TRAINING) {
     throw new ApiError(400, 'This endpoint is only for training games');
+  }
+
+  if (game.status === 'ARCHIVED') {
+    throw new ApiError(403, 'Cannot modify results for archived games');
+  }
+
+  if (game.trainerId !== userId) {
+    const isAdmin = await loadActorIsAdmin(userId);
+    await canModifyResults(gameId, userId, isAdmin);
   }
 
   const isFirstTimeFinal = game.resultsStatus !== 'FINAL';
@@ -75,7 +119,7 @@ export async function updateParticipantLevel(
   const [user, game] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, isTrainer: true, isAdmin: true },
+      select: { id: true, isAdmin: true },
     }),
     prisma.game.findUnique({
       where: { id: gameId },
@@ -95,23 +139,21 @@ export async function updateParticipantLevel(
     throw new ApiError(404, 'User not found');
   }
 
-  const userParticipant = game?.participants.find(p => p.userId === userId);
-  const isTrainerOrOwner = userParticipant?.role === 'OWNER' || userParticipant?.role === 'ADMIN';
-  if (!user.isTrainer && !user.isAdmin && !isTrainerOrOwner) {
-    throw new ApiError(403, 'Only trainers or admins can update participant levels');
-  }
-
-  if (game?.trainerId === participantUserId) {
-    throw new ApiError(400, 'Cannot update trainer level');
-  }
-
-  const gameWithTarget = game
-    ? { ...game, participants: game.participants.filter(p => p.userId === participantUserId && p.status === 'PLAYING') }
-    : null;
-
   if (!game) {
     throw new ApiError(404, 'Game not found');
   }
+
+  if (!(await isTrainingManager(gameId, game.trainerId, userId, user.isAdmin))) {
+    throw new ApiError(403, 'Only the trainer, game owners/admins or platform admins can update participant levels');
+  }
+
+  if (game.trainerId === participantUserId) {
+    throw new ApiError(400, 'Cannot update trainer level');
+  }
+
+  const targetParticipants = game.participants.filter(
+    (p) => p.userId === participantUserId && p.status === 'PLAYING',
+  );
 
   if (game.entityType !== EntityType.TRAINING) {
     throw new ApiError(400, 'This endpoint is only for training games');
@@ -125,7 +167,7 @@ export async function updateParticipantLevel(
     throw new ApiError(400, 'Training must be finished before updating participant levels');
   }
 
-  if (gameWithTarget!.participants.length === 0) {
+  if (targetParticipants.length === 0) {
     throw new ApiError(404, 'Participant not found in this game');
   }
 
@@ -181,15 +223,13 @@ export async function updateParticipantLevel(
   await prisma.$transaction(async (tx) => {
     await clearSetEventsForUserInGame(gameId, participantUserId, tx);
 
-    const confirmationPatch =
-      user.isTrainer || user.isAdmin || isTrainerOrOwner
-        ? {
-            approvedLevel: true,
-            approvedById: userId,
-            approvedWhen: now,
-            approvedAtLevel: levelAfter,
-          }
-        : null;
+    // Every caller past the gate above is a training manager, so the edit is a confirmation.
+    const confirmationPatch = {
+      approvedLevel: true,
+      approvedById: userId,
+      approvedWhen: now,
+      approvedAtLevel: levelAfter,
+    };
 
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId: participantUserId, sport: game.sport } },
@@ -199,13 +239,13 @@ export async function updateParticipantLevel(
         level: levelAfter,
         reliability: reliabilityAfter,
         lastRatingActivityAt: now,
-        ...(confirmationPatch ?? {}),
+        ...confirmationPatch,
       },
       update: {
         level: levelAfter,
         reliability: reliabilityAfter,
         lastRatingActivityAt: now,
-        ...(confirmationPatch ?? {}),
+        ...confirmationPatch,
       },
     });
 
@@ -213,7 +253,7 @@ export async function updateParticipantLevel(
 
   // User.approved* is a PADEL-only denormalized mirror for older clients (see docs/APP_FUNCTIONALITY.md §2.2).
   // It has no `approvedAtLevel` column — the snapshot lives on the sport profile only.
-    if (confirmationPatch && game.sport === Sport.PADEL) {
+    if (game.sport === Sport.PADEL) {
       await tx.user.update({
         where: { id: participantUserId },
         data: {
@@ -280,7 +320,7 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
   const [user, game] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, isTrainer: true, isAdmin: true },
+      select: { id: true, isAdmin: true },
     }),
     prisma.game.findUnique({
       where: { id: gameId },
@@ -301,14 +341,12 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
     throw new ApiError(404, 'User not found');
   }
 
-  const userParticipant = game?.participants.find(p => p.userId === userId);
-  const isTrainerOrOwner = userParticipant?.role === 'OWNER' || userParticipant?.role === 'ADMIN';
-  if (!user.isTrainer && !user.isAdmin && !isTrainerOrOwner) {
-    throw new ApiError(403, 'Only trainers or admins can undo training changes');
-  }
-
   if (!game) {
     throw new ApiError(404, 'Game not found');
+  }
+
+  if (!(await isTrainingManager(gameId, game.trainerId, userId, user.isAdmin))) {
+    throw new ApiError(403, 'Only the trainer, game owners/admins or platform admins can undo training changes');
   }
 
   if (game.entityType !== EntityType.TRAINING) {

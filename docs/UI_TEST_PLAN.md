@@ -845,7 +845,7 @@ One boolean the organizer sets; everything here is read-only display. The tag is
 | C-NV-02 | Hidden where it does not apply | League fixture / league season / EVENT create flows | No row, and the created entity is never tagged |
 | C-04 | Create TRAINING | Pick TRAINING | Trainer fields |
 | C-05 | Create TOURNAMENT | Pick TOURNAMENT (any logged-in user) | Roster/tournament defaults; cap 8–12 for normal users, up to 32 for `canCreateTournament` |
-| C-06 | Duplicate game | From game details Duplicate on an **unplayed** game (`resultsStatus === NONE`) | Pre-filled form incl. the old time/court/booked flag; once results are FINAL the Duplicate card is gone and **Play with this group again** (§9.21) is the way to the next game |
+| C-06 | Duplicate game | From game details Duplicate on an **unplayed** game (`resultsStatus === NONE`) | Pre-filled form incl. the old time/court/booked flag; once results are FINAL the Duplicate card is gone and **Play with this group again** (§9.21) is the way to the next game. TRAINING: Duplicate only shown to `isTrainer` / platform admins |
 | C-07 | Bottom tabs hidden | On create page | Tab bar hidden |
 | C-08 | Back navigation | Back button | Returns home |
 
@@ -1755,7 +1755,7 @@ One action after FINAL replaces both the old results "Play again" and, for FINAL
 |----|------|-------|----------|
 | GD-RM-01 | Button in results area | FINAL GAME as a PLAYING participant | Primary **Play with this group again** (lucide `Users`) with caption *Pick a new time. We'll invite the same players.* as its accessible description; share visual (if any) and stories switch sit below it |
 | GD-RM-02 | Entity types | FINAL GAME / TOURNAMENT / TRAINING / BAR vs LEAGUE fixture / LEAGUE_SEASON / EVENT | Button on the first four (TRAINING and BAR render it at the top of their results block, there is no share card there); never on the last three |
-| GD-RM-03 | Who sees it | Same FINAL game as spectator, guest, queued, invited-only, or signed out | No button. TRAINING: the `trainerId` user sees it even though they are NON_PLAYING |
+| GD-RM-03 | Who sees it | Same FINAL game as spectator, guest, queued, invited-only, or signed out | No button. TRAINING: the `trainerId` user sees it even though they are NON_PLAYING; a viewer who is neither `isTrainer` nor platform admin never sees it on a TRAINING (they cannot create one) |
 | GD-RM-04 | Duplicate gone after FINAL | Owner opens a FINAL game | No Duplicate action card; on an unplayed game (`resultsStatus === NONE`) Duplicate is unchanged (C-06); during `IN_PROGRESS` neither is shown |
 | GD-RM-05 | Fresh schedule required | Tap the button | `/create-game` opens with the club, sport, format, level band, gender rule, price, settings and format numbers prefilled; **no** date/time, court, booked-court flag or booking; submitting before picking a time is blocked |
 | GD-RM-06 | Rematch banner | Same draft | One context line at the top: *Playing again with N players* + *Format and settings copied from {name}. Pick a new date, time and court. Invites are sent when you create the game.* Absent on Duplicate and ordinary create |
@@ -1764,7 +1764,7 @@ One action after FINAL replaces both the old results "Play again" and, for FINAL
 | GD-RM-09 | Remove before sending | Remove one row, pick a time, create | Only the remaining rows receive invites; removed player gets nothing |
 | GD-RM-10 | Invited, never seated | Create the rematch | New game has the creator PLAYING and every invitee as INVITED; no PLAYING seat for any invitee; no results, attendance, cost or booking state carried over |
 | GD-RM-11 | Abandon the draft | Open the draft, go back without creating | No game, no invites, no notification |
-| GD-RM-12 | TRAINING as trainee | FINAL TRAINING opened by a PLAYING trainee where `trainerId` is another user | Trainer listed as an invitee after the players with a **Trainer** pill on their row; on create they receive a trainer invite (`asTrainer`), the players normal invites |
+| GD-RM-12 | TRAINING as trainee | FINAL TRAINING opened by a PLAYING trainee who is themself `isTrainer`, where `trainerId` is another user (a non-trainer trainee sees no button, GD-RM-03) | Trainer listed as an invitee after the players with a **Trainer** pill on their row; on create they receive a trainer invite (`asTrainer`), the players normal invites |
 | GD-RM-13 | TRAINING as trainer | FINAL TRAINING opened by the trainer | Draft opens with "I'm not playing" on (creator is the trainer); invitees are the players only |
 | GD-RM-14 | Make it weekly | In the rematch draft, pick a time | The existing **Repeat** row (Once · Weekly · Every 2 weeks, §8.6) is available; no extra post-create link |
 | GD-RM-15 | Profile-name gate | Viewer without a set name taps the button | Name sheet first, then the draft opens (`runWithProfileName`) |

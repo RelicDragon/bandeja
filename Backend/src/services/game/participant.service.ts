@@ -947,6 +947,16 @@ export class ParticipantService {
     if (asTrainer && game.entityType !== 'TRAINING') {
       throw new ApiError(400, 'Only training games can have a trainer');
     }
+    if (asTrainer) {
+      // The invite picker lists trainers only; the server enforces the same rule.
+      const receiver = await prisma.user.findUnique({
+        where: { id: receiverId },
+        select: { isTrainer: true },
+      });
+      if (!receiver?.isTrainer) {
+        throw new ApiError(403, 'Only trainers can be invited as trainer');
+      }
+    }
 
     let resolvedInviteUserTeamId: string | null = null;
     if (inviteUserTeamId && !asTrainer) {

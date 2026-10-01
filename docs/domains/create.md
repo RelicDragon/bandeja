@@ -16,6 +16,11 @@ Canonical template registry: `Frontend/shared/createTemplates.ts` (`CREATE_TEMPL
 
 Entity chips: GAME / BAR / TRAINING / TOURNAMENT. TRAINING invite picker is trainers-only. Creator of TRAINING may be NON_PLAYING.
 
+Who may create what (server-side, `GameCreateService.createGame`):
+
+- **TRAINING**: only `User.isTrainer` or platform admins (`403 Only trainers can create trainings`). Same rule as the create menu (`CreateMenuModal`) and the agent (`assertMayCreate`). Duplicate and rematch ("Play with this group again") go through `POST /games`, so they are hidden in the UI for anyone else. Recurring-series occurrences skip the gate (`seriesOccurrence`), see [training.md](./training.md).
+- **TOURNAMENT**: open to everyone. `User.canCreateTournament` is **not** a create permission — it only raises the participant cap: 12 for everyone else; with the flag (or platform admin) the picker offers up to 32 (`maxSlotsForUserTournament`) and the server lifts the cap (`maxParticipantsLimitForActor` in `Backend/src/utils/game/userMaxParticipantsCap.ts`).
+
 ### Format wizard
 
 `GameFormatWizard` / `GameFormatCard` / `useGameFormat` / `MatchFormatControl`.

@@ -129,6 +129,29 @@ async function resolveCreateCourts(
  */
 export interface GameCreateOptions {
   deferDiscoveryAnnouncement?: (announce: () => void) => void;
+  /**
+   * Recurring-series generation only: the TRAINING create gate was applied when
+   * the series' seed game was created, so occurrences keep generating even if
+   * the owner later loses `User.isTrainer`. Never set from an HTTP body.
+   */
+  seriesOccurrence?: boolean;
+}
+
+/**
+ * TRAINING is created only by trainers (`User.isTrainer`) or platform admins —
+ * the same rule as the create menu (`CreateMenuModal`) and the agent
+ * (`assertMayCreate`). Duplicate / rematch go through `POST /games` and so
+ * through this gate too.
+ */
+async function assertMayCreateTraining(userId: string, jwtIsAdmin: boolean): Promise<void> {
+  if (jwtIsAdmin) return;
+  const actor = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isTrainer: true, isAdmin: true },
+  });
+  if (!actor?.isTrainer && !actor?.isAdmin) {
+    throw new ApiError(403, 'Only trainers can create trainings');
+  }
 }
 
 export class GameCreateService {
@@ -213,6 +236,9 @@ export class GameCreateService {
     const entityType = data.entityType || EntityType.GAME;
     const isEventEntity = entityType === EntityType.EVENT;
     const entityCaps = getEntityCapabilities(entityType);
+    if (entityType === EntityType.TRAINING && !options.seriesOccurrence) {
+      await assertMayCreateTraining(userId, jwtIsAdmin);
+    }
     if (isEventEntity) {
       assertEventCreatePayload(data);
       applyEventUpdateInvariants({

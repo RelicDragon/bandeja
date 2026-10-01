@@ -26,10 +26,11 @@ type PlayWithGroupAgainButtonProps = {
 export function PlayWithGroupAgainButton({ game, className = '' }: PlayWithGroupAgainButtonProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const userId = useAuthStore((s) => s.user?.id);
+  const viewer = useAuthStore((s) => s.user);
+  const userId = viewer?.id;
   const captionId = useId();
 
-  if (!canPlayWithGroupAgain(game, userId)) return null;
+  if (!canPlayWithGroupAgain(game, viewer)) return null;
 
   const handleClick = () => {
     const go = () => {

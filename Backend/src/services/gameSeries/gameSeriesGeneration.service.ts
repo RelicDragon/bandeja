@@ -351,6 +351,9 @@ export class GameSeriesGenerationService {
         // user in the city to a 404.
         let announceOccurrence: (() => void) | null = null;
         const created = await GameCreateService.createGame(payload, series.ownerId, false, {
+          // The TRAINING create gate ran when the seed game was created; a series
+          // keeps generating if its owner later loses `User.isTrainer`.
+          seriesOccurrence: true,
           deferDiscoveryAnnouncement: (announce) => {
             announceOccurrence = announce;
           },

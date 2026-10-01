@@ -25,7 +25,7 @@ type GameResultsShareCardProps = {
  */
 export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
   const { t } = useTranslation();
-  const userId = useAuthStore((s) => s.user?.id);
+  const viewer = useAuthStore((s) => s.user);
   const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos) ?? EMPTY_GAME_PHOTOS;
   const photoUrl = resolveGameResultsSharePhotoUrl(game, photos);
   const showShareCard = canShowGameResultsShareCard(game, photos);
@@ -33,7 +33,7 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
     ? game.resultsSummaryText!.trim()
     : null;
   const sportLabel = t(getSportConfig(game.sport).labelKey);
-  const canRematch = canPlayWithGroupAgain(game, userId);
+  const canRematch = canPlayWithGroupAgain(game, viewer);
   const title = game.name?.trim() || sportLabel;
 
   if (!showShareCard && !canRematch) return null;
