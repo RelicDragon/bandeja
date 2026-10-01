@@ -45,7 +45,7 @@ The existing dialog `AgentPermissionsScreen.tsx` becomes "Assistant settings" wi
 
 Memory tab, top to bottom:
 
-- **Switch row** "Allow memory" with a one-line explanation; below it the note that turning it off stops saving and using memory.
+- **Switch row** "Allow memory", default ON. Small text under it: memory is sent to our LLM provider with your requests so the assistant can answer in the best way possible; turning it off stops saving and using memory.
 - **List** (dimmed while OFF): description as title, body secondary, badge `You added` / `Learned`, trash icon (immediate delete with Undo toast), tap to edit inline.
 - **Add memory**: inline form, one field, 500-char counter, pinned above the software keyboard, animated open. Disabled while OFF.
 - **Remove all** (danger, `ConfirmationModal`), disabled when empty.
@@ -60,7 +60,6 @@ Wiring: `AgentMemoryDto` in `Frontend/shared/agentContract.ts`; `agentApi` metho
 3. Settings modal tabs, memory tab, chip + Undo, i18n, `docs/UI_TEST_PLAN.md`, `docs/domains/agent.md`.
 4. Rolling chat summary (replaces the crude fold in `agentContext.service.ts`; chat-scoped, not memory), then a weekly consolidation job that skips opted-out users.
 
-## 11.6 Open
+## 11.6 Decided
 
-- Privacy-policy line: memory text is sent to DeepSeek like the rest of the context (parent plan §11.3).
-- Whether to ask once on first use ("Let the assistant remember things?") instead of silently defaulting ON. Current decision: default ON, switch always visible in the modal.
+- Default stays ON, no first-use prompt. The disclosure is the small text under the switch (above). A privacy-policy line can follow the parent plan §11.3 work and is not a blocker.

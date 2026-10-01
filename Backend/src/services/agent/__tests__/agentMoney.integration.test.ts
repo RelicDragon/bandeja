@@ -41,6 +41,13 @@
  *     reminded; the 24 h cooldown refuses without a card and FAILS a raced confirm with the next
  *     time; stale when the unpaid set changes; stranger writes nothing; frozen 10-day-old game
  *     still allowed (no age limit); trainer; lost role → 403.
+ * Read 10h (`list_cost_shares`): season owner / season admin / platform admin see every fixture
+ * share of the season (same data), a plain player, stranger or fixture-only player is refused;
+ * `my_organized_games` gives a game admin who isn't the payer their games and a player nothing;
+ * states filter (MARKED_PAID / SETTLED with method and dates / mixed); totals view adds up and
+ * equals the by_player rows over all states; per-currency totals (EUR + USD never added); `when`;
+ * payer view (outflow, own share, inflow, received / pending / outstanding, net; projected for an
+ * unsplit fixture); no rows or payer stamp for an unsplit game; row parity with `get_game_cost`.
  */
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
@@ -63,7 +70,7 @@ import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { generateShortAccessToken } from '../../../utils/jwt';
 import { getRemindAvailableAt, remindUnpaidShares } from '../../gameCost/costShareReminder.service';
-import { getGameCostSummary, markOwnShareAsPaid } from '../../gameCost/gameCost.service';
+import { getGameCostSummary, markOwnShareAsPaid, setShareConfirmed } from '../../gameCost/gameCost.service';
 import {
   getNumericSetting,
   getSetting,
@@ -84,7 +91,7 @@ import type { AgentToolContext } from '../tools/registry';
 const registry = getAgentToolRegistry();
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
-const MONEY_READS = ['list_my_cost_balances', 'get_game_cost', 'get_my_wallet'] as const;
+const MONEY_READS = ['list_my_cost_balances', 'get_game_cost', 'get_my_wallet', 'list_cost_shares'] as const;
 const PHONE_HANDLE = '+34600111222';
 
 type Json = Record<string, unknown>;
@@ -156,6 +163,7 @@ async function main(): Promise<void> {
   const G = fixture.games;
   const gameIds: string[] = [];
   const chatIds: string[] = [];
+  const leagueIds: string[] = [];
   const server = app.listen(0);
   const { port } = server.address() as AddressInfo;
   try {
@@ -1571,6 +1579,215 @@ async function main(): Promise<void> {
       console.log('remind_unpaid_shares card / cooldown / race / stale / frozen / trainer / lost role: ok');
     }
 
+    // =========================================================================================
+    // Slice 10h: list_cost_shares (organizer view; read only, no sync)
+    // =========================================================================================
+    {
+      type Amount = { amountMinor: number; currency: string; amount: string };
+      type ListedShare = { gameId: string; amountMinor: number; currency: string; state: string; method?: string; markedPaidAt?: string; confirmedAt?: string; appLink: string; fixture?: string | null; title: string };
+      type PlayerGroup = { player: Json & { userId: string; name: string }; counts: Record<string, number>; totals: Amount[]; shares: ListedShare[] };
+      type StateTotal = { currency: string; expected: Amount; settled: Amount; markedPaid: Amount; unpaid: Amount };
+      type Totals = { byCurrency: StateTotal[]; shares: number; byState: Record<string, number>; games: number; gamesNotSplitYet: number; gamesTooOld: number };
+      type Listing = { players?: PlayerGroup[]; shown?: { shares: number; players: number; byCurrency: Amount[] }; totals: Totals; notSplitYet: { gameId: string; appLink: string }[]; truncated: Json };
+      type PayerRow = { gameId: string; ledger: string; currency: string; outflow: Amount; myShare: Amount; inflowExpected: Amount; received: Amount; pending: Amount; outstanding: Amount; netExpected: Amount; netSoFar: Amount; appLink: string };
+      type PayerListing = { games: PayerRow[]; totals: { byCurrency: Omit<PayerRow, 'gameId' | 'ledger' | 'appLink'>[]; games: number; projectedGames: number } };
+      const ALL_STATES = ['UNPAID', 'MARKED_PAID', 'SETTLED'];
+      const day = (offset: number) => new Date(Date.now() + offset * DAY).toISOString().slice(0, 10);
+      const PAST = { from: day(-202), to: day(-198) };
+      const UPCOMING = { from: day(298), to: day(302) };
+      const at = (offset: number) => ({ startTime: new Date(Date.now() + offset * DAY), endTime: new Date(Date.now() + offset * DAY + 90 * 60 * 1000) });
+      const list = async (principal: AgentPrincipal, args: Json) => {
+        const result = await call('list_cost_shares', principal, args);
+        assert.equal(result.ok, true, `list_cost_shares ${JSON.stringify(args)}: ${JSON.stringify(result.data)}`);
+        assertNoHandles(result.data, 'list_cost_shares');
+        return result;
+      };
+      const rowsOf = (data: Listing) =>
+        data.players!.flatMap((g) => g.shares.map((sh) => `${g.player.userId}:${sh.gameId}:${sh.state}`)).sort();
+      const amounts = (rows: Amount[]) => rows.map((m) => [m.currency, m.amountMinor]).sort();
+
+      // input
+      const tool = registry.get('list_cost_shares')!;
+      for (const bad of [{}, { seasonId: 's', scope: 'my_organized_games' }, { scope: 'mine' }, { seasonId: 's', states: [] }, { seasonId: 's', states: ['PAID'] }, { seasonId: 's', view: 'all' }]) {
+        assert.equal(tool.input.safeParse(bad).success, false, `list_cost_shares rejects ${JSON.stringify(bad)}`);
+      }
+      assert.deepEqual(tool.input.parse({ seasonId: 's' }), { seasonId: 's', view: 'by_player', states: ['UNPAID', 'MARKED_PAID'], when: 'all' });
+
+      const FIX_ROSTER: Roster = [
+        ['owner', ParticipantRole.PARTICIPANT, ParticipantStatus.PLAYING],
+        ['gameAdmin', ParticipantRole.PARTICIPANT, ParticipantStatus.PLAYING],
+        ['player', ParticipantRole.PARTICIPANT, ParticipantStatus.PLAYING],
+      ];
+      // Season: leagueOwner OWNER, invited ADMIN (neither plays). Fixtures 1-2 past, 3 upcoming and never opened.
+      const season = await mkGame(
+        'Ledger season',
+        { entityType: EntityType.LEAGUE_SEASON, isPublic: false, priceType: 'PER_PERSON', priceTotal: 10, priceCurrency: 'EUR', ...at(-200) },
+        [
+          ['leagueOwner', ParticipantRole.OWNER, ParticipantStatus.NON_PLAYING],
+          ['invited', ParticipantRole.ADMIN, ParticipantStatus.NON_PLAYING],
+        ],
+      );
+      // A real season row (the league read guard needs it); the League row is removed in `finally`.
+      const league = await prisma.league.create({ data: { name: `Ledger league ${s}`, cityId: fixture.cityId }, select: { id: true } });
+      leagueIds.push(league.id);
+      await prisma.leagueSeason.create({ data: { id: season, leagueId: league.id, orderIndex: 0 } });
+      const fixtureOf = (name: string, offset: number) =>
+        mkGame(name, { entityType: EntityType.LEAGUE, parentId: season, priceType: 'NOT_KNOWN', ...at(offset) }, FIX_ROSTER);
+      const f1 = await fixtureOf('Ledger fixture one', -200);
+      const f2 = await fixtureOf('Ledger fixture two', -199.5);
+      const f3 = await fixtureOf('Ledger fixture unsplit', 300);
+      // A casual USD game: owner pays and plays, gameAdmin admins and plays, invited admins (no play).
+      const usd = await mkGame('Ledger dollars', { priceType: 'TOTAL', priceTotal: 30, priceCurrency: 'USD', costPayerId: P.owner.userId, ...at(-199) }, [
+        ['owner', ParticipantRole.OWNER, ParticipantStatus.PLAYING],
+        ['gameAdmin', ParticipantRole.ADMIN, ParticipantStatus.PLAYING],
+        ['player', ParticipantRole.PARTICIPANT, ParticipantStatus.PLAYING],
+        ['invited', ParticipantRole.ADMIN, ParticipantStatus.NON_PLAYING],
+      ]);
+      await getGameCostSummary(f1, P.leagueOwner.userId);
+      await getGameCostSummary(f2, P.leagueOwner.userId);
+      await getGameCostSummary(usd, P.owner.userId);
+      await markOwnShareAsPaid(f1, P.player.userId, 'MANUAL');
+      await setShareConfirmed(f2, P.leagueOwner.userId, P.gameAdmin.userId, true);
+      const sharesBefore = await prisma.gameCostShare.count({ where: { gameId: { in: [f1, f2, usd] } } });
+
+      // Season owner: every unpaid / marked fixture share of the season (default states).
+      const ownerList = await list(P.leagueOwner, { seasonId: season });
+      const owned = ownerList.data as Listing;
+      const u = (actor: AgentMatrixActor) => P[actor].userId;
+      assert.deepEqual(
+        rowsOf(owned),
+        [`${u('owner')}:${f1}:UNPAID`, `${u('owner')}:${f2}:UNPAID`, `${u('gameAdmin')}:${f1}:UNPAID`, `${u('player')}:${f1}:MARKED_PAID`, `${u('player')}:${f2}:UNPAID`].sort(),
+        'season owner: unpaid + marked shares of every split fixture',
+      );
+      assert.deepEqual(
+        owned.totals.byCurrency.map((t) => [t.currency, t.expected.amountMinor, t.settled.amountMinor, t.markedPaid.amountMinor, t.unpaid.amountMinor]),
+        [['EUR', 6000, 1000, 1000, 4000]],
+        'season totals: every state',
+      );
+      assert.deepEqual([owned.totals.shares, owned.totals.games, owned.totals.gamesNotSplitYet], [6, 2, 1]);
+      assert.deepEqual(owned.totals.byState, { UNPAID: 4, MARKED_PAID: 1, SETTLED: 1 });
+      assert.deepEqual(owned.notSplitYet.map((g) => g.gameId), [f3], 'unsplit fixture reported, not split');
+      assert.equal(owned.notSplitYet[0].appLink, `/games/${f3}?section=cost`);
+      const playerGroup = owned.players!.find((g) => g.player.userId === u('player'))!;
+      assert.deepEqual(Object.keys(playerGroup.player).sort(), ['name', 'userId'], 'name-only user card');
+      assert.deepEqual(playerGroup.counts, { UNPAID: 1, MARKED_PAID: 1 });
+      assert.deepEqual(amounts(playerGroup.totals), [['EUR', 2000]]);
+      const marked = playerGroup.shares.find((sh) => sh.state === 'MARKED_PAID')!;
+      assert.equal(marked.method, 'MANUAL');
+      assert.ok(marked.markedPaidAt, 'marked date shown');
+      assert.equal(marked.appLink, `/games/${f1}?section=cost`);
+      assert.equal(typeof marked.fixture, 'string', 'fixture label');
+      assert.equal(playerGroup.shares.find((sh) => sh.state === 'UNPAID')!.method, undefined, 'no method on an unpaid share');
+      assert.equal(ownerList.summary, EN['summary.costShares'].replace('{{players}}', '3').replace('{{count}}', '5'));
+      assert.ok(ownerList.entities?.some((e) => e.type === 'game' && e.id === season), 'season entity');
+      assert.ok(!/email|phone|telegram/i.test(JSON.stringify(owned)), 'no contact data');
+
+      // Season admin and platform admin see the same; anyone else is refused (league reads are public, the split isn't).
+      assert.deepEqual((await list(P.invited, { seasonId: season })).data, owned, 'season admin = season owner');
+      assert.deepEqual((await list(P.globalAdmin, { seasonId: season })).data, owned, 'platform admin = season owner');
+      for (const actor of ['player', 'stranger', 'gameAdmin', 'owner'] as const) {
+        const refused = await call('list_cost_shares', P[actor], { seasonId: season });
+        assert.equal((refused.data as Json).error, 'forbidden', `${actor}: refused for the season`);
+      }
+      assert.deepEqual((await call('list_cost_shares', P.leagueOwner, { seasonId: `missing-${s}` })).data, { error: 'not_found' });
+      assert.deepEqual((await call('list_cost_shares', P.leagueOwner, { seasonId: f1 })).data, { error: 'not_found' }, 'a fixture is not a season');
+
+      // states filter: MARKED_PAID only, SETTLED only (method + confirmed date), mixed.
+      const markedOnly = (await list(P.leagueOwner, { seasonId: season, states: ['MARKED_PAID'] })).data as Listing;
+      assert.deepEqual(rowsOf(markedOnly), [`${u('player')}:${f1}:MARKED_PAID`]);
+      assert.deepEqual(markedOnly.totals, owned.totals, 'totals ignore the states filter');
+      const settledOnly = (await list(P.leagueOwner, { seasonId: season, states: ['SETTLED'] })).data as Listing;
+      assert.deepEqual(rowsOf(settledOnly), [`${u('gameAdmin')}:${f2}:SETTLED`]);
+      const settled = settledOnly.players![0].shares[0];
+      assert.equal(settled.method, 'MANUAL');
+      assert.ok(settled.confirmedAt, 'confirmed date shown');
+      const mixed = (await list(P.leagueOwner, { seasonId: season, states: ['UNPAID', 'SETTLED'] })).data as Listing;
+      assert.equal(rowsOf(mixed).length, 5);
+      const adminGroup = mixed.players!.find((g) => g.player.userId === u('gameAdmin'))!;
+      assert.deepEqual(adminGroup.counts, { UNPAID: 1, SETTLED: 1 });
+      assert.deepEqual(amounts(adminGroup.totals), [['EUR', 2000]]);
+      assert.deepEqual(amounts(mixed.shown!.byCurrency), [['EUR', 5000]]);
+
+      // totals view: no rows; expected = settled + marked + unpaid = the sum of by_player rows over all states.
+      const totalsView = (await list(P.leagueOwner, { seasonId: season, view: 'totals', states: ['SETTLED'] })).data as Listing;
+      assert.equal(totalsView.players, undefined, 'totals view has no player rows');
+      assert.deepEqual(totalsView.totals, owned.totals);
+      const everything = (await list(P.leagueOwner, { seasonId: season, states: ALL_STATES })).data as Listing;
+      for (const t of totalsView.totals.byCurrency) {
+        assert.equal(t.expected.amountMinor, t.settled.amountMinor + t.markedPaid.amountMinor + t.unpaid.amountMinor, `${t.currency}: adds up`);
+        const rowSum = everything.players!.flatMap((g) => g.shares).filter((sh) => sh.currency === t.currency).reduce((sum, sh) => sum + sh.amountMinor, 0);
+        assert.equal(t.expected.amountMinor, rowSum, `${t.currency}: = sum of by_player rows, all states`);
+      }
+      assert.equal(everything.shown!.shares, totalsView.totals.shares);
+
+      // when: upcoming = only the unsplit fixture; past = the two split ones.
+      const upcoming = (await list(P.leagueOwner, { seasonId: season, when: 'upcoming' })).data as Listing;
+      assert.deepEqual([upcoming.totals.games, upcoming.notSplitYet.map((g) => g.gameId)], [0, [f3]]);
+      const past = (await list(P.leagueOwner, { seasonId: season, when: 'past' })).data as Listing;
+      assert.deepEqual([past.totals.games, past.notSplitYet.length], [2, 0]);
+
+      // my_organized_games (dated window keeps the earlier fixture games out).
+      const mineOf = async (actor: AgentMatrixActor, extra: Json = {}) =>
+        (await list(P[actor], { scope: 'my_organized_games', ...PAST, states: ALL_STATES, ...extra })).data as Listing;
+      const usdRows = [`${u('gameAdmin')}:${usd}:UNPAID`, `${u('player')}:${usd}:UNPAID`].sort();
+      assert.deepEqual(rowsOf(await mineOf('owner')), usdRows, 'owner (payer) sees their game');
+      const asGameAdmin = await mineOf('gameAdmin');
+      assert.deepEqual(rowsOf(asGameAdmin), usdRows, 'a game admin who is not the payer sees their game');
+      assert.deepEqual(amounts(asGameAdmin.totals.byCurrency.map((t) => t.expected)), [['USD', 2000]]);
+      for (const actor of ['player', 'stranger'] as const) {
+        const nothing = await mineOf(actor);
+        assert.deepEqual([nothing.players!.length, nothing.totals.games, nothing.totals.shares, nothing.notSplitYet.length], [0, 0, 0, 0], `${actor}: nothing for games they only play in`);
+      }
+      // Season admin + casual admin: EUR and USD side by side, never added.
+      const twoCurrencies = await mineOf('invited');
+      assert.deepEqual(
+        twoCurrencies.totals.byCurrency.map((t) => [t.currency, t.expected.amountMinor, t.settled.amountMinor, t.markedPaid.amountMinor, t.unpaid.amountMinor]).sort(),
+        [['EUR', 6000, 1000, 1000, 4000], ['USD', 2000, 0, 0, 2000]],
+      );
+      const gameAdminMoney = twoCurrencies.players!.find((g) => g.player.userId === u('gameAdmin'))!;
+      assert.deepEqual(amounts(gameAdminMoney.totals), [['EUR', 2000], ['USD', 1000]], 'per player, per currency');
+      const leagueUpcoming = (await list(P.leagueOwner, { scope: 'my_organized_games', ...UPCOMING })).data as Listing;
+      assert.deepEqual(leagueUpcoming.notSplitYet.map((g) => g.gameId), [f3], 'season owner: fixtures in my_organized_games');
+
+      // payer view
+      const payerSeason = (await list(P.leagueOwner, { seasonId: season, view: 'payer' })).data as PayerListing;
+      const money = (row: Omit<PayerRow, 'gameId' | 'ledger' | 'appLink'>) =>
+        [row.currency, row.outflow, row.myShare, row.inflowExpected, row.received, row.pending, row.outstanding, row.netExpected, row.netSoFar].map((m) => (typeof m === 'string' ? m : m.amountMinor));
+      const byGame = new Map(payerSeason.games.map((g) => [g.gameId, g]));
+      assert.deepEqual(money(byGame.get(f1)!), ['EUR', 3000, 0, 3000, 0, 1000, 2000, 0, -3000]);
+      assert.deepEqual(money(byGame.get(f2)!), ['EUR', 3000, 0, 3000, 1000, 0, 2000, 0, -2000]);
+      assert.deepEqual([byGame.get(f3)!.ledger, ...money(byGame.get(f3)!)], ['projected', 'EUR', 3000, 0, 3000, 0, 0, 3000, 0, -3000], 'unsplit: projected, not stored');
+      assert.equal(byGame.get(f1)!.ledger, 'split');
+      assert.deepEqual(payerSeason.totals.byCurrency.map(money), [['EUR', 9000, 0, 9000, 1000, 1000, 7000, 0, -8000]]);
+      assert.deepEqual([payerSeason.totals.games, payerSeason.totals.projectedGames], [3, 1]);
+      const payerUpcoming = (await list(P.leagueOwner, { seasonId: season, view: 'payer', when: 'upcoming' })).data as PayerListing;
+      assert.deepEqual(payerUpcoming.games.map((g) => g.gameId), [f3], 'how much will I pay: upcoming');
+      const ownerPays = (await list(P.owner, { scope: 'my_organized_games', view: 'payer', ...PAST })).data as PayerListing;
+      assert.deepEqual(ownerPays.games.map(money), [['USD', 3000, 1000, 2000, 0, 0, 2000, -1000, -3000]], 'payer who plays: own share');
+      assert.equal(ownerPays.games[0].appLink, `/games/${usd}?section=cost`);
+      for (const actor of ['gameAdmin', 'invited', 'player'] as const) {
+        const none = (await list(P[actor], { scope: 'my_organized_games', view: 'payer', ...PAST })).data as PayerListing;
+        assert.deepEqual([none.games.length, none.totals.byCurrency.length], [0, 0], `${actor}: not the payer`);
+      }
+      const seasonAdminPays = (await list(P.invited, { seasonId: season, view: 'payer' })).data as PayerListing;
+      assert.equal(seasonAdminPays.games.length, 0, 'season admin is not the payer');
+
+      // Read only: the unsplit fixture got no rows and no payer; nothing else moved.
+      assert.equal(await shareRows(f3), 0, 'no rows created for an unsplit game');
+      assert.equal((await prisma.game.findUniqueOrThrow({ where: { id: f3 }, select: { costPayerId: true } })).costPayerId, null, 'no payer stamped');
+      assert.equal(await prisma.gameCostShare.count({ where: { gameId: { in: [f1, f2, usd] } } }), sharesBefore);
+
+      // Row parity with get_game_cost (the organizer's full split, payer row excluded).
+      const ownerAll = (await list(P.owner, { scope: 'my_organized_games', ...PAST, states: ALL_STATES })).data as Listing;
+      for (const [gameId, actor, listing] of [[f1, P.leagueOwner, everything], [f2, P.leagueOwner, everything], [usd, P.owner, ownerAll]] as const) {
+        const cost = (await call('get_game_cost', actor, { gameId })).data as AgentCost;
+        const expected = cost.shares!.filter((sh) => !sh.isPayer).map((sh) => `${sh.player.userId}:${sh.amountMinor}:${sh.state}:${sh.method}`).sort();
+        const got = listing.players!.flatMap((g) => g.shares.filter((sh) => sh.gameId === gameId).map((sh) => `${g.player.userId}:${sh.amountMinor}:${sh.state}:${sh.method ?? 'MANUAL'}`)).sort();
+        assert.deepEqual(got, expected, `${gameId}: list_cost_shares rows = get_game_cost rows`);
+      }
+      console.log('list_cost_shares: ok');
+    }
+
     console.log('agentMoney.integration.test.ts: ok');
   } finally {
     server.close();
@@ -1582,6 +1799,7 @@ async function main(): Promise<void> {
     for (const id of [...gameIds].reverse()) {
       await prisma.game.deleteMany({ where: { id } }).catch((e) => console.error('game cleanup failed', e));
     }
+    await prisma.league.deleteMany({ where: { id: { in: leagueIds } } }).catch((e) => console.error('league cleanup failed', e));
     await fixture.cleanup().catch((e) => console.error('fixture cleanup failed', e));
   }
 }

@@ -16,6 +16,7 @@ import { BOOKING_LINK_TOOLS } from './bookingLinks.tools';
 import { CANCEL_BOOKING_TOOLS } from './cancelBooking.tools';
 import { CANCEL_GAME_TOOLS } from './cancelGame.tools';
 import { CLUB_TOOLS } from './clubs.tools';
+import { COST_SHARE_LIST_TOOLS } from './costShares.tools';
 import { CREATE_GAME_TOOLS } from './createGame.tools';
 import { CREATE_GAME_WITH_BOOKING_TOOLS } from './createGameWithBooking.tools';
 import { GAME_CHAT_TOOLS } from './gameChat.tools';
@@ -57,6 +58,7 @@ export const AGENT_TOOL_DEFINITIONS: AgentToolDefinition[] = [
   ...RESULTS_TOOLS,
   ...PLAY_INTENT_TOOLS,
   ...MONEY_TOOLS,
+  ...COST_SHARE_LIST_TOOLS,
   ...ADMIN_TOOLS,
 ] as AgentToolDefinition[];
 

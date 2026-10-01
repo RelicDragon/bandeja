@@ -29,6 +29,8 @@
  *     archived). Casual types only; never a league fixture or season (§10.7 decision 3).
  *   - `remind_unpaid_shares` (standard): `remindUnpaidShares` (24 h cooldown, no age limit).
  *
+ * Slice 10h, read: `list_cost_shares` (`costShares.tools.ts`), the organizer's cross-game view.
+ *
  * Amounts come only from the services (minor units + a server-formatted string); currencies
  * are never added together. Payment methods are method ids only, never handles (IBAN, phone,
  * tag) or `paymentHint`: the model names the method and links the game's cost section.
@@ -149,7 +151,7 @@ export const listMyCostBalancesTool = defineTool({
         direction: args.direction,
         ...(wantOwed ? { owed: section(owed, summary.owed) } : {}),
         ...(wantOwedToMe ? { owedToMe: section(owedToMe, summary.owedToMe) } : {}),
-        note: `${AMOUNTS_NOTE}. owedToMe lists only games where the user is the payer; an organizer who is not the payer checks a game with get_game_cost. state MARKED_PAID = the debtor says they paid, the payer hasn't confirmed yet. ${USER_DATA_NOTE}`,
+        note: `${AMOUNTS_NOTE}. owedToMe lists only games where the user is the payer; for every game the user organizes (or a league season they own/admin), paid or not, use list_cost_shares; one game in detail: get_game_cost. state MARKED_PAID = the debtor says they paid, the payer hasn't confirmed yet. ${USER_DATA_NOTE}`,
       },
       summary: summaryLine,
       entities,
@@ -1110,7 +1112,8 @@ export const remindUnpaidSharesTool = defineTool({
   kind: 'write',
   riskTier: 'standard',
   scope: 'user',
-  promptHint: "as a game's payer or organizer, remind the players who haven't paid their share (once per game per 24 h)",
+  promptHint:
+    "as a game's payer or organizer, remind the players who haven't paid their share (once per game per 24 h); to find them across games or a league season, list_cost_shares first, then one card per game",
   input: z.object({ gameId: ID }).strict(),
   label: (_args, locale) => agentMoneyT(locale, 'label.remindUnpaidShares'),
   handler: async (ctx, args) => {

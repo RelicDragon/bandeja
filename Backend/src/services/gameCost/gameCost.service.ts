@@ -73,9 +73,9 @@ export const COST_SHARE_MAX_AMOUNT_MINOR = 100_000_000;
 export const COST_REMIND_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 /** A FINAL game without a ledger older than this never gets one (matches the auto-remind window). */
-const RETROACTIVE_LEDGER_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+export const RETROACTIVE_LEDGER_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-type GameCostRow = {
+export type GameCostRow = {
   id: string;
   entityType: string;
   name: string | null;
@@ -118,7 +118,7 @@ type ShareRow = {
   transactionId: string | null;
 };
 
-const GAME_COST_SELECT = {
+export const GAME_COST_SELECT = {
   id: true,
   entityType: true,
   name: true,

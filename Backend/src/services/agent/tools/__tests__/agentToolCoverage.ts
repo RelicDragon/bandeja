@@ -58,7 +58,9 @@
  *                     (`__tests__/agentResults.integration.test.ts`, `npm run test:agent-results`)
  *   money-read-cases / money-write-cases — Phase 10 cost split tools: visibility + `getGameCostSummary`
  *                     parity with `GET /games/:id/cost-shares`, `/transactions/owed` and `/wallet`, league
- *                     season price, 7-day guard; writes `mark_my_share_paid` / `confirm_share_received` /
+ *                     season price, 7-day guard; `list_cost_shares` (10h): season owner/admin vs refused
+ *                     player/stranger, organizer scope, states / totals / payer views, no rows for unsplit
+ *                     games, per-currency totals, row parity with `get_game_cost`; writes `mark_my_share_paid` / `confirm_share_received` /
  *                     `pay_my_share_with_coins` / `remind_unpaid_shares`: propose + confirm parity with the
  *                     cost-share POST routes, `set_game_price` with `PUT /games/:id`; stale cards, trainer /
  *                     season owner, frozen, coins (critical, `expect`), price locks and escalation, cooldown
@@ -143,6 +145,7 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   list_my_cost_balances: 'money-read-cases',
   get_game_cost: 'money-read-cases',
   get_my_wallet: 'money-read-cases',
+  list_cost_shares: 'money-read-cases',
   mark_my_share_paid: 'money-write-cases',
   confirm_share_received: 'money-write-cases',
   pay_my_share_with_coins: 'money-write-cases',

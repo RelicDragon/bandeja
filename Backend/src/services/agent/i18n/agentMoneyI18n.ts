@@ -104,6 +104,11 @@ export const AGENT_MONEY_I18N_EN = {
   'error.coinsUnavailable': 'Paying with coins isn\'t available right now. Nothing was sent.',
   'error.noPayer': 'This game has no payer any more. Nothing was sent.',
   'error.remindCooldown': 'A reminder was already sent for this game in the last 24 hours. Nothing was sent; the next one is possible after {{time}}.',
+  'label.listCostShares': 'Checking who has paid',
+  'summary.costShares': 'Players: {{players}} · shares: {{count}}',
+  'summary.costSharesNone': 'No matching cost shares',
+  'summary.costSharesTotals': 'Cost totals for {{games}} games',
+  'summary.costSharesPayer': 'Games you pay for: {{games}}',
 } as const;
 
 export type AgentMoneyI18nKey = keyof typeof AGENT_MONEY_I18N_EN;
@@ -208,6 +213,11 @@ const ru: Dictionary = {
   'error.coinsUnavailable': 'Оплата монетами сейчас недоступна. Ничего не отправлено.',
   'error.noPayer': 'У игры больше нет плательщика. Ничего не отправлено.',
   'error.remindCooldown': 'Напоминание по этой игре уже отправляли за последние 24 часа. Ничего не отправлено; следующее — после {{time}}.',
+  'label.listCostShares': 'Проверяю, кто заплатил',
+  'summary.costShares': 'Игроков: {{players}} · долей: {{count}}',
+  'summary.costSharesNone': 'Подходящих долей нет',
+  'summary.costSharesTotals': 'Итоги по {{games}} играм',
+  'summary.costSharesPayer': 'Игр, за которые платите вы: {{games}}',
 };
 
 const sr: Dictionary = {
@@ -309,6 +319,11 @@ const sr: Dictionary = {
   'error.coinsUnavailable': 'Plaćanje novčićima trenutno nije dostupno. Ništa nije poslato.',
   'error.noPayer': 'Ova igra više nema platioca. Ništa nije poslato.',
   'error.remindCooldown': 'Podsetnik za ovu igru je već poslat u poslednja 24 sata. Ništa nije poslato; sledeći je moguć posle {{time}}.',
+  'label.listCostShares': 'Proveravam ko je platio',
+  'summary.costShares': 'Igrača: {{players}} · udela: {{count}}',
+  'summary.costSharesNone': 'Nema odgovarajućih udela',
+  'summary.costSharesTotals': 'Ukupno za {{games}} igara',
+  'summary.costSharesPayer': 'Igre koje plaćaš: {{games}}',
 };
 
 const es: Dictionary = {
@@ -410,6 +425,11 @@ const es: Dictionary = {
   'error.coinsUnavailable': 'Pagar con monedas no está disponible ahora. No se envió nada.',
   'error.noPayer': 'Este partido ya no tiene pagador. No se envió nada.',
   'error.remindCooldown': 'Ya se envió un recordatorio para este partido en las últimas 24 horas. No se envió nada; el siguiente es posible después de {{time}}.',
+  'label.listCostShares': 'Comprobando quién ha pagado',
+  'summary.costShares': 'Jugadores: {{players}} · partes: {{count}}',
+  'summary.costSharesNone': 'No hay partes que coincidan',
+  'summary.costSharesTotals': 'Totales de {{games}} partidos',
+  'summary.costSharesPayer': 'Partidos que pagas tú: {{games}}',
 };
 
 const cs: Dictionary = {
@@ -511,6 +531,11 @@ const cs: Dictionary = {
   'error.coinsUnavailable': 'Platba mincemi teď není dostupná. Nic nebylo odesláno.',
   'error.noPayer': 'Tato hra už nemá plátce. Nic nebylo odesláno.',
   'error.remindCooldown': 'Připomínka k této hře už byla odeslána během posledních 24 hodin. Nic nebylo odesláno; další je možná po {{time}}.',
+  'label.listCostShares': 'Zjišťuji, kdo zaplatil',
+  'summary.costShares': 'Hráčů: {{players}} · podílů: {{count}}',
+  'summary.costSharesNone': 'Žádné odpovídající podíly',
+  'summary.costSharesTotals': 'Součty za {{games}} her',
+  'summary.costSharesPayer': 'Hry, které platíš: {{games}}',
 };
 
 const ar: Dictionary = {
@@ -612,6 +637,11 @@ const ar: Dictionary = {
   'error.coinsUnavailable': 'الدفع بالعملات غير متاح الآن. لم يُرسل شيء.',
   'error.noPayer': 'لم يعد لهذه المباراة دافع. لم يُرسل شيء.',
   'error.remindCooldown': 'أُرسل تذكير لهذه المباراة خلال آخر 24 ساعة. لم يُرسل شيء؛ التالي ممكن بعد {{time}}.',
+  'label.listCostShares': 'أتحقق ممن دفع',
+  'summary.costShares': 'اللاعبون: {{players}} · الحصص: {{count}}',
+  'summary.costSharesNone': 'لا توجد حصص مطابقة',
+  'summary.costSharesTotals': 'إجماليات {{games}} مباراة',
+  'summary.costSharesPayer': 'المباريات التي تدفع عنها: {{games}}',
 };
 
 const zh: Dictionary = {
@@ -713,6 +743,11 @@ const zh: Dictionary = {
   'error.coinsUnavailable': '目前无法使用金币支付。未发送任何内容。',
   'error.noPayer': '这场比赛已没有付款人。未发送任何内容。',
   'error.remindCooldown': '过去 24 小时内已为这场比赛发送过提醒。未发送任何内容；{{time}} 之后可再次发送。',
+  'label.listCostShares': '正在查看谁已付款',
+  'summary.costShares': '球员：{{players}} · 份额：{{count}}',
+  'summary.costSharesNone': '没有符合条件的份额',
+  'summary.costSharesTotals': '{{games}} 场比赛的合计',
+  'summary.costSharesPayer': '你垫付的比赛：{{games}}',
 };
 
 const id: Dictionary = {
@@ -814,6 +849,11 @@ const id: Dictionary = {
   'error.coinsUnavailable': 'Pembayaran dengan koin sedang tidak tersedia. Tidak ada yang dikirim.',
   'error.noPayer': 'Permainan ini tidak lagi punya pembayar. Tidak ada yang dikirim.',
   'error.remindCooldown': 'Pengingat untuk permainan ini sudah dikirim dalam 24 jam terakhir. Tidak ada yang dikirim; berikutnya bisa setelah {{time}}.',
+  'label.listCostShares': 'Memeriksa siapa yang sudah bayar',
+  'summary.costShares': 'Pemain: {{players}} · bagian: {{count}}',
+  'summary.costSharesNone': 'Tidak ada bagian yang cocok',
+  'summary.costSharesTotals': 'Total untuk {{games}} permainan',
+  'summary.costSharesPayer': 'Permainan yang kamu bayar: {{games}}',
 };
 
 const hi: Dictionary = {
@@ -915,6 +955,11 @@ const hi: Dictionary = {
   'error.coinsUnavailable': 'सिक्कों से भुगतान अभी उपलब्ध नहीं है। कुछ नहीं भेजा गया।',
   'error.noPayer': 'इस गेम का अब कोई भुगतानकर्ता नहीं है। कुछ नहीं भेजा गया।',
   'error.remindCooldown': 'इस गेम के लिए पिछले 24 घंटों में रिमाइंडर भेजा जा चुका है। कुछ नहीं भेजा गया; अगला {{time}} के बाद संभव है।',
+  'label.listCostShares': 'देख रहा हूँ किसने भुगतान किया',
+  'summary.costShares': 'खिलाड़ी: {{players}} · हिस्से: {{count}}',
+  'summary.costSharesNone': 'कोई मेल खाता हिस्सा नहीं',
+  'summary.costSharesTotals': '{{games}} गेम का कुल',
+  'summary.costSharesPayer': 'जिन गेम का भुगतान आप करते हैं: {{games}}',
 };
 
 const th: Dictionary = {
@@ -1016,6 +1061,11 @@ const th: Dictionary = {
   'error.coinsUnavailable': 'ตอนนี้ยังจ่ายด้วยเหรียญไม่ได้ ไม่มีการส่งใด ๆ',
   'error.noPayer': 'เกมนี้ไม่มีผู้จ่ายแล้ว ไม่มีการส่งใด ๆ',
   'error.remindCooldown': 'ส่งการเตือนสำหรับเกมนี้ไปแล้วใน 24 ชั่วโมงที่ผ่านมา ไม่มีการส่งใด ๆ ครั้งถัดไปได้หลัง {{time}}',
+  'label.listCostShares': 'กำลังตรวจสอบว่าใครจ่ายแล้ว',
+  'summary.costShares': 'ผู้เล่น: {{players}} · ส่วนแบ่ง: {{count}}',
+  'summary.costSharesNone': 'ไม่มีส่วนแบ่งที่ตรงกัน',
+  'summary.costSharesTotals': 'ยอดรวมของ {{games}} เกม',
+  'summary.costSharesPayer': 'เกมที่คุณจ่าย: {{games}}',
 };
 
 const ja: Dictionary = {
@@ -1117,6 +1167,11 @@ const ja: Dictionary = {
   'error.coinsUnavailable': '現在コインでの支払いは利用できません。何も送っていません。',
   'error.noPayer': 'このゲームには支払者がいなくなりました。何も送っていません。',
   'error.remindCooldown': 'このゲームのリマインドは過去24時間以内に送信済みです。何も送っていません。次は{{time}}以降に送れます。',
+  'label.listCostShares': '支払った人を確認しています',
+  'summary.costShares': 'プレイヤー: {{players}} · 負担分: {{count}}',
+  'summary.costSharesNone': '該当する負担分はありません',
+  'summary.costSharesTotals': '{{games}} ゲームの合計',
+  'summary.costSharesPayer': 'あなたが立て替えるゲーム: {{games}}',
 };
 
 export const AGENT_MONEY_I18N_TRANSLATIONS: Record<string, Dictionary> = { ru, sr, es, cs, ar, zh, id, hi, th, ja };
