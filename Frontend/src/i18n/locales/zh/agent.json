@@ -43,7 +43,9 @@
     "tool": {
       "working": "正在处理…",
       "done": "已完成",
-      "failed": "步骤失败"
+      "failed": "步骤失败",
+      "steps": "{{n}} 个步骤",
+      "stepsFailed": "{{n}} 个步骤 · {{failed}} 个失败"
     },
     "action": {
       "heading": "确认更改",

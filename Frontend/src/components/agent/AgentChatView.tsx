@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -24,14 +24,14 @@ import { agentRunIdToAttach } from '@/features/agent/agentRunAttach';
 import { useAgentRun } from '@/features/agent/agentRunStore';
 import { isTerminalPhase } from '@/features/agent/agentRunReducer';
 import { isLiveAgentRunStatus } from '@/features/agent/agentChatsPolling';
-import { buildAgentTimeline, type AgentTimelineItem } from '@/features/agent/agentTimeline';
+import { buildAgentTimeline, groupAgentTimeline, type AgentRenderItem } from '@/features/agent/agentTimeline';
 import { agentErrorCodeOf, agentErrorKey } from '@/features/agent/agentErrors';
 import { AgentSendContext, type AgentSendApi } from '@/features/agent/agentSendContext';
 import { stripAgentRefTokens } from '@/features/agent/agentBookingCards';
 import type { AgentErrorCode } from '@shared/agentContract';
 import { AgentComposer } from './AgentComposer';
 import { AgentMarkdown } from './AgentMarkdown';
-import { AgentToolChip } from './AgentToolChip';
+import { AgentToolGroup } from './AgentToolGroup';
 import { AgentActionCard } from './AgentActionCard';
 import { AgentClientActionCard } from './AgentClientActionCard';
 import { useAgentClientExecution, useAgentClientResume } from '@/queries/agent/useAgentClientExecution';
@@ -42,6 +42,8 @@ import {
 } from './agentExamplePrompts';
 
 const STICK_THRESHOLD_PX = 80;
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const ITEM_ENTER = { duration: 0.32, ease: EASE_OUT };
 const AGENT_LIST_URL = '/?tab=ai';
 
 interface PendingSend {
@@ -128,10 +130,44 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
   const stickRef = useRef(true);
   const [footerHeight, setFooterHeight] = useState(88);
 
+  const followRafRef = useRef<number | null>(null);
+  const initialScrollDoneRef = useRef(false);
+
+  const stopFollowing = useCallback(() => {
+    if (followRafRef.current != null) cancelAnimationFrame(followRafRef.current);
+    followRafRef.current = null;
+  }, []);
+
+  // Glide to the bottom as content grows (streamed lines, cards) instead of jumping per chunk.
+  // The first scroll after load is instant so the history doesn't scroll by.
   const scrollToBottom = useCallback(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    if (!initialScrollDoneRef.current) {
+      el.scrollTop = el.scrollHeight;
+      return;
+    }
+    if (followRafRef.current != null) return;
+    const step = () => {
+      const node = scrollRef.current;
+      if (!node) {
+        followRafRef.current = null;
+        return;
+      }
+      const target = node.scrollHeight - node.clientHeight;
+      const diff = target - node.scrollTop;
+      if (diff <= 1) {
+        node.scrollTop = target;
+        followRafRef.current = null;
+        return;
+      }
+      node.scrollTop += Math.max(1, diff * 0.22);
+      followRafRef.current = requestAnimationFrame(step);
+    };
+    followRafRef.current = requestAnimationFrame(step);
   }, []);
+
+  useEffect(() => stopFollowing, [stopFollowing]);
 
   useEffect(() => {
     const scroller = scrollRef.current;
@@ -150,20 +186,27 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
 
   const onScroll = () => {
     const el = scrollRef.current;
-    if (!el) return;
+    // Our own glide: don't let its intermediate positions unstick the view.
+    if (!el || followRafRef.current != null) return;
     stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_THRESHOLD_PX;
   };
 
   const timeline = useMemo(
-    () => (detail ? buildAgentTimeline(detail.messages, detail.actions, live) : []),
+    () => (detail ? groupAgentTimeline(buildAgentTimeline(detail.messages, detail.actions, live)) : []),
     [detail, live],
   );
+
+  // Keys on screen when the chat first loaded: that history shows at once; anything later types in.
+  const initialKeysRef = useRef<Set<string> | null>(null);
+  if (initialKeysRef.current == null && detail) initialKeysRef.current = new Set(timeline.map((i) => i.key));
+  const arrivedLive = (key: string) => initialKeysRef.current != null && !initialKeysRef.current.has(key);
 
   const lastItem = timeline[timeline.length - 1];
   const contentSignature = `${timeline.length}:${lastItem?.kind === 'assistantText' ? lastItem.text.length : 0}:${pending.length}`;
   useLayoutEffect(() => {
     if (stickRef.current) scrollToBottom();
-  }, [contentSignature, scrollToBottom]);
+    if (timeline.length > 0) initialScrollDoneRef.current = true;
+  }, [contentSignature, scrollToBottom, timeline.length]);
 
   // ---- sending ----
   const send = useCallback(
@@ -249,18 +292,18 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     });
   };
 
-  const renderItem = (item: AgentTimelineItem) => {
+  const renderItem = (item: AgentRenderItem) => {
     switch (item.kind) {
       case 'user':
         return <UserBubble text={item.text} />;
       case 'assistantText':
         return (
           <div className="max-w-full text-gray-900 dark:text-gray-100">
-            <AgentMarkdown text={item.text} streaming={item.streaming} />
+            <AgentMarkdown text={item.text} streaming={item.streaming} animate={arrivedLive(item.key)} />
           </div>
         );
-      case 'tool':
-        return <AgentToolChip tool={item.tool} />;
+      case 'toolGroup':
+        return <AgentToolGroup tools={item.tools} />;
       case 'action':
         if (item.action?.execution === 'client') {
           return (
@@ -284,8 +327,15 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     }
   };
 
+  // Thinking: nothing streamed yet, waiting after a confirmation, or every tool step returned
+  // and the model hasn't started its next text / call.
+  const lastSegment = live?.segments[live.segments.length - 1];
   const showThinking =
-    running && !queued && (!live || live.segments.length === 0 || live.segments[live.segments.length - 1].kind === 'action');
+    running &&
+    !queued &&
+    (!lastSegment ||
+      lastSegment.kind === 'action' ||
+      (lastSegment.kind === 'tool' && live?.tools[lastSegment.callId]?.status !== 'running'));
   // A client-side attach failure only matters while the server still has the run active.
   const runError =
     !running && live?.phase === 'failed' && !(live.connectionFailed && serverRunId == null) ? live.error : null;
@@ -346,6 +396,8 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
         <div
           ref={scrollRef}
           onScroll={onScroll}
+          onWheel={stopFollowing}
+          onTouchStart={stopFollowing}
           className="thread-message-scroll h-full overflow-y-auto overscroll-contain"
           style={{ paddingBottom: footerHeight + 12 }}
         >
@@ -371,9 +423,9 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                 <motion.div
                   key={item.key}
                   layout="position"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18 }}
+                  transition={ITEM_ENTER}
                 >
                   <AgentSendContext.Provider value={cardSendApi}>{renderItem(item)}</AgentSendContext.Provider>
                 </motion.div>
@@ -381,9 +433,11 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
               {pending.map((p) => (
                 <motion.div
                   key={p.localId}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18 }}
+                  layout="position"
+                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={ITEM_ENTER}
+                  style={{ transformOrigin: '100% 100%' }}
                 >
                   <UserBubble text={p.text} sending={!p.failed} />
                   {p.failed ? (
@@ -403,25 +457,37 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
               ))}
             </AnimatePresence>
 
-            {queued ? (
-              <QueuedPlaceholder
-                label={
-                  queuePosition != null && queuePosition > 0
-                    ? t('agent.status.waitingInQueuePosition', { position: queuePosition })
-                    : t('agent.status.waitingInQueue')
-                }
-              />
-            ) : null}
-            {showThinking ? <ThinkingDots label={t('agent.status.thinking')} /> : null}
-            {runError ? (
-              <div className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
-                <AlertCircle size={16} className="mt-0.5 flex-shrink-0" aria-hidden />
-                <span>{t(agentErrorKey(runError.code))}</span>
-              </div>
-            ) : null}
-            {runStopped ? (
-              <p className="text-center text-xs text-gray-400 dark:text-gray-500">{t('agent.status.stopped')}</p>
-            ) : null}
+            <AnimatePresence initial={false} mode="popLayout">
+              {queued ? (
+                <StatusFade key="queued">
+                  <QueuedPlaceholder
+                    label={
+                      queuePosition != null && queuePosition > 0
+                        ? t('agent.status.waitingInQueuePosition', { position: queuePosition })
+                        : t('agent.status.waitingInQueue')
+                    }
+                  />
+                </StatusFade>
+              ) : null}
+              {showThinking ? (
+                <StatusFade key="thinking">
+                  <ThinkingDots label={t('agent.status.thinking')} />
+                </StatusFade>
+              ) : null}
+              {runError ? (
+                <StatusFade key="error">
+                  <div className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+                    <AlertCircle size={16} className="mt-0.5 flex-shrink-0" aria-hidden />
+                    <span>{t(agentErrorKey(runError.code))}</span>
+                  </div>
+                </StatusFade>
+              ) : null}
+              {runStopped ? (
+                <StatusFade key="stopped">
+                  <p className="text-center text-xs text-gray-400 dark:text-gray-500">{t('agent.status.stopped')}</p>
+                </StatusFade>
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
       </main>
@@ -483,15 +549,31 @@ function UserBubble({ text, sending = false }: { text: string; sending?: boolean
   );
 }
 
+function StatusFade({ children }: { children: ReactNode }) {
+  return (
+    <motion.div
+      layout="position"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      transition={ITEM_ENTER}
+      className="flex flex-col"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function ThinkingDots({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400" role="status">
       <span className="flex gap-1" aria-hidden>
         {[0, 1, 2].map((i) => (
-          <span
+          <motion.span
             key={i}
-            className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 dark:bg-gray-500"
-            style={{ animationDelay: `${i * 120}ms` }}
+            className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500"
+            animate={{ opacity: [0.35, 1, 0.35], y: [0, -2, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.18 }}
           />
         ))}
       </span>

@@ -169,3 +169,49 @@ export function buildAgentTimeline(
 
   return items;
 }
+
+export type AgentRenderItem =
+  | Exclude<AgentTimelineItem, { kind: 'tool' }>
+  | { kind: 'toolGroup'; key: string; tools: AgentToolItemData[] };
+
+/**
+ * What the chat renders: consecutive tool steps fold into one group, and keys stay the same
+ * across the live → persisted handover (`message.saved` swaps `live-…` items for `m-…` ones with
+ * the same content), so streamed text and open groups are not remounted mid-animation.
+ * Text keys hang off the last non-text item (`t-<anchor>-<n>`), groups off their first call.
+ */
+export function groupAgentTimeline(items: readonly AgentTimelineItem[]): AgentRenderItem[] {
+  const out: AgentRenderItem[] = [];
+  let group: { kind: 'toolGroup'; key: string; tools: AgentToolItemData[] } | null = null;
+  let anchor = 'start';
+  let texts = 0;
+  for (const item of items) {
+    if (item.kind === 'tool') {
+      if (group) {
+        group.tools.push(item.tool);
+        continue;
+      }
+      group = { kind: 'toolGroup', key: `c-${item.tool.callId}`, tools: [item.tool] };
+      out.push(group);
+      anchor = group.key;
+      texts = 0;
+      continue;
+    }
+    // Live drafts keep whitespace-only text that the persisted copy drops.
+    if (item.kind === 'assistantText' && !item.text.trim()) continue;
+    group = null;
+    if (item.kind === 'assistantText') {
+      out.push({ ...item, key: `t-${anchor}-${texts++}` });
+    } else if (item.kind === 'action') {
+      const key = `a-${item.actionId}`;
+      out.push({ ...item, key });
+      anchor = key;
+      texts = 0;
+    } else {
+      out.push(item);
+      anchor = item.key;
+      texts = 0;
+    }
+  }
+  return out;
+}

@@ -43,7 +43,9 @@
     "tool": {
       "working": "Radim na tome…",
       "done": "Gotovo",
-      "failed": "Korak nije uspeo"
+      "failed": "Korak nije uspeo",
+      "steps": "Koraci: {{n}}",
+      "stepsFailed": "Koraci: {{n}} · neuspešno: {{failed}}"
     },
     "action": {
       "heading": "Potvrdite izmenu",

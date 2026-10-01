@@ -43,7 +43,9 @@
     "tool": {
       "working": "Sedang dikerjakan…",
       "done": "Selesai",
-      "failed": "Langkah gagal"
+      "failed": "Langkah gagal",
+      "steps": "{{n}} langkah",
+      "stepsFailed": "{{n}} langkah · {{failed}} gagal"
     },
     "action": {
       "heading": "Konfirmasi perubahan",

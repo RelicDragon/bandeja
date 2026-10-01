@@ -43,7 +43,9 @@
     "tool": {
       "working": "Pracuji na tom…",
       "done": "Hotovo",
-      "failed": "Krok selhal"
+      "failed": "Krok selhal",
+      "steps": "Kroky: {{n}}",
+      "stepsFailed": "Kroky: {{n}} · selhalo: {{failed}}"
     },
     "action": {
       "heading": "Potvrďte změnu",

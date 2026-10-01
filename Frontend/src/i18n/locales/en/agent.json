@@ -43,7 +43,9 @@
     "tool": {
       "working": "Working on it…",
       "done": "Done",
-      "failed": "Step failed"
+      "failed": "Step failed",
+      "steps": "{{n}} steps",
+      "stepsFailed": "{{n}} steps · {{failed}} failed"
     },
     "action": {
       "heading": "Confirm change",

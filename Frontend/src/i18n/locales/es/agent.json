@@ -43,7 +43,9 @@
     "tool": {
       "working": "En ello…",
       "done": "Hecho",
-      "failed": "El paso falló"
+      "failed": "El paso falló",
+      "steps": "{{n}} pasos",
+      "stepsFailed": "{{n}} pasos · {{failed}} con error"
     },
     "action": {
       "heading": "Confirma el cambio",

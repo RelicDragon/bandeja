@@ -43,7 +43,9 @@
     "tool": {
       "working": "処理中…",
       "done": "完了",
-      "failed": "ステップに失敗しました"
+      "failed": "ステップに失敗しました",
+      "steps": "{{n}} ステップ",
+      "stepsFailed": "{{n}} ステップ · {{failed}} 件失敗"
     },
     "action": {
       "heading": "変更の確認",

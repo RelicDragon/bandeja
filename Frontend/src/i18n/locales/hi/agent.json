@@ -43,7 +43,9 @@
     "tool": {
       "working": "काम हो रहा है…",
       "done": "हो गया",
-      "failed": "चरण विफल रहा"
+      "failed": "चरण विफल रहा",
+      "steps": "{{n}} चरण",
+      "stepsFailed": "{{n}} चरण · {{failed}} विफल"
     },
     "action": {
       "heading": "बदलाव की पुष्टि करें",

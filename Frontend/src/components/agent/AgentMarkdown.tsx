@@ -3,11 +3,14 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import { classifyAgentLink } from '@/features/agent/agentLinks';
+import { useSmoothText } from '@/features/agent/useSmoothText';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 
 interface AgentMarkdownProps {
   text: string;
   streaming?: boolean;
+  /** Type the text out even when not streaming (a reply that arrived whole after the chat opened). */
+  animate?: boolean;
 }
 
 function AgentLink({ href, children }: ComponentProps<'a'>) {
@@ -60,17 +63,22 @@ const COMPONENTS: Components = {
   img: () => null,
 };
 
-/** Assistant markdown: GFM, no raw HTML (react-markdown's default), links vetted by `classifyAgentLink`. */
-export const AgentMarkdown = memo(function AgentMarkdown({ text, streaming }: AgentMarkdownProps) {
+/**
+ * Assistant markdown: GFM, no raw HTML (react-markdown's default), links vetted by `classifyAgentLink`.
+ * Streamed text eases in (`useSmoothText`) instead of landing in network-sized chunks.
+ */
+export const AgentMarkdown = memo(function AgentMarkdown({ text, streaming = false, animate = false }: AgentMarkdownProps) {
+  const smooth = useSmoothText(text, streaming || animate);
+  const typing = streaming || smooth.revealing;
   return (
     <div className="agent-markdown break-words text-[15px] leading-relaxed" dir="auto">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={COMPONENTS} skipHtml>
-        {text}
+        {smooth.text}
       </ReactMarkdown>
-      {streaming ? (
+      {typing ? (
         <span
           aria-hidden
-          className="ms-0.5 inline-block h-4 w-1.5 translate-y-0.5 animate-pulse rounded-sm bg-gray-400 dark:bg-gray-500"
+          className="ms-0.5 inline-block h-4 w-1 translate-y-0.5 animate-pulse rounded-full bg-gray-400 dark:bg-gray-500"
         />
       ) : null}
     </div>

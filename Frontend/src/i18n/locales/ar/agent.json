@@ -43,7 +43,9 @@
     "tool": {
       "working": "جارٍ التنفيذ…",
       "done": "تم",
-      "failed": "فشلت الخطوة"
+      "failed": "فشلت الخطوة",
+      "steps": "الخطوات: {{n}}",
+      "stepsFailed": "الخطوات: {{n}} · فشل: {{failed}}"
     },
     "action": {
       "heading": "تأكيد التغيير",
