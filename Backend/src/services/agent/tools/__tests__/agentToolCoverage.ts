@@ -65,6 +65,10 @@
  *                     cost-share POST routes, `set_game_price` with `PUT /games/:id`; stale cards, trainer /
  *                     season owner, frozen, coins (critical, `expect`), price locks and escalation, cooldown
  *                     (`__tests__/agentMoney.integration.test.ts`, `npm run test:agent-money`)
+ *   web-read-cases — Phase 13 `web_search` / `web_fetch`: hidden without keys / kill switch, forged
+ *                     calls, strict input, personal-data refusal, per-run / per-day / global / budget
+ *                     limits, audit rows, URL allowlist, taint (`__tests__/agentWeb.integration.test.ts`,
+ *                     `npm run test:agent-web`)
  */
 export type AgentToolCoverageKind =
   | 'game-matrix'
@@ -91,7 +95,8 @@ export type AgentToolCoverageKind =
   | 'results-read-cases'
   | 'results-write-cases'
   | 'money-read-cases'
-  | 'money-write-cases';
+  | 'money-write-cases'
+  | 'web-read-cases';
 
 export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = {
   list_my_games: 'game-matrix',
@@ -151,4 +156,6 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   pay_my_share_with_coins: 'money-write-cases',
   set_game_price: 'money-write-cases',
   remind_unpaid_shares: 'money-write-cases',
+  web_search: 'web-read-cases',
+  web_fetch: 'web-read-cases',
 };

@@ -363,14 +363,11 @@ Privacy: EULA §1.10 gets one bullet in every language: when the assistant searc
 
 All without network: providers and chain get an injected `fetchImpl`, the guard an injected `lookup`, clocks are injected; the integration test stubs the chain and fetch service through the tool module's deps. `npm run test:agent-web` (in `test:agent` too):
 
-- **Unit (no DB)** `services/agent/web/__tests__/`:
-  - `webSearchError.test.ts`: Retry-After forms, caps, HTTP → kind, thrown → kind.
-  - `providerHealth.test.ts`: cooldown per kind, recovery, Retry-After wins, backoff growth and cap, independence, reset, snapshot copy.
-  - `providers.test.ts`: Tavily request shape (bearer header, **no key in body**, `include_answer`), answer trimming; Brave headers / query / `search_result` filter; DDG parser + `uddg`; normalization (http(s) only, trims, dedupe); error kinds; no key in any error message.
+- **Unit (no DB)** `services/agent/web/__tests__/` (as built, grouped in three files):
+  - `webSearchBasics.test.ts`: env rule; Retry-After forms, caps, HTTP → kind, thrown → kind; breaker cooldown per kind, recovery, Retry-After wins, backoff growth and cap, independence, reset, snapshot copy; rotation; TTL cache; URL canon; Tavily request shape (bearer header, **no key in body**, `include_answer`), answer trimming; Brave headers / query / `search_result` filter; DDG parser + `uddg`; normalization (http(s) only, trims, dedupe); error kinds; no key in any error message.
   - `webSearchChain.test.ts`: LRU alternation over two healthy providers; ordered strategy; failover on 429 / 500 / empty; cooldown skip; one-off 400 doesn't cool; exhausted vs genuine empty; `tried` without messages; cache hit / no caching of failures / single-flight; whole-chain deadline; caller abort doesn't cool; `admit` false → `rateLimited`, no network; kill switch; "configured" ignores DDG; DDG only last and only when enabled.
-  - `ssrfGuard.test.ts`: v4 / v6 tables incl. mapped, compatible, NAT64, 6to4, Teredo; shape rules (scheme, userinfo, ports, IP literals, suffixes, single label, refused domains); DNS: any private answer refuses, empty / error fails closed.
-  - `webFetchService.test.ts`: happy path extraction; redirect to a private host refused; redirect cycle / too many; non-http Location; content-type refusal and sniffing; size cap; charset; HTTP error; cache + `maxChars` trim; DNS rebinding (the pinned lookup returns only vetted addresses).
-  - `htmlToText.test.ts`, `webUrl.test.ts`, `agentWebQuery.test.ts` (personal data cases), `providerRotation.test.ts`.
+  - `webFetch.test.ts`: v4 / v6 tables incl. mapped, compatible, NAT64, 6to4, Teredo; shape rules (scheme, userinfo, ports, IP literals, suffixes, single label, refused domains); DNS: any private answer refuses, empty / error fails closed; pinned lookup (DNS rebinding: only vetted addresses); HTML → text; fetch service: happy path extraction, redirect to a private host refused, redirect cycle / too many, non-http Location, content-type refusal and sniffing, size cap, charset, HTTP error, cache + `maxChars` trim, timeout.
+  - Personal-data query cases live in the integration test (they go through the tool).
 - **Integration (DB)** `services/agent/__tests__/agentWeb.integration.test.ts`: tools hidden without keys / with the kill switch, forged call → `unknown_tool`; strict input (extra keys, `userId`); personal-data refusal makes no call and no row; per-run, per-user-day, global and budget refusals; audit rows (hash, no query text, host only, charges) and `agentTokensUsedToday` including them; cached call = 0 charge but counted; allowlist (same-run search URL yes, history search URL yes, user-typed URL yes, changed query string no, model-invented no, other chat no); taint (after `web_search`, an ALWAYS_ALLOW standard write in the same run is a PENDING card); prompt rule present only when enabled; `web` view on `tool.finished` and the persisted block.
 - Registry + i18n parity (`agentToolRegistry.test.ts`, `agentI18nParity.test.ts`), Telegram `agentBotWeb.test.ts` (in `test:telegram-agent`), FE `AgentWebResults` via `agentTimeline` / reducer tests and the FE locale parity test.
 - **Manual smoke** `npm run smoke:agent-web` (`scripts/agent-web-smoke.ts`, not in CI): one trivial query to Tavily and one to Brave directly through the adapters, prints `tavily: ok (n results)` / `brave: failed (auth)`; never the key or response body.
@@ -379,9 +376,9 @@ All without network: providers and chain get an injected `fetchImpl`, the guard 
 
 | Slice | Scope | Status |
 |---|---|---|
-| 13a | search: error, utils, health, rotation, providers, chain, cache + unit tests, env | planned |
-| 13b | fetch: SSRF guard, pinned dispatcher, extractor, fetch service + unit tests | planned |
-| 13c | tools, registry hooks, prompt rule, limits / budget / audit, taint, i18n, EULA, integration tests | planned |
+| 13a | search: error, utils, health, rotation, providers, chain, cache + unit tests, env | built 2026-10-01 |
+| 13b | fetch: SSRF guard, pinned dispatcher, extractor, fetch service + unit tests | built 2026-10-01 |
+| 13c | tools, registry hooks, prompt rule, limits / budget / audit, taint, i18n, EULA, integration tests | built 2026-10-01 |
 | 13d | contract `web` view, app `AgentWebResults`, Telegram block, FE / bot i18n | planned |
 
 ## 13.15 Risks and follow-ups

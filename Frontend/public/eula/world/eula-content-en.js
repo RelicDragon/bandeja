@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['en'] = `<h1>Privacy Policy & User Agreement</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. Privacy Policy</h2>
@@ -89,6 +89,7 @@ Applies worldwide</p>
 </ul>
 </li>
 <li><strong>Other AI processing:</strong> Other AI features, such as automatic translation of messages and texts and voice transcription, are processed by AI providers (OpenAI or DeepSeek) in the same way.</li>
+<li><strong>Web search:</strong> When the assistant searches the web for you, the short search words it writes (never your whole message or your contact details) are sent to a third-party search provider (currently Tavily or Brave). When it opens a web page, that website receives a request from our servers. Searches are stored with the conversation; usage is logged without the search words.</li>
 <li><strong>Actions:</strong> The assistant can prepare changes on your behalf (for example, editing a game or inviting players), but nothing is changed until you confirm each action.</li>
 <li><strong>Storage:</strong> Conversations are stored on our servers and linked to your account so you can continue them later. You can archive chats. We log usage metadata (such as token counts) to prevent abuse and control costs. If you connect club booking accounts (Booktime, Padeloo, Klikteren), the app also copies your upcoming bookings at those clubs (club, court, time and status) to our servers, so the assistant and the Telegram bot can list them and link them to games.</li>
 <li><strong>Limits:</strong> The assistant has no access to games or data that you cannot see in the app. Please do not enter sensitive personal data in AI chats.</li>
@@ -178,6 +179,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>This document was last updated on 30/09/2026. We reserve the right to update this policy and agreement at any time.</p>
+<p>This document was last updated on 01/10/2026. We reserve the right to update this policy and agreement at any time.</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

@@ -18,6 +18,7 @@ import { AGENT_ROSTER_I18N_EN, AGENT_ROSTER_I18N_TRANSLATIONS } from '../agentRo
 import { AGENT_SLOTS_I18N_EN, AGENT_SLOTS_I18N_TRANSLATIONS } from '../agentSlotsI18n';
 import { AGENT_TOOL_PERMISSION_I18N_EN, AGENT_TOOL_PERMISSION_I18N_TRANSLATIONS } from '../agentToolPermissionI18n';
 import { AGENT_WEATHER_I18N_EN, AGENT_WEATHER_I18N_TRANSLATIONS } from '../agentWeatherI18n';
+import { AGENT_WEB_I18N_EN, AGENT_WEB_I18N_TRANSLATIONS } from '../agentWebI18n';
 
 type Dictionaries = { en: Record<string, string>; translations: Record<string, Partial<Record<string, string>>> };
 
@@ -36,6 +37,7 @@ const DICTIONARIES: Record<string, Dictionaries> = {
   agentSlotsI18n: { en: AGENT_SLOTS_I18N_EN, translations: AGENT_SLOTS_I18N_TRANSLATIONS },
   agentToolPermissionI18n: { en: AGENT_TOOL_PERMISSION_I18N_EN, translations: AGENT_TOOL_PERMISSION_I18N_TRANSLATIONS },
   agentWeatherI18n: { en: AGENT_WEATHER_I18N_EN, translations: AGENT_WEATHER_I18N_TRANSLATIONS },
+  agentWebI18n: { en: AGENT_WEB_I18N_EN, translations: AGENT_WEB_I18N_TRANSLATIONS },
 };
 
 function placeholders(text: string): string[] {

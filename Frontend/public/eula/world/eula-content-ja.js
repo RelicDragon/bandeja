@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['ja'] = `<h1>プライバシーポリシーと利用規約</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. プライバシーポリシー</h2>
@@ -88,6 +88,7 @@ Applies worldwide</p>
 </ul>
 </li>
 <li><strong>その他のAI処理:</strong> メッセージやテキストの自動翻訳、音声の文字起こしなど、その他のAI機能も同様にAIプロバイダー（OpenAIまたはDeepSeek）によって処理されます。</li>
+<li><strong>ウェブ検索:</strong> アシスタントがお客様のためにウェブを検索するとき、アシスタントが作成する短い検索語（お客様のメッセージ全体や連絡先情報は決して含みません）が第三者の検索プロバイダー（現在は Tavily または Brave）に送信されます。ウェブページを開くとき、そのウェブサイトは当社のサーバーからリクエストを受け取ります。検索は会話とともに保存され、利用ログには検索語を記録しません。</li>
 <li><strong>操作:</strong> アシスタントはお客様に代わって変更を準備できます（例：ゲームの編集、プレイヤーの招待）が、お客様が各操作を確認するまで何も変更されません。</li>
 <li><strong>保存:</strong> 会話は当社のサーバーに保存され、続きから利用できるようお客様のアカウントに紐付けられます。チャットはアーカイブできます。不正利用の防止とコスト管理のため、利用メタデータ（トークン数など）を記録します。クラブの予約アカウント（Booktime、Padeloo、Klikteren）を連携している場合、アシスタントと Telegram ボットが予約を一覧表示し試合に紐付けられるよう、アプリはそれらのクラブでの今後の予約（クラブ、コート、時間、状態）を当社のサーバーにもコピーします。</li>
 <li><strong>制限:</strong> アシスタントは、お客様がアプリ内で閲覧できないゲームやデータにはアクセスできません。AIチャットには機微な個人情報を入力しないでください。</li>
@@ -177,6 +178,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>このドキュメントの最終更新日は 2026 年 9 月 30 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
+<p>このドキュメントの最終更新日は 2026 年 10 月 1 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

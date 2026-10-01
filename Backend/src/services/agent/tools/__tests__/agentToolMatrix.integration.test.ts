@@ -387,6 +387,7 @@ void (async () => {
       if (kind === 'weather-read-cases') continue; // __tests__/agentWeather.integration.test.ts
       if (kind === 'results-read-cases' || kind === 'results-write-cases') continue; // __tests__/agentResults.integration.test.ts
       if (kind === 'money-read-cases' || kind === 'money-write-cases') continue; // __tests__/agentMoney.integration.test.ts
+      if (kind === 'web-read-cases') continue; // __tests__/agentWeb.integration.test.ts
       assert.ok(covered.has(name), `${name} (${kind}) has no authorization cases in this test`);
     }
     console.log(`agentToolMatrix.integration.test.ts: ok (${covered.size} tools)`);

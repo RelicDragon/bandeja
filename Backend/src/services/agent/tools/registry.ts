@@ -16,9 +16,14 @@
  */
 import { fromZonedTime } from 'date-fns-tz';
 import { z } from 'zod/v4';
-import type { AgentEntityRef, AgentToolRiskTier as AgentToolRiskTierContract } from '@bandeja/shared/agentContract';
+import type {
+  AgentEntityRef,
+  AgentToolRiskTier as AgentToolRiskTierContract,
+  AgentWebView,
+} from '@bandeja/shared/agentContract';
 import { ApiError } from '../../../utils/ApiError';
 import type { AgentPrincipal } from '../access/agentPrincipal';
+import type { AgentWebRunSession } from '../web/agentWebSession';
 import { agentT } from '../i18n/agentI18n';
 
 export type AgentToolKind = 'read' | 'write';
@@ -51,6 +56,8 @@ export type AgentToolContext = {
    */
   tool?: AgentToolDefinition;
   signal?: AbortSignal;
+  /** Per-run web tool state (call counts, URLs a search returned); set by the run loop. */
+  web?: AgentWebRunSession;
 };
 
 export type AgentToolResult = {
@@ -59,6 +66,14 @@ export type AgentToolResult = {
   /** Short human line for the UI chip ("Found 4 games"). Server-written. */
   summary: string;
   entities?: AgentEntityRef[];
+  /**
+   * A refusal the handler answered itself (limit reached, URL not allowed…): `data` carries
+   * the error for the model, `summary` the localized line, and the call counts as failed
+   * (`ok: false`, so it never taints the run). Throwing stays the way to report ApiErrors.
+   */
+  failed?: boolean;
+  /** UI view of a web tool step (`web_search` / `web_fetch`), copied to the event and block. */
+  web?: AgentWebView;
   /**
    * Write tools (phase 3): the pending action this call created. The run loop emits
    * `action.pending` and ends the run as `AWAITING_CONFIRMATION`.
@@ -130,14 +145,28 @@ export type AgentToolDefinition<S extends z.ZodType = z.ZodType> = {
    */
   promptHint?: string;
   /**
-   * Read tools that return text written by other people (game chat; later web search).
+   * Read tools that return text written by other people (game chat, web search / fetch).
    * A successful call taints the run: no write proposed later in that run auto-approves
    * (ALWAYS_ALLOW is ignored → normal confirmation card; `agentActionAutoApprove.ts`).
    */
   untrustedContent?: boolean;
+  /**
+   * Feature switch read on every listing and call (web tools: kill switch + keys). False →
+   * the tool is not listed and a forged call answers `unknown_tool`.
+   */
+  isAvailable?: () => boolean;
 };
 
 const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]{1,63}$/;
+
+function isToolAvailable(tool: Pick<AgentToolDefinition, 'isAvailable'>): boolean {
+  if (!tool.isAvailable) return true;
+  try {
+    return tool.isAvailable();
+  } catch {
+    return false;
+  }
+}
 
 export function defineTool<S extends z.ZodType>(definition: AgentToolDefinition<S>): AgentToolDefinition<S> {
   if (!TOOL_NAME_PATTERN.test(definition.name)) {
@@ -183,6 +212,7 @@ export type AgentToolExecution = {
   summary: string;
   label: string;
   entities?: AgentEntityRef[];
+  web?: AgentWebView;
   awaitingConfirmation?: { actionId: string };
 };
 
@@ -218,9 +248,9 @@ export class AgentToolRegistry {
     return this.tools.get(name);
   }
 
-  /** Tools the principal may see. Admin-scope tools are hidden from non-admins. */
+  /** Tools the principal may see. Admin-scope tools are hidden from non-admins; switched-off tools from everyone. */
   toolsForPrincipal(principal: Pick<AgentPrincipal, 'isAdmin'>): AgentToolDefinition[] {
-    return this.list().filter((tool) => tool.scope === 'user' || principal.isAdmin);
+    return this.list().filter((tool) => (tool.scope === 'user' || principal.isAdmin) && isToolAvailable(tool));
   }
 
   openAiToolsFor(principal: Pick<AgentPrincipal, 'isAdmin'>): AgentOpenAiTool[] {
@@ -249,7 +279,7 @@ export class AgentToolRegistry {
   async executeTool(ctx: AgentToolContext, name: string, rawArgs: unknown): Promise<AgentToolExecution> {
     const tool = this.tools.get(name);
     const { locale } = ctx;
-    if (!tool || (tool.scope === 'admin' && !ctx.principal.isAdmin)) {
+    if (!tool || (tool.scope === 'admin' && !ctx.principal.isAdmin) || !isToolAvailable(tool)) {
       return { ok: false, data: { error: 'unknown_tool', name }, summary: agentT(locale, 'error.unknownTool'), label: name };
     }
     const label = this.labelFor(name, rawArgs, ctx.locale);
@@ -271,11 +301,12 @@ export class AgentToolRegistry {
     try {
       const result = await tool.handler({ ...ctx, tool }, parsed.data);
       return {
-        ok: true,
+        ok: !result.failed,
         data: result.data,
         summary: result.summary,
         label,
         ...(result.entities?.length ? { entities: result.entities } : {}),
+        ...(result.web ? { web: result.web } : {}),
         ...(result.awaitingConfirmation ? { awaitingConfirmation: result.awaitingConfirmation } : {}),
       };
     } catch (error) {

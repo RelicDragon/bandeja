@@ -188,6 +188,38 @@ export function agentEntityKey(entity: AgentEntityRef): string {
   }
 }
 
+/** Search provider that answered a `web_search` (docs/plans/ai-agent-web-search.md §13.11). */
+export type AgentWebProvider = 'tavily' | 'brave' | 'duckduckgo';
+
+export interface AgentWebSearchLink {
+  title: string;
+  /** http(s) only. */
+  url: string;
+  /** Hostname without `www.`. */
+  host: string;
+  snippet: string;
+}
+
+/**
+ * Server-built view of a web tool step for the UI (never model text). Optional and additive:
+ * old app builds ignore it and show the plain chip.
+ */
+export type AgentWebView =
+  | {
+      kind: 'search';
+      query: string;
+      provider: AgentWebProvider | null;
+      cached: boolean;
+      /** Every provider failed (the trail is in `tried`). */
+      exhausted: boolean;
+      /** The provider's own summary (Tavily), if any. */
+      answer: string | null;
+      results: AgentWebSearchLink[];
+      /** Failover trail: error / skip kinds only, never messages. */
+      tried: { provider: string; error?: string; skipped?: string }[];
+    }
+  | { kind: 'fetch'; url: string; host: string; title: string | null; cached: boolean; truncated: boolean };
+
 export interface AgentActionPreviewLine {
   label: string;
   from: string | null;
@@ -249,7 +281,7 @@ export interface AgentPendingActionDto {
 export type AgentContentBlock =
   | { type: 'text'; text: string }
   | { type: 'tool_call'; callId: string; name: string; label: string }
-  | { type: 'tool_result'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[] }
+  | { type: 'tool_result'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[]; web?: AgentWebView }
   | { type: 'action'; actionId: string };
 
 export interface AgentMessageDto {
@@ -299,7 +331,7 @@ export type AgentStreamEvent =
   | { type: 'run.started'; runId: string; chatId: string }
   | { type: 'text.delta'; text: string }
   | { type: 'tool.started'; callId: string; name: string; label: string }
-  | { type: 'tool.finished'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[] }
+  | { type: 'tool.finished'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[]; web?: AgentWebView }
   /** A proposed write (PENDING), or one already settled when `action.autoApproved` (EXECUTED / FAILED, no tap). */
   | { type: 'action.pending'; action: AgentPendingActionDto }
   | { type: 'message.saved'; message: AgentMessageDto }

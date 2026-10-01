@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['es'] = `<h1>Política de Privacidad y Acuerdo de Usuario</h1>
 <p><strong>Aplicación:</strong> Padel Bandeja<br>
 <strong>Fecha de vigencia:</strong> 12/01/2025<br>
-<strong>Última actualización:</strong> 30/09/2026<br>
+<strong>Última actualización:</strong> 01/10/2026<br>
 Aplica en todo el mundo</p>
 
 <h2>1. Política de Privacidad</h2>
@@ -89,6 +89,7 @@ Aplica en todo el mundo</p>
 </ul>
 </li>
 <li><strong>Otros procesamientos con IA:</strong> Otras funciones de IA, como la traducción automática de mensajes y textos y la transcripción de voz, son procesadas de la misma manera por proveedores de IA (OpenAI o DeepSeek).</li>
+<li><strong>Búsqueda web:</strong> Cuando el asistente busca en la web por ti, las breves palabras de búsqueda que redacta (nunca tu mensaje completo ni tus datos de contacto) se envían a un proveedor de búsqueda externo (actualmente Tavily o Brave). Cuando abre una página web, ese sitio recibe una solicitud de nuestros servidores. Las búsquedas se guardan con la conversación; el uso se registra sin las palabras de búsqueda.</li>
 <li><strong>Acciones:</strong> El asistente puede preparar cambios en tu nombre (por ejemplo, editar un partido o invitar a jugadores), pero no se modifica nada hasta que confirmas cada acción.</li>
 <li><strong>Almacenamiento:</strong> Las conversaciones se guardan en nuestros servidores y se vinculan a tu cuenta para que puedas continuarlas. Puedes archivar los chats. Registramos metadatos de uso (como el número de tokens) para prevenir abusos y controlar costes. Si conectas cuentas de reservas de clubes (Booktime, Padeloo, Klikteren), la app también copia tus próximas reservas en esos clubes (club, pista, hora y estado) a nuestros servidores, para que el asistente y el bot de Telegram puedan mostrarlas y vincularlas a partidos.</li>
 <li><strong>Límites:</strong> El asistente no tiene acceso a partidos ni a datos que no puedas ver en la aplicación. No introduzcas datos personales sensibles en los chats de IA.</li>
@@ -178,6 +179,6 @@ Aplica en todo el mundo</p>
 <p><strong>Correo Electrónico:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Este documento fue actualizado por última vez el 30/09/2026. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
+<p>Este documento fue actualizado por última vez el 01/10/2026. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
 <p>Contacto: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

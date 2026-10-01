@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['zh'] = `<h1>隐私政策与用户协议</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. 隐私政策</h2>
@@ -88,6 +88,7 @@ Applies worldwide</p>
 </ul>
 </li>
 <li><strong>其他 AI 处理：</strong> 其他 AI 功能（如消息和文本的自动翻译、语音转写）同样由 AI 服务商（OpenAI 或 DeepSeek）以相同方式处理。</li>
+<li><strong>网络搜索：</strong>当助手为您在网上搜索时，它编写的简短搜索词（绝不包括您的完整消息或联系方式）会发送给第三方搜索服务商（目前为 Tavily 或 Brave）。当它打开网页时，该网站会收到来自我们服务器的请求。搜索记录与对话一起保存；使用日志不记录搜索词。</li>
 <li><strong>操作：</strong> 助手可以代您准备更改（例如编辑比赛或邀请球员），但在您逐一确认之前，不会进行任何更改。</li>
 <li><strong>存储：</strong> 对话存储在我们的服务器上，并与您的账户关联，以便您继续对话。您可以归档聊天。我们会记录使用元数据（如 token 数量），用于防止滥用和控制成本。如果您连接了球场预订账户（Booktime、Padeloo、Klikteren），应用还会将您在这些球场即将进行的预订（球场、场地、时间和状态）复制到我们的服务器，以便助手和 Telegram 机器人列出这些预订并将其关联到比赛。</li>
 <li><strong>限制：</strong> 助手无法访问您在应用中看不到的比赛或数据。请勿在 AI 聊天中输入敏感个人信息。</li>
@@ -177,6 +178,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>本文档的最新更新日期为 2026 年 9 月 30 日。我们保留随时更新本政策和协议的权利。</p>
+<p>本文档的最新更新日期为 2026 年 10 月 1 日。我们保留随时更新本政策和协议的权利。</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

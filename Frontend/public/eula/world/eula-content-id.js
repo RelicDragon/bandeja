@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['id'] = `<h1>Kebijakan Privasi & Perjanjian Pengguna</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. Kebijakan Privasi</h2>
@@ -88,6 +88,7 @@ Applies worldwide</p>
 </ul>
 </li>
 <li><strong>Pemrosesan AI lainnya:</strong> Fitur AI lainnya, seperti terjemahan otomatis pesan dan teks serta transkripsi suara, juga diproses oleh penyedia AI (OpenAI atau DeepSeek) dengan cara yang sama.</li>
+<li><strong>Pencarian web:</strong> Saat asisten mencari di web untuk Anda, kata pencarian singkat yang ditulisnya (tidak pernah seluruh pesan Anda atau data kontak Anda) dikirim ke penyedia pencarian pihak ketiga (saat ini Tavily atau Brave). Saat asisten membuka halaman web, situs tersebut menerima permintaan dari server kami. Pencarian disimpan bersama percakapan; penggunaan dicatat tanpa kata pencarian.</li>
 <li><strong>Tindakan:</strong> Asisten dapat menyiapkan perubahan atas nama Anda (misalnya mengedit permainan atau mengundang pemain), tetapi tidak ada yang berubah sampai Anda mengonfirmasi setiap tindakan.</li>
 <li><strong>Penyimpanan:</strong> Percakapan disimpan di server kami dan ditautkan ke akun Anda agar Anda dapat melanjutkannya. Anda dapat mengarsipkan obrolan. Kami mencatat metadata penggunaan (seperti jumlah token) untuk mencegah penyalahgunaan dan mengendalikan biaya. Jika Anda menghubungkan akun pemesanan klub (Booktime, Padeloo, Klikteren), aplikasi juga menyalin pemesanan Anda yang akan datang di klub tersebut (klub, lapangan, waktu, dan status) ke server kami, agar asisten dan bot Telegram dapat menampilkannya dan menautkannya ke permainan.</li>
 <li><strong>Batasan:</strong> Asisten tidak memiliki akses ke permainan atau data yang tidak dapat Anda lihat di aplikasi. Jangan memasukkan data pribadi yang sensitif ke dalam obrolan AI.</li>
@@ -177,6 +178,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Dokumen ini terakhir diperbarui pada 30/09/2026. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
+<p>Dokumen ini terakhir diperbarui pada 01/10/2026. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;
