@@ -101,13 +101,13 @@
     "publicGame": {
       "title": "Javna igra",
       "note": {
-        "false": "Biće privatan i vidljiv samo pozvanim učesnicima.",
+        "false": "Neće se pojaviti u pretrazi. Pronaći ga mogu samo oni koje pozovete ili kojima pošaljete link.",
         "true": "Biće vidljiv svim igračima i može se naći u pretrazi."
       },
       "titleTraining": "Public training",
       "noteTraining": {
-        "true": "Will be visible to all players and can be found in the search.",
-        "false": "Will be private and only visible to invited participants."
+        "true": "Biće vidljiv svim igračima i može se naći u pretrazi.",
+        "false": "Neće se pojaviti u pretrazi. Pronaći ga mogu samo oni koje pozovete ili kojima pošaljete link."
       }
     },
     "resultsByAnyone": {

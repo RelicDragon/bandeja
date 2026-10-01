@@ -754,7 +754,7 @@ export class ParticipantService {
         where: { gameId, userId: currentUserId },
       });
 
-      const canManage = canUserManageQueue(currentParticipant, currentGame) ||
+      const canManage = canUserManageQueue(currentParticipant) ||
         await hasParentGamePermissionWithUserCheck(gameId, currentUserId);
       if (!canManage) {
         throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
@@ -824,7 +824,6 @@ export class ParticipantService {
       where: { id: gameId },
       select: {
         id: true,
-        anyoneCanInvite: true,
       },
     });
 
@@ -836,7 +835,7 @@ export class ParticipantService {
       where: { gameId, userId: currentUserId },
     });
 
-    if (!canUserManageQueue(currentParticipant, game)) {
+    if (!canUserManageQueue(currentParticipant)) {
       throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');
     }
 

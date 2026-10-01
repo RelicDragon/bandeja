@@ -358,11 +358,11 @@ export const acceptFromQueueTool = defineTool({
 /** `declineNonPlayingParticipant` only accepts an owner/admin row on this very game (no parent, no platform-admin bypass). */
 async function assertMayDecline(principal: Pick<AgentPrincipal, 'userId'>, gameId: string): Promise<void> {
   const [game, mine] = await Promise.all([
-    prisma.game.findUnique({ where: { id: gameId }, select: { anyoneCanInvite: true } }),
-    prisma.gameParticipant.findFirst({ where: { gameId, userId: principal.userId }, select: { role: true, status: true } }),
+    prisma.game.findUnique({ where: { id: gameId }, select: { id: true } }),
+    prisma.gameParticipant.findFirst({ where: { gameId, userId: principal.userId }, select: { role: true } }),
   ]);
   if (!game) throw new ApiError(404, 'Game not found');
-  if (!canUserManageQueue(mine, game)) throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');
+  if (!canUserManageQueue(mine)) throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');
 }
 
 export const declineFromQueueTool = defineTool({

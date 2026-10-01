@@ -903,11 +903,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     : undefined;
 
   const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && isRealParticipant && !isFull && canMutateRoster);
-  const canManageJoinQueue = Boolean(
-    isOwner ||
-    participation.userParticipant?.role === 'ADMIN' ||
-    (game?.anyoneCanInvite && participation.isPlaying)
-  );
+  // Same rule as `accept-join-queue` / `decline-join-queue` (`canManageGameRoster`):
+  // owner or admin of this game. `anyoneCanInvite` widens inviting only.
+  const canManageJoinQueue = isOwner;
 
   // PRD 364 — organizer "Next steps". The platform flag decides which surface
   // hosts the attendance strip and the open-spot row; the placement helper

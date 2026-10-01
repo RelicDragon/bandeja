@@ -104,11 +104,11 @@
       "title": "Permainan publik",
       "titleTraining": "Pelatihan publik",
       "note": {
-        "false": "Akan bersifat pribadi dan hanya dapat dilihat oleh peserta yang diundang.",
+        "false": "Tidak akan muncul di pencarian. Hanya orang yang Anda undang atau yang menerima tautannya yang dapat menemukannya.",
         "true": "Akan terlihat oleh semua pemain dan dapat ditemukan dalam pencarian."
       },
       "noteTraining": {
-        "false": "Akan bersifat pribadi dan hanya dapat dilihat oleh peserta yang diundang.",
+        "false": "Tidak akan muncul di pencarian. Hanya orang yang Anda undang atau yang menerima tautannya yang dapat menemukannya.",
         "true": "Akan terlihat oleh semua pemain dan dapat ditemukan dalam pencarian."
       }
     },

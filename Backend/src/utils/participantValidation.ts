@@ -191,16 +191,14 @@ export async function validatePlayerCanJoinGame(
   return await canAddPlayerToGame(game, userId);
 }
 
-export function canUserManageQueue(
-  participant: { role: string; status?: string } | null,
-  game: { anyoneCanInvite: boolean }
-): boolean {
-  const playing = !!(participant && participant.status === 'PLAYING');
-  return !!participant && (
-    participant.role === 'OWNER' ||
-    participant.role === 'ADMIN' ||
-    (game.anyoneCanInvite && playing)
-  );
+/**
+ * Accepting / declining a join-queue request is the organizer's call: OWNER or ADMIN
+ * on this game. `anyoneCanInvite` widens who may *invite*, never who may answer the
+ * queue — the routes gate on `canManageGameRoster` and the client's
+ * `canManageJoinQueue` matches.
+ */
+export function canUserManageQueue(participant: { role: string } | null): boolean {
+  return !!participant && (participant.role === 'OWNER' || participant.role === 'ADMIN');
 }
 
 export async function validateAndGetGameInTransaction(

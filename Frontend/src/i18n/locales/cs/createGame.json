@@ -104,11 +104,11 @@
       "title": "Veřejný zápas",
       "titleTraining": "Veřejný trénink",
       "note": {
-        "false": "Bude soukromý a viditelný jen pro pozvané.",
+        "false": "Nezobrazí se ve vyhledávání. Najdou ho jen pozvaní a ti, komu pošlete odkaz.",
         "true": "Bude viditelný všem a najdete ho v hledání."
       },
       "noteTraining": {
-        "false": "Bude soukromý a viditelný jen pro pozvané.",
+        "false": "Nezobrazí se ve vyhledávání. Najdou ho jen pozvaní a ti, komu pošlete odkaz.",
         "true": "Bude viditelný všem a najdete ho v hledání."
       }
     },

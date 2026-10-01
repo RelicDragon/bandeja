@@ -104,11 +104,11 @@
       "title": "Public game",
       "titleTraining": "Public training",
       "note": {
-        "false": "Will be private and only visible to invited participants.",
+        "false": "Won't appear in search. Only people you invite or share the link with can find it.",
         "true": "Will be visible to all players and can be found in the search."
       },
       "noteTraining": {
-        "false": "Will be private and only visible to invited participants.",
+        "false": "Won't appear in search. Only people you invite or share the link with can find it.",
         "true": "Will be visible to all players and can be found in the search."
       }
     },

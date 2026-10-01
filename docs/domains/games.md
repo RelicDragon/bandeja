@@ -66,11 +66,11 @@ Only `PLAYING` counts toward `maxParticipants`.
 
 | Action | API | Notes |
 |--------|-----|--------|
-| Join | `POST /games/:id/join` | `allowDirectJoin` false → `IN_QUEUE` after gender check |
+| Join | `POST /games/:id/join` | Public or private alike (private = unlisted, direct-link model). `allowDirectJoin` false → `IN_QUEUE` after gender check |
 | Leave roster | `POST /games/:id/leave` | Owner cannot fully leave |
 | Guest (chat-only) | `POST /games/:id/join-as-guest` | `GUEST` |
 | Leave chat | `POST /games/:id/leave-chat` | |
-| Queue accept/decline | owner/admin | `acceptJoinQueue` / `declineJoinQueue` |
+| Queue accept/decline | owner/admin (`canManageGameRoster`); **not** widened by `anyoneCanInvite` | `acceptJoinQueue` / `declineJoinQueue`; client `canManageJoinQueue` matches |
 | Cancel queue | `cancelJoinQueue` | |
 | Invite | owner/admin or `anyoneCanInvite` | Search \| Looking; `canInviteToGame` |
 | Kick | owner/admin | `kickUser` |
@@ -83,6 +83,8 @@ Only `PLAYING` counts toward `maxParticipants`.
 Gender filter: `genderTeams` MEN/WOMEN/MIX_PAIRS. Fixed teams: `GameTeam` / `gameTeam.controller`. Guest is a **status**, not a `ParticipantRole`.
 
 Play-intent consume: only `PLAYING` joins consume a looking intent. Queue does not.
+
+**Private games are unlisted, not invite-only.** `isPublic = false` keeps the game out of Find, search, the Live rail and radars, but anyone signed in with the link can open it and join (or join the queue when `allowDirectJoin` is off) — the same direct-link model `GET /games/:id` and league reads use. "Share game" is offered on private games for exactly this. The **Public game** setting note says so ("Only people you invite or share the link with can find it"). The AI agent's `join_game` is stricter on purpose (it can only reach games it may list). Constraint: [constraints.md](../product/constraints.md) "Private means unlisted"; test `npm run test:game-join-access`.
 
 A queued player is **not** frozen in the queue. `POST /games/:id/join` re-runs every gate for them: with `allowDirectJoin` true and a genuinely free seat they become `PLAYING` through the ordinary path (this is what the spot-opened push's "Join now" lands in). With `allowDirectJoin` false the join is refused with `spots.queue.waitForOrganizer` — seating is the organizer's call, through `acceptNonPlayingParticipant`.
 

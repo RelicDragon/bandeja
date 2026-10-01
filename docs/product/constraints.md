@@ -188,6 +188,12 @@ Same discipline as play-intent (above). Seat-opened, live-start, weather and ser
 
 - `Frontend/src/utils/attachAvailableGamesEnrichment.ts`, `Frontend/src/utils/gameCardPropsEqual.ts`
 
+### Private means unlisted (the direct-link model)
+
+`Game.isPublic = false` keeps a game out of Find, search, the Live rail, radars and other strangers' lists. It is **not** an access list: a signed-in user holding the link can open it (`GET /games/:id`) and use `POST /games/:id/join` exactly as on a public game. "Share game" and the PRD 351 invite link (shown on private games too) depend on this, and shipped store builds cannot be updated, so do not add an `isPublic` / invite gate to read or join. The organizer's control over strangers is `allowDirectJoin`: off → a link holder only lands in the join queue (league fixtures are created private **and** `allowDirectJoin: false`). The AI agent is deliberately stricter (public ∪ roster ∪ league content, see below) because it searches; previews and guest endpoints still answer 404 for private games so nothing *lists* them. Pinned by `npm run test:game-join-access`.
+
+- `Backend/src/services/game/read.service.ts`, `Backend/src/services/game/participant.service.ts`
+
 ### Guest-readable endpoints are whitelist projections
 
 `GET /clubs/:id/public` and `GET /api/results/game/:gameId` (plus its round/match variants **and the three `outcome/:userId/…explanation` siblings**) serve unauthenticated callers. They use explicit `select` whitelists, never a top-level `include`: `integrationConfig`, `ptMeta`, `paymentHint`, `bio`, `weeklyAvailability` and `socialLevel` must never reach a client. A private game answers **404**, not 403, so the endpoint is not an existence oracle.
