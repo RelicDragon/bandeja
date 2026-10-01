@@ -1,6 +1,6 @@
 # AI agent: Phase 11, Memory (design, 2026-10-01)
 
-Parent plan: [ai-agent.md](./ai-agent.md). Status: **design, not built.** Owner: relic.
+Parent plan: [ai-agent.md](./ai-agent.md). Status: **phases 1–2 built (2026-10-01, backend); phases 3–4 not built.** Owner: relic. Behavior as built: [domains/agent.md § Memory](../domains/agent.md#memory-phase-11-agentmemoryservicets-toolsmemorytoolsts).
 
 The agent remembers durable facts about the signed-in user across chats, the way Claude and Codex do: a small index always in the prompt, full bodies read on demand, written by the model itself, fully visible and editable by the user.
 
@@ -55,11 +55,13 @@ Wiring: `AgentMemoryDto` in `Frontend/shared/agentContract.ts`; `agentApi` metho
 
 ## 11.5 Phases
 
-1. Schema + migration, `agentMemory.service.ts`, routes, tools, master switch enforcement, tests (switch OFF: no prompt section, no tools, handler refuses).
-2. Prompt index section, provenance guard, `memory.saved` event.
+1. **Built.** Schema + migration (`20261001053000_agent_memory`; the switch is `User.agentMemoryEnabled`, there is no per-user agent settings table), `agentMemory.service.ts`, routes, tools, master switch enforcement, tests (switch OFF: no prompt section, no tools, handler refuses).
+2. **Built.** Prompt index section, provenance guard, `memory.saved` event.
+
+   As built (phases 1–2): the memory tools are a third tool kind, `kind: 'memory'` (self-scoped, no card, no risk tier, not in rule 6 or the permissions list; hidden unless `principal.agentMemoryEnabled`, and every handler re-checks the switch in the DB → 409 `MEMORY_DISABLED`). `forget_memory` and `list_memories` also refuse while OFF; the user deletes dormant notes in the app. A model save in reply to an explicit "remember…" is stored as `USER_ASKED`, otherwise `MODEL_INFERRED`. The provenance guard is chat-wide, not only per run: any `untrustedContent` call in the chat's history taints later runs too (folded turns can still paraphrase other people's text); "the user asked" = explicit remember wording in the latest user message, per app language (`userAskedToRemember`). Tests: `npm run test:agent-memory` (in `test:agent`).
 3. Settings modal tabs, memory tab, chip + Undo, i18n, `docs/UI_TEST_PLAN.md`, `docs/domains/agent.md`.
 4. Rolling chat summary (replaces the crude fold in `agentContext.service.ts`; chat-scoped, not memory), then a weekly consolidation job that skips opted-out users.
 
 ## 11.6 Decided
 
-- Default stays ON, no first-use prompt. The disclosure is the small text under the switch (above). A privacy-policy line can follow the parent plan §11.3 work and is not a blocker.
+- Default stays ON, no first-use prompt. The disclosure is the small text under the switch (above). A privacy-policy line can follow the parent plan §11.3 work and is not a blocker. **Done with phases 1–2:** §1.10 "What we send" of the privacy policy (`Frontend/public/eula/world/eula-content-*.js`, 10 languages) lists the assistant's memory.
