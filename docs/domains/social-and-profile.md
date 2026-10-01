@@ -108,6 +108,8 @@ That is what makes a twelve-month archive survive a language switch, and it is w
 
 **Eligibility and the day window.** `MonthlyRecapScheduler` runs `0 4 1-3 * *` and targets the month that just ended. Two sweeps, both cursor-paged by ascending `userId`: users with ≥1 FINAL game in that month get the full recap; users with no game that month but activity in the previous 90 days get the low-activity variant. `EntityType.EVENT` and `EntityType.BAR` are excluded — they are not a personal result.
 
+**Streak slide.** Play streaks are per sport (`UserSportProfile.playStreakCount` / `playStreakBest`, not `User`). The recap reads the profile of the user's `primarySport`, falling back to their first profile — the same pick as the profile's top-level `playStreak`. Prisma does not type-check unknown keys inside a nested `select`, so `recapInputs.integration.test.ts` runs the loader's real queries against the dev DB (`npm run test:recap-integration`).
+
 **Idempotency is the unique key, never a `Set`.** `generateMonthlyRecap` does a plain `create` and treats `P2002` as "already done": it returns `created: false` and the scheduler stays silent. That is the entire reason the 2nd and 3rd of the month do not re-push. Do not "optimise" it into an `upsert` — an upsert reports success on every pass and the notification guard is lost.
 
 **Month arithmetic is UTC.** `recapMonth.ts` is deliberately timezone-free: "September" has to mean the same 30 days to the scheduler, the payload builder and the retention sweep. The client re-labels the month with `Intl`, so the UTC boundary is never visible.

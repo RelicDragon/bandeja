@@ -1,5 +1,6 @@
 import { EntityType, MatchSetRole, Prisma, Sport } from '@prisma/client';
 import prisma from '../../config/database';
+import { resolveSport } from '../../sport/sportRegistry';
 import { isRelationshipInsightMatch } from '../user/userPerformanceInsights.service';
 import type { RecapBuildInput, RecapGameInput, RecapPartnerAppearance } from './recapPayload.builder';
 import { monthKeyRange, recapLowActivityLookbackStart } from './recapMonth';
@@ -152,12 +153,13 @@ export type RecapOwnerRow = {
   isPremium: boolean;
   language: string | null;
   primarySport: Sport | null;
+  /** From the primary sport's `UserSportProfile` — streaks are per sport. */
   playStreakCount: number;
   playStreakBest: number;
 };
 
 export async function loadRecapOwner(userId: string): Promise<RecapOwnerRow | null> {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -167,10 +169,22 @@ export async function loadRecapOwner(userId: string): Promise<RecapOwnerRow | nu
       isPremium: true,
       language: true,
       primarySport: true,
-      playStreakCount: true,
-      playStreakBest: true,
+      sportProfiles: {
+        select: { sport: true, playStreakCount: true, playStreakBest: true },
+      },
     },
   });
+  if (!user) return null;
+
+  const { sportProfiles, ...rest } = user;
+  // Same pick as the profile's top-level `playStreak` (attachPlayStreaksToUser).
+  const primary = resolveSport(user.primarySport);
+  const profile = sportProfiles.find((p) => p.sport === primary) ?? sportProfiles[0];
+  return {
+    ...rest,
+    playStreakCount: profile?.playStreakCount ?? 0,
+    playStreakBest: profile?.playStreakBest ?? 0,
+  };
 }
 
 /** Everything the pure builder needs for one user and one month. */
