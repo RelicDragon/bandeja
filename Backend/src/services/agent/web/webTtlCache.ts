@@ -16,7 +16,7 @@ export type TtlCacheOptions = {
 
 export class TtlCache<V> {
   private readonly entries = new Map<string, { value: V; expiresAt: number }>();
-  private readonly inFlight = new Map<string, Promise<V>>();
+  private readonly inFlight = new Map<string, Promise<unknown>>();
 
   constructor(private readonly options: TtlCacheOptions) {}
 
@@ -47,9 +47,9 @@ export class TtlCache<V> {
     this.entries.set(key, { value, expiresAt: this.now() + ttl });
   }
 
-  /** Concurrent callers with the same key share one task. */
-  singleFlight(key: string, task: () => Promise<V>): { promise: Promise<V>; joined: boolean } {
-    const existing = this.inFlight.get(key);
+  /** Concurrent callers with the same key share one task (callers of one key use one `T`). */
+  singleFlight<T = V>(key: string, task: () => Promise<T>): { promise: Promise<T>; joined: boolean } {
+    const existing = this.inFlight.get(key) as Promise<T> | undefined;
     if (existing) return { promise: existing, joined: true };
     const promise = task().finally(() => this.inFlight.delete(key));
     this.inFlight.set(key, promise);

@@ -196,7 +196,7 @@ export function createWebSearchChain(deps: WebSearchChainDeps = {}) {
 
     // `admit` is the global limit, the same for every caller, so a joined caller may share
     // a refusal as well as a result.
-    const flight = cache.singleFlight(key, async () => {
+    const flight = cache.singleFlight<WebSearchOutcome>(key, async () => {
       if (opts.admit && !(await opts.admit())) {
         return { query, count: 0, results: [], provider: null, tried: [], rateLimited: true, tookMs: 0 };
       }
