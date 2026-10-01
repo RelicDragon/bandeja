@@ -40,6 +40,11 @@
  * a read tool declaring `untrustedContent` (game chat; later web search) succeeds, the run
  * is tainted and no later write in it auto-approves (normal card). In-memory per run is
  * enough: RUNNING rows are never re-executed.
+ *
+ * Phase 11 memory: every call gets `memoryProvenance` (run taint OR an `untrustedContent`
+ * call anywhere in this chat's history; whether the latest user message asked to remember).
+ * `save_memory` refuses on taint unless the user asked. A successful save emits
+ * `memory.saved` right after its `tool.finished` (no card, no pause).
  */
 import os from 'node:os';
 import { AgentMessageRole, AgentRunStatus, Prisma, type AgentMessage, type AgentRun } from '@prisma/client';
@@ -75,7 +80,8 @@ import {
   toAgentMessageDto,
   toAgentPendingActionDto,
 } from './agentChat.service';
-import { buildAgentModelHistory, buildAgentRunContext } from './agentContext.service';
+import { agentMemoryProvenanceFromHistory, buildAgentModelHistory, buildAgentRunContext } from './agentContext.service';
+import { userAskedToRemember } from './agentMemory.service';
 import { getAgentEventStore, type AgentEventStore, type AgentStoredEvent } from './agentEvents';
 import { agentApiError, assertAgentBudget } from './agentGuards';
 import { agentT } from './i18n/agentI18n';
@@ -112,6 +118,12 @@ type AbortReason = 'cancelled' | 'timeout';
 type AgentRunLoopState = {
   /** An `untrustedContent` read tool returned content in this run: writes always ask. */
   tainted: boolean;
+  /**
+   * Phase 11 provenance guard (`save_memory`): an `untrustedContent` tool was called earlier
+   * in this chat (any run), and whether the latest user message asked to remember something.
+   */
+  historyTainted: boolean;
+  userAskedToRemember: boolean;
 };
 
 export type AgentRunDeps = {
@@ -753,7 +765,15 @@ export class AgentRunService {
       };
       const openAiTools = this.deps.registry.openAiToolsFor(principal);
       let finalStatus: 'COMPLETED' | 'AWAITING_CONFIRMATION' = 'COMPLETED';
-      const runState: AgentRunLoopState = { tainted: false };
+      const provenance = agentMemoryProvenanceFromHistory(
+        history,
+        (name) => this.deps.registry.get(name)?.untrustedContent === true,
+      );
+      const runState: AgentRunLoopState = {
+        tainted: false,
+        historyTainted: provenance.historyTainted,
+        userAskedToRemember: userAskedToRemember(provenance.latestUserText),
+      };
 
       for (let step = 1; step <= agentConfig.maxSteps; step += 1) {
         steps = step;
@@ -881,7 +901,18 @@ export class AgentRunService {
         await this.emit(run.id, { type: 'tool.started', callId: call.id, name: call.function.name, label });
         const parsed = parseToolArguments(call.function.arguments);
         execution = parsed.ok
-          ? await registry.executeTool({ ...toolCtx, callId: call.id }, call.function.name, parsed.value)
+          ? await registry.executeTool(
+              {
+                ...toolCtx,
+                callId: call.id,
+                memoryProvenance: {
+                  untrustedContentInContext: runState.tainted || runState.historyTainted,
+                  userAskedToRemember: runState.userAskedToRemember,
+                },
+              },
+              call.function.name,
+              parsed.value,
+            )
           : {
               ok: false,
               data: { error: 'invalid_arguments', message: 'arguments were not valid JSON' },
@@ -922,6 +953,10 @@ export class AgentRunService {
           summary: execution.summary,
           ...(execution.entities?.length ? { entities: execution.entities } : {}),
         });
+        // Phase 11: a memory saved without a card → the "Saved to memory · Undo" chip.
+        if (execution.ok && execution.memorySaved) {
+          await this.emit(run.id, { type: 'memory.saved', memory: execution.memorySaved });
+        }
       }
       toolMessages.push({ role: 'tool', tool_call_id: call.id, content: serializeToolContent(execution) });
       resultBlocks.push({

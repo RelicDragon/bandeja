@@ -22,6 +22,15 @@ import {
 } from '../services/agent/agentEvents';
 import { expireStaleAgentActions } from '../services/agent/agentActionOutcome';
 import { confirmAgentAction, rejectAgentAction } from '../services/agent/agentActions.service';
+import {
+  addAgentMemoryFromText,
+  clearAgentMemories,
+  deleteAgentMemory,
+  getAgentMemoryOverview,
+  setAgentMemoryEnabled,
+  toAgentMemoryDto,
+  updateAgentMemoryText,
+} from '../services/agent/agentMemory.service';
 import { getAgentToolPermissionService } from '../services/agent/agentToolPermission.service';
 import { loadAgentPrincipal } from '../services/agent/access/agentPrincipal';
 import { getAgentRunService } from '../services/agent/agentRun.service';
@@ -145,6 +154,43 @@ export const resetToolPermissions = asyncHandler<AuthRequest>(async (req, res) =
   const principal = await permissionPrincipal(req);
   const tools = await getAgentToolPermissionService().reset(principal, undefined, permissionLocale(req, principal));
   res.json({ success: true, data: { tools } });
+});
+
+/** `GET /agent/memory` → `AgentMemoryOverviewDto` (own rows; also while OFF). */
+export const getMemory = asyncHandler<AuthRequest>(async (req, res) => {
+  res.json({ success: true, data: await getAgentMemoryOverview(requireUserId(req)) });
+});
+
+/** `PUT /agent/memory/settings {enabled}` → `AgentMemoryOverviewDto`. Rows are kept either way. */
+export const setMemorySettings = asyncHandler<AuthRequest>(async (req, res) => {
+  const { enabled } = getValidatedRequestPart<{ enabled: boolean }>(req, 'body');
+  res.json({ success: true, data: await setAgentMemoryEnabled(requireUserId(req), enabled) });
+});
+
+/** `POST /agent/memory/items {text}` → `AgentMemoryDto` (USER_ASKED; 409 while OFF or full). */
+export const addMemoryItem = asyncHandler<AuthRequest>(async (req, res) => {
+  const { text } = getValidatedRequestPart<{ text: string }>(req, 'body');
+  const row = await addAgentMemoryFromText(requireUserId(req), text);
+  res.status(201).json({ success: true, data: toAgentMemoryDto(row) });
+});
+
+/** `PATCH /agent/memory/items/:id {text}` → `AgentMemoryDto` (foreign id 404; 409 while OFF). */
+export const updateMemoryItem = asyncHandler<AuthRequest>(async (req, res) => {
+  const { text } = getValidatedRequestPart<{ text: string }>(req, 'body');
+  const row = await updateAgentMemoryText(requireUserId(req), req.params.id, text);
+  res.json({ success: true, data: toAgentMemoryDto(row) });
+});
+
+/** `DELETE /agent/memory/items/:id` (foreign id 404; allowed while OFF). */
+export const deleteMemoryItem = asyncHandler<AuthRequest>(async (req, res) => {
+  await deleteAgentMemory(requireUserId(req), req.params.id);
+  res.json({ success: true, data: { ok: true } });
+});
+
+/** `DELETE /agent/memory/items` → `{ ok, deleted }` (allowed while OFF). */
+export const clearMemoryItems = asyncHandler<AuthRequest>(async (req, res) => {
+  const deleted = await clearAgentMemories(requireUserId(req));
+  res.json({ success: true, data: { ok: true, deleted } });
 });
 
 /**

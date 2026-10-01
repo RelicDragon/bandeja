@@ -27,6 +27,7 @@ import { GAME_TOOLS } from './games.tools';
 import { LEAGUE_TOOLS } from './leagues.tools';
 import { LEAGUE_SCHEDULE_TOOLS } from './leagueSchedule.tools';
 import { LEAGUE_WRITE_TOOLS } from './leagues.write.tools';
+import { MEMORY_TOOLS } from './memory.tools';
 import { MONEY_TOOLS } from './money.tools';
 import { PLAYER_TOOLS } from './players.tools';
 import { RESULTS_TOOLS } from './results.tools';
@@ -59,6 +60,7 @@ export const AGENT_TOOL_DEFINITIONS: AgentToolDefinition[] = [
   ...PLAY_INTENT_TOOLS,
   ...MONEY_TOOLS,
   ...COST_SHARE_LIST_TOOLS,
+  ...MEMORY_TOOLS,
   ...ADMIN_TOOLS,
 ] as AgentToolDefinition[];
 

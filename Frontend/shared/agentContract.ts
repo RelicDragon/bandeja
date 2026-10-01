@@ -226,6 +226,38 @@ export interface AgentToolPermissionDto {
   canAlwaysAllow: boolean;
 }
 
+/** Phase 11 memory (docs/plans/ai-agent-memory.md). */
+export type AgentMemoryType = 'PREFERENCE' | 'FEEDBACK' | 'FACT';
+/** `USER_ASKED`: the user added it or asked the assistant to remember it ("You added"); `MODEL_INFERRED`: "Learned". */
+export type AgentMemorySource = 'USER_ASKED' | 'MODEL_INFERRED';
+
+export const AGENT_MEMORY_BODY_MAX_LENGTH = 500;
+export const AGENT_MEMORY_MAX_ITEMS = 50;
+
+export interface AgentMemoryDto {
+  id: string;
+  /** Internal slug the model uses (`read_memory(name)`); unique per user. */
+  name: string;
+  /** One line; the list title. */
+  description: string;
+  body: string;
+  type: AgentMemoryType;
+  source: AgentMemorySource;
+  createdAt: string;
+  updatedAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface AgentMemoryOverviewDto {
+  /** The master switch (`User.agentMemoryEnabled`). OFF: items stay, dormant (deletable, not editable). */
+  enabled: boolean;
+  /** Most recently used first. */
+  items: AgentMemoryDto[];
+}
+
+/** `code` on memory route / tool errors. */
+export type AgentMemoryErrorCode = 'MEMORY_DISABLED' | 'MEMORY_LIMIT' | 'MEMORY_SENSITIVE';
+
 export interface AgentPendingActionDto {
   id: string;
   chatId: string;
@@ -303,6 +335,8 @@ export type AgentStreamEvent =
   /** A proposed write (PENDING), or one already settled when `action.autoApproved` (EXECUTED / FAILED, no tap). */
   | { type: 'action.pending'; action: AgentPendingActionDto }
   | { type: 'message.saved'; message: AgentMessageDto }
+  /** `save_memory` stored (or updated) a memory without a confirmation card; the chip offers Undo (`DELETE /agent/memory/items/:id`). */
+  | { type: 'memory.saved'; memory: { id: string; name: string; description: string; created: boolean } }
   | { type: 'run.completed'; status: 'COMPLETED' | 'AWAITING_CONFIRMATION'; usage: AgentUsage }
   | { type: 'run.failed'; code: AgentErrorCode; message: string | null }
   | { type: 'run.cancelled' };
@@ -343,6 +377,15 @@ export const AGENT_TERMINAL_EVENT_TYPES: readonly AgentStreamEventType[] = [
  *                                              (ALWAYS_ALLOW on a critical tool → 400 code PERMISSION_NOT_ALLOWED; unknown/unavailable tool → 404)
  *   DELETE /api/agent/permissions             -> { tools: AgentToolPermissionDto[] }   (reset all to ASK)
  *   DELETE /api/agent/permissions/:toolName   -> AgentToolPermissionDto                (reset one to ASK)
+ *   GET    /api/agent/memory                  -> AgentMemoryOverviewDto                (own rows only)
+ *   PUT    /api/agent/memory/settings {enabled: boolean} -> AgentMemoryOverviewDto
+ *   POST   /api/agent/memory/items {text}     -> AgentMemoryDto                        (server derives name/description; USER_ASKED)
+ *   PATCH  /api/agent/memory/items/:id {text} -> AgentMemoryDto
+ *   DELETE /api/agent/memory/items/:id        -> { ok: true }
+ *   DELETE /api/agent/memory/items            -> { ok: true; deleted: number }
+ *                                              (add / edit while OFF → 409 MEMORY_DISABLED; delete / clear always allowed;
+ *                                               a 51st item → 409 MEMORY_LIMIT; contact details / secrets → 400 MEMORY_SENSITIVE;
+ *                                               another user's id → 404)
  * Errors: `ApiError` JSON with `code: AgentErrorCode` where applicable.
  */
 export const AGENT_MESSAGE_MAX_LENGTH = 4000;

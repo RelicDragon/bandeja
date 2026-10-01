@@ -11,6 +11,7 @@ import { AGENT_GAME_CHAT_I18N_EN, AGENT_GAME_CHAT_I18N_TRANSLATIONS } from '../a
 import { AGENT_I18N_EN, AGENT_LOCALES } from '../agentI18n';
 import { AGENT_I18N_TRANSLATIONS } from '../agentI18nTranslations';
 import { AGENT_LEAGUE_I18N_EN, AGENT_LEAGUE_I18N_TRANSLATIONS } from '../agentLeagueI18n';
+import { AGENT_MEMORY_I18N_EN, AGENT_MEMORY_I18N_TRANSLATIONS } from '../agentMemoryI18n';
 import { AGENT_MONEY_I18N_EN, AGENT_MONEY_I18N_TRANSLATIONS } from '../agentMoneyI18n';
 import { AGENT_PLAY_INTENT_I18N_EN, AGENT_PLAY_INTENT_I18N_TRANSLATIONS } from '../agentPlayIntentI18n';
 import { AGENT_RESULTS_I18N_EN, AGENT_RESULTS_I18N_TRANSLATIONS } from '../agentResultsI18n';
@@ -29,6 +30,7 @@ const DICTIONARIES: Record<string, Dictionaries> = {
   agentCancelGameI18n: { en: AGENT_CANCEL_GAME_I18N_EN, translations: AGENT_CANCEL_GAME_I18N_TRANSLATIONS },
   agentGameChatI18n: { en: AGENT_GAME_CHAT_I18N_EN, translations: AGENT_GAME_CHAT_I18N_TRANSLATIONS },
   agentLeagueI18n: { en: AGENT_LEAGUE_I18N_EN, translations: AGENT_LEAGUE_I18N_TRANSLATIONS },
+  agentMemoryI18n: { en: AGENT_MEMORY_I18N_EN, translations: AGENT_MEMORY_I18N_TRANSLATIONS },
   agentMoneyI18n: { en: AGENT_MONEY_I18N_EN, translations: AGENT_MONEY_I18N_TRANSLATIONS },
   agentPlayIntentI18n: { en: AGENT_PLAY_INTENT_I18N_EN, translations: AGENT_PLAY_INTENT_I18N_TRANSLATIONS },
   agentResultsI18n: { en: AGENT_RESULTS_I18N_EN, translations: AGENT_RESULTS_I18N_TRANSLATIONS },

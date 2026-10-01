@@ -246,6 +246,10 @@ model User {
   agentChats                     AgentChat[]
   agentPendingActions            AgentPendingAction[]
   agentToolPermissions           AgentToolPermission[]
+  agentMemories                  AgentMemory[]
+  /// AI assistant memory master switch (docs/plans/ai-agent-memory.md §11.1). OFF: memory is
+  /// neither read into the prompt nor offered to the model; stored rows stay, dormant.
+  agentMemoryEnabled             Boolean                          @default(true)
   bookedExternalBookings         GameExternalBooking[]            @relation("GameExternalBookingBookedBy")
 
   @@index([phone])
@@ -4689,4 +4693,36 @@ model AgentToolPermission {
   user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, toolName])
+}
+
+/// AI assistant memory (Phase 11, docs/plans/ai-agent-memory.md): durable facts about the user,
+/// written by the model (MODEL_INFERRED) or the user (USER_ASKED). Self-scoped, ≤ 50 per user,
+/// body ≤ 500 chars; never grants privilege. Used only while `User.agentMemoryEnabled`.
+enum AgentMemoryType {
+  PREFERENCE
+  FEEDBACK
+  FACT
+}
+
+enum AgentMemorySource {
+  USER_ASKED
+  MODEL_INFERRED
+}
+
+model AgentMemory {
+  id          String            @id @default(cuid())
+  userId      String
+  /// Internal slug (`a-z0-9_`), unique per user; the upsert key.
+  name        String            @db.VarChar(64)
+  /// One line shown in the prompt index.
+  description String            @db.VarChar(160)
+  body        String            @db.VarChar(500)
+  type        AgentMemoryType
+  source      AgentMemorySource
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  lastUsedAt  DateTime?
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
 }

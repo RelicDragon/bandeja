@@ -28,6 +28,7 @@ const user: AgentPrincipal = {
   canCreateTournament: false,
   currentCityId: 'c1',
   language: 'en',
+  agentMemoryEnabled: true,
 };
 const admin: AgentPrincipal = { ...user, userId: 'a1', isAdmin: true };
 const ctx = (principal: AgentPrincipal): AgentToolContext => ({ principal, locale: 'en', timezone: 'UTC', now: new Date() });
@@ -37,7 +38,8 @@ async function main() {
   const names = AGENT_TOOL_DEFINITIONS.map((t) => t.name);
   assert.equal(new Set(names).size, names.length, 'tool names are unique');
   for (const tool of AGENT_TOOL_DEFINITIONS) {
-    assert.ok(tool.kind === 'read' || tool.kind === 'write', `${tool.name}: kind`);
+    assert.ok(tool.kind === 'read' || tool.kind === 'write' || tool.kind === 'memory', `${tool.name}: kind`);
+    if (tool.kind === 'memory') assert.equal(tool.scope, 'user', `${tool.name}: memory tools are user scope`);
     assert.ok(tool.scope === 'user' || tool.scope === 'admin', `${tool.name}: scope`);
     assert.ok(tool.description.length >= 20, `${tool.name}: description`);
     assert.ok(AGENT_TOOL_AUTHZ_COVERAGE[tool.name], `${tool.name}: add authorization cases (agentToolCoverage.ts + matrix test)`);

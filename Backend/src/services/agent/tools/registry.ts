@@ -10,18 +10,27 @@
  *     return `awaitingConfirmation` with a saved `AgentPendingAction` id (phase 3).
  *   - `scope: 'admin'` tools are not even listed to non-admins, and `executeTool`
  *     refuses them for non-admins exactly like an unknown tool.
+ *   - `kind: 'memory'` tools (Phase 11, docs/plans/ai-agent-memory.md) touch only the
+ *     user's own assistant memory: no confirmation card, never app data. They are listed
+ *     only while the principal's memory switch is ON (`executeTool` refuses them like an
+ *     unknown tool otherwise) and their handlers re-check the switch in the DB.
  *
  * `executeTool` never throws into the run loop: bad args, ApiErrors (404 stays the same
  * generic "not found") and crashes all come back as `{ ok: false, data: { error } }`.
  */
 import { fromZonedTime } from 'date-fns-tz';
 import { z } from 'zod/v4';
-import type { AgentEntityRef, AgentToolRiskTier as AgentToolRiskTierContract } from '@bandeja/shared/agentContract';
+import type {
+  AgentEntityRef,
+  AgentStreamEvent,
+  AgentToolRiskTier as AgentToolRiskTierContract,
+} from '@bandeja/shared/agentContract';
 import { ApiError } from '../../../utils/ApiError';
 import type { AgentPrincipal } from '../access/agentPrincipal';
 import { agentT } from '../i18n/agentI18n';
 
-export type AgentToolKind = 'read' | 'write';
+/** `memory`: the user's own assistant memory (self-scoped, no card; see the header). */
+export type AgentToolKind = 'read' | 'write' | 'memory';
 export type AgentToolScope = 'user' | 'admin';
 /**
  * Write tools only (plan §15): `standard` may be stored as ALWAYS_ALLOW by the user (the
@@ -51,7 +60,25 @@ export type AgentToolContext = {
    */
   tool?: AgentToolDefinition;
   signal?: AbortSignal;
+  /**
+   * Set by the run loop for every call (Phase 11 provenance guard, `agentMemory.service.ts`
+   * `assertMemorySaveProvenance`). Missing = unknown = `save_memory` refuses (fail closed).
+   */
+  memoryProvenance?: AgentMemoryProvenance;
 };
+
+export type AgentMemoryProvenance = {
+  /**
+   * Text written by other people is in the model's context: an `untrustedContent` read
+   * returned content earlier in this run, or one was called anywhere in this chat's history.
+   */
+  untrustedContentInContext: boolean;
+  /** The latest user message explicitly asks to remember something (`userAskedToRemember`). */
+  userAskedToRemember: boolean;
+};
+
+/** Payload of the `memory.saved` run event a `save_memory` call emits (chip with Undo). */
+export type AgentMemorySavedEvent = Extract<AgentStreamEvent, { type: 'memory.saved' }>['memory'];
 
 export type AgentToolResult = {
   /** JSON sent back to the model. Keep it small and free of private fields. */
@@ -64,6 +91,8 @@ export type AgentToolResult = {
    * `action.pending` and ends the run as `AWAITING_CONFIRMATION`.
    */
   awaitingConfirmation?: { actionId: string };
+  /** `save_memory` stored a memory: the run loop emits `memory.saved` (Phase 11). */
+  memorySaved?: AgentMemorySavedEvent;
 };
 
 /** Context of a confirmed write: the principal is re-loaded from the DB at confirm time. */
@@ -143,8 +172,8 @@ export function defineTool<S extends z.ZodType>(definition: AgentToolDefinition<
   if (!TOOL_NAME_PATTERN.test(definition.name)) {
     throw new Error(`Invalid agent tool name "${definition.name}"`);
   }
-  if (definition.kind !== 'read' && definition.kind !== 'write') {
-    throw new Error(`Agent tool ${definition.name} must declare kind read|write`);
+  if (definition.kind !== 'read' && definition.kind !== 'write' && definition.kind !== 'memory') {
+    throw new Error(`Agent tool ${definition.name} must declare kind read|write|memory`);
   }
   if (definition.scope !== 'user' && definition.scope !== 'admin') {
     throw new Error(`Agent tool ${definition.name} must declare scope user|admin`);
@@ -155,11 +184,14 @@ export function defineTool<S extends z.ZodType>(definition: AgentToolDefinition<
   if (definition.kind === 'write' && definition.riskTier !== 'standard' && definition.riskTier !== 'critical') {
     throw new Error(`Agent tool ${definition.name}: write tools must declare riskTier standard|critical`);
   }
-  if (definition.kind === 'read' && (definition.riskTier || definition.escalate)) {
+  if (definition.kind !== 'write' && (definition.riskTier || definition.escalate)) {
     throw new Error(`Agent tool ${definition.name}: riskTier / escalate are for write tools only`);
   }
-  if (definition.kind === 'write' && definition.untrustedContent) {
+  if (definition.kind !== 'read' && definition.untrustedContent) {
     throw new Error(`Agent tool ${definition.name}: untrustedContent is for read tools only`);
+  }
+  if (definition.kind === 'memory' && definition.scope !== 'user') {
+    throw new Error(`Agent tool ${definition.name}: memory tools are user scope`);
   }
   return definition;
 }
@@ -184,7 +216,17 @@ export type AgentToolExecution = {
   label: string;
   entities?: AgentEntityRef[];
   awaitingConfirmation?: { actionId: string };
+  memorySaved?: AgentMemorySavedEvent;
 };
+
+/** Who may see a tool: admin scope needs an admin; memory tools need the switch ON (fail closed). */
+export type AgentToolAudience = Pick<AgentPrincipal, 'isAdmin'> & Partial<Pick<AgentPrincipal, 'agentMemoryEnabled'>>;
+
+function visibleTo(tool: AgentToolDefinition, principal: AgentToolAudience): boolean {
+  if (tool.scope === 'admin' && !principal.isAdmin) return false;
+  if (tool.kind === 'memory' && principal.agentMemoryEnabled !== true) return false;
+  return true;
+}
 
 /** Generic answer for ids the principal may not see — identical to a missing id. */
 export const AGENT_TOOL_NOT_FOUND = { error: 'not_found' } as const;
@@ -218,12 +260,15 @@ export class AgentToolRegistry {
     return this.tools.get(name);
   }
 
-  /** Tools the principal may see. Admin-scope tools are hidden from non-admins. */
-  toolsForPrincipal(principal: Pick<AgentPrincipal, 'isAdmin'>): AgentToolDefinition[] {
-    return this.list().filter((tool) => tool.scope === 'user' || principal.isAdmin);
+  /**
+   * Tools the principal may see. Admin-scope tools are hidden from non-admins; memory
+   * tools are hidden unless `agentMemoryEnabled` is true.
+   */
+  toolsForPrincipal(principal: AgentToolAudience): AgentToolDefinition[] {
+    return this.list().filter((tool) => visibleTo(tool, principal));
   }
 
-  openAiToolsFor(principal: Pick<AgentPrincipal, 'isAdmin'>): AgentOpenAiTool[] {
+  openAiToolsFor(principal: AgentToolAudience): AgentOpenAiTool[] {
     return this.toolsForPrincipal(principal).map((tool) => ({
       type: 'function',
       function: {
@@ -249,7 +294,7 @@ export class AgentToolRegistry {
   async executeTool(ctx: AgentToolContext, name: string, rawArgs: unknown): Promise<AgentToolExecution> {
     const tool = this.tools.get(name);
     const { locale } = ctx;
-    if (!tool || (tool.scope === 'admin' && !ctx.principal.isAdmin)) {
+    if (!tool || !visibleTo(tool, ctx.principal)) {
       return { ok: false, data: { error: 'unknown_tool', name }, summary: agentT(locale, 'error.unknownTool'), label: name };
     }
     const label = this.labelFor(name, rawArgs, ctx.locale);
@@ -277,6 +322,7 @@ export class AgentToolRegistry {
         label,
         ...(result.entities?.length ? { entities: result.entities } : {}),
         ...(result.awaitingConfirmation ? { awaitingConfirmation: result.awaitingConfirmation } : {}),
+        ...(result.memorySaved ? { memorySaved: result.memorySaved } : {}),
       };
     } catch (error) {
       if (error instanceof ApiError) {

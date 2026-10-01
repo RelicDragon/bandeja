@@ -65,6 +65,10 @@
  *                     cost-share POST routes, `set_game_price` with `PUT /games/:id`; stale cards, trainer /
  *                     season owner, frozen, coins (critical, `expect`), price locks and escalation, cooldown
  *                     (`__tests__/agentMoney.integration.test.ts`, `npm run test:agent-money`)
+ *   memory-cases — Phase 11 `kind:'memory'` tools: hidden + refused while the switch is OFF, own rows
+ *                     only (another user's note is not_found), cap / length / secrets, upsert, provenance
+ *                     guard on `save_memory`, `memory.saved` event (`__tests__/agentMemory.integration.test.ts`,
+ *                     `npm run test:agent-memory`)
  */
 export type AgentToolCoverageKind =
   | 'game-matrix'
@@ -91,7 +95,8 @@ export type AgentToolCoverageKind =
   | 'results-read-cases'
   | 'results-write-cases'
   | 'money-read-cases'
-  | 'money-write-cases';
+  | 'money-write-cases'
+  | 'memory-cases';
 
 export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = {
   list_my_games: 'game-matrix',
@@ -151,4 +156,8 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   pay_my_share_with_coins: 'money-write-cases',
   set_game_price: 'money-write-cases',
   remind_unpaid_shares: 'money-write-cases',
+  list_memories: 'memory-cases',
+  read_memory: 'memory-cases',
+  save_memory: 'memory-cases',
+  forget_memory: 'memory-cases',
 };

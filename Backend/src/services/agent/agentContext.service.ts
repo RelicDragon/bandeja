@@ -15,6 +15,7 @@ import { agentGameSummarySelect, agentGameTitle } from './dto/game.dto';
 import { roundLevel } from './dto/user.dto';
 import type { AgentLlmMessage } from './llm/deepseekStream';
 import { textOfBlocks } from './agentChat.service';
+import { buildAgentMemoryPromptSection } from './agentMemory.service';
 import { upcomingGamesWhere } from './tools/games.tools';
 import type { AgentToolDefinition } from './tools/registry';
 
@@ -115,7 +116,11 @@ export function buildAgentModelRules(tools: ReadonlyArray<Pick<AgentToolDefiniti
   ].join('\n');
 }
 
-/** Builds the system prompt from the DB-loaded principal. */
+/**
+ * Builds the system prompt from the DB-loaded principal. With the memory switch ON, a
+ * "What you remember about this user" index (`agentMemory.service.ts`) sits between the
+ * snapshot and the rules, framed as quoted data; it never changes the rules or the tools.
+ */
 export async function buildAgentRunContext(params: {
   principal: AgentPrincipal;
   /** Tools listed to this principal (`registry.toolsForPrincipal`); rule 6 is built from them. */
@@ -137,7 +142,7 @@ export async function buildAgentRunContext(params: {
   const locale = resolveAgentLocale(params.headerLocale, principal.language);
   const timezone = isValidTimeZone(user?.currentCity?.timezone) ? user!.currentCity!.timezone : 'UTC';
 
-  const [upcoming, seasons] = await Promise.all([
+  const [upcoming, seasons, memorySection] = await Promise.all([
     prisma.game.findMany({
       where: {
         AND: [
@@ -163,6 +168,8 @@ export async function buildAgentRunContext(params: {
       orderBy: { startTime: 'desc' },
       take: 5,
     }),
+    // Phase 11: null while the memory switch is OFF (then the prompt says nothing about memory).
+    buildAgentMemoryPromptSection(principal.userId),
   ]);
 
   const sports = (user?.sportsEnabled?.length ? user.sportsEnabled : [user?.primarySport ?? 'PADEL'])
@@ -203,6 +210,7 @@ export async function buildAgentRunContext(params: {
     'League seasons I own or admin (id | title | role):',
     ...seasonLines,
     '',
+    ...(memorySection ? [memorySection, ''] : []),
     buildAgentModelRules(params.tools),
     '',
     `Reply in ${languageName} unless the user writes in another language; then use theirs.`,
@@ -224,6 +232,26 @@ function llmMessagesOf(message: HistoryMessage): AgentLlmMessage[] {
 function clip(text: string, max: number): string {
   const oneLine = text.replace(/\s+/g, ' ').trim();
   return oneLine.length > max ? `${oneLine.slice(0, max)}…` : oneLine;
+}
+
+/**
+ * Phase 11 provenance guard inputs (`assertMemorySaveProvenance`), read from the WHOLE chat
+ * history (not only the replayed window: folded turns may still paraphrase other people's
+ * text): whether any `untrustedContent` tool was ever called in this chat, and the latest
+ * user message text.
+ */
+export function agentMemoryProvenanceFromHistory(
+  messages: HistoryMessage[],
+  isUntrustedTool: (toolName: string) => boolean,
+): { historyTainted: boolean; latestUserText: string | null } {
+  const ordered = [...messages].sort((a, b) => a.seq - b.seq);
+  const historyTainted = ordered.some((message) =>
+    llmMessagesOf(message).some(
+      (llm) => llm.role === 'assistant' && (llm.tool_calls ?? []).some((call) => isUntrustedTool(call.function.name)),
+    ),
+  );
+  const lastUser = [...ordered].reverse().find((message) => message.role === AgentMessageRole.USER);
+  return { historyTainted, latestUserText: lastUser ? textOfBlocks(blocks(lastUser)) || null : null };
 }
 
 /**

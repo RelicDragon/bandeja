@@ -14,6 +14,11 @@ export type AgentPrincipal = {
   canCreateTournament: boolean;
   currentCityId: string | null;
   language: string | null;
+  /**
+   * Memory master switch at load time (`User.agentMemoryEnabled`, Phase 11). Only decides
+   * whether the memory tools are listed; the memory service re-reads the flag on every call.
+   */
+  agentMemoryEnabled: boolean;
 };
 
 const AGENT_PRINCIPAL_SELECT = {
@@ -24,6 +29,7 @@ const AGENT_PRINCIPAL_SELECT = {
   currentCityId: AUTH_USER_SELECT.currentCityId,
   language: AUTH_USER_SELECT.language,
   canCreateTournament: true,
+  agentMemoryEnabled: true,
 } as const;
 
 /**
@@ -43,5 +49,6 @@ export async function loadAgentPrincipal(userId: string): Promise<AgentPrincipal
     canCreateTournament: user.canCreateTournament,
     currentCityId: user.currentCityId,
     language: user.language,
+    agentMemoryEnabled: user.agentMemoryEnabled,
   };
 }
