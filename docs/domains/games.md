@@ -66,11 +66,11 @@ Only `PLAYING` counts toward `maxParticipants`.
 
 | Action | API | Notes |
 |--------|-----|--------|
-| Join | `POST /games/:id/join` | Public or private alike (private = unlisted, direct-link model). `allowDirectJoin` false → `IN_QUEUE` after gender check |
+| Join | `POST /games/:id/join` | Public or private alike (private = unlisted, direct-link model). `allowDirectJoin` false → `IN_QUEUE` after gender check. **Not on `LEAGUE` fixtures** (400 `errors.games.joinNotSupportedForLeagueFixture`, also for self `toggle-playing-status`): players request the season; fixtures are filled by league assignment |
 | Leave roster | `POST /games/:id/leave` | Owner cannot fully leave |
 | Guest (chat-only) | `POST /games/:id/join-as-guest` | `GUEST` |
 | Leave chat | `POST /games/:id/leave-chat` | |
-| Queue accept/decline | owner/admin (`canManageGameRoster`), incl. parent-season owner/admin on league fixtures and platform admins; **not** widened by `anyoneCanInvite` | `acceptJoinQueue` / `declineJoinQueue` — both services re-check `canUserManageQueue` \|\| `hasParentGamePermissionWithUserCheck`; client `canManageJoinQueue` matches |
+| Queue accept/decline | owner/admin (`canManageGameRoster`), incl. parent owner/admin and platform admins (accept and decline share one gate); **not** widened by `anyoneCanInvite` | `acceptJoinQueue` / `declineJoinQueue` — both services re-check `canUserManageQueue` \|\| `hasParentGamePermissionWithUserCheck`; client `canManageJoinQueue` matches |
 | Cancel queue | `cancelJoinQueue` | |
 | Invite | owner/admin or `anyoneCanInvite` | Search \| Looking; `canInviteToGame` |
 | Kick | owner/admin | `kickUser` |

@@ -13,8 +13,9 @@
  *    (`canManageGameRoster`), even with `anyoneCanInvite` on. A plain PLAYING
  *    participant gets 403 and the queue row is untouched; the client hides the
  *    accept/decline icons from them (`GameDetailsShell` `canManageJoinQueue`).
- * 3. A parent league-season owner answers a fixture's queue both ways (the client shows
- *    them both icons); league fixtures are `allowDirectJoin = false`, so queues are common.
+ * 3. Leagues: players request to join the **season** (its owner/admin answers). League
+ *    fixtures are closed (`entityType = LEAGUE`, roster filled by league assignment):
+ *    `/join` and self `toggle-playing-status` answer 400 and create no queue row.
  *
  * Every row carries a unique suffix and is removed in `finally`. Notifications suppressed.
  */
@@ -159,25 +160,29 @@ void (async () => {
     assert.equal(await statusOf(queueGame, 'queued2'), null, 'declined queue row removed');
     checks++;
 
-    // --- 3. Parent-season owner answers a league fixture's queue ------------------------------
+    // --- 3. League: request the season, never a fixture ---------------------------------------
     const season = await makeGame({ isPublic: false, allowDirectJoin: false, entityType: EntityType.LEAGUE_SEASON }, [
       { userId: userIds.seasonOwner, role: ParticipantRole.OWNER, status: ParticipantStatus.NON_PLAYING },
     ]);
     const fixture = await makeGame({ isPublic: false, allowDirectJoin: false, entityType: EntityType.LEAGUE, parentId: season }, [
       { userId: userIds.player, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.PLAYING },
-      { userId: userIds.queued, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.IN_QUEUE },
-      { userId: userIds.queued2, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.IN_QUEUE },
     ]);
-    const fixtureDecline = await call('player', 'POST', `/${fixture}/decline-join-queue`, { userId: userIds.queued2 });
-    assert.equal(fixtureDecline.status, 403, `fixture player declines = 403 (got ${fixtureDecline.status})`);
+    const fixtureJoin = await call('stranger', 'POST', `/${fixture}/join`);
+    assert.equal(fixtureJoin.status, 400, `join on a fixture = 400 (got ${fixtureJoin.status})`);
+    assert.equal(fixtureJoin.body.message, 'errors.games.joinNotSupportedForLeagueFixture');
+    assert.equal(await statusOf(fixture, 'stranger'), null, 'no fixture queue row');
     checks++;
-    const seasonDeclined = await call('seasonOwner', 'POST', `/${fixture}/decline-join-queue`, { userId: userIds.queued2 });
-    assert.equal(seasonDeclined.status, 200, `season owner declines on a fixture (got ${seasonDeclined.status} ${JSON.stringify(seasonDeclined.body)})`);
-    assert.equal(await statusOf(fixture, 'queued2'), null, 'season-owner decline removes the queue row');
+    const fixtureToggle = await call('player', 'PUT', `/${fixture}/toggle-playing-status`, { status: 'IN_QUEUE' });
+    assert.equal(fixtureToggle.status, 400, `fixture player self-queue = 400 (got ${fixtureToggle.status})`);
+    assert.equal(await statusOf(fixture, 'player'), ParticipantStatus.PLAYING, 'fixture seat untouched');
     checks++;
-    const seasonAccepted = await call('seasonOwner', 'POST', `/${fixture}/accept-join-queue`, { userId: userIds.queued });
-    assert.equal(seasonAccepted.status, 200, `season owner accepts on a fixture (got ${seasonAccepted.status} ${JSON.stringify(seasonAccepted.body)})`);
-    assert.equal(await statusOf(fixture, 'queued'), ParticipantStatus.PLAYING);
+    const seasonJoin = await call('stranger', 'POST', `/${season}/join`);
+    assert.equal(seasonJoin.status, 200, `join request on the season (got ${seasonJoin.status} ${JSON.stringify(seasonJoin.body)})`);
+    assert.equal(await statusOf(season, 'stranger'), ParticipantStatus.IN_QUEUE);
+    checks++;
+    const seasonDeclined = await call('seasonOwner', 'POST', `/${season}/decline-join-queue`, { userId: userIds.stranger });
+    assert.equal(seasonDeclined.status, 200, `season owner declines (got ${seasonDeclined.status} ${JSON.stringify(seasonDeclined.body)})`);
+    assert.equal(await statusOf(season, 'stranger'), null, 'season request removed');
     checks++;
 
     console.log(`gameJoinAccess.http.integration.test.ts: ok (${checks} checks)`);

@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "Střídání je možné jen během zadávání výsledků",
       "substituteCannotReplaceTrainer": "Změňte trenéra místo střídání",
       "substituteNotSupportedForLeague": "Sestavy ligy se mění v ligovém týmu, ne zde",
+      "joinNotSupportedForLeagueFixture": "Zápasy ligy obsazuje liga. Požádejte o vstup do sezóny",
       "substituteOutNotPlaying": "Tento hráč v tomto zápase nehraje",
       "substituteInAlreadyPlaying": "Tento hráč už v tomto zápase hraje"
     },

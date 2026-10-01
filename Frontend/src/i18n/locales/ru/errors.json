@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "Замена доступна только во время ввода результатов",
       "substituteCannotReplaceTrainer": "Смените тренера вместо замены",
       "substituteNotSupportedForLeague": "Составы лиги меняются в команде лиги, а не здесь",
+      "joinNotSupportedForLeagueFixture": "Матчи лиги заполняет лига. Подайте заявку в сезон",
       "substituteOutNotPlaying": "Этот игрок не играет в этой игре",
       "substituteInAlreadyPlaying": "Этот игрок уже играет в этой игре"
     },

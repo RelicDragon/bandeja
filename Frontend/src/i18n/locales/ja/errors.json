@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "交代は結果の入力中のみ可能です",
       "substituteCannotReplaceTrainer": "交代ではなくトレーナーを変更してください",
       "substituteNotSupportedForLeague": "リーグのロスターはリーグチームから変更してください",
+      "joinNotSupportedForLeagueFixture": "リーグの試合はリーグが割り当てます。シーズンへの参加を申請してください",
       "substituteOutNotPlaying": "その選手はこの試合に出場していません",
       "substituteInAlreadyPlaying": "その選手はすでにこの試合に出場しています"
     },

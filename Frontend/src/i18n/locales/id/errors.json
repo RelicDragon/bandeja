@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "Penggantian hanya tersedia saat pencatatan hasil berlangsung",
       "substituteCannotReplaceTrainer": "Ganti pelatih, bukan menggantikannya sebagai pemain",
       "substituteNotSupportedForLeague": "Susunan liga diubah dari tim liga, bukan di sini",
+      "joinNotSupportedForLeagueFixture": "Pertandingan liga diisi oleh liga. Ajukan gabung ke musimnya",
       "substituteOutNotPlaying": "Pemain itu tidak bermain di pertandingan ini",
       "substituteInAlreadyPlaying": "Pemain itu sudah bermain di pertandingan ini"
     },

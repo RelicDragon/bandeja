@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "التبديل متاح فقط أثناء إدخال النتائج",
       "substituteCannotReplaceTrainer": "قم بتغيير المدرب بدلاً من تبديله",
       "substituteNotSupportedForLeague": "يتم تغيير تشكيلات الدوري من فريق الدوري، لا من هنا",
+      "joinNotSupportedForLeagueFixture": "يحدد الدوري لاعبي مبارياته. اطلب الانضمام إلى الموسم بدلاً من ذلك",
       "substituteOutNotPlaying": "هذا اللاعب لا يشارك في هذه المباراة",
       "substituteInAlreadyPlaying": "هذا اللاعب يشارك بالفعل في هذه المباراة"
     },

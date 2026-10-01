@@ -25,6 +25,8 @@ export interface JoinDeepLinkViewer {
   isInJoinQueue: boolean;
   /** `Game.allowDirectJoin` — false when the organizer accepts by hand. */
   allowDirectJoin: boolean;
+  /** `entityType === 'LEAGUE'`: fixtures are filled by the league, never joined. */
+  isLeagueFixture: boolean;
 }
 
 /**
@@ -38,6 +40,7 @@ export interface JoinDeepLinkViewer {
  * panel already explains that the organizer accepts manually.
  */
 export function shouldSwallowJoinDeepLink(viewer: JoinDeepLinkViewer): boolean {
+  if (viewer.isLeagueFixture) return true;
   if (viewer.isInJoinQueue) return !viewer.allowDirectJoin;
   return viewer.isParticipantNonGuest || viewer.hasPendingInvite || viewer.isGuest;
 }

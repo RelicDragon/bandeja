@@ -2180,6 +2180,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           hasPendingInvite,
           isInJoinQueue,
           allowDirectJoin: game.allowDirectJoin,
+          isLeagueFixture: game.entityType === 'LEAGUE',
         })}
         onJoin={() => void handleJoin()}
       />

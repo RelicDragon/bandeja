@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "仅在录入成绩期间可以替换球员",
       "substituteCannotReplaceTrainer": "请更换教练，而不是替换教练",
       "substituteNotSupportedForLeague": "联赛阵容需在联赛队伍中更改，而非此处",
+      "joinNotSupportedForLeagueFixture": "联赛比赛由联赛安排。请申请加入赛季",
       "substituteOutNotPlaying": "该球员未参加本场比赛",
       "substituteInAlreadyPlaying": "该球员已参加本场比赛"
     },

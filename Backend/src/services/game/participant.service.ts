@@ -78,6 +78,16 @@ async function lockGameRowForSeating(
   await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${gameId} FOR UPDATE`);
 }
 
+/**
+ * League fixtures are closed: players request to join the **season**, and fixture rosters
+ * are filled by league assignment (auto or season owner/admin). No self-join, no queue.
+ */
+function assertNotLeagueFixture(entityType: EntityType) {
+  if (entityType === EntityType.LEAGUE) {
+    throw new ApiError(400, 'errors.games.joinNotSupportedForLeagueFixture');
+  }
+}
+
 export class ParticipantService {
   /**
    * Read-only forecast of `joinGame` for previews (agent `join_game`): the same branches and
@@ -139,6 +149,7 @@ export class ParticipantService {
     if (!game) {
       throw new ApiError(404, 'Game not found');
     }
+    assertNotLeagueFixture(game.entityType);
 
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
@@ -502,6 +513,7 @@ export class ParticipantService {
     if (eventGame?.entityType === EntityType.EVENT) {
       throw new ApiError(400, 'Events use going or looking, not playing status');
     }
+    if (eventGame) assertNotLeagueFixture(eventGame.entityType);
 
     const isPlaying = status === PLAYING_STATUS;
     const newStatus = status;

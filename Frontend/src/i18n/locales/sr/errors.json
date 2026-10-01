@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "Zamena je moguća samo tokom unosa rezultata",
       "substituteCannotReplaceTrainer": "Promenite trenera umesto zamene",
       "substituteNotSupportedForLeague": "Sastavi lige se menjaju u timu lige, ne ovde",
+      "joinNotSupportedForLeagueFixture": "Mečeve lige popunjava liga. Prijavite se za sezonu",
       "substituteOutNotPlaying": "Taj igrač ne igra u ovoj igri",
       "substituteInAlreadyPlaying": "Taj igrač već igra u ovoj igri"
     },

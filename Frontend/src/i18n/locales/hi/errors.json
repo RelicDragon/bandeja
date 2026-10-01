@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "खिलाड़ी बदलना केवल परिणाम दर्ज करते समय उपलब्ध है",
       "substituteCannotReplaceTrainer": "उन्हें बदलने के बजाय ट्रेनर बदलें",
       "substituteNotSupportedForLeague": "लीग रोस्टर लीग टीम से बदले जाते हैं, यहाँ से नहीं",
+      "joinNotSupportedForLeagueFixture": "लीग मैच लीग भरती है। इसके बजाय सीज़न में शामिल होने का अनुरोध करें",
       "substituteOutNotPlaying": "वह खिलाड़ी इस गेम में नहीं खेल रहा है",
       "substituteInAlreadyPlaying": "वह खिलाड़ी इस गेम में पहले से खेल रहा है"
     },

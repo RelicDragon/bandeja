@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "La sustitución solo está disponible durante el registro de resultados",
       "substituteCannotReplaceTrainer": "Cambia el entrenador en lugar de sustituirlo",
       "substituteNotSupportedForLeague": "Las alineaciones de liga se cambian en el equipo de liga, no aquí",
+      "joinNotSupportedForLeagueFixture": "Los partidos de liga los asigna la liga. Solicita unirte a la temporada",
       "substituteOutNotPlaying": "Ese jugador no está jugando en este partido",
       "substituteInAlreadyPlaying": "Ese jugador ya está jugando en este partido"
     },

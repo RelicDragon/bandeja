@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "เปลี่ยนตัวได้เฉพาะระหว่างบันทึกผลเท่านั้น",
       "substituteCannotReplaceTrainer": "เปลี่ยนผู้ฝึกสอนแทนการเปลี่ยนตัว",
       "substituteNotSupportedForLeague": "รายชื่อผู้เล่นลีกเปลี่ยนได้จากทีมลีก ไม่ใช่ที่นี่",
+      "joinNotSupportedForLeagueFixture": "แมตช์ลีกจัดผู้เล่นโดยลีก ขอเข้าร่วมซีซันแทน",
       "substituteOutNotPlaying": "ผู้เล่นคนนั้นไม่ได้เล่นในเกมนี้",
       "substituteInAlreadyPlaying": "ผู้เล่นคนนั้นเล่นในเกมนี้อยู่แล้ว"
     },

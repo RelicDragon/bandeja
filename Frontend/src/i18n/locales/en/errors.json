@@ -78,6 +78,7 @@
       "substituteResultsNotStarted": "Substitution is only available while results entry is in progress",
       "substituteCannotReplaceTrainer": "Change the trainer instead of substituting them",
       "substituteNotSupportedForLeague": "League rosters are changed from the league team, not here",
+      "joinNotSupportedForLeagueFixture": "League matches are filled by the league. Ask to join the season instead",
       "substituteOutNotPlaying": "That player is not playing in this game",
       "substituteInAlreadyPlaying": "That player is already playing in this game"
     },

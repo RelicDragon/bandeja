@@ -43,6 +43,7 @@ describe('shouldSwallowJoinDeepLink', () => {
     hasPendingInvite: false,
     isInJoinQueue: false,
     allowDirectJoin: true,
+    isLeagueFixture: false,
     ...overrides,
   });
 
@@ -72,5 +73,9 @@ describe('shouldSwallowJoinDeepLink', () => {
     expect(shouldSwallowJoinDeepLink(viewer({ isParticipantNonGuest: true }))).toBe(true);
     expect(shouldSwallowJoinDeepLink(viewer({ hasPendingInvite: true }))).toBe(true);
     expect(shouldSwallowJoinDeepLink(viewer({ isGuest: true }))).toBe(true);
+  });
+
+  it('swallows the link on a league fixture (the league fills it)', () => {
+    expect(shouldSwallowJoinDeepLink(viewer({ isLeagueFixture: true }))).toBe(true);
   });
 });
