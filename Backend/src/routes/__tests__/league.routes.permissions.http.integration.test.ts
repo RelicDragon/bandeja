@@ -220,6 +220,11 @@ void (async () => {
     for (const actor of ['leagueCreator', 'platformAdmin'] as Actor[]) {
       const res = await call(actor, 'POST', '', leaguePayload(actor));
       assert.equal(res.status, 201, `POST /leagues: ${actor} = 201 (got ${res.status} ${JSON.stringify(res.body)})`);
+      const creatorRows = await prisma.gameParticipant.findMany({
+        where: { userId: userIds[actor], game: { cityId: city.id, entityType: EntityType.LEAGUE_SEASON, name: 'S1' } },
+        select: { role: true, status: true },
+      });
+      assert.deepEqual(creatorRows, [{ role: 'OWNER', status: 'PLAYING' }], `${actor}'s season row is a playing owner, not queued`);
       checks++;
     }
     assert.equal(await leaguesInCity(), leagueCountBefore + 2);
