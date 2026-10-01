@@ -25,6 +25,7 @@ import { AuthSessionMaintenanceScheduler } from './services/auth/authSessionMain
 import { RatingInactiveScheduler } from './services/ratingInactiveScheduler.service';
 import { GameSeriesScheduler } from './services/gameSeries/gameSeriesScheduler.service';
 import { CostShareReminderScheduler } from './services/gameCost/costShareReminderScheduler.service';
+import { AgentMemoryConsolidationScheduler } from './services/agent/agentMemoryConsolidationScheduler.service';
 import { MonthlyRecapScheduler } from './services/recap/monthlyRecapScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
@@ -121,6 +122,9 @@ const startServer = async () => {
     const costShareReminderScheduler = new CostShareReminderScheduler();
     costShareReminderScheduler.start();
 
+    const agentMemoryConsolidationScheduler = new AgentMemoryConsolidationScheduler();
+    agentMemoryConsolidationScheduler.start();
+
     const monthlyRecapScheduler = new MonthlyRecapScheduler();
     monthlyRecapScheduler.start();
 
@@ -182,6 +186,7 @@ const startServer = async () => {
         ratingInactiveScheduler.stop();
         gameSeriesScheduler.stop();
         costShareReminderScheduler.stop();
+        agentMemoryConsolidationScheduler.stop();
         monthlyRecapScheduler.stop();
         stopQueueWorkers();
         telegramBotService.stop();

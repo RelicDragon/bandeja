@@ -53,7 +53,7 @@ docs/
     player-invite-looking.md
     event-entity.md         EntityType.EVENT
     ai-agent.md             AI agent plan (phases; phase 0–1 backend built)
-    ai-agent-memory.md      AI agent memory (phase 11; phases 1-2 built)
+    ai-agent-memory.md      AI agent memory (phase 11; built)
   ops/
     development.md          local run, env, Prisma, heavy lock
     testing.md              Playwright / Vitest / backend / CI

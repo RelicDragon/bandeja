@@ -250,6 +250,8 @@ model User {
   /// AI assistant memory master switch (docs/plans/ai-agent-memory.md §11.1). OFF: memory is
   /// neither read into the prompt nor offered to the model; stored rows stay, dormant.
   agentMemoryEnabled             Boolean                          @default(true)
+  /// Last weekly memory consolidation pass for this user (Phase 11.4).
+  agentMemoryConsolidatedAt      DateTime?
   bookedExternalBookings         GameExternalBooking[]            @relation("GameExternalBookingBookedBy")
 
   @@index([phone])
@@ -4579,6 +4581,13 @@ model AgentChat {
   createdAt  DateTime             @default(now())
   updatedAt  DateTime             @updatedAt
   archivedAt DateTime?
+  /// Rolling summary of the turns folded out of the replay window (Phase 11.4; chat-scoped,
+  /// not memory). Covers messages with `seq <= summaryThroughSeq`.
+  summary           String?              @db.Text
+  summaryThroughSeq Int?
+  /// The summarized turns included text written by other people (an `untrustedContent` read).
+  summaryTainted    Boolean              @default(false)
+  summaryUpdatedAt  DateTime?
   user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages   AgentMessage[]
   runs       AgentRun[]

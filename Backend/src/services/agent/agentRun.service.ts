@@ -80,10 +80,22 @@ import {
   toAgentMessageDto,
   toAgentPendingActionDto,
 } from './agentChat.service';
-import { agentMemoryProvenanceFromHistory, buildAgentModelHistory, buildAgentRunContext } from './agentContext.service';
+import {
+  agentMemoryProvenanceFromHistory,
+  buildAgentModelHistory,
+  buildAgentRunContext,
+  type AgentChatSummaryState,
+  type HistoryMessage,
+} from './agentContext.service';
+import {
+  AGENT_CHAT_SUMMARY_BUDGET_RESERVE,
+  agentChatSummaryFromRow,
+  planAgentChatSummary,
+  updateAgentChatSummary,
+} from './agentChatSummary.service';
 import { userAskedToRemember } from './agentMemory.service';
 import { getAgentEventStore, type AgentEventStore, type AgentStoredEvent } from './agentEvents';
-import { agentApiError, assertAgentBudget } from './agentGuards';
+import { agentApiError, agentTokensUsedToday, assertAgentBudget } from './agentGuards';
 import { agentT } from './i18n/agentI18n';
 import {
   AgentLlmError,
@@ -749,9 +761,11 @@ export class AgentRunService {
         orderBy: { seq: 'asc' },
         select: { role: true, content: true, llmMessages: true, seq: true },
       });
+      const isUntrustedTool = (name: string) => this.deps.registry.get(name)?.untrustedContent === true;
+      const summary = await this.refreshChatSummary(run, llm, history, isUntrustedTool, usage, signal);
       const messages: AgentLlmMessage[] = [
         { role: 'system', content: context.systemPrompt },
-        ...buildAgentModelHistory(history),
+        ...buildAgentModelHistory(history, undefined, summary),
       ];
       const toolCtx: AgentToolContext = {
         principal,
@@ -765,13 +779,10 @@ export class AgentRunService {
       };
       const openAiTools = this.deps.registry.openAiToolsFor(principal);
       let finalStatus: 'COMPLETED' | 'AWAITING_CONFIRMATION' = 'COMPLETED';
-      const provenance = agentMemoryProvenanceFromHistory(
-        history,
-        (name) => this.deps.registry.get(name)?.untrustedContent === true,
-      );
+      const provenance = agentMemoryProvenanceFromHistory(history, isUntrustedTool);
       const runState: AgentRunLoopState = {
         tainted: false,
-        historyTainted: provenance.historyTainted,
+        historyTainted: provenance.historyTainted || Boolean(summary?.tainted),
         userAskedToRemember: userAskedToRemember(provenance.latestUserText),
       };
 
@@ -849,6 +860,58 @@ export class AgentRunService {
     } finally {
       clearTimeout(timeout);
       clearInterval(heartbeat);
+    }
+  }
+
+  /**
+   * Phase 11.4 rolling chat summary (`agentChatSummary.service.ts`): returns the summary to
+   * replay (stored, or freshly updated when due and the daily budget allows). Its tokens are
+   * added to the run's usage. Any failure other than an abort keeps the stored summary.
+   */
+  private async refreshChatSummary(
+    run: AgentRun,
+    llm: AgentLlmClient,
+    history: HistoryMessage[],
+    isUntrustedTool: (name: string) => boolean,
+    usage: AgentUsage,
+    signal: AbortSignal,
+  ): Promise<AgentChatSummaryState | null> {
+    const row = await prisma.agentChat.findUnique({
+      where: { id: run.chatId },
+      select: { summary: true, summaryThroughSeq: true, summaryTainted: true },
+    });
+    const stored = agentChatSummaryFromRow(row);
+    const plan = planAgentChatSummary(history, stored, isUntrustedTool);
+    if (!plan) return stored;
+    const now = this.deps.now();
+    const used = (await agentTokensUsedToday(run.userId, now)) + usage.inputTokens + usage.outputTokens;
+    if (this.deps.config().dailyTokenBudget - used < AGENT_CHAT_SUMMARY_BUDGET_RESERVE) return stored;
+    const release = await this.llmGate.acquire(signal);
+    try {
+      const result = await updateAgentChatSummary({ chatId: run.chatId, llm, previous: stored, plan, signal, now });
+      usage.inputTokens += result.usage.inputTokens;
+      usage.outputTokens += result.usage.outputTokens;
+      await prisma.agentRun.updateMany({
+        where: { id: run.id },
+        data: { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens },
+      });
+      void this.deps.logUsage({
+        provider: llm.provider,
+        model: llm.model,
+        reason: LLM_REASON.AGENT_CHAT_SUMMARY,
+        userId: run.userId,
+        input: JSON.stringify(result.input).slice(0, USAGE_LOG_INPUT_MAX_CHARS),
+        output: result.output || '[empty]',
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
+      });
+      return result.state ?? stored;
+    } catch (error) {
+      if (signal.aborted) throw new RunAborted(abortReasonOf(signal));
+      console.error('[agent] chat summary failed; using the stored summary', { runId: run.id, error });
+      return stored;
+    } finally {
+      release();
     }
   }
 

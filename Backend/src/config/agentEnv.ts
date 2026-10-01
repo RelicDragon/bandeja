@@ -25,6 +25,8 @@ export type AgentEnvConfig = {
   queueMaxWaitMs: number;
   /** A RUNNING run whose heartbeat is older than this is failed (`INTERNAL`) by the sweep. */
   staleRunMs: number;
+  /** Phase 11.4: LLM calls the weekly memory consolidation may make per UTC day (all users). 0 = deterministic dedupe only. */
+  memoryConsolidationDailyCap: number;
 };
 
 export const AGENT_DEFAULT_MODEL = 'deepseek-flash';
@@ -52,5 +54,6 @@ export function resolveAgentEnvConfig(env: NodeJS.ProcessEnv): AgentEnvConfig {
     queuePollIntervalMs: intInRange(env.AGENT_QUEUE_POLL_INTERVAL_MS, 1000, 100, 60_000),
     queueMaxWaitMs: intInRange(env.AGENT_QUEUE_MAX_WAIT_MS, 10 * 60 * 1000, 10_000, 24 * 60 * 60 * 1000),
     staleRunMs: intInRange(env.AGENT_STALE_RUN_MS, 30_000, 10_000, 60 * 60 * 1000),
+    memoryConsolidationDailyCap: intInRange(env.AGENT_MEMORY_CONSOLIDATION_DAILY_CAP, 200, 0, 100_000),
   };
 }

@@ -208,6 +208,22 @@ function cleanDescription(description: string): string {
   return clip(cleaned, AGENT_MEMORY_DESCRIPTION_MAX_LENGTH);
 }
 
+/**
+ * The checks every write applies (length, one-line description, contact data / secrets),
+ * for writers outside this file (the consolidation job). Throws the same ApiErrors.
+ */
+export function checkAgentMemoryText(description: string, body: string): { description: string; body: string } {
+  const cleanedBody = cleanBody(body);
+  const cleanedDescription = cleanDescription(description);
+  assertNotSensitive(cleanedDescription, cleanedBody);
+  return { description: cleanedDescription, body: cleanedBody };
+}
+
+/** Serialises a user's memory writes (exported for the consolidation job). */
+export async function lockAgentMemoryUser(tx: Prisma.TransactionClient, userId: string): Promise<void> {
+  await lockUserMemory(tx, userId);
+}
+
 export function toAgentMemoryDto(row: AgentMemory): AgentMemoryDto {
   return {
     id: row.id,
@@ -274,7 +290,8 @@ export async function readAgentMemoryByName(userId: string, rawName: string, now
   if (!name) throw memoryNotFound();
   const row = await prisma.agentMemory.findUnique({ where: { userId_name: { userId, name } } });
   if (!row) throw memoryNotFound();
-  return prisma.agentMemory.update({ where: { id: row.id }, data: { lastUsedAt: now } });
+  // A read is not a content change: keep `updatedAt` (the weekly consolidation looks at it).
+  return prisma.agentMemory.update({ where: { id: row.id }, data: { lastUsedAt: now, updatedAt: row.updatedAt } });
 }
 
 // --- writes -------------------------------------------------------------------------------------

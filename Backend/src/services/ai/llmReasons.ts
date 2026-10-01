@@ -9,6 +9,10 @@ export const LLM_REASON = {
   RATING_EXPLANATION: 'rating_explanation',
   RATING_EXPLANATION_TRANSLATION: 'rating_explanation_translation',
   AGENT_CHAT: 'agent_chat',
+  /** Phase 11.4 rolling chat summary (one call when enough turns fold out of the window). */
+  AGENT_CHAT_SUMMARY: 'agent_chat_summary',
+  /** Phase 11.4 weekly memory consolidation (one call per user, global daily cap). */
+  AGENT_MEMORY_CONSOLIDATION: 'agent_memory_consolidation',
 } as const;
 
 export type LlmReason = (typeof LLM_REASON)[keyof typeof LLM_REASON];
