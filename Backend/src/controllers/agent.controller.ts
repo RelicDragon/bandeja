@@ -2,7 +2,7 @@
  * AI agent REST + SSE (`/api/agent`, contract: `Frontend/shared/agentContract.ts`).
  * Every lookup is scoped by `req.userId`; foreign ids are 404.
  */
-import type { AgentChatDto, AgentClientReportRequest } from '@bandeja/shared/agentContract';
+import type { AgentChatDto, AgentClientReportRequest, AgentMemoryRestore } from '@bandeja/shared/agentContract';
 import prisma from '../config/database';
 import type { AuthRequest } from '../middleware/auth';
 import { getValidatedRequestPart } from '../middleware/validateZod';
@@ -27,6 +27,7 @@ import {
   clearAgentMemories,
   deleteAgentMemory,
   getAgentMemoryOverview,
+  restoreAgentMemory,
   setAgentMemoryEnabled,
   toAgentMemoryDto,
   updateAgentMemoryText,
@@ -167,10 +168,14 @@ export const setMemorySettings = asyncHandler<AuthRequest>(async (req, res) => {
   res.json({ success: true, data: await setAgentMemoryEnabled(requireUserId(req), enabled) });
 });
 
-/** `POST /agent/memory/items {text}` → `AgentMemoryDto` (USER_ASKED; 409 while OFF or full). */
+/**
+ * `POST /agent/memory/items {text, restore?}` → `AgentMemoryDto` (USER_ASKED; 409 while OFF
+ * or full). `restore` (Undo of a delete) puts the item back with its own fields.
+ */
 export const addMemoryItem = asyncHandler<AuthRequest>(async (req, res) => {
-  const { text } = getValidatedRequestPart<{ text: string }>(req, 'body');
-  const row = await addAgentMemoryFromText(requireUserId(req), text);
+  const { text, restore } = getValidatedRequestPart<{ text: string; restore?: AgentMemoryRestore }>(req, 'body');
+  const userId = requireUserId(req);
+  const row = restore ? await restoreAgentMemory(userId, text, restore) : await addAgentMemoryFromText(userId, text);
   res.status(201).json({ success: true, data: toAgentMemoryDto(row) });
 });
 

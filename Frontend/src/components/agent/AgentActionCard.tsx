@@ -113,7 +113,7 @@ function AutoApprovedNote() {
       <span>{t('agent.action.autoApproved')}</span>
       <button
         type="button"
-        onClick={openAgentPermissionsScreen}
+        onClick={() => openAgentPermissionsScreen()}
         className="font-medium text-primary-600 underline-offset-2 hover:underline dark:text-primary-400"
       >
         {t('agent.permissions.manage')}

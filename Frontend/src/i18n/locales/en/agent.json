@@ -149,6 +149,45 @@
       "failed": "Nothing was changed",
       "reportPending": "Done at the club, but not saved yet. We'll retry when you come back.",
       "inProgress": "Running in the app…"
+    },
+    "settings": {
+      "title": "Assistant settings",
+      "tabPermissions": "Permissions",
+      "tabMemory": "Memory"
+    },
+    "memory": {
+      "allow": "Allow memory",
+      "allowHint": "The assistant remembers your preferences and facts about you across chats.",
+      "disclosure": "Memory is sent to our LLM provider with your requests so the assistant can answer in the best way possible. Turning it off stops saving and using memory.",
+      "offNote": "Memory is off: saved notes are kept but not used. You can still delete them.",
+      "loadFailed": "Could not load memory",
+      "badgeUser": "You added",
+      "badgeLearned": "Learned",
+      "add": "Add memory",
+      "addPlaceholder": "Something the assistant should remember, e.g. I prefer evening games",
+      "save": "Save",
+      "edit": "Edit memory",
+      "delete": "Delete memory",
+      "deleted": "Memory deleted",
+      "undo": "Undo",
+      "removeAll": "Remove all",
+      "removeAllTitle": "Remove all memories?",
+      "removeAllMessage": "The assistant forgets everything it remembers about you. This cannot be undone.",
+      "removeAllConfirm": "Remove all",
+      "removedAll": "Memory cleared",
+      "emptyTitle": "Nothing remembered yet",
+      "emptyHint": "The assistant saves short notes like these as you chat. You can add your own too.",
+      "example1": "Prefers evening games after 19:00",
+      "example2": "Plays on the left side and likes short answers",
+      "limit": "{{count}} of {{max}} notes",
+      "savedChip": "Saved to memory",
+      "updatedChip": "Memory updated",
+      "undoneChip": "Removed from memory",
+      "openMemory": "Open memory settings",
+      "errorDisabled": "Turn on memory first",
+      "errorLimit": "Memory is full. Delete a note first.",
+      "errorSensitive": "Memory can't hold contact details or secrets",
+      "saved": "Saved"
     }
   }
 }

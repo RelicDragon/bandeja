@@ -149,6 +149,45 @@
       "failed": "没有任何更改",
       "reportPending": "俱乐部已完成，但尚未保存。你回来时我们会重试。",
       "inProgress": "正在应用中执行…"
+    },
+    "settings": {
+      "title": "助手设置",
+      "tabPermissions": "权限",
+      "tabMemory": "记忆"
+    },
+    "memory": {
+      "allow": "允许记忆",
+      "allowHint": "助手会在不同对话之间记住你的偏好和关于你的信息。",
+      "disclosure": "记忆会随你的请求一起发送给我们的大模型服务商，以便助手尽可能给出最好的回答。关闭后将不再保存和使用记忆。",
+      "offNote": "记忆已关闭：已保存的备注会保留但不会被使用。你仍可删除它们。",
+      "loadFailed": "无法加载记忆",
+      "badgeUser": "你添加的",
+      "badgeLearned": "助手记下的",
+      "add": "添加记忆",
+      "addPlaceholder": "希望助手记住的事，例如：我喜欢晚上打球",
+      "save": "保存",
+      "edit": "编辑备注",
+      "delete": "删除备注",
+      "deleted": "备注已删除",
+      "undo": "撤销",
+      "removeAll": "全部删除",
+      "removeAllTitle": "删除全部记忆？",
+      "removeAllMessage": "助手将忘记关于你的所有内容。此操作无法撤销。",
+      "removeAllConfirm": "全部删除",
+      "removedAll": "记忆已清空",
+      "emptyTitle": "还没有记住任何内容",
+      "emptyHint": "聊天时助手会保存类似下面的简短备注。你也可以自己添加。",
+      "example1": "喜欢晚上 19:00 以后的比赛",
+      "example2": "打左边位置，喜欢简短的回答",
+      "limit": "备注：{{count}} / {{max}}",
+      "savedChip": "已保存到记忆",
+      "updatedChip": "记忆已更新",
+      "undoneChip": "已从记忆中移除",
+      "openMemory": "打开记忆设置",
+      "errorDisabled": "请先开启记忆",
+      "errorLimit": "记忆已满，请先删除一条备注。",
+      "errorSensitive": "记忆中不能保存联系方式或机密信息",
+      "saved": "已保存"
     }
   }
 }

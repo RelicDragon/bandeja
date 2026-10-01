@@ -149,6 +149,45 @@
       "failed": "Nic se nezměnilo",
       "reportPending": "V klubu hotovo, ale zatím neuloženo. Zkusíme to znovu, až se vrátíte.",
       "inProgress": "Probíhá v aplikaci…"
+    },
+    "settings": {
+      "title": "Nastavení asistenta",
+      "tabPermissions": "Oprávnění",
+      "tabMemory": "Paměť"
+    },
+    "memory": {
+      "allow": "Povolit paměť",
+      "allowHint": "Asistent si mezi chaty pamatuje tvé preference a fakta o tobě.",
+      "disclosure": "Paměť se posílá našemu poskytovateli LLM spolu s tvými požadavky, aby asistent odpovídal co nejlépe. Vypnutím se paměť přestane ukládat i používat.",
+      "offNote": "Paměť je vypnutá: uložené poznámky zůstávají, ale nepoužívají se. Pořád je můžeš smazat.",
+      "loadFailed": "Paměť se nepodařilo načíst",
+      "badgeUser": "Přidal(a) jsi",
+      "badgeLearned": "Naučeno",
+      "add": "Přidat do paměti",
+      "addPlaceholder": "Co si má asistent zapamatovat, např. hraju raději večer",
+      "save": "Uložit",
+      "edit": "Upravit poznámku",
+      "delete": "Smazat poznámku",
+      "deleted": "Poznámka smazána",
+      "undo": "Zpět",
+      "removeAll": "Odebrat vše",
+      "removeAllTitle": "Odebrat celou paměť?",
+      "removeAllMessage": "Asistent zapomene vše, co si o tobě pamatuje. Nelze vrátit.",
+      "removeAllConfirm": "Odebrat vše",
+      "removedAll": "Paměť vymazána",
+      "emptyTitle": "Zatím si nic nepamatuje",
+      "emptyHint": "Asistent si během chatu ukládá krátké poznámky, jako jsou tyto. Můžeš přidat i vlastní.",
+      "example1": "Hraje raději večer po 19:00",
+      "example2": "Hraje vlevo a má rád krátké odpovědi",
+      "limit": "Poznámek: {{count}} z {{max}}",
+      "savedChip": "Uloženo do paměti",
+      "updatedChip": "Paměť aktualizována",
+      "undoneChip": "Odebráno z paměti",
+      "openMemory": "Otevřít nastavení paměti",
+      "errorDisabled": "Nejdřív zapni paměť",
+      "errorLimit": "Paměť je plná. Nejdřív smaž nějakou poznámku.",
+      "errorSensitive": "Paměť nemůže obsahovat kontakty ani tajné údaje",
+      "saved": "Uloženo"
     }
   }
 }

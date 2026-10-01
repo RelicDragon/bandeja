@@ -107,14 +107,30 @@ router.delete('/permissions/:toolName', validateZod({ params: toolParams }), age
 // Memory (Phase 11, docs/plans/ai-agent-memory.md §11.3): the user's own rows only. Add / edit
 // while the switch is OFF → 409 MEMORY_DISABLED; delete / clear always allowed.
 const memoryItemParams = z.object({ id: idParam });
-const memoryTextBody = z.object({ text: z.string().trim().min(1).max(AGENT_MEMORY_BODY_MAX_LENGTH) }).strict();
+const memoryText = z.string().trim().min(1).max(AGENT_MEMORY_BODY_MAX_LENGTH);
+const memoryTextBody = z.object({ text: memoryText }).strict();
+// Undo of a delete puts the item back with its own name / description / type / source.
+const memoryAddBody = z
+  .object({
+    text: memoryText,
+    restore: z
+      .object({
+        name: z.string().trim().min(1).max(64),
+        description: z.string().trim().min(1).max(160),
+        type: z.enum(['PREFERENCE', 'FEEDBACK', 'FACT']),
+        source: z.enum(['USER_ASKED', 'MODEL_INFERRED']),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
 router.get('/memory', agentController.getMemory);
 router.put(
   '/memory/settings',
   validateZod({ body: z.object({ enabled: z.boolean() }).strict() }),
   agentController.setMemorySettings,
 );
-router.post('/memory/items', validateZod({ body: memoryTextBody }), agentController.addMemoryItem);
+router.post('/memory/items', validateZod({ body: memoryAddBody }), agentController.addMemoryItem);
 router.patch(
   '/memory/items/:id',
   validateZod({ params: memoryItemParams, body: memoryTextBody }),

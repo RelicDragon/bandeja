@@ -3,7 +3,7 @@ import type {
   AgentMessageDto,
   AgentPendingActionDto,
 } from '@shared/agentContract';
-import type { AgentRunLiveState } from './agentRunReducer';
+import type { AgentMemorySaved, AgentRunLiveState } from './agentRunReducer';
 import { isTerminalPhase } from './agentRunReducer';
 
 export interface AgentToolItemData {
@@ -12,6 +12,8 @@ export interface AgentToolItemData {
   status: 'running' | 'ok' | 'error';
   summary: string | null;
   entities: AgentEntityRef[];
+  /** Phase 11: this call saved a memory (live runs only): "Saved to memory · Undo". */
+  memorySaved?: AgentMemorySaved;
 }
 
 export type AgentTimelineItem =
@@ -62,6 +64,11 @@ export function buildAgentTimeline(
   const renderedCalls = new Set<string>();
   const renderedActions = new Set<string>();
 
+  const memoryOf = (callId: string): { memorySaved?: AgentMemorySaved } => {
+    const saved = live?.memorySaves?.[callId];
+    return saved ? { memorySaved: saved } : {};
+  };
+
   const toolFor = (callId: string, fallbackLabel: string): AgentToolItemData => {
     const result = persistedResults.get(callId);
     if (result) {
@@ -71,6 +78,7 @@ export function buildAgentTimeline(
         status: result.ok ? 'ok' : 'error',
         summary: result.summary,
         entities: result.entities,
+        ...memoryOf(callId),
       };
     }
     const step = live?.tools[callId];
@@ -82,6 +90,7 @@ export function buildAgentTimeline(
         status: step.status === 'running' && !liveRunning ? 'error' : step.status,
         summary: step.summary,
         entities: step.entities,
+        ...memoryOf(callId),
       };
     }
     return { callId, label: fallbackLabel, status: liveRunning ? 'running' : 'error', summary: null, entities: [] };

@@ -149,6 +149,45 @@
       "failed": "No se cambió nada",
       "reportPending": "Hecho en el club, pero aún no guardado. Lo reintentaremos cuando vuelvas.",
       "inProgress": "Ejecutándose en la app…"
+    },
+    "settings": {
+      "title": "Ajustes del asistente",
+      "tabPermissions": "Permisos",
+      "tabMemory": "Memoria"
+    },
+    "memory": {
+      "allow": "Permitir memoria",
+      "allowHint": "El asistente recuerda tus preferencias y datos sobre ti entre chats.",
+      "disclosure": "La memoria se envía a nuestro proveedor de LLM con tus solicitudes para que el asistente responda lo mejor posible. Si la desactivas, deja de guardarse y usarse.",
+      "offNote": "La memoria está desactivada: las notas guardadas se conservan pero no se usan. Puedes borrarlas.",
+      "loadFailed": "No se pudo cargar la memoria",
+      "badgeUser": "Añadido por ti",
+      "badgeLearned": "Aprendido",
+      "add": "Añadir a la memoria",
+      "addPlaceholder": "Algo que el asistente deba recordar, p. ej. prefiero partidos por la tarde",
+      "save": "Guardar",
+      "edit": "Editar nota",
+      "delete": "Borrar nota",
+      "deleted": "Nota borrada",
+      "undo": "Deshacer",
+      "removeAll": "Borrar todo",
+      "removeAllTitle": "¿Borrar toda la memoria?",
+      "removeAllMessage": "El asistente olvida todo lo que recuerda de ti. No se puede deshacer.",
+      "removeAllConfirm": "Borrar todo",
+      "removedAll": "Memoria borrada",
+      "emptyTitle": "Aún no recuerda nada",
+      "emptyHint": "El asistente guarda notas breves como estas mientras charlas. También puedes añadir las tuyas.",
+      "example1": "Prefiere partidos por la tarde después de las 19:00",
+      "example2": "Juega en el lado izquierdo y prefiere respuestas cortas",
+      "limit": "Notas: {{count}} de {{max}}",
+      "savedChip": "Guardado en la memoria",
+      "updatedChip": "Memoria actualizada",
+      "undoneChip": "Quitado de la memoria",
+      "openMemory": "Abrir ajustes de memoria",
+      "errorDisabled": "Activa primero la memoria",
+      "errorLimit": "La memoria está llena. Borra primero una nota.",
+      "errorSensitive": "La memoria no puede guardar contactos ni secretos",
+      "saved": "Guardado"
     }
   }
 }

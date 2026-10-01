@@ -149,6 +149,45 @@
       "failed": "Tidak ada yang berubah",
       "reportPending": "Selesai di klub, tetapi belum tersimpan. Kami akan mencoba lagi saat Anda kembali.",
       "inProgress": "Berjalan di aplikasi…"
+    },
+    "settings": {
+      "title": "Pengaturan asisten",
+      "tabPermissions": "Izin",
+      "tabMemory": "Memori"
+    },
+    "memory": {
+      "allow": "Izinkan memori",
+      "allowHint": "Asisten mengingat preferensi dan fakta tentang kamu di semua chat.",
+      "disclosure": "Memori dikirim ke penyedia LLM kami bersama permintaanmu agar asisten bisa menjawab sebaik mungkin. Jika dimatikan, memori tidak lagi disimpan atau dipakai.",
+      "offNote": "Memori mati: catatan tersimpan tetap ada tetapi tidak dipakai. Kamu masih bisa menghapusnya.",
+      "loadFailed": "Gagal memuat memori",
+      "badgeUser": "Kamu tambahkan",
+      "badgeLearned": "Dipelajari",
+      "add": "Tambah ke memori",
+      "addPlaceholder": "Sesuatu yang perlu diingat asisten, mis. saya suka main malam hari",
+      "save": "Simpan",
+      "edit": "Ubah catatan",
+      "delete": "Hapus catatan",
+      "deleted": "Catatan dihapus",
+      "undo": "Urungkan",
+      "removeAll": "Hapus semua",
+      "removeAllTitle": "Hapus semua memori?",
+      "removeAllMessage": "Asisten akan melupakan semua yang diingat tentang kamu. Ini tidak bisa diurungkan.",
+      "removeAllConfirm": "Hapus semua",
+      "removedAll": "Memori dikosongkan",
+      "emptyTitle": "Belum ada yang diingat",
+      "emptyHint": "Asisten menyimpan catatan singkat seperti ini saat kamu chat. Kamu juga bisa menambahkan sendiri.",
+      "example1": "Lebih suka main malam setelah pukul 19.00",
+      "example2": "Main di sisi kiri dan suka jawaban singkat",
+      "limit": "Catatan: {{count}} dari {{max}}",
+      "savedChip": "Disimpan ke memori",
+      "updatedChip": "Memori diperbarui",
+      "undoneChip": "Dihapus dari memori",
+      "openMemory": "Buka pengaturan memori",
+      "errorDisabled": "Nyalakan memori dulu",
+      "errorLimit": "Memori penuh. Hapus satu catatan dulu.",
+      "errorSensitive": "Memori tidak boleh berisi kontak atau rahasia",
+      "saved": "Tersimpan"
     }
   }
 }

@@ -53,7 +53,7 @@ export function AgentChatMenuSheet({ open, title, onClose, onRename, onArchive }
             }}
           >
             <ShieldCheck size={18} aria-hidden />
-            {t('agent.permissions.title')}
+            {t('agent.settings.title')}
           </button>
           <button type="button" className={`${row} text-red-600 dark:text-red-400`} onClick={onArchive}>
             <Archive size={18} aria-hidden />

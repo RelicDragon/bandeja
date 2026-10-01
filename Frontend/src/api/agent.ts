@@ -6,6 +6,9 @@ import {
   type AgentClientClaimResponse,
   type AgentClientReportRequest,
   type AgentChatDto,
+  type AgentMemoryDto,
+  type AgentMemoryOverviewDto,
+  type AgentMemoryRestore,
   type AgentMessageDto,
   type AgentPendingActionDto,
   type AgentToolPermissionDto,
@@ -135,5 +138,44 @@ export const agentApi = {
   resetPermissions: async (): Promise<AgentToolPermissionDto[]> => {
     const response = await api.delete<ApiResponse<{ tools: AgentToolPermissionDto[] }>>('/agent/permissions', caps);
     return response.data.data.tools;
+  },
+
+  /** Phase 11 memory (own rows only). */
+  getMemory: async (): Promise<AgentMemoryOverviewDto> => {
+    const response = await api.get<ApiResponse<AgentMemoryOverviewDto>>('/agent/memory', caps);
+    return response.data.data;
+  },
+
+  setMemoryEnabled: async (enabled: boolean): Promise<AgentMemoryOverviewDto> => {
+    const response = await api.put<ApiResponse<AgentMemoryOverviewDto>>('/agent/memory/settings', { enabled }, caps);
+    return response.data.data;
+  },
+
+  /** `restore`: Undo of a delete (the item comes back with its own name, type and source). */
+  addMemory: async (text: string, restore?: AgentMemoryRestore): Promise<AgentMemoryDto> => {
+    const response = await api.post<ApiResponse<AgentMemoryDto>>(
+      '/agent/memory/items',
+      restore ? { text, restore } : { text },
+      caps,
+    );
+    return response.data.data;
+  },
+
+  updateMemory: async (id: string, text: string): Promise<AgentMemoryDto> => {
+    const response = await api.patch<ApiResponse<AgentMemoryDto>>(
+      `/agent/memory/items/${encodeURIComponent(id)}`,
+      { text },
+      caps,
+    );
+    return response.data.data;
+  },
+
+  deleteMemory: async (id: string): Promise<void> => {
+    await api.delete<ApiResponse<{ ok: true }>>(`/agent/memory/items/${encodeURIComponent(id)}`, caps);
+  },
+
+  clearMemory: async (): Promise<number> => {
+    const response = await api.delete<ApiResponse<{ ok: true; deleted: number }>>('/agent/memory/items', caps);
+    return response.data.data.deleted;
   },
 };

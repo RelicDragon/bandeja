@@ -36,6 +36,9 @@ export interface AgentToolStep {
   entities: AgentEntityRef[];
 }
 
+/** `memory.saved` payload (Phase 11): the chip under that tool call offers Undo. */
+export type AgentMemorySaved = Extract<AgentStreamEvent, { type: 'memory.saved' }>['memory'];
+
 export type AgentDraftSegment =
   | { kind: 'text'; text: string }
   | { kind: 'tool'; callId: string }
@@ -51,6 +54,8 @@ export interface AgentRunLiveState {
   segments: AgentDraftSegment[];
   tools: Record<string, AgentToolStep>;
   actions: Record<string, AgentPendingActionDto>;
+  /** `memory.saved` by tool call id; kept across saves like `tools` (the chip is live only). */
+  memorySaves: Record<string, AgentMemorySaved>;
   /** Every entity seen during the run (for cache invalidation on the terminal event). */
   touchedEntities: AgentEntityRef[];
   lastEventId: string | null;
@@ -96,6 +101,7 @@ export function createRunState(runId: string, chatId: string | null): AgentRunLi
     segments: [],
     tools: {},
     actions: {},
+    memorySaves: {},
     touchedEntities: [],
     lastEventId: null,
     error: null,
@@ -182,6 +188,8 @@ function applyEvent(state: AgentRunLiveState, event: AgentStreamEvent): AgentRun
           : [...state.segments, { kind: 'action', actionId: event.action.id }],
       };
     }
+    case 'memory.saved':
+      return { ...state, memorySaves: { ...state.memorySaves, [event.callId]: event.memory } };
     case 'message.saved': {
       const touched = event.message.blocks.flatMap((b) =>
         b.type === 'tool_result' ? (b.entities ?? []) : [],

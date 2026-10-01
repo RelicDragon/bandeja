@@ -955,7 +955,7 @@ export class AgentRunService {
         });
         // Phase 11: a memory saved without a card → the "Saved to memory · Undo" chip.
         if (execution.ok && execution.memorySaved) {
-          await this.emit(run.id, { type: 'memory.saved', memory: execution.memorySaved });
+          await this.emit(run.id, { type: 'memory.saved', callId: call.id, memory: execution.memorySaved });
         }
       }
       toolMessages.push({ role: 'tool', tool_call_id: call.id, content: serializeToolContent(execution) });

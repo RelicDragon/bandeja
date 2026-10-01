@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Check, ChevronDown, Loader2 } from 'lucide-react';
 import type { AgentToolItemData } from '@/features/agent/agentTimeline';
 import { AgentEntityList } from './AgentEntityCard';
+import { AgentMemorySavedChip } from './AgentMemorySavedChip';
 
 /** One tool step: "Looking up your games…" while running, the summary when finished. */
 export const AgentToolChip = memo(function AgentToolChip({ tool }: { tool: AgentToolItemData }) {
@@ -62,6 +63,7 @@ export const AgentToolChip = memo(function AgentToolChip({ tool }: { tool: Agent
         ) : null}
       </AnimatePresence>
       <AgentEntityList entities={tool.entities} />
+      {tool.memorySaved && !failed ? <AgentMemorySavedChip memory={tool.memorySaved} /> : null}
     </div>
   );
 });

@@ -1,6 +1,6 @@
 # AI agent: Phase 11, Memory (design, 2026-10-01)
 
-Parent plan: [ai-agent.md](./ai-agent.md). Status: **phases 1–2 built (2026-10-01, backend); phases 3–4 not built.** Owner: relic. Behavior as built: [domains/agent.md § Memory](../domains/agent.md#memory-phase-11-agentmemoryservicets-toolsmemorytoolsts).
+Parent plan: [ai-agent.md](./ai-agent.md). Status: **phases 1–3 built (2026-10-01); phase 4 see §11.5.** Owner: relic. Behavior as built: [domains/agent.md § Memory](../domains/agent.md#memory-phase-11-agentmemoryservicets-toolsmemorytoolsts).
 
 The agent remembers durable facts about the signed-in user across chats, the way Claude and Codex do: a small index always in the prompt, full bodies read on demand, written by the model itself, fully visible and editable by the user.
 
@@ -59,7 +59,7 @@ Wiring: `AgentMemoryDto` in `Frontend/shared/agentContract.ts`; `agentApi` metho
 2. **Built.** Prompt index section, provenance guard, `memory.saved` event.
 
    As built (phases 1–2): the memory tools are a third tool kind, `kind: 'memory'` (self-scoped, no card, no risk tier, not in rule 6 or the permissions list; hidden unless `principal.agentMemoryEnabled`, and every handler re-checks the switch in the DB → 409 `MEMORY_DISABLED`). `forget_memory` and `list_memories` also refuse while OFF; the user deletes dormant notes in the app. A model save in reply to an explicit "remember…" is stored as `USER_ASKED`, otherwise `MODEL_INFERRED`. The provenance guard is chat-wide, not only per run: any `untrustedContent` call in the chat's history taints later runs too (folded turns can still paraphrase other people's text); "the user asked" = explicit remember wording in the latest user message, per app language (`userAskedToRemember`). Tests: `npm run test:agent-memory` (in `test:agent`).
-3. Settings modal tabs, memory tab, chip + Undo, i18n, `docs/UI_TEST_PLAN.md`, `docs/domains/agent.md`.
+3. **Built.** Settings modal tabs, memory tab, chip + Undo, i18n, `docs/UI_TEST_PLAN.md` (AI-46…AI-53), `docs/domains/agent.md`. As built: `memory.saved` carries the `callId` (the chip sits under that tool step); Undo of a delete in the tab is `POST /agent/memory/items {text, restore: {name, description, type, source}}` so a Learned note comes back as Learned; Telegram shows one "Saved to memory" line per save (no Undo there, the line points to the app).
 4. Rolling chat summary (replaces the crude fold in `agentContext.service.ts`; chat-scoped, not memory), then a weekly consolidation job that skips opted-out users.
 
 ## 11.6 Decided

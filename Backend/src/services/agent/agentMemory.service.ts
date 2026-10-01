@@ -373,6 +373,20 @@ export async function addAgentMemoryFromText(userId: string, text: string): Prom
   });
 }
 
+/**
+ * Undo of a delete (`POST /agent/memory/items {text, restore}`): the item comes back with its
+ * own name, description, type and source, through the same checks as any save (switch,
+ * cap, length, secrets; an existing name is updated).
+ */
+export async function restoreAgentMemory(
+  userId: string,
+  body: string,
+  restore: { name: string; description: string; type: AgentMemoryType; source: AgentMemorySource },
+): Promise<AgentMemory> {
+  const { memory } = await saveAgentMemory(userId, { ...restore, body });
+  return memory;
+}
+
 /** `PATCH /agent/memory/items/:id {text}`: new body + re-derived description; name kept. */
 export async function updateAgentMemoryText(userId: string, id: string, text: string): Promise<AgentMemory> {
   const body = cleanBody(text);

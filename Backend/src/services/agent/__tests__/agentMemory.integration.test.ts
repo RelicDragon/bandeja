@@ -427,6 +427,22 @@ void (async () => {
     // Undo from the chip = DELETE the id.
     assert.equal((await call(alice.id, 'DELETE', `/memory/items/${askedRow.id}`)).status, 200);
     assert.equal(await prisma.agentMemory.count({ where: { id: askedRow.id } }), 0);
+    const finishedSave = finishedOf(asked.stream).at(-1)!;
+    assert.equal(savedOf(asked.stream)[0].callId, finishedSave.callId, 'memory.saved names its tool call');
+    // Undo of a delete in the settings tab: POST {text, restore} brings the item back as it was.
+    res = await call(alice.id, 'POST', '/memory/items', {
+      text: askedRow.body,
+      restore: { name: askedRow.name, description: askedRow.description, type: askedRow.type, source: 'MODEL_INFERRED' },
+    });
+    assert.equal(res.status, 201);
+    assert.deepEqual(
+      (({ name, description, body, type, source }) => ({ name, description, body, type, source }))(res.body.data as Record<string, unknown>),
+      { name: 'evening_games', description: askedRow.description, body: askedRow.body, type: askedRow.type, source: 'MODEL_INFERRED' },
+      'restored with its own fields (not a new "You added" note)',
+    );
+    assert.equal((await call(alice.id, 'POST', '/memory/items', { text: 'x', restore: { name: 'n', description: 'd', type: 'FACT', source: 'USER_ASKED', userId: bob.id } })).status, 400, 'strict restore');
+    assert.equal((await call(alice.id, 'POST', '/memory/items', { text: 'Call +381 64 123 4567', restore: { name: 'n', description: 'd', type: 'FACT', source: 'USER_ASKED' } })).status, 400, 'restore is checked for secrets too');
+    await call(alice.id, 'DELETE', '/memory/items');
     // 3. Clean run → saved as MODEL_INFERRED; the next run's prompt carries it.
     const clean = await runOnce(null, 'I usually play at 19:00 after work', [save('plays_at_19'), textStep('Noted.')]);
     assert.deepEqual(finishedOf(clean.stream).map((e) => e.ok), [true]);

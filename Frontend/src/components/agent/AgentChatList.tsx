@@ -56,9 +56,9 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
         <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-gray-900 dark:text-white">{t('agent.listTitle')}</h2>
         <button
           type="button"
-          onClick={openAgentPermissionsScreen}
-          aria-label={t('agent.permissions.title')}
-          title={t('agent.permissions.title')}
+          onClick={() => openAgentPermissionsScreen()}
+          aria-label={t('agent.settings.title')}
+          title={t('agent.settings.title')}
           className="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
         >
           <ShieldCheck size={19} aria-hidden />

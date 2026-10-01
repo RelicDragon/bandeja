@@ -255,6 +255,14 @@ export interface AgentMemoryOverviewDto {
   items: AgentMemoryDto[];
 }
 
+/** Undo of a delete: the deleted item's own fields (`POST /agent/memory/items {text: body, restore}`). */
+export interface AgentMemoryRestore {
+  name: string;
+  description: string;
+  type: AgentMemoryType;
+  source: AgentMemorySource;
+}
+
 /** `code` on memory route / tool errors. */
 export type AgentMemoryErrorCode = 'MEMORY_DISABLED' | 'MEMORY_LIMIT' | 'MEMORY_SENSITIVE';
 
@@ -335,8 +343,11 @@ export type AgentStreamEvent =
   /** A proposed write (PENDING), or one already settled when `action.autoApproved` (EXECUTED / FAILED, no tap). */
   | { type: 'action.pending'; action: AgentPendingActionDto }
   | { type: 'message.saved'; message: AgentMessageDto }
-  /** `save_memory` stored (or updated) a memory without a confirmation card; the chip offers Undo (`DELETE /agent/memory/items/:id`). */
-  | { type: 'memory.saved'; memory: { id: string; name: string; description: string; created: boolean } }
+  /**
+   * `save_memory` stored (or updated) a memory without a confirmation card, right after that
+   * call's `tool.finished` (`callId`). The chip offers Undo (`DELETE /agent/memory/items/:id`).
+   */
+  | { type: 'memory.saved'; callId: string; memory: { id: string; name: string; description: string; created: boolean } }
   | { type: 'run.completed'; status: 'COMPLETED' | 'AWAITING_CONFIRMATION'; usage: AgentUsage }
   | { type: 'run.failed'; code: AgentErrorCode; message: string | null }
   | { type: 'run.cancelled' };
@@ -379,7 +390,8 @@ export const AGENT_TERMINAL_EVENT_TYPES: readonly AgentStreamEventType[] = [
  *   DELETE /api/agent/permissions/:toolName   -> AgentToolPermissionDto                (reset one to ASK)
  *   GET    /api/agent/memory                  -> AgentMemoryOverviewDto                (own rows only)
  *   PUT    /api/agent/memory/settings {enabled: boolean} -> AgentMemoryOverviewDto
- *   POST   /api/agent/memory/items {text}     -> AgentMemoryDto                        (server derives name/description; USER_ASKED)
+ *   POST   /api/agent/memory/items {text, restore?} -> AgentMemoryDto                  (server derives name/description; USER_ASKED.
+ *                                              `restore: AgentMemoryRestore` puts a just-deleted item back as it was: the Undo toast)
  *   PATCH  /api/agent/memory/items/:id {text} -> AgentMemoryDto
  *   DELETE /api/agent/memory/items/:id        -> { ok: true }
  *   DELETE /api/agent/memory/items            -> { ok: true; deleted: number }

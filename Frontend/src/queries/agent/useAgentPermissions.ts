@@ -5,16 +5,28 @@ import { agentApi } from '@/api/agent';
 import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 
-/** "Assistant permissions" screen (plan §15): opened from the AI ⋯ menus and the auto-approved card. */
-export const useAgentPermissionsScreenStore = create<{ open: boolean; setOpen: (open: boolean) => void }>(
-  (set) => ({
-    open: false,
-    setOpen: (open) => set({ open }),
-  }),
-);
+/** Tabs of the "Assistant settings" dialog (plan §15 permissions, Phase 11 memory). */
+export type AgentSettingsTab = 'permissions' | 'memory';
 
-export function openAgentPermissionsScreen(): void {
-  useAgentPermissionsScreenStore.getState().setOpen(true);
+/**
+ * "Assistant settings" (plan §15 + Phase 11): opened from the AI ⋯ menus, the auto-approved
+ * card (Permissions) and the "Saved to memory" chip (Memory).
+ */
+export const useAgentPermissionsScreenStore = create<{
+  open: boolean;
+  tab: AgentSettingsTab;
+  setOpen: (open: boolean) => void;
+  setTab: (tab: AgentSettingsTab) => void;
+}>((set) => ({
+  open: false,
+  tab: 'permissions',
+  setOpen: (open) => set({ open }),
+  setTab: (tab) => set({ tab }),
+}));
+
+/** Opens the dialog on `initialTab` (default Permissions). Call it as `() => openAgentPermissionsScreen()`. */
+export function openAgentPermissionsScreen(initialTab: AgentSettingsTab = 'permissions'): void {
+  useAgentPermissionsScreenStore.setState({ open: true, tab: initialTab === 'memory' ? 'memory' : 'permissions' });
 }
 
 /** Every write tool the user has, with its mode (no row = ASK). */

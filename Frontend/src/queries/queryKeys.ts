@@ -247,6 +247,9 @@ export const queryKeys = {
     chat: (chatId: string) => ['agent', 'chat', chatId] as const,
     permissions: (userId?: string) =>
       userId != null ? (['agent', 'permissions', userId] as const) : (['agent', 'permissions'] as const),
+    /** Phase 11 memory: `{ enabled, items }` (docs/plans/ai-agent-memory.md). */
+    memory: (userId?: string) =>
+      userId != null ? (['agent', 'memory', userId] as const) : (['agent', 'memory'] as const),
   },
   weatherAlerts: {
     all: ['weatherAlerts'] as const,

@@ -13,6 +13,7 @@
  *   - booking / slot lists as escaped text (`agentBotEntities.ts`), handoff / game links as
  *     URL buttons, UNKNOWN / partial action outcomes (slice 7j);
  *   - a "Done automatically" line per auto-approved write in the final answer;
+ *   - a "🧠 Saved to memory: …" line per `memory.saved` (Phase 11; Undo lives in the app);
  *   - the 🔐 Permissions menu (`agent:perms`, `agent:perm:<tool>`, `agent:preset[:yes]`).
  * No I/O here; `agentBotRunWatcher.ts` drives the Telegram API.
  */
@@ -55,6 +56,8 @@ export type AgentBotRunState = {
   live: string;
   entities: AgentEntityRef[];
   actions: AgentPendingActionDto[];
+  /** `memory.saved` descriptions (Phase 11), one final-answer line each. */
+  memorySaved: string[];
   terminal: AgentBotTerminal | null;
 };
 
@@ -70,6 +73,7 @@ export function initialAgentBotRunState(runId: string): AgentBotRunState {
     live: '',
     entities: [],
     actions: [],
+    memorySaved: [],
     terminal: null,
   };
 }
@@ -130,6 +134,12 @@ export function reduceAgentBotRun(state: AgentBotRunState, event: AgentStreamEve
         committed: text ? [...state.committed, text] : state.committed,
         live: '',
       };
+    }
+    case 'memory.saved': {
+      // `?? []`: a state restored from before Phase 11 has no list.
+      const saved = state.memorySaved ?? [];
+      if (saved.includes(event.memory.description)) return state;
+      return { ...state, memorySaved: [...saved, event.memory.description] };
     }
     case 'run.completed':
       return { ...state, terminal: { kind: 'completed', awaitingConfirmation: event.status === 'AWAITING_CONFIRMATION' } };
@@ -437,7 +447,12 @@ export function renderAgentBotFinal(
     }
   }
   if (chunks.length === 0) chunks.push(escapeTelegramHtml(agentBotT('answer.empty', lang)));
-  const autoLines = autoApprovedLines(state.actions, lang);
+  const autoLines = [
+    ...autoApprovedLines(state.actions, lang),
+    ...(state.memorySaved ?? []).map(
+      (description) => `<i>${escapeTelegramHtml(agentBotT('memory.saved', lang, { description }))}</i>`,
+    ),
+  ];
   if (autoLines.length > 0) chunks[chunks.length - 1] = `${chunks[chunks.length - 1]}\n\n${autoLines.join('\n')}`;
 
   const entities = finalEntities(state);

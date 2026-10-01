@@ -197,6 +197,19 @@ function testHandoffButtons(): void {
   assert.equal(reduced.chatId, 'chat_9');
 }
 
+/** Phase 11: `memory.saved` → one escaped "Saved to memory" line in the final answer, once. */
+function testMemorySavedLine(): void {
+  const event = { type: 'memory.saved' as const, callId: 'c1', memory: { id: 'm1', name: 'evening', description: 'Prefers <b>evening</b> games', created: true } };
+  let state = reduceAgentBotRun({ ...finalState([]), terminal: null }, event);
+  state = reduceAgentBotRun(state, event);
+  assert.deepEqual(state.memorySaved, ['Prefers <b>evening</b> games']);
+  const [final] = renderAgentBotFinal({ ...state, terminal: { kind: 'completed', awaitingConfirmation: false } }, 'en', LINKS);
+  assert.equal(final.html.match(/Saved to memory/g)?.length, 1);
+  assert.match(final.html, /Prefers &lt;b&gt;evening&lt;\/b&gt; games/);
+  const legacy = { ...initialAgentBotRunState('r'), memorySaved: undefined as unknown as string[] };
+  assert.deepEqual(reduceAgentBotRun(legacy, event).memorySaved, ['Prefers <b>evening</b> games'], 'a pre-Phase-11 state');
+}
+
 function testClientExecutionCard(): void {
   const card = renderAgentActionCard(action({ execution: 'client' }), 'en', LINKS);
   const all = buttons(card.keyboard);
@@ -355,6 +368,7 @@ void (async () => {
   testSlotsNeverFreeUnlessLive();
   testTruncationAndOpenInApp();
   testHandoffButtons();
+  testMemorySavedLine();
   testClientExecutionCard();
   testUnknownAndPartialOutcomes();
   await testConfirm409HandsOff();

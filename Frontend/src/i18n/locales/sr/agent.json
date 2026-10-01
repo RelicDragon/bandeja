@@ -149,6 +149,45 @@
       "failed": "Ništa nije promenjeno",
       "reportPending": "Urađeno u klubu, ali još nije sačuvano. Pokušaćemo ponovo kad se vratite.",
       "inProgress": "Izvršava se u aplikaciji…"
+    },
+    "settings": {
+      "title": "Podešavanja asistenta",
+      "tabPermissions": "Dozvole",
+      "tabMemory": "Memorija"
+    },
+    "memory": {
+      "allow": "Dozvoli memoriju",
+      "allowHint": "Asistent pamti tvoje želje i činjenice o tebi između četova.",
+      "disclosure": "Memorija se šalje našem LLM provajderu uz tvoje zahteve kako bi asistent odgovarao što bolje. Kad je isključiš, memorija se više ne čuva i ne koristi.",
+      "offNote": "Memorija je isključena: sačuvane beleške ostaju, ali se ne koriste. I dalje ih možeš obrisati.",
+      "loadFailed": "Memorija nije učitana",
+      "badgeUser": "Dodao si",
+      "badgeLearned": "Naučeno",
+      "add": "Dodaj u memoriju",
+      "addPlaceholder": "Nešto što asistent treba da zapamti, npr. više volim večernje igre",
+      "save": "Sačuvaj",
+      "edit": "Izmeni belešku",
+      "delete": "Obriši belešku",
+      "deleted": "Beleška obrisana",
+      "undo": "Poništi",
+      "removeAll": "Ukloni sve",
+      "removeAllTitle": "Ukloniti celu memoriju?",
+      "removeAllMessage": "Asistent zaboravlja sve što pamti o tebi. Ovo se ne može poništiti.",
+      "removeAllConfirm": "Ukloni sve",
+      "removedAll": "Memorija je obrisana",
+      "emptyTitle": "Još ništa nije zapamćeno",
+      "emptyHint": "Asistent čuva ovakve kratke beleške dok razgovarate. Možeš dodati i svoje.",
+      "example1": "Više voli večernje igre posle 19:00",
+      "example2": "Igra na levoj strani i voli kratke odgovore",
+      "limit": "Beleški: {{count}} od {{max}}",
+      "savedChip": "Sačuvano u memoriju",
+      "updatedChip": "Memorija ažurirana",
+      "undoneChip": "Uklonjeno iz memorije",
+      "openMemory": "Otvori podešavanja memorije",
+      "errorDisabled": "Prvo uključi memoriju",
+      "errorLimit": "Memorija je puna. Prvo obriši neku belešku.",
+      "errorSensitive": "Memorija ne može da čuva kontakte ni tajne",
+      "saved": "Sačuvano"
     }
   }
 }
