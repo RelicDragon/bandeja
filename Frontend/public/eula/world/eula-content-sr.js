@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['sr'] = `<h1>Politika privatnosti i Korisnički ugovor</h1>
 <p><strong>Aplikacija:</strong> Padel Bandeja<br>
 <strong>Datum stupanja na snagu:</strong> 12.01.2025<br>
-<strong>Poslednje ažuriranje:</strong> 30.09.2026<br>
+<strong>Poslednje ažuriranje:</strong> 01.10.2026<br>
 Primenjuje se širom sveta</p>
 
 <h2>1. Politika privatnosti</h2>
@@ -84,6 +84,7 @@ Primenjuje se širom sveta</p>
 <li>vaše ime, jezik, matični grad i vremensku zonu;</li>
 <li>vaše predstojeće igre;</li>
 <li>lige kojima upravljate;</li>
+<li>memoriju asistenta o vama, dok je memorija uključena: kratke beleške (na primer, vaše preferencije) koje ste sačuvali vi ili asistent; memoriju možete pregledati, obrisati ili isključiti u podešavanjima asistenta;</li>
 <li>poruke u četovima igara u kojima učestvujete, kada zatražite od asistenta da ih pročita ili sažme (samo četovi koje već vidite u aplikaciji);</li>
 <li>rezultate pretraga koje zatražite: igre, klubove i javne podatke iz profila drugih igrača.</li>
 </ul>
@@ -178,6 +179,6 @@ Primenjuje se širom sveta</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Ovaj dokument je poslednji put ažuriran 30.09.2026. Zadržavamo pravo da ažuriramo ovu politiku i ugovor u bilo kom trenutku.</p>
+<p>Ovaj dokument je poslednji put ažuriran 01.10.2026. Zadržavamo pravo da ažuriramo ovu politiku i ugovor u bilo kom trenutku.</p>
 <p>Kontakt: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

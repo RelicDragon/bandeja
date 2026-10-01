@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['id'] = `<h1>Kebijakan Privasi & Perjanjian Pengguna</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. Kebijakan Privasi</h2>
@@ -83,6 +83,7 @@ Applies worldwide</p>
 <li>nama depan, bahasa, kota asal, dan zona waktu Anda;</li>
 <li>permainan Anda yang akan datang;</li>
 <li>liga yang Anda kelola;</li>
+<li>memori asisten tentang Anda, selama memori aktif: catatan singkat (misalnya preferensi Anda) yang disimpan oleh Anda atau asisten; Anda dapat melihat, menghapus, atau menonaktifkan memori di pengaturan asisten;</li>
 <li>pesan di obrolan permainan yang Anda ikuti, saat Anda meminta asisten untuk membaca atau merangkumnya (hanya obrolan yang sudah dapat Anda lihat di aplikasi);</li>
 <li>hasil pencarian yang Anda minta: permainan, klub, dan informasi profil publik pemain lain.</li>
 </ul>
@@ -177,6 +178,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Dokumen ini terakhir diperbarui pada 30/09/2026. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
+<p>Dokumen ini terakhir diperbarui pada 01/10/2026. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['zh'] = `<h1>隐私政策与用户协议</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. 隐私政策</h2>
@@ -83,6 +83,7 @@ Applies worldwide</p>
 <li>您的名字、语言、常驻城市和时区；</li>
 <li>您即将参加的比赛；</li>
 <li>您管理的联赛；</li>
+<li>记忆功能开启时，助手关于您的记忆：由您或助手保存的简短备注（例如您的偏好）；您可以在助手设置中查看、删除或关闭记忆；</li>
 <li>您参与的比赛聊天中的消息，仅在您要求助手阅读或总结时发送（仅限您在应用中本就可以看到的聊天）；</li>
 <li>您所请求查询的结果：比赛、俱乐部以及其他球员的公开资料信息。</li>
 </ul>
@@ -177,6 +178,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>本文档的最新更新日期为 2026 年 9 月 30 日。我们保留随时更新本政策和协议的权利。</p>
+<p>本文档的最新更新日期为 2026 年 10 月 1 日。我们保留随时更新本政策和协议的权利。</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

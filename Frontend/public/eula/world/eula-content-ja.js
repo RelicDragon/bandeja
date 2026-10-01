@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['ja'] = `<h1>プライバシーポリシーと利用規約</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. プライバシーポリシー</h2>
@@ -83,6 +83,7 @@ Applies worldwide</p>
 <li>お客様の名（ファーストネーム）、言語、ホームシティ、タイムゾーン</li>
 <li>お客様の今後のゲーム</li>
 <li>お客様が管理しているリーグ</li>
+<li>メモリーがオンの間、アシスタントがお客様について記憶している内容（お客様またはアシスタントが保存した、お好みなどの短いメモ）。メモリーはアシスタントの設定で確認、削除、またはオフにできます</li>
 <li>お客様が参加しているゲームのチャットのメッセージ（アシスタントに読み取りや要約を依頼した場合のみ。アプリですでに閲覧できるチャットに限ります）</li>
 <li>お客様がリクエストした検索の結果（ゲーム、クラブ、他のプレイヤーの公開プロフィール情報）</li>
 </ul>
@@ -177,6 +178,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>このドキュメントの最終更新日は 2026 年 9 月 30 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
+<p>このドキュメントの最終更新日は 2026 年 10 月 1 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['es'] = `<h1>Política de Privacidad y Acuerdo de Usuario</h1>
 <p><strong>Aplicación:</strong> Padel Bandeja<br>
 <strong>Fecha de vigencia:</strong> 12/01/2025<br>
-<strong>Última actualización:</strong> 30/09/2026<br>
+<strong>Última actualización:</strong> 01/10/2026<br>
 Aplica en todo el mundo</p>
 
 <h2>1. Política de Privacidad</h2>
@@ -84,6 +84,7 @@ Aplica en todo el mundo</p>
 <li>tu nombre, idioma, ciudad de residencia y zona horaria;</li>
 <li>tus próximos partidos;</li>
 <li>las ligas que administras;</li>
+<li>la memoria del asistente sobre ti, mientras la memoria esté activada: notas breves (por ejemplo, tus preferencias) guardadas por ti o por el asistente; puedes verla, borrarla o desactivarla en los ajustes del asistente;</li>
 <li>los mensajes de los chats de los partidos en los que participas, cuando pides al asistente que los lea o resuma (solo chats que ya puedes ver en la app);</li>
 <li>los resultados de las búsquedas que solicitas: partidos, clubes e información pública del perfil de otros jugadores.</li>
 </ul>
@@ -178,6 +179,6 @@ Aplica en todo el mundo</p>
 <p><strong>Correo Electrónico:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Este documento fue actualizado por última vez el 30/09/2026. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
+<p>Este documento fue actualizado por última vez el 01/10/2026. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
 <p>Contacto: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

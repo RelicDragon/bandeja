@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['en'] = `<h1>Privacy Policy & User Agreement</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 30/09/2026<br>
+<strong>Last updated:</strong> 01/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. Privacy Policy</h2>
@@ -84,6 +84,7 @@ Applies worldwide</p>
 <li>your first name, language, home city and time zone;</li>
 <li>your upcoming games;</li>
 <li>the leagues you manage;</li>
+<li>the assistant's memory about you, while memory is on: short notes (such as your preferences) saved by you or by the assistant; you can view, delete or turn off memory in the assistant settings;</li>
 <li>messages in the chats of games you take part in, when you ask the assistant to read or summarize them (only chats you can already see in the app);</li>
 <li>the results of lookups you request: games, clubs, and public profile information of other players.</li>
 </ul>
@@ -178,6 +179,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>This document was last updated on 30/09/2026. We reserve the right to update this policy and agreement at any time.</p>
+<p>This document was last updated on 01/10/2026. We reserve the right to update this policy and agreement at any time.</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;
