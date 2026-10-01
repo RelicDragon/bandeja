@@ -12,8 +12,8 @@
  *   decline_from_queue  POST /:id/decline-join-queue  canManageGameRoster        → ParticipantService.declineNonPlayingParticipant
  *   set_trainer         POST /:id/set-trainer         canManageGameRosterAsOwner → AdminService.setTrainer
  * then calls the controller's service with the controller's arguments (`req.userId` = the
- * principal). Actor checks the services add on top (admins can't kick the owner, decline
- * needs a roster row, set-trainer needs the owner row) are mirrored at propose time so the
+ * principal). Actor checks the services add on top (admins can't kick the owner, set-trainer
+ * needs the owner row) are mirrored at propose time so the
  * card never offers what confirm would refuse. Target checks are stricter than HTTP where
  * the service would do something harmful (demoting the owner via add-admin / set-trainer).
  * Never here: ownership transfer, delete, substitutions (docs/plans/ai-agent.md §5).
@@ -25,7 +25,7 @@ import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { fetchGameWithPlayingParticipants } from '../../../utils/gameQueries';
 import { getParentGameParticipant } from '../../../utils/parentGamePermissions';
-import { canUserManageQueue, validatePlayerCanJoinGame } from '../../../utils/participantValidation';
+import { validatePlayerCanJoinGame } from '../../../utils/participantValidation';
 import { AdminService } from '../../game/admin.service';
 import { ParticipantService } from '../../game/participant.service';
 import type { AgentPrincipal } from '../access/agentPrincipal';
@@ -355,16 +355,6 @@ export const acceptFromQueueTool = defineTool({
   },
 });
 
-/** `declineNonPlayingParticipant` only accepts an owner/admin row on this very game (no parent, no platform-admin bypass). */
-async function assertMayDecline(principal: Pick<AgentPrincipal, 'userId'>, gameId: string): Promise<void> {
-  const [game, mine] = await Promise.all([
-    prisma.game.findUnique({ where: { id: gameId }, select: { id: true } }),
-    prisma.gameParticipant.findFirst({ where: { gameId, userId: principal.userId }, select: { role: true } }),
-  ]);
-  if (!game) throw new ApiError(404, 'Game not found');
-  if (!canUserManageQueue(mine)) throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');
-}
-
 export const declineFromQueueTool = defineTool({
   name: 'decline_from_queue',
   description:
@@ -378,7 +368,6 @@ export const declineFromQueueTool = defineTool({
     const { principal, locale } = ctx;
     await guard(principal, args.gameId, MANAGE);
     const game = await loadRosterGame(args.gameId);
-    await assertMayDecline(principal, game.id);
     const target = await loadTarget(game.id, args.playerId, ParticipantStatus.IN_QUEUE);
     const name = agentUserDisplayName(target.user);
     const isOwner = target.role === ParticipantRole.OWNER;
@@ -403,7 +392,6 @@ export const declineFromQueueTool = defineTool({
     authorize: async (principal, rawPlan) => {
       const plan = parsePlan(targetPlanSchema, rawPlan);
       await guard(principal, plan.gameId, MANAGE);
-      await assertMayDecline(principal, plan.gameId);
     },
     execute: async (ctx, rawPlan) => {
       const plan = parsePlan(targetPlanSchema, rawPlan);

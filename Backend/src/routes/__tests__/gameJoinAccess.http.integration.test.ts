@@ -13,6 +13,8 @@
  *    (`canManageGameRoster`), even with `anyoneCanInvite` on. A plain PLAYING
  *    participant gets 403 and the queue row is untouched; the client hides the
  *    accept/decline icons from them (`GameDetailsShell` `canManageJoinQueue`).
+ * 3. A parent league-season owner answers a fixture's queue both ways (the client shows
+ *    them both icons); league fixtures are `allowDirectJoin = false`, so queues are common.
  *
  * Every row carries a unique suffix and is removed in `finally`. Notifications suppressed.
  */
@@ -27,8 +29,8 @@ import { generateShortAccessToken } from '../../utils/jwt';
 process.env.E2E_TEST = '1';
 
 type Json = Record<string, unknown>;
-type Actor = 'owner' | 'admin' | 'player' | 'stranger' | 'queued' | 'queued2';
-const ACTORS: Actor[] = ['owner', 'admin', 'player', 'stranger', 'queued', 'queued2'];
+type Actor = 'owner' | 'admin' | 'player' | 'stranger' | 'queued' | 'queued2' | 'seasonOwner';
+const ACTORS: Actor[] = ['owner', 'admin', 'player', 'stranger', 'queued', 'queued2', 'seasonOwner'];
 const HOURS = 60 * 60 * 1000;
 
 void (async () => {
@@ -60,14 +62,15 @@ void (async () => {
 
   /** Each game gets its own day so no join trips the slot-overlap confirm. */
   const makeGame = async (
-    flags: { isPublic: boolean; allowDirectJoin: boolean; anyoneCanInvite?: boolean },
+    flags: { isPublic: boolean; allowDirectJoin: boolean; anyoneCanInvite?: boolean; entityType?: EntityType; parentId?: string },
     roster: { userId: string; role: ParticipantRole; status: ParticipantStatus }[],
   ) => {
     slot += 1;
     const startTime = new Date(Date.now() + slot * 24 * HOURS);
     const game = await prisma.game.create({
       data: {
-        entityType: EntityType.GAME,
+        entityType: flags.entityType ?? EntityType.GAME,
+        parentId: flags.parentId,
         sport: Sport.PADEL,
         gameType: GameType.CLASSIC,
         cityId: city.id,
@@ -154,6 +157,27 @@ void (async () => {
     const declined = await call('admin', 'POST', `/${queueGame}/decline-join-queue`, { userId: userIds.queued2 });
     assert.equal(declined.status, 200, `game admin declines (got ${declined.status} ${JSON.stringify(declined.body)})`);
     assert.equal(await statusOf(queueGame, 'queued2'), null, 'declined queue row removed');
+    checks++;
+
+    // --- 3. Parent-season owner answers a league fixture's queue ------------------------------
+    const season = await makeGame({ isPublic: false, allowDirectJoin: false, entityType: EntityType.LEAGUE_SEASON }, [
+      { userId: userIds.seasonOwner, role: ParticipantRole.OWNER, status: ParticipantStatus.NON_PLAYING },
+    ]);
+    const fixture = await makeGame({ isPublic: false, allowDirectJoin: false, entityType: EntityType.LEAGUE, parentId: season }, [
+      { userId: userIds.player, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.PLAYING },
+      { userId: userIds.queued, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.IN_QUEUE },
+      { userId: userIds.queued2, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.IN_QUEUE },
+    ]);
+    const fixtureDecline = await call('player', 'POST', `/${fixture}/decline-join-queue`, { userId: userIds.queued2 });
+    assert.equal(fixtureDecline.status, 403, `fixture player declines = 403 (got ${fixtureDecline.status})`);
+    checks++;
+    const seasonDeclined = await call('seasonOwner', 'POST', `/${fixture}/decline-join-queue`, { userId: userIds.queued2 });
+    assert.equal(seasonDeclined.status, 200, `season owner declines on a fixture (got ${seasonDeclined.status} ${JSON.stringify(seasonDeclined.body)})`);
+    assert.equal(await statusOf(fixture, 'queued2'), null, 'season-owner decline removes the queue row');
+    checks++;
+    const seasonAccepted = await call('seasonOwner', 'POST', `/${fixture}/accept-join-queue`, { userId: userIds.queued });
+    assert.equal(seasonAccepted.status, 200, `season owner accepts on a fixture (got ${seasonAccepted.status} ${JSON.stringify(seasonAccepted.body)})`);
+    assert.equal(await statusOf(fixture, 'queued'), ParticipantStatus.PLAYING);
     checks++;
 
     console.log(`gameJoinAccess.http.integration.test.ts: ok (${checks} checks)`);

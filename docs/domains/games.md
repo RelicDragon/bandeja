@@ -70,7 +70,7 @@ Only `PLAYING` counts toward `maxParticipants`.
 | Leave roster | `POST /games/:id/leave` | Owner cannot fully leave |
 | Guest (chat-only) | `POST /games/:id/join-as-guest` | `GUEST` |
 | Leave chat | `POST /games/:id/leave-chat` | |
-| Queue accept/decline | owner/admin (`canManageGameRoster`); **not** widened by `anyoneCanInvite` | `acceptJoinQueue` / `declineJoinQueue`; client `canManageJoinQueue` matches |
+| Queue accept/decline | owner/admin (`canManageGameRoster`), incl. parent-season owner/admin on league fixtures and platform admins; **not** widened by `anyoneCanInvite` | `acceptJoinQueue` / `declineJoinQueue` — both services re-check `canUserManageQueue` \|\| `hasParentGamePermissionWithUserCheck`; client `canManageJoinQueue` matches |
 | Cancel queue | `cancelJoinQueue` | |
 | Invite | owner/admin or `anyoneCanInvite` | Search \| Looking; `canInviteToGame` |
 | Kick | owner/admin | `kickUser` |

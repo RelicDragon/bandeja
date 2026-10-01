@@ -235,15 +235,6 @@ async function main(): Promise<void> {
       leagueFixture: /* */ matrixRow('F F F F F A A A'),
     };
     const OWNER_CONFIRM: AgentMatrixExpectations = { ...OWNER_PROPOSE, privateSeason: matrixRow('F F F F F F A A') };
-    // decline: the service only takes an owner/admin row on this very game (no parent, no platform-admin bypass).
-    const DECLINE_PROPOSE: AgentMatrixExpectations = {
-      ...MANAGE_PROPOSE,
-      public: /*        */ matrixRow('F F F F A A F F'),
-      private: /*       */ matrixRow('N F F F A A N F'),
-      pendingEvent: /*  */ matrixRow('N N N N N A N F'),
-      leagueFixture: /* */ matrixRow('F F F F A A F F'),
-    };
-    const DECLINE_CONFIRM: AgentMatrixExpectations = { ...DECLINE_PROPOSE, privateSeason: matrixRow('F F F F F F A F') };
     // set_trainer on non-TRAINING games: everyone past the owner guard gets the service's 400.
     const TRAINER_ON_GAME: AgentMatrixExpectations = {
       ...OWNER_PROPOSE,
@@ -301,8 +292,9 @@ async function main(): Promise<void> {
         route: 'decline-join-queue',
         body: (t) => ({ userId: t.queue }),
         plan: (gameId, t) => ({ gameId, playerId: t.queue }),
-        propose: DECLINE_PROPOSE,
-        confirm: DECLINE_CONFIRM,
+        // Same actor gate as accept: own owner/admin row, parent-season owner/admin, or platform admin.
+        propose: MANAGE_PROPOSE,
+        confirm: MANAGE_CONFIRM,
       },
       {
         label: 'set_trainer',

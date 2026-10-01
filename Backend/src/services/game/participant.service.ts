@@ -835,7 +835,9 @@ export class ParticipantService {
       where: { gameId, userId: currentUserId },
     });
 
-    if (!canUserManageQueue(currentParticipant)) {
+    const canManage = canUserManageQueue(currentParticipant) ||
+      await hasParentGamePermissionWithUserCheck(gameId, currentUserId);
+    if (!canManage) {
       throw new ApiError(403, 'games.notAuthorizedToDeclineJoinQueue');
     }
 
