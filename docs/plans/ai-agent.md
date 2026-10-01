@@ -383,7 +383,7 @@ The four most-used flows that are still menu-heavy. Every tool reuses the existi
 - Trainer discovery
 - Club-admin scope
 - Proactive Telegram daily brief and nudges
-- Web search → see §17
+- Web search → Phase 13, see §17
 - Deliberately excluded: coin transfers and the shop, marketplace buying and bidding, account and security settings.
 
 ### 16.6 Slices
@@ -395,19 +395,22 @@ The four most-used flows that are still menu-heavy. Every tool reuses the existi
 | 9d | BE | weather tool + tests + i18n — **built** (`get_weather`, [agent.md](../domains/agent.md#read-tools-phase-1-kindread-scopeuser)) | none |
 | 9e | FE+TG | entity cards/chips for results, intent and weather, if the plain-text answer is not enough (decide after 9a–9d) | 9a–9d |
 
-## 17. Backlog: web search (Phase 10)
+## 17. Phase 13: web search and web fetch (spec 2026-10-01)
 
-Backlog, not scheduled. Design: **[ai-agent-web-search.md](./ai-agent-web-search.md)**, ported from travel-bandeja's `webSearch` / `webFetch` services.
-- `web_search {query, locale?, recency?}` runs on the **backend against one search API** (cached, per-user and global limits, charged to `AGENT_DAILY_TOKEN_BUDGET`, kill switch `AGENT_WEB_SEARCH_ENABLED`). No device execution; a generic curl tool is excluded permanently.
-- Optional `read_page {url}`: only club websites and URLs from a search earlier in the same run; GET, SSRF-guarded, size-capped.
-- Web content is untrusted; a **taint rule** stops auto-approve for the rest of a run once web content is in it. No personal data in queries. EULA §1.10 needs a line.
-- Slices 10a (search) · 10b (read_page) · 10c (FE/TG citations) · 10d (taint, ships with 10a). Open: provider (Brave vs Tavily), whether read_page is needed.
+Spec: **[ai-agent-web-search.md](./ai-agent-web-search.md)**, a TypeScript port of travel-bandeja's `webSearch` / `webFetch` services. Numbering: Phase 10 = money settling (§18), 11 = memory ([ai-agent-memory.md](./ai-agent-memory.md)), 12 = app help (parked), 13 = web search (this section; it was labelled "Phase 10, backlog" until 2026-10-01).
+- `web_search {query, count?}` and `web_fetch {url, maxChars?}` run on the **backend**; both `kind:'read'`, `untrustedContent: true` (taint: no later write in the run auto-approves).
+- Providers **Tavily and Brave, both used**: travel-bandeja's chain (per-provider circuit breaker with cooldowns, failover) plus least-recently-used rotation so load alternates. DuckDuckGo scraping ported but off by default (`AGENT_WEB_SEARCH_DDG_ENABLED`).
+- Keys `TAVILY_API_KEY` / `BRAVE_SEARCH_API_KEY`; on automatically when one is set; kill switch `AGENT_WEB_SEARCH_ENABLED=false`.
+- `web_fetch` only reads URLs from an earlier `web_search` in the same chat or links the user typed; SSRF guard (DNS check of every address, pinned connect, redirects re-checked, private / loopback / link-local / CGNAT / reserved blocked, default ports only, no IP literals), 2 MB / 10 s caps, HTML / text only, HTML → text without new deps.
+- Limits: per run, per user per day, global per minute; in-memory TTL cache; live calls charged to `AGENT_DAILY_TOKEN_BUDGET` via `LlmUsageLog` audit rows (no query text stored there). No migration.
+- UI: search steps with provider / cached badges, answer and links (app); a "Web sources" text block (Telegram). EULA §1.10 bullet.
+- Slices 13a (search) · 13b (fetch) · 13c (tools, limits, prompt) · 13d (UI, Telegram).
 
 ## 18. Phase 10 — money settling (added 2026-09-30)
 
 Design: **[ai-agent-money.md](./ai-agent-money.md)** (rules with file:line references, tools, cards, tests, open questions). Domain: [economy.md § Cost split ledger](../domains/economy.md#cost-split-ledger).
 
-This narrows the §5 "never payments or wallet" rule for the **cost split ledger only**. The agent can read debts, credits and splits, mark shares paid or received, pay a share with coins, set a casual game's price, and nudge unpaid players. P2P coin transfers, the shop, bets and payment-method handles stay excluded (§16.5). Numbering: the web-search backlog in §17 was also labelled Phase 10; money settling is the scheduled Phase 10, and web search takes the next free number when it is scheduled.
+This narrows the §5 "never payments or wallet" rule for the **cost split ledger only**. The agent can read debts, credits and splits, mark shares paid or received, pay a share with coins, set a casual game's price, and nudge unpaid players. P2P coin transfers, the shop, bets and payment-method handles stay excluded (§16.5). Numbering: the web-search backlog in §17 was also labelled Phase 10; money settling is Phase 10, and web search is Phase 13 (§17).
 
 Rules:
 - Every tool reuses the `services/gameCost/` function behind the HTTP route, and the permission is that service's own predicate (`costSharePermissions.ts`). The agent adds only `assertAgentCanViewGame` in front. It authorizes through `getGameCostSummary` before anything can sync.
