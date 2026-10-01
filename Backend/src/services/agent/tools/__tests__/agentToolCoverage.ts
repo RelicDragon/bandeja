@@ -69,6 +69,10 @@
  *                     only (another user's note is not_found), cap / length / secrets, upsert, provenance
  *                     guard on `save_memory`, `memory.saved` event (`__tests__/agentMemory.integration.test.ts`,
  *                     `npm run test:agent-memory`)
+ *   web-read-cases — Phase 13 `web_search` / `web_fetch`: hidden without keys / kill switch, forged
+ *                     calls, strict input, personal-data refusal, per-run / per-day / global / budget
+ *                     limits, audit rows, URL allowlist, taint (`__tests__/agentWeb.integration.test.ts`,
+ *                     `npm run test:agent-web`)
  */
 export type AgentToolCoverageKind =
   | 'game-matrix'
@@ -96,7 +100,8 @@ export type AgentToolCoverageKind =
   | 'results-write-cases'
   | 'money-read-cases'
   | 'money-write-cases'
-  | 'memory-cases';
+  | 'memory-cases'
+  | 'web-read-cases';
 
 export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = {
   list_my_games: 'game-matrix',
@@ -160,4 +165,6 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   read_memory: 'memory-cases',
   save_memory: 'memory-cases',
   forget_memory: 'memory-cases',
+  web_search: 'web-read-cases',
+  web_fetch: 'web-read-cases',
 };

@@ -90,6 +90,7 @@ Applies worldwide</p>
 </ul>
 </li>
 <li><strong>Other AI processing:</strong> Other AI features, such as automatic translation of messages and texts and voice transcription, are processed by AI providers (OpenAI or DeepSeek) in the same way.</li>
+<li><strong>Web search:</strong> When the assistant searches the web for you, the short search words it writes (never your whole message or your contact details) are sent to a third-party search provider (currently Tavily or Brave). When it opens a web page, that website receives a request from our servers. Searches are stored with the conversation; usage is logged without the search words.</li>
 <li><strong>Actions:</strong> The assistant can prepare changes on your behalf (for example, editing a game or inviting players), but nothing is changed until you confirm each action.</li>
 <li><strong>Storage:</strong> Conversations are stored on our servers and linked to your account so you can continue them later. You can archive chats. We log usage metadata (such as token counts) to prevent abuse and control costs. If you connect club booking accounts (Booktime, Padeloo, Klikteren), the app also copies your upcoming bookings at those clubs (club, court, time and status) to our servers, so the assistant and the Telegram bot can list them and link them to games.</li>
 <li><strong>Limits:</strong> The assistant has no access to games or data that you cannot see in the app. Please do not enter sensitive personal data in AI chats.</li>

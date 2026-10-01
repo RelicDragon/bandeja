@@ -14,6 +14,8 @@
  *     user's own assistant memory: no confirmation card, never app data. They are listed
  *     only while the principal's memory switch is ON (`executeTool` refuses them like an
  *     unknown tool otherwise) and their handlers re-check the switch in the DB.
+ *   - Tools with `isAvailable` (web tools: kill switch + provider keys) are neither listed
+ *     nor callable while it returns false.
  *
  * `executeTool` never throws into the run loop: bad args, ApiErrors (404 stays the same
  * generic "not found") and crashes all come back as `{ ok: false, data: { error } }`.
@@ -24,9 +26,11 @@ import type {
   AgentEntityRef,
   AgentStreamEvent,
   AgentToolRiskTier as AgentToolRiskTierContract,
+  AgentWebView,
 } from '@bandeja/shared/agentContract';
 import { ApiError } from '../../../utils/ApiError';
 import type { AgentPrincipal } from '../access/agentPrincipal';
+import type { AgentWebRunSession } from '../web/agentWebSession';
 import { agentT } from '../i18n/agentI18n';
 
 /** `memory`: the user's own assistant memory (self-scoped, no card; see the header). */
@@ -65,6 +69,8 @@ export type AgentToolContext = {
    * `assertMemorySaveProvenance`). Missing = unknown = `save_memory` refuses (fail closed).
    */
   memoryProvenance?: AgentMemoryProvenance;
+  /** Per-run web tool state (call counts, URLs a search returned); set by the run loop. */
+  web?: AgentWebRunSession;
 };
 
 export type AgentMemoryProvenance = {
@@ -86,6 +92,14 @@ export type AgentToolResult = {
   /** Short human line for the UI chip ("Found 4 games"). Server-written. */
   summary: string;
   entities?: AgentEntityRef[];
+  /**
+   * A refusal the handler answered itself (limit reached, URL not allowed…): `data` carries
+   * the error for the model, `summary` the localized line, and the call counts as failed
+   * (`ok: false`, so it never taints the run). Throwing stays the way to report ApiErrors.
+   */
+  failed?: boolean;
+  /** UI view of a web tool step (`web_search` / `web_fetch`), copied to the event and block. */
+  web?: AgentWebView;
   /**
    * Write tools (phase 3): the pending action this call created. The run loop emits
    * `action.pending` and ends the run as `AWAITING_CONFIRMATION`.
@@ -159,14 +173,28 @@ export type AgentToolDefinition<S extends z.ZodType = z.ZodType> = {
    */
   promptHint?: string;
   /**
-   * Read tools that return text written by other people (game chat; later web search).
+   * Read tools that return text written by other people (game chat, web search / fetch).
    * A successful call taints the run: no write proposed later in that run auto-approves
    * (ALWAYS_ALLOW is ignored → normal confirmation card; `agentActionAutoApprove.ts`).
    */
   untrustedContent?: boolean;
+  /**
+   * Feature switch read on every listing and call (web tools: kill switch + keys). False →
+   * the tool is not listed and a forged call answers `unknown_tool`.
+   */
+  isAvailable?: () => boolean;
 };
 
 const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]{1,63}$/;
+
+function isToolAvailable(tool: Pick<AgentToolDefinition, 'isAvailable'>): boolean {
+  if (!tool.isAvailable) return true;
+  try {
+    return tool.isAvailable();
+  } catch {
+    return false;
+  }
+}
 
 export function defineTool<S extends z.ZodType>(definition: AgentToolDefinition<S>): AgentToolDefinition<S> {
   if (!TOOL_NAME_PATTERN.test(definition.name)) {
@@ -215,17 +243,21 @@ export type AgentToolExecution = {
   summary: string;
   label: string;
   entities?: AgentEntityRef[];
+  web?: AgentWebView;
   awaitingConfirmation?: { actionId: string };
   memorySaved?: AgentMemorySavedEvent;
 };
 
-/** Who may see a tool: admin scope needs an admin; memory tools need the switch ON (fail closed). */
+/**
+ * Who may see a tool: admin scope needs an admin; memory tools need the switch ON (fail
+ * closed); switched-off tools (`isAvailable` false, e.g. web tools without keys) nobody.
+ */
 export type AgentToolAudience = Pick<AgentPrincipal, 'isAdmin'> & Partial<Pick<AgentPrincipal, 'agentMemoryEnabled'>>;
 
 function visibleTo(tool: AgentToolDefinition, principal: AgentToolAudience): boolean {
   if (tool.scope === 'admin' && !principal.isAdmin) return false;
   if (tool.kind === 'memory' && principal.agentMemoryEnabled !== true) return false;
-  return true;
+  return isToolAvailable(tool);
 }
 
 /** Generic answer for ids the principal may not see — identical to a missing id. */
@@ -262,7 +294,7 @@ export class AgentToolRegistry {
 
   /**
    * Tools the principal may see. Admin-scope tools are hidden from non-admins; memory
-   * tools are hidden unless `agentMemoryEnabled` is true.
+   * tools are hidden unless `agentMemoryEnabled` is true; switched-off tools from everyone.
    */
   toolsForPrincipal(principal: AgentToolAudience): AgentToolDefinition[] {
     return this.list().filter((tool) => visibleTo(tool, principal));
@@ -316,11 +348,12 @@ export class AgentToolRegistry {
     try {
       const result = await tool.handler({ ...ctx, tool }, parsed.data);
       return {
-        ok: true,
+        ok: !result.failed,
         data: result.data,
         summary: result.summary,
         label,
         ...(result.entities?.length ? { entities: result.entities } : {}),
+        ...(result.web ? { web: result.web } : {}),
         ...(result.awaitingConfirmation ? { awaitingConfirmation: result.awaitingConfirmation } : {}),
         ...(result.memorySaved ? { memorySaved: result.memorySaved } : {}),
       };

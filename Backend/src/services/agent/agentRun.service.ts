@@ -37,7 +37,7 @@
  * always allows that standard-tier tool, `deps.autoApprove` executes it at once (same
  * re-authorize → execute path as a tap); the outcome is the call's tool result, an
  * `action.pending` with the settled action is emitted, and the loop continues. Taint: once
- * a read tool declaring `untrustedContent` (game chat; later web search) succeeds, the run
+ * a read tool declaring `untrustedContent` (game chat, web search / fetch) succeeds, the run
  * is tainted and no later write in it auto-approves (normal card). In-memory per run is
  * enough: RUNNING rows are never re-executed.
  *
@@ -106,6 +106,7 @@ import {
   type AgentLlmToolCall,
 } from './llm/deepseekStream';
 import { Semaphore } from './llm/semaphore';
+import { createAgentWebRunSession } from './web/agentWebSession';
 import { getAgentToolRegistry } from './tools';
 import type { AgentToolContext, AgentToolExecution, AgentToolRegistry } from './tools/registry';
 
@@ -776,6 +777,7 @@ export class AgentRunService {
         chatId: run.chatId,
         clientCaps: run.clientCaps ?? [],
         signal,
+        web: createAgentWebRunSession(),
       };
       const openAiTools = this.deps.registry.openAiToolsFor(principal);
       let finalStatus: 'COMPLETED' | 'AWAITING_CONFIRMATION' = 'COMPLETED';
@@ -1015,6 +1017,7 @@ export class AgentRunService {
           ok: execution.ok,
           summary: execution.summary,
           ...(execution.entities?.length ? { entities: execution.entities } : {}),
+          ...(execution.web ? { web: execution.web } : {}),
         });
         // Phase 11: a memory saved without a card → the "Saved to memory · Undo" chip.
         if (execution.ok && execution.memorySaved) {
@@ -1028,6 +1031,7 @@ export class AgentRunService {
         ok: execution.ok,
         summary: execution.summary,
         ...(execution.entities?.length ? { entities: execution.entities } : {}),
+        ...(execution.web ? { web: execution.web } : {}),
       });
       if (execution.awaitingConfirmation) {
         pendingActionIds.push(execution.awaitingConfirmation.actionId);

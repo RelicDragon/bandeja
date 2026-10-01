@@ -34,6 +34,7 @@ import { RESULTS_TOOLS } from './results.tools';
 import { PLAY_INTENT_TOOLS } from './playIntent.tools';
 import { SLOT_TOOLS } from './slots.tools';
 import { WEATHER_TOOLS } from './weather.tools';
+import { WEB_TOOLS } from './web.tools';
 import { AgentToolRegistry, type AgentToolDefinition } from './registry';
 
 export const AGENT_TOOL_DEFINITIONS: AgentToolDefinition[] = [
@@ -61,6 +62,7 @@ export const AGENT_TOOL_DEFINITIONS: AgentToolDefinition[] = [
   ...MONEY_TOOLS,
   ...COST_SHARE_LIST_TOOLS,
   ...MEMORY_TOOLS,
+  ...WEB_TOOLS,
   ...ADMIN_TOOLS,
 ] as AgentToolDefinition[];
 

@@ -90,6 +90,7 @@ Primenjuje se širom sveta</p>
 </ul>
 </li>
 <li><strong>Druga VI obrada:</strong> Ostale VI funkcije, kao što su automatsko prevođenje poruka i tekstova i transkripcija glasovnih poruka, na isti način obrađuju provajderi veštačke inteligencije (OpenAI ili DeepSeek).</li>
+<li><strong>Pretraga interneta:</strong> Kada asistent pretražuje internet za vas, kratke reči pretrage koje sastavi (nikada cela vaša poruka niti vaši kontakt podaci) šalju se spoljnom pretraživaču (trenutno Tavily ili Brave). Kada otvori veb-stranicu, taj sajt dobija zahtev sa naših servera. Pretrage se čuvaju uz razgovor; korišćenje se beleži bez reči pretrage.</li>
 <li><strong>Radnje:</strong> Asistent može da pripremi izmene u vaše ime (na primer, izmenu igre ili pozivanje igrača), ali ništa se ne menja dok ne potvrdite svaku radnju.</li>
 <li><strong>Čuvanje:</strong> Razgovori se čuvaju na našim serverima i povezani su sa vašim nalogom kako biste mogli da ih nastavite. Četove možete arhivirati. Beležimo metapodatke o korišćenju (npr. broj tokena) radi sprečavanja zloupotrebe i kontrole troškova. Ako povežete naloge za rezervacije u klubovima (Booktime, Padeloo, Klikteren), aplikacija takođe kopira vaše predstojeće rezervacije u tim klubovima (klub, teren, vreme i status) na naše servere, kako bi asistent i Telegram bot mogli da ih prikažu i povežu sa igrama.</li>
 <li><strong>Ograničenja:</strong> Asistent nema pristup igrama ni podacima koje ne vidite u aplikaciji. Ne unosite osetljive lične podatke u VI četove.</li>

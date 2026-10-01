@@ -188,6 +188,26 @@
       "errorLimit": "Memorija je puna. Prvo obriši neku belešku.",
       "errorSensitive": "Memorija ne može da čuva kontakte ni tajne",
       "saved": "Sačuvano"
+    },
+    "web": {
+      "resultCount": "Rezultata: {{count}}",
+      "cached": "iz keša",
+      "failed": "Pretraga nije uspela",
+      "exhaustedHint": "Svi pretraživači su nedostupni ili zauzeti.",
+      "tried": "Pokušano: {{trail}}",
+      "summaryBy": "Sažetak: {{provider}}",
+      "shortened": "skraćeno",
+      "details": "Prikaži rezultate sa interneta",
+      "kind": {
+        "rate_limited": "limit zahteva",
+        "auth": "ključ odbijen",
+        "server": "greška servera",
+        "network": "nema veze",
+        "unknown": "greška",
+        "cooldown": "pauza",
+        "unconfigured": "nije podešen",
+        "empty_results": "bez rezultata"
+      }
     }
   }
 }

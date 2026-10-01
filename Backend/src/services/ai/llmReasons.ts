@@ -13,6 +13,9 @@ export const LLM_REASON = {
   AGENT_CHAT_SUMMARY: 'agent_chat_summary',
   /** Phase 11.4 weekly memory consolidation (one call per user, global daily cap). */
   AGENT_MEMORY_CONSOLIDATION: 'agent_memory_consolidation',
+  /** Agent web tools: audit + budget rows (no LLM call; `inputTokens` = token-equivalent charge). */
+  AGENT_WEB_SEARCH: 'agent_web_search',
+  AGENT_WEB_FETCH: 'agent_web_fetch',
 } as const;
 
 export type LlmReason = (typeof LLM_REASON)[keyof typeof LLM_REASON];

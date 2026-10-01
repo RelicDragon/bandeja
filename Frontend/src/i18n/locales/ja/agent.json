@@ -188,6 +188,26 @@
       "errorLimit": "メモリーがいっぱいです。先にメモを削除してください。",
       "errorSensitive": "メモリーには連絡先や秘密情報を保存できません",
       "saved": "保存しました"
+    },
+    "web": {
+      "resultCount": "結果:{{count}}件",
+      "cached": "キャッシュ",
+      "failed": "検索に失敗しました",
+      "exhaustedHint": "すべての検索プロバイダーが利用できないか混雑しています。",
+      "tried": "試行:{{trail}}",
+      "summaryBy": "{{provider}} による要約",
+      "shortened": "短縮済み",
+      "details": "ウェブの結果を表示",
+      "kind": {
+        "rate_limited": "リクエスト上限",
+        "auth": "キー拒否",
+        "server": "サーバーエラー",
+        "network": "接続なし",
+        "unknown": "エラー",
+        "cooldown": "待機中",
+        "unconfigured": "未設定",
+        "empty_results": "結果なし"
+      }
     }
   }
 }

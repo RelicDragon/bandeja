@@ -16,6 +16,7 @@ import {
   AGENT_CHAT_CONTENT_RULE,
   AGENT_MONEY_RULE,
   AGENT_OUT_OF_SCOPE_RULE,
+  AGENT_WEB_CONTENT_RULE,
   AGENT_WRITE_SAFETY_RULES,
   agentToolCapabilityLine,
   buildAgentModelRules,
@@ -89,7 +90,7 @@ async function main() {
     /write tools only/,
     'a read tool with a riskTier is rejected',
   );
-  // Taint rule: only reads can declare untrustedContent; today exactly the game chat read.
+  // Taint rule: only reads can declare untrustedContent: the game chat read and the web tools.
   assert.throws(
     () => defineTool({ ...someWrite, untrustedContent: true }),
     /untrustedContent is for read tools only/,
@@ -97,7 +98,7 @@ async function main() {
   );
   assert.deepEqual(
     AGENT_TOOL_DEFINITIONS.filter((t) => t.untrustedContent).map((t) => t.name),
-    ['summarize_game_chat'],
+    ['summarize_game_chat', 'web_search', 'web_fetch'],
     'untrusted-content reads',
   );
   const tiers = Object.fromEntries(
@@ -325,6 +326,46 @@ async function main() {
     'fallback capability line comes from the description',
   );
   assert.ok(buildAgentModelRules([]).includes(AGENT_WRITE_SAFETY_RULES));
+
+  // --- Phase 13: web tools follow the kill switch + keys (listing, prompt rule, forged calls) --
+  const savedEnv = {
+    enabled: process.env.AGENT_WEB_SEARCH_ENABLED,
+    fetch: process.env.AGENT_WEB_FETCH_ENABLED,
+    tavily: process.env.TAVILY_API_KEY,
+    brave: process.env.BRAVE_SEARCH_API_KEY,
+  };
+  const restore = (name: string, value: string | undefined) => {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  };
+  try {
+    const webNames = () => catalogue.toolsForPrincipal(user).map((t) => t.name).filter((n) => n.startsWith('web_'));
+    process.env.TAVILY_API_KEY = 'test-key';
+    delete process.env.BRAVE_SEARCH_API_KEY;
+    delete process.env.AGENT_WEB_SEARCH_ENABLED;
+    delete process.env.AGENT_WEB_FETCH_ENABLED;
+    assert.deepEqual(webNames(), ['web_search', 'web_fetch'], 'one key turns the web tools on');
+    assert.ok(buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes(AGENT_WEB_CONTENT_RULE), 'web rule when listed');
+    process.env.AGENT_WEB_FETCH_ENABLED = 'false';
+    assert.deepEqual(webNames(), ['web_search'], 'fetch switch hides only web_fetch');
+    process.env.AGENT_WEB_SEARCH_ENABLED = 'false';
+    assert.deepEqual(webNames(), [], 'kill switch hides both');
+    assert.ok(!buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes(AGENT_WEB_CONTENT_RULE), 'no web rule when off');
+    assert.ok(!catalogue.openAiToolsFor(user).some((t) => t.function.name.startsWith('web_')), 'not sent to the model');
+    const forged = await catalogue.executeTool(ctx(user), 'web_search', { query: 'padel rules' });
+    assert.deepEqual(forged.data, { error: 'unknown_tool', name: 'web_search' }, 'a forged call while off = unknown tool');
+    delete process.env.AGENT_WEB_SEARCH_ENABLED;
+    delete process.env.TAVILY_API_KEY;
+    assert.deepEqual(webNames(), [], 'no key → off');
+    const strict = catalogue.get('web_search')!.input.safeParse({ query: 'padel', url: 'https://x.org' });
+    assert.equal(strict.success, false, 'web_search input is strict');
+    assert.equal(catalogue.get('web_fetch')!.input.safeParse({ url: 'https://padelfip.com/', maxChars: 50_000 }).success, false, 'maxChars capped');
+  } finally {
+    restore('AGENT_WEB_SEARCH_ENABLED', savedEnv.enabled);
+    restore('AGENT_WEB_FETCH_ENABLED', savedEnv.fetch);
+    restore('TAVILY_API_KEY', savedEnv.tavily);
+    restore('BRAVE_SEARCH_API_KEY', savedEnv.brave);
+  }
 
   console.log(`agentToolRegistry.test.ts: ok (${AGENT_TOOL_DEFINITIONS.length} tools)`);
 }

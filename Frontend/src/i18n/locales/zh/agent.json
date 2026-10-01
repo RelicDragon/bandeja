@@ -188,6 +188,26 @@
       "errorLimit": "记忆已满，请先删除一条备注。",
       "errorSensitive": "记忆中不能保存联系方式或机密信息",
       "saved": "已保存"
+    },
+    "web": {
+      "resultCount": "结果：{{count}}",
+      "cached": "缓存",
+      "failed": "搜索失败",
+      "exhaustedHint": "所有搜索服务均不可用或繁忙。",
+      "tried": "已尝试：{{trail}}",
+      "summaryBy": "{{provider}} 摘要",
+      "shortened": "已截短",
+      "details": "显示网络结果",
+      "kind": {
+        "rate_limited": "请求受限",
+        "auth": "密钥被拒",
+        "server": "服务器错误",
+        "network": "无法连接",
+        "unknown": "出错",
+        "cooldown": "冷却中",
+        "unconfigured": "未配置",
+        "empty_results": "无结果"
+      }
     }
   }
 }

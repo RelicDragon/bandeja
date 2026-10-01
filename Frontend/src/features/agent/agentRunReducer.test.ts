@@ -218,6 +218,42 @@ describe('agentRunReducer', () => {
     const user = message({ id: 'u1', seq: 1, role: 'USER', blocks: [{ type: 'text', text: 'Hi' }] });
     expect(buildAgentTimeline([user], [], s).map((i) => i.kind)).toEqual(['user']);
   });
+
+  it('carries the web view from tool.finished and from a persisted tool_result', () => {
+    const web = {
+      kind: 'search' as const,
+      query: 'padel rules',
+      provider: 'brave' as const,
+      cached: true,
+      exhausted: false,
+      answer: null,
+      results: [{ title: 'Rules', url: 'https://www.padelfip.com/rules', host: 'padelfip.com', snippet: 'Official' }],
+      tried: [],
+    };
+    const live = run([
+      [{ type: 'run.started', runId: 'r1', chatId: 'c1' }, '1'],
+      [{ type: 'tool.started', callId: 't1', name: 'web_search', label: 'Searching the web' }, '2'],
+      [{ type: 'tool.finished', callId: 't1', ok: true, summary: 'Web results: 1', web }, '3'],
+    ]);
+    expect(live.tools.t1.web).toEqual(web);
+    const liveItem = buildAgentTimeline([], [], live).find((i) => i.kind === 'tool');
+    expect(liveItem?.kind === 'tool' && liveItem.tool.web).toEqual(web);
+
+    const assistant = message({
+      id: 'm1',
+      seq: 2,
+      role: 'ASSISTANT',
+      blocks: [{ type: 'tool_call', callId: 't2', name: 'web_search', label: 'Searching the web' }],
+    });
+    const tool = message({
+      id: 'm2',
+      seq: 3,
+      role: 'TOOL',
+      blocks: [{ type: 'tool_result', callId: 't2', ok: true, summary: 'Web results: 1', web }],
+    });
+    const persisted = buildAgentTimeline([assistant, tool], [], null).find((i) => i.kind === 'tool');
+    expect(persisted?.kind === 'tool' && persisted.tool.web).toEqual(web);
+  });
 });
 
 describe('isEventIdAtOrBefore', () => {

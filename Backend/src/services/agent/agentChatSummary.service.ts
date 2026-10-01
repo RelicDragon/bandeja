@@ -9,7 +9,7 @@
  * - **Budget.** Skipped (crude fold instead) unless the user's daily token budget has
  *   `AGENT_CHAT_SUMMARY_BUDGET_RESERVE` tokens left after this run so far. The call's tokens are
  *   added to the run's usage (so they count against the budget) and logged as `agent_chat_summary`.
- * - **Taint.** If any newly summarized turn came after an `untrustedContent` read (game chat),
+ * - **Taint.** If any newly summarized turn came after an `untrustedContent` read (game chat, web),
  *   `summaryTainted` becomes true and stays true: the model is told the summary includes other
  *   people's text, and the memory provenance guard keeps treating the chat as tainted.
  * - **Safety.** The transcript is framed as quoted data; tool rows contribute only their

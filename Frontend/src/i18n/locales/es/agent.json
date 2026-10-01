@@ -188,6 +188,26 @@
       "errorLimit": "La memoria está llena. Borra primero una nota.",
       "errorSensitive": "La memoria no puede guardar contactos ni secretos",
       "saved": "Guardado"
+    },
+    "web": {
+      "resultCount": "Resultados: {{count}}",
+      "cached": "en caché",
+      "failed": "La búsqueda falló",
+      "exhaustedHint": "Ningún proveedor de búsqueda estaba disponible.",
+      "tried": "Probado: {{trail}}",
+      "summaryBy": "Resumen de {{provider}}",
+      "shortened": "recortado",
+      "details": "Ver resultados de la web",
+      "kind": {
+        "rate_limited": "límite de solicitudes",
+        "auth": "clave rechazada",
+        "server": "error del servidor",
+        "network": "sin conexión",
+        "unknown": "fallo",
+        "cooldown": "en pausa",
+        "unconfigured": "sin configurar",
+        "empty_results": "sin resultados"
+      }
     }
   }
 }
