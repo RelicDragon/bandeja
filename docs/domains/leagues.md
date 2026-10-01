@@ -2,6 +2,8 @@
 
 A **league season** is a `Game` with `entityType=LEAGUE_SEASON` (hub). Its id is `LeagueSeason.id`. **Fixtures** are child games `entityType=LEAGUE` with `parentId` → season. Do not treat league as a create-template tier ([create.md](./create.md)).
 
+**Joining.** Players request to join the **season** (its `IN_QUEUE`, answered by season owner/admin). Fixtures are closed: their rosters come only from league assignment, never `/join` ([games.md](./games.md) Join). The creator's season row is `OWNER` + `PLAYING` (they play by default and take a seat); "Don't play in game" moves them to `NON_PLAYING` via `leaveGame`, and "Play in game" brings them back.
+
 `Game.status` is still ANNOUNCED/STARTED/FINISHED/ARCHIVED. Fixture UI labels `SCHEDULED`/`NOT_SCHEDULED` come from `timeIsSet` / `resultsStatus`, not a `READY`/`PLAYING` game status.
 
 League data (season, standings, rounds/schedule, groups, bracket) is intentionally public to every authenticated user (`GET /leagues/:id/*`, and the AI agent's league reads).

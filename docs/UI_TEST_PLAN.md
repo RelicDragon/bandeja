@@ -1027,7 +1027,7 @@ One boolean the organizer sets; everything here is read-only display. The tag is
 | C-29 | League basic info | Name, city, club, season | Form valid |
 | C-30 | League format wizard | Configure format | Saved |
 | C-31 | Season avatar | Upload season image | Preview |
-| C-32 | Create league submit | Valid form | League season game created |
+| C-32 | Create league submit | Valid form | League season game created; the creator is listed as a playing owner (not in the join queue) and sees "Don't play in game" |
 | C-33 | Anyone-can-invite toggle | Enable on create | Saved; non-owner participants can invite |
 | C-34 | Gender teams setting | Set MEN/WOMEN/MIX | Saved on game |
 | C-35 | Fixed teams + multi-court | Enable both | Correct roster/court UI |

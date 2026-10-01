@@ -435,11 +435,13 @@ export class LeagueCreateService {
           minLevel,
           maxLevel,
           status: 'ANNOUNCED',
+          // The creator plays by default; they can stop later ("Don't play in game" →
+          // NON_PLAYING via `leaveGame`). Players request the season and land in its queue.
           participants: {
             create: {
               userId: userId,
               role: 'OWNER',
-              status: 'IN_QUEUE',
+              status: 'PLAYING',
             },
           },
         },
