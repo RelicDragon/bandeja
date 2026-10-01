@@ -5,6 +5,7 @@ import {
   type AgentPendingActionDto,
   type AgentStreamEvent,
   type AgentUsage,
+  type AgentWebView,
 } from '@shared/agentContract';
 
 /**
@@ -34,6 +35,8 @@ export interface AgentToolStep {
   status: 'running' | 'ok' | 'error';
   summary: string | null;
   entities: AgentEntityRef[];
+  /** Web search / fetch view (Phase 13), from `tool.finished`. */
+  web?: AgentWebView;
 }
 
 export type AgentDraftSegment =
@@ -164,6 +167,7 @@ function applyEvent(state: AgentRunLiveState, event: AgentStreamEvent): AgentRun
         status: event.ok ? 'ok' : 'error',
         summary: event.summary,
         entities: event.entities ?? [],
+        ...(event.web ? { web: event.web } : {}),
       };
       return {
         ...state,

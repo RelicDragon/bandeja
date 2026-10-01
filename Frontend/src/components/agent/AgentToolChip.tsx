@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Check, ChevronDown, Loader2 } from 'lucide-react';
 import type { AgentToolItemData } from '@/features/agent/agentTimeline';
 import { AgentEntityList } from './AgentEntityCard';
+import { AgentWebResults } from './AgentWebResults';
 
 /** One tool step: "Looking up your games…" while running, the summary when finished. */
 export const AgentToolChip = memo(function AgentToolChip({ tool }: { tool: AgentToolItemData }) {
@@ -14,7 +15,8 @@ export const AgentToolChip = memo(function AgentToolChip({ tool }: { tool: Agent
   const title = running
     ? tool.label || t('agent.tool.working')
     : tool.summary || tool.label || (failed ? t('agent.tool.failed') : t('agent.tool.done'));
-  const canExpand = !running && Boolean(tool.label) && tool.label !== title;
+  const hasLabelDetail = Boolean(tool.label) && tool.label !== title;
+  const canExpand = !running && (hasLabelDetail || Boolean(tool.web));
 
   return (
     <div className="flex flex-col gap-2">
@@ -22,6 +24,7 @@ export const AgentToolChip = memo(function AgentToolChip({ tool }: { tool: Agent
         type="button"
         onClick={() => canExpand && setOpen((v) => !v)}
         aria-expanded={canExpand ? open : undefined}
+        aria-label={canExpand && tool.web ? `${title}. ${t('agent.web.details')}` : undefined}
         className={`inline-flex max-w-full items-center gap-1.5 self-start rounded-full border px-2.5 py-1 text-xs transition-colors ${
           failed
             ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300'
@@ -53,11 +56,18 @@ export const AgentToolChip = memo(function AgentToolChip({ tool }: { tool: Agent
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="overflow-hidden"
+            className="flex flex-col gap-1.5 overflow-hidden"
           >
-            <p className="ps-3 text-xs text-gray-500 dark:text-gray-400" dir="auto">
-              {tool.label}
-            </p>
+            {hasLabelDetail ? (
+              <p className="ps-3 text-xs text-gray-500 dark:text-gray-400" dir="auto">
+                {tool.label}
+              </p>
+            ) : null}
+            {tool.web ? (
+              <div className="ps-3">
+                <AgentWebResults web={tool.web} />
+              </div>
+            ) : null}
           </motion.div>
         ) : null}
       </AnimatePresence>

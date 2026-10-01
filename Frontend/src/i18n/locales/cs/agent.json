@@ -149,6 +149,26 @@
       "failed": "Nic se nezměnilo",
       "reportPending": "V klubu hotovo, ale zatím neuloženo. Zkusíme to znovu, až se vrátíte.",
       "inProgress": "Probíhá v aplikaci…"
+    },
+    "web": {
+      "resultCount": "Výsledků: {{count}}",
+      "cached": "z mezipaměti",
+      "failed": "Vyhledávání selhalo",
+      "exhaustedHint": "Žádný vyhledávač nebyl dostupný.",
+      "tried": "Zkoušeno: {{trail}}",
+      "summaryBy": "Shrnutí od {{provider}}",
+      "shortened": "zkráceno",
+      "details": "Zobrazit výsledky z webu",
+      "kind": {
+        "rate_limited": "limit požadavků",
+        "auth": "klíč odmítnut",
+        "server": "chyba serveru",
+        "network": "bez spojení",
+        "unknown": "chyba",
+        "cooldown": "pauza",
+        "unconfigured": "nenastaveno",
+        "empty_results": "bez výsledků"
+      }
     }
   }
 }

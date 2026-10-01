@@ -2,6 +2,7 @@ import type {
   AgentEntityRef,
   AgentMessageDto,
   AgentPendingActionDto,
+  AgentWebView,
 } from '@shared/agentContract';
 import type { AgentRunLiveState } from './agentRunReducer';
 import { isTerminalPhase } from './agentRunReducer';
@@ -12,6 +13,8 @@ export interface AgentToolItemData {
   status: 'running' | 'ok' | 'error';
   summary: string | null;
   entities: AgentEntityRef[];
+  /** Web search / fetch view (Phase 13): provider, cached, answer, links. */
+  web?: AgentWebView;
 }
 
 export type AgentTimelineItem =
@@ -45,12 +48,20 @@ export function buildAgentTimeline(
     }
   }
 
-  const persistedResults = new Map<string, { ok: boolean; summary: string; entities: AgentEntityRef[] }>();
+  const persistedResults = new Map<
+    string,
+    { ok: boolean; summary: string; entities: AgentEntityRef[]; web?: AgentWebView }
+  >();
   const persistedCalls = new Set<string>();
   for (const m of messages) {
     for (const b of m.blocks) {
       if (b.type === 'tool_result') {
-        persistedResults.set(b.callId, { ok: b.ok, summary: b.summary, entities: b.entities ?? [] });
+        persistedResults.set(b.callId, {
+          ok: b.ok,
+          summary: b.summary,
+          entities: b.entities ?? [],
+          ...(b.web ? { web: b.web } : {}),
+        });
       } else if (b.type === 'tool_call') {
         persistedCalls.add(b.callId);
       }
@@ -71,6 +82,7 @@ export function buildAgentTimeline(
         status: result.ok ? 'ok' : 'error',
         summary: result.summary,
         entities: result.entities,
+        ...(result.web ? { web: result.web } : {}),
       };
     }
     const step = live?.tools[callId];
@@ -82,6 +94,7 @@ export function buildAgentTimeline(
         status: step.status === 'running' && !liveRunning ? 'error' : step.status,
         summary: step.summary,
         entities: step.entities,
+        ...(step.web ? { web: step.web } : {}),
       };
     }
     return { callId, label: fallbackLabel, status: liveRunning ? 'running' : 'error', summary: null, entities: [] };
@@ -113,6 +126,7 @@ export function buildAgentTimeline(
             status: b.ok ? 'ok' : 'error',
             summary: b.summary,
             entities: b.entities ?? [],
+            ...(b.web ? { web: b.web } : {}),
           },
         });
       } else if (b.type === 'action') {

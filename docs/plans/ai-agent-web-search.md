@@ -1,6 +1,6 @@
 # AI agent: Phase 13, Web search and web fetch (spec, 2026-10-01)
 
-Parent plan: [ai-agent.md](./ai-agent.md) §17. Domain: [agent.md](../domains/agent.md). Status: **spec; built in slices 13a–13d** (status line per slice in §13.14). Numbering: Phase 10 is money settling, 11 memory ([ai-agent-memory.md](./ai-agent-memory.md)), 12 app help (parked). This doc was "Phase 10 (backlog)" until 2026-10-01.
+Parent plan: [ai-agent.md](./ai-agent.md) §17. Domain: [agent.md](../domains/agent.md). Status: **built 2026-10-01** (slices 13a–13d, §13.14). Numbering: Phase 10 is money settling, 11 memory ([ai-agent-memory.md](./ai-agent-memory.md)), 12 app help (parked). This doc was "Phase 10 (backlog)" until 2026-10-01.
 
 Reference implementation: travel-bandeja (`~/Projects/travel-bandeja`, commit `5e0232a`): `server/src/services/webSearch/*`, `server/src/services/webFetch/*`, the tool wiring in `server/src/services/deepseekService.js` (`:698-760`, `:1176`, `:2052-2175`) and the UI `src/components/chat/WebSearchResults.jsx`, `ToolStepRow.jsx`. Every module below is a TypeScript port of one of those files; deviations are listed per module.
 
@@ -379,7 +379,7 @@ All without network: providers and chain get an injected `fetchImpl`, the guard 
 | 13a | search: error, utils, health, rotation, providers, chain, cache + unit tests, env | built 2026-10-01 |
 | 13b | fetch: SSRF guard, pinned dispatcher, extractor, fetch service + unit tests | built 2026-10-01 |
 | 13c | tools, registry hooks, prompt rule, limits / budget / audit, taint, i18n, EULA, integration tests | built 2026-10-01 |
-| 13d | contract `web` view, app `AgentWebResults`, Telegram block, FE / bot i18n | planned |
+| 13d | contract `web` view, app `AgentWebResults`, Telegram block, FE / bot i18n | built 2026-10-01 |
 
 ## 13.15 Risks and follow-ups
 

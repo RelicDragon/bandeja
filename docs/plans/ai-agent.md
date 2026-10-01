@@ -395,7 +395,7 @@ The four most-used flows that are still menu-heavy. Every tool reuses the existi
 | 9d | BE | weather tool + tests + i18n — **built** (`get_weather`, [agent.md](../domains/agent.md#read-tools-phase-1-kindread-scopeuser)) | none |
 | 9e | FE+TG | entity cards/chips for results, intent and weather, if the plain-text answer is not enough (decide after 9a–9d) | 9a–9d |
 
-## 17. Phase 13: web search and web fetch (spec 2026-10-01)
+## 17. Phase 13: web search and web fetch (built 2026-10-01)
 
 Spec: **[ai-agent-web-search.md](./ai-agent-web-search.md)**, a TypeScript port of travel-bandeja's `webSearch` / `webFetch` services. Numbering: Phase 10 = money settling (§18), 11 = memory ([ai-agent-memory.md](./ai-agent-memory.md)), 12 = app help (parked), 13 = web search (this section; it was labelled "Phase 10, backlog" until 2026-10-01).
 - `web_search {query, count?}` and `web_fetch {url, maxChars?}` run on the **backend**; both `kind:'read'`, `untrustedContent: true` (taint: no later write in the run auto-approves).
@@ -404,7 +404,7 @@ Spec: **[ai-agent-web-search.md](./ai-agent-web-search.md)**, a TypeScript port 
 - `web_fetch` only reads URLs from an earlier `web_search` in the same chat or links the user typed; SSRF guard (DNS check of every address, pinned connect, redirects re-checked, private / loopback / link-local / CGNAT / reserved blocked, default ports only, no IP literals), 2 MB / 10 s caps, HTML / text only, HTML → text without new deps.
 - Limits: per run, per user per day, global per minute; in-memory TTL cache; live calls charged to `AGENT_DAILY_TOKEN_BUDGET` via `LlmUsageLog` audit rows (no query text stored there). No migration.
 - UI: search steps with provider / cached badges, answer and links (app); a "Web sources" text block (Telegram). EULA §1.10 bullet.
-- Slices 13a (search) · 13b (fetch) · 13c (tools, limits, prompt) · 13d (UI, Telegram).
+- Slices 13a (search) · 13b (fetch) · 13c (tools, limits, prompt) · 13d (UI, Telegram): all built. Tests `npm run test:agent-web` (in `test:agent`); manual `npm run smoke:agent-web`.
 
 ## 18. Phase 10 — money settling (added 2026-09-30)
 

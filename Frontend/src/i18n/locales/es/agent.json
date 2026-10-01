@@ -149,6 +149,26 @@
       "failed": "No se cambió nada",
       "reportPending": "Hecho en el club, pero aún no guardado. Lo reintentaremos cuando vuelvas.",
       "inProgress": "Ejecutándose en la app…"
+    },
+    "web": {
+      "resultCount": "Resultados: {{count}}",
+      "cached": "en caché",
+      "failed": "La búsqueda falló",
+      "exhaustedHint": "Ningún proveedor de búsqueda estaba disponible.",
+      "tried": "Probado: {{trail}}",
+      "summaryBy": "Resumen de {{provider}}",
+      "shortened": "recortado",
+      "details": "Ver resultados de la web",
+      "kind": {
+        "rate_limited": "límite de solicitudes",
+        "auth": "clave rechazada",
+        "server": "error del servidor",
+        "network": "sin conexión",
+        "unknown": "fallo",
+        "cooldown": "en pausa",
+        "unconfigured": "sin configurar",
+        "empty_results": "sin resultados"
+      }
     }
   }
 }

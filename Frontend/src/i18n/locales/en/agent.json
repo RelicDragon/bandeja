@@ -149,6 +149,26 @@
       "failed": "Nothing was changed",
       "reportPending": "Done at the club, but not saved yet. We'll retry when you come back.",
       "inProgress": "Running in the app…"
+    },
+    "web": {
+      "resultCount": "Results: {{count}}",
+      "cached": "cached",
+      "failed": "Search failed",
+      "exhaustedHint": "Every search provider was unavailable or busy.",
+      "tried": "Tried: {{trail}}",
+      "summaryBy": "Summary by {{provider}}",
+      "shortened": "shortened",
+      "details": "Show web results",
+      "kind": {
+        "rate_limited": "rate limited",
+        "auth": "key rejected",
+        "server": "server error",
+        "network": "no connection",
+        "unknown": "error",
+        "cooldown": "cooling down",
+        "unconfigured": "not set up",
+        "empty_results": "no results"
+      }
     }
   }
 }

@@ -149,6 +149,26 @@
       "failed": "कुछ नहीं बदला",
       "reportPending": "क्लब में हो गया, पर अभी सहेजा नहीं गया। आपके लौटने पर फिर कोशिश करेंगे।",
       "inProgress": "ऐप में चल रहा है…"
+    },
+    "web": {
+      "resultCount": "परिणाम: {{count}}",
+      "cached": "कैश से",
+      "failed": "खोज विफल रही",
+      "exhaustedHint": "सभी खोज प्रदाता अनुपलब्ध या व्यस्त थे।",
+      "tried": "आज़माया: {{trail}}",
+      "summaryBy": "{{provider}} का सारांश",
+      "shortened": "छोटा किया गया",
+      "details": "वेब परिणाम दिखाएँ",
+      "kind": {
+        "rate_limited": "अनुरोध सीमा",
+        "auth": "कुंजी अस्वीकृत",
+        "server": "सर्वर त्रुटि",
+        "network": "कनेक्शन नहीं",
+        "unknown": "त्रुटि",
+        "cooldown": "विराम",
+        "unconfigured": "सेट नहीं",
+        "empty_results": "कोई परिणाम नहीं"
+      }
     }
   }
 }

@@ -84,6 +84,10 @@ export const AGENT_BOT_COPY_KEYS = [
   'action.clientRequired',
   'action.unknown',
   'action.partial',
+  'web.search',
+  'web.searchCached',
+  'web.unavailable',
+  'web.read',
 ] as const;
 
 export type AgentBotCopyKey = (typeof AGENT_BOT_COPY_KEYS)[number];
@@ -169,6 +173,10 @@ const EN: Bundle = {
   'action.clientRequired': 'Only the app can make this change. Open it to confirm.',
   'action.unknown': '⚠️ Result unknown — check Connected clubs',
   'action.partial': '⚠️ Partly done',
+  'web.search': '🔎 Web search ({provider})',
+  'web.searchCached': '🔎 Web search ({provider}, cached)',
+  'web.unavailable': '🔎 Web search unavailable',
+  'web.read': '📄 Read:',
 };
 
 const COPY: Record<string, Bundle> = {
@@ -252,6 +260,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'Это изменение можно сделать только в приложении. Откройте его, чтобы подтвердить.',
     'action.unknown': '⚠️ Результат неизвестен — проверьте «Подключённые клубы»',
     'action.partial': '⚠️ Выполнено частично',
+    'web.search': '🔎 Поиск в интернете ({provider})',
+    'web.searchCached': '🔎 Поиск в интернете ({provider}, из кэша)',
+    'web.unavailable': '🔎 Поиск в интернете недоступен',
+    'web.read': '📄 Прочитано:',
   },
   sr: {
     'menu.ai': 'AI asistent: pitaj o svojim mečevima',
@@ -332,6 +344,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'Samo aplikacija može da napravi ovu izmenu. Otvori je da potvrdiš.',
     'action.unknown': '⚠️ Rezultat nepoznat — proveri Povezane klubove',
     'action.partial': '⚠️ Delimično urađeno',
+    'web.search': '🔎 Pretraga interneta ({provider})',
+    'web.searchCached': '🔎 Pretraga interneta ({provider}, iz keša)',
+    'web.unavailable': '🔎 Pretraga interneta nije dostupna',
+    'web.read': '📄 Pročitano:',
   },
   es: {
     'menu.ai': 'Asistente IA: pregunta por tus partidos',
@@ -412,6 +428,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'Solo la app puede hacer este cambio. Ábrela para confirmarlo.',
     'action.unknown': '⚠️ Resultado desconocido: revisa Clubes conectados',
     'action.partial': '⚠️ Hecho en parte',
+    'web.search': '🔎 Búsqueda web ({provider})',
+    'web.searchCached': '🔎 Búsqueda web ({provider}, en caché)',
+    'web.unavailable': '🔎 Búsqueda web no disponible',
+    'web.read': '📄 Leído:',
   },
   cs: {
     'menu.ai': 'AI asistent: zeptej se na své zápasy',
@@ -492,6 +512,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'Tuto změnu umí provést jen aplikace. Otevři ji a potvrď.',
     'action.unknown': '⚠️ Výsledek neznámý — zkontroluj Připojené kluby',
     'action.partial': '⚠️ Provedeno částečně',
+    'web.search': '🔎 Hledání na webu ({provider})',
+    'web.searchCached': '🔎 Hledání na webu ({provider}, z mezipaměti)',
+    'web.unavailable': '🔎 Hledání na webu není dostupné',
+    'web.read': '📄 Přečteno:',
   },
   ar: {
     'menu.ai': 'المساعد الذكي: اسأل عن مبارياتك',
@@ -572,6 +596,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'التطبيق وحده يمكنه إجراء هذا التغيير. افتحه للتأكيد.',
     'action.unknown': '⚠️ النتيجة غير معروفة — راجع الأندية المتصلة',
     'action.partial': '⚠️ تم جزئيًا',
+    'web.search': '🔎 بحث في الويب ({provider})',
+    'web.searchCached': '🔎 بحث في الويب ({provider}، من الذاكرة المؤقتة)',
+    'web.unavailable': '🔎 البحث في الويب غير متاح',
+    'web.read': '📄 تمت القراءة:',
   },
   zh: {
     'menu.ai': 'AI 助手：询问你的比赛',
@@ -652,6 +680,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': '只有应用可以执行此更改，请打开应用确认。',
     'action.unknown': '⚠️ 结果未知——请检查已连接的俱乐部',
     'action.partial': '⚠️ 部分完成',
+    'web.search': '🔎 网络搜索（{provider}）',
+    'web.searchCached': '🔎 网络搜索（{provider}，缓存）',
+    'web.unavailable': '🔎 网络搜索不可用',
+    'web.read': '📄 已阅读：',
   },
   id: {
     'menu.ai': 'Asisten AI: tanya soal pertandinganmu',
@@ -732,6 +764,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'Hanya aplikasi yang bisa melakukan perubahan ini. Buka untuk mengonfirmasi.',
     'action.unknown': '⚠️ Hasil tidak diketahui — periksa Klub terhubung',
     'action.partial': '⚠️ Sebagian selesai',
+    'web.search': '🔎 Pencarian web ({provider})',
+    'web.searchCached': '🔎 Pencarian web ({provider}, dari cache)',
+    'web.unavailable': '🔎 Pencarian web tidak tersedia',
+    'web.read': '📄 Dibaca:',
   },
   hi: {
     'menu.ai': 'AI सहायक: अपने मैचों के बारे में पूछें',
@@ -812,6 +848,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'यह बदलाव केवल ऐप कर सकता है। पुष्टि के लिए ऐप खोलें।',
     'action.unknown': '⚠️ परिणाम अज्ञात — जुड़े क्लब देखें',
     'action.partial': '⚠️ आंशिक रूप से पूरा',
+    'web.search': '🔎 वेब खोज ({provider})',
+    'web.searchCached': '🔎 वेब खोज ({provider}, कैश से)',
+    'web.unavailable': '🔎 वेब खोज उपलब्ध नहीं',
+    'web.read': '📄 पढ़ा गया:',
   },
   th: {
     'menu.ai': 'ผู้ช่วย AI: ถามเรื่องเกมของคุณ',
@@ -892,6 +932,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'มีเพียงแอปที่ทำการเปลี่ยนแปลงนี้ได้ เปิดแอปเพื่อยืนยัน',
     'action.unknown': '⚠️ ไม่ทราบผลลัพธ์ — ตรวจสอบคลับที่เชื่อมต่อ',
     'action.partial': '⚠️ ทำได้บางส่วน',
+    'web.search': '🔎 ค้นหาบนเว็บ ({provider})',
+    'web.searchCached': '🔎 ค้นหาบนเว็บ ({provider}, จากแคช)',
+    'web.unavailable': '🔎 การค้นหาเว็บไม่พร้อมใช้งาน',
+    'web.read': '📄 อ่านแล้ว:',
   },
   ja: {
     'menu.ai': 'AIアシスタント：試合について質問',
@@ -972,6 +1016,10 @@ const COPY: Record<string, Bundle> = {
     'action.clientRequired': 'この変更はアプリでのみ実行できます。アプリを開いて確認してください。',
     'action.unknown': '⚠️ 結果不明 — 連携済みクラブを確認してください',
     'action.partial': '⚠️ 一部のみ完了',
+    'web.search': '🔎 ウェブ検索（{provider}）',
+    'web.searchCached': '🔎 ウェブ検索（{provider}、キャッシュ）',
+    'web.unavailable': '🔎 ウェブ検索は利用できません',
+    'web.read': '📄 読んだページ:',
   },
 };
 

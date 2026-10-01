@@ -21,11 +21,13 @@ import {
   type AgentEntityRef,
   type AgentPendingActionDto,
   type AgentStreamEvent,
+  type AgentWebView,
 } from '@bandeja/shared/agentContract';
 import type { InlineKeyboardButton, InlineKeyboardMarkup } from 'grammy/types';
 import { agentToolPermissionText } from '../../agent/i18n/agentToolPermissionI18n';
 import { agentBotT } from './agentBotCopy';
 import { renderEntityTextBlock } from './agentBotEntities';
+import { renderWebSourcesBlock } from './agentBotWeb';
 import {
   TELEGRAM_MESSAGE_MAX,
   agentAnswerToTelegramMessages,
@@ -54,6 +56,8 @@ export type AgentBotRunState = {
   /** Streamed text of the current step, not saved yet. */
   live: string;
   entities: AgentEntityRef[];
+  /** Web search / fetch views of this run (Phase 13), one per tool call. */
+  web: { callId: string; view: AgentWebView }[];
   actions: AgentPendingActionDto[];
   terminal: AgentBotTerminal | null;
 };
@@ -69,9 +73,18 @@ export function initialAgentBotRunState(runId: string): AgentBotRunState {
     savedMessageIds: [],
     live: '',
     entities: [],
+    web: [],
     actions: [],
     terminal: null,
   };
+}
+
+function addWeb(state: AgentBotRunState, items: { callId: string; view: AgentWebView | undefined }[]): AgentBotRunState['web'] {
+  const current = state.web ?? [];
+  const fresh = items.filter(
+    (item): item is { callId: string; view: AgentWebView } => Boolean(item.view) && !current.some((w) => w.callId === item.callId),
+  );
+  return fresh.length ? [...current, ...fresh] : current;
 }
 
 function addEntities(state: AgentBotRunState, entities: AgentEntityRef[] | undefined): AgentEntityRef[] {
@@ -104,7 +117,13 @@ export function reduceAgentBotRun(state: AgentBotRunState, event: AgentStreamEve
     case 'tool.started':
       return { ...state, phase: 'tool', toolLabel: event.label };
     case 'tool.finished':
-      return { ...state, phase: 'thinking', toolLabel: null, entities: addEntities(state, event.entities) };
+      return {
+        ...state,
+        phase: 'thinking',
+        toolLabel: null,
+        entities: addEntities(state, event.entities),
+        web: addWeb(state, [{ callId: event.callId, view: event.web }]),
+      };
     case 'action.pending':
       if (state.actions.some((a) => a.id === event.action.id)) return state;
       return { ...state, actions: [...state.actions, event.action] };
@@ -115,7 +134,8 @@ export function reduceAgentBotRun(state: AgentBotRunState, event: AgentStreamEve
       const chatId = state.chatId ?? message.chatId ?? null;
       if (message.role === 'TOOL') {
         const entities = message.blocks.flatMap((b) => (b.type === 'tool_result' ? (b.entities ?? []) : []));
-        return { ...state, chatId, savedMessageIds, entities: addEntities(state, entities) };
+        const web = message.blocks.flatMap((b) => (b.type === 'tool_result' ? [{ callId: b.callId, view: b.web }] : []));
+        return { ...state, chatId, savedMessageIds, entities: addEntities(state, entities), web: addWeb(state, web) };
       }
       if (message.role !== 'ASSISTANT') return { ...state, chatId, savedMessageIds };
       const text = message.blocks
@@ -449,6 +469,16 @@ export function renderAgentBotFinal(
       chunks[chunks.length - 1] = `${last}\n\n${block.html}`;
     } else {
       chunks.push(block.html);
+    }
+  }
+
+  const webBlock = renderWebSourcesBlock((state.web ?? []).map((w) => w.view), lang);
+  if (webBlock) {
+    const last = chunks[chunks.length - 1];
+    if (last.length + webBlock.length + 2 <= TELEGRAM_MESSAGE_MAX - 400) {
+      chunks[chunks.length - 1] = `${last}\n\n${webBlock}`;
+    } else {
+      chunks.push(webBlock);
     }
   }
 

@@ -149,6 +149,26 @@
       "failed": "Tidak ada yang berubah",
       "reportPending": "Selesai di klub, tetapi belum tersimpan. Kami akan mencoba lagi saat Anda kembali.",
       "inProgress": "Berjalan di aplikasi…"
+    },
+    "web": {
+      "resultCount": "Hasil: {{count}}",
+      "cached": "dari cache",
+      "failed": "Pencarian gagal",
+      "exhaustedHint": "Semua penyedia pencarian tidak tersedia atau sibuk.",
+      "tried": "Dicoba: {{trail}}",
+      "summaryBy": "Ringkasan dari {{provider}}",
+      "shortened": "dipersingkat",
+      "details": "Tampilkan hasil web",
+      "kind": {
+        "rate_limited": "batas permintaan",
+        "auth": "kunci ditolak",
+        "server": "galat server",
+        "network": "tidak ada koneksi",
+        "unknown": "galat",
+        "cooldown": "jeda",
+        "unconfigured": "belum diatur",
+        "empty_results": "tanpa hasil"
+      }
     }
   }
 }

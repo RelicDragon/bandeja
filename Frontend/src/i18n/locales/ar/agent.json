@@ -149,6 +149,26 @@
       "failed": "لم يتغير شيء",
       "reportPending": "تم التنفيذ في النادي لكن لم يُحفظ بعد. سنعيد المحاولة عند عودتك.",
       "inProgress": "جارٍ التنفيذ في التطبيق…"
+    },
+    "web": {
+      "resultCount": "النتائج: {{count}}",
+      "cached": "من الذاكرة المؤقتة",
+      "failed": "فشل البحث",
+      "exhaustedHint": "كل مزوّدي البحث غير متاحين أو مشغولون.",
+      "tried": "تمت المحاولة: {{trail}}",
+      "summaryBy": "ملخص من {{provider}}",
+      "shortened": "مختصر",
+      "details": "عرض نتائج الويب",
+      "kind": {
+        "rate_limited": "تجاوز حد الطلبات",
+        "auth": "المفتاح مرفوض",
+        "server": "خطأ في الخادم",
+        "network": "لا يوجد اتصال",
+        "unknown": "خطأ",
+        "cooldown": "استراحة",
+        "unconfigured": "غير مُعد",
+        "empty_results": "لا نتائج"
+      }
     }
   }
 }
