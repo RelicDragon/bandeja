@@ -249,6 +249,15 @@ export class LeagueCreateService {
   }
 
   static async createLeague(data: any, userId: string, jwtIsAdmin: boolean = false) {
+    const actor = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true, canCreateLeague: true, canCreateTournament: true, maxParticipantsInGame: true },
+    });
+    // Same gate as the app's Create menu (`isAdmin || canCreateLeague`).
+    if (!jwtIsAdmin && !actor?.isAdmin && !actor?.canCreateLeague) {
+      throw new ApiError(403, 'You are not allowed to create leagues');
+    }
+
     if (!data.name || !data.name.trim()) {
       throw new ApiError(400, 'League name is required');
     }
@@ -286,10 +295,6 @@ export class LeagueCreateService {
       throw new ApiError(400, 'Max participants must be between 4 and 999');
     }
 
-    const actor = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { canCreateTournament: true, maxParticipantsInGame: true },
-    });
     assertMaxParticipantsWithinUserCap({
       jwtIsAdmin,
       actor,

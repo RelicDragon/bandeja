@@ -1,6 +1,7 @@
-import { Prisma } from '@prisma/client';
+import { ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { assertGamePermission, type GamePermissionActor } from '../game/gamePermission';
 import { loadLeagueSeasonSportOrThrow } from '../../utils/validators/validateLeagueSeasonSport';
 import { getDistinctLeagueGroupColor } from './groupColors';
 import {
@@ -42,6 +43,7 @@ const participantOrder: Prisma.LeagueParticipantOrderByWithRelationInput[] = [
 ];
 
 export class LeagueGroupManagementService {
+  /** Season exists (404). Read-only callers; writes go through `ensureCanEditSeason`. */
   private static async ensureLeagueAccess(leagueSeasonId: string) {
     const leagueSeason = await prisma.leagueSeason.findUnique({
       where: { id: leagueSeasonId },
@@ -57,7 +59,18 @@ export class LeagueGroupManagementService {
     return leagueSeason;
   }
 
-  private static async ensureGroupAccess(groupId: string) {
+  /**
+   * Season exists (404), then season OWNER/ADMIN (incl. parent) or platform admin — the same
+   * `assertGamePermission` the `canEditGame` route middleware runs (403 / archived 400).
+   */
+  static async ensureCanEditSeason(leagueSeasonId: string, actor: GamePermissionActor) {
+    const leagueSeason = await this.ensureLeagueAccess(leagueSeasonId);
+    await assertGamePermission(actor, leagueSeasonId, [ParticipantRole.OWNER, ParticipantRole.ADMIN]);
+    return leagueSeason;
+  }
+
+  /** Group exists (404), then edit rights on its season (see `ensureCanEditSeason`). */
+  static async ensureCanEditGroup(groupId: string, actor: GamePermissionActor) {
     const group = await prisma.leagueGroup.findUnique({
       where: { id: groupId },
     });
@@ -66,7 +79,7 @@ export class LeagueGroupManagementService {
       throw new ApiError(404, 'League group not found');
     }
 
-    await this.ensureLeagueAccess(group.leagueSeasonId);
+    await this.ensureCanEditSeason(group.leagueSeasonId, actor);
     return group;
   }
 
@@ -163,12 +176,12 @@ export class LeagueGroupManagementService {
     return this.buildPayload(leagueSeasonId);
   }
 
-  static async createGroup(leagueSeasonId: string, name: string) {
+  static async createGroup(leagueSeasonId: string, name: string, actor: GamePermissionActor) {
     if (!name.trim()) {
       throw new ApiError(400, 'Group name is required');
     }
 
-    await this.ensureLeagueAccess(leagueSeasonId);
+    await this.ensureCanEditSeason(leagueSeasonId, actor);
 
     const [lastGroup, existingGroupColors] = await Promise.all([
       prisma.leagueGroup.findFirst({
@@ -208,12 +221,12 @@ export class LeagueGroupManagementService {
     return this.buildPayload(leagueSeasonId);
   }
 
-  static async renameGroup(groupId: string, name: string) {
+  static async renameGroup(groupId: string, name: string, actor: GamePermissionActor) {
     if (!name.trim()) {
       throw new ApiError(400, 'Group name is required');
     }
 
-    const group = await this.ensureGroupAccess(groupId);
+    const group = await this.ensureCanEditGroup(groupId, actor);
 
     await prisma.leagueGroup.update({
       where: { id: groupId },
@@ -224,8 +237,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async deleteGroup(groupId: string) {
-    const group = await this.ensureGroupAccess(groupId);
+  static async deleteGroup(groupId: string, actor: GamePermissionActor) {
+    const group = await this.ensureCanEditGroup(groupId, actor);
 
     const withdrawnInGroup = await prisma.leagueParticipant.count({
       where: { currentGroupId: groupId, withdrawnAt: { not: null } },
@@ -271,8 +284,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async addParticipant(groupId: string, participantId: string) {
-    const group = await this.ensureGroupAccess(groupId);
+  static async addParticipant(groupId: string, participantId: string, actor: GamePermissionActor) {
+    const group = await this.ensureCanEditGroup(groupId, actor);
 
     const participant = await prisma.leagueParticipant.findUnique({
       where: { id: participantId },
@@ -300,8 +313,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async removeParticipant(groupId: string, participantId: string) {
-    const group = await this.ensureGroupAccess(groupId);
+  static async removeParticipant(groupId: string, participantId: string, actor: GamePermissionActor) {
+    const group = await this.ensureCanEditGroup(groupId, actor);
 
     const participant = await prisma.leagueParticipant.findFirst({
       where: { id: participantId, currentGroupId: groupId },
@@ -324,8 +337,8 @@ export class LeagueGroupManagementService {
     return this.buildPayload(group.leagueSeasonId);
   }
 
-  static async reorderGroups(leagueSeasonId: string, groupIds: string[]) {
-    await this.ensureLeagueAccess(leagueSeasonId);
+  static async reorderGroups(leagueSeasonId: string, groupIds: string[], actor: GamePermissionActor) {
+    await this.ensureCanEditSeason(leagueSeasonId, actor);
 
     const groups = await prisma.leagueGroup.findMany({
       where: { leagueSeasonId },

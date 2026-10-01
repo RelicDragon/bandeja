@@ -1,10 +1,24 @@
-import { Router } from 'express';
+import { NextFunction, Response, Router } from 'express';
 import { body, query } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate, canAccessGame, canEditGame } from '../middleware/auth';
+import { authenticate, canAccessGame, canEditGame, type AuthRequest } from '../middleware/auth';
 import * as leagueController from '../controllers/league.controller';
+import { LeagueGroupManagementService } from '../services/league/groups.service';
 
 const router = Router();
+
+/** `canEditGame` for `/groups/:groupId/*`: resolves the group's season, then season OWNER/ADMIN or platform admin. */
+const canEditLeagueGroup = async (req: AuthRequest, _res: Response, next: NextFunction) => {
+  try {
+    await LeagueGroupManagementService.ensureCanEditGroup(req.params.groupId, {
+      userId: req.userId!,
+      isAdmin: req.user?.isAdmin || false,
+    });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
 
 router.post(
   '/',
@@ -316,6 +330,7 @@ router.post(
 router.patch(
   '/groups/:groupId',
   authenticate,
+  canEditLeagueGroup,
   validate([body('name').notEmpty().withMessage('Group name is required')]),
   leagueController.renameLeagueGroup
 );
@@ -323,12 +338,14 @@ router.patch(
 router.delete(
   '/groups/:groupId',
   authenticate,
+  canEditLeagueGroup,
   leagueController.deleteLeagueGroup
 );
 
 router.post(
   '/groups/:groupId/participants',
   authenticate,
+  canEditLeagueGroup,
   validate([body('participantId').notEmpty().withMessage('Participant ID is required')]),
   leagueController.addParticipantToLeagueGroup
 );
@@ -336,6 +353,7 @@ router.post(
 router.delete(
   '/groups/:groupId/participants/:participantId',
   authenticate,
+  canEditLeagueGroup,
   leagueController.removeParticipantFromLeagueGroup
 );
 

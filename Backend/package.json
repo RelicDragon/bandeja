@@ -86,6 +86,7 @@
     "test:agent-cancel-game": "../scripts/run-heavy sh -c 'ts-node -r dotenv/config --transpile-only src/services/agent/__tests__/agentCancelGame.integration.test.ts'",
     "test:agent-slots": "../scripts/run-heavy sh -c 'ts-node -r dotenv/config --transpile-only src/services/agent/booking/slotEngine/__tests__/slotEngine.test.ts'",
     "test:agent-leagues": "../scripts/run-heavy sh -c 'ts-node -r dotenv/config --transpile-only src/services/agent/__tests__/agentLeagueTools.integration.test.ts'",
+    "test:league-permissions": "../scripts/run-heavy ts-node -r dotenv/config --transpile-only src/routes/__tests__/league.routes.permissions.http.integration.test.ts",
     "test:agent-roster": "../scripts/run-heavy sh -c 'ts-node -r dotenv/config --transpile-only src/services/agent/__tests__/agentRoster.integration.test.ts'",
     "test:agent-permissions": "../scripts/run-heavy sh -c 'ts-node -r dotenv/config --transpile-only src/services/agent/__tests__/agentToolPermission.integration.test.ts'",
     "test:agent-admin": "../scripts/run-heavy sh -c 'ts-node -r dotenv/config --transpile-only src/services/agent/tools/__tests__/agentAdminTools.integration.test.ts'",

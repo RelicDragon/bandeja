@@ -72,9 +72,9 @@ BE: `POST /games` → `GameCreateService.createGame`. `validateGameForSport`, `n
 
 ## `/create-league`
 
-Not a create-template. Fields: league name/description, city, club; season name + date range; sport, level range, max participants; format wizard (RR / bracket seeds — **playoff templates**, not `CREATE_TEMPLATES`); season avatar; gender teams, fixed teams, multi-court; `anyoneCanInvite`; participant setup tags; price.
+Not a create-template. Fields (`CreateLeague.tsx`): league name/description, city, club; season name; sport, level range, max participants; start date; season avatar (uploaded after create); the format (`season.gameSeason`: game type, scoring, sets/points, match generation — **playoff templates** for seeds, not `CREATE_TEMPLATES`). Fixed teams, price and other season settings are set later on the season page.
 
-`POST /leagues` (`league.routes.ts`): name, `cityId`, `season.startDate` required. `LeagueCreateService` creates `LEAGUE_SEASON` game + `League`/`LeagueSeason` rows. `canCreateLeague` on User.
+`POST /leagues` (`league.routes.ts`): name, `cityId`, `season.startDate` required. 403 unless `User.canCreateLeague` or platform admin (the app only offers League to `isAdmin || canCreateLeague`, `CreateMenuModal.tsx`). `LeagueCreateService` creates `LEAGUE_SEASON` game + `League`/`LeagueSeason` rows.
 
 ## `/create-event`
 

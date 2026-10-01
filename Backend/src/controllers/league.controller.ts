@@ -15,6 +15,12 @@ import { LeagueTeamWithdrawalService } from '../services/league/leagueTeamWithdr
 import { LeagueGroupChatService, queueLeagueGroupChatReconcile } from '../services/league/leagueGroupChat.service';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
+import type { GamePermissionActor } from '../services/game/gamePermission';
+
+const actorOf = (req: AuthRequest): GamePermissionActor => ({
+  userId: req.userId!,
+  isAdmin: req.user?.isAdmin || false,
+});
 
 export const createLeague = asyncHandler(async (req: AuthRequest, res: Response) => {
   const league = await LeagueCreateService.createLeague(req.body, req.userId!, req.user?.isAdmin || false);
@@ -285,7 +291,7 @@ export const createManualLeagueGroup = asyncHandler(async (req: AuthRequest, res
   const { leagueSeasonId } = req.params;
   const { name } = req.body;
 
-  const data = await LeagueGroupManagementService.createGroup(leagueSeasonId, name);
+  const data = await LeagueGroupManagementService.createGroup(leagueSeasonId, name, actorOf(req));
 
   res.status(201).json({
     success: true,
@@ -297,7 +303,7 @@ export const renameLeagueGroup = asyncHandler(async (req: AuthRequest, res: Resp
   const { groupId } = req.params;
   const { name } = req.body;
 
-  const data = await LeagueGroupManagementService.renameGroup(groupId, name);
+  const data = await LeagueGroupManagementService.renameGroup(groupId, name, actorOf(req));
 
   res.json({
     success: true,
@@ -308,7 +314,7 @@ export const renameLeagueGroup = asyncHandler(async (req: AuthRequest, res: Resp
 export const deleteLeagueGroup = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { groupId } = req.params;
 
-  const data = await LeagueGroupManagementService.deleteGroup(groupId);
+  const data = await LeagueGroupManagementService.deleteGroup(groupId, actorOf(req));
 
   res.json({
     success: true,
@@ -320,7 +326,7 @@ export const addParticipantToLeagueGroup = asyncHandler(async (req: AuthRequest,
   const { groupId } = req.params;
   const { participantId } = req.body;
 
-  const data = await LeagueGroupManagementService.addParticipant(groupId, participantId);
+  const data = await LeagueGroupManagementService.addParticipant(groupId, participantId, actorOf(req));
 
   res.json({
     success: true,
@@ -331,7 +337,7 @@ export const addParticipantToLeagueGroup = asyncHandler(async (req: AuthRequest,
 export const removeParticipantFromLeagueGroup = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { groupId, participantId } = req.params;
 
-  const data = await LeagueGroupManagementService.removeParticipant(groupId, participantId);
+  const data = await LeagueGroupManagementService.removeParticipant(groupId, participantId, actorOf(req));
 
   res.json({
     success: true,
@@ -343,7 +349,7 @@ export const reorderLeagueGroups = asyncHandler(async (req: AuthRequest, res: Re
   const { leagueSeasonId } = req.params;
   const { groupIds } = req.body;
 
-  const data = await LeagueGroupManagementService.reorderGroups(leagueSeasonId, groupIds);
+  const data = await LeagueGroupManagementService.reorderGroups(leagueSeasonId, groupIds, actorOf(req));
 
   res.json({
     success: true,

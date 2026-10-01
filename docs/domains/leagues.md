@@ -39,6 +39,20 @@ LEAGUE fixture details: link to parent season; no season tabs. Parent owner/admi
 
 `GameStatusScheduler` skips `LEAGUE_SEASON` rows. FINAL LEAGUE fixtures trigger parent standings recalc.
 
+### Write permissions
+
+Every league write needs season **OWNER/ADMIN** (incl. parent-game roles, `hasParentGamePermission`) or a platform admin (`User.isAdmin`); a plain season participant is not enough. Errors: 404 unknown season/group, 400 archived season, 403 role (`{ success: false, message }`).
+
+| Writes | Check |
+|--------|-------|
+| `POST /leagues` (create league + first season) | `User.canCreateLeague` or platform admin, else 403 (`LeagueCreateService.createLeague`). Same gate as the app's Create menu |
+| `/:leagueSeasonId/*` writes (rounds, playoff, bracket, groups create/manual/reorder, sync, recalculate, swap, withdraw) | `canEditGame` route middleware (`assertGamePermission`) |
+| `/groups/:groupId` rename / delete, `/groups/:groupId/participants` add / remove | `canEditLeagueGroup` route middleware → `LeagueGroupManagementService.ensureCanEditGroup` (group → season, then `assertGamePermission`). The service also checks on every write (`ensureCanEditSeason` / `ensureCanEditGroup`, also for create/reorder), so non-HTTP callers are covered |
+| `POST /rounds/:id/games`, `DELETE /rounds/:id` | In the service: season-game participant with role OWNER/ADMIN, or platform admin (`create.service.ts`) |
+| `POST /rounds/:id/send-start-message` | In the service: `hasParentGamePermission` OWNER/ADMIN or platform admin (`broadcast.service.ts`) |
+
+Test: `npm run test:league-permissions` (`Backend/src/routes/__tests__/league.routes.permissions.http.integration.test.ts`).
+
 ## Generation
 
 `Backend/src/services/league/` + `Backend/src/routes/league.routes.ts`. Editor: `canEditGame` on the season.
