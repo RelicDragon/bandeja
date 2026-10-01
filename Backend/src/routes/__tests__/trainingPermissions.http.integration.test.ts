@@ -2,11 +2,13 @@
  * Training permissions, proven over HTTP against a real database.
  *
  *   · POST /api/training/:id/finish — the game's trainer, owner/admin (incl. the
- *     parent game's), platform admin; ARCHIVED refused for everyone.
- *   · POST /api/training/:id/participant/:userId/level and /undo — the game's
- *     trainer, owner/admin (incl. parent), platform admin. A global
- *     `User.isTrainer` who is not in the game gets nothing.
- *   · POST /api/games with entityType TRAINING — `isTrainer` or platform admin;
+ *     parent game's), platform admin; ARCHIVED refused for everyone. The
+ *     rating-activity stamp only when the actor may manage ratings.
+ *   · POST /api/training/:id/participant/:userId/level and /undo — platform
+ *     admin, or an `isTrainer` who is the game's trainer or owner/admin (incl.
+ *     parent). A global trainer not in the game, and a non-trainer owner, get 403.
+ *   · POST /api/games with entityType TRAINING — anyone as a playing creator
+ *     (never becomes trainerId); `creatorNonPlaying` only for `isTrainer` / admin;
  *     a recurring TRAINING series keeps generating after its owner loses the flag.
  *   · POST /api/invites with asTrainer — the invitee must be `isTrainer`.
  *   · POST /api/games/:id/set-trainer — deliberately any roster member (documented).
@@ -83,7 +85,8 @@ async function main(): Promise<void> {
     const stranger = await makeUser('stranger');
     const randomTrainer = await makeUser('randomTrainer', { isTrainer: true });
     const platformAdmin = await makeUser('platformAdmin', { isAdmin: true });
-    const parentOwner = await makeUser('parentOwner');
+    const parentOwner = await makeUser('parentOwner', { isTrainer: true });
+    const plainOwner = await makeUser('plainOwner');
 
     const parent = await prisma.game.create({
       data: {
@@ -102,7 +105,9 @@ async function main(): Promise<void> {
     gameIds.push(parent.id);
 
     /** OWNER (PLAYING), trainer (ADMIN, NON_PLAYING, `trainerId`), one PLAYING student. */
-    const makeTraining = async (opts: { resultsStatus?: ResultsStatus; status?: GameStatus; withTrainer?: boolean } = {}) => {
+    const makeTraining = async (
+      opts: { resultsStatus?: ResultsStatus; status?: GameStatus; withTrainer?: boolean; ownerId?: string } = {},
+    ) => {
       const withTrainer = opts.withTrainer ?? true;
       const game = await prisma.game.create({
         data: {
@@ -124,7 +129,7 @@ async function main(): Promise<void> {
       gameIds.push(game.id);
       await prisma.gameParticipant.createMany({
         data: [
-          { gameId: game.id, userId: owner, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING },
+          { gameId: game.id, userId: opts.ownerId ?? owner, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING },
           { gameId: game.id, userId: student, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.PLAYING },
           ...(withTrainer
             ? [{ gameId: game.id, userId: trainer, role: ParticipantRole.ADMIN, status: ParticipantStatus.NON_PLAYING }]
@@ -172,6 +177,24 @@ async function main(): Promise<void> {
       const archived = await prisma.game.findUniqueOrThrow({ where: { id: archivedId }, select: { resultsStatus: true } });
       assert.equal(archived.resultsStatus, ResultsStatus.NONE, 'archived training untouched');
 
+      // The rating-activity stamp is a rating effect: only for actors who may manage ratings.
+      const activityOf = async () =>
+        (
+          await prisma.userSportProfile.findUnique({
+            where: { userId_sport: { userId: student, sport: Sport.PADEL } },
+            select: { lastRatingActivityAt: true },
+          })
+        )?.lastRatingActivityAt ?? null;
+      await prisma.userSportProfile.deleteMany({ where: { userId: student } });
+      const plainId = await makeTraining({ ownerId: plainOwner, withTrainer: false });
+      const plainFinish = await call('POST', plainOwner, `/training/${plainId}/finish`);
+      assert.equal(plainFinish.status, 200, `finish: non-trainer owner → 200 (${plainFinish.text})`);
+      assert.equal(await activityOf(), null, 'finish by a non-trainer owner stamps no rating activity');
+      const coachedId = await makeTraining();
+      const coachedFinish = await call('POST', trainer, `/training/${coachedId}/finish`);
+      assert.equal(coachedFinish.status, 200);
+      assert.ok(await activityOf(), 'finish by the trainer stamps rating activity');
+
       // `resultsByAnyone` lets a PLAYING participant finish — same as the button.
       const anyoneId = await makeTraining();
       await prisma.game.update({ where: { id: anyoneId }, data: { resultsByAnyone: true } });
@@ -197,6 +220,18 @@ async function main(): Promise<void> {
         assert.equal(await prisma.gameOutcome.count({ where: { gameId } }), 0, `level: ${label} wrote no outcome`);
         assert.deepEqual(await profileOf(), before, `level: ${label} left the profile alone`);
       }
+      // A non-trainer owner (trainee rematch) cannot edit or confirm levels.
+      const plainId = await makeTraining({ ownerId: plainOwner, resultsStatus: ResultsStatus.FINAL, status: GameStatus.FINISHED, withTrainer: false });
+      const plainLevel = await call('POST', plainOwner, `/training/${plainId}/participant/${student}/level`, { level: 6.5, reliability: 90 });
+      assert.equal(plainLevel.status, 403, `level: non-trainer owner → 403 (${plainLevel.text})`);
+      assert.equal(await prisma.gameOutcome.count({ where: { gameId: plainId } }), 0, 'level: non-trainer owner wrote no outcome');
+      assert.deepEqual(await profileOf(), before, 'level: non-trainer owner left the profile alone');
+      // The game's trainer who lost the global flag is refused as well.
+      await prisma.user.update({ where: { id: trainer }, data: { isTrainer: false } });
+      const unflagged = await call('POST', trainer, `/training/${gameId}/participant/${student}/level`, { level: 6.5, reliability: 90 });
+      assert.equal(unflagged.status, 403, `level: game trainer without isTrainer → 403 (${unflagged.text})`);
+      await prisma.user.update({ where: { id: trainer }, data: { isTrainer: true } });
+
       for (const [label, userId, level] of [
         ['trainer', trainer, 3.5],
         ['owner', owner, 3.6],
@@ -213,6 +248,16 @@ async function main(): Promise<void> {
       const outcomesBefore = await prisma.gameOutcome.count({ where: { gameId } });
       assert.equal(outcomesBefore, 1);
       const levelBeforeUndo = (await profileOf())?.level;
+      await prisma.gameOutcome.create({
+        data: {
+          gameId: plainId, userId: student, levelBefore: 3, levelAfter: 3.5, levelChange: 0.5,
+          reliabilityBefore: 10, reliabilityAfter: 10, reliabilityChange: 0, pointsEarned: 0, isWinner: false,
+        },
+      });
+      const plainUndo = await call('POST', plainOwner, `/training/${plainId}/undo`);
+      assert.equal(plainUndo.status, 403, `undo: non-trainer owner → 403 (${plainUndo.text})`);
+      assert.equal(await prisma.gameOutcome.count({ where: { gameId: plainId } }), 1, 'undo: non-trainer owner kept outcomes');
+
       for (const [label, userId] of outsiders) {
         const res = await call('POST', userId, `/training/${gameId}/undo`);
         assert.equal(res.status, 403, `undo: ${label} → 403 (${res.text})`);
@@ -248,26 +293,38 @@ async function main(): Promise<void> {
         participants: [],
         name: `Perm training ${suffix}`,
       };
+      const created = async (res: { status: number; text: string }) => {
+        const id = (JSON.parse(res.text) as { data?: { id?: string } }).data?.id;
+        assert.ok(id, `created game id in ${res.text.slice(0, 200)}`);
+        gameIds.push(id);
+        return prisma.game.findUniqueOrThrow({
+          where: { id },
+          select: { entityType: true, trainerId: true, participants: { select: { userId: true, role: true, status: true } } },
+        });
+      };
       const countTrainings = () => prisma.game.count({ where: { cityId: city.id, entityType: EntityType.TRAINING, name: body.name } });
+
+      // A non-trainer creates as a playing creator (trainee rematch) and does not become the trainer.
+      const asPlayer = await call('POST', stranger, '/games', { ...body, participants: [stranger] });
+      assert.equal(asPlayer.status, 201, `create TRAINING: non-trainer as player → 201 (${asPlayer.text})`);
+      const playerGame = await created(asPlayer);
+      assert.equal(playerGame.entityType, EntityType.TRAINING);
+      assert.equal(playerGame.trainerId, null, 'a non-trainer creator never becomes trainerId');
+      assert.ok(playerGame.participants.some((p) => p.userId === stranger && p.role === ParticipantRole.OWNER && p.status === ParticipantStatus.PLAYING));
+
+      // "I coach, I don't play" would make a non-trainer the trainer: refused.
       const baseline = await countTrainings();
-      for (const [label, userId] of [['stranger', stranger], ['plain participant', student]] as const) {
-        const res = await call('POST', userId, '/games', body);
-        assert.equal(res.status, 403, `create TRAINING: ${label} → 403 (${res.text})`);
-        assert.match(res.text, /Only trainers can create trainings/);
-        assert.equal(await countTrainings(), baseline, `create TRAINING: ${label} created nothing`);
-      }
-      // creatorNonPlaying would have made a non-trainer the game's trainer; still refused.
-      const nonPlaying = await call('POST', stranger, '/games', { ...body, creatorNonPlaying: true });
-      assert.equal(nonPlaying.status, 403, 'create TRAINING: non-trainer "I coach" → 403');
-      assert.equal(await countTrainings(), baseline);
+      const nonPlaying = await call('POST', student, '/games', { ...body, creatorNonPlaying: true });
+      assert.equal(nonPlaying.status, 403, `create TRAINING: non-trainer creatorNonPlaying → 403 (${nonPlaying.text})`);
+      assert.match(nonPlaying.text, /Only trainers can coach a training without playing/);
+      assert.equal(await countTrainings(), baseline, 'create TRAINING: refused create wrote nothing');
 
       for (const [label, userId] of [['trainer', randomTrainer], ['platform admin', platformAdmin]] as const) {
-        const res = await call('POST', userId, '/games', body);
-        assert.ok(res.status === 200 || res.status === 201, `create TRAINING: ${label} → 2xx (${res.status} ${res.text})`);
+        const res = await call('POST', userId, '/games', { ...body, creatorNonPlaying: true });
+        assert.equal(res.status, 201, `create TRAINING: ${label} creatorNonPlaying → 201 (${res.text})`);
+        const game = await created(res);
+        assert.equal(game.trainerId, userId, `create TRAINING: ${label} coaches it`);
       }
-      const created = await prisma.game.findMany({ where: { cityId: city.id, entityType: EntityType.TRAINING, name: body.name }, select: { id: true } });
-      gameIds.push(...created.map((g) => g.id));
-      assert.equal(created.length, baseline + 2);
       console.log('create TRAINING gate: ok');
     }
 

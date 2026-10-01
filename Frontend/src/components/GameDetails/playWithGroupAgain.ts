@@ -31,32 +31,18 @@ export interface RematchNavigationState {
   rematchOf: RematchSource;
 }
 
-/** The signed-in viewer, as far as the rematch rules care. */
-export interface RematchViewer {
-  id: string;
-  isTrainer?: boolean;
-  isAdmin?: boolean;
-}
-
 /**
  * Who sees the button: results are FINAL, the entity type can be rematched,
  * and the viewer either played (PLAYING) or was the trainer of a TRAINING. A
  * trainer is NON_PLAYING by construction, so the plain "was playing" rule would
  * hide the one action a coach wants after a session.
- *
- * A TRAINING rematch creates a TRAINING, which the server allows only for
- * `isTrainer` or platform admins (same rule as the create menu), so the button
- * is hidden from anyone else.
  */
-export function canPlayWithGroupAgain(game: Game, viewer: RematchViewer | null | undefined): boolean {
-  if (!viewer?.id) return false;
+export function canPlayWithGroupAgain(game: Game, viewerId: string | undefined): boolean {
+  if (!viewerId) return false;
   if (game.resultsStatus !== 'FINAL') return false;
   if (!getEntityCapabilities(game.entityType).canRematch) return false;
-  if (game.entityType === 'TRAINING') {
-    if (!viewer.isTrainer && !viewer.isAdmin) return false;
-    if (game.trainerId === viewer.id) return true;
-  }
-  return getGameParticipationState(game.participants ?? [], viewer.id, game).isPlaying;
+  if (game.entityType === 'TRAINING' && game.trainerId === viewerId) return true;
+  return getGameParticipationState(game.participants ?? [], viewerId, game).isPlaying;
 }
 
 export function buildRematchNavigationState(

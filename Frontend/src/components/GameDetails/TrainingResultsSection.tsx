@@ -7,6 +7,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { Game, User, GameOutcome, TrainerReview } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { EditLevelModal } from './EditLevelModal';
+import { canManageTrainingRatings } from './trainingRatingPermission';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { userStatsQueryOptions } from '@/queries/useUserStatsQuery';
@@ -53,8 +54,7 @@ export const TrainingResultsSection = ({
   const isReviewEdited = (r: TrainerReview) =>
     r.updatedAt && new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime() > 2000;
 
-  const isTrainerOrOwner = game.participants?.some(p => p.userId === user?.id && (game.trainerId === p.userId || p.role === 'OWNER'));
-  const canEdit = user && (isTrainerOrOwner || user.isAdmin) && !isGameArchived(game);
+  const canEdit = canManageTrainingRatings(game, user) && !isGameArchived(game);
   const hasChanges = game.outcomes && game.outcomes.length > 0;
   const canUndo = hasChanges && !isGameArchived(game) && game.resultsStatus === 'FINAL';
 

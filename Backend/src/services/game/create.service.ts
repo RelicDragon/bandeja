@@ -130,27 +130,29 @@ async function resolveCreateCourts(
 export interface GameCreateOptions {
   deferDiscoveryAnnouncement?: (announce: () => void) => void;
   /**
-   * Recurring-series generation only: the TRAINING create gate was applied when
-   * the series' seed game was created, so occurrences keep generating even if
-   * the owner later loses `User.isTrainer`. Never set from an HTTP body.
+   * Recurring-series generation only: an owner-trainer series sets
+   * `creatorNonPlaying`; the gate ran when the seed game was created, so
+   * occurrences keep generating even if the owner later loses
+   * `User.isTrainer`. Never set from an HTTP body.
    */
   seriesOccurrence?: boolean;
 }
 
 /**
- * TRAINING is created only by trainers (`User.isTrainer`) or platform admins —
- * the same rule as the create menu (`CreateMenuModal`) and the agent
- * (`assertMayCreate`). Duplicate / rematch go through `POST /games` and so
- * through this gate too.
+ * TRAINING create rule. Anyone may create a TRAINING as a playing creator (the
+ * trainee "Play with this group again" flow, shipped in store builds); they do
+ * not become `Game.trainerId`, so they get no level-edit power. "I coach, I
+ * don't play" (`creatorNonPlaying`, which makes the creator the trainer) is
+ * reserved for `User.isTrainer` and platform admins.
  */
-async function assertMayCreateTraining(userId: string, jwtIsAdmin: boolean): Promise<void> {
-  if (jwtIsAdmin) return;
+async function assertMayCreateTraining(userId: string, jwtIsAdmin: boolean, creatorNonPlaying: boolean): Promise<void> {
+  if (jwtIsAdmin || !creatorNonPlaying) return;
   const actor = await prisma.user.findUnique({
     where: { id: userId },
     select: { isTrainer: true, isAdmin: true },
   });
   if (!actor?.isTrainer && !actor?.isAdmin) {
-    throw new ApiError(403, 'Only trainers can create trainings');
+    throw new ApiError(403, 'Only trainers can coach a training without playing');
   }
 }
 
@@ -237,7 +239,7 @@ export class GameCreateService {
     const isEventEntity = entityType === EntityType.EVENT;
     const entityCaps = getEntityCapabilities(entityType);
     if (entityType === EntityType.TRAINING && !options.seriesOccurrence) {
-      await assertMayCreateTraining(userId, jwtIsAdmin);
+      await assertMayCreateTraining(userId, jwtIsAdmin, data.creatorNonPlaying === true);
     }
     if (isEventEntity) {
       assertEventCreatePayload(data);

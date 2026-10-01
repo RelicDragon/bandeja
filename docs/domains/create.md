@@ -18,7 +18,7 @@ Entity chips: GAME / BAR / TRAINING / TOURNAMENT. TRAINING invite picker is trai
 
 Who may create what (server-side, `GameCreateService.createGame`):
 
-- **TRAINING**: only `User.isTrainer` or platform admins (`403 Only trainers can create trainings`). Same rule as the create menu (`CreateMenuModal`) and the agent (`assertMayCreate`). Duplicate and rematch ("Play with this group again") go through `POST /games`, so they are hidden in the UI for anyone else. Recurring-series occurrences skip the gate (`seriesOccurrence`), see [training.md](./training.md).
+- **TRAINING**: anyone may create one as a **playing** creator — that is what a trainee's "Play with this group again" / Duplicate sends, and shipped store builds rely on it. Such a creator does not become `Game.trainerId`. "I coach, I don't play" (`creatorNonPlaying`, makes the creator the trainer) is `User.isTrainer` / platform admin only (403 otherwise). The create menu (`CreateMenuModal`) and the agent (`assertMayCreate`) still offer TRAINING only to trainers/admins. The security boundary is level edits, see [training.md](./training.md). Recurring-series occurrences skip the check (`seriesOccurrence`).
 - **TOURNAMENT**: open to everyone. `User.canCreateTournament` is **not** a create permission — it only raises the participant cap: 12 for everyone else; with the flag (or platform admin) the picker offers up to 32 (`maxSlotsForUserTournament`) and the server lifts the cap (`maxParticipantsLimitForActor` in `Backend/src/utils/game/userMaxParticipantsCap.ts`).
 
 ### Format wizard

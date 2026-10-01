@@ -1992,10 +1992,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           })() : null}
 
           {/* PRD 362 — Duplicate is for unplayed games only; once results are FINAL,
-              "Play with this group again" in the results area replaces it.
-              TRAINING: only trainers / platform admins may create one (server-enforced). */}
-          {user && canEdit && !isLeague && game.resultsStatus === 'NONE' &&
-          (game.entityType !== 'TRAINING' || user.isTrainer || user.isAdmin) ? (
+              "Play with this group again" in the results area replaces it. */}
+          {user && canEdit && !isLeague && game.resultsStatus === 'NONE' ? (
             <div key="duplicate-game" className="contents">
             <GameActionCard
               icon={Copy}

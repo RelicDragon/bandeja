@@ -4,8 +4,7 @@
  * PRD 362 — "Play with this group again".
  *
  * What must hold: the button exists for a PLAYING participant of a FINAL GAME,
- * TOURNAMENT, TRAINING or BAR and for the trainer of a FINAL TRAINING (TRAINING
- * only when the viewer may create one: `isTrainer` or platform admin); it does
+ * TOURNAMENT, TRAINING or BAR and for the trainer of a FINAL TRAINING; it does
  * not exist for EVENT / LEAGUE / LEAGUE_SEASON, for spectators, or before
  * results are FINAL; and tapping it opens `/create-game` with a draft that has
  * no schedule, no court, no booking, and the previous roster as *invitees*
@@ -21,10 +20,7 @@ import type { Game, GameParticipant } from '@/types';
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 const navigate = vi.fn();
-let viewer: { id: string; nameIsSet: boolean; isTrainer?: boolean; isAdmin?: boolean } | null = {
-  id: 'me',
-  nameIsSet: true,
-};
+let viewer: { id: string; nameIsSet: boolean } | null = { id: 'me', nameIsSet: true };
 const runWithProfileName = vi.fn((action: () => void) => action());
 
 vi.mock('react-router-dom', () => ({
@@ -121,7 +117,6 @@ describe('PlayWithGroupAgainButton', () => {
   it.each(['GAME', 'TOURNAMENT', 'TRAINING', 'BAR'] as const)(
     'renders the new label for a PLAYING participant of a FINAL %s',
     (entityType) => {
-      viewer = { id: 'me', nameIsSet: true, isTrainer: true };
       const button = render(makeGame({ entityType }));
       expect(button).not.toBeNull();
       expect(button!.textContent).toContain('gameResults.playWithGroupAgainCta');
@@ -190,7 +185,7 @@ describe('PlayWithGroupAgainButton', () => {
   });
 
   it('TRAINING: the trainer gets the button and opens a non-playing draft without inviting themself', () => {
-    viewer = { id: 'coach', nameIsSet: true, isTrainer: true };
+    viewer = { id: 'coach', nameIsSet: true };
     const button = render(
       makeGame({
         entityType: 'TRAINING',
@@ -210,24 +205,8 @@ describe('PlayWithGroupAgainButton', () => {
     expect(options.state.invitedTrainerId).toBeNull();
   });
 
-  it('TRAINING: hidden from a trainee who is neither a trainer nor a platform admin', () => {
+  it('TRAINING: a trainee re-invites the trainer as trainer', () => {
     viewer = { id: 'ana', nameIsSet: true };
-    const game = makeGame({
-      entityType: 'TRAINING',
-      trainerId: 'coach',
-      participants: [
-        participant('coach', 'NON_PLAYING', 'OWNER'),
-        participant('ana', 'PLAYING'),
-        participant('marko', 'PLAYING'),
-      ],
-    });
-    expect(render(game)).toBeNull();
-    viewer = { id: 'ana', nameIsSet: true, isAdmin: true };
-    expect(render(game)).not.toBeNull();
-  });
-
-  it('TRAINING: a trainee who is a trainer re-invites the trainer as trainer', () => {
-    viewer = { id: 'ana', nameIsSet: true, isTrainer: true };
     const button = render(
       makeGame({
         entityType: 'TRAINING',
