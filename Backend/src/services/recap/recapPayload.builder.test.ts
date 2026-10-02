@@ -227,4 +227,18 @@ assert.deepEqual(
   'the game outcomes are the fallback when the event log is empty',
 );
 
+const withSportlessEvent = build({
+  games: [game({ id: 's1', dayOfMonth: 3, won: true })],
+  levelEvents: [
+    { sport: Sport.PADEL, levelBefore: 3.9, levelAfter: 4.0, createdAt: day(3) },
+    // A social-level event: no sport, different scale. Must not touch the sport line.
+    { sport: null, levelBefore: 1.2, levelAfter: 1.35, createdAt: day(4) },
+  ],
+});
+assert.deepEqual(
+  withSportlessEvent.sports[0].level,
+  { before: 3.9, after: 4, delta: 0.1, points: [3.9, 4] },
+  'events without a sport never feed a sport level journey',
+);
+
 console.log('✅ recapPayload.builder tests passed');

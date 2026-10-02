@@ -1,8 +1,13 @@
-import { EntityType, MatchSetRole, Prisma, Sport } from '@prisma/client';
+import { EntityType, LevelChangeEventType, MatchSetRole, Prisma, Sport } from '@prisma/client';
 import prisma from '../../config/database';
 import { resolveSport } from '../../sport/sportRegistry';
 import { isRelationshipInsightMatch } from '../user/userPerformanceInsights.service';
-import type { RecapBuildInput, RecapGameInput, RecapPartnerAppearance } from './recapPayload.builder';
+import type {
+  RecapBuildInput,
+  RecapGameInput,
+  RecapLevelEventInput,
+  RecapPartnerAppearance,
+} from './recapPayload.builder';
 import { monthKeyRange, recapLowActivityLookbackStart } from './recapMonth';
 import type { RecapUserPage } from './monthlyRecapPass';
 
@@ -194,7 +199,7 @@ export async function loadRecapBuildInput(
 ): Promise<RecapBuildInput> {
   const { start, end } = monthKeyRange(monthKey);
 
-  const [outcomes, levelEvents] = await Promise.all([
+  const [outcomes, levelEventRows] = await Promise.all([
     prisma.gameOutcome.findMany({
       where: { userId: owner.id, ...RECAP_OUTCOME_WHERE(start, end) },
       select: {
@@ -243,12 +248,32 @@ export async function loadRecapBuildInput(
       },
       orderBy: { createdAt: 'asc' },
     }),
+    // Sport-level history only: social-level events (sport null) live on a
+    // different scale and must never feed the level slide. Mirrors the
+    // profile's per-sport history filter (levelChange/projection.service).
     prisma.levelChangeEvent.findMany({
-      where: { userId: owner.id, createdAt: { gte: start, lt: end } },
-      select: { sport: true, levelBefore: true, levelAfter: true, createdAt: true },
+      where: {
+        userId: owner.id,
+        createdAt: { gte: start, lt: end },
+        eventType: { notIn: [LevelChangeEventType.SOCIAL_BAR, LevelChangeEventType.SOCIAL_PARTICIPANT] },
+      },
+      select: {
+        sport: true,
+        levelBefore: true,
+        levelAfter: true,
+        createdAt: true,
+        game: { select: { sport: true } },
+      },
       orderBy: { createdAt: 'asc' },
     }),
   ]);
+
+  const levelEvents: RecapLevelEventInput[] = levelEventRows.map((event) => ({
+    sport: event.sport ?? event.game?.sport ?? null,
+    levelBefore: event.levelBefore,
+    levelAfter: event.levelAfter,
+    createdAt: event.createdAt,
+  }));
 
   const games: RecapGameInput[] = outcomes.flatMap((outcome) => {
     const finishedAt = outcome.game.finishedDate;

@@ -188,7 +188,7 @@ function buildSportGroup(
     partners.push(...game.partners);
   }
 
-  const sportEvents = levelEvents.filter((event) => event.sport == null || event.sport === sport);
+  const sportEvents = levelEvents.filter((event) => event.sport === sport);
 
   return {
     sport,
