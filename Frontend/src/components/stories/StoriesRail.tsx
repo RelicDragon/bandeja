@@ -21,6 +21,7 @@ import type { StoryMediaFile } from './create/types/storyEditor.types';
 import type { StoryMediaFile as PhotoMediaFile } from './create/photo/types';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { useRecapRail } from '@/features/recap/useRecapRail';
+import { useStoryDeepLink } from '@/features/stories/useStoryDeepLink';
 import { RecapRailBubble } from '@/components/recap/RecapRailBubble';
 import { RecapStoryViewer } from '@/components/recap/RecapStoryViewer';
 
@@ -91,6 +92,17 @@ export const StoriesRail = memo(function StoriesRail() {
     setViewerSessionId((id) => id + 1);
     setViewerOpen(true);
   }, []);
+
+  // A story like/comment push lands on `/?story=<ownerId>&storySegment=<key>`.
+  const storyDeepLink = useStoryDeepLink();
+  const consumeStoryDeepLink = storyDeepLink.consume;
+  useEffect(() => {
+    const target = storyDeepLink.target;
+    if (!target || !feed) return;
+    const idx = viewerBubbles.findIndex((b) => b.user.id === target.ownerUserId);
+    if (idx >= 0) openViewerAt(idx, target.segmentKey);
+    consumeStoryDeepLink();
+  }, [storyDeepLink.target, feed, viewerBubbles, openViewerAt, consumeStoryDeepLink]);
 
   const handleCreateClick = useCallback(() => {
     if (offline) return;
