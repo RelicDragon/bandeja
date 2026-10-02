@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Every push the backend can send must land somewhere when tapped. A type with
@@ -95,6 +95,11 @@ function navCallCount(): number {
 }
 
 describe('push tap routing', () => {
+  // Cold import of the service graph takes seconds on CI; keep it out of the first case's 5s budget.
+  beforeAll(async () => {
+    await import('./pushNotificationService');
+  }, 60_000);
+
   beforeEach(() => {
     vi.clearAllMocks();
     nav.isReady.mockReturnValue(true);
