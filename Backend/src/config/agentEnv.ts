@@ -42,7 +42,7 @@ export function resolveAgentEnvConfig(env: NodeJS.ProcessEnv): AgentEnvConfig {
   return {
     model: (env.AGENT_MODEL || '').trim() || AGENT_DEFAULT_MODEL,
     baseUrl: ((env.AGENT_BASE_URL || '').trim() || AGENT_DEFAULT_BASE_URL).replace(/\/$/, ''),
-    dailyTokenBudget: intInRange(env.AGENT_DAILY_TOKEN_BUDGET, 300_000, 0, 100_000_000),
+    dailyTokenBudget: intInRange(env.AGENT_DAILY_TOKEN_BUDGET, 1_500_000, 0, 100_000_000),
     rateLimitMax: intInRange(env.AGENT_RATE_LIMIT_MAX, 30, 1, 10_000),
     rateLimitWindowMs: intInRange(env.AGENT_RATE_LIMIT_WINDOW_MS, 10 * 60 * 1000, 1000, 24 * 60 * 60 * 1000),
     maxSteps: intInRange(env.AGENT_MAX_STEPS, 8, 1, 20),

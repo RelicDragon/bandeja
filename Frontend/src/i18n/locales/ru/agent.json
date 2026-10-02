@@ -2,6 +2,7 @@
   "agent": {
     "tab": "ИИ",
     "listTitle": "ИИ-ассистент",
+    "recent": "Недавние",
     "newChat": "Новый чат",
     "noMessagesYet": "Сообщений пока нет",
     "archived": "Чат в архиве",

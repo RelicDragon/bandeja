@@ -296,6 +296,9 @@ export function useResultsArtifactsTelegram({
         t('gameResults.prepareTextFailed') ||
         'Failed to prepare text';
       toast.error(errorMessage);
+      // AI text is optional: let the user write their own instead of blocking the send.
+      setTelegramSummary('');
+      setIsTelegramSummaryModalOpen(true);
     } finally {
       setIsSendingToTelegram(false);
     }

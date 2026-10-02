@@ -2,6 +2,7 @@
   "agent": {
     "tab": "AI",
     "listTitle": "AI asistent",
+    "recent": "Nedávné",
     "newChat": "Nový chat",
     "noMessagesYet": "Zatím žádné zprávy",
     "archived": "Chat archivován",

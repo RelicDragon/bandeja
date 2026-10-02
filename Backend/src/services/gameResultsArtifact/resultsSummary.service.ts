@@ -15,7 +15,7 @@ const languageNames: Record<string, string> = {
 export async function generateResultsSummary(
   game: any,
   language: string,
-  options?: { reason?: LlmReason; initiatedByUserId?: string }
+  options?: { reason?: LlmReason; initiatedByUserId?: string; timeoutMs?: number }
 ): Promise<string> {
   const ai = getAiService();
   if (!ai.isConfigured()) {
@@ -40,6 +40,7 @@ export async function generateResultsSummary(
       max_tokens: 3000,
       reason,
       userId: options?.initiatedByUserId,
+      timeoutMs: options?.timeoutMs,
     });
   } catch (error: unknown) {
     console.error('AI summary generation error:', error);

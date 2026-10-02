@@ -12,7 +12,7 @@ Status: backend phases 1 (reads), 3 (writes with confirmation, localized labels,
 - Loop: ≤ `AGENT_MAX_STEPS` (8) LLM steps; the last step gets no tools, so the model must answer in text. Wall clock `AGENT_RUN_TIMEOUT_MS` (60s) from the claim → `run.failed {code:'TIMEOUT'}`. Cancel → `run.cancelled`; streamed-but-unsaved text is saved as a partial ASSISTANT message.
 - Persistence per step: ASSISTANT message (text + `tool_call` blocks), then TOOL message (`tool_result` blocks, joined by `callId`). Every saved message is also emitted as `message.saved`, so the client swaps live text for the stored message. Raw model messages (tool call ids/args, tool JSON) live in the private `AgentMessage.llmMessages` column and are replayed to the model on the next turn; broken pairs (cancelled mid-step) are dropped.
 - History: the last 30 user turns verbatim; older turns become one "earlier turns" block: the chat's rolling summary for the turns it covers plus the plain-truncation fold for the rest (Phase 11.4, see [Memory](#memory-phase-11-agentmemoryservicets-toolsmemorytoolsts) → Rolling chat summary).
-- Reply language: `X-App-Locale` header → `User.language` → English.
+- Reply language: the language of the user's latest message (`agentLanguageRule`, stated at the top and end of the prompt); the app language (`X-App-Locale` header → `User.language` → English) is only the fallback for messages with no language of their own.
 - Usage: summed per run on `AgentRun` and logged per step to `LlmUsageLog` with reason `agent_chat`.
 
 ## Queue (`agentRun.service.ts`, `agentRunQueue.service.ts`)
@@ -380,7 +380,7 @@ Errors are `ApiError` JSON with `code`: 429 `RATE_LIMITED` (message rate or too 
 |-----|---------|---|
 | `AGENT_MODEL` | `deepseek-flash` | streaming tool calls verified with thinking disabled |
 | `AGENT_BASE_URL` | `https://api.deepseek.com` | uses `DEEPSEEK_API_KEY` |
-| `AGENT_DAILY_TOKEN_BUDGET` | 300000 | input+output per user per UTC day (`AgentRun` sums + web tool charges) |
+| `AGENT_DAILY_TOKEN_BUDGET` | 1500000 | input+output per user per UTC day (`AgentRun` sums + web tool charges) |
 | `AGENT_RATE_LIMIT_MAX` / `AGENT_RATE_LIMIT_WINDOW_MS` | 30 / 600000 | messages per user |
 | `AGENT_MAX_STEPS` / `AGENT_RUN_TIMEOUT_MS` | 8 / 60000 | |
 | `AGENT_MAX_CONCURRENT_RUNS` | 4 | executing per process |

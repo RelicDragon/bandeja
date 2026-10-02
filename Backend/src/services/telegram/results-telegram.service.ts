@@ -37,6 +37,9 @@ export class ResultsTelegramService {
     return generateResultsSummary(game, language, {
       reason: LLM_REASON.TELEGRAM_RESULTS,
       initiatedByUserId,
+      // Interactive path: the app gives up at 20s. The budget is split between
+      // DeepSeek and the OpenAI fallback, and still fails with a clean 503 in time.
+      timeoutMs: 18000,
     });
   }
 

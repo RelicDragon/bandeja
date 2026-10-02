@@ -2,6 +2,7 @@
   "agent": {
     "tab": "AI",
     "listTitle": "AI 助手",
+    "recent": "最近",
     "newChat": "新对话",
     "noMessagesYet": "暂无消息",
     "archived": "对话已归档",

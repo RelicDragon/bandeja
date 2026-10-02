@@ -2,6 +2,7 @@
   "agent": {
     "tab": "AI",
     "listTitle": "AI assistant",
+    "recent": "Recent",
     "newChat": "New chat",
     "noMessagesYet": "No messages yet",
     "archived": "Chat archived",

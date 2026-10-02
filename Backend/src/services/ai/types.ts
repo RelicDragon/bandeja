@@ -14,6 +14,8 @@ export interface CreateCompletionOptions {
   max_tokens?: number;
   reason?: LlmReason | string;
   userId?: string;
+  /** Hard deadline for the whole call (including any fallback); disables SDK retries. */
+  timeoutMs?: number;
 }
 
 export interface IAiService {

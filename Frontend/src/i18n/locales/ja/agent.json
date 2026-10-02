@@ -2,6 +2,7 @@
   "agent": {
     "tab": "AI",
     "listTitle": "AIアシスタント",
+    "recent": "最近",
     "newChat": "新しいチャット",
     "noMessagesYet": "まだメッセージはありません",
     "archived": "チャットをアーカイブしました",

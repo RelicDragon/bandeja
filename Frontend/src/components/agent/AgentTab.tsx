@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
 import { useDesktop } from '@/hooks/useDesktop';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel } from '@/components/SplitViewPanels';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { AgentChatList } from './AgentChatList';
+import { AgentGlyph } from './AgentGlyph';
 import { AgentChatView } from './AgentChatView';
 import { AgentPermissionsScreen } from './AgentPermissionsScreen';
 import { AGENT_INITIAL_PROMPT_STATE_KEY } from './agentExamplePrompts';
@@ -63,7 +63,7 @@ export function AgentTab({ selectedChatId = null }: { selectedChatId?: string | 
               <AgentChatView key={selectedChatId} chatId={selectedChatId} embedded />
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
-                <Sparkles size={64} className="opacity-30" aria-hidden />
+                <AgentGlyph size={64} strokeWidth={1.25} className="opacity-30" />
                 <p className="text-lg font-medium">{t('agent.selectChat')}</p>
               </div>
             )}

@@ -122,6 +122,15 @@ export function buildAgentModelRules(tools: ReadonlyArray<Pick<AgentToolDefiniti
 }
 
 /**
+ * Reply-language rule, stated at the top and repeated as the prompt's last line. The
+ * language of the user's message wins over the app language: everything else the model
+ * sees (this prompt, tool results, labels) is English, and a weak "unless" lost to it.
+ */
+export function agentLanguageRule(appLanguageName: string): string {
+  return `Language: always reply in the language of the user's latest message, written naturally, the way a native speaker would say it (not a word-for-word translation). The app language (${appLanguageName}) is only the fallback when that message has no language of its own (just an id, a number, an emoji or an app token). This prompt, tool results and labels being in English never decides your reply language. If the user asks for a language (e.g. "in Russian"), use it from then on.`;
+}
+
+/**
  * Builds the system prompt from the DB-loaded principal. With the memory switch ON, a
  * "What you remember about this user" index (`agentMemory.service.ts`) sits between the
  * snapshot and the rules, framed as quoted data; it never changes the rules or the tools.
@@ -203,8 +212,10 @@ export async function buildAgentRunContext(params: {
 
   const city = user?.currentCity;
   const languageName = LANGUAGE_NAMES[locale] ?? locale;
+  const languageRule = agentLanguageRule(languageName);
   const systemPrompt = [
     'You are the Bandeja assistant inside the Bandeja app (padel and other racket sports: games, tournaments, leagues, trainings, clubs). You help the signed-in user with their games and leagues using the tools provided.',
+    languageRule,
     '',
     'Snapshot (server data, current as of this turn):',
     `- User: ${user?.firstName?.trim() || 'Player'}; sports: ${sports}${roles.length ? `; ${roles.join(', ')}` : ''}`,
@@ -218,7 +229,7 @@ export async function buildAgentRunContext(params: {
     ...(memorySection ? [memorySection, ''] : []),
     buildAgentModelRules(params.tools),
     '',
-    `Reply in ${languageName} unless the user writes in another language; then use theirs.`,
+    languageRule,
   ].join('\n');
 
   return { systemPrompt, locale, timezone };

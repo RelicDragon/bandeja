@@ -83,7 +83,9 @@ export const saveMemoryTool = defineTool({
   description:
     'Save (or update, same name) a short durable note about this user for later chats: a PREFERENCE (e.g. usual times, ' +
     'clubs, formats, language), FEEDBACK on how you should answer, or a FACT about them (e.g. level goals, dominant hand). ' +
-    'Save when the user asks you to remember something, or when they state a lasting preference. Never save live data ' +
+    'Call it on your own, in the same turn, whenever the user states a lasting preference or corrects how you answer ' +
+    '(reply language, which league they mean, usual city/club/times, indoor or outdoor, answer format), and whenever they ' +
+    'ask you to remember something; then continue with their request. Never save live data ' +
     'tools return (games, rosters, results, balances), anything about other people, contact details or secrets. ' +
     'No confirmation card; the user sees a "Saved to memory" chip with Undo. Max 500 characters.',
   kind: 'memory',
