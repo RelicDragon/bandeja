@@ -76,7 +76,8 @@ export async function preparePushPayloadForRecipient(
 ): Promise<NotificationPayload> {
   let next: NotificationPayload = {
     ...payload,
-    category: resolveApnsNotificationCategory(payload),
+    // A builder-chosen category (e.g. the organizer weather variant) wins over the type default.
+    category: payload.category ?? resolveApnsNotificationCategory(payload),
     threadId: payload.threadId ?? resolvePushThreadId(payload),
   };
 

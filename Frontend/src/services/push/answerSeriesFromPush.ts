@@ -16,6 +16,7 @@ import api from '@/api/axios';
 import { queryClient } from '@/queries/queryClient';
 import { queryKeys } from '@/queries/queryKeys';
 import { PUSH_ACTION_ACCEPT, PUSH_ACTION_DECLINE } from './pushNotificationConstants';
+import type { AuthApiRequestConfig } from '@/api/auth';
 
 const LOG_PREFIX = '[series-push]';
 
@@ -79,7 +80,8 @@ export async function answerSeriesFromPush(
   }
 
   try {
-    await api.post('/push/invite-action', { actionToken });
+    // An expired token answers 401; it is not an expired session.
+    await api.post('/push/invite-action', { actionToken }, { skipAuth401Handler: true } as AuthApiRequestConfig);
   } catch (error) {
     // Expired token, offline, seat already taken — all the same to the player:
     // the answer did not land, and the in-app card is still there to tap.

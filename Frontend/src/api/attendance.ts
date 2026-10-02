@@ -5,6 +5,7 @@
  * change a seat or reorder a queue — the backend refuses to do so.
  */
 import api from './axios';
+import type { AuthApiRequestConfig } from './auth';
 import type { ApiResponse } from '@/types';
 import type { AttendanceSummary, ParticipantAttendance } from '@/types/gameCardEnrichment';
 
@@ -64,6 +65,8 @@ export interface MyNoShowNote {
   notedAt: string;
 }
 
+const PUSH_TOKEN_REQUEST: AuthApiRequestConfig = { skipAuth401Handler: true };
+
 export const attendanceApi = {
   async get(gameId: string): Promise<GameAttendanceDetails> {
     const { data } = await api.get<ApiResponse<GameAttendanceDetails>>(
@@ -87,7 +90,9 @@ export const attendanceApi = {
    * game and the answer, so this works even when the webview has no session.
    */
   async answerFromPushToken(actionToken: string): Promise<void> {
-    await api.post('/push/invite-action', { actionToken });
+    // The token is the credential: an expired one answers 401, which must not
+    // be mistaken for an expired session and trigger a refresh / sign-out.
+    await api.post('/push/invite-action', { actionToken }, PUSH_TOKEN_REQUEST);
   },
 
   async nudge(gameId: string): Promise<{ nudgedUserIds: string[]; cooldown: AttendanceNudgeState }> {

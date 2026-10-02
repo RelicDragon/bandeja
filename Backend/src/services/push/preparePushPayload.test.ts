@@ -34,5 +34,17 @@ void (async () => {
     });
     assert.equal(grouped.threadId, 'play-intent');
   }
+
+  // PRD 357 — the organizer variant names its own APNs category; the type
+  // default would hand organizers the participant's single-button category.
+  const organizerWeather = await preparePushPayloadForRecipient('user-1', {
+    type: NotificationType.GAME_WEATHER_ALERT,
+    title: 'Rain likely',
+    body: 'Move indoor?',
+    data: { gameId: 'game-1' },
+    category: 'GAME_WEATHER_ALERT_ORGANIZER',
+    actions: [{ id: 'weather-keep', title: 'Keep', action: 'weather-keep' }],
+  });
+  assert.equal(organizerWeather.category, 'GAME_WEATHER_ALERT_ORGANIZER');
   console.log('preparePushPayload.test.ts: ok');
 })();

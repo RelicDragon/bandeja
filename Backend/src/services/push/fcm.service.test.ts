@@ -138,6 +138,26 @@ function testFcmLeavesAPlainReminderAlone(): void {
   assert.equal(message.data?.nativeHandler, undefined);
 }
 
+/** A league "assigned to game" push is an INVITE with no inviteId; the invite renderer would drop it. */
+function testFcmKeepsInviteRendererForRealInvitesOnly(): void {
+  const assigned = buildFcmMessage('token-8', {
+    type: NotificationType.INVITE,
+    title: 'You were assigned to a league game',
+    body: 'Padel Centar Tue 19:00',
+    data: { gameId: 'game-1', shortDayOfWeek: 'Tue' },
+  });
+  assert.equal(assigned.data?.nativeHandler, undefined);
+  assert.equal(assigned.data?.gameId, 'game-1');
+
+  const invite = buildFcmMessage('token-9', {
+    type: NotificationType.INVITE,
+    title: 'Invite',
+    body: 'Join',
+    data: { gameId: 'game-1', inviteId: 'invite-1' },
+  });
+  assert.equal(invite.data?.nativeHandler, 'invite_actions');
+}
+
 function testFcmBuildsOneMulticastMessage(): void {
   const message = buildFcmMulticastMessage(['token-1', 'token-2'], {
     type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
@@ -162,6 +182,7 @@ void (async () => {
   testFcmSendsNewGameDataOnly();
   testFcmCarriesAttendanceShadeContract();
   testFcmLeavesAPlainReminderAlone();
+  testFcmKeepsInviteRendererForRealInvitesOnly();
   testFcmBuildsOneMulticastMessage();
   console.log('fcm.service.test.ts: ok');
 })();

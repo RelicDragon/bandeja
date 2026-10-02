@@ -97,6 +97,10 @@ interface NotificationData {
     weatherDeepLink?: string;
     /** PRD 357 — signed token for the alert's "Keep as planned" shade action. */
     weatherKeepActionToken?: string;
+    /** Story like / comment / reply pushes (sent as USER_CHAT, no chat context). */
+    sourceType?: string;
+    sourceId?: string;
+    ownerUserId?: string;
   };
 }
 
@@ -738,6 +742,29 @@ class PushNotificationService {
         }
         break;
 
+      // PRD 348 — "Settle your share" lands on the game's Cost card with the
+      // settle sheet open (same deep link the Wallet's owed rows use).
+      // `GameCostCard` consumes `?section=cost&settle=1` and strips it.
+      case 'GAME_COST_REMINDER':
+        if (payload?.gameId) {
+          navigationService.navigateToPath(
+            `/games/${encodeURIComponent(payload.gameId)}?section=cost&settle=1`,
+          );
+        }
+        break;
+
+      // PRD 349 — "X is live" opens the game, which is the Watch affordance.
+      case 'FOLLOWED_USER_LIVE':
+        if (payload?.gameId) {
+          navigationService.navigateToGame(payload.gameId);
+        }
+        break;
+
+      // PRD 355 — a gifted item is already owned; the shop shows the collection.
+      case 'GOODS_GIFT_RECEIVED':
+        navigationService.navigateToPath('/shop');
+        break;
+
       // PRD 346 — a no-show note lands in the game chat so the player can reply.
       case 'GAME_NO_SHOW_NOTED':
         if (payload?.gameId) {
@@ -792,6 +819,13 @@ class PushNotificationService {
         if (chatCtx) {
           navigationService.navigateToUserChat(chatCtx.userChatId ?? chatCtx.contextId, {
             anchorMessageId: chatCtx.messageId,
+          });
+        } else if (payload?.ownerUserId && payload.sourceType && payload.sourceId) {
+          // Story like / comment / reply: open the story on the Home rail
+          // (`useStoryDeepLink` consumes the params).
+          navigationService.navigateToHome({
+            story: payload.ownerUserId,
+            storySegment: `${payload.sourceType}:${payload.sourceId}`,
           });
         }
         break;

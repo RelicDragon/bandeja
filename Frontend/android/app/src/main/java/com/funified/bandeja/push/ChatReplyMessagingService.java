@@ -22,7 +22,9 @@ public class ChatReplyMessagingService extends FirebaseMessagingService {
         }
 
         String nativeHandler = data.get("nativeHandler");
-        if ("invite_actions".equals(nativeHandler) || InvitePushData.isInvite(data)) {
+        // `isInvite` is exactly what the invite renderer needs; an INVITE without
+        // an inviteId (league assignment) falls through to the plain data path.
+        if (InvitePushData.isInvite(data)) {
             InviteNotificationHelper.showInvite(getApplicationContext(), data);
             return;
         }

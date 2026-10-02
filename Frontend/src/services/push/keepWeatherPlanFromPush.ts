@@ -14,6 +14,7 @@ import api from '@/api/axios';
 import { queryClient } from '@/queries/queryClient';
 import { queryKeys } from '@/queries/queryKeys';
 import { PUSH_ACTION_WEATHER_KEEP } from './pushNotificationConstants';
+import type { AuthApiRequestConfig } from '@/api/auth';
 
 const LOG_PREFIX = '[weather-push]';
 
@@ -66,7 +67,8 @@ export async function keepWeatherPlanFromPush(
   }
 
   try {
-    await api.post('/push/invite-action', { actionToken });
+    // An expired token answers 401; it is not an expired session.
+    await api.post('/push/invite-action', { actionToken }, { skipAuth401Handler: true } as AuthApiRequestConfig);
   } catch (error) {
     // Expired token, offline, game already moved — the banner in the app is
     // still there and still offers the same choice.

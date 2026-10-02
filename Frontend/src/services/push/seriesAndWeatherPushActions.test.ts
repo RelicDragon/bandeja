@@ -62,9 +62,12 @@ describe('answerSeriesFromPush', () => {
     const handled = await answerSeriesFromPush('accept', seriesPrompt);
 
     expect(handled).toBe(true);
-    expect(postMock).toHaveBeenCalledWith('/push/invite-action', {
-      actionToken: 'accept-token',
-    });
+    expect(postMock).toHaveBeenCalledWith(
+      '/push/invite-action',
+      { actionToken: 'accept-token' },
+      // An expired token's 401 must not read as an expired session.
+      { skipAuth401Handler: true },
+    );
     expect(scheduleMock).toHaveBeenCalledTimes(1);
     // Both the prompt state and the series page are now stale.
     expect(invalidateQueriesMock).toHaveBeenCalledTimes(2);
@@ -74,9 +77,12 @@ describe('answerSeriesFromPush', () => {
     const { answerSeriesFromPush } = await import('./answerSeriesFromPush');
     await answerSeriesFromPush('decline', seriesPrompt);
 
-    expect(postMock).toHaveBeenCalledWith('/push/invite-action', {
-      actionToken: 'decline-token',
-    });
+    expect(postMock).toHaveBeenCalledWith(
+      '/push/invite-action',
+      { actionToken: 'decline-token' },
+      // An expired token's 401 must not read as an expired session.
+      { skipAuth401Handler: true },
+    );
   });
 
   it('refuses a push of another type even when the action id matches', async () => {
@@ -122,7 +128,7 @@ describe('keepWeatherPlanFromPush', () => {
     const handled = await keepWeatherPlanFromPush('keep', weatherAlert);
 
     expect(handled).toBe(true);
-    expect(postMock).toHaveBeenCalledWith('/push/invite-action', { actionToken: 'keep-token' });
+    expect(postMock).toHaveBeenCalledWith('/push/invite-action', { actionToken: 'keep-token' }, { skipAuth401Handler: true });
     expect(invalidateQueriesMock).toHaveBeenCalledTimes(1);
   });
 

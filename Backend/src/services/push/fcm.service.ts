@@ -77,7 +77,14 @@ function buildDataMap(payload: NotificationPayload): Record<string, string> {
   ) {
     data.nativeHandler = 'chat_reply';
   }
-  if (payload.type === NotificationType.INVITE || payload.type === NotificationType.TEAM_INVITE) {
+  // Only real invites get the accept/decline renderer: shipped Android builds
+  // drop an `invite_actions` push without an `inviteId` (`teamId` for teams),
+  // and the league "assigned to game" push is an INVITE with neither. Without
+  // the tag it renders as a plain data push whose tap keeps every key.
+  if (
+    (payload.type === NotificationType.INVITE && payload.data?.inviteId) ||
+    (payload.type === NotificationType.TEAM_INVITE && payload.data?.teamId)
+  ) {
     data.nativeHandler = 'invite_actions';
   }
   if (payload.type === NotificationType.FOLLOWED_USER_PLAY_INTENT) {
