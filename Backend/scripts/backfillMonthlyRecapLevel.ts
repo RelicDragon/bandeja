@@ -20,8 +20,16 @@ import { loadRecapBuildInput, loadRecapOwner } from '../src/services/recap/recap
 import { buildMonthlyRecapPayload } from '../src/services/recap/recapPayload.builder';
 import type { MonthlyRecapPayload, RecapLevel } from '../src/services/recap/recap.types';
 
+// Field-wise: jsonb does not keep key order, so JSON.stringify never matches.
 function sameLevel(a: RecapLevel | null, b: RecapLevel | null): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  if (!a || !b) return a === b;
+  return (
+    a.before === b.before &&
+    a.after === b.after &&
+    a.delta === b.delta &&
+    a.points.length === b.points.length &&
+    a.points.every((point, i) => point === b.points[i])
+  );
 }
 
 async function run(apply: boolean, monthKey: string | null): Promise<void> {
