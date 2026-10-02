@@ -13,6 +13,11 @@
     box-sizing: border-box;
 }
 
+html, body {
+    overflow-x: hidden;
+    overflow-x: clip;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background: #f9fafb;
@@ -38,6 +43,7 @@ body.dark {
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     margin-top: 24px;
     margin-bottom: 24px;
+    overflow-wrap: break-word;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -87,7 +93,7 @@ body.dark .eula-back-btn:hover {
     display: flex;
 }
 .eula-top-bar .lang-switch {
-    margin-left: auto;
+    margin-inline-start: auto;
 }
 .lang-switch {
     display: flex;
@@ -163,7 +169,7 @@ body.dark .lang-selector-button .label {
 
 .lang-selector-menu {
     position: absolute;
-    right: 0;
+    inset-inline-end: 0;
     top: calc(100% + 8px);
     min-width: 160px;
     background: #ffffff;
@@ -368,16 +374,6 @@ body.dark .footer a:hover {
         justify-content: center;
     }
     
-    .lang-selector-menu {
-        right: auto;
-        left: 50%;
-        transform: translateX(-50%) scale(0.95) translateY(-8px);
-        transform-origin: top center;
-    }
-    
-    .lang-selector-menu.open {
-        transform: translateX(-50%) scale(1) translateY(0);
-    }
 }
 </style>
 
