@@ -442,6 +442,8 @@ export interface GameTeam {
   teamNumber: number;
   name?: string;
   players: GameTeamPlayer[];
+  /** The pair's own `UserTeam` (accepted members == this roster); game detail, signed-in only. `avatar` is an upload, never the generated split face. */
+  userTeam?: { id: string; name: string; avatar: string | null } | null;
 }
 
 export interface GameTeamData {

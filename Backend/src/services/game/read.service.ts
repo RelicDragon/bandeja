@@ -43,6 +43,7 @@ import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enrichAvailableGamesSafe } from './availableGamesEnrichment';
 import { appendEventDiscoveryVisibility } from './eventApprovalVisibility';
+import { attachUserTeamsToFixedTeams } from './fixedTeamUserTeam';
 
 export { MAIN_PHOTO_RELATION_SELECT };
 export { getAvailableGamesCardInclude, getAvailableGamesCardSelect } from './availableGamesCard.projection';
@@ -426,10 +427,15 @@ export class GameReadService {
     // `as never`: the row comes from a `Prisma.GameSelect`-typed projection, so
     // its inferred shape carries no implicit index signature. Same cast the
     // Find-card and series-detail readers use for the same reason.
-    const gameWithSportLevels = projectGamePhotoPayload(
+    const projectedGame = projectGamePhotoPayload(
       projectGameUsersForSportContext(game as never),
       photoViewer,
     );
+    // Signed-in only: the matchup card that shows the pair's own team is too.
+    const gameWithSportLevels =
+      userId && projectedGame.hasFixedTeams
+        ? await attachUserTeamsToFixedTeams(projectedGame)
+        : projectedGame;
     const base = {
       ...gameWithSportLevels,
       ...(paymentHint !== undefined ? { paymentHint } : {}),
