@@ -218,8 +218,8 @@ export async function retryPendingCoinShareRefunds(limit = AUTO_REMIND_BATCH_SIZ
  * FINAL transition itself, so `Game.costFrozenAt` is the FINAL timestamp and
  * the 24 h delay is measured from the right clock. This pass only catches games
  * that went FINAL through a path that never reached that hook.
- * Step 2 nudges every game that froze between 24 h and 7 days ago and still has
- * an unpaid share. The claim makes step 2 a no-op on every later pass.
+ * Step 2 nudges every game that froze between 24 h and 7 days ago, ended no more
+ * than 7 days ago, and still has an unpaid share. The claim makes step 2 a no-op on every later pass.
  */
 export async function runCostShareReminderSweep(now: Date = new Date()): Promise<{
   frozen: number;
@@ -285,6 +285,9 @@ export async function runCostShareReminderSweep(now: Date = new Date()): Promise
       where: {
         entityType: { not: 'LEAGUE_SEASON' },
         costFrozenAt: { lte: dueBefore, gte: dueAfter },
+        // The game itself must have ended inside the window too: a ledger frozen
+        // today on a game played months ago (opened retroactively) is not news.
+        endTime: { gte: dueAfter },
         costShares: { some: { confirmedAt: null } },
       },
       select: { id: true },

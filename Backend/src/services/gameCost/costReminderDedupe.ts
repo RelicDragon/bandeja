@@ -17,8 +17,19 @@ import { getSetting, setSetting } from '../platformSetting.service';
 /** The one `PlatformSetting` row holding the fallback state. */
 export const COST_REMINDER_STATE_KEY = 'COST_REMINDER_STATE';
 
-/** Keep the fallback row small enough to stay well under the column's limit. */
-export const COST_REMINDER_STATE_MAX_ENTRIES = 200;
+/**
+ * Cap on the fallback row. Sized for a full week of automatic claims: dropping a
+ * live `auto:` claim to make room would re-send that game's reminder.
+ */
+export const COST_REMINDER_STATE_MAX_ENTRIES = 5000;
+
+/**
+ * How long any claim is kept in the shared row: the longest window any caller
+ * claims with (the automatic nudge's 7 days). Pruning with the *caller's* TTL
+ * instead let a manual nudge (24 h) wipe every automatic claim older than a
+ * day, and the next hourly sweep re-sent all of them.
+ */
+export const COST_REMINDER_STATE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type ReminderClaimState = Record<string, number>;
 
@@ -61,7 +72,11 @@ export function claimInState(
 ): ReminderClaimState | null {
   const previous = state[key];
   if (previous != null && nowMs - previous < ttlMs) return null;
-  return pruneReminderState({ ...state, [key]: nowMs }, nowMs, ttlMs);
+  return pruneReminderState(
+    { ...state, [key]: nowMs },
+    nowMs,
+    Math.max(ttlMs, COST_REMINDER_STATE_RETENTION_MS),
+  );
 }
 
 /** When the key may next be claimed, or `null` when it may be claimed now. */

@@ -515,9 +515,14 @@ const partitioned = partitionAttendanceAsk(
 assert.deepEqual(partitioned.ask.map((row) => row.id), ['player']);
 assert.deepEqual(partitioned.remindOnly.map((row) => row.id), ['owner']);
 assert.deepEqual(
-  partitionAttendanceAsk(REMINDER_ROSTER).remindOnly,
-  [],
-  'a roster with no playing owner puts the question to everyone',
+  partitionAttendanceAsk(REMINDER_ROSTER).ask.map((row) => row.id),
+  ['unanswered', 'confirmed', 'unsure'],
+  'only PLAYING rows are asked — nobody else may answer',
+);
+assert.deepEqual(
+  partitionAttendanceAsk(REMINDER_ROSTER).remindOnly.map((row) => row.id),
+  ['looking', 'trainer'],
+  'queue and non-playing rows get the plain reminder, without buttons that can only fail',
 );
 
 // The boundary is inclusive, and anything above it is still "the first ask".

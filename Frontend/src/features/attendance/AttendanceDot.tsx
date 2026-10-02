@@ -36,7 +36,12 @@ function AttendanceDotInner({ state, size = 'sm', className = '', onRequestLegen
   const style = attendanceDotStyle(state);
   const label = t(style.labelKey);
 
-  const shared = `absolute -bottom-0.5 inline-flex items-center justify-center rounded-full ring-2 ring-white dark:ring-gray-900 ${SIZES[size]} ${style.className} ${className}`;
+  // Bottom-left, above the avatar: `PlayerAvatar` is its own `z-10` layer and
+  // parks the level badge bottom-right (physical `right`), so a dot there was
+  // painted underneath it and never seen. Crown / online / remove use the top
+  // corners; the bottom-left trainer badge never meets a dot (trainers are
+  // NON_PLAYING).
+  const shared = `absolute -bottom-0.5 -left-0.5 z-20 inline-flex items-center justify-center rounded-full ring-2 ring-white dark:ring-gray-900 ${SIZES[size]} ${style.className} ${className}`;
   const glyph = (
     <>
       {state === 'CONFIRMED' ? <Check size={9} strokeWidth={3.5} aria-hidden /> : null}
@@ -52,7 +57,6 @@ function AttendanceDotInner({ state, size = 'sm', className = '', onRequestLegen
     return (
       <span
         className={`pointer-events-none ${shared}`}
-        style={{ insetInlineEnd: '-2px' }}
         data-attendance-state={state}
       >
         {glyph}
@@ -66,8 +70,7 @@ function AttendanceDotInner({ state, size = 'sm', className = '', onRequestLegen
       type="button"
       // `after:` grows the touch region past the 14–16 px glyph without moving
       // any layout; the avatar underneath keeps the rest of its own area.
-      className={`${shared} after:absolute after:-inset-1.5 after:content-[''] focus-visible:outline-none focus-visible:ring-primary-500`}
-      style={{ insetInlineEnd: '-2px' }}
+      className={`${shared} pointer-events-auto after:absolute after:-inset-1.5 after:content-[''] focus-visible:outline-none focus-visible:ring-primary-500`}
       data-attendance-state={state}
       aria-label={`${label}. ${t('attendance.legend.title')}`}
       onClick={(event) => {

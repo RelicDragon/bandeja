@@ -295,16 +295,18 @@ export async function setAttendanceFromAction(
   userId: string,
   gameId: string,
   answer: AttendanceAnswer,
-): Promise<boolean> {
+): Promise<{ ok: true } | { ok: false; errorKey: string }> {
   try {
     await setAttendance(gameId, userId, answer);
-    return true;
+    return { ok: true };
   } catch (error) {
+    // Hand back the real reason (closed, not supported, not a player) so the
+    // shade / Telegram alert does not claim "not a participant" for all of them.
     if (error instanceof ApiError && error.statusCode < 500) {
-      return false;
+      return { ok: false, errorKey: error.message };
     }
     console.error('[attendance] Action failed:', error);
-    return false;
+    return { ok: false, errorKey: 'errors.attendance.notParticipant' };
   }
 }
 
@@ -564,9 +566,9 @@ registerPushActionHandler('attendance', async (scope) => {
   if (!answer || !isAttendanceAnswer(answer)) {
     return { success: false, message: 'errors.attendance.invalidState' };
   }
-  const ok = await setAttendanceFromAction(scope.userId, scope.targetId, answer);
-  if (!ok) {
-    return { success: false, message: 'errors.attendance.notParticipant' };
+  const saved = await setAttendanceFromAction(scope.userId, scope.targetId, answer);
+  if (!saved.ok) {
+    return { success: false, message: saved.errorKey };
   }
   return {
     success: true,

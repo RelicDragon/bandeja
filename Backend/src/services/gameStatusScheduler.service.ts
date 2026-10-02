@@ -7,7 +7,7 @@ import { getUserTimezoneFromCityId } from './user-timezone.service';
 import notificationService from './notification.service';
 import { BarResultsService } from './barResults.service';
 import { LeagueStandingsRecalculateService } from './league/leagueStandingsRecalculate.service';
-import { onGameFinalizedForAttendance } from './gameAttendance/gameAttendance.service';
+import { onGameFinalizedForAttendance, supportsAttendance } from './gameAttendance/gameAttendance.service';
 import {
   attendanceReminderRecipients,
   partitionAttendanceAsk,
@@ -301,6 +301,12 @@ export class GameStatusScheduler {
   }
 
   private async sendGameReminder(gameId: string, hoursBeforeStart: number) {
+    const game = await prisma.game.findUnique({ where: { id: gameId }, select: { entityType: true } });
+    if (!game) return;
+    // Events are reminded, never asked: `setAttendance` rejects them, so the
+    // buttons would be taps that can only fail.
+    const asksAttendance = supportsAttendance(game.entityType);
+
     const participants = await prisma.gameParticipant.findMany({
       where: {
         gameId,
@@ -332,7 +338,7 @@ export class GameStatusScheduler {
     const { ask, remindOnly } = partitionAttendanceAsk(relevant);
 
     for (const [group, attendanceActions] of [
-      [ask, true],
+      [ask, asksAttendance],
       [remindOnly, false],
     ] as const) {
       if (group.length === 0) continue;

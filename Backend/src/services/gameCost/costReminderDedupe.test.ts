@@ -71,6 +71,21 @@ assert.deepEqual(
   assert.ok(claimInState(state, autoRemindKey('g1'), T0, DAY));
 }
 
+{
+  // A manual nudge (24 h window) must not prune the 7-day automatic claims that
+  // share the row — that wipe let the next hourly sweep re-send every reminder.
+  const autoClaimed = claimInState({}, autoRemindKey('g1'), T0, 7 * DAY);
+  assert.ok(autoClaimed);
+  const afterManual = claimInState(autoClaimed, manualRemindKey('g2'), T0 + 2 * DAY, DAY);
+  assert.ok(afterManual);
+  assert.equal(afterManual[autoRemindKey('g1')], T0, 'the automatic claim survives');
+  assert.equal(
+    claimInState(afterManual, autoRemindKey('g1'), T0 + 3 * DAY, 7 * DAY),
+    null,
+    'so the sweep still refuses to re-send',
+  );
+}
+
 assert.equal(manualRemindKey('g1'), 'manual:g1');
 assert.equal(autoRemindKey('g1'), 'auto:g1');
 

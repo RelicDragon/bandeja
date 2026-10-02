@@ -384,9 +384,11 @@ export function attendanceReminderRecipients<T extends ReminderCandidate>(
  * Splits reminder recipients into the ones the reminder may put the question
  * to and the ones who get the plain reminder.
  *
- * Only the owner lands in `remindOnly`: they are already confirmed, so shipping
+ * The owner lands in `remindOnly`: they are already confirmed, so shipping
  * them "Are you coming?" with two buttons would ask a question the app has
- * decided on their behalf.
+ * decided on their behalf. Non-PLAYING recipients (`lookingForPartner` rows)
+ * land there too: only PLAYING players may answer, so their taps could only
+ * ever be rejected.
  */
 export function partitionAttendanceAsk<T extends ReminderCandidate>(
   recipients: readonly T[],
@@ -394,7 +396,7 @@ export function partitionAttendanceAsk<T extends ReminderCandidate>(
   const ask: T[] = [];
   const remindOnly: T[] = [];
   for (const recipient of recipients) {
-    if (isImplicitlyConfirmedOwner(recipient)) remindOnly.push(recipient);
+    if (recipient.status !== 'PLAYING' || isImplicitlyConfirmedOwner(recipient)) remindOnly.push(recipient);
     else ask.push(recipient);
   }
   return { ask, remindOnly };

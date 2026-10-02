@@ -168,7 +168,7 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
         />
         <UnreadBadge count={unreadCount} className="absolute -top-1 right-[calc(50%-2.25rem)] border-2 border-white dark:border-gray-900" />
         {attendanceState ? (
-          <span className="absolute inset-x-0 top-0 flex justify-center">
+          <span className="pointer-events-none absolute inset-x-0 top-0 flex justify-center">
             <span className="relative h-12 w-12">
               <AttendanceDot state={attendanceState} onRequestLegend={onAttendanceLegend} />
             </span>
