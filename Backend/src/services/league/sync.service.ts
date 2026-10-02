@@ -20,6 +20,34 @@ type GameTeamWithPlayers = {
   players: { userId: string }[];
 };
 
+type DeletedTeamStanding = {
+  id: string;
+  leagueTeamId: string | null;
+  currentGroupId: string | null;
+  points: number;
+  wins: number;
+  ties: number;
+  losses: number;
+  createdAt: Date;
+  leagueTeam: {
+    players: { userId: string; user: { firstName: string | null; lastName: string | null } | null }[];
+  } | null;
+};
+
+/** Hard deletes leave no row behind; this line is the only record of what was removed. */
+function logDeletedTeamParticipants(leagueSeasonId: string, reason: string, deleted: DeletedTeamStanding[]) {
+  for (const s of deleted) {
+    const roster = (s.leagueTeam?.players ?? [])
+      .map((p) => `${p.userId}:${[p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ')}`)
+      .join(', ');
+    console.log(
+      `[LEAGUE SYNC] Season ${leagueSeasonId}: deleting team participant ${s.id} (${reason}) ` +
+        `leagueTeamId=${s.leagueTeamId} groupId=${s.currentGroupId} createdAt=${s.createdAt.toISOString()} ` +
+        `points=${s.points} W/T/L=${s.wins}/${s.ties}/${s.losses} roster=[${roster}]`
+    );
+  }
+}
+
 async function collectDesiredTeamPlayerIds(leagueSeasonId: string): Promise<string[][]> {
   const [seasonGame, roundGames] = await Promise.all([
     prisma.game.findUnique({
@@ -239,6 +267,7 @@ export class LeagueSyncService {
           .filter((id): id is string => Boolean(id));
 
         if (staleTeamParticipants.length > 0) {
+          logDeletedTeamParticipants(leagueSeasonId, 'roster no longer in fixed teams', staleTeamParticipants);
           await tx.leagueParticipant.deleteMany({
             where: { id: { in: staleTeamParticipants.map((s) => s.id) } },
           });
@@ -268,6 +297,11 @@ export class LeagueSyncService {
           ),
         ];
         if (teamParticipantRows.length > 0) {
+          logDeletedTeamParticipants(
+            leagueSeasonId,
+            'season has no fixed teams',
+            standings.filter((s) => s.participantType === LeagueParticipantType.TEAM)
+          );
           await tx.leagueParticipant.deleteMany({
             where: { leagueSeasonId, participantType: LeagueParticipantType.TEAM },
           });

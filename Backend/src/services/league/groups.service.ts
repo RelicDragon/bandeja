@@ -332,6 +332,9 @@ export class LeagueGroupManagementService {
       where: { id: participantId },
       data: { currentGroupId: null },
     });
+    console.log(
+      `[LEAGUE GROUPS] Season ${group.leagueSeasonId}: participant ${participantId} removed from group ${groupId} by user ${actor.userId}`
+    );
 
     queueLeagueGroupChatReconcile(group.leagueSeasonId);
     return this.buildPayload(group.leagueSeasonId);
