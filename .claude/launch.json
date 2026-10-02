@@ -37,6 +37,20 @@
         "--strictPort"
       ],
       "port": 3011
+    },
+    {
+      "name": "roster-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "9123",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "docs/plans/game-roster-redesign"
+      ],
+      "port": 9123
     }
   ]
 }

@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Roster redesign · Direction A · One list, the You-row expands</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { brand: ['Outfit', 'system-ui', 'sans-serif'] },
+        colors: {
+          primary: {
+            DEFAULT: '#0ea5e9', foreground: '#ffffff',
+            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8',
+            500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49',
+          },
+        },
+      },
+    },
+  };
+</script>
+<style>
+  body { -webkit-font-smoothing: antialiased; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .phone { width: 375px; }
+  .scroller::-webkit-scrollbar { height: 8px; }
+  .scroller::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+  /* 44px hit area around visually smaller controls without moving layout */
+  .hit { position: relative; }
+  .hit::after { content: ''; position: absolute; inset: -8px; }
+</style>
+</head>
+<body class="bg-[#e9edf2] text-gray-900">
+
+<header class="mx-auto max-w-6xl px-6 pt-10 pb-6">
+  <p class="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">Design preview · not production code</p>
+  <h1 class="mt-1 font-brand text-3xl font-semibold tracking-tight text-gray-900">Direction A — One list, the You-row expands</h1>
+  <p class="mt-2 max-w-3xl text-sm leading-relaxed text-gray-600">
+    Roster, attendance and cost shares merged into a single Players card on Game Details. Every person appears exactly once.
+    The seat strip replaces the fill bar and doubles as the attendance glance. Money is only shown beyond your own share to the owner, admins and the payer.
+  </p>
+</header>
+
+<main id="frames" class="scroller flex gap-8 overflow-x-auto px-6 pb-16 items-start"></main>
+
+<script>
+/* ------------------------------------------------------------------ icons (lucide) */
+const P = {
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  bell: '<path d="M10.27 21a2 2 0 0 0 3.46 0"/><path d="M3.26 15.33A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.67C19.41 13.96 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.41 5.96-2.74 7.33"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  userPlus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  userRound: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  userX: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5"/><path d="m22 8-5 5"/>',
+  sliders: '<path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  checkCircle: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  xCircle: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  crown: '<path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.6a1 1 0 0 0 1.52.29l4.27-3.66a.5.5 0 0 1 .82.52l-2.83 10.25a1 1 0 0 1-.96.73H5.8a1 1 0 0 1-.96-.73L2.02 6.02a.5.5 0 0 1 .82-.52l4.27 3.66a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  chevronDown: '<path d="m6 9 6 6 6-6"/>',
+  layoutGrid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  list: '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+  chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+};
+const icon = (n, s = 16, cls = '', sw = 2) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 ${cls}" aria-hidden="true">${P[n]}</svg>`;
+
+/* ------------------------------------------------------------------ people */
+const PEOPLE = {
+  marko: { name: 'Marko Petrović', first: 'Marko', ini: 'MP', bg: 'from-sky-400 to-primary-600', level: '4.2' },
+  ana:   { name: 'Ana Kovač',      first: 'Ana',   ini: 'AK', bg: 'from-rose-300 to-rose-500', level: '3.6' },
+  ivo:   { name: 'Ivo Babić',      first: 'Ivo',   ini: 'IB', bg: 'from-emerald-300 to-teal-600', level: '3.9' },
+  lea:   { name: 'Lea Horvat',     first: 'Lea',   ini: 'LH', bg: 'from-amber-300 to-orange-500', level: '3.1' },
+  petar: { name: 'Petar Novak',    first: 'Petar', ini: 'PN', bg: 'from-violet-300 to-indigo-600', level: '3.4' },
+  nika:  { name: 'Nika Jurić',     first: 'Nika',  ini: 'NJ', bg: 'from-fuchsia-300 to-pink-600', level: '3.3' },
+  luka:  { name: 'Luka Marić',     first: 'Luka',  ini: 'LM', bg: 'from-cyan-300 to-sky-600', level: '4.0' },
+  mia:   { name: 'Mia Knežević',   first: 'Mia',   ini: 'MK', bg: 'from-lime-300 to-green-600', level: '3.5' },
+  toni:  { name: 'Toni Perić',     first: 'Toni',  ini: 'TP', bg: 'from-slate-300 to-slate-600', level: '3.8' },
+  sara:  { name: 'Sara Vuković',   first: 'Sara',  ini: 'SV', bg: 'from-orange-300 to-red-500', level: '3.2' },
+};
+
+/* ------------------------------------------------------------------ attendance */
+const ATT = {
+  CONFIRMED:  { dot: 'bg-green-500 text-white', seat: 'bg-green-500', text: 'Coming', tone: 'text-green-700 dark:text-green-400', sr: 'Confirmed' },
+  UNSURE:     { dot: 'bg-amber-400 text-amber-950', seat: 'bg-amber-400', text: 'Not sure yet', tone: 'text-amber-700 dark:text-amber-300', sr: 'Not sure yet' },
+  UNANSWERED: { dot: 'border-2 border-gray-300 bg-white dark:border-gray-500 dark:bg-gray-800', seat: 'bg-primary-500/35', text: 'No answer yet', tone: 'text-gray-500 dark:text-gray-400', sr: 'No answer yet' },
+  NO_SHOW:    { dot: 'bg-gray-400 text-white dark:bg-gray-500', seat: 'bg-gray-400', text: 'No-show', tone: 'text-gray-500 dark:text-gray-400', sr: 'Noted as a no-show' },
+};
+
+const dot = (state, size = 'md') => {
+  const s = ATT[state];
+  const dim = size === 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5';
+  const glyph = state === 'CONFIRMED' ? icon('check', 9, '', 3.5)
+    : state === 'UNSURE' ? '<span class="text-[9px] font-bold leading-none">?</span>' : '';
+  return `<span class="absolute -bottom-0.5 -start-0.5 z-20 inline-flex ${dim} items-center justify-center rounded-full ring-2 ring-white dark:ring-gray-900 ${s.dot}">${glyph}<span class="sr-only">${s.sr}</span></span>`;
+};
+
+const avatar = (p, state, { size = 32, crown = false } = {}) => `
+  <span class="relative shrink-0" style="width:${size}px;height:${size}px">
+    <span class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br ${PEOPLE[p].bg} text-[11px] font-semibold tracking-wide text-white shadow-sm">${PEOPLE[p].ini}</span>
+    ${crown ? `<span class="absolute -top-1.5 -end-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-amber-950 ring-2 ring-white dark:ring-gray-900">${icon('crown', 9, '', 2.5)}</span>` : ''}
+    ${state ? dot(state) : ''}
+  </span>`;
+
+/* ------------------------------------------------------------------ cost */
+const STATE = {
+  UNPAID:      { label: 'Unpaid', cls: 'border border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-300', ic: '' },
+  MARKED_PAID: { label: 'Marked paid', cls: 'border border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200', ic: 'clock' },
+  SETTLED:     { label: 'Settled', cls: 'border border-green-500 bg-green-50 text-green-800 dark:border-green-500/60 dark:bg-green-500/10 dark:text-green-200', ic: 'check' },
+};
+const chip = (st) => {
+  const s = STATE[st];
+  return `<span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${s.cls}">${s.ic ? icon(s.ic, 12) : ''}${s.label}</span>`;
+};
+/* Money pill = amount + state in one object (collector rows). */
+const moneyPill = (amount, st) => {
+  const s = STATE[st];
+  return `<span class="inline-flex min-h-7 items-center gap-1 whitespace-nowrap rounded-full ps-1.5 pe-2 py-0.5 text-xs font-semibold tnum ${s.cls}">
+    ${s.ic ? icon(s.ic, 12) : `<span class="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500"></span>`}€${amount}
+    <span class="sr-only">${s.label}</span></span>`;
+};
+const received = (st, who, disabled = false) => {
+  const on = st === 'SETTLED';
+  const base = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full';
+  const inner = on
+    ? `<span class="flex h-7 w-7 items-center justify-center rounded-full bg-green-500 text-white shadow-sm shadow-green-600/30">${icon('check', 15, '', 3)}</span>`
+    : st === 'MARKED_PAID'
+      ? `<span class="flex h-7 w-7 items-center justify-center rounded-full border-2 border-amber-400 bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">${icon('check', 13, 'opacity-60', 3)}</span>`
+      : `<span class="h-7 w-7 rounded-full border-2 border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-900"></span>`;
+  return `<button type="button" role="checkbox" aria-checked="${on}" ${disabled ? 'disabled' : ''} aria-label="Mark ${who} as paid" class="${base} ${disabled ? 'opacity-50' : 'active:scale-95'} transition">${inner}</button>`;
+};
+const kebab = (open = false) => `<button type="button" aria-label="More" aria-expanded="${open}" class="-ms-1 -me-1 flex h-11 w-7 shrink-0 items-center justify-center rounded-lg ${open ? 'text-gray-900 bg-gray-200/70 dark:bg-gray-700 dark:text-white' : 'text-gray-400 dark:text-gray-500'}">${icon('more', 18)}</button>`;
+
+/* ------------------------------------------------------------------ header */
+const tag = (t) => `<span class="inline-flex items-center rounded-full border border-gray-200/90 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200">${t}</span>`;
+const header = ({ title, trophy = false, tags = [], playing, max, organizer = false, subline, locked = false }) => {
+  const full = playing >= max;
+  const sub = subline ?? (full ? 'All spots filled' : `${max - playing} spot${max - playing === 1 ? '' : 's'} left`);
+  const count = organizer
+    ? `<button class="flex items-center gap-1.5 rounded-xl bg-primary-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-primary-600/25 dark:bg-primary-500 tnum">${icon('pencil', 13)}${playing}/${max}</button>`
+    : `<span class="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 tnum">${playing}/${max}</span>`;
+  return `
+  <div class="flex items-start gap-3">
+    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950/50 dark:text-primary-400">${icon(trophy ? 'trophy' : 'users', 18)}</span>
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">${title}</h2>
+        ${tags.map(tag).join('')}
+      </div>
+      <p class="mt-0.5 text-xs ${locked ? 'text-gray-500 dark:text-gray-400' : full ? 'font-medium text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">${sub}</p>
+    </div>
+    ${count}
+  </div>`;
+};
+
+/* ------------------------------------------------------------------ seat strip + legend */
+const seat = (state) => state
+  ? `<span class="h-2 flex-1 rounded-full ${ATT[state].seat}" title="${ATT[state].sr}"></span>`
+  : `<span class="h-2 flex-1 rounded-full border border-dashed border-gray-300 dark:border-gray-600" title="Open spot"></span>`;
+const seatStrip = (seats) => `<div class="mt-3 flex gap-[3px]" role="img" aria-label="Seats">${seats.map(seat).join('')}</div>`;
+const groupedStrip = (groups) => `
+  <div class="mt-3 flex gap-2.5">
+    ${groups.map(g => `<div class="flex-1"><div class="flex gap-[3px]">${g.seats.map(seat).join('')}</div>
+      <p class="mt-1 text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">${g.label} <span class="tnum">${g.count}</span></p></div>`).join('')}
+  </div>`;
+
+const legendDot = (state) => {
+  const s = ATT[state];
+  return state === 'UNANSWERED'
+    ? `<span class="inline-block h-2 w-2 rounded-full border-[1.5px] border-gray-400 dark:border-gray-500"></span>`
+    : `<span class="inline-block h-2 w-2 rounded-full ${s.seat}"></span>`;
+};
+const legend = ({ coming = 0, unsure = 0, none = 0, open = false }) => {
+  const parts = [];
+  if (coming) parts.push(`${legendDot('CONFIRMED')}<span class="tnum">${coming}</span> coming`);
+  if (unsure) parts.push(`${legendDot('UNSURE')}<span class="tnum">${unsure}</span> not sure`);
+  if (none) parts.push(`${legendDot('UNANSWERED')}<span class="tnum">${none}</span> no answer`);
+  return `
+  <div class="mt-1.5 flex items-center justify-between gap-2">
+    <p class="flex flex-wrap items-center gap-x-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+      ${parts.map(p => `<span class="inline-flex items-center gap-1">${p}</span>`).join('<span class="text-gray-300 dark:text-gray-600">·</span>')}
+    </p>
+    <button type="button" aria-expanded="${open}" aria-label="What the dots mean" class="hit -me-1 flex h-6 w-6 items-center justify-center rounded-full ${open ? 'bg-primary-50 text-primary-600 dark:bg-primary-950/60 dark:text-primary-300' : 'text-gray-400 dark:text-gray-500'}">${icon('info', 15)}</button>
+  </div>
+  ${open ? legendPanel() : ''}`;
+};
+const legendPanel = () => `
+  <div class="mt-2 rounded-xl border border-gray-200 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/60">
+    <p class="text-xs font-semibold text-gray-900 dark:text-white">What the dots mean</p>
+    <ul class="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
+      ${['CONFIRMED','UNSURE','UNANSWERED','NO_SHOW'].map(s => `
+        <li class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+          <span class="relative h-4 w-4">${dot(s).replace('absolute -bottom-0.5 -start-0.5', 'absolute inset-0').replace('ring-2 ring-white dark:ring-gray-900', '')}</span>${ATT[s].sr}
+        </li>`).join('')}
+    </ul>
+    <p class="mt-2.5 border-t border-gray-200 pt-2 text-[11px] leading-snug text-gray-500 dark:border-gray-700 dark:text-gray-400">Each bar above is one seat. A dashed bar is an open spot.</p>
+  </div>`;
+
+/* ------------------------------------------------------------------ rows */
+const ROW = 'flex min-h-11 items-center rounded-xl bg-gray-50/90 ps-2.5 pe-1.5 py-1.5 dark:bg-gray-800/70';
+const statusText = (state, extra = '') => `<p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs ${ATT[state].tone}">${ATT[state].text}${extra}</p>`;
+const payerTag = `<span class="text-gray-300 dark:text-gray-600">·</span><span class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-400">${icon('wallet', 11)}paid the club</span>`;
+const noShowTag = `<span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-gray-200/80 px-1.5 py-px text-[11px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">${icon('userX', 11)}No-show</span>`;
+
+const row = ({ p, state, crown = false, payer = false, money = null, menuOpen = false, extraLine = null, you = false }) => `
+  <div class="${ROW} ${money ? 'gap-2' : 'gap-3 pe-2.5'}">
+    ${avatar(p, state, { crown })}
+    <div class="min-w-0 flex-1 py-0.5">
+      <p class="truncate text-sm font-medium text-gray-900 dark:text-white">${PEOPLE[p].name}${you ? ' <span class="ms-1 rounded-md bg-primary-100 px-1.5 py-px align-middle text-[10px] font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary-900/60 dark:text-primary-300">You</span>' : ''}</p>
+      ${extraLine ?? statusText(state, payer ? payerTag : '')}
+    </div>
+    ${money ? `${moneyPill(money.amount, money.state)}${money.toggle === false ? '<span class="w-11"></span>' : received(money.state, PEOPLE[p].first, money.payer)}${kebab(menuOpen)}` : ''}
+  </div>`;
+
+const openSpot = () => `
+  <div class="flex min-h-11 items-center gap-3 rounded-xl border-2 border-dashed border-gray-300 p-2 dark:border-gray-600">
+    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-gray-300 text-gray-400 dark:border-gray-600 dark:text-gray-500">${icon('userRound', 16)}</span>
+    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Open spot</span>
+  </div>`;
+const invitePlayerRow = () => `
+  <button type="button" class="flex min-h-11 w-full items-center gap-3 rounded-xl border-2 border-dashed border-primary-300 bg-primary-50/70 p-2 text-start dark:border-primary-700 dark:bg-primary-950/30">
+    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/60 dark:text-primary-300">${icon('userPlus', 16)}</span>
+    <span class="flex-1">
+      <span class="block text-sm font-medium text-primary-700 dark:text-primary-300">Invite player</span>
+      <span class="block text-[11px] text-primary-600/80 dark:text-primary-400/80">Open spot</span>
+    </span>
+  </button>`;
+
+/* ------------------------------------------------------------------ the You-row */
+const seg = (selected) => {
+  const btn = (kind) => {
+    const isSel = selected === kind;
+    const label = kind === 'CONFIRMED' ? "I'm coming" : 'Not sure yet';
+    const ic = kind === 'CONFIRMED' ? icon('check', 15, '', 2.75) : '<span class="text-[13px] font-bold leading-none">?</span>';
+    const sel = kind === 'CONFIRMED'
+      ? 'bg-green-600 text-white shadow-sm shadow-green-700/25 dark:bg-green-500'
+      : 'bg-amber-400 text-amber-950 shadow-sm shadow-amber-600/20';
+    return `<button type="button" role="radio" aria-checked="${isSel}" class="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[10px] text-sm font-semibold transition ${isSel ? sel : 'text-gray-700 dark:text-gray-200'}">${ic}${label}</button>`;
+  };
+  return `<div role="radiogroup" aria-label="Are you coming?" class="flex gap-1 rounded-xl border border-gray-200/90 bg-white p-1 shadow-sm shadow-gray-900/[0.03] dark:border-gray-700 dark:bg-gray-900/80">${btn('CONFIRMED')}${btn('UNSURE')}</div>`;
+};
+
+const youPanel = ({ p, state, crown = false, organizer = false, share, settledLine, payer = false }) => {
+  let action = '';
+  if (share.state === 'UNPAID' && !payer) {
+    action = `<button type="button" class="flex min-h-11 items-center gap-1.5 rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white shadow-sm shadow-primary-600/25 active:scale-[0.98] dark:bg-primary-500">${icon('wallet', 15)}I paid</button>`;
+  } else if (share.state === 'SETTLED' && !payer) {
+    action = `<button type="button" disabled class="flex min-h-11 items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-100 px-4 text-sm font-semibold text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">${icon('check', 15)}Settled</button>`;
+  }
+  return `
+  <section aria-label="You" class="rounded-2xl border border-primary-200/80 bg-gradient-to-br from-primary-50 via-white to-white p-3 shadow-sm shadow-primary-600/5 dark:border-primary-800/70 dark:from-primary-950/50 dark:via-gray-900 dark:to-gray-900">
+    <div class="flex items-center gap-3">
+      ${avatar(p, state, { crown })}
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">${organizer ? 'You (organizer)' : PEOPLE[p].name}
+          ${organizer ? '' : '<span class="ms-1 rounded-md bg-primary-100 px-1.5 py-px align-middle text-[10px] font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary-900/60 dark:text-primary-300">You</span>'}</p>
+        <p class="mt-0.5 text-xs ${ATT[state].tone}">${state === 'CONFIRMED' ? "You're confirmed" : state === 'UNSURE' ? "You're not sure yet" : 'No answer yet'}</p>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <p class="mb-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">Are you coming?</p>
+      ${seg(state)}
+      <div class="mt-2 flex items-start justify-between gap-3">
+        <p class="text-[11px] leading-snug text-gray-500 dark:text-gray-400">Just so the organizer knows. Your seat is yours either way.</p>
+        <button type="button" class="hit shrink-0 whitespace-nowrap text-[11px] font-medium text-gray-500 underline decoration-gray-300 underline-offset-2 dark:text-gray-400 dark:decoration-gray-600">Can't make it at all?</button>
+      </div>
+    </div>
+
+    <div class="mt-3 flex items-center gap-3 border-t border-primary-100 pt-3 dark:border-primary-900/50">
+      <div class="min-w-0 flex-1">
+        <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Your share</p>
+        <div class="mt-0.5 flex flex-wrap items-center gap-2">
+          <span class="text-lg font-semibold leading-none text-gray-900 tnum dark:text-white">€${share.amount}</span>
+          ${chip(share.state)}
+        </div>
+        <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">${payer ? 'You paid the club' : `To ${share.to}`}<span class="text-gray-300 dark:text-gray-600"> · </span><span class="tnum">${settledLine}</span></p>
+      </div>
+      ${action}
+    </div>
+  </section>`;
+};
+
+/* Owner's own row: pinned, compact, never asked "Are you coming?" (backend treats owner as confirmed). */
+const ownerRow = ({ p, share, sub = 'paid the club', settledLine = '' }) => `
+  <section aria-label="You" class="flex min-h-14 items-center gap-3 rounded-xl border border-primary-200/80 bg-gradient-to-br from-primary-50 via-white to-white ps-2.5 pe-3 py-2 shadow-sm shadow-primary-600/5 dark:border-primary-800/70 dark:from-primary-950/50 dark:via-gray-900 dark:to-gray-900">
+    ${avatar(p, 'CONFIRMED', { crown: true })}
+    <div class="min-w-0 flex-1">
+      <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">You (organizer)</p>
+      <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-green-700 dark:text-green-400">Confirmed<span class="text-gray-300 dark:text-gray-600">·</span><span class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-400">${icon('wallet', 11)}${sub}</span></p>
+    </div>
+    <div class="flex shrink-0 flex-col items-end gap-1">
+      <span class="text-sm font-semibold leading-none text-gray-900 tnum dark:text-white"><span class="sr-only">Your share </span>€${share.amount}</span>
+      ${chip(share.state)}
+    </div>
+  </section>`;
+
+/* ------------------------------------------------------------------ scale helpers (≥ 12 seats) */
+const stackedBar = ({ coming, unsure, none, open }) => {
+  const total = coming + unsure + none + open;
+  const seg = (n, cls) => n ? `<span class="h-full ${cls}" style="width:${(n / total) * 100}%"></span>` : '';
+  return `
+  <div class="mt-3">
+    <div class="flex h-2.5 gap-[2px] overflow-hidden rounded-full" role="img" aria-label="${coming} coming, ${unsure} not sure, ${none} no answer, ${open} open spots">
+      ${seg(coming, 'bg-green-500 rounded-s-full')}${seg(unsure, 'bg-amber-400')}${seg(none, 'bg-primary-500/35')}
+      ${open ? `<span class="h-full rounded-e-full border border-dashed border-gray-300 dark:border-gray-600" style="width:${(open / total) * 100}%"></span>` : ''}
+    </div>
+    <div class="mt-1.5 flex items-center justify-between gap-2">
+      <p class="flex flex-wrap items-center gap-x-1.5 text-[11px] text-gray-500 dark:text-gray-400 tnum">
+        <span class="inline-flex items-center gap-1">${legendDot('CONFIRMED')}${coming} coming</span><span class="text-gray-300 dark:text-gray-600">·</span>
+        <span class="inline-flex items-center gap-1">${legendDot('UNSURE')}${unsure} not sure</span><span class="text-gray-300 dark:text-gray-600">·</span>
+        <span class="inline-flex items-center gap-1">${legendDot('UNANSWERED')}${none} no answer</span><span class="text-gray-300 dark:text-gray-600">·</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-full border border-dashed border-gray-400"></span>${open} open</span>
+      </p>
+      <button type="button" aria-label="What the dots mean" class="hit -me-1 flex h-6 w-6 items-center justify-center rounded-full text-gray-400 dark:text-gray-500">${icon('info', 15)}</button>
+    </div>
+  </div>`;
+};
+const filterChips = (chips, active) => `
+  <div class="-mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-0.5" role="tablist" aria-label="Filter players">
+    ${chips.map(([label, n, money]) => {
+      const on = label === active;
+      return `<button type="button" role="tab" aria-selected="${on}" class="hit flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 text-xs font-medium transition ${on
+        ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/25 dark:bg-primary-500'
+        : money ? 'border border-dashed border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-300' : 'border border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'}">
+        ${money ? icon('wallet', 12, on ? '' : 'text-gray-400') : ''}${label}<span class="tnum ${on ? 'text-white/80' : 'text-gray-400 dark:text-gray-500'}">${n}</span></button>`;
+    }).join('')}
+  </div>`;
+const openSpotsLine = (n, invite) => `
+  <div class="flex min-h-11 items-center gap-3 rounded-xl border-2 border-dashed border-gray-300 ps-2 pe-1.5 py-1 dark:border-gray-600">
+    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-gray-300 text-gray-400 dark:border-gray-600 dark:text-gray-500">${icon('userRound', 16)}</span>
+    <span class="flex-1 text-sm font-medium text-gray-500 tnum dark:text-gray-400">${n} open spots</span>
+    ${invite ? `<button type="button" class="flex min-h-9 items-center gap-1.5 rounded-lg bg-primary-50 px-3 text-sm font-semibold text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">${icon('userPlus', 15)}Invite</button>` : ''}
+  </div>`;
+const showAll = (n, more) => `
+  <button type="button" class="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl text-sm font-medium text-primary-700 dark:text-primary-300">
+    Show all <span class="tnum">${n}</span><span class="text-xs font-normal text-gray-400 tnum dark:text-gray-500">· ${more} more</span>${icon('chevronDown', 16)}
+  </button>`;
+const filteredNote = (shown, all) => `
+  <div class="flex items-center justify-between px-0.5 pt-1 text-[11px] text-gray-500 dark:text-gray-400 tnum">
+    <span>Showing ${shown} of ${all}</span>
+    <button type="button" class="hit font-medium text-primary-700 dark:text-primary-300">Show all ${all}</button>
+  </div>`;
+const vsDivider = () => `
+  <div class="relative flex h-5 items-center justify-center" aria-hidden="true">
+    <span class="absolute inset-x-6 top-1/2 border-t border-gray-100 dark:border-gray-800"></span>
+    <span class="relative rounded-full border border-gray-200 bg-white px-2 py-px text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500">vs</span>
+  </div>`;
+
+/* ------------------------------------------------------------------ tray, action bar, queue, menu */
+const trayChip = (label, ic = 'bell', muted = false) =>
+  `<button type="button" class="flex min-h-11 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold ${muted ? 'border-gray-200 bg-white text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500' : 'border-gray-200 bg-white text-gray-700 shadow-sm shadow-gray-900/[0.03] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'}">${icon(ic, 14, 'text-primary-600 dark:text-primary-400')}${label}</button>`;
+const lockBadge = () => `<span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">${icon('lock', 11)}Shares fixed at final score</span>`;
+const tray = ({ chips = [], total, outstanding, settled, locked = false }) => `
+  <div class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+    ${chips.length ? `<div class="flex flex-wrap gap-2">${chips.join('')}</div>` : ''}
+    <div class="${chips.length ? 'mt-2.5' : ''} flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+      <p class="text-xs text-gray-600 dark:text-gray-300 tnum"><span class="font-semibold text-gray-900 dark:text-white">Total €${total}</span>${outstanding ? `<span class="text-gray-300 dark:text-gray-600"> · </span>€${outstanding} outstanding` : ''}</p>
+      <p class="text-[11px] text-gray-500 dark:text-gray-400 tnum">${settled}</p>
+    </div>
+    ${locked ? `<div class="mt-2">${lockBadge()}</div>` : ''}
+  </div>`;
+const actionBar = ({ invite = true, manage = true } = {}) => `
+  <div class="mt-3 flex gap-2">
+    ${invite ? `<button class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-primary-200 bg-primary-50/80 px-3 py-2 text-sm font-medium text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300">
+      <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/60 dark:text-primary-400">${icon('userPlus', 16)}</span>Invite</button>` : ''}
+    ${manage ? `<button class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200">
+      <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">${icon('sliders', 16)}</span>Players</button>` : ''}
+  </div>`;
+const queue = (p) => `
+  <div class="mt-4">
+    <div class="mb-2 flex items-center justify-between">
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Waiting List</h3>
+      <span class="text-[11px] text-gray-500 dark:text-gray-400">1 waiting</span>
+    </div>
+    <div class="${ROW} gap-3 pe-1">
+      ${avatar(p, null)}
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-medium text-gray-900 dark:text-white">${PEOPLE[p].name}</p>
+        <p class="text-xs text-gray-600 dark:text-gray-400">Wants to join</p>
+      </div>
+      <button aria-label="Accept" class="flex h-11 w-11 items-center justify-center rounded-xl text-green-600 dark:text-green-400">${icon('checkCircle', 20)}</button>
+      <button aria-label="Decline" class="flex h-11 w-11 items-center justify-center rounded-xl text-gray-400 dark:text-gray-500">${icon('xCircle', 20)}</button>
+    </div>
+  </div>`;
+const menu = (who) => `
+  <div role="menu" class="absolute end-1 top-[calc(100%-4px)] z-40 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl shadow-gray-900/10 ring-1 ring-black/[0.02] dark:border-gray-700 dark:bg-gray-800">
+    <div role="menuitem" aria-disabled="true" class="flex min-h-11 items-center gap-3 px-3 text-sm text-gray-400 dark:text-gray-500">
+      ${icon('pencil', 16)}<span class="flex-1"><span class="block">Edit ${who}'s share</span><span class="flex items-center gap-1 text-[11px]">${icon('lock', 10)}Shares fixed at final score</span></span>
+    </div>
+    <div class="mx-3 border-t border-gray-100 dark:border-gray-700"></div>
+    <button role="menuitem" class="flex min-h-11 w-full items-center gap-3 px-3 text-start text-sm text-gray-800 dark:text-gray-100">${icon('userX', 16, 'text-gray-500')}Remove no-show note</button>
+    <button role="menuitem" class="flex min-h-11 w-full items-center gap-3 px-3 text-start text-sm text-gray-800 dark:text-gray-100">${icon('check', 16, 'text-gray-500')}Mark ${who} as paid</button>
+  </div>`;
+
+/* ------------------------------------------------------------------ chrome */
+const card = (inner) => `<div class="relative rounded-2xl border border-gray-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.10)] dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">${inner}</div>`;
+const phone = ({ n, caption, sub, body, dark = false }) => `
+  <figure class="shrink-0">
+    <figcaption class="mb-3 phone">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary-700">Frame ${n}${dark ? ' · dark' : ''}</p>
+      <p class="mt-0.5 text-sm font-semibold text-gray-900">${caption}</p>
+      <p class="mt-0.5 text-xs leading-snug text-gray-500">${sub}</p>
+    </figcaption>
+    <div class="${dark ? 'dark' : ''}">
+      <div class="phone overflow-hidden rounded-[40px] border-[6px] border-gray-900 bg-gray-50 shadow-2xl shadow-gray-900/20 dark:bg-gray-950">
+        <div class="flex h-11 items-center justify-between px-7 text-[13px] font-semibold text-gray-900 dark:text-white">
+          <span class="tnum">9:41</span><span class="h-6 w-24 rounded-full bg-gray-900"></span><span class="flex gap-1"><span class="h-2.5 w-4 rounded-sm bg-current opacity-80"></span></span>
+        </div>
+        <div class="flex h-11 items-center gap-2 px-3 text-gray-700 dark:text-gray-200">
+          <span class="flex h-9 w-9 items-center justify-center">${icon('chevronLeft', 22)}</span>
+          <span class="text-[15px] font-semibold">Game details</span>
+        </div>
+        <div class="px-3 pb-8 pt-1">
+          <div class="mb-3 h-14 rounded-2xl border border-gray-200 bg-white/70 px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900/60">
+            <div class="h-2.5 w-40 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+            <div class="mt-2 h-2 w-24 rounded-full bg-gray-100 dark:bg-gray-800"></div>
+          </div>
+          ${body}
+        </div>
+      </div>
+    </div>
+  </figure>`;
+
+/* ================================================================== FRAMES */
+
+/* 1 · Ana before the game, unanswered, Unpaid */
+const frame1Body = card(`
+  ${header({ title: 'Level 3.0–4.5', trophy: true, tags: ['Doubles'], playing: 4, max: 4 })}
+  ${seatStrip(['CONFIRMED', 'UNSURE', 'UNANSWERED', 'UNANSWERED'])}
+  ${legend({ coming: 1, unsure: 1, none: 2 })}
+  <div class="mt-3 space-y-1.5">
+    ${youPanel({ p: 'ana', state: 'UNANSWERED', share: { amount: '10.00', state: 'UNPAID', to: 'Marko' }, settledLine: '1 of 4 settled' })}
+    ${row({ p: 'marko', state: 'CONFIRMED', crown: true, payer: true })}
+    ${row({ p: 'ivo', state: 'UNSURE' })}
+    ${row({ p: 'lea', state: 'UNANSWERED' })}
+  </div>
+`);
+
+/* 2 · Ana after "I'm coming" + I paid */
+const frame2Body = card(`
+  ${header({ title: 'Level 3.0–4.5', trophy: true, tags: ['Doubles'], playing: 4, max: 4 })}
+  ${seatStrip(['CONFIRMED', 'CONFIRMED', 'UNSURE', 'UNANSWERED'])}
+  ${legend({ coming: 2, unsure: 1, none: 1 })}
+  <div class="mt-3 space-y-1.5">
+    ${youPanel({ p: 'ana', state: 'CONFIRMED', share: { amount: '10.00', state: 'MARKED_PAID', to: 'Marko' }, settledLine: '1 of 4 settled' })}
+    ${row({ p: 'marko', state: 'CONFIRMED', crown: true, payer: true })}
+    ${row({ p: 'ivo', state: 'UNSURE' })}
+    ${row({ p: 'lea', state: 'UNANSWERED' })}
+  </div>
+  <div class="pointer-events-none absolute inset-x-6 -bottom-5 flex justify-center">
+    <span class="rounded-full bg-gray-900 px-3 py-1.5 text-xs font-medium text-white shadow-lg dark:bg-white dark:text-gray-900">Marked as paid</span>
+  </div>
+`);
+
+/* 3 · Marko — organizer + payer, pre-game */
+const frame3Body = card(`
+  ${header({ title: 'Level 3.0–4.5', trophy: true, tags: ['Doubles'], playing: 3, max: 4, organizer: true })}
+  ${seatStrip(['CONFIRMED', 'CONFIRMED', 'UNANSWERED', null])}
+  ${legend({ coming: 2, none: 1 })}
+  <div class="mt-3 space-y-1.5">
+    ${ownerRow({ p: 'marko', share: { amount: '14.00', state: 'SETTLED' } })}
+    ${row({ p: 'ana', state: 'CONFIRMED', money: { amount: '14.00', state: 'MARKED_PAID' } })}
+    ${row({ p: 'lea', state: 'UNANSWERED', money: { amount: '14.00', state: 'UNPAID' } })}
+    ${invitePlayerRow()}
+  </div>
+  ${tray({
+    chips: [trayChip('Nudge · 1 no answer'), trayChip('Remind unpaid')],
+    total: '42.00', outstanding: '28.00', settled: '1 of 3 settled',
+  })}
+  ${actionBar()}
+  ${queue('petar')}
+`);
+
+/* 4 · Post-game ledger, organizer */
+const frame4Body = card(`
+  ${header({ title: 'Participants', tags: ['Doubles'], playing: 4, max: 4, organizer: false, subline: 'Final score entered', locked: true })}
+  <div class="mt-3 space-y-1.5">
+    ${row({ p: 'marko', state: 'CONFIRMED', crown: true, you: true, extraLine: `<p class="mt-0.5 flex items-center gap-1 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">${icon('wallet', 11)}paid the club</p>`, money: { amount: '10.00', state: 'SETTLED', toggle: false } })}
+    ${row({ p: 'ana', state: 'CONFIRMED', money: { amount: '10.00', state: 'SETTLED' } })}
+    ${row({ p: 'ivo', state: 'CONFIRMED', money: { amount: '10.00', state: 'SETTLED' } })}
+    <div class="relative">
+      ${row({ p: 'lea', state: 'NO_SHOW', extraLine: `<p class="mt-0.5 flex items-center gap-1.5">${noShowTag}</p>`, money: { amount: '10.00', state: 'UNPAID' }, menuOpen: true })}
+      ${menu('Lea')}
+    </div>
+  </div>
+  <div class="h-28"></div>
+  ${tray({ chips: [trayChip('Remind unpaid')], total: '40.00', outstanding: '10.00', settled: '3 of 4 settled', locked: true })}
+`);
+
+/* 5 · Mixed pairs, regular player (Ana), legend expanded */
+const frame5Body = card(`
+  ${header({ title: 'Level 3.0–4.5', trophy: true, tags: ['Mixed pairs'], playing: 3, max: 4 })}
+  ${groupedStrip([
+    { label: 'Women', count: '1/2', seats: ['UNSURE', null] },
+    { label: 'Men', count: '2/2', seats: ['CONFIRMED', 'CONFIRMED'] },
+  ])}
+  ${legend({ coming: 2, unsure: 1, open: true })}
+  <div class="mt-3 space-y-3">
+    <div>
+      <div class="mb-1.5 flex items-center justify-between px-0.5">
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Women</h3>
+        <span class="text-[11px] font-medium text-gray-500 tnum dark:text-gray-400">1/2</span>
+      </div>
+      <div class="space-y-1.5">
+        ${youPanel({ p: 'ana', state: 'UNSURE', share: { amount: '10.00', state: 'SETTLED', to: 'Marko' }, settledLine: '2 of 3 settled' })}
+        ${openSpot()}
+      </div>
+    </div>
+    <div>
+      <div class="mb-1.5 flex items-center justify-between px-0.5">
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Men</h3>
+        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-green-600 tnum dark:text-green-400">${icon('check', 11, '', 3)}2/2</span>
+      </div>
+      <div class="space-y-1.5">
+        ${row({ p: 'marko', state: 'CONFIRMED', crown: true, payer: true })}
+        ${row({ p: 'ivo', state: 'CONFIRMED' })}
+      </div>
+    </div>
+  </div>
+`);
+
+/* 6 · Singles 1v1, regular player (Ana vs Marko) */
+const frame6Body = card(`
+  ${header({ title: 'Level 3.0–4.5', trophy: true, tags: ['Singles'], playing: 2, max: 2 })}
+  ${seatStrip(['CONFIRMED', 'CONFIRMED'])}
+  <div class="mt-1 flex justify-between text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"><span>You</span><span>Marko</span></div>
+  ${legend({ coming: 2 })}
+  <div class="mt-3">
+    ${youPanel({ p: 'ana', state: 'CONFIRMED', share: { amount: '12.50', state: 'UNPAID', to: 'Marko' }, settledLine: '1 of 2 settled' })}
+    ${vsDivider()}
+    ${row({ p: 'marko', state: 'CONFIRMED', crown: true, payer: true })}
+  </div>
+`);
+
+/* 7 · Tournament, 24 entries, organizer — "No answer" filter active */
+const frame7Body = card(`
+  ${header({ title: 'Participants', tags: ['Tournament'], playing: 20, max: 24, organizer: true })}
+  ${stackedBar({ coming: 14, unsure: 3, none: 3, open: 4 })}
+  ${filterChips([['All', 20], ['Coming', 14], ['Not sure', 3], ['No answer', 3], ['Unpaid', 10, true], ['Settled', 9, true]], 'No answer')}
+  <div class="mt-3 space-y-1.5">
+    ${ownerRow({ p: 'marko', share: { amount: '15.00', state: 'SETTLED' } })}
+    ${row({ p: 'lea', state: 'UNANSWERED', money: { amount: '15.00', state: 'UNPAID' } })}
+    ${row({ p: 'nika', state: 'UNANSWERED', money: { amount: '15.00', state: 'MARKED_PAID' } })}
+    ${row({ p: 'petar', state: 'UNANSWERED', money: { amount: '15.00', state: 'UNPAID' } })}
+    ${filteredNote(3, 20)}
+    ${openSpotsLine(4, true)}
+  </div>
+  ${tray({
+    chips: [trayChip('Nudge · 3 no answer'), trayChip('Remind unpaid')],
+    total: '300.00', outstanding: '165.00', settled: '9 of 20 settled',
+  })}
+  ${actionBar()}
+`);
+
+/* 7b · Same tournament, regular player — no money beyond own share */
+const frame7bBody = card(`
+  ${header({ title: 'Participants', tags: ['Tournament'], playing: 20, max: 24 })}
+  ${stackedBar({ coming: 14, unsure: 3, none: 3, open: 4 })}
+  ${filterChips([['All', 20], ['Coming', 14], ['Not sure', 3], ['No answer', 3]], 'All')}
+  <div class="mt-3 space-y-1.5">
+    ${youPanel({ p: 'ana', state: 'CONFIRMED', share: { amount: '15.00', state: 'UNPAID', to: 'Marko' }, settledLine: '9 of 20 settled' })}
+    ${row({ p: 'marko', state: 'CONFIRMED', crown: true })}
+    ${row({ p: 'ivo', state: 'CONFIRMED' })}
+    ${row({ p: 'mia', state: 'UNSURE' })}
+    ${row({ p: 'luka', state: 'CONFIRMED' })}
+    ${row({ p: 'lea', state: 'UNANSWERED' })}
+    ${row({ p: 'toni', state: 'CONFIRMED' })}
+    ${row({ p: 'sara', state: 'UNSURE' })}
+    ${showAll(20, 12)}
+    ${openSpotsLine(4, false)}
+  </div>
+`);
+
+document.getElementById('frames').innerHTML = [
+  phone({ n: 1, caption: 'Regular player · before the game', sub: 'Ana hasn’t answered. 4/4 seats. She sees only her own share (€10.00 Unpaid) and the count “1 of 4 settled”.', body: frame1Body }),
+  phone({ n: 1, dark: true, caption: 'Regular player · before the game', sub: 'Same state, dark mode.', body: frame1Body }),
+  phone({ n: 2, caption: 'Regular player · answered + marked paid', sub: 'One tap each. Selection stays visible and re-tappable; the seat strip turns her seat green; chip moves to Marked paid until Marko confirms.', body: frame2Body }),
+  phone({ n: 3, caption: 'Organizer + payer (Marko)', sub: 'Money pills, 44px “received” toggles and ⋮ on every row. Own row compact and never asked “Are you coming?” (owner = Confirmed). Collector tray: Nudge, Remind unpaid, totals. 3/4 with Invite row and a waiting list.', body: frame3Body }),
+  phone({ n: 4, caption: 'Post-game ledger · organizer', sub: 'Results entered: no seat strip, no invite. Compact money rows, grey No-show tag (never red), shares locked. ⋮ menu shown open.', body: frame4Body }),
+  phone({ n: 5, caption: 'Mixed pairs · regular player', sub: 'Grouped sub-headers inside the same list; strip split per group. The “What the dots mean” legend expanded inline (no tooltip).', body: frame5Body }),
+  phone({ n: 6, caption: 'Singles (1v1) · regular player', sub: 'Same component, still one list. Two wide seat segments labelled You / Marko and a quiet “vs” divider make it read as a matchup; Ana’s panel holds attendance + €12.50.', body: frame6Body }),
+  phone({ n: 7, caption: 'Tournament · 24 entries · organizer', sub: '≥ 12 seats: stacked bar instead of segments. Filter chips (money chips dashed, collectors only) with “No answer” active, the moment before Nudge. Owner row compact, never asked. 4 open spots collapse to one line.', body: frame7Body }),
+  phone({ n: '7b', caption: 'Tournament · 24 entries · regular player', sub: 'Same bar and filters minus money chips. Own expanded row, then 7 more rows and “Show all 20”. No amounts on anyone else.', body: frame7bBody }),
+].join('');
+</script>
+</body>
+</html>
