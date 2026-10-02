@@ -32,6 +32,9 @@
       "reasonLabel": "理由（任意）",
       "reasonPlaceholder": "例：予定が合わない、ケガ…",
       "confirm": "辞退"
-    }
+    },
+    "fullForNow": "現在満員",
+    "fullForNowHint": "空きが出たらお知らせします",
+    "joinWaitlist": "キャンセル待ち"
   }
 }

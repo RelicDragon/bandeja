@@ -30,6 +30,7 @@ import { FindTabController } from '@/components/headerContent/FindTabController'
 import { PremiumBrand } from '@/components/navigation/PremiumBrand';
 import { usePremiumNavigationAppearance } from '@/hooks/usePremiumNavigationAppearance';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { usePendingInvitesBadgeCount } from '@/hooks/usePendingInvitesBadgeCount';
 import { useShallow } from 'zustand/react/shallow';
 
 interface HeaderProps {
@@ -46,13 +47,11 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const reduceMotion = usePrefersReducedMotion();
   // Narrow selectors: whole-store subscriptions re-rendered the header on every
   // write to any of these stores (invite polls, tab animations, chat flags).
-  const { pendingInvites, isNewInviteAnimating } = useHeaderStore(
-    useShallow((s) => ({ pendingInvites: s.pendingInvites, isNewInviteAnimating: s.isNewInviteAnimating })),
-  );
-  const { setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions } =
+  const isNewInviteAnimating = useHeaderStore((s) => s.isNewInviteAnimating);
+  const pendingInvites = usePendingInvitesBadgeCount();
+  const { profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions } =
     useShellNavStore(
       useShallow((s) => ({
-        setBounceNotifications: s.setBounceNotifications,
         profileActiveTab: s.profileActiveTab,
         setProfileActiveTab: s.setProfileActiveTab,
         userProfileHeaderActions: s.userProfileHeaderActions,
@@ -170,9 +169,14 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
     handleBack(navigate);
   };
 
-  const handleNotificationsClick = async () => {
-    setBounceNotifications(true);
-    navigate('/', { replace: true });
+  // `?focus=invites` switches Home to the calendar and scrolls to the invites section
+  // (useUrlStoreSync → MyTab). Same URL again does not re-run that sync, so bump directly.
+  const handleNotificationsClick = () => {
+    if (location.pathname === '/' && new URLSearchParams(location.search).get('focus') === 'invites') {
+      useShellNavStore.getState().bumpRequestFocusInvites();
+      return;
+    }
+    navigate('/?focus=invites', { replace: true });
   };
 
   if (shouldHideHeader) {

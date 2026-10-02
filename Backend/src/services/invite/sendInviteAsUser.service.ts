@@ -7,7 +7,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
-import { isInviteInboxVisible } from '../../utils/gameInviteInbox';
+import { isInviteInboxListed } from '../../utils/gameInviteInbox';
 import { appendGameLog } from '../game/gameLog.service';
 import { assertCanInviteToGame } from '../game/canInviteToGame';
 import { ParticipantService } from '../game/participant.service';
@@ -180,7 +180,7 @@ export async function sendInviteAsUser(
   // Emit notification to receiver via Socket.IO
   const socketService = (global as { socketService?: { emitNewInvite: (userId: string, invite: unknown) => void } })
     .socketService;
-  if (socketService && isInviteInboxVisible(invite)) {
+  if (socketService && isInviteInboxListed(invite)) {
     socketService.emitNewInvite(receiverId, invite);
   }
 

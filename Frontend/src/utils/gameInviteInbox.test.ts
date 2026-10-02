@@ -5,6 +5,7 @@ import {
   countPlayingParticipants,
   didPlayingSlotOpen,
   filterInboxVisibleInvites,
+  isInviteInboxListed,
   isInviteInboxVisible,
   isInvitePlaySlotFull,
   isPlayingRosterFull,
@@ -19,10 +20,12 @@ describe('gameInviteInbox', () => {
     expect(countPlayingParticipants([...playing(3), { status: 'INVITED' }])).toBe(3);
   });
 
-  it('hides inbox invites while PLAYING is at maxParticipants', () => {
+  it('keeps full-game invites listed but not actionable while PLAYING is at maxParticipants', () => {
     const fullGame = { maxParticipants: 4, participants: playing(4), entityType: 'GAME' };
     expect(isPlayingRosterFull(fullGame)).toBe(true);
     expect(isInviteInboxVisible({ status: 'PENDING', game: fullGame }, now)).toBe(false);
+    expect(isInviteInboxListed({ status: 'PENDING', game: fullGame }, now)).toBe(true);
+    expect(isInviteInboxListed({ status: 'PENDING', game: { ...fullGame, status: 'ARCHIVED' } }, now)).toBe(false);
     expect(
       isInviteInboxVisible({ status: 'PENDING', game: { ...fullGame, participants: playing(3) } }, now),
     ).toBe(true);

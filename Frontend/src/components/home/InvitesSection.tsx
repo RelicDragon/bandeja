@@ -11,6 +11,8 @@ import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
 import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { isInvitePlaySlotFull } from '@/utils/gameInviteInbox';
+import { InviteFullRow } from './InviteFullRow';
 
 interface InvitesSectionProps {
   invites: Invite[];
@@ -68,6 +70,9 @@ const InvitesSectionView = ({
   const isHiding = (inviteId: string) =>
     hidingInvites.has(inviteId) || (decliningInviteIds?.has(inviteId) ?? false);
 
+  const openInvites = invites.filter((invite) => !isInvitePlaySlotFull(invite));
+  const fullInvites = invites.filter((invite) => isInvitePlaySlotFull(invite));
+
   return (
     <AnimatedMount layout className="mb-6">
       <h2
@@ -77,7 +82,7 @@ const InvitesSectionView = ({
         {t('invites.title')} ({invites.length})
       </h2>
       <div className="space-y-3">
-        {invites.map((invite) => {
+        {openInvites.map((invite) => {
           const gameId = invite.gameId;
 
           const inviteLevelSport = invite.game?.sport ? parseGameSport(invite.game.sport) : undefined;
@@ -170,6 +175,21 @@ const InvitesSectionView = ({
             </SportLevelProvider>
           );
         })}
+        {fullInvites.length > 0 && (
+          <div className="space-y-2">
+            {fullInvites.map((invite) => (
+              <InviteFullRow
+                key={invite.id}
+                invite={invite}
+                hiding={isHiding(invite.id)}
+                onOpen={() => invite.gameId && navigate(`/games/${invite.gameId}`)}
+                onJoinWaitlist={() => handleAccept(invite.id)}
+                onDecline={() => handleDecline(invite.id)}
+                onHideAnimationEnd={() => handleHideAnimationEnd(invite.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </AnimatedMount>
   );

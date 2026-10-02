@@ -151,9 +151,7 @@ export function createCallbackHandler(
           const chat = query.message.chat;
           if ('id' in chat && typeof chat.id === 'number') {
             const statusText = result.success
-              ? (action === 'accept'
-                ? t('telegram.inviteAccepted', lang)
-                : t('telegram.inviteDeclined', lang))
+              ? t(result.message, lang)
               : (t(result.message, lang) || t('telegram.inviteActionError', lang));
 
             try {
@@ -315,9 +313,9 @@ export function createCallbackHandler(
         const lang = getUserLanguage(user.language, ctx.from?.language_code);
         const saved = await setAttendanceFromAction(user.id, parsed.gameId, parsed.answer);
 
-        if (!saved) {
+        if (!saved.ok) {
           await ctx.answerCallbackQuery({
-            text: t('errors.attendance.notParticipant', lang),
+            text: t(saved.errorKey, lang),
             show_alert: true,
           });
           return;
@@ -333,13 +331,12 @@ export function createCallbackHandler(
         if (query.message && 'text' in query.message && query.message.text && query.message.chat) {
           const chat = query.message.chat;
           if ('id' in chat && typeof chat.id === 'number') {
+            // `message.text` is the rendered plain text (entities stripped), so
+            // re-sending it under a parse mode breaks on any `_`, `*` or `[` in
+            // a name or game title. Send it back as plain text.
             const originalMessage = query.message.text;
-            const isHTML = originalMessage.includes('<') && originalMessage.includes('>');
-            const parseMode = isHTML ? 'HTML' : 'Markdown';
-            const escapeFunction = isHTML ? escapeHTML : escapeMarkdown;
             const cleanedMessage = originalMessage.replace(/^(✅|🤔)[^\n]*(?:\n\n?)?/s, '');
-            const updatedMessage =
-              escapeFunction(statusText) + '\n\n' + cleanedMessage.trim();
+            const updatedMessage = statusText + '\n\n' + cleanedMessage.trim();
 
             try {
               // Keep the "View game" row, drop the two answer buttons.
@@ -347,7 +344,6 @@ export function createCallbackHandler(
                 (row) => !row.some((button) => 'callback_data' in button && typeof button.callback_data === 'string' && button.callback_data.startsWith('at:')),
               );
               await ctx.api.editMessageText(chat.id, query.message.message_id, updatedMessage, {
-                parse_mode: parseMode,
                 reply_markup: { inline_keyboard: keptRows },
               });
             } catch (editError) {

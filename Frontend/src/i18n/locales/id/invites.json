@@ -32,6 +32,9 @@
       "reasonLabel": "Alasan (opsional)",
       "reasonPlaceholder": "mis. konflik jadwal, cedera…",
       "confirm": "Tolak"
-    }
+    },
+    "fullForNow": "Penuh untuk saat ini",
+    "fullForNowHint": "Kami kabari jika ada tempat",
+    "joinWaitlist": "Daftar tunggu"
   }
 }

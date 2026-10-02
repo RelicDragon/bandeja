@@ -15,6 +15,7 @@ import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
+import { isInvitePlaySlotFull } from '../../../utils/gameInviteInbox';
 
 export async function sendInviteNotification(
   api: Api,
@@ -71,10 +72,16 @@ export async function sendInviteNotification(
     message += `\n\n💬 ${escapeMarkdown(invite.message)}`;
   }
 
+  // A full game keeps the invite: say so and offer the waitlist (accept queues while full).
+  const full = isInvitePlaySlotFull(invite);
+  if (full) {
+    message += `\n\n⏳ ${escapeMarkdown(t('telegram.inviteFullForNow', lang))}`;
+  }
+
   const buttons = [
     [
       {
-        text: t('telegram.acceptInvite', lang),
+        text: t(full ? 'telegram.joinWaitlist' : 'telegram.acceptInvite', lang),
         callback_data: `ia:${invite.id}:accept`
       },
       {

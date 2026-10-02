@@ -16,7 +16,7 @@ import { applyUserTeamToFixedTeamsIfReady } from '../game/userTeamFixedTeams.ser
 import { ParticipantMessageHelper } from '../game/participantMessageHelper';
 import notificationService from '../notification.service';
 import { validateGameCanAcceptParticipants, validateGenderForGame } from '../../utils/participantValidation';
-import { isInviteInboxVisible, type InboxInviteLike } from '../../utils/gameInviteInbox';
+import { isInviteInboxListed, type InboxInviteLike } from '../../utils/gameInviteInbox';
 import {
   acceptedMemberUserIds,
   classifyMembersForAddToGame,
@@ -67,7 +67,7 @@ async function emitCreatedGameInvite(
       metadata: { inviteId: invite.id, asTrainer: false },
     });
   }
-  if (isInviteInboxVisible(invite)) {
+  if (isInviteInboxListed(invite)) {
     const sockets = (global as { socketService?: { emitNewInvite: (id: string, payload: unknown) => void } }).socketService;
     sockets?.emitNewInvite(receiverId, invite);
   }

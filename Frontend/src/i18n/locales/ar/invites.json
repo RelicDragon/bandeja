@@ -32,6 +32,9 @@
       "reasonLabel": "السبب (اختياري)",
       "reasonPlaceholder": "مثال: تعارض في الموعد، إصابة…",
       "confirm": "رفض"
-    }
+    },
+    "fullForNow": "مكتمل حاليًا",
+    "fullForNowHint": "سنخبرك عند توفر مكان",
+    "joinWaitlist": "قائمة الانتظار"
   }
 }

@@ -1,8 +1,9 @@
-import { Calendar, History, Sparkles } from 'lucide-react';
+import { Calendar, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
+import { AgentGlyph } from '@/components/agent/AgentGlyph';
 
 export const MyGamesTabController = () => {
   const { t } = useTranslation();
@@ -28,7 +29,7 @@ export const MyGamesTabController = () => {
   const tabs: SegmentedSwitchTab[] = [
     { id: 'calendar', label: t('games.calendar'), icon: Calendar },
     { id: 'past-games', label: t('home.past'), icon: History },
-    { id: 'ai', label: t('agent.tab'), icon: Sparkles },
+    { id: 'ai', label: t('agent.tab'), icon: AgentGlyph },
   ];
 
   return (

@@ -32,6 +32,9 @@
       "reasonLabel": "Důvod (volitelné)",
       "reasonPlaceholder": "např. časová kolize, zranění…",
       "confirm": "Odmítnout"
-    }
+    },
+    "fullForNow": "Zatím plno",
+    "fullForNowHint": "Dáme vědět, až se uvolní místo",
+    "joinWaitlist": "Na čekací listinu"
   }
 }

@@ -10,7 +10,7 @@ assert.match(shapeSrc, /genderTeams: true/);
 assert.match(shapeSrc, /participants:/);
 assert.match(participantSrc, /inboxInviteGameSelect/);
 assert.match(participantSrc, /mapInvitedParticipantToInboxInvite\(participant\)/);
-assert.match(sendInviteServiceSrc, /isInviteInboxVisible\(invite\)/);
+assert.match(sendInviteServiceSrc, /isInviteInboxListed\(invite\)/);
 assert.match(sendInviteServiceSrc, /inboxInviteGameSelect/);
 
 console.log('ok: sendInviteInbox.contract.test.ts');

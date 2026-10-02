@@ -23,6 +23,8 @@ Unified dispatch: `Backend/src/services/notification.service.ts`. Types: `Backen
 | `GOODS_GIFT_RECEIVED` | `sendWalletNotifications` | Another player gifted a shop item |
 | `GAME_WEATHER_ALERT` | `sendWeatherAlerts` | Outdoor game at rain/wind risk, 12 h out (and once more if the severity class rises) ([weather.md](./weather.md)) |
 
+**Full-game invites** (`INVITE`, push and Telegram) keep the invite and say so: when `isInvitePlaySlotFull(invite)` the body gains `telegram.inviteFullForNow` and the accept button reads **Join waitlist** (`telegram.joinWaitlist`). Accept is unchanged: while full, `InviteService.acceptInvite` queues the invitee (`games.addedToJoinQueue`), and Telegram answers `telegram.inviteQueued` instead of "accepted". Android shows the payload label; iOS `INVITE` is a static category and keeps "Accept" (same action). When a seat frees, `notifyPendingInvitesIfPlayingSlotOpened` re-sends the invite push with `{ spotOpened: true }` → title `telegram.inviteSpotOpenedTitle` ("A spot opened up"). Pinned by `fullInviteCopy.contract.test.ts` (`npm run test:invite-inbox`).
+
 The referral **payout** deliberately reuses `TRANSACTION` rather than adding a type: it inherits the wallet preference, the push plumbing and the Telegram template. The referral variant is flagged by `data.referralReward === '1'` plus its own copy.
 
 Payload prep: `preparePushPayload.ts` (reply token, collapse key, unread badge). Chat category: `chat-push-reply.utils.ts` (`PUSH_CATEGORY_CHAT_REPLY`, APNs mutable-content).

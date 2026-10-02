@@ -20,7 +20,7 @@ export type PendingInviteSlotOpenOptions = {
 export function createSlotOpenInviteNotifier(): SlotOpenInviteNotifier {
   return {
     sendPush: async (invite) => {
-      const payload = await createInvitePushNotification(invite);
+      const payload = await createInvitePushNotification(invite, { spotOpened: true });
       if (!payload) return;
       await notificationService.sendNotification({
         userId: invite.receiverId,

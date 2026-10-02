@@ -32,6 +32,9 @@
       "reasonLabel": "Motivo (opcional)",
       "reasonPlaceholder": "p. ej. conflicto de horario, lesión…",
       "confirm": "Rechazar"
-    }
+    },
+    "fullForNow": "Completo por ahora",
+    "fullForNowHint": "Te avisaremos si se libera una plaza",
+    "joinWaitlist": "Lista de espera"
   }
 }

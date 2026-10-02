@@ -7,7 +7,7 @@ import {
   type MyGamesData,
 } from '@/queries/games/useMyGamesQuery';
 import { queryKeys } from '@/queries/queryKeys';
-import { filterInboxVisibleInvites } from '@/utils/gameInviteInbox';
+import { filterInboxListedInvites, isInvitePlaySlotFull } from '@/utils/gameInviteInbox';
 import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnlyMyGames';
 import { excludeUnoptedEventsFromMyGames } from '@/utils/eventMyTabMembership';
 
@@ -32,11 +32,15 @@ export const useMyGames = (
     [data?.games, userId],
   );
   // Memoised so the invites list keeps its identity across the tab's unrelated
-  // re-renders and `InvitesSection` can skip them.
-  const invites = useMemo(
-    () => filterInboxVisibleInvites<Invite>(data?.invites ?? EMPTY_INVITES),
-    [data?.invites],
-  );
+  // re-renders and `InvitesSection` can skip them. Full-game invites stay listed
+  // (as compact rows) after the ones with a free seat; stable sort keeps server order.
+  const invites = useMemo(() => {
+    const listed = filterInboxListedInvites<Invite>(data?.invites ?? EMPTY_INVITES);
+    return [
+      ...listed.filter((invite) => !isInvitePlaySlotFull(invite)),
+      ...listed.filter((invite) => isInvitePlaySlotFull(invite)),
+    ];
+  }, [data?.invites]);
   const unreadCounts = data?.unreadCounts ?? EMPTY_UNREAD_COUNTS;
 
   const setInvites = useCallback(

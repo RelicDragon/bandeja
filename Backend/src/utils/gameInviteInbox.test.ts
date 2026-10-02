@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import {
   countPlayingParticipants,
   didPlayingSlotOpen,
+  filterInboxListedInvites,
   filterInboxVisibleInvites,
+  isInviteInboxListed,
   isInviteInboxVisible,
   isInvitePlaySlotFull,
   isPlayingRosterFull,
@@ -177,6 +179,27 @@ const invited = { status: 'INVITED' as const };
     }).map((invite) => invite.id),
     [],
     'MIX_PAIRS gender-slot notify requires the leaving player gender',
+  );
+}
+
+{
+  const fullGame = { maxParticipants: 4, participants: playing(4), status: 'ANNOUNCED' };
+  assert.equal(isInviteInboxListed({ status: 'INVITED', game: fullGame }, now), true, 'full game stays listed');
+  assert.equal(isInviteInboxVisible({ status: 'INVITED', game: fullGame }, now), false, 'full game does not badge');
+  assert.equal(
+    isInviteInboxListed({ status: 'INVITED', game: { ...fullGame, resultsStatus: 'IN_PROGRESS' } }, now),
+    false,
+  );
+  assert.equal(
+    isInviteInboxListed({ status: 'INVITED', inviteExpiresAt: '2026-08-20T11:00:00.000Z', game: fullGame }, now),
+    false,
+  );
+  assert.deepEqual(
+    filterInboxListedInvites([
+      { id: 'full', status: 'INVITED', game: fullGame },
+      { id: 'gone', status: 'DECLINED', game: fullGame },
+    ], now).map((invite) => invite.id),
+    ['full'],
   );
 }
 

@@ -10,9 +10,16 @@ import { NotificationPreferenceService } from '../../notificationPreference.serv
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { signPushInviteActionToken } from '../pushInviteActionToken.service';
+import { isInvitePlaySlotFull } from '../../../utils/gameInviteInbox';
+
+export type InvitePushOptions = {
+  /** Re-send after a PLAYING seat freed up (`notifyPendingInvitesIfPlayingSlotOpened`). */
+  spotOpened?: boolean;
+};
 
 export async function createInvitePushNotification(
-  invite: any
+  invite: any,
+  options: InvitePushOptions = {},
 ): Promise<NotificationPayload | null> {
   const allowed = await NotificationPreferenceService.doesUserAllow(invite.receiverId, NotificationChannelType.PUSH, PreferenceKey.SEND_INVITES);
   if (!allowed) return null;
@@ -43,13 +50,20 @@ export async function createInvitePushNotification(
   );
   const gameInfo = await formatGameInfoForUser(invite.game, receiver.currentCityId, lang);
 
+  // A full game keeps the invite: say so and offer the waitlist (accept queues while full).
+  const full = !options.spotOpened && isInvitePlaySlotFull(invite);
+
   const title = withOptionalSportPrefix(
-    t('telegram.inviteReceived', lang),
+    t(options.spotOpened ? 'telegram.inviteSpotOpenedTitle' : 'telegram.inviteReceived', lang),
     invite.game.sport,
     receiver.primarySport,
     lang,
   );
-  const body = `${senderDisplay} ${t('telegram.invitedYou', lang)}\n${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const schedule = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
+  const lead = `${senderDisplay} ${t('telegram.invitedYou', lang)}`;
+  const body = full
+    ? `${lead}\n${schedule}\n${t('telegram.inviteFullForNow', lang)}`
+    : `${lead}\n${schedule}`;
 
   return {
     type: NotificationType.INVITE,
@@ -77,7 +91,7 @@ export async function createInvitePushNotification(
     actions: [
       {
         id: 'accept',
-        title: t('telegram.acceptInvite', lang),
+        title: t(full ? 'telegram.joinWaitlist' : 'telegram.acceptInvite', lang),
         action: 'accept'
       },
       {

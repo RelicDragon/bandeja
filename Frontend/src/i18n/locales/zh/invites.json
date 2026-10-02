@@ -32,6 +32,9 @@
       "reasonLabel": "原因（可选）",
       "reasonPlaceholder": "例如：时间冲突、受伤…",
       "confirm": "拒绝"
-    }
+    },
+    "fullForNow": "暂时已满",
+    "fullForNowHint": "有空位时会通知你",
+    "joinWaitlist": "加入候补"
   }
 }

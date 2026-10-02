@@ -19,7 +19,7 @@ import { ParticipantMessageHelper } from './game/participantMessageHelper';
 import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges, publishMatchingGamesChangedForGameId } from './playIntent/playIntentRealtime';
 import { consumeLookingIntentOnPlayingJoin } from './playIntent/playIntentPlayingJoin';
-import { isInviteInboxVisible } from '../utils/gameInviteInbox';
+import { isInviteInboxListed } from '../utils/gameInviteInbox';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
 import { assertSlotOverlapConfirmed } from './game/gameSlotOverlap.service';
 import { GameSeatService } from './gameSeat/gameSeat.service';
@@ -129,8 +129,10 @@ export class InviteService {
     });
     const now = new Date();
     return participants
+      // Full games stay listed: the client shows a "full for now" row and badges only open seats.
+      // Store builds filter full invites client-side, so this stays compatible with them.
       .filter((p) =>
-        isInviteInboxVisible(
+        isInviteInboxListed(
           {
             status: p.status,
             inviteExpiresAt: p.inviteExpiresAt,

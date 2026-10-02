@@ -32,6 +32,9 @@
       "reasonLabel": "Причина (необязательно)",
       "reasonPlaceholder": "например, занят, травма…",
       "confirm": "Отклонить"
-    }
+    },
+    "fullForNow": "Мест пока нет",
+    "fullForNowHint": "Сообщим, когда место освободится",
+    "joinWaitlist": "В лист ожидания"
   }
 }

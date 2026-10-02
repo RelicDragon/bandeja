@@ -33,6 +33,9 @@
       "reasonLabel": "Razlog (opciono)",
       "reasonPlaceholder": "npr. zauzetost, povreda…",
       "confirm": "Odbij"
-    }
+    },
+    "fullForNow": "Trenutno popunjeno",
+    "fullForNowHint": "Javićemo kad se oslobodi mesto",
+    "joinWaitlist": "Lista čekanja"
   }
 }

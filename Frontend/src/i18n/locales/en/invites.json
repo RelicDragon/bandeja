@@ -32,6 +32,9 @@
       "reasonLabel": "Reason (optional)",
       "reasonPlaceholder": "e.g. scheduling conflict, injury…",
       "confirm": "Decline"
-    }
+    },
+    "fullForNow": "Full right now",
+    "fullForNowHint": "We'll tell you when a spot opens",
+    "joinWaitlist": "Join waitlist"
   }
 }

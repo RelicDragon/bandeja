@@ -125,7 +125,11 @@ export function isInviteRosterClosed(
   return game.resultsStatus != null && game.resultsStatus !== 'NONE';
 }
 
-export function isInviteInboxVisible(
+/**
+ * Still a live invite (pending, not expired, roster open). A listed invite may sit on a
+ * full game: the inbox shows it as a one-line "full for now" row and it does not badge.
+ */
+export function isInviteInboxListed(
   invite: InboxInviteLike,
   now: Date = new Date(),
 ): boolean {
@@ -134,8 +138,22 @@ export function isInviteInboxVisible(
   const expiresAt = invite.expiresAt ?? invite.inviteExpiresAt;
   if (!isInviteExpiryActive(expiresAt, now)) return false;
   if (!invite.game) return true;
-  if (isInviteRosterClosed(invite.game)) return false;
-  return !isInvitePlaySlotFull(invite);
+  return !isInviteRosterClosed(invite.game);
+}
+
+/** Listed and a seat is free for the invitee: the invite badges and can be accepted into PLAYING. */
+export function isInviteInboxVisible(
+  invite: InboxInviteLike,
+  now: Date = new Date(),
+): boolean {
+  return isInviteInboxListed(invite, now) && !isInvitePlaySlotFull(invite);
+}
+
+export function filterInboxListedInvites<T extends InboxInviteLike>(
+  invites: T[],
+  now: Date = new Date(),
+): T[] {
+  return invites.filter((invite) => isInviteInboxListed(invite, now));
 }
 
 export function filterInboxVisibleInvites<T extends InboxInviteLike>(

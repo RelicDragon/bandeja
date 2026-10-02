@@ -32,6 +32,9 @@
       "reasonLabel": "कारण (वैकल्पिक)",
       "reasonPlaceholder": "जैसे समय की टक्कर, चोट…",
       "confirm": "अस्वीकार करें"
-    }
+    },
+    "fullForNow": "अभी भरा हुआ है",
+    "fullForNowHint": "जगह खुलने पर हम बताएंगे",
+    "joinWaitlist": "प्रतीक्षा सूची"
   }
 }

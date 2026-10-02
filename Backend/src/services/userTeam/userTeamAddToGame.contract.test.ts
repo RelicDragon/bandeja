@@ -10,7 +10,7 @@ assert.match(sendInviteServiceSrc, /stampInviteUserTeamId/);
 assert.match(sendInviteServiceSrc, /resolvedInviteUserTeamId/);
 assert.match(inviteControllerSrc, /resolvedInviteUserTeamId/);
 assert.match(addToGameSrc, /toPromoteFromQueue/);
-assert.match(addToGameSrc, /isInviteInboxVisible/);
+assert.match(addToGameSrc, /isInviteInboxListed/);
 assert.match(addToGameSrc, /viewerCanInviteFromLoadedGame/);
 assert.match(addToGameSrc, /includeFullGameForPartner/);
 assert.match(addToGameSrc, /emitCreatedGameInvite/);

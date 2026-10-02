@@ -9,7 +9,8 @@ export async function acceptInviteFromTelegram(
   if (result.success) {
     return {
       success: true,
-      message: 'telegram.inviteAccepted',
+      // A full game queues the invitee instead of seating them.
+      message: result.message === 'games.addedToJoinQueue' ? 'telegram.inviteQueued' : 'telegram.inviteAccepted',
     };
   }
   
