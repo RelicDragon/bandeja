@@ -309,6 +309,7 @@
       "USER_NOTED_NO_SHOW": "{{userName}} को अनुपस्थित के रूप में चिह्नित किया गया",
       "GAME_SPOT_OPENED": "एक जगह खाली हुई ({{userName}} बाहर हुए)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} को कतार से शामिल किया गया",
+      "LEAGUE_GROUP_CHAT_CREATED": "{{groupName}} के लिए चैट बनाई गई",
       "GAME_MOVED_INDOOR": "{{courtName}} (इनडोर) पर ले जाया गया"
     },
     "openChat": "चैट खोलें",

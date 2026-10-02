@@ -29,6 +29,7 @@ export const GameChatContextArea: React.FC = () => {
     <>
       {!showLoadingHeader && !panels.showParticipantsPage && !panels.showItemPage && (
         <ChatContextPanel
+          key={`${contextType}:${id}`}
           contextType={contextType as 'GAME' | 'USER' | 'GROUP'}
           bug={bug}
           marketItem={groupChannel?.marketItem}

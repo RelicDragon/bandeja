@@ -36,6 +36,8 @@ export enum SystemMessageType {
   GAME_SPOT_OPENED = 'GAME_SPOT_OPENED',
   /** PRD 347 — auto-fill seated the first player in the queue. */
   GAME_SEAT_AUTO_FILLED = 'GAME_SEAT_AUTO_FILLED',
+  /** Auto-managed league group chat was created (first message, so the chat surfaces in lists). */
+  LEAGUE_GROUP_CHAT_CREATED = 'LEAGUE_GROUP_CHAT_CREATED',
 }
 
 export interface SystemMessageTemplate {
@@ -204,6 +206,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.GAME_SEAT_AUTO_FILLED,
     template: '{{userName}} was seated from the queue',
     variables: ['userName'],
+  },
+  [SystemMessageType.LEAGUE_GROUP_CHAT_CREATED]: {
+    type: SystemMessageType.LEAGUE_GROUP_CHAT_CREATED,
+    template: 'Chat for {{groupName}} has been created',
+    variables: ['groupName'],
   },
 };
 

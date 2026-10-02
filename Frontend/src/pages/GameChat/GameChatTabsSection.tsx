@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { ChatType } from '@/types';
 import { GameChatTabs } from './GameChatTabs';
 import { useThreadChrome } from './useThreadView';
+import { useLeagueSeasonGroupChats } from './useLeagueSeasonGroupChats';
 
-/** Game chat type tabs — chrome seam only. */
+const SEASON_CHAT_TYPES: ChatType[] = ['PUBLIC'];
+
+/** Game chat type tabs — chrome seam only. League seasons add the viewer's group chats as tabs. */
 export const GameChatTabsSection: React.FC = () => {
+  const navigate = useNavigate();
   const {
     contextType,
     game,
+    groupChannel,
     derived,
     showLoadingHeader,
     currentChatType,
@@ -16,6 +23,29 @@ export const GameChatTabsSection: React.FC = () => {
     handleChatTypeChange,
   } = useThreadChrome();
 
+  const leagueGroupSeasonId = contextType === 'GROUP' ? groupChannel?.leagueGroup?.leagueSeasonId ?? null : null;
+  const leagueSeasonId =
+    contextType === 'GAME' && game?.entityType === 'LEAGUE_SEASON' ? game.id : leagueGroupSeasonId;
+  const groupChats = useLeagueSeasonGroupChats(leagueSeasonId);
+
+  const openGroupChat = useCallback(
+    (groupChannelId: string) => {
+      navigate(`/group-chat/${groupChannelId}`, { replace: true, state: { contextType: 'GROUP' } });
+    },
+    [navigate]
+  );
+
+  const openSeasonChat = useCallback(
+    (chatType: ChatType) => {
+      if (!leagueGroupSeasonId) return;
+      navigate(`/games/${leagueGroupSeasonId}/chat`, {
+        replace: true,
+        state: { contextType: 'GAME', initialChatType: chatType },
+      });
+    },
+    [navigate, leagueGroupSeasonId]
+  );
+
   const chromeSettling = isThreadOpenSettling || isInitialLoad;
   const showGameChatTabs =
     !showLoadingHeader &&
@@ -23,8 +53,9 @@ export const GameChatTabsSection: React.FC = () => {
     ((derived.isParticipant && derived.isPlayingParticipant) ||
       derived.isAdminOrOwner ||
       (game?.status && game.status !== 'ANNOUNCED'));
+  const showLeagueGroupTabs = !showLoadingHeader && leagueGroupSeasonId != null && groupChats.length > 0;
 
-  if (!showGameChatTabs) return null;
+  if (!showGameChatTabs && !showLeagueGroupTabs) return null;
 
   return (
     <div
@@ -34,12 +65,26 @@ export const GameChatTabsSection: React.FC = () => {
           : 'relative flex-shrink-0 z-[2]'
       }
     >
-      <GameChatTabs
-        availableChatTypes={derived.availableChatTypes}
-        currentChatType={currentChatType}
-        isSwitchingChatType={isSwitchingChatType}
-        onChatTypeChange={handleChatTypeChange}
-      />
+      {showLeagueGroupTabs ? (
+        <GameChatTabs
+          availableChatTypes={SEASON_CHAT_TYPES}
+          currentChatType="PUBLIC"
+          isSwitchingChatType={false}
+          onChatTypeChange={openSeasonChat}
+          groupChats={groupChats}
+          activeGroupChatId={groupChannel?.id ?? null}
+          onOpenGroupChat={openGroupChat}
+        />
+      ) : (
+        <GameChatTabs
+          availableChatTypes={derived.availableChatTypes}
+          currentChatType={currentChatType}
+          isSwitchingChatType={isSwitchingChatType}
+          onChatTypeChange={handleChatTypeChange}
+          groupChats={groupChats}
+          onOpenGroupChat={openGroupChat}
+        />
+      )}
     </div>
   );
 };

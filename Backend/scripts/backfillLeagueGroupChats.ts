@@ -12,6 +12,7 @@ import prisma from '../src/config/database';
 import {
   LeagueGroupChatService,
   buildLeagueGroupChatMembers,
+  postLeagueGroupChatCreatedMessage,
   leagueGroupChatName,
 } from '../src/services/league/leagueGroupChat.service';
 
@@ -69,9 +70,14 @@ async function run(): Promise<void> {
   await LeagueGroupChatService.reconcileSeason(JESEN_ZIMA_2026_SEASON_ID, { announce: false });
   const chats = await prisma.groupChannel.findMany({
     where: { leagueGroup: { leagueSeasonId: JESEN_ZIMA_2026_SEASON_ID } },
-    select: { id: true, name: true, participantsCount: true },
+    select: { id: true, name: true, participantsCount: true, leagueGroup: { select: { name: true } } },
   });
-  for (const c of chats) console.log(`  ✓ ${c.name} (${c.id}): ${c.participantsCount} members`);
+  for (const c of chats) {
+    // Chats created before the "created" message existed have no messages and sink in chat lists.
+    const hasMessages = await prisma.chatMessage.count({ where: { chatContextType: 'GROUP', contextId: c.id } });
+    if (hasMessages === 0 && c.leagueGroup) await postLeagueGroupChatCreatedMessage(c.id, c.leagueGroup.name);
+    console.log(`  ✓ ${c.name} (${c.id}): ${c.participantsCount} members${hasMessages === 0 ? ', posted created message' : ''}`);
+  }
 }
 
 run()

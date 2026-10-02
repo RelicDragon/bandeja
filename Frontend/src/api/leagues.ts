@@ -355,6 +355,8 @@ export interface LeagueGroupWithParticipants extends LeagueGroup {
 export interface LeagueGroupChatLink {
   leagueGroupId: string;
   groupChannelId: string;
+  groupName?: string;
+  color?: string | null;
 }
 
 export interface LeagueGroupManagementPayload {

@@ -311,6 +311,7 @@
       "USER_NOTED_NO_SHOW": "{{userName}} je označen kao nedolazak",
       "GAME_SPOT_OPENED": "Oslobodilo se mesto ({{userName}} je izašao)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} je ušao iz reda čekanja",
+      "LEAGUE_GROUP_CHAT_CREATED": "Kreirano je ćaskanje za {{groupName}}",
       "GAME_MOVED_INDOOR": "Prebačeno na {{courtName}} (zatvoren)"
     },
     "openChat": "Otvori ćaskanje",

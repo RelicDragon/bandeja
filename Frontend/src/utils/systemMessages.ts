@@ -38,6 +38,7 @@ export enum SystemMessageType {
   GAME_SPOT_OPENED = 'GAME_SPOT_OPENED',
   /** PRD 347 — auto-fill seated the first player in the queue. */
   GAME_SEAT_AUTO_FILLED = 'GAME_SEAT_AUTO_FILLED',
+  LEAGUE_GROUP_CHAT_CREATED = 'LEAGUE_GROUP_CHAT_CREATED',
 }
 
 export interface SystemMessageData {
@@ -77,6 +78,7 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.GAME_MOVED_INDOOR]: 'Moved to {{courtName}} (indoor)',
   [SystemMessageType.GAME_SPOT_OPENED]: 'A spot opened ({{userName}} left)',
   [SystemMessageType.GAME_SEAT_AUTO_FILLED]: '{{userName}} was seated from the queue',
+  [SystemMessageType.LEAGUE_GROUP_CHAT_CREATED]: 'Chat for {{groupName}} has been created',
 };
 
 const interpolateTemplate = (template: string, variables: Record<string, string>): string => {
@@ -248,5 +250,6 @@ export const formatSystemMessageForDisplay = (
     return content;
   }
   
-  return translateSystemMessageData(systemMessageData, translateFn, entityType);
+  // Types this build doesn't know yet render the server's English text instead of an empty line.
+  return translateSystemMessageData(systemMessageData, translateFn, entityType) || getSystemMessageText(content);
 };

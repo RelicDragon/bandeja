@@ -70,6 +70,16 @@ async function announce(groupChannelId: string, userIds: string[], type: SystemM
   }
 }
 
+/** First message of a new league group chat; without one the chat sorts to the bottom of chat lists. */
+export async function postLeagueGroupChatCreatedMessage(groupChannelId: string, groupName: string) {
+  await SystemMessageService.createSystemMessageWithEmit(
+    groupChannelId,
+    { type: SystemMessageType.LEAGUE_GROUP_CHAT_CREATED, variables: { groupName } },
+    undefined,
+    ChatContextType.GROUP
+  );
+}
+
 export class LeagueGroupChatService {
   /**
    * Idempotent: makes every group chat of the season match the current groups, players and admins.
@@ -210,6 +220,14 @@ export class LeagueGroupChatService {
         });
       });
 
+      if (isNew) {
+        try {
+          await postLeagueGroupChatCreatedMessage(channelId, group.name);
+        } catch (err) {
+          console.error('[leagueGroupChat] created message failed', { channelId, err });
+        }
+      }
+
       const joined = toAdd.filter(([, role]) => role === 'PARTICIPANT').map(([userId]) => userId);
       if (opts.announce !== false && !isNew && joined.length + toRemove.length <= MAX_ANNOUNCED_CHANGES) {
         try {
@@ -222,18 +240,26 @@ export class LeagueGroupChatService {
     }
   }
 
-  /** Group id → chat id for the season's group chats the viewer belongs to. */
+  /** The season's group chats the viewer belongs to, ordered by group name. */
   static async getViewerGroupChats(leagueSeasonId: string, userId: string) {
     const rows = await prisma.groupChannel.findMany({
       where: {
         leagueGroup: { leagueSeasonId },
         participants: { some: { userId } },
       },
-      select: { id: true, leagueGroupId: true },
+      select: { id: true, leagueGroup: { select: { id: true, name: true, color: true } } },
+      orderBy: { leagueGroup: { name: 'asc' } },
     });
-    return rows
-      .filter((r): r is { id: string; leagueGroupId: string } => r.leagueGroupId != null)
-      .map((r) => ({ leagueGroupId: r.leagueGroupId, groupChannelId: r.id }));
+    return rows.flatMap((r) =>
+      r.leagueGroup
+        ? [{
+            leagueGroupId: r.leagueGroup.id,
+            groupChannelId: r.id,
+            groupName: r.leagueGroup.name,
+            color: r.leagueGroup.color,
+          }]
+        : []
+    );
   }
 }
 

@@ -415,6 +415,8 @@ export interface GroupChannel {
   isCityGroup?: boolean;
   /** Auto-managed league group chat; membership follows the league, no leave/invite/edit. */
   leagueGroupId?: string | null;
+  /** Present on single-chat fetches of league group chats. */
+  leagueGroup?: { leagueSeasonId: string } | null;
   isMuted?: boolean;
 }
 

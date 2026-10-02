@@ -167,6 +167,7 @@ export class GroupChannelService {
           }
         },
         lastMessageSender: { select: USER_SELECT_WITH_SPORT_PROFILES },
+        leagueGroup: { select: { leagueSeasonId: true } },
         participants: {
           include: {
             user: {

@@ -317,6 +317,7 @@
       "USER_NOTED_NO_SHOW": "تم تسجيل {{userName}} كغائب",
       "GAME_SPOT_OPENED": "تحرر مكان (غادر {{userName}})",
       "GAME_SEAT_AUTO_FILLED": "تم إدخال {{userName}} من قائمة الانتظار",
+      "LEAGUE_GROUP_CHAT_CREATED": "تم إنشاء محادثة {{groupName}}",
       "GAME_MOVED_INDOOR": "تم النقل إلى {{courtName}} (مغلق)"
     },
     "openChat": "فتح المحادثة",

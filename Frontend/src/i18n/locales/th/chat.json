@@ -309,6 +309,7 @@
       "USER_NOTED_NO_SHOW": "{{userName}} ถูกบันทึกว่าไม่มา",
       "GAME_SPOT_OPENED": "มีที่ว่าง ({{userName}} ออกไป)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} ได้ลงเล่นจากคิว",
+      "LEAGUE_GROUP_CHAT_CREATED": "สร้างแชทสำหรับ {{groupName}} แล้ว",
       "GAME_MOVED_INDOOR": "ย้ายไปที่ {{courtName}} (ในร่ม)"
     },
     "openChat": "เปิดแชท",
