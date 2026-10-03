@@ -83,7 +83,8 @@
       "alwaysAllow": "Vždy povolit",
       "alwaysAsks": "Tato akce se vždy ptá",
       "autoHeading": "Provedeno automaticky",
-      "autoApproved": "Provedeno automaticky, povolili jste to."
+      "autoApproved": "Provedeno automaticky, povolili jste to.",
+      "applying": "Provádím…"
     },
     "entity": {
       "untitledGame": "Hra",
@@ -249,6 +250,159 @@
       "resets": "Obnovení",
       "resetsAt": "{{time}} (za {{duration}})",
       "dailyExplain": "Sdílený pro všechny vaše AI chaty. Po vyčerpání se asistent pozastaví až do obnovení."
+    },
+    "followUps": {
+      "label": "Návrhy, jak pokračovat",
+      "whoMissing": "Kdo ještě chybí?",
+      "weatherNext": "Počasí na mou příští hru",
+      "bookFirstSlot": "Zarezervuj první termín",
+      "laterSlots": "Ukaž pozdější časy",
+      "otherDay": "Zkus jiný den",
+      "standings": "Ukaž tabulku",
+      "nextRound": "Zápasy dalšího kola",
+      "invitePlayers": "Pozvi hráče",
+      "splitCost": "Rozděl náklady",
+      "postInChat": "Napiš do chatu hry",
+      "enterScore": "Zadej skóre",
+      "finishResults": "Uzavři výsledky",
+      "showResults": "Ukaž výsledky",
+      "remindUnpaid": "Připomeň těm, kdo nezaplatili",
+      "markMyPaid": "Označ můj podíl jako zaplacený",
+      "createGameForBooking": "Vytvoř hru pro tuto rezervaci",
+      "findIndoor": "Najdi krytý kurt",
+      "moveGame": "Přesuň hru",
+      "joinBestMatch": "Přihlas mě do nejlepšího zápasu",
+      "freeCourtThere": "Najdi tam volný kurt",
+      "inviteToNextGame": "Pozvi je na mou příští hru",
+      "replyInChat": "Odpověz v chatu",
+      "myBookings": "Ukaž mé rezervace",
+      "retry": "Zkus to znovu",
+      "adminApproveFirst": "Schval první událost"
+    },
+    "personal": {
+      "loading": "Načítání návrhů",
+      "enterScore": {
+        "prompt": "Zadej skóre mé hry {{when}}"
+      },
+      "needsPlayers": {
+        "prompt": "Moje hra {{when}} má ještě volná místa — koho můžu pozvat?",
+        "context": "Hráči: {{playing}}/{{max}}"
+      },
+      "remindPay": {
+        "prompt": "Připomeň hráčům zaplatit mou hru {{when}}",
+        "context": "Nezaplacené podíly: {{count}}"
+      },
+      "pendingInvite": {
+        "prompt": "Řekni mi o pozvánce od {{name}} na {{when}}"
+      },
+      "payShare": {
+        "prompt": "Označ můj podíl za hru {{when}} jako zaplacený",
+        "context": "Pro: {{name}}"
+      },
+      "leagueNext": {
+        "prompt": "Co je dál v lize {{league}}?",
+        "context": "Liga, kterou spravujete"
+      },
+      "nextGameWeather": {
+        "prompt": "Jaké bude počasí na mé hře {{when}}?"
+      }
+    },
+    "cards": {
+      "results": {
+        "status": {
+          "FINAL": "Konečné",
+          "IN_PROGRESS": "Probíhá",
+          "NONE": "Nezahájeno"
+        },
+        "you": "{{name}} (vy)",
+        "winner": "Vítěz",
+        "draw": "Remíza",
+        "matchRef": "Kolo {{round}} · Zápas {{match}}",
+        "matches": "Zápasů: {{count}}",
+        "more": "Další zápasy: {{count}}",
+        "noMatches": "Zatím žádné zápasy",
+        "noPlayers": "Zatím žádní hráči"
+      },
+      "playIntent": {
+        "open": "Hledám hru",
+        "matched": "Spárováno",
+        "chip": {
+          "days": "Dny",
+          "time": "Čas",
+          "clubs": "Kluby",
+          "level": "Úroveň",
+          "players": "Hráči"
+        },
+        "inProposal": "V návrhu zápasu · hráčů: {{count}}",
+        "gamesFit": "Vhodných her: {{count}}",
+        "noGames": "Zatím žádná vhodná hra"
+      },
+      "weather": {
+        "verdict": {
+          "good": "Dobré na hraní",
+          "risky": "Možný déšť nebo vítr",
+          "bad": "Špatné počasí na hraní venku",
+          "indoor": "Kryté kurty"
+        },
+        "recorded": "Zaznamenáno",
+        "bestWindow": "Nejlepší čas na hraní: {{range}}",
+        "stale": "Předpověď nemusí být aktuální"
+      }
+    },
+    "voice": {
+      "title": "Hlasový rozhovor",
+      "start": "Mluvit s asistentem",
+      "end": "Ukončit hlasový rozhovor",
+      "mute": "Vypnout mikrofon",
+      "unmute": "Zapnout mikrofon",
+      "interrupt": "Přerušit",
+      "keepTalking": "Mluvit dál",
+      "listeningLabel": "Poslouchám",
+      "status": {
+        "starting": "Zapínám mikrofon…",
+        "listening": "Poslouchám",
+        "hearing": "Slyším vás…",
+        "transcribing": "Rozumím…",
+        "thinking": "Přemýšlím…",
+        "speaking": "Mluvím",
+        "confirm": "Potvrďte na obrazovce",
+        "muted": "Mikrofon vypnutý"
+      },
+      "hint": {
+        "starting": "Pokud se zobrazí výzva, povolte přístup k mikrofonu",
+        "listening": "Zeptejte se na své hry, rezervace, ligy…",
+        "hearing": "Až skončíte, udělejte pauzu",
+        "transcribing": "Převádím řeč na text",
+        "thinking": "Kdykoli promluvte a přerušíte mě",
+        "speaking": "Klepněte na kruh nebo prostě mluvte a přerušíte mě",
+        "confirm": "Klepněte nahoře na Potvrdit nebo Zrušit, nebo na kruh a mluvte dál",
+        "muted": "Klepněte na mikrofon a mluvte znovu"
+      },
+      "notice": {
+        "micDenied": "Povolte přístup k mikrofonu v Nastavení, abyste mohli mluvit s asistentem.",
+        "micInsecure": "Hlas vyžaduje zabezpečené připojení.",
+        "micUnsupported": "Toto zařízení zde nemůže nahrávat zvuk.",
+        "notHeard": "Nerozuměl jsem. Zkuste to znovu.",
+        "transcribeFailed": "Řeč se nepodařilo rozpoznat. Zkuste to znovu.",
+        "sendFailed": "Nepodařilo se odeslat. Zkuste to znovu.",
+        "speechFailed": "Odpověď se nepodařilo přečíst nahlas. Najdete ji v chatu.",
+        "runFailed": "Něco se pokazilo. Zkuste to znovu.",
+        "interrupted": "Hlasový rozhovor je pozastaven.",
+        "unavailable": "Hlas teď není k dispozici.",
+        "budget": "Dosáhli jste dnešního limitu asistenta. Zkuste to zítra.",
+        "rateLimited": "Příliš mnoho hlasových požadavků. Chvíli počkejte.",
+        "idle": "Hlasový rozhovor skončil po minutě ticha."
+      },
+      "dictation": {
+        "start": "Diktovat",
+        "cancel": "Zrušit nahrávání",
+        "done": "Dokončit nahrávání",
+        "recording": "Nahrávám…",
+        "transcribing": "Přepisuji…",
+        "tooShort": "Příliš krátké. Mluvte o něco déle."
+      },
+      "confirmPrompt": "{{title}}. Klepněte na obrazovce na Potvrdit.",
+      "confirmFallbackTitle": "Připravil jsem změnu"
     }
   }
 }

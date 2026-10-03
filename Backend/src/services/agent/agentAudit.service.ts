@@ -42,9 +42,20 @@ export async function listAgentActionsForAdmin(filter: {
   }));
 }
 
-type UsageRow = { day: string; userId: string; runs: bigint; inputTokens: bigint | null; outputTokens: bigint | null };
+type UsageRow = {
+  day: string;
+  userId: string;
+  runs: bigint;
+  inputTokens: bigint | null;
+  outputTokens: bigint | null;
+  cachedInputTokens: bigint | null;
+};
+type EndReasonRow = { endReason: string | null; runs: bigint; maxSteps: number | null };
 
-/** Daily (UTC) token sums per user from `AgentRun`, newest day first. */
+/**
+ * Daily (UTC) token sums per user from `AgentRun`, newest day first, plus run counts by
+ * `endReason` over the window (`null` = runs from before the column, or still open).
+ */
 export async function agentUsageForAdmin(filter: { days: number; userId?: string; now?: Date }) {
   const days = Math.min(Math.max(filter.days, 1), AGENT_AUDIT_USAGE_MAX_DAYS);
   const now = filter.now ?? new Date();
@@ -55,11 +66,18 @@ export async function agentUsageForAdmin(filter: { days: number; userId?: string
            "userId",
            COUNT(*) AS runs,
            SUM("inputTokens") AS "inputTokens",
-           SUM("outputTokens") AS "outputTokens"
+           SUM("outputTokens") AS "outputTokens",
+           SUM("cachedInputTokens") AS "cachedInputTokens"
     FROM "AgentRun"
     WHERE "createdAt" >= ${since} ${userClause}
     GROUP BY 1, 2
     ORDER BY 1 DESC, 5 DESC`;
+  const endReasons = await prisma.$queryRaw<EndReasonRow[]>`
+    SELECT "endReason", COUNT(*) AS runs, MAX(steps) AS "maxSteps"
+    FROM "AgentRun"
+    WHERE "createdAt" >= ${since} ${userClause}
+    GROUP BY 1
+    ORDER BY 2 DESC`;
   const users = await prisma.user.findMany({
     where: { id: { in: [...new Set(rows.map((row) => row.userId))] } },
     select: { id: true, firstName: true, lastName: true },
@@ -68,6 +86,11 @@ export async function agentUsageForAdmin(filter: { days: number; userId?: string
   return {
     since: since.toISOString(),
     days,
+    endReasons: endReasons.map((row) => ({
+      endReason: row.endReason,
+      runs: Number(row.runs),
+      maxSteps: row.maxSteps == null ? null : Number(row.maxSteps),
+    })),
     rows: rows.map((row) => {
       const inputTokens = Number(row.inputTokens ?? 0);
       const outputTokens = Number(row.outputTokens ?? 0);
@@ -79,6 +102,8 @@ export async function agentUsageForAdmin(filter: { days: number; userId?: string
         inputTokens,
         outputTokens,
         totalTokens: inputTokens + outputTokens,
+        /** Part of `inputTokens` the provider served from its prompt cache (null: not reported). */
+        cachedInputTokens: row.cachedInputTokens == null ? null : Number(row.cachedInputTokens),
       };
     }),
   };

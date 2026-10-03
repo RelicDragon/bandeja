@@ -13,6 +13,7 @@ import {
   type AgentPendingActionDto,
   type AgentToolPermissionDto,
   type AgentToolPermissionMode,
+  type AgentVoiceTranscriptionDto,
 } from '@shared/agentContract';
 
 /**
@@ -95,13 +96,37 @@ export const agentApi = {
     text: string,
     /** Edit: the server drops this USER message and everything after it, then sends `text`. */
     editMessageId?: string,
+    /** Voice-conversation turn: the reply is written to be read aloud. */
+    voice?: boolean,
   ): Promise<{ message: AgentMessageDto; runId: string }> => {
     const response = await api.post<ApiResponse<{ message: AgentMessageDto; runId: string }>>(
       `/agent/chats/${encodeURIComponent(chatId)}/messages`,
-      editMessageId ? { text, editMessageId } : { text },
+      { text, ...(editMessageId ? { editMessageId } : {}), ...(voice ? { voice: true } : {}) },
       caps,
     );
     return response.data.data;
+  },
+
+  /** Speech → text (dictation and voice turns). `durationMs` is the charge fallback for containers without one. */
+  transcribeVoice: async (audio: Blob, durationMs: number, signal?: AbortSignal): Promise<AgentVoiceTranscriptionDto> => {
+    const response = await api.post<ApiResponse<AgentVoiceTranscriptionDto>>('/agent/voice/transcriptions', audio, {
+      headers: { ...caps.headers, 'Content-Type': (audio.type || 'audio/webm').split(';')[0] },
+      params: { durationMs: Math.max(0, Math.round(durationMs)) },
+      timeout: 45_000,
+      signal,
+    });
+    return response.data.data;
+  },
+
+  /** One spoken sentence: MP3 bytes. */
+  speakVoice: async (text: string, signal?: AbortSignal): Promise<ArrayBuffer> => {
+    const response = await api.post<ArrayBuffer>('/agent/voice/speech', { text }, {
+      ...caps,
+      responseType: 'arraybuffer',
+      timeout: 30_000,
+      signal,
+    });
+    return response.data;
   },
 
   cancelRun: async (runId: string): Promise<void> => {

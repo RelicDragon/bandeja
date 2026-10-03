@@ -18,9 +18,18 @@ import {
   dateKeyInTimezone,
   type WeatherHourlyPoint,
 } from '../../weatherForecast.service';
+import type { AgentWeatherCard, AgentWeatherCardHour, AgentWeatherVerdict } from '@bandeja/shared/agentContract';
 import { classifyWeatherRisk, detectOutdoor } from '../../weather/weatherRisk';
 import { assertAgentCanViewGame } from '../access/agentGameAccess';
 import { agentWeatherT } from '../i18n/agentWeatherI18n';
+import {
+  WEATHER_CARD_FIRST_HOUR,
+  WEATHER_CARD_LAST_HOUR,
+  bestPlayableWindow,
+  isPlayableHour,
+  verdictForSeverity,
+  withToolCard,
+} from './agentToolCards';
 import { defineTool } from './registry';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -68,6 +77,37 @@ function overview(hours: WeatherHourlyPoint[]) {
     maxRainMm: maxOf(hours.map((hour) => hour.precipitationMm)),
     maxWindKmh: maxOf(hours.map((hour) => (hour.windSpeedKmh == null ? null : Math.round(hour.windSpeedKmh)))),
   };
+}
+
+function cardHour(point: WeatherHourlyPoint, timezone: string): AgentWeatherCardHour {
+  return {
+    time: formatInTimeZone(new Date(point.time), timezone, 'HH:mm'),
+    tempC: Math.round(point.temperatureC),
+    condition: point.conditionKey,
+    isDay: point.isDay,
+    rainChancePct: point.precipitationProbability,
+    rainMm: point.precipitationMm,
+    windKmh: point.windSpeedKmh == null ? null : Math.round(point.windSpeedKmh),
+    playable: isPlayableHour(point),
+  };
+}
+
+/** Day card: padel hours only (06:00–23:00 local). */
+function daytimeHours(hours: WeatherHourlyPoint[], timezone: string): WeatherHourlyPoint[] {
+  return hours.filter((point) => {
+    const hour = Number(formatInTimeZone(new Date(point.time), timezone, 'H'));
+    return hour >= WEATHER_CARD_FIRST_HOUR && hour <= WEATHER_CARD_LAST_HOUR;
+  });
+}
+
+/**
+ * Game card verdict: indoor courts → `indoor`; unknown courts → no hint (the weather-risk
+ * noise rule: unknown is never "at risk"); past days (archive) → no hint.
+ */
+function gameVerdict(hours: WeatherHourlyPoint[], outdoor: boolean | null, source: 'forecast' | 'archive'): AgentWeatherVerdict | null {
+  if (outdoor === false) return 'indoor';
+  if (outdoor == null || source === 'archive' || hours.length === 0) return null;
+  return verdictForSeverity(classifyWeatherRisk(hours).severity);
 }
 
 const UNITS = { temperature: '°C', wind: 'km/h', rainChance: '%', rain: 'mm per hour' } as const;
@@ -121,7 +161,27 @@ export const getWeatherTool = defineTool({
       });
       const unavailableReason = window.available ? undefined : (window.unavailableReason ?? 'out_of_range');
       const hours = window.available ? window.hours : [];
-      return {
+      const outdoorFlag = outdoor.known ? outdoor.outdoor : null;
+      const card: AgentWeatherCard | null =
+        window.available && hours.length
+          ? {
+              kind: 'weather',
+              place: game.city.name,
+              gameId: game.id,
+              gameTitle: game.name?.trim() || game.club?.name || null,
+              date,
+              window: game.timeIsSet
+                ? { start: formatInTimeZone(game.startTime, timezone, 'HH:mm'), end: formatInTimeZone(game.endTime, timezone, 'HH:mm') }
+                : null,
+              source: window.source,
+              stale: Boolean(window.stale),
+              outdoor: outdoorFlag,
+              verdict: gameVerdict(hours, outdoorFlag, window.source),
+              bestWindow: null,
+              hours: hours.map((hour) => cardHour(hour, timezone)),
+            }
+          : null;
+      return withToolCard({
         data: {
           gameId: game.id,
           gameName: game.name,
@@ -149,7 +209,7 @@ export const getWeatherTool = defineTool({
         summary: window.available
           ? agentWeatherT(ctx.locale, 'summary.weather', { city: game.city.name, date: date ?? '' })
           : agentWeatherT(ctx.locale, 'summary.unavailable', { date: date ?? game.name ?? '—' }),
-      };
+      }, card);
     }
 
     const cityId = args.cityId ?? ctx.principal.currentCityId;
@@ -160,7 +220,26 @@ export const getWeatherTool = defineTool({
     const day = await WeatherDayArchiveService.getDay(cityId, date);
     const timezone = day.cityTimezone || 'UTC';
     const unavailableReason = day.available ? undefined : (day.unavailableReason ?? 'out_of_range');
-    return {
+    const daytime = day.available ? daytimeHours(day.hours, timezone) : [];
+    const cardHours = daytime.map((hour) => cardHour(hour, timezone));
+    const past = day.source === 'archive';
+    const card: AgentWeatherCard | null = cardHours.length
+      ? {
+          kind: 'weather',
+          place: day.cityName,
+          gameId: null,
+          gameTitle: null,
+          date,
+          window: null,
+          source: day.source,
+          stale: Boolean(day.stale),
+          outdoor: null,
+          verdict: past ? null : verdictForSeverity(classifyWeatherRisk(daytime).severity),
+          bestWindow: past ? null : bestPlayableWindow(cardHours),
+          hours: cardHours,
+        }
+      : null;
+    return withToolCard({
       data: {
         cityId: day.cityId,
         city: day.cityName,
@@ -181,7 +260,7 @@ export const getWeatherTool = defineTool({
       summary: day.available
         ? agentWeatherT(ctx.locale, 'summary.weather', { city: day.cityName, date })
         : agentWeatherT(ctx.locale, 'summary.unavailable', { date }),
-    };
+    }, card);
   },
 });
 

@@ -58,7 +58,8 @@ export interface AgentRunAttachDeps {
   native: boolean;
   refreshToken: () => Promise<string | null>;
   /** Called after each event is applied to the run store (cache patches). */
-  onEvent?: (event: AgentStreamEvent) => void;
+  /** Every parsed event, replays included (`eventId` lets listeners dedupe). */
+  onEvent?: (event: AgentStreamEvent, eventId: string | null) => void;
   /** Terminal event received. The draft is dropped (`settled`) once this resolves. */
   onTerminal?: () => Promise<void> | void;
   /** Server refused the stream (403/404) or auth could not be refreshed. */
@@ -158,7 +159,7 @@ export function attachAgentRun(runId: string, chatId: string, deps: AgentRunAtta
           const event = parseAgentStreamFrame(frame);
           if (!event) continue;
           dispatch({ type: 'event', event, eventId: frame.id });
-          deps.onEvent?.(event);
+          deps.onEvent?.(event, frame.id ?? null);
           if (AGENT_TERMINAL_EVENT_TYPES.includes(event.type)) {
             controller.abort();
             return 'terminal';

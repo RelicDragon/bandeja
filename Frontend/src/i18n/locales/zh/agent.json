@@ -83,7 +83,8 @@
       "alwaysAllow": "始终允许",
       "alwaysAsks": "此操作每次都需要确认",
       "autoHeading": "已自动完成",
-      "autoApproved": "已自动完成，这是你允许的。"
+      "autoApproved": "已自动完成，这是你允许的。",
+      "applying": "正在执行…"
     },
     "entity": {
       "untitledGame": "比赛",
@@ -249,6 +250,159 @@
       "resets": "重置",
       "resetsAt": "{{time}}（{{duration}}后）",
       "dailyExplain": "所有 AI 对话共享。用完后，助手将暂停直到重置。"
+    },
+    "followUps": {
+      "label": "建议的后续问题",
+      "whoMissing": "还差谁？",
+      "weatherNext": "我下一场比赛的天气",
+      "bookFirstSlot": "预订第一个时段",
+      "laterSlots": "显示更晚的时间",
+      "otherDay": "换一天试试",
+      "standings": "显示积分榜",
+      "nextRound": "下一轮赛程",
+      "invitePlayers": "邀请球员",
+      "splitCost": "分摊费用",
+      "postInChat": "在比赛群聊里发消息",
+      "enterScore": "录入比分",
+      "finishResults": "完成成绩",
+      "showResults": "显示成绩",
+      "remindUnpaid": "提醒还没付款的人",
+      "markMyPaid": "把我的份额标记为已付",
+      "createGameForBooking": "为这个预订创建比赛",
+      "findIndoor": "找一个室内场地",
+      "moveGame": "改期比赛",
+      "joinBestMatch": "帮我加入最合适的比赛",
+      "freeCourtThere": "在那里找一个空场",
+      "inviteToNextGame": "邀请他们参加我的下一场比赛",
+      "replyInChat": "在聊天里回复",
+      "myBookings": "显示我的预订",
+      "retry": "再试一次",
+      "adminApproveFirst": "批准第一个活动"
+    },
+    "personal": {
+      "loading": "正在加载建议",
+      "enterScore": {
+        "prompt": "录入我 {{when}} 那场比赛的比分"
+      },
+      "needsPlayers": {
+        "prompt": "我 {{when}} 的比赛还有空位——可以邀请谁？",
+        "context": "球员：{{playing}}/{{max}}"
+      },
+      "remindPay": {
+        "prompt": "提醒球员为我 {{when}} 的比赛付款",
+        "context": "未付份额：{{count}}"
+      },
+      "pendingInvite": {
+        "prompt": "说说 {{name}} 邀请我参加 {{when}} 的比赛"
+      },
+      "payShare": {
+        "prompt": "把我 {{when}} 那场比赛的份额标记为已付",
+        "context": "付给 {{name}}"
+      },
+      "leagueNext": {
+        "prompt": "{{league}} 接下来是什么？",
+        "context": "你管理的联赛"
+      },
+      "nextGameWeather": {
+        "prompt": "我 {{when}} 的比赛天气怎么样？"
+      }
+    },
+    "cards": {
+      "results": {
+        "status": {
+          "FINAL": "已确定",
+          "IN_PROGRESS": "进行中",
+          "NONE": "未开始"
+        },
+        "you": "{{name}}（你）",
+        "winner": "胜方",
+        "draw": "平局",
+        "matchRef": "第 {{round}} 轮 · 第 {{match}} 场",
+        "matches": "比赛：{{count}}",
+        "more": "更多比赛：{{count}}",
+        "noMatches": "暂无比赛",
+        "noPlayers": "暂无球员"
+      },
+      "playIntent": {
+        "open": "寻找中",
+        "matched": "已匹配",
+        "chip": {
+          "days": "日期",
+          "time": "时间",
+          "clubs": "俱乐部",
+          "level": "水平",
+          "players": "球员"
+        },
+        "inProposal": "在比赛提议中 · 球员：{{count}}",
+        "gamesFit": "合适的比赛：{{count}}",
+        "noGames": "暂无合适的比赛"
+      },
+      "weather": {
+        "verdict": {
+          "good": "适合打球",
+          "risky": "可能有雨或风",
+          "bad": "天气不适合户外打球",
+          "indoor": "室内场地"
+        },
+        "recorded": "历史记录",
+        "bestWindow": "最佳打球时间：{{range}}",
+        "stale": "预报可能已过时"
+      }
+    },
+    "voice": {
+      "title": "语音对话",
+      "start": "和助手对话",
+      "end": "结束语音对话",
+      "mute": "关闭麦克风",
+      "unmute": "打开麦克风",
+      "interrupt": "打断",
+      "keepTalking": "继续说话",
+      "listeningLabel": "正在听",
+      "status": {
+        "starting": "正在打开麦克风…",
+        "listening": "正在听",
+        "hearing": "我在听…",
+        "transcribing": "收到…",
+        "thinking": "思考中…",
+        "speaking": "正在回答",
+        "confirm": "请在屏幕上确认",
+        "muted": "麦克风已关闭"
+      },
+      "hint": {
+        "starting": "如有提示，请允许使用麦克风",
+        "listening": "问问你的比赛、预订、联赛…",
+        "hearing": "说完后稍作停顿",
+        "transcribing": "正在把语音转成文字",
+        "thinking": "随时说话即可打断",
+        "speaking": "点击圆圈或直接说话即可打断",
+        "confirm": "点击上方的确认或取消，或点击圆圈继续对话",
+        "muted": "点击麦克风即可再次说话"
+      },
+      "notice": {
+        "micDenied": "请在设置中允许使用麦克风，才能和助手对话。",
+        "micInsecure": "语音需要安全连接。",
+        "micUnsupported": "此设备无法在这里录音。",
+        "notHeard": "没听清，请再说一遍。",
+        "transcribeFailed": "无法识别语音，请重试。",
+        "sendFailed": "发送失败，请重试。",
+        "speechFailed": "无法朗读回复，内容已在聊天中。",
+        "runFailed": "出了点问题，请重试。",
+        "interrupted": "语音对话已暂停。",
+        "unavailable": "语音功能暂时不可用。",
+        "budget": "你已达到今天的助手使用上限，请明天再试。",
+        "rateLimited": "语音请求过多，请稍候。",
+        "idle": "安静一分钟后，语音对话已结束。"
+      },
+      "dictation": {
+        "start": "语音输入",
+        "cancel": "取消录音",
+        "done": "完成录音",
+        "recording": "正在录音…",
+        "transcribing": "正在识别…",
+        "tooShort": "太短了，请多说一会儿。"
+      },
+      "confirmPrompt": "{{title}}。请在屏幕上点击确认。",
+      "confirmFallbackTitle": "我已准备好更改"
     }
   }
 }

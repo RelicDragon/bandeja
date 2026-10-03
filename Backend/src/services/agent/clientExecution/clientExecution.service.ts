@@ -91,7 +91,7 @@ export class AgentClientExecutionService {
   private async followUp(action: AgentPendingAction, message: AgentMessage | null, headerLocale: string | null) {
     const run = await prisma.agentRun.findUnique({
       where: { id: action.runId },
-      select: { locale: true, clientCaps: true },
+      select: { locale: true, clientCaps: true, voice: true },
     });
     try {
       return await this.deps.runService().enqueueFollowUpRun({
@@ -100,6 +100,7 @@ export class AgentClientExecutionService {
         locale: headerLocale || run?.locale || readStoredActionArgs(action.args).locale,
         messages: message ? [message] : [],
         clientCaps: run?.clientCaps ?? [],
+        voice: run?.voice ?? false,
       });
     } catch (error) {
       console.error('[agent] follow-up run not enqueued', { actionId: action.id, error });

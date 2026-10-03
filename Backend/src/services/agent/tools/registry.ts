@@ -25,6 +25,7 @@ import { z } from 'zod/v4';
 import type {
   AgentEntityRef,
   AgentStreamEvent,
+  AgentToolCard,
   AgentToolRiskTier as AgentToolRiskTierContract,
   AgentWebImage,
   AgentWebView,
@@ -33,6 +34,13 @@ import { ApiError } from '../../../utils/ApiError';
 import type { AgentPrincipal } from '../access/agentPrincipal';
 import type { AgentWebRunSession } from '../web/agentWebSession';
 import { agentT } from '../i18n/agentI18n';
+import {
+  AGENT_TOOL_GROUP_DESCRIPTIONS,
+  AGENT_TOOL_GROUPS,
+  LOAD_TOOLS_NAME,
+  type AgentLoadableToolGroup,
+  type AgentToolGroup,
+} from './toolGroups';
 
 /** `memory`: the user's own assistant memory (self-scoped, no card; see the header). */
 export type AgentToolKind = 'read' | 'write' | 'memory';
@@ -103,6 +111,8 @@ export type AgentToolResult = {
   web?: AgentWebView;
   /** `web_images` pictures (server-built proxy paths), copied to the event and block. */
   images?: AgentWebImage[];
+  /** Rich UI card (results, play intent, weather), copied to the event and block; never sent to the model. */
+  card?: AgentToolCard;
   /**
    * Write tools (phase 3): the pending action this call created. The run loop emits
    * `action.pending` and ends the run as `AWAITING_CONFIRMATION`.
@@ -186,6 +196,11 @@ export type AgentToolDefinition<S extends z.ZodType = z.ZodType> = {
    * the tool is not listed and a forged call answers `unknown_tool`.
    */
   isAvailable?: () => boolean;
+  /**
+   * Tool group (`toolGroups.ts`), set where the tool is registered (`tools/index.ts`). With
+   * tool groups on, only `core` and loaded groups are sent to the model. Missing = `core`.
+   */
+  group?: AgentToolGroup;
 };
 
 const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]{1,63}$/;
@@ -248,6 +263,8 @@ export type AgentToolExecution = {
   entities?: AgentEntityRef[];
   web?: AgentWebView;
   images?: AgentWebImage[];
+  /** UI only: the run loop puts it on `tool.finished` and the `tool_result` block, never in `data`. */
+  card?: AgentToolCard;
   awaitingConfirmation?: { actionId: string };
   memorySaved?: AgentMemorySavedEvent;
 };
@@ -274,6 +291,39 @@ function apiErrorToToolData(error: ApiError): { error: string; message?: string 
   if (error.statusCode === 409) return { error: 'conflict', message: error.message };
   if (error.statusCode >= 400 && error.statusCode < 500) return { error: 'bad_request', message: error.message };
   return { error: 'internal_error' };
+}
+
+export function agentToolGroupOf(tool: Pick<AgentToolDefinition, 'group'>): AgentToolGroup {
+  return tool.group ?? 'core';
+}
+
+function toOpenAiTool(tool: AgentToolDefinition): AgentOpenAiTool {
+  return {
+    type: 'function',
+    function: { name: tool.name, description: tool.description, parameters: toolJsonSchema(tool.input) },
+  };
+}
+
+/** The `load_tools` meta-tool (handled by the run loop, not a registry tool). */
+export function loadToolsOpenAiTool(groups: readonly AgentLoadableToolGroup[]): AgentOpenAiTool {
+  return {
+    type: 'function',
+    function: {
+      name: LOAD_TOOLS_NAME,
+      description: [
+        'Load more tools. Only the core tools (games, clubs, players, memory) are listed at first; call this with every group you need before using its tools. Loaded groups stay available for the rest of the chat. Groups:',
+        ...groups.map((group) => `- ${group}: ${AGENT_TOOL_GROUP_DESCRIPTIONS[group]}`),
+      ].join('\n'),
+      parameters: {
+        type: 'object',
+        properties: {
+          groups: { type: 'array', items: { type: 'string', enum: [...groups] }, minItems: 1 },
+        },
+        required: ['groups'],
+        additionalProperties: false,
+      },
+    },
+  };
 }
 
 export class AgentToolRegistry {
@@ -304,15 +354,32 @@ export class AgentToolRegistry {
     return this.list().filter((tool) => visibleTo(tool, principal));
   }
 
-  openAiToolsFor(principal: AgentToolAudience): AgentOpenAiTool[] {
-    return this.toolsForPrincipal(principal).map((tool) => ({
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: toolJsonSchema(tool.input),
-      },
-    }));
+  /** Non-core groups with at least one tool the principal may see, in `AGENT_TOOL_GROUPS` order. */
+  groupsForPrincipal(principal: AgentToolAudience): AgentLoadableToolGroup[] {
+    const visible = new Set(this.toolsForPrincipal(principal).map(agentToolGroupOf));
+    return AGENT_TOOL_GROUPS.filter((group): group is AgentLoadableToolGroup => group !== 'core' && visible.has(group));
+  }
+
+  /**
+   * `tools[]` for the model. Without `groups`: every tool the principal may see, registry
+   * order. With `groups` (tool groups on): core tools, then `load_tools` (when any other group
+   * is available), then each requested group's tools in the order given — so loading a group
+   * only appends and the earlier prefix stays byte-stable. Permission filtering comes first:
+   * a group the principal cannot see contributes nothing.
+   */
+  openAiToolsFor(principal: AgentToolAudience, options: { groups?: readonly AgentToolGroup[] } = {}): AgentOpenAiTool[] {
+    const visible = this.toolsForPrincipal(principal);
+    if (!options.groups) return visible.map(toOpenAiTool);
+    const out = visible.filter((tool) => agentToolGroupOf(tool) === 'core').map(toOpenAiTool);
+    const loadable = this.groupsForPrincipal(principal);
+    if (loadable.length) out.push(loadToolsOpenAiTool(loadable));
+    const done = new Set<AgentToolGroup>(['core']);
+    for (const group of options.groups) {
+      if (done.has(group)) continue;
+      done.add(group);
+      out.push(...visible.filter((tool) => agentToolGroupOf(tool) === group).map(toOpenAiTool));
+    }
+    return out;
   }
 
   /** Label for a tool call before/while it runs; never throws. */
@@ -359,6 +426,7 @@ export class AgentToolRegistry {
         ...(result.entities?.length ? { entities: result.entities } : {}),
         ...(result.web ? { web: result.web } : {}),
         ...(result.images?.length ? { images: result.images } : {}),
+        ...(result.card ? { card: result.card } : {}),
         ...(result.awaitingConfirmation ? { awaitingConfirmation: result.awaitingConfirmation } : {}),
         ...(result.memorySaved ? { memorySaved: result.memorySaved } : {}),
       };

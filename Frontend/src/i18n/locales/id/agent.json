@@ -83,7 +83,8 @@
       "alwaysAllow": "Selalu izinkan",
       "alwaysAsks": "Tindakan ini selalu meminta konfirmasi",
       "autoHeading": "Dilakukan otomatis",
-      "autoApproved": "Dilakukan otomatis, Anda mengizinkan ini."
+      "autoApproved": "Dilakukan otomatis, Anda mengizinkan ini.",
+      "applying": "Menerapkan…"
     },
     "entity": {
       "untitledGame": "Permainan",
@@ -249,6 +250,159 @@
       "resets": "Direset",
       "resetsAt": "{{time}} ({{duration}} lagi)",
       "dailyExplain": "Dipakai bersama untuk semua chat AI Anda. Jika habis, asisten berhenti sampai direset."
+    },
+    "followUps": {
+      "label": "Saran lanjutan",
+      "whoMissing": "Siapa yang masih kurang?",
+      "weatherNext": "Cuaca untuk permainan saya berikutnya",
+      "bookFirstSlot": "Pesan slot pertama",
+      "laterSlots": "Tampilkan jam yang lebih malam",
+      "otherDay": "Coba hari lain",
+      "standings": "Tampilkan klasemen",
+      "nextRound": "Jadwal babak berikutnya",
+      "invitePlayers": "Undang pemain",
+      "splitCost": "Bagi biayanya",
+      "postInChat": "Kirim di chat permainan",
+      "enterScore": "Masukkan skor",
+      "finishResults": "Selesaikan hasil",
+      "showResults": "Tampilkan hasil",
+      "remindUnpaid": "Ingatkan yang belum bayar",
+      "markMyPaid": "Tandai bagian saya sudah dibayar",
+      "createGameForBooking": "Buat permainan untuk booking ini",
+      "findIndoor": "Cari lapangan indoor",
+      "moveGame": "Pindahkan permainan",
+      "joinBestMatch": "Daftarkan saya ke pertandingan terbaik",
+      "freeCourtThere": "Cari lapangan kosong di sana",
+      "inviteToNextGame": "Undang mereka ke permainan saya berikutnya",
+      "replyInChat": "Balas di chat",
+      "myBookings": "Tampilkan booking saya",
+      "retry": "Coba lagi",
+      "adminApproveFirst": "Setujui acara pertama"
+    },
+    "personal": {
+      "loading": "Memuat saran",
+      "enterScore": {
+        "prompt": "Masukkan skor permainan saya {{when}}"
+      },
+      "needsPlayers": {
+        "prompt": "Permainan saya {{when}} masih ada tempat kosong — siapa yang bisa saya undang?",
+        "context": "Pemain: {{playing}}/{{max}}"
+      },
+      "remindPay": {
+        "prompt": "Ingatkan pemain untuk membayar permainan saya {{when}}",
+        "context": "Bagian belum dibayar: {{count}}"
+      },
+      "pendingInvite": {
+        "prompt": "Ceritakan undangan dari {{name}} untuk {{when}}"
+      },
+      "payShare": {
+        "prompt": "Tandai bagian saya untuk permainan {{when}} sudah dibayar",
+        "context": "Kepada {{name}}"
+      },
+      "leagueNext": {
+        "prompt": "Apa selanjutnya di {{league}}?",
+        "context": "Liga yang kamu kelola"
+      },
+      "nextGameWeather": {
+        "prompt": "Bagaimana cuaca untuk permainan saya {{when}}?"
+      }
+    },
+    "cards": {
+      "results": {
+        "status": {
+          "FINAL": "Selesai",
+          "IN_PROGRESS": "Berlangsung",
+          "NONE": "Belum dimulai"
+        },
+        "you": "{{name}} (Anda)",
+        "winner": "Pemenang",
+        "draw": "Seri",
+        "matchRef": "Ronde {{round}} · Pertandingan {{match}}",
+        "matches": "Pertandingan: {{count}}",
+        "more": "Pertandingan lain: {{count}}",
+        "noMatches": "Belum ada pertandingan",
+        "noPlayers": "Belum ada pemain"
+      },
+      "playIntent": {
+        "open": "Mencari",
+        "matched": "Cocok",
+        "chip": {
+          "days": "Hari",
+          "time": "Waktu",
+          "clubs": "Klub",
+          "level": "Tingkat",
+          "players": "Pemain"
+        },
+        "inProposal": "Dalam usulan pertandingan · pemain: {{count}}",
+        "gamesFit": "Permainan yang cocok: {{count}}",
+        "noGames": "Belum ada permainan yang cocok"
+      },
+      "weather": {
+        "verdict": {
+          "good": "Bagus untuk bermain",
+          "risky": "Mungkin hujan atau berangin",
+          "bad": "Cuaca buruk untuk bermain di luar",
+          "indoor": "Lapangan indoor"
+        },
+        "recorded": "Tercatat",
+        "bestWindow": "Waktu terbaik bermain: {{range}}",
+        "stale": "Prakiraan mungkin sudah usang"
+      }
+    },
+    "voice": {
+      "title": "Percakapan suara",
+      "start": "Bicara dengan asisten",
+      "end": "Akhiri percakapan suara",
+      "mute": "Matikan mikrofon",
+      "unmute": "Nyalakan mikrofon",
+      "interrupt": "Sela",
+      "keepTalking": "Lanjut bicara",
+      "listeningLabel": "Mendengarkan",
+      "status": {
+        "starting": "Menyalakan mikrofon…",
+        "listening": "Mendengarkan",
+        "hearing": "Saya mendengar Anda…",
+        "transcribing": "Oke…",
+        "thinking": "Berpikir…",
+        "speaking": "Berbicara",
+        "confirm": "Konfirmasi di layar",
+        "muted": "Mikrofon mati"
+      },
+      "hint": {
+        "starting": "Izinkan akses mikrofon jika diminta",
+        "listening": "Tanyakan pertandingan, booking, liga Anda…",
+        "hearing": "Berhenti sejenak setelah selesai",
+        "transcribing": "Mengubah suara Anda menjadi teks",
+        "thinking": "Bicara kapan saja untuk menyela",
+        "speaking": "Ketuk lingkaran atau langsung bicara untuk menyela",
+        "confirm": "Ketuk Konfirmasi atau Batal di atas, atau ketuk lingkaran untuk lanjut bicara",
+        "muted": "Ketuk mikrofon untuk bicara lagi"
+      },
+      "notice": {
+        "micDenied": "Izinkan akses mikrofon di Pengaturan untuk berbicara dengan asisten.",
+        "micInsecure": "Suara memerlukan koneksi yang aman.",
+        "micUnsupported": "Perangkat ini tidak dapat merekam audio di sini.",
+        "notHeard": "Saya tidak menangkapnya. Coba lagi.",
+        "transcribeFailed": "Suara tidak dapat dikenali. Coba lagi.",
+        "sendFailed": "Gagal mengirim. Coba lagi.",
+        "speechFailed": "Balasan tidak dapat dibacakan. Balasan ada di chat.",
+        "runFailed": "Terjadi kesalahan. Coba lagi.",
+        "interrupted": "Percakapan suara dijeda.",
+        "unavailable": "Suara sedang tidak tersedia.",
+        "budget": "Anda telah mencapai batas asisten hari ini. Coba lagi besok.",
+        "rateLimited": "Terlalu banyak permintaan suara. Tunggu sebentar.",
+        "idle": "Percakapan suara berakhir setelah satu menit hening."
+      },
+      "dictation": {
+        "start": "Dikte",
+        "cancel": "Batalkan rekaman",
+        "done": "Selesaikan rekaman",
+        "recording": "Merekam…",
+        "transcribing": "Mentranskripsi…",
+        "tooShort": "Terlalu singkat. Bicara sedikit lebih lama."
+      },
+      "confirmPrompt": "{{title}}. Ketuk Konfirmasi di layar.",
+      "confirmFallbackTitle": "Saya sudah menyiapkan perubahannya"
     }
   }
 }

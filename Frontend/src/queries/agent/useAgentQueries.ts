@@ -171,12 +171,12 @@ function restoreChatLists(client: QueryClient, snapshots: ChatListSnapshots | un
 }
 
 /** `edit`: resend in place of that USER message (it and everything after it are dropped). */
-export type AgentSendVars = { text: string; edit?: { messageId: string; seq: number } };
+export type AgentSendVars = { text: string; edit?: { messageId: string; seq: number }; voice?: boolean };
 
 export function useSendAgentMessageMutation(chatId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (vars: AgentSendVars) => agentApi.sendMessage(chatId, vars.text, vars.edit?.messageId),
+    mutationFn: (vars: AgentSendVars) => agentApi.sendMessage(chatId, vars.text, vars.edit?.messageId, vars.voice),
     onSuccess: ({ message, runId }, vars) => {
       patchAgentChatDetail(queryClient, chatId, (d) => ({
         ...expirePendingActions(upsertMessage(vars.edit ? truncateMessagesFrom(d, vars.edit.seq) : d, message)),

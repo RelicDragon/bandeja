@@ -15,8 +15,13 @@
  *
  * Loop, per step (≤ `AGENT_MAX_STEPS`; the last step gets no tools so it must answer):
  *   stream completion → `text.delta` → if tool calls: save ASSISTANT message (text +
- *   tool_call blocks) → `message.saved` → per call `tool.started` / registry.executeTool /
- *   `tool.finished` → save TOOL message → `message.saved` → next step. No tool calls: save
+ *   tool_call blocks) → `message.saved` → every call of the step: `tool.started` /
+ *   registry.executeTool / `tool.finished` (consecutive reads run concurrently; writes and
+ *   memory tools one at a time, in order) → save TOOL message → `message.saved` → next step.
+ *   Messages: static rules, history, then the per-turn snapshot right before the latest user
+ *   message (prompt-cache prefix, `agentContext.service.ts`). Tools: with
+ *   `AGENT_TOOL_GROUPS_ENABLED`, core + `load_tools` + loaded groups (`tools/toolGroups.ts`).
+ *   The run records `endReason`, and the provider's prompt-cache hits as `cachedInputTokens`. No tool calls: save
  *   ASSISTANT text → `message.saved` → `run.completed`. Wall clock `AGENT_RUN_TIMEOUT_MS`
  *   from claim. The executor heartbeats every 2s; a heartbeat that finds the row no longer
  *   RUNNING (cancelled from another process) aborts the loop. Runs never depend on an SSE
@@ -85,6 +90,7 @@ import {
   agentMemoryProvenanceFromHistory,
   buildAgentModelHistory,
   buildAgentRunContext,
+  withAgentSnapshot,
   type AgentChatSummaryState,
   type HistoryMessage,
 } from './agentContext.service';
@@ -109,7 +115,14 @@ import {
 import { Semaphore } from './llm/semaphore';
 import { createAgentWebRunSession } from './web/agentWebSession';
 import { getAgentToolRegistry } from './tools';
-import type { AgentToolContext, AgentToolExecution, AgentToolRegistry } from './tools/registry';
+import { agentToolGroupOf, type AgentToolContext, type AgentToolExecution, type AgentToolRegistry } from './tools/registry';
+import {
+  agentToolGroupsForText,
+  agentToolGroupsFromHistory,
+  LOAD_TOOLS_NAME,
+  loadToolsGroupsFromArguments,
+  type AgentToolGroup,
+} from './tools/toolGroups';
 
 const TOOL_CONTENT_MAX_CHARS = 16_000;
 const USAGE_LOG_INPUT_MAX_CHARS = 20_000;
@@ -128,6 +141,21 @@ const TERMINAL_RUN_STATUSES: AgentRunStatus[] = [
 
 type AbortReason = 'cancelled' | 'timeout';
 
+/**
+ * Why a run stopped (`AgentRun.endReason`, admin usage API). `max_steps`: the answer came from
+ * the forced no-tools last step. `queue_timeout`: QUEUED too long. `interrupted`: the
+ * executor's heartbeat went stale (crash / restart).
+ */
+export type AgentRunEndReason =
+  | 'answered'
+  | 'max_steps'
+  | 'awaiting_confirmation'
+  | 'cancelled'
+  | 'timeout'
+  | 'queue_timeout'
+  | 'interrupted'
+  | 'error';
+
 /** Per-run loop state kept across steps. */
 type AgentRunLoopState = {
   /** An `untrustedContent` read tool returned content in this run: writes always ask. */
@@ -138,6 +166,11 @@ type AgentRunLoopState = {
    */
   historyTainted: boolean;
   userAskedToRemember: boolean;
+  /**
+   * Tool groups loaded for this run (`toolGroups.ts`), in load order; null = tool groups off
+   * (every tool is sent). Only appended to: history, keywords, `load_tools`, direct calls.
+   */
+  toolGroups: AgentToolGroup[] | null;
 };
 
 export type AgentRunDeps = {
@@ -333,6 +366,8 @@ export class AgentRunService {
     headerLocale?: string | null;
     /** `X-Agent-Client-Caps`, already parsed (`clientExecution/clientCaps.ts`). */
     clientCaps?: readonly string[] | null;
+    /** Voice-conversation turn: the prompt asks for a short reply written to be read aloud. */
+    voice?: boolean;
   }): Promise<{ message: AgentMessageDto; runId: string }> {
     const text = input.text.trim();
     if (!text) throw new ApiError(400, 'Message is empty', true, { code: 'validation.invalidInput' });
@@ -397,6 +432,7 @@ export class AgentRunService {
           model: llm.model,
           locale,
           clientCaps: [...(input.clientCaps ?? [])],
+          voice: input.voice === true,
           createdAt: now,
         },
       });
@@ -433,6 +469,8 @@ export class AgentRunService {
     messages?: AgentMessage[];
     /** Inherited from the run that proposed the action (the app that confirmed it). */
     clientCaps?: readonly string[] | null;
+    /** Inherited too: a write proposed in a voice turn reports its outcome aloud. */
+    voice?: boolean;
   }): Promise<string | null> {
     const agentConfig = this.deps.config();
     const llm = this.deps.llm();
@@ -464,6 +502,7 @@ export class AgentRunService {
           model: llm.model,
           locale: (input.locale ?? '').trim().slice(0, 16) || null,
           clientCaps: [...(input.clientCaps ?? [])],
+          voice: input.voice === true,
           createdAt: now,
         },
       });
@@ -498,7 +537,7 @@ export class AgentRunService {
     if (run.status === AgentRunStatus.QUEUED) {
       const updated = await prisma.agentRun.updateMany({
         where: { id: runId, status: AgentRunStatus.QUEUED },
-        data: { status: AgentRunStatus.CANCELLED, endedAt: this.deps.now() },
+        data: { status: AgentRunStatus.CANCELLED, endedAt: this.deps.now(), endReason: 'cancelled' satisfies AgentRunEndReason },
       });
       if (updated.count === 1) {
         await this.deps.events.open(runId, { resumed: !(await this.deps.events.has(runId)) });
@@ -519,7 +558,7 @@ export class AgentRunService {
     // (saving partial text, then emitting `run.cancelled`).
     await prisma.agentRun.updateMany({
       where: { id: runId, status: AgentRunStatus.RUNNING },
-      data: { status: AgentRunStatus.CANCELLED, endedAt: this.deps.now() },
+      data: { status: AgentRunStatus.CANCELLED, endedAt: this.deps.now(), endReason: 'cancelled' satisfies AgentRunEndReason },
     });
   }
 
@@ -627,14 +666,16 @@ export class AgentRunService {
       take: 100,
     });
     for (const run of stale) {
-      if (!this.active.has(run.id)) await this.failRun(run.id, 'INTERNAL', 'The run was interrupted');
+      if (!this.active.has(run.id)) await this.failRun(run.id, 'INTERNAL', 'The run was interrupted', 'interrupted');
     }
     const expired = await prisma.agentRun.findMany({
       where: { status: AgentRunStatus.QUEUED, createdAt: { lt: new Date(now - agentConfig.queueMaxWaitMs) } },
       select: { id: true },
       take: 100,
     });
-    for (const run of expired) await this.failRun(run.id, 'TIMEOUT', 'The assistant is too busy right now', AgentRunStatus.QUEUED);
+    for (const run of expired) {
+      await this.failRun(run.id, 'TIMEOUT', 'The assistant is too busy right now', 'queue_timeout', AgentRunStatus.QUEUED);
+    }
     if (expired.length) await this.broadcastQueuePositions();
     // Unconfirmed writes older than 15 min → EXPIRED (also done lazily on read/confirm).
     await expireStaleAgentActions({}, this.deps.now());
@@ -646,11 +687,12 @@ export class AgentRunService {
     runId: string,
     code: AgentErrorCode,
     message: string,
+    endReason: AgentRunEndReason,
     fromStatus: AgentRunStatus = AgentRunStatus.RUNNING,
   ): Promise<void> {
     const updated = await prisma.agentRun.updateMany({
       where: { id: runId, status: fromStatus },
-      data: { status: AgentRunStatus.FAILED, errorCode: code, error: message, endedAt: this.deps.now() },
+      data: { status: AgentRunStatus.FAILED, errorCode: code, error: message, endedAt: this.deps.now(), endReason },
     });
     if (updated.count !== 1) return;
     await this.deps.events.open(runId, { resumed: !(await this.deps.events.has(runId)) });
@@ -673,6 +715,7 @@ export class AgentRunService {
         errorCode: 'INTERNAL',
         error: 'The run was interrupted',
         endedAt: this.deps.now(),
+        endReason: 'interrupted' satisfies AgentRunEndReason,
       },
     });
     if (updated.count === 1 && db === prisma) {
@@ -806,6 +849,8 @@ export class AgentRunService {
     }, HEARTBEAT_MS);
     heartbeat.unref?.();
     const usage: AgentUsage = { inputTokens: 0, outputTokens: 0 };
+    /** Prompt-cache hits summed over steps; null until the provider reports one. */
+    const cache: { inputTokens: number | null } = { inputTokens: null };
     let steps = 0;
     /** Text streamed in the current step and not yet saved (persisted on cancel). */
     let unsavedText = '';
@@ -816,10 +861,13 @@ export class AgentRunService {
       const llm = this.deps.llm();
       if (!llm) throw new AgentLlmError('The AI assistant is not configured');
       const principal = await loadAgentPrincipal(run.userId);
+      const toolGroupsEnabled = agentConfig.toolGroupsEnabled;
       const context = await buildAgentRunContext({
         principal,
         tools: this.deps.registry.toolsForPrincipal(principal),
+        toolGroups: toolGroupsEnabled,
         headerLocale: run.locale,
+        voice: run.voice === true,
         now: this.deps.now(),
       });
       const history = await prisma.agentMessage.findMany({
@@ -829,9 +877,11 @@ export class AgentRunService {
       });
       const isUntrustedTool = (name: string) => this.deps.registry.get(name)?.untrustedContent === true;
       const summary = await this.refreshChatSummary(run, llm, history, isUntrustedTool, usage, signal);
+      const replay = buildAgentModelHistory(history, undefined, summary);
+      // Static rules first (cacheable prefix), the per-turn snapshot right before the latest user message.
       const messages: AgentLlmMessage[] = [
         { role: 'system', content: context.systemPrompt },
-        ...buildAgentModelHistory(history, undefined, summary),
+        ...withAgentSnapshot(replay, context.snapshot),
       ];
       const toolCtx: AgentToolContext = {
         principal,
@@ -844,13 +894,16 @@ export class AgentRunService {
         signal,
         web: createAgentWebRunSession(),
       };
-      const openAiTools = this.deps.registry.openAiToolsFor(principal);
       let finalStatus: 'COMPLETED' | 'AWAITING_CONFIRMATION' = 'COMPLETED';
+      let endReason: AgentRunEndReason = 'answered';
       const provenance = agentMemoryProvenanceFromHistory(history, isUntrustedTool);
       const runState: AgentRunLoopState = {
         tainted: false,
         historyTainted: provenance.historyTainted || Boolean(summary?.tainted),
         userAskedToRemember: userAskedToRemember(provenance.latestUserText),
+        toolGroups: toolGroupsEnabled
+          ? this.initialToolGroups(principal, replay, provenance.latestUserText)
+          : null,
       };
 
       for (let step = 1; step <= agentConfig.maxSteps; step += 1) {
@@ -860,9 +913,14 @@ export class AgentRunService {
         const stepUsage: AgentUsage = { inputTokens: 0, outputTokens: 0 };
         unsavedText = '';
 
+        // Rebuilt per step: `load_tools` / a direct call may have appended groups (prefix kept).
+        const openAiTools = lastStep
+          ? []
+          : this.deps.registry.openAiToolsFor(principal, runState.toolGroups ? { groups: runState.toolGroups } : {});
+        let stepCachedTokens: number | null = null;
         const release = await this.llmGate.acquire(signal);
         try {
-          const stream = llm.stream({ messages, tools: lastStep ? [] : openAiTools, signal });
+          const stream = llm.stream({ messages, tools: openAiTools, signal });
           for await (const chunk of stream) {
             if (signal.aborted) break;
             if (chunk.type === 'text') {
@@ -873,6 +931,7 @@ export class AgentRunService {
             } else if (chunk.type === 'usage') {
               stepUsage.inputTokens = chunk.inputTokens;
               stepUsage.outputTokens = chunk.outputTokens;
+              if (chunk.cachedInputTokens != null) stepCachedTokens = chunk.cachedInputTokens;
             }
           }
         } finally {
@@ -880,12 +939,14 @@ export class AgentRunService {
         }
         usage.inputTokens += stepUsage.inputTokens;
         usage.outputTokens += stepUsage.outputTokens;
-        await this.recordStepUsage(run, llm, messages, unsavedText, stepUsage, steps, usage);
+        if (stepCachedTokens != null) cache.inputTokens = (cache.inputTokens ?? 0) + stepCachedTokens;
+        await this.recordStepUsage(run, llm, messages, unsavedText, stepUsage, steps, usage, stepCachedTokens, cache.inputTokens);
         if (signal.aborted) throw new RunAborted(abortReasonOf(signal));
 
         const calls = lastStep ? [] : accumulator.calls(run.id, step);
         const text = unsavedText.trim();
         if (calls.length === 0) {
+          endReason = lastStep && agentConfig.maxSteps > 1 ? 'max_steps' : 'answered';
           const finalText = text || 'Sorry, I could not produce an answer. Please try again.';
           unsavedText = '';
           await this.saveMessage(run.id, run.chatId, AgentMessageRole.ASSISTANT, [{ type: 'text', text: finalText }], [
@@ -903,6 +964,7 @@ export class AgentRunService {
             if (action) await this.emit(run.id, { type: 'action.pending', action });
           }
           finalStatus = 'AWAITING_CONFIRMATION';
+          endReason = 'awaiting_confirmation';
           break;
         }
       }
@@ -915,6 +977,8 @@ export class AgentRunService {
           steps,
           inputTokens: usage.inputTokens,
           outputTokens: usage.outputTokens,
+          ...(cache.inputTokens != null ? { cachedInputTokens: cache.inputTokens } : {}),
+          endReason,
         },
       });
       if (updated.count === 1) {
@@ -923,11 +987,34 @@ export class AgentRunService {
         await this.emitCurrentTerminal(run.id);
       }
     } catch (error) {
-      await this.finishWithError(run, error, signal, unsavedText, usage, steps);
+      await this.finishWithError(run, error, signal, unsavedText, usage, steps, cache.inputTokens);
     } finally {
       clearTimeout(timeout);
       clearInterval(heartbeat);
     }
+  }
+
+  /**
+   * Tool groups at run start (`toolGroups.ts`): groups used in the recent replayed history
+   * (first-use order, so it matches the order the previous turn ended with), then keyword hits
+   * on the latest user message. Only groups the principal can see.
+   */
+  private initialToolGroups(
+    principal: AgentToolContext['principal'],
+    replay: AgentLlmMessage[],
+    latestUserText: string | null,
+  ): AgentToolGroup[] {
+    const { registry } = this.deps;
+    const available = new Set<AgentToolGroup>(registry.groupsForPrincipal(principal));
+    const groups: AgentToolGroup[] = [];
+    const fromHistory = agentToolGroupsFromHistory(replay, (name) => {
+      const tool = registry.get(name);
+      return tool ? agentToolGroupOf(tool) : undefined;
+    });
+    for (const group of [...fromHistory, ...agentToolGroupsForText(latestUserText)]) {
+      if (available.has(group) && !groups.includes(group)) groups.push(group);
+    }
+    return groups;
   }
 
   /**
@@ -987,6 +1074,51 @@ export class AgentRunService {
     if (current) await this.emit(runId, terminalEventForRun(current));
   }
 
+  /**
+   * Calls that may run at the same time as their neighbours: reads (and `load_tools`, unknown
+   * tools and bad JSON, which answer at once). Writes and memory tools run one at a time, in
+   * order, so proposals keep the one-pending-action rule and auto-approve sees the run's taint.
+   */
+  private isConcurrentCall(call: AgentLlmToolCall): boolean {
+    const tool = this.deps.registry.get(call.function.name);
+    return !tool || tool.kind === 'read';
+  }
+
+  /** `load_tools` (tool groups on): appends the requested groups the principal can see. */
+  private loadToolGroups(toolCtx: AgentToolContext, runState: AgentRunLoopState, rawArgs: unknown, label: string): AgentToolExecution {
+    const { registry } = this.deps;
+    const groups = runState.toolGroups ?? [];
+    const available = registry.groupsForPrincipal(toolCtx.principal);
+    const requested = loadToolsGroupsFromArguments(rawArgs);
+    const loaded = requested.filter((group) => group !== 'core' && (available as AgentToolGroup[]).includes(group));
+    for (const group of loaded) if (!groups.includes(group)) groups.push(group);
+    if (!loaded.length) {
+      return {
+        ok: false,
+        data: { error: 'unknown_group', message: 'None of these groups can be loaded for this user.', available },
+        summary: agentT(toolCtx.locale, 'error.invalid'),
+        label,
+      };
+    }
+    const tools = registry
+      .toolsForPrincipal(toolCtx.principal)
+      .filter((tool) => (loaded as AgentToolGroup[]).includes(agentToolGroupOf(tool)))
+      .map((tool) => tool.name);
+    const unavailable = requested.filter((group) => !(loaded as AgentToolGroup[]).includes(group) && group !== 'core');
+    return {
+      ok: true,
+      data: {
+        status: 'loaded',
+        groups: loaded,
+        tools,
+        ...(unavailable.length ? { unavailable } : {}),
+        note: 'These tools are now in your tool list for the rest of this chat. Call them next.',
+      },
+      summary: agentT(toolCtx.locale, 'summary.toolsLoaded'),
+      label,
+    };
+  }
+
   /** One tool step; returns pending action ids created by write tools (auto-approved ones excluded). */
   private async executeToolStep(
     run: AgentRun,
@@ -999,13 +1131,17 @@ export class AgentRunService {
   ): Promise<string[]> {
     const { registry } = this.deps;
     const assistantLlm: AgentLlmMessage = { role: 'assistant', content: text || null, tool_calls: calls };
-    const callBlocks = calls.map((call) => {
-      const parsed = parseToolArguments(call.function.arguments);
+    const parsedArgs = calls.map((call) => parseToolArguments(call.function.arguments));
+    const callBlocks = calls.map((call, index) => {
+      const parsed = parsedArgs[index];
       return {
         type: 'tool_call' as const,
         callId: call.id,
         name: call.function.name,
-        label: registry.labelFor(call.function.name, parsed.ok ? parsed.value : null, toolCtx.locale),
+        label:
+          call.function.name === LOAD_TOOLS_NAME && runState.toolGroups
+            ? agentT(toolCtx.locale, 'label.loadTools')
+            : registry.labelFor(call.function.name, parsed.ok ? parsed.value : null, toolCtx.locale),
       };
     });
     await this.saveMessage(
@@ -1017,79 +1153,126 @@ export class AgentRunService {
     );
     messages.push(assistantLlm);
 
+    const executions: AgentToolExecution[] = [];
+    const autoActionIds: string[] = [];
+    const resultActionIds = new Map<string, string>();
+    const started = new Set<number>();
+
+    /** Phase B of a call: runs the tool (no events). */
+    const invoke = async (index: number): Promise<AgentToolExecution> => {
+      const call = calls[index];
+      const { label } = callBlocks[index];
+      const parsed = parsedArgs[index];
+      if (!parsed.ok) {
+        return {
+          ok: false,
+          data: { error: 'invalid_arguments', message: 'arguments were not valid JSON' },
+          summary: agentT(toolCtx.locale, 'error.invalid'),
+          label,
+        };
+      }
+      if (call.function.name === LOAD_TOOLS_NAME && runState.toolGroups) {
+        return this.loadToolGroups(toolCtx, runState, parsed.value, label);
+      }
+      // Calling a tool of a group that is not loaded yet loads it (still permission-checked).
+      const tool = registry.get(call.function.name);
+      if (tool && runState.toolGroups) {
+        const group = agentToolGroupOf(tool);
+        if (group !== 'core' && !runState.toolGroups.includes(group) && registry.groupsForPrincipal(toolCtx.principal).includes(group)) {
+          runState.toolGroups.push(group);
+        }
+      }
+      return registry.executeTool(
+        {
+          ...toolCtx,
+          callId: call.id,
+          memoryProvenance: {
+            untrustedContentInContext: runState.tainted || runState.historyTainted,
+            userAskedToRemember: runState.userAskedToRemember,
+          },
+        },
+        call.function.name,
+        parsed.value,
+      );
+    };
+
+    /** Phase C of a call, in call order: auto-approve, taint, `tool.finished`, `memory.saved`. */
+    const settle = async (index: number, raw: AgentToolExecution): Promise<AgentToolExecution> => {
+      const call = calls[index];
+      const { label } = callBlocks[index];
+      let execution = raw;
+      if (execution.awaitingConfirmation) {
+        const auto = await this.deps.autoApprove(registry, execution.awaitingConfirmation.actionId, this.deps.now(), {
+          runTainted: runState.tainted,
+        });
+        if (auto) {
+          // Executed (or failed) in this run: the model gets the outcome as this call's
+          // result and keeps going; no AWAITING_CONFIRMATION, no follow-up run.
+          const { action, closing } = auto;
+          autoActionIds.push(action.id);
+          execution = {
+            ok: closing.status === 'EXECUTED',
+            data: {
+              status: closing.modelStatus,
+              actionId: action.id,
+              tool: action.toolName,
+              autoApproved: true,
+              note: closing.modelNote,
+              ...(closing.modelData ?? {}),
+            },
+            summary: closing.result.message ?? '',
+            label,
+            ...(closing.result.entities?.length ? { entities: closing.result.entities } : {}),
+          };
+          resultActionIds.set(call.id, action.id);
+        }
+      }
+      if (execution.ok && registry.get(call.function.name)?.untrustedContent) runState.tainted = true;
+      await this.emit(run.id, {
+        type: 'tool.finished',
+        callId: call.id,
+        ok: execution.ok,
+        summary: execution.summary,
+        ...(execution.entities?.length ? { entities: execution.entities } : {}),
+        ...(execution.web ? { web: execution.web } : {}),
+        ...(execution.images?.length ? { images: execution.images } : {}),
+        ...(execution.card ? { card: execution.card } : {}),
+      });
+      // Phase 11: a memory saved without a card → the "Saved to memory · Undo" chip.
+      if (execution.ok && execution.memorySaved) {
+        await this.emit(run.id, { type: 'memory.saved', callId: call.id, memory: execution.memorySaved });
+      }
+      return execution;
+    };
+
+    // Batches of consecutive concurrent-safe calls run together; any other call runs alone.
+    for (let first = 0; first < calls.length; ) {
+      let last = first + 1;
+      if (this.isConcurrentCall(calls[first])) {
+        while (last < calls.length && this.isConcurrentCall(calls[last])) last += 1;
+      }
+      const batch = Array.from({ length: last - first }, (_, offset) => first + offset);
+      // Phase A, in order: a call starts only if the run is still alive.
+      for (const index of batch) {
+        if (signal.aborted) break;
+        started.add(index);
+        await this.emit(run.id, { type: 'tool.started', callId: calls[index].id, name: calls[index].function.name, label: callBlocks[index].label });
+      }
+      const raw = await Promise.all(batch.map((index) => (started.has(index) ? invoke(index) : null)));
+      for (const [offset, index] of batch.entries()) {
+        const result = raw[offset];
+        executions[index] = result
+          ? await settle(index, result)
+          : { ok: false, data: { error: 'cancelled' }, summary: agentT(toolCtx.locale, 'error.cancelled'), label: callBlocks[index].label };
+      }
+      first = last;
+    }
+
     const toolMessages: AgentLlmMessage[] = [];
     const resultBlocks: AgentContentBlock[] = [];
     const pendingActionIds: string[] = [];
-    const autoActionIds: string[] = [];
-    const resultActionIds = new Map<string, string>();
     for (const [index, call] of calls.entries()) {
-      const { label } = callBlocks[index];
-      let execution: AgentToolExecution;
-      if (signal.aborted) {
-        execution = { ok: false, data: { error: 'cancelled' }, summary: agentT(toolCtx.locale, 'error.cancelled'), label };
-      } else {
-        await this.emit(run.id, { type: 'tool.started', callId: call.id, name: call.function.name, label });
-        const parsed = parseToolArguments(call.function.arguments);
-        execution = parsed.ok
-          ? await registry.executeTool(
-              {
-                ...toolCtx,
-                callId: call.id,
-                memoryProvenance: {
-                  untrustedContentInContext: runState.tainted || runState.historyTainted,
-                  userAskedToRemember: runState.userAskedToRemember,
-                },
-              },
-              call.function.name,
-              parsed.value,
-            )
-          : {
-              ok: false,
-              data: { error: 'invalid_arguments', message: 'arguments were not valid JSON' },
-              summary: agentT(toolCtx.locale, 'error.invalid'),
-              label,
-            };
-        if (execution.awaitingConfirmation) {
-          const auto = await this.deps.autoApprove(registry, execution.awaitingConfirmation.actionId, this.deps.now(), {
-            runTainted: runState.tainted,
-          });
-          if (auto) {
-            // Executed (or failed) in this run: the model gets the outcome as this call's
-            // result and keeps going; no AWAITING_CONFIRMATION, no follow-up run.
-            const { action, closing } = auto;
-            autoActionIds.push(action.id);
-            execution = {
-              ok: closing.status === 'EXECUTED',
-              data: {
-                status: closing.modelStatus,
-                actionId: action.id,
-                tool: action.toolName,
-                autoApproved: true,
-                note: closing.modelNote,
-                ...(closing.modelData ?? {}),
-              },
-              summary: closing.result.message ?? '',
-              label,
-              ...(closing.result.entities?.length ? { entities: closing.result.entities } : {}),
-            };
-            resultActionIds.set(call.id, action.id);
-          }
-        }
-        if (execution.ok && registry.get(call.function.name)?.untrustedContent) runState.tainted = true;
-        await this.emit(run.id, {
-          type: 'tool.finished',
-          callId: call.id,
-          ok: execution.ok,
-          summary: execution.summary,
-          ...(execution.entities?.length ? { entities: execution.entities } : {}),
-          ...(execution.web ? { web: execution.web } : {}),
-          ...(execution.images?.length ? { images: execution.images } : {}),
-        });
-        // Phase 11: a memory saved without a card → the "Saved to memory · Undo" chip.
-        if (execution.ok && execution.memorySaved) {
-          await this.emit(run.id, { type: 'memory.saved', callId: call.id, memory: execution.memorySaved });
-        }
-      }
+      const execution = executions[index];
       toolMessages.push({ role: 'tool', tool_call_id: call.id, content: serializeToolContent(execution) });
       resultBlocks.push({
         type: 'tool_result',
@@ -1099,6 +1282,7 @@ export class AgentRunService {
         ...(execution.entities?.length ? { entities: execution.entities } : {}),
         ...(execution.web ? { web: execution.web } : {}),
         ...(execution.images?.length ? { images: execution.images } : {}),
+        ...(execution.card ? { card: execution.card } : {}),
       });
       if (execution.awaitingConfirmation) {
         pendingActionIds.push(execution.awaitingConfirmation.actionId);
@@ -1126,6 +1310,8 @@ export class AgentRunService {
     stepUsage: AgentUsage,
     steps: number,
     total: AgentUsage,
+    stepCachedTokens: number | null,
+    totalCachedTokens: number | null,
   ): Promise<void> {
     await prisma.agentRun.updateMany({
       where: { id: run.id },
@@ -1133,6 +1319,7 @@ export class AgentRunService {
         steps,
         inputTokens: total.inputTokens,
         outputTokens: total.outputTokens,
+        ...(totalCachedTokens != null ? { cachedInputTokens: totalCachedTokens } : {}),
         heartbeatAt: this.deps.now(),
         // The latest call's prompt + reply is what the next turn replays: the chat's context size.
         ...(stepUsage.inputTokens > 0 ? { contextTokens: stepUsage.inputTokens + stepUsage.outputTokens } : {}),
@@ -1148,6 +1335,7 @@ export class AgentRunService {
       output: output || '[tool calls]',
       inputTokens: stepUsage.inputTokens,
       outputTokens: stepUsage.outputTokens,
+      cachedInputTokens: stepCachedTokens,
     });
   }
 
@@ -1158,15 +1346,19 @@ export class AgentRunService {
     unsavedText: string,
     usage: AgentUsage,
     steps: number,
+    cachedInputTokens: number | null,
   ): Promise<void> {
     const aborted = error instanceof RunAborted ? error.reason : signal.aborted ? abortReasonOf(signal) : null;
     let status: AgentRunStatus = AgentRunStatus.FAILED;
     let code: AgentErrorCode = 'INTERNAL';
     let message: string | null = 'Something went wrong';
+    let endReason: AgentRunEndReason = 'error';
     if (aborted === 'cancelled') {
       status = AgentRunStatus.CANCELLED;
       message = null;
+      endReason = 'cancelled';
     } else if (aborted === 'timeout') {
+      endReason = 'timeout';
       code = 'TIMEOUT';
       message = 'The assistant took too long to answer';
     } else if (error instanceof AgentLlmError) {
@@ -1199,6 +1391,8 @@ export class AgentRunService {
           steps,
           inputTokens: usage.inputTokens,
           outputTokens: usage.outputTokens,
+          ...(cachedInputTokens != null ? { cachedInputTokens } : {}),
+          endReason,
         },
       });
     } catch (updateError) {

@@ -83,7 +83,8 @@
       "alwaysAllow": "Uvek dozvoli",
       "alwaysAsks": "Ova radnja uvek traži potvrdu",
       "autoHeading": "Urađeno automatski",
-      "autoApproved": "Urađeno automatski, vi ste ovo dozvolili."
+      "autoApproved": "Urađeno automatski, vi ste ovo dozvolili.",
+      "applying": "Primenjujem…"
     },
     "entity": {
       "untitledGame": "Igra",
@@ -249,6 +250,159 @@
       "resets": "Resetuje se",
       "resetsAt": "{{time}} (za {{duration}})",
       "dailyExplain": "Zajednički za sve vaše AI četove. Kada se potroši, asistent pauzira do resetovanja."
+    },
+    "followUps": {
+      "label": "Predlozi za nastavak",
+      "whoMissing": "Ko još nedostaje?",
+      "weatherNext": "Vreme za moju sledeću igru",
+      "bookFirstSlot": "Rezerviši prvi termin",
+      "laterSlots": "Prikaži kasnije termine",
+      "otherDay": "Probaj drugi dan",
+      "standings": "Prikaži tabelu",
+      "nextRound": "Mečevi sledećeg kola",
+      "invitePlayers": "Pozovi igrače",
+      "splitCost": "Podeli trošak",
+      "postInChat": "Napiši u čet igre",
+      "enterScore": "Unesi rezultat",
+      "finishResults": "Završi rezultate",
+      "showResults": "Prikaži rezultate",
+      "remindUnpaid": "Podseti one koji nisu platili",
+      "markMyPaid": "Označi moj deo kao plaćen",
+      "createGameForBooking": "Napravi igru za ovu rezervaciju",
+      "findIndoor": "Nađi zatvoreni teren",
+      "moveGame": "Pomeri igru",
+      "joinBestMatch": "Prijavi me na najbolji meč",
+      "freeCourtThere": "Nađi slobodan teren tamo",
+      "inviteToNextGame": "Pozovi ih na moju sledeću igru",
+      "replyInChat": "Odgovori u četu",
+      "myBookings": "Prikaži moje rezervacije",
+      "retry": "Pokušaj ponovo",
+      "adminApproveFirst": "Odobri prvi događaj"
+    },
+    "personal": {
+      "loading": "Učitavanje predloga",
+      "enterScore": {
+        "prompt": "Unesi rezultat moje igre {{when}}"
+      },
+      "needsPlayers": {
+        "prompt": "Moja igra {{when}} još ima slobodnih mesta — koga mogu da pozovem?",
+        "context": "Igrači: {{playing}}/{{max}}"
+      },
+      "remindPay": {
+        "prompt": "Podseti igrače da plate moju igru {{when}}",
+        "context": "Neplaćeni delovi: {{count}}"
+      },
+      "pendingInvite": {
+        "prompt": "Reci mi nešto o pozivu od {{name}} za {{when}}"
+      },
+      "payShare": {
+        "prompt": "Označi moj deo za igru {{when}} kao plaćen",
+        "context": "Prima: {{name}}"
+      },
+      "leagueNext": {
+        "prompt": "Šta je sledeće u ligi {{league}}?",
+        "context": "Liga koju vodite"
+      },
+      "nextGameWeather": {
+        "prompt": "Kakvo će biti vreme na mojoj igri {{when}}?"
+      }
+    },
+    "cards": {
+      "results": {
+        "status": {
+          "FINAL": "Konačno",
+          "IN_PROGRESS": "U toku",
+          "NONE": "Nije počelo"
+        },
+        "you": "{{name}} (vi)",
+        "winner": "Pobednik",
+        "draw": "Nerešeno",
+        "matchRef": "Runda {{round}} · Meč {{match}}",
+        "matches": "Mečeva: {{count}}",
+        "more": "Još mečeva: {{count}}",
+        "noMatches": "Još nema mečeva",
+        "noPlayers": "Još nema igrača"
+      },
+      "playIntent": {
+        "open": "Tražim igru",
+        "matched": "Upareno",
+        "chip": {
+          "days": "Dani",
+          "time": "Vreme",
+          "clubs": "Klubovi",
+          "level": "Nivo",
+          "players": "Igrači"
+        },
+        "inProposal": "U predlogu meča · igrača: {{count}}",
+        "gamesFit": "Odgovarajućih igara: {{count}}",
+        "noGames": "Još nema odgovarajućih igara"
+      },
+      "weather": {
+        "verdict": {
+          "good": "Dobro za igru",
+          "risky": "Moguća kiša ili vetar",
+          "bad": "Loše vreme za igru napolju",
+          "indoor": "Zatvoreni tereni"
+        },
+        "recorded": "Zabeleženo",
+        "bestWindow": "Najbolje vreme za igru: {{range}}",
+        "stale": "Prognoza možda nije ažurna"
+      }
+    },
+    "voice": {
+      "title": "Glasovni razgovor",
+      "start": "Razgovaraj sa asistentom",
+      "end": "Završi glasovni razgovor",
+      "mute": "Isključi mikrofon",
+      "unmute": "Uključi mikrofon",
+      "interrupt": "Prekini",
+      "keepTalking": "Nastavi razgovor",
+      "listeningLabel": "Slušam",
+      "status": {
+        "starting": "Uključujem mikrofon…",
+        "listening": "Slušam",
+        "hearing": "Čujem te…",
+        "transcribing": "Razumem…",
+        "thinking": "Razmišljam…",
+        "speaking": "Govorim",
+        "confirm": "Potvrdi na ekranu",
+        "muted": "Mikrofon isključen"
+      },
+      "hint": {
+        "starting": "Dozvoli pristup mikrofonu ako se traži",
+        "listening": "Pitaj za svoje igre, rezervacije, lige…",
+        "hearing": "Napravi pauzu kad završiš",
+        "transcribing": "Pretvaram govor u tekst",
+        "thinking": "Pričaj bilo kad da prekineš",
+        "speaking": "Dodirni krug ili samo pričaj da prekineš",
+        "confirm": "Dodirni Potvrdi ili Otkaži iznad, ili krug da nastaviš razgovor",
+        "muted": "Dodirni mikrofon da ponovo pričaš"
+      },
+      "notice": {
+        "micDenied": "Dozvoli pristup mikrofonu u Podešavanjima da bi razgovarao sa asistentom.",
+        "micInsecure": "Za glas je potrebna sigurna veza.",
+        "micUnsupported": "Ovaj uređaj ovde ne može da snima zvuk.",
+        "notHeard": "Nisam razumeo. Pokušaj ponovo.",
+        "transcribeFailed": "Govor nije prepoznat. Pokušaj ponovo.",
+        "sendFailed": "Slanje nije uspelo. Pokušaj ponovo.",
+        "speechFailed": "Odgovor nije mogao da se pusti naglas. Nalazi se u četu.",
+        "runFailed": "Nešto nije u redu. Pokušaj ponovo.",
+        "interrupted": "Glasovni razgovor je pauziran.",
+        "unavailable": "Glas trenutno nije dostupan.",
+        "budget": "Dostigao si današnji limit asistenta. Pokušaj sutra.",
+        "rateLimited": "Previše glasovnih zahteva. Sačekaj malo.",
+        "idle": "Glasovni razgovor je završen posle minuta tišine."
+      },
+      "dictation": {
+        "start": "Diktiraj",
+        "cancel": "Otkaži snimanje",
+        "done": "Završi snimanje",
+        "recording": "Snimam…",
+        "transcribing": "Prepoznajem…",
+        "tooShort": "Prekratko. Pričaj malo duže."
+      },
+      "confirmPrompt": "{{title}}. Dodirni Potvrdi na ekranu.",
+      "confirmFallbackTitle": "Pripremio sam izmenu"
     }
   }
 }

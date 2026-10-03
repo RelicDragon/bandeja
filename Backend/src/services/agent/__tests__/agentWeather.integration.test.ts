@@ -9,7 +9,9 @@
  *   - past date → archive (one archive fetch, then the DB row);
  *   - beyond the forecast horizon / unscheduled game / city without coordinates → "not available"
  *     with a note, no fetch;
- *   - unknown city → not_found, no home city → bad_request; strict input.
+ *   - unknown city → not_found, no home city → bad_request; strict input;
+ *   - the rich card (slice 9e): hours with `playable`, the game verdict, the day's best window,
+ *     no hint for past days; never in the model-facing `data`.
  * Open-Meteo is faked by replacing `globalThis.fetch`; any other URL fails the test.
  */
 import assert from 'node:assert/strict';
@@ -27,7 +29,9 @@ import {
 } from '../access/__tests__/agentPermissionMatrix';
 import type { AgentPrincipal } from '../access/agentPrincipal';
 import { getAgentToolRegistry } from '../tools';
+import type { AgentWeatherCard } from '@bandeja/shared/agentContract';
 import type { AgentToolExecution } from '../tools/registry';
+import { bestPlayableWindow, type AgentToolResultWithCard } from '../tools/agentToolCards';
 
 const TZ = 'Europe/Belgrade';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -105,6 +109,14 @@ const registry = getAgentToolRegistry();
 
 async function exec(principal: AgentPrincipal, args: unknown, locale = 'en'): Promise<AgentToolExecution> {
   return registry.executeTool({ principal, locale, timezone: TZ, now: new Date() }, 'get_weather', args);
+}
+
+/** The handler's own result (the rich card rides next to `data`, which the model sees). */
+async function weatherCard(principal: AgentPrincipal, args: unknown): Promise<AgentWeatherCard | undefined> {
+  const tool = registry.get('get_weather')!;
+  const result = (await tool.handler({ principal, locale: 'en', timezone: TZ, now: new Date() }, tool.input.parse(args))) as AgentToolResultWithCard;
+  assert.equal(JSON.stringify(result.data).includes('"playable"'), false, 'the card stays out of the model data');
+  return result.card?.kind === 'weather' ? result.card : undefined;
 }
 
 /** Maps a tool result to the matrix outcomes (`classifyAgentOutcome` reads ApiErrors). */
@@ -252,6 +264,24 @@ function localDay(offsetDays: number): string {
     const ruSummary = (await exec(principals.stranger, { gameId: game.id }, 'ru')).summary;
     assert.equal(ruSummary, `Погода: ${city.name}, ${tomorrow}`);
 
+    // Card: the game window, rain hours not playable, verdict from the weather-risk classes.
+    const gameCard = await weatherCard(principals.stranger, { gameId: game.id });
+    assert.ok(gameCard, 'game card');
+    assert.equal(gameCard.gameId, game.id);
+    assert.equal(gameCard.place, city.name);
+    assert.deepEqual(gameCard.window, { start: '18:00', end: '19:30' });
+    assert.equal(gameCard.outdoor, true);
+    assert.equal(gameCard.verdict, 'risky');
+    assert.equal(gameCard.bestWindow, null);
+    assert.deepEqual(gameCard.hours.map((h) => [h.time, h.playable]), [['17:00', true], ['18:00', false], ['19:00', false], ['20:00', false]]);
+    assert.equal(gameCard.hours[1].rainChancePct, 70);
+    assert.equal(gameCard.hours[1].condition, 'rain');
+    // Indoor courts: no rain verdict, just "indoor".
+    await prisma.court.update({ where: { id: club.courts[0].id }, data: { isIndoor: true } });
+    assert.equal((await weatherCard(principals.stranger, { gameId: game.id }))?.verdict, 'indoor');
+    await prisma.court.update({ where: { id: club.courts[0].id }, data: { isIndoor: false } });
+    assert.equal(await weatherCard(principals.stranger, { gameId: unscheduled.id }), undefined, 'no card without a forecast');
+
     const notScheduled = (await callWeather(principals.stranger, { gameId: unscheduled.id })).data as DayData;
     assert.equal(notScheduled.available, false);
     assert.equal(notScheduled.unavailableReason, 'not_scheduled');
@@ -268,6 +298,13 @@ function localDay(offsetDays: number): string {
     assert.equal(homeDay.cityId, city.id);
     assert.deepEqual(homeDay.hours, day.hours);
     assert.equal(calls.forecast, 1, 'day reads reuse the cached forecast');
+    const dayCard = await weatherCard(principals.stranger, { cityId: city.id, date: tomorrow });
+    assert.ok(dayCard, 'day card');
+    assert.equal(dayCard.gameId, null);
+    assert.equal(dayCard.hours[0].time, '06:00', 'padel hours only');
+    assert.equal(dayCard.hours.length, 18);
+    assert.equal(dayCard.verdict, 'risky');
+    assert.deepEqual(dayCard.bestWindow, { start: '06:00', end: '18:00' });
 
     // 4. Past date → archive (fetched once, then read from the DB).
     const past = localDay(-3);
@@ -280,6 +317,17 @@ function localDay(offsetDays: number): string {
     assert.equal(calls.archive, 1);
     await callWeather(homePrincipal, { date: past });
     assert.equal(calls.archive, 1, 'archived day is served from the DB');
+    const pastCard = await weatherCard(homePrincipal, { date: past });
+    assert.equal(pastCard?.source, 'archive');
+    assert.equal(pastCard?.verdict, null, 'no "good to play" hint for a past day');
+    assert.equal(pastCard?.bestWindow, null);
+    assert.equal(await weatherCard(homePrincipal, { date: localDay(30) }), undefined, 'no card without a forecast');
+
+    // Best window: ≥ 2 playable hours, none when every hour is playable.
+    const hour = (time: string, playable: boolean) => ({ time, tempC: 20, condition: 'clear', isDay: true, rainChancePct: 0, rainMm: 0, windKmh: 5, playable });
+    assert.equal(bestPlayableWindow([hour('10:00', true), hour('11:00', true)]), null);
+    assert.equal(bestPlayableWindow([hour('10:00', true), hour('11:00', false), hour('12:00', true)]), null);
+    assert.deepEqual(bestPlayableWindow([hour('21:00', false), hour('22:00', true), hour('23:00', true)]), { start: '22:00', end: '24:00' });
 
     // 5. Beyond the forecast horizon → not available, no fetch.
     const far = localDay(30);

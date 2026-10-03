@@ -2,10 +2,15 @@
  * `/api/agent` — AI agent chats (docs/domains/agent.md). REST + one SSE route.
  * All routes authenticate; everything but `GET /me` is behind the feature flag.
  */
-import { Router } from 'express';
+import express, { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { AGENT_MEMORY_BODY_MAX_LENGTH, AGENT_MESSAGE_MAX_LENGTH } from '@bandeja/shared/agentContract';
+import {
+  AGENT_MEMORY_BODY_MAX_LENGTH,
+  AGENT_MESSAGE_MAX_LENGTH,
+  AGENT_VOICE_MAX_AUDIO_BYTES,
+  AGENT_VOICE_SPEECH_MAX_CHARS,
+} from '@bandeja/shared/agentContract';
 import { config } from '../config/env';
 import { authenticate, type AuthRequest } from '../middleware/auth';
 import { validateZod } from '../middleware/validateZod';
@@ -44,6 +49,24 @@ const agentMessageLimiter = rateLimit({
   },
 });
 noteAgentMessageRateStoreInitialized(config.agent.rateLimitWindowMs);
+
+/** Voice: per-user limits (`AGENT_VOICE_*_RATE_LIMIT_MAX`); the daily token budget is the real cap. */
+const voiceLimiter = (max: () => number) =>
+  rateLimit({
+    windowMs: config.agentVoice.rateLimitWindowMs,
+    limit: max,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
+    message: { success: false, message: 'Too many voice requests. Try again in a few minutes.', code: 'RATE_LIMITED' },
+  });
+const voiceTranscriptionLimiter = voiceLimiter(() => config.agentVoice.sttRateLimitMax);
+const voiceSpeechLimiter = voiceLimiter(() => config.agentVoice.ttsRateLimitMax);
+/** Raw audio upload: any `audio/*` body (format checked by the service). */
+const rawAudioBody = express.raw({
+  type: (req) => String(req.headers['content-type'] ?? '').toLowerCase().startsWith('audio/'),
+  limit: AGENT_VOICE_MAX_AUDIO_BYTES,
+});
 
 router.use(authenticate);
 
@@ -85,9 +108,26 @@ router.post(
     body: z.object({
       text: z.string().trim().min(1).max(AGENT_MESSAGE_MAX_LENGTH),
       editMessageId: idParam.optional(),
+      // Voice-conversation turn: the reply is written to be read aloud (docs/domains/agent.md § Voice).
+      voice: z.boolean().optional(),
     }),
   }),
   agentController.postMessage,
+);
+
+// Voice (docs/domains/agent.md § Voice): raw audio in → transcript; text in → audio/mpeg.
+router.post(
+  '/voice/transcriptions',
+  voiceTranscriptionLimiter,
+  rawAudioBody,
+  validateZod({ query: z.object({ durationMs: z.coerce.number().int().min(0).max(24 * 60 * 60 * 1000).optional() }) }),
+  agentController.transcribeVoice,
+);
+router.post(
+  '/voice/speech',
+  voiceSpeechLimiter,
+  validateZod({ body: z.object({ text: z.string().trim().min(1).max(AGENT_VOICE_SPEECH_MAX_CHARS) }).strict() }),
+  agentController.speakVoice,
 );
 
 router.get('/runs/:runId/events', validateZod({ params: runParams }), agentController.streamRunEvents);

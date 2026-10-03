@@ -83,7 +83,8 @@
       "alwaysAllow": "Always allow",
       "alwaysAsks": "This action always asks",
       "autoHeading": "Done automatically",
-      "autoApproved": "Done automatically, you allowed this."
+      "autoApproved": "Done automatically, you allowed this.",
+      "applying": "Applying…"
     },
     "entity": {
       "untitledGame": "Game",
@@ -249,6 +250,159 @@
       "resets": "Resets",
       "resetsAt": "{{time}} (in {{duration}})",
       "dailyExplain": "Shared across all your AI chats. When it runs out, the assistant pauses until the reset."
+    },
+    "followUps": {
+      "label": "Suggested follow-ups",
+      "whoMissing": "Who's still missing?",
+      "weatherNext": "Weather for my next game",
+      "bookFirstSlot": "Book the first slot",
+      "laterSlots": "Show later times",
+      "otherDay": "Try another day",
+      "standings": "Show the standings",
+      "nextRound": "Next round fixtures",
+      "invitePlayers": "Invite players",
+      "splitCost": "Split the cost",
+      "postInChat": "Post in the game chat",
+      "enterScore": "Enter the score",
+      "finishResults": "Finish the results",
+      "showResults": "Show the results",
+      "remindUnpaid": "Remind who hasn't paid",
+      "markMyPaid": "Mark my share as paid",
+      "createGameForBooking": "Create a game for this booking",
+      "findIndoor": "Find an indoor court",
+      "moveGame": "Move the game",
+      "joinBestMatch": "Join the best match",
+      "freeCourtThere": "Find a free court there",
+      "inviteToNextGame": "Invite them to my next game",
+      "replyInChat": "Reply in the chat",
+      "myBookings": "Show my bookings",
+      "retry": "Try again",
+      "adminApproveFirst": "Approve the first event"
+    },
+    "personal": {
+      "loading": "Loading suggestions",
+      "enterScore": {
+        "prompt": "Enter the score for my {{when}} game"
+      },
+      "needsPlayers": {
+        "prompt": "My {{when}} game still has open spots — who could I invite?",
+        "context": "Players: {{playing}}/{{max}}"
+      },
+      "remindPay": {
+        "prompt": "Remind players to pay for my {{when}} game",
+        "context": "Unpaid shares: {{count}}"
+      },
+      "pendingInvite": {
+        "prompt": "Tell me about {{name}}'s invite for {{when}}"
+      },
+      "payShare": {
+        "prompt": "Mark my share for the {{when}} game as paid",
+        "context": "To {{name}}"
+      },
+      "leagueNext": {
+        "prompt": "What's next in {{league}}?",
+        "context": "A league you run"
+      },
+      "nextGameWeather": {
+        "prompt": "What's the weather for my {{when}} game?"
+      }
+    },
+    "cards": {
+      "results": {
+        "status": {
+          "FINAL": "Final",
+          "IN_PROGRESS": "In progress",
+          "NONE": "Not started"
+        },
+        "you": "{{name}} (you)",
+        "winner": "Winner",
+        "draw": "Draw",
+        "matchRef": "Round {{round}} · Match {{match}}",
+        "matches": "Matches: {{count}}",
+        "more": "More matches: {{count}}",
+        "noMatches": "No matches yet",
+        "noPlayers": "No players yet"
+      },
+      "playIntent": {
+        "open": "Looking",
+        "matched": "Matched",
+        "chip": {
+          "days": "Days",
+          "time": "Time",
+          "clubs": "Clubs",
+          "level": "Level",
+          "players": "Players"
+        },
+        "inProposal": "In a match proposal · players: {{count}}",
+        "gamesFit": "Games that fit: {{count}}",
+        "noGames": "No games fit yet"
+      },
+      "weather": {
+        "verdict": {
+          "good": "Good to play",
+          "risky": "Rain or wind possible",
+          "bad": "Bad weather to play outdoors",
+          "indoor": "Indoor courts"
+        },
+        "recorded": "Recorded",
+        "bestWindow": "Best time to play: {{range}}",
+        "stale": "Forecast may be out of date"
+      }
+    },
+    "voice": {
+      "title": "Voice conversation",
+      "start": "Talk to the assistant",
+      "end": "End voice conversation",
+      "mute": "Mute microphone",
+      "unmute": "Unmute microphone",
+      "interrupt": "Interrupt",
+      "keepTalking": "Keep talking",
+      "listeningLabel": "Listening",
+      "status": {
+        "starting": "Starting the microphone…",
+        "listening": "Listening",
+        "hearing": "Hearing you…",
+        "transcribing": "Got it…",
+        "thinking": "Thinking…",
+        "speaking": "Speaking",
+        "confirm": "Confirm on screen",
+        "muted": "Microphone off"
+      },
+      "hint": {
+        "starting": "Allow microphone access if asked",
+        "listening": "Ask about your games, bookings, leagues…",
+        "hearing": "Pause when you're done",
+        "transcribing": "Turning your words into text",
+        "thinking": "Talk any time to interrupt",
+        "speaking": "Tap the circle or just talk to interrupt",
+        "confirm": "Tap Confirm or Cancel above, or tap the circle to keep talking",
+        "muted": "Tap the microphone to talk again"
+      },
+      "notice": {
+        "micDenied": "Allow microphone access in Settings to talk to the assistant.",
+        "micInsecure": "Voice needs a secure connection.",
+        "micUnsupported": "This device can't record audio here.",
+        "notHeard": "I didn't catch that. Try again.",
+        "transcribeFailed": "Couldn't recognize the speech. Try again.",
+        "sendFailed": "Couldn't send that. Try again.",
+        "speechFailed": "Couldn't play the reply aloud. It's in the chat.",
+        "runFailed": "Something went wrong. Try again.",
+        "interrupted": "Voice conversation paused.",
+        "unavailable": "Voice isn't available right now.",
+        "budget": "You have reached today's assistant limit. Try again tomorrow.",
+        "rateLimited": "Too many voice requests. Wait a moment.",
+        "idle": "Voice conversation ended after a quiet minute."
+      },
+      "dictation": {
+        "start": "Dictate",
+        "cancel": "Cancel recording",
+        "done": "Finish recording",
+        "recording": "Recording…",
+        "transcribing": "Transcribing…",
+        "tooShort": "That was too short. Hold on a bit longer."
+      },
+      "confirmPrompt": "{{title}}. Tap Confirm on the screen.",
+      "confirmFallbackTitle": "I've prepared the change"
     }
   }
 }

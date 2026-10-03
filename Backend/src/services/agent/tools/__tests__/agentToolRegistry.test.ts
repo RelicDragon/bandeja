@@ -13,6 +13,19 @@ import { hasAgentToolPermissionText } from '../../i18n/agentToolPermissionI18n';
 import { escalateUpdateGame } from '../gameWrites.tools';
 import { escalateSetGamePrice } from '../money.tools';
 import {
+  AGENT_TOOL_GROUPS,
+  LOAD_TOOLS_NAME,
+  agentToolGroupsForText,
+  agentToolGroupsFromHistory,
+  type AgentToolGroup,
+} from '../toolGroups';
+import { agentToolGroupOf } from '../registry';
+import {
+  AGENT_TOOL_GROUPS_RULE,
+  buildAgentStaticSystemPrompt,
+  withAgentSnapshot,
+} from '../../agentContext.service';
+import {
   AGENT_CHAT_CONTENT_RULE,
   AGENT_MONEY_RULE,
   AGENT_OUT_OF_SCOPE_RULE,
@@ -365,6 +378,118 @@ async function main() {
     restore('AGENT_WEB_FETCH_ENABLED', savedEnv.fetch);
     restore('TAVILY_API_KEY', savedEnv.tavily);
     restore('BRAVE_SEARCH_API_KEY', savedEnv.brave);
+  }
+
+  // --- tool groups (toolGroups.ts) ------------------------------------------------------------
+  {
+    const groupOf = (name: string) => agentToolGroupOf(catalogue.get(name)!);
+    for (const tool of AGENT_TOOL_DEFINITIONS) {
+      assert.ok((AGENT_TOOL_GROUPS as readonly string[]).includes(agentToolGroupOf(tool)), `${tool.name}: group`);
+      if (tool.scope === 'admin') assert.equal(tool.group, 'admin', `${tool.name}: admin tools are in the admin group`);
+      if (tool.kind === 'write') assert.notEqual(agentToolGroupOf(tool), 'core', `${tool.name}: writes load on demand`);
+    }
+    assert.deepEqual(
+      AGENT_TOOL_DEFINITIONS.filter((t) => agentToolGroupOf(t) === 'core').map((t) => t.name).sort(),
+      ['forget_memory', 'get_club', 'get_game', 'get_player', 'list_cities', 'list_memories', 'list_my_games', 'read_memory', 'save_memory', 'search_clubs', 'search_games', 'search_players'],
+      'core = read essentials + memory',
+    );
+    assert.equal(groupOf('book_court'), 'booking');
+    assert.equal(groupOf('mark_my_share_paid'), 'money');
+    assert.equal(groupOf('get_weather'), 'weather');
+
+    // Permission first: groups never widen access.
+    assert.ok(!catalogue.groupsForPrincipal(user).includes('admin'));
+    assert.ok(catalogue.groupsForPrincipal(admin).includes('admin'));
+    const userAll = catalogue.openAiToolsFor(user, { groups: [...AGENT_TOOL_GROUPS] }).map((t) => t.function.name);
+    assert.ok(!userAll.some((n) => n.startsWith('admin_')), 'asking for admin as a user lists nothing of it');
+    const visible = catalogue.toolsForPrincipal(user).map((t) => t.name);
+    assert.deepEqual(userAll.filter((n) => n !== LOAD_TOOLS_NAME).sort(), [...visible].sort(), 'all groups = every visible tool');
+    const coreOnly = catalogue.openAiToolsFor(user, { groups: [] }).map((t) => t.function.name);
+    assert.equal(coreOnly.at(-1), LOAD_TOOLS_NAME, 'load_tools follows the core tools');
+    assert.ok(coreOnly.every((n) => n === LOAD_TOOLS_NAME || groupOf(n) === 'core'));
+    const ordered = catalogue.openAiToolsFor(user, { groups: ['money', 'booking'] }).map((t) => t.function.name);
+    assert.deepEqual(ordered.slice(0, coreOnly.length), coreOnly, 'loaded groups only append');
+    assert.ok(ordered.indexOf('mark_my_share_paid') < ordered.indexOf('book_court'), 'groups in load order');
+    assert.deepEqual(catalogue.openAiToolsFor(user).map((t) => t.function.name), visible, 'no groups option = every visible tool');
+    assert.deepEqual(
+      JSON.stringify(catalogue.openAiToolsFor(user, { groups: ['money'] })),
+      JSON.stringify(catalogue.openAiToolsFor(user, { groups: ['money'] })),
+      'deterministic',
+    );
+    const coreChars = JSON.stringify(catalogue.openAiToolsFor(user, { groups: [] })).length;
+    const allChars = JSON.stringify(catalogue.openAiToolsFor(user)).length;
+    assert.ok(coreChars * 3 < allChars, `core tools are a fraction of the catalogue (${coreChars} vs ${allChars} chars)`);
+
+    // Rule 6 lists every write the principal can use, by group, plus the load_tools rule.
+    const grouped = buildAgentModelRules(catalogue.toolsForPrincipal(user), { toolGroups: true });
+    assert.ok(grouped.includes(AGENT_TOOL_GROUPS_RULE));
+    assert.ok(grouped.includes(' money:\n') && grouped.includes(' booking:\n'));
+    for (const tool of catalogue.toolsForPrincipal(user).filter((t) => t.kind === 'write')) {
+      assert.ok(grouped.includes(`   - ${agentToolCapabilityLine(tool)}`), `grouped rules list ${tool.name}`);
+    }
+    assert.ok(!grouped.includes(' admin:'), 'no admin group for a user');
+    assert.ok(!buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes('load_tools'), 'no load_tools text when off');
+
+    // The static prompt is pure: identical for two users with the same tools, and its fixed
+    // part (everything before the write list) identical for an admin too.
+    const promptA = buildAgentStaticSystemPrompt(catalogue.toolsForPrincipal(user), { toolGroups: true });
+    const promptB = buildAgentStaticSystemPrompt(catalogue.toolsForPrincipal({ isAdmin: false, agentMemoryEnabled: true }), { toolGroups: true });
+    const promptAdmin = buildAgentStaticSystemPrompt(catalogue.toolsForPrincipal(admin), { toolGroups: true });
+    assert.equal(promptA, promptB);
+    const cut = promptA.indexOf('What you can change');
+    assert.equal(promptAdmin.slice(0, cut), promptA.slice(0, cut));
+
+    // Snapshot goes right before the latest user message.
+    const snap = withAgentSnapshot(
+      [
+        { role: 'user', content: 'a' },
+        { role: 'assistant', content: 'b' },
+        { role: 'user', content: 'c' },
+        { role: 'assistant', content: null, tool_calls: [{ id: 'x', type: 'function', function: { name: 'get_game', arguments: '{}' } }] },
+        { role: 'tool', tool_call_id: 'x', content: '{}' },
+      ],
+      'SNAP',
+    );
+    assert.deepEqual(snap.map((m) => (m.role === 'system' ? 'S' : m.role)), ['user', 'assistant', 'S', 'user', 'assistant', 'tool']);
+    assert.deepEqual(withAgentSnapshot([], 'SNAP'), [{ role: 'system', content: 'SNAP' }]);
+
+    // Keyword preload: conservative, multilingual.
+    const kw = (text: string) => agentToolGroupsForText(text);
+    const has = (text: string, group: AgentToolGroup) => assert.ok(kw(text).includes(group as never), `"${text}" → ${group} (got ${kw(text).join(',')})`);
+    has('Book a court for tomorrow at 19:00', 'booking');
+    has('Забронируй корт на завтра', 'booking');
+    has('Rezerviši termin za sutra', 'booking');
+    has('明天预订一个场地', 'booking');
+    has('Who has not paid for the game?', 'money');
+    has('Сколько я должен заплатить?', 'money');
+    has('¿Cuánto tengo que pagar?', 'money');
+    has('リーグの順位を見せて', 'league');
+    has('Покажи таблицу лиги', 'league');
+    has('Enter the score 6-4 6-3', 'results');
+    has('Будет ли дождь вечером?', 'weather');
+    has('Kakvo je vreme sutra?', 'weather');
+    has('明天天气怎么样', 'weather');
+    has('What does a padel racket look like?', 'web');
+    has('Создай игру на субботу', 'games');
+    has('Cancel my game on Friday', 'games');
+    has('Summarize the game chat', 'chat');
+    for (const plain of ['What are my next games?', 'Какие у меня игры?', 'hi', 'Привет!', '你好', '', 'Find players near me', 'Покажи игроков в клубе']) {
+      assert.deepEqual(kw(plain), [], `"${plain}" preloads nothing`);
+    }
+
+    // Groups from history: first-use order, load_tools args, only recent user turns.
+    const call = (name: string, args = '{}') => ({ id: name, type: 'function' as const, function: { name, arguments: args } });
+    const history = [
+      { role: 'user' as const, content: 'old' },
+      { role: 'assistant' as const, content: null, tool_calls: [call('get_weather')] },
+      { role: 'user' as const, content: 'q1' },
+      { role: 'assistant' as const, content: null, tool_calls: [call('mark_my_share_paid'), call(LOAD_TOOLS_NAME, '{"groups":["booking","bogus","admin"]}')] },
+      { role: 'user' as const, content: 'q2' },
+      { role: 'assistant' as const, content: null, tool_calls: [call('get_game'), call('get_league_standings'), call('unknown_tool_x')] },
+    ];
+    const lookup = (name: string) => (catalogue.get(name) ? agentToolGroupOf(catalogue.get(name)!) : undefined);
+    assert.deepEqual(agentToolGroupsFromHistory(history, lookup), ['weather', 'money', 'booking', 'admin', 'league']);
+    assert.deepEqual(agentToolGroupsFromHistory(history, lookup, 2), ['money', 'booking', 'admin', 'league'], 'older turns drop out');
   }
 
   console.log(`agentToolRegistry.test.ts: ok (${AGENT_TOOL_DEFINITIONS.length} tools)`);

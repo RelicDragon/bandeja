@@ -18,7 +18,16 @@
  */
 import { EntityType, MatchGenerationType, MatchSetRole, ParticipantStatus } from '@prisma/client';
 import { z } from 'zod/v4';
-import type { AgentActionPreview, AgentActionPreviewLine, AgentEntityRef } from '@bandeja/shared/agentContract';
+import {
+  AGENT_RESULTS_CARD_MAX_MATCHES,
+  AGENT_RESULTS_CARD_MAX_STANDINGS,
+  type AgentActionPreview,
+  type AgentActionPreviewLine,
+  type AgentCardPlayer,
+  type AgentEntityRef,
+  type AgentResultsCard,
+  type AgentResultsCardMatch,
+} from '@bandeja/shared/agentContract';
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { canModifyResults } from '../../../utils/parentGamePermissions';
@@ -37,6 +46,7 @@ import { proposeAgentAction } from '../agentActionPropose';
 import { agentGameTitle } from '../dto/game.dto';
 import { agentUserDisplayName } from '../dto/user.dto';
 import { agentResultsT, type AgentResultsI18nKey } from '../i18n/agentResultsI18n';
+import { withToolCard } from './agentToolCards';
 import type { AgentToolContext, AgentToolResult, AgentWriteContext, AgentWriteOutcome } from './registry';
 import { defineTool } from './registry';
 import { clip, gameEntityFor, line, loadGameForWrite, parsePlan } from './writeHelpers';
@@ -148,6 +158,58 @@ async function playingRoster(gameId: string): Promise<BoardUser[]> {
     orderBy: { joinedAt: 'asc' },
   });
   return rows.map((row) => row.user);
+}
+
+// --- card (slice 9e) -------------------------------------------------------------------------
+
+function cardPlayer(user: BoardUser, me: string): AgentCardPlayer {
+  return { name: agentUserDisplayName(user), ...(user.id === me ? { you: true } : {}) };
+}
+
+function cardMatch(entry: FlatMatch, board: Board, me: string): AgentResultsCardMatch {
+  const sets = boardSets(entry.match);
+  return {
+    round: entry.roundNumber,
+    match: entry.matchNumber,
+    teamA: sidePlayers(entry.match, 1).map((p) => cardPlayer(p.user, me)),
+    teamB: sidePlayers(entry.match, 2).map((p) => cardPlayer(p.user, me)),
+    sets: sets.filter((s) => s.role === 'OFFICIAL').map((s) => ({ teamA: s.teamA, teamB: s.teamB, ...(s.isTieBreak ? { tieBreak: true } : {}) })),
+    winner: matchOutcome(sets, board),
+  };
+}
+
+/** The user's own matches first (board order), then the rest, capped; shown in board order. */
+function cardMatches(board: Board, me: string): FlatMatch[] {
+  const flat = flatMatches(board);
+  if (flat.length <= AGENT_RESULTS_CARD_MAX_MATCHES) return flat;
+  const mine = (entry: FlatMatch) => entry.match.teams.some((t) => t.players.some((p) => p.userId === me));
+  const picked = new Set([...flat.filter(mine), ...flat].slice(0, AGENT_RESULTS_CARD_MAX_MATCHES));
+  return flat.filter((entry) => picked.has(entry));
+}
+
+/** Scoreboard card of `get_game_results` / `finish_results`: teams, set scores, winners, podium. */
+function resultsCardFromBoard(board: Board, title: string, me: string): AgentResultsCard {
+  return {
+    kind: 'results',
+    gameId: board.id,
+    title,
+    resultsStatus: board.resultsStatus,
+    matchCount: flatMatches(board).length,
+    matches: cardMatches(board, me).map((entry) => cardMatch(entry, board, me)),
+    ...(board.resultsStatus === 'FINAL' && board.outcomes.length
+      ? {
+          standings: board.outcomes.slice(0, AGENT_RESULTS_CARD_MAX_STANDINGS).map((o) => ({
+            position: o.position,
+            name: agentUserDisplayName(o.user),
+            ...(o.userId === me ? { you: true } : {}),
+            isWinner: o.isWinner,
+            wins: o.wins,
+            ties: o.ties,
+            losses: o.losses,
+          })),
+        }
+      : {}),
+  };
 }
 
 // --- guards ---------------------------------------------------------------------------------
@@ -291,7 +353,10 @@ export const getGameResultsTool = defineTool({
           levelChange: Math.round(o.levelChange * 100) / 100,
         }))
       : undefined;
-    return {
+    const entities = await gameEntityFor(board.id, me);
+    const gameEntity = entities.find((e) => e.type === 'game');
+    const title = gameEntity?.type === 'game' ? gameEntity.title : '';
+    return withToolCard({
       data: {
         gameId: board.id,
         entityType: board.entityType,
@@ -307,8 +372,8 @@ export const getGameResultsTool = defineTool({
         handoffUrl: gameHandoffUrl(board.id),
       },
       summary: agentResultsT(ctx.locale, 'summary.results', { finished, total: flat.length }),
-      entities: await gameEntityFor(board.id, me),
-    };
+      entities,
+    }, resultsCardFromBoard(board, title, me));
   },
 });
 
@@ -478,10 +543,31 @@ export const enterMatchScoreTool = defineTool({
       ),
     );
     const title = agentGameTitle(game);
+    const me = principal.userId;
+    const matchRef = plan.matchId ? flat.find((entry) => entry.match.id === plan.matchId) : undefined;
     const preview: AgentActionPreview = {
       title: agentResultsT(locale, 'preview.score.title', { game: clip(title, 60) ?? title }),
       lines,
       warnings,
+      // The new score as a scoreboard; the old score stays in the warnings.
+      card: {
+        kind: 'results',
+        gameId: board.id,
+        title,
+        resultsStatus: board.resultsStatus,
+        matchCount: 1,
+        matches: [
+          {
+            round: matchRef?.roundNumber ?? 1,
+            match: matchRef?.matchNumber ?? 1,
+            teamA: plan.teamA.map((id) => cardPlayer(names[id], me)),
+            teamB: plan.teamB.map((id) => cardPlayer(names[id], me)),
+            sets: sets.map((s) => ({ teamA: s.teamA, teamB: s.teamB, ...(s.isTieBreak ? { tieBreak: true } : {}) })),
+            winner: outcome,
+          },
+        ],
+      },
+      linesInCard: true,
     };
     return proposeAgentAction(ctx, { toolName: 'enter_match_score', input: args, plan, preview });
   },
@@ -626,6 +712,7 @@ export const finishResultsTool = defineTool({
       title: agentResultsT(locale, 'preview.finish.title', { game: clip(title, 60) ?? title }),
       lines,
       warnings,
+      card: resultsCardFromBoard(board, title, principal.userId),
     };
     const plan: z.infer<typeof finishPlanSchema> = { gameId: board.id, boardVersion: board.resultsVersion };
     return proposeAgentAction(ctx, { toolName: 'finish_results', input: args, plan, preview });

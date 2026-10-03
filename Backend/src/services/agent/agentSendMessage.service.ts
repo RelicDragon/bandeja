@@ -21,6 +21,8 @@ export type SendAgentUserMessageInput = {
   locale: string | null;
   /** Parsed `X-Agent-Client-Caps` (app only; Telegram and old builds: none). Stored on the run. */
   clientCaps?: readonly string[] | null;
+  /** Voice-conversation turn (app only): the reply is written to be read aloud. Stored on the run. */
+  voice?: boolean;
   /**
    * `'consume'`: count this message against the quota here. `'counted'`: the HTTP route's
    * `express-rate-limit` middleware already counted it in the same store.
@@ -39,5 +41,6 @@ export async function sendAgentUserMessage(
     editMessageId: input.editMessageId ?? null,
     headerLocale: input.locale,
     clientCaps: input.clientCaps ?? null,
+    voice: input.voice === true,
   });
 }

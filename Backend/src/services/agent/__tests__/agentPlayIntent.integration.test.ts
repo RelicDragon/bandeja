@@ -8,7 +8,8 @@
  *   - matches: a public game with a private parent is on the HTTP radar but never in the agent's
  *     matches; private games never; `get_my_play_intent` counts only visible ones;
  *   - confirm re-auth with a fresh principal (intent cancelled in between → 404, deactivated user);
- *   - standard tier.
+ *   - standard tier;
+ *   - rich card (slice 9e): when / where / level chips and the visible match count.
  */
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
@@ -22,7 +23,8 @@ import {
   PlayIntentStatus,
   Sport,
 } from '@prisma/client';
-import type { AgentActionPreview } from '@bandeja/shared/agentContract';
+import type { AgentActionPreview, AgentPlayIntentCard } from '@bandeja/shared/agentContract';
+import type { AgentToolResultWithCard } from '../tools/agentToolCards';
 import app from '../../../app';
 import prisma from '../../../config/database';
 import { generateShortAccessToken } from '../../../utils/jwt';
@@ -134,6 +136,11 @@ async function main(): Promise<void> {
         await expirePending();
       }
     };
+    /** The handler's own result: the rich card rides next to the model-facing `data`. */
+    const cardOf = async (principal: AgentPrincipal, name: string): Promise<AgentPlayIntentCard | undefined> => {
+      const result = (await tool(name).handler(await ctxFor(principal), {})) as AgentToolResultWithCard;
+      return result.card?.kind === 'play_intent' ? result.card : undefined;
+    };
     const propose = async (principal: AgentPrincipal, name: string, args: unknown, locale = 'en') => {
       const out = await exec(principal, name, args, locale);
       assert.ok(out.ok && out.awaitingConfirmation, `${name} proposes: ${JSON.stringify(out.data)}`);
@@ -206,6 +213,8 @@ async function main(): Promise<void> {
       assert.equal((none.data as { intent: unknown }).intent, null);
       const noMatches = await exec(A, 'list_play_intent_matches', {});
       assert.deepEqual((noMatches.data as { games: unknown[] }).games, []);
+      assert.equal(await cardOf(A, 'get_my_play_intent'), undefined, 'no card when not looking');
+      assert.equal(await cardOf(A, 'list_play_intent_matches'), undefined);
       assert.equal(await activeOf(A.userId), null, 'nothing created');
       console.log('home city: ok');
     }
@@ -244,6 +253,17 @@ async function main(): Promise<void> {
       assert.equal(data.intent.status, 'OPEN');
       assert.equal(data.intent.labels.time, '19:00–24:00');
       assert.equal(data.proposal, null);
+      const card = await cardOf(A, 'get_my_play_intent');
+      assert.ok(card, 'play intent card');
+      assert.equal(card.status, 'OPEN');
+      assert.equal(card.cityName, home.name);
+      assert.equal(card.proposal, null);
+      const chip = (kind: string) => card.chips.find((c) => c.kind === kind)?.label;
+      assert.equal(chip('days'), EN['value.tomorrow']);
+      assert.equal(chip('time'), '19:00–24:00');
+      assert.equal(chip('clubs'), club.name);
+      assert.equal(chip('level'), '2–4');
+      assert.ok(!JSON.stringify(mine.data).includes('"chips"'), 'the card stays out of the model data');
       console.log('create parity: ok');
     }
 
@@ -334,6 +354,8 @@ async function main(): Promise<void> {
       const mine = await exec(A, 'get_my_play_intent', {});
       assert.equal((mine.data as { matchingGameCount: number }).matchingGameCount, ids.length);
       assert.ok(!JSON.stringify(mine.data).includes(hiddenChild));
+      assert.equal((await cardOf(A, 'list_play_intent_matches'))?.matchingGameCount, ids.length, 'card counts visible games only');
+      assert.equal((await cardOf(A, 'get_my_play_intent'))?.matchingGameCount, ids.length);
       console.log('matches visibility: ok');
     }
 

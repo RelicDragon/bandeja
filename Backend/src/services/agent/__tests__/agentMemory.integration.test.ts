@@ -137,8 +137,13 @@ void (async () => {
   });
   const setSwitch = (userId: string, enabled: boolean) =>
     prisma.user.update({ where: { id: userId }, data: { agentMemoryEnabled: enabled } });
-  const promptOf = async (principal: AgentPrincipal) =>
-    (await buildAgentRunContext({ principal, tools: registry.toolsForPrincipal(principal), now: new Date() })).systemPrompt;
+  // Static rules + the per-turn snapshot (the memory index lives in the snapshot).
+  const promptOf = async (principal: AgentPrincipal) => {
+    const context = await buildAgentRunContext({ principal, tools: registry.toolsForPrincipal(principal), now: new Date() });
+    return `${context.systemPrompt}\n${context.snapshot}`;
+  };
+  const systemOf = (messages: AgentLlmStreamParams['messages']) =>
+    messages.filter((m) => m.role === 'system').map((m) => m.content as string).join('\n');
 
   try {
     // --- registry ------------------------------------------------------------------------------
@@ -166,7 +171,7 @@ void (async () => {
     let prompt = await promptOf(alicePrincipal);
     assert.ok(prompt.includes(AGENT_MEMORY_PROMPT_HEADER), 'memory section while ON');
     assert.ok(prompt.includes('(no notes yet)'));
-    assert.ok(prompt.indexOf(AGENT_MEMORY_PROMPT_HEADER) < prompt.indexOf('Rules:'), 'index sits before the rules');
+    assert.ok(prompt.indexOf(AGENT_MEMORY_PROMPT_HEADER) > prompt.indexOf('Rules:'), 'index sits in the snapshot, after the static rules');
     const writesOn = registry.toolsForPrincipal(alicePrincipal).filter((t) => t.kind === 'write').map((t) => t.name);
     console.log('switch ON: ok');
 
@@ -188,7 +193,8 @@ void (async () => {
     );
     prompt = await promptOf(alicePrincipal);
     assert.ok(!prompt.includes(AGENT_MEMORY_PROMPT_HEADER), 'no memory section while OFF');
-    assert.equal(prompt.match(/.{0,60}(?:remember|memory|memories|dormant_note|Sundays).{0,30}/i)?.[0] ?? null, null, 'nothing about memory in the prompt while OFF');
+    // Rule 7's "not from memory of earlier answers" is about the model's own recall, not the memory feature.
+    assert.equal(prompt.replace('not from memory of earlier answers', '').match(/.{0,60}(?:remember|memory|memories|dormant_note|Sundays).{0,30}/i)?.[0] ?? null, null, 'nothing about memory in the prompt while OFF');
     assert.equal(await buildAgentMemoryPromptSection(alice.id), null);
     // Handlers refuse even when called directly, and with a principal loaded while ON.
     const handlerArgs: Record<string, unknown> = {
@@ -448,7 +454,7 @@ void (async () => {
     assert.deepEqual(finishedOf(clean.stream).map((e) => e.ok), [true]);
     assert.equal((await prisma.agentMemory.findUniqueOrThrow({ where: { userId_name: { userId: alice.id, name: 'plays_at_19' } } })).source, AgentMemorySource.MODEL_INFERRED);
     const next = await runOnce(clean.chatId, 'Any games tonight?', [textStep('Let me see.')]);
-    assert.match(next.llm.calls[0].messages[0].content as string, /- plays_at_19: Note plays_at_19/);
+    assert.match(systemOf(next.llm.calls[0].messages), /- plays_at_19: Note plays_at_19/);
     // 4. A later run in the tainted chat → still refused (history taint), even without a read in this run.
     const later = await runOnce(tainted.chatId, 'Thanks. I like Americano.', [save('likes_americano'), textStep('OK.')]);
     assert.deepEqual(finishedOf(later.stream).map((e) => e.ok), [false], 'history taint blocks save_memory in later runs');
@@ -457,8 +463,8 @@ void (async () => {
     await setSwitch(alice.id, false);
     const off = await runOnce(null, 'Remember that I like padel', [textStep('OK.')]);
     assert.ok(!(off.llm.calls[0].tools ?? []).some((t) => memoryNames.includes(t.function.name)), 'no memory tools sent while OFF');
-    assert.ok(!(off.llm.calls[0].messages[0].content as string).includes(AGENT_MEMORY_PROMPT_HEADER));
-    assert.ok(!(off.llm.calls[0].messages[0].content as string).includes('plays_at_19'));
+    assert.ok(!systemOf(off.llm.calls[0].messages).includes(AGENT_MEMORY_PROMPT_HEADER));
+    assert.ok(!systemOf(off.llm.calls[0].messages).includes('plays_at_19'));
     await setSwitch(alice.id, true);
     const on = await runOnce(null, 'Hi', [textStep('Hi.')]);
     assert.ok((on.llm.calls[0].tools ?? []).some((t) => t.function.name === 'save_memory'), 'listed again when ON');

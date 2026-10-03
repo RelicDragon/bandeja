@@ -8,6 +8,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { AGENT_ACTION_TTL_MS, type AgentStoredActionArgs } from './agentActionOutcome';
 import { agentT } from './i18n/agentI18n';
+import { previewForModel } from './tools/agentToolCards';
 import type { AgentToolContext, AgentToolResult } from './tools/registry';
 
 export type ProposeAgentActionParams = {
@@ -69,7 +70,8 @@ export async function proposeAgentAction(
     data: {
       status: 'awaiting_user_confirmation',
       actionId: action.id,
-      preview: params.preview,
+      // The rich card is for the app only; the model gets the text preview.
+      preview: previewForModel(params.preview),
       note: 'Nothing has changed yet. The user sees a confirmation card with this preview and must tap Confirm. Do not say it is done.',
     },
     summary: agentT(ctx.locale, 'summary.awaitingConfirmation'),

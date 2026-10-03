@@ -24,7 +24,7 @@ import {
   Sport,
 } from '@prisma/client';
 import { z } from 'zod/v4';
-import type { AgentActionPreview, AgentActionPreviewLine } from '@bandeja/shared/agentContract';
+import type { AgentActionPreview, AgentActionPreviewLine, AgentPlayIntentCard } from '@bandeja/shared/agentContract';
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { resolveIntlLocale } from '../../../utils/intlLocale';
@@ -40,6 +40,7 @@ import { isValidTimeZone } from '../agentContext.service';
 import { agentGameEntity, agentGameSummarySelect, toAgentGameSummary } from '../dto/game.dto';
 import { agentLang, agentSportLabel } from '../i18n/agentI18n';
 import { agentPlayIntentT } from '../i18n/agentPlayIntentI18n';
+import { withToolCard } from './agentToolCards';
 import { defineTool } from './registry';
 import { line, parsePlan } from './writeHelpers';
 
@@ -149,6 +150,38 @@ function describeIntent(intent: IntentShape, clubNames: Map<string, string>, tim
   };
 }
 
+/** Card of the user's open request (slice 9e): when / where / level chips, match count. */
+function playIntentCard(params: {
+  intent: IntentShape & { status: PlayIntentStatus };
+  labels: IntentLabels;
+  cityName: string;
+  matchingGameCount: number;
+  proposal: { members: unknown[]; status: string } | null;
+}): AgentPlayIntentCard | null {
+  const { intent, labels } = params;
+  if (intent.status !== PlayIntentStatus.OPEN && intent.status !== PlayIntentStatus.MATCHED) return null;
+  const isBar = intent.entityType === EntityType.BAR;
+  return {
+    kind: 'play_intent',
+    status: intent.status,
+    cityName: params.cityName,
+    lookingFor: labels.lookingFor,
+    chips: [
+      { kind: 'days', label: labels.days },
+      { kind: 'time', label: labels.time },
+      { kind: 'clubs', label: labels.clubs },
+      ...(isBar
+        ? []
+        : [
+            { kind: 'level' as const, label: labels.level },
+            { kind: 'players' as const, label: labels.players },
+          ]),
+    ],
+    matchingGameCount: params.matchingGameCount,
+    proposal: params.proposal ? { memberCount: params.proposal.members.length, status: params.proposal.status } : null,
+  };
+}
+
 async function clubNamesFor(ids: string[]): Promise<Map<string, string>> {
   if (!ids.length) return new Map();
   const rows = await prisma.club.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } });
@@ -217,7 +250,14 @@ export const getMyPlayIntentTool = defineTool({
     const games = await visibleMatchingGames(principal, pool.matchingGames);
     const proposal = pool.pendingProposal;
     const mine = proposal?.members.find((member) => member.userId === principal.userId);
-    return {
+    const card = playIntentCard({
+      intent: { ...shape, status: intent.status },
+      labels,
+      cityName: city.name,
+      matchingGameCount: games.length,
+      proposal: proposal ?? null,
+    });
+    return withToolCard({
       data: {
         intent: {
           intentId: intent.id,
@@ -252,7 +292,7 @@ export const getMyPlayIntentTool = defineTool({
         ...(proposal ? { note: 'While a match proposal is open the app shows the proposal, not matching games.' } : {}),
       },
       summary: agentPlayIntentT(locale, 'summary.intent', { days: labels.days, time: labels.time }),
-    };
+    }, card);
   },
 });
 
@@ -268,7 +308,7 @@ export const listPlayIntentMatchesTool = defineTool({
   label: (_args, locale) => agentPlayIntentT(locale, 'label.listMatches'),
   handler: async (ctx) => {
     const { principal, locale } = ctx;
-    const { pool } = await homePool(principal);
+    const { city, pool } = await homePool(principal);
     if (!pool.myIntent) {
       return {
         data: { hasOpenIntent: false, games: [], note: 'No open play request; set_play_intent creates one.' },
@@ -276,7 +316,15 @@ export const listPlayIntentMatchesTool = defineTool({
       };
     }
     const games = await visibleMatchingGames(principal, pool.matchingGames);
-    return {
+    const shape = intentShape(pool.myIntent);
+    const card = playIntentCard({
+      intent: { ...shape, status: pool.myIntent.status },
+      labels: describeIntent(shape, await clubNamesFor(shape.clubIds), city.timezone, locale),
+      cityName: city.name,
+      matchingGameCount: games.length,
+      proposal: pool.pendingProposal ?? null,
+    });
+    return withToolCard({
       data: {
         hasOpenIntent: true,
         intentId: pool.myIntent.id,
@@ -285,7 +333,7 @@ export const listPlayIntentMatchesTool = defineTool({
       },
       summary: agentPlayIntentT(locale, 'summary.matches', { count: games.length }),
       entities: games.map(({ row }) => agentGameEntity(row)),
-    };
+    }, card);
   },
 });
 

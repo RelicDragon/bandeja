@@ -149,7 +149,7 @@ export class AgentActionService {
     );
     const run = await prisma.agentRun.findUnique({
       where: { id: action.runId },
-      select: { locale: true, clientCaps: true },
+      select: { locale: true, clientCaps: true, voice: true },
     });
     let runId: string | null = null;
     try {
@@ -159,6 +159,7 @@ export class AgentActionService {
         locale: headerLocale || run?.locale || stored.locale,
         messages: message ? [message] : [],
         clientCaps: run?.clientCaps ?? [],
+        voice: run?.voice ?? false,
       });
     } catch (error) {
       console.error('[agent] follow-up run not enqueued', { actionId, error });

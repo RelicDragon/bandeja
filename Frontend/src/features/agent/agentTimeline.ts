@@ -2,6 +2,7 @@ import type {
   AgentEntityRef,
   AgentMessageDto,
   AgentPendingActionDto,
+  AgentToolCard,
   AgentWebImage,
   AgentWebView,
 } from '@shared/agentContract';
@@ -20,6 +21,8 @@ export interface AgentToolItemData {
   web?: AgentWebView;
   /** `web_images` pictures (shown inline via `img:<id>` and as the step's thumbnails). */
   images?: AgentWebImage[];
+  /** Rich result card (slice 9e): results, play intent, weather. */
+  card?: AgentToolCard;
 }
 
 export type AgentTimelineItem =
@@ -55,7 +58,14 @@ export function buildAgentTimeline(
 
   const persistedResults = new Map<
     string,
-    { ok: boolean; summary: string; entities: AgentEntityRef[]; web?: AgentWebView; images?: AgentWebImage[] }
+    {
+      ok: boolean;
+      summary: string;
+      entities: AgentEntityRef[];
+      web?: AgentWebView;
+      images?: AgentWebImage[];
+      card?: AgentToolCard;
+    }
   >();
   const persistedCalls = new Set<string>();
   for (const m of messages) {
@@ -67,6 +77,7 @@ export function buildAgentTimeline(
           entities: b.entities ?? [],
           ...(b.web ? { web: b.web } : {}),
           ...(b.images?.length ? { images: b.images } : {}),
+          ...(b.card ? { card: b.card } : {}),
         });
       } else if (b.type === 'tool_call') {
         persistedCalls.add(b.callId);
@@ -96,6 +107,7 @@ export function buildAgentTimeline(
         ...memoryOf(callId),
         ...(result.web ? { web: result.web } : {}),
         ...(result.images ? { images: result.images } : {}),
+        ...(result.card ? { card: result.card } : {}),
       };
     }
     const step = live?.tools[callId];
@@ -110,6 +122,7 @@ export function buildAgentTimeline(
         ...memoryOf(callId),
         ...(step.web ? { web: step.web } : {}),
         ...(step.images ? { images: step.images } : {}),
+        ...(step.card ? { card: step.card } : {}),
       };
     }
     return { callId, label: fallbackLabel, status: liveRunning ? 'running' : 'error', summary: null, entities: [] };
@@ -143,6 +156,7 @@ export function buildAgentTimeline(
             entities: b.entities ?? [],
             ...(b.web ? { web: b.web } : {}),
             ...(b.images?.length ? { images: b.images } : {}),
+            ...(b.card ? { card: b.card } : {}),
           },
         });
       } else if (b.type === 'action') {

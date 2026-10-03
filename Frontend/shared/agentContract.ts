@@ -247,17 +247,131 @@ export interface AgentWebImage {
 /** Prefix of an inline image reference in assistant markdown. */
 export const AGENT_IMAGE_REF_PREFIX = 'img:';
 
+/**
+ * Rich result cards (plan §16.6 slice 9e). Server-built from tool data, never model text, and
+ * never sent to the model. A separate optional `card` field (not an `entities` kind) so old app
+ * builds, whose entity card has no fallback for unknown kinds, ignore it. Display strings
+ * (names, chip labels) are already localized; enums are translated by the app.
+ */
+export interface AgentCardPlayer {
+  name: string;
+  /** The signed-in user. */
+  you?: boolean;
+}
+
+export type AgentResultsCardSide = 'teamA' | 'teamB';
+
+export interface AgentResultsCardMatch {
+  round: number;
+  match: number;
+  teamA: AgentCardPlayer[];
+  teamB: AgentCardPlayer[];
+  /** Official sets in order, scores as teamA-teamB. */
+  sets: { teamA: number; teamB: number; tieBreak?: boolean }[];
+  /** null: not decided (unscored or incomplete). */
+  winner: AgentResultsCardSide | 'tie' | null;
+}
+
+export interface AgentResultsCardStanding {
+  position: number | null;
+  name: string;
+  you?: boolean;
+  isWinner: boolean;
+  wins: number;
+  ties: number;
+  losses: number;
+}
+
+/** Most matches / standings rows a results card carries (`matchCount` says how many exist). */
+export const AGENT_RESULTS_CARD_MAX_MATCHES = 6;
+export const AGENT_RESULTS_CARD_MAX_STANDINGS = 3;
+
+export interface AgentResultsCard {
+  kind: 'results';
+  gameId: string;
+  title: string;
+  resultsStatus: 'NONE' | 'IN_PROGRESS' | 'FINAL';
+  matchCount: number;
+  matches: AgentResultsCardMatch[];
+  /** FINAL only: the top of the standings. */
+  standings?: AgentResultsCardStanding[];
+}
+
+export type AgentPlayIntentChipKind = 'days' | 'time' | 'clubs' | 'level' | 'players';
+
+export interface AgentPlayIntentCard {
+  kind: 'play_intent';
+  status: 'OPEN' | 'MATCHED';
+  cityName: string;
+  /** "Padel game" / "Bar meetup" (localized). */
+  lookingFor: string;
+  /** Localized when / where / level chips. */
+  chips: { kind: AgentPlayIntentChipKind; label: string }[];
+  /** Visible games that fit (the radar; listed as `entities` by `list_play_intent_matches`). */
+  matchingGameCount: number;
+  /** The match proposal the user is in, if any. */
+  proposal: { memberCount: number; status: string } | null;
+}
+
+export interface AgentWeatherCardHour {
+  /** Local `HH:mm` (card's place timezone). */
+  time: string;
+  tempC: number;
+  /** Open-Meteo condition key (`clear`, `rain`, `thunderstorm`…). */
+  condition: string;
+  isDay: boolean | null;
+  rainChancePct: number | null;
+  rainMm: number | null;
+  windKmh: number | null;
+  /** No rain / wind / storm risk this hour (the weather-alert thresholds). */
+  playable: boolean;
+}
+
+/** good: no risk · risky: rain or wind likely · bad: heavy rain or storm · indoor: the courts are indoor. */
+export type AgentWeatherVerdict = 'good' | 'risky' | 'bad' | 'indoor';
+
+export interface AgentWeatherCard {
+  kind: 'weather';
+  /** City name. */
+  place: string;
+  /** Set when the forecast is for one game (tap opens it). */
+  gameId: string | null;
+  gameTitle: string | null;
+  /** `YYYY-MM-DD` local. */
+  date: string | null;
+  /** Game start / end (local `HH:mm`). */
+  window: { start: string; end: string } | null;
+  source: 'forecast' | 'archive';
+  stale: boolean;
+  /** null: unknown (no courts to judge by). */
+  outdoor: boolean | null;
+  /** null: no hint (past day, unknown courts). */
+  verdict: AgentWeatherVerdict | null;
+  /** Day view: the longest stretch of playable hours (≥ 2 h), when the day is mixed. */
+  bestWindow: { start: string; end: string } | null;
+  hours: AgentWeatherCardHour[];
+}
+
+export type AgentToolCard = AgentResultsCard | AgentPlayIntentCard | AgentWeatherCard;
+
 export interface AgentActionPreviewLine {
   label: string;
+  /** Value before the change (struck through), or null for a new / context value. */
   from: string | null;
+  /** Value after the change (highlighted), or null when it goes away. */
   to: string | null;
 }
 
 /** Server-rendered (never model-written) description of what a write will do. */
 export interface AgentActionPreview {
   title: string;
+  /** Field changes are `from → to` rows; Telegram and old builds render these as text too. */
   lines: AgentActionPreviewLine[];
   warnings: string[];
+  /** Optional rich card (e.g. the scoreboard of `enter_match_score`); old builds ignore it. */
+  card?: AgentToolCard;
+  /** The card shows everything `lines` says: new clients may show the card instead of the lines. */
+  linesInCard?: boolean;
 }
 
 export interface AgentActionResult {
@@ -357,6 +471,8 @@ export type AgentContentBlock =
       web?: AgentWebView;
       /** `web_images` results. A separate field (not a `web` kind) so old app builds ignore it. */
       images?: AgentWebImage[];
+      /** Rich result card (results, play intent, weather). Old app builds ignore it. */
+      card?: AgentToolCard;
     }
   | { type: 'action'; actionId: string };
 
@@ -436,6 +552,7 @@ export type AgentStreamEvent =
       entities?: AgentEntityRef[];
       web?: AgentWebView;
       images?: AgentWebImage[];
+      card?: AgentToolCard;
     }
   /** A proposed write (PENDING), or one already settled when `action.autoApproved` (EXECUTED / FAILED, no tap). */
   | { type: 'action.pending'; action: AgentPendingActionDto }
@@ -464,9 +581,14 @@ export const AGENT_TERMINAL_EVENT_TYPES: readonly AgentStreamEventType[] = [
  *   GET    /api/agent/chats/:chatId           -> AgentChatDetailDto           (`usage`: context meter + daily budget)
  *   PATCH  /api/agent/chats/:chatId {title?, pinned?, archived?} -> AgentChatDto  (pin / archive alone keep updatedAt)
  *   DELETE /api/agent/chats/:chatId           -> { ok: true }                    (bare = archive, for store builds; ?mode=delete = soft delete: hidden everywhere, rows kept)
- *   POST   /api/agent/chats/:chatId/messages {text, editMessageId?} -> { message: AgentMessageDto; runId: string }
+ *   POST   /api/agent/chats/:chatId/messages {text, editMessageId?, voice?} -> { message: AgentMessageDto; runId: string }
  *                                                (run starts QUEUED; 409 code CHAT_BUSY if the chat has a QUEUED/RUNNING run;
- *                                                 `editMessageId`: that USER message and everything after it are deleted first)
+ *                                                 `editMessageId`: that USER message and everything after it are deleted first;
+ *                                                 `voice: true`: a voice-conversation turn, the reply is written to be read aloud)
+ *   POST   /api/agent/voice/transcriptions   raw audio body (Content-Type audio/*) -> AgentVoiceTranscriptionDto
+ *                                              (≤ AGENT_VOICE_MAX_AUDIO_BYTES and AGENT_VOICE_MAX_AUDIO_MS; 400 code VOICE_AUDIO_INVALID,
+ *                                               503 code VOICE_UNAVAILABLE, 429 RATE_LIMITED / BUDGET_EXCEEDED)
+ *   POST   /api/agent/voice/speech {text}     -> audio/mpeg bytes (text ≤ AGENT_VOICE_SPEECH_MAX_CHARS; same error codes)
  *   GET    /api/agent/runs/:runId/events      -> SSE (see above)
  *   POST   /api/agent/runs/:runId/cancel      -> { ok: true }
  *   POST   /api/agent/actions/:actionId/confirm {remember?: 'always'}
@@ -499,3 +621,21 @@ export const AGENT_TERMINAL_EVENT_TYPES: readonly AgentStreamEventType[] = [
  * Errors: `ApiError` JSON with `code: AgentErrorCode` where applicable.
  */
 export const AGENT_MESSAGE_MAX_LENGTH = 4000;
+
+/**
+ * Voice (docs/domains/agent.md § Voice). Dictation and voice-conversation turns are transcribed
+ * server-side; replies are spoken sentence by sentence through `/voice/speech`. Both are charged
+ * to the daily token budget as token-equivalents. Voice never confirms a write: that stays a tap.
+ */
+export const AGENT_VOICE_MAX_AUDIO_BYTES = 6 * 1024 * 1024;
+export const AGENT_VOICE_MAX_AUDIO_MS = 2 * 60 * 1000;
+export const AGENT_VOICE_SPEECH_MAX_CHARS = 600;
+
+export type AgentVoiceErrorCode = 'VOICE_UNAVAILABLE' | 'VOICE_AUDIO_INVALID';
+
+export interface AgentVoiceTranscriptionDto {
+  /** Trimmed transcript; empty when no speech was heard. */
+  text: string;
+  /** Audio length the charge was based on. */
+  durationMs: number;
+}

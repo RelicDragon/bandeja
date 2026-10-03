@@ -203,7 +203,7 @@ Routes: `GET/POST /agent/chats`, `GET/PATCH/DELETE /agent/chats/:id` (delete = a
 **Composer** (`components/agent/AgentComposer.tsx`)
 - About 100 lines, forked from the `MessageInput` panel markup: textarea 48–120px, `useMessageInputMultiline`, Enter sends only off-native, Shift+Enter for a newline.
 - While a run is streaming, the Send button becomes **Stop**.
-- Not in v1: mentions, attachments, voice, drafts, translation, typing indicators. Voice input can come later through the existing transcription.
+- Not in v1: mentions, attachments, drafts, translation, typing indicators. Voice (dictation + spoken conversation) came later, §20.
 
 **Streaming** (`features/agent/useAgentStream.ts`)
 - `fetch` with the bearer token, parsing `text/event-stream` from `body.getReader()`.
@@ -393,7 +393,7 @@ The four most-used flows that are still menu-heavy. Every tool reuses the existi
 | 9b | BE | results tools + tests + i18n — **built** (`tools/results.tools.ts`: `get_game_results`, `enter_match_score`, `finish_results`; `npm run test:agent-results`; see [agent.md § Results](../domains/agent.md#results-slice-9b-toolsresultstoolsts)) | none |
 | 9c | BE | game chat tools + injection tests + i18n — **built** (`tools/gameChat.tools.ts`: `summarize_game_chat`, `post_to_game_chat`; `npm run test:agent-chat`; see [agent.md § Game chat](../domains/agent.md#game-chat-slice-9c-toolsgamechattoolsts)) | none |
 | 9d | BE | weather tool + tests + i18n — **built** (`get_weather`, [agent.md](../domains/agent.md#read-tools-phase-1-kindread-scopeuser)) | none |
-| 9e | FE+TG | entity cards/chips for results, intent and weather, if the plain-text answer is not enough (decide after 9a–9d) | 9a–9d |
+| 9e | FE | rich cards for results, play intent and weather — **built 2026-10-03** (optional `card` on `tool.finished` / `tool_result` and on the action preview; never in the model's JSON; old builds ignore it; Telegram keeps the text preview). Results: teams, set scores, winner, podium (also the `enter_match_score` / `finish_results` preview); play intent: when / where / level chips + match count; weather: hourly icon / temp / rain / wind with a "good to play" verdict from the weather-alert classes and the day's best window. Confirmation card polish: structured before → after rows (the existing `lines[].from/to`), haptics, pending → executing → done / failed animation. See [agent.md § Result cards](../domains/agent.md#result-cards-slice-9e-app). Needs the run loop to forward `card` | 9a–9d |
 
 ## 17. Phase 13: web search and web fetch (built 2026-10-01)
 
@@ -440,3 +440,17 @@ Design: **[ai-agent-memory.md](./ai-agent-memory.md)**. Domain: [agent.md § Mem
 The agent keeps short durable notes about the signed-in user across chats: an index in the prompt, bodies read on demand, written by the model or the user, all visible and deletable. One switch `User.agentMemoryEnabled`, default ON; OFF is total (no prompt section, no tools, handlers refuse). Memory never grants privilege (non-negotiables 1 and 3 hold): it cannot change confirmation, permissions, auto-approve or tool filtering. `save_memory` skips the card but emits `memory.saved` (chip with Undo), and is refused after other people's text entered the chat unless the user's latest message asked to remember.
 
 **Status (2026-10-01): phases 1–4 built.** `AgentMemory` + migration `20261001053000_agent_memory`, `agentMemory.service.ts` (cap 50, ≤ 500 chars, secrets / contact-data check, upsert by name, switch), `/api/agent/memory…` routes, the `kind:'memory'` tools `list_memories` / `read_memory` / `save_memory` / `forget_memory`, the prompt index (~800 tokens), the provenance guard and the `memory.saved` event; privacy-policy line added. Phase 3: "Assistant settings" dialog with Permissions / Memory tabs, the "Saved to memory · Undo" chip, a Telegram line. Phase 4: rolling chat summary (`AgentChat.summary*`, budget-gated, taint-preserving) and the weekly validated memory consolidation job (global daily LLM cap). Tests: `npm run test:agent-memory` (in `test:agent`); app `cd Frontend && npm run test:agent`.
+
+## 20. Voice, route A (built 2026-10-03)
+
+Domain: [agent.md § Voice](../domains/agent.md#voice-dictation-and-spoken-conversation).
+
+**Choice: a chained pipeline, not a speech-to-speech model.** Speech → text (OpenAI `gpt-4o-mini-transcribe`) → the existing DeepSeek run → text → speech (`gpt-4o-mini-tts`) sentence by sentence. It keeps every guarantee of §0 (principal, tool filtering, confirmation cards, taint, memory provenance, budget) because the brain is the same run loop; a realtime speech-to-speech model would be a second agent to secure and is several times the cost per minute. Expected time to the first spoken word ≈ 1.5–3 s (end-of-speech 0.85 s + transcription + the model's first sentence + the first TTS chunk). Revisit a realtime model only if that latency is the main complaint.
+
+- **Dictation** in the composer (mic → transcript appended to the draft, still editable).
+- **Voice conversation** (dock replaces the composer; chat and cards stay on screen): client VAD with pre-roll, barge-in with a stricter VAD while the reply plays, run cancel on interrupt, 60 s idle stop, background stop, screen wake lock.
+- **Server:** `POST /agent/voice/transcriptions`, `POST /agent/voice/speech`, `AgentRun.voice` (migration `20261003180000_agent_run_voice`) + `AGENT_VOICE_RULE`, charges in `LlmUsageLog` counted by the daily budget, nothing stored but sizes. Env `AGENT_VOICE_*` (`Backend/env.sample`).
+- **Non-negotiable kept:** voice never confirms a write ([constraints](../product/constraints.md#ai-agent-authorizes-per-tool-call-against-the-db-principal)); the card stays a tap, and the app speaks "tap Confirm on the screen" when the model went straight to a card.
+- **Store builds:** additive only (new routes, an optional body field, a new column); old builds never send `voice` and never call the voice routes.
+- **Open:** native audio session tuning on older iOS (< 17 has no `navigator.audioSession`; playback may go to the earpiece while the mic is open — test on device, a small Capacitor plugin setting `.playAndRecord` + `.defaultToSpeaker` is the fallback); a neural VAD (Silero) if the energy VAD misfires in loud clubs; Telegram voice notes (the bot could reuse `/voice/transcriptions`' service).
+

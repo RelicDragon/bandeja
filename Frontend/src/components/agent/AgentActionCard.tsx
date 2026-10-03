@@ -1,10 +1,15 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion, type Transition } from 'framer-motion';
 import { AlertTriangle, ArrowRight, CheckCircle2, Clock, Loader2, Lock, ShieldQuestion, XCircle, Zap } from 'lucide-react';
-import type { AgentPendingActionDto } from '@shared/agentContract';
+import type { AgentActionPreviewLine, AgentPendingActionDto } from '@shared/agentContract';
 import { agentActionButtons } from '@/features/agent/agentActionButtons';
+import { agentActionOutcomeHaptic, agentActionPhase, agentPreviewLineKind, type AgentActionPhase } from '@/features/agent/agentActionPhase';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { openAgentPermissionsScreen } from '@/queries/agent/useAgentPermissions';
+import { hapticError, hapticSelection, hapticSuccess } from '@/utils/haptics';
 import { AgentEntityList } from './AgentEntityCard';
+import { AgentToolCard } from './AgentToolCard';
 
 interface AgentActionCardProps {
   action: AgentPendingActionDto | null;
@@ -15,10 +20,42 @@ interface AgentActionCardProps {
   onAlwaysAllow?: (actionId: string) => void;
 }
 
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const COLLAPSE: Transition = { height: { duration: 0.26, ease: EASE_OUT }, opacity: { duration: 0.18 } };
+
+/** Height + fade in / out (instant with reduced motion). Skipped for a card that mounts settled. */
+function Collapsible({ children, reducedMotion }: { children: ReactNode; reducedMotion: boolean }) {
+  return (
+    <motion.div
+      initial={reducedMotion ? false : { height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={reducedMotion ? { opacity: 0, transition: { duration: 0 } } : { height: 0, opacity: 0 }}
+      transition={COLLAPSE}
+      className="overflow-hidden"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** Outcome haptic once per phase change seen on screen (never for a card that arrives settled). */
+function useOutcomeHaptic(phase: AgentActionPhase | null) {
+  const previous = useRef<AgentActionPhase | null>(phase);
+  useEffect(() => {
+    if (phase == null) return;
+    const haptic = agentActionOutcomeHaptic(previous.current, phase);
+    if (haptic === 'success') hapticSuccess();
+    else if (haptic === 'error') hapticError();
+    previous.current = phase;
+  }, [phase]);
+}
+
 /**
  * Confirmation card. Everything shown comes from the server-rendered `preview`
  * (never from model text); the buttons exist only while the action is PENDING:
  * Reject / Allow once / Always allow (plan §15). An auto-approved action arrives settled.
+ * Confirm taps give a light haptic and the outcome a success / error one; the buttons
+ * collapse into the compact result line (instant with reduced motion).
  */
 export const AgentActionCard = memo(function AgentActionCard({
   action,
@@ -28,7 +65,11 @@ export const AgentActionCard = memo(function AgentActionCard({
   onAlwaysAllow,
 }: AgentActionCardProps) {
   const { t } = useTranslation();
-  if (!action) {
+  const reducedMotion = usePrefersReducedMotion();
+  const phase = action ? agentActionPhase(action, busy) : null;
+  useOutcomeHaptic(phase);
+
+  if (!action || !phase) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white p-3 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
         <Loader2 size={14} className="me-1.5 inline animate-spin" aria-hidden />
@@ -37,13 +78,12 @@ export const AgentActionCard = memo(function AgentActionCard({
     );
   }
 
-  const { status } = action;
   const buttons = agentActionButtons(action);
   const pending = buttons.allowOnce;
+  const executing = phase === 'executing';
   const showAlwaysAllow = buttons.alwaysAllow && onAlwaysAllow != null;
-  const success = status === 'EXECUTED' || status === 'CONFIRMED';
-  // UNKNOWN: a client-executed action's lease expired with no report; the result says what to check.
-  const failed = status === 'FAILED' || status === 'UNKNOWN' || (success && action.result?.ok === false);
+  const success = phase === 'done';
+  const failed = phase === 'failed';
   const border = pending
     ? 'border-primary-300 dark:border-primary-700'
     : failed
@@ -51,56 +91,86 @@ export const AgentActionCard = memo(function AgentActionCard({
       : success
         ? 'border-green-200 dark:border-green-900/60'
         : 'border-gray-200 dark:border-gray-700';
+  const confirm = (always: boolean) => {
+    hapticSelection();
+    if (always) onAlwaysAllow?.(action.id);
+    else onConfirm(action.id);
+  };
 
   return (
-    <div className={`overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-gray-800 ${border}`}>
+    <div
+      className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-colors duration-300 dark:bg-gray-800 ${border}`}
+      aria-busy={executing || undefined}
+    >
       <AgentActionPreviewSection action={action} />
 
-      <div className="p-3">
+      <AnimatePresence initial={false} mode="wait">
         {pending ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={busy != null}
-                onClick={() => onReject(action.id)}
-                className="flex h-11 flex-1 items-center justify-center rounded-xl border border-gray-200 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-              >
-                {busy === 'reject' ? <Loader2 size={16} className="animate-spin" aria-hidden /> : t('agent.action.reject')}
-              </button>
-              <button
-                type="button"
-                disabled={busy != null}
-                onClick={() => onConfirm(action.id)}
-                className="flex h-11 flex-1 items-center justify-center rounded-xl bg-primary-600 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:opacity-50"
-              >
-                {busy === 'confirm' ? <Loader2 size={16} className="animate-spin" aria-hidden /> : t('agent.action.allowOnce')}
-              </button>
+          <Collapsible key="buttons" reducedMotion={reducedMotion}>
+            <div className="flex flex-col gap-2 p-3">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={busy != null}
+                  onClick={() => onReject(action.id)}
+                  className="flex h-11 flex-1 items-center justify-center rounded-xl border border-gray-200 text-sm font-medium text-gray-700 transition-[colors,opacity] hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  {busy === 'reject' ? <Loader2 size={16} className="animate-spin" aria-hidden /> : t('agent.action.reject')}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy != null}
+                  onClick={() => confirm(false)}
+                  className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary-600 text-sm font-semibold text-white transition-[colors,opacity,transform] duration-200 hover:bg-primary-700 active:scale-[0.98] motion-reduce:active:scale-100 ${
+                    busy === 'confirm' ? 'disabled:opacity-90' : 'disabled:opacity-50'
+                  }`}
+                >
+                  {busy === 'confirm' ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" aria-hidden />
+                      <span>{t('agent.action.applying')}</span>
+                    </>
+                  ) : (
+                    t('agent.action.allowOnce')
+                  )}
+                </button>
+              </div>
+              {showAlwaysAllow ? (
+                <button
+                  type="button"
+                  disabled={busy != null}
+                  onClick={() => confirm(true)}
+                  className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary-300 text-sm font-semibold text-primary-700 transition-[colors,opacity] hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30 ${
+                    busy === 'always' ? 'disabled:opacity-90' : 'disabled:opacity-50'
+                  }`}
+                >
+                  {busy === 'always' ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" aria-hidden />
+                      <span>{t('agent.action.applying')}</span>
+                    </>
+                  ) : (
+                    t('agent.action.alwaysAllow')
+                  )}
+                </button>
+              ) : null}
+              {buttons.alwaysAsksHint ? (
+                <p className="flex items-center justify-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
+                  <Lock size={11} aria-hidden />
+                  {t('agent.action.alwaysAsks')}
+                </p>
+              ) : null}
             </div>
-            {showAlwaysAllow ? (
-              <button
-                type="button"
-                disabled={busy != null}
-                onClick={() => onAlwaysAllow?.(action.id)}
-                className="flex h-11 w-full items-center justify-center rounded-xl border border-primary-300 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-50 disabled:opacity-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
-              >
-                {busy === 'always' ? <Loader2 size={16} className="animate-spin" aria-hidden /> : t('agent.action.alwaysAllow')}
-              </button>
-            ) : null}
-            {buttons.alwaysAsksHint ? (
-              <p className="flex items-center justify-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
-                <Lock size={11} aria-hidden />
-                {t('agent.action.alwaysAsks')}
-              </p>
-            ) : null}
-          </div>
+          </Collapsible>
         ) : (
-          <div className="flex flex-col gap-2">
-            <ActionStatusRow action={action} failed={failed} success={success} />
-            {action.autoApproved ? <AutoApprovedNote /> : null}
-          </div>
+          <Collapsible key="result" reducedMotion={reducedMotion}>
+            <div className="flex flex-col gap-2 p-3" role="status">
+              <ActionStatusRow action={action} failed={failed} success={success} />
+              {action.autoApproved ? <AutoApprovedNote /> : null}
+            </div>
+          </Collapsible>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 });
@@ -122,6 +192,21 @@ function AutoApprovedNote() {
   );
 }
 
+/** Result icon that pops in when the outcome arrives on screen (static when the card mounts settled). */
+function PopIcon({ children }: { children: ReactNode }) {
+  const reducedMotion = usePrefersReducedMotion();
+  return (
+    <motion.span
+      className="mt-0.5 inline-flex flex-shrink-0"
+      initial={reducedMotion ? false : { scale: 0.4, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 520, damping: 26, delay: 0.12 }}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
 export function ActionStatusRow({
   action,
   failed,
@@ -137,7 +222,9 @@ export function ActionStatusRow({
     return (
       <div className="flex flex-col gap-2">
         <div className="flex items-start gap-1.5 text-sm text-red-600 dark:text-red-400" dir="auto">
-          <XCircle size={16} className="mt-0.5 flex-shrink-0" aria-hidden />
+          <PopIcon>
+            <XCircle size={16} aria-hidden />
+          </PopIcon>
           <span>{message || t('agent.action.failed')}</span>
         </div>
         <AgentEntityList entities={action.result?.entities ?? []} />
@@ -148,7 +235,9 @@ export function ActionStatusRow({
     return (
       <div className="flex flex-col gap-2">
         <div className="flex items-start gap-1.5 text-sm text-green-700 dark:text-green-400" dir="auto">
-          <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" aria-hidden />
+          <PopIcon>
+            <CheckCircle2 size={16} aria-hidden />
+          </PopIcon>
           <span>{message || (action.status === 'CONFIRMED' ? t('agent.action.confirmed') : t('agent.action.done'))}</span>
         </div>
         <AgentEntityList entities={action.result?.entities ?? []} />
@@ -164,10 +253,48 @@ export function ActionStatusRow({
   );
 }
 
-/** Title, `label: from → to` lines and warnings of the server-rendered preview. */
+/** One preview row: a change is `old` (struck) → `new` (highlighted); otherwise the value alone. */
+function PreviewLineValue({ line }: { line: AgentActionPreviewLine }) {
+  const kind = agentPreviewLineKind(line);
+  if (kind === 'change') {
+    return (
+      <>
+        <span className="text-gray-500 line-through decoration-gray-400/70 dark:text-gray-400" dir="auto">
+          {line.from}
+        </span>
+        <ArrowRight size={14} className="flex-shrink-0 text-gray-400 rtl:rotate-180" aria-hidden />
+        <span
+          className="rounded-md bg-primary-50 px-1.5 py-0.5 font-medium text-primary-800 dark:bg-primary-900/40 dark:text-primary-200"
+          dir="auto"
+        >
+          {line.to}
+        </span>
+      </>
+    );
+  }
+  if (kind === 'removed') {
+    return (
+      <span className="text-gray-500 line-through decoration-gray-400/70 dark:text-gray-400" dir="auto">
+        {line.from}
+      </span>
+    );
+  }
+  return (
+    <span className="font-medium text-gray-900 dark:text-white" dir="auto">
+      {line.to}
+    </span>
+  );
+}
+
+/**
+ * Title, the optional rich card (e.g. the scoreboard of a score entry), `label: from → to`
+ * lines (hidden when `linesInCard` and the card is shown) and warnings of the preview.
+ */
 export function AgentActionPreviewSection({ action }: { action: AgentPendingActionDto }) {
   const { t } = useTranslation();
   const { preview } = action;
+  const card = preview.card;
+  const showLines = preview.lines.length > 0 && !(card && preview.linesInCard);
   return (
     <>
       <div className="flex items-start gap-2 px-3 pt-3">
@@ -182,23 +309,21 @@ export function AgentActionPreviewSection({ action }: { action: AgentPendingActi
         </div>
       </div>
 
-      {preview.lines.length > 0 ? (
+      {card ? (
+        <div className="mx-3 mt-2">
+          <AgentToolCard card={card} linkable={false} />
+        </div>
+      ) : null}
+
+      {showLines ? (
         <dl className="mx-3 mt-2 divide-y divide-gray-100 rounded-xl bg-gray-50 dark:divide-gray-700/70 dark:bg-gray-900/40">
           {preview.lines.map((line, i) => (
             <div key={`${line.label}-${i}`} className="px-3 py-2">
               <dt className="text-[11px] text-gray-500 dark:text-gray-400" dir="auto">
                 {line.label}
               </dt>
-              <dd className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm" dir="auto">
-                {line.from != null ? (
-                  <span className="text-gray-500 line-through decoration-gray-400/70 dark:text-gray-400">{line.from}</span>
-                ) : null}
-                {line.from != null && line.to != null ? (
-                  <ArrowRight size={14} className="flex-shrink-0 text-gray-400 rtl:rotate-180" aria-hidden />
-                ) : null}
-                {line.to != null ? (
-                  <span className="font-medium text-gray-900 dark:text-white">{line.to}</span>
-                ) : null}
+              <dd className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm">
+                <PreviewLineValue line={line} />
               </dd>
             </div>
           ))}

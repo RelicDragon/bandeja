@@ -9,7 +9,9 @@
  *     finish vs `POST /recalculate` on the twin (same lineup, sets, winners, statuses);
  *   - stale `baseVersion`: a change after the card → friendly FAILED outcome, nothing overwritten;
  *   - finish preview mirrors the app's confirm (unscored / missing players), FINAL → handoff;
- *   - critical: `finish_results` can't be ALWAYS_ALLOW and a forged row never auto-approves.
+ *   - critical: `finish_results` can't be ALWAYS_ALLOW and a forged row never auto-approves;
+ *   - rich cards (slice 9e): the scoreboard card of `get_game_results`, the score / finish
+ *     previews' cards, kept out of the model-facing data.
  */
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
@@ -25,6 +27,7 @@ import {
   Sport,
 } from '@prisma/client';
 import type { AgentActionPreview } from '@bandeja/shared/agentContract';
+import type { AgentToolResultWithCard } from '../tools/agentToolCards';
 import app from '../../../app';
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
@@ -210,6 +213,21 @@ async function main(): Promise<void> {
       assert.ok(preview.lines.some((l) => l.to === 'owner & gameAdmin'), JSON.stringify(preview.lines));
       assert.ok(preview.lines.some((l) => l.to === EN['value.winner'].replace('{{team}}', 'owner & gameAdmin')));
       assert.equal((await board(gA)).resultsStatus, 'NONE', 'nothing changes at propose time');
+      // The card: one match, both sides, the new sets, the winner; the model gets no card.
+      assert.equal(preview.card?.kind, 'results');
+      assert.equal(preview.linesInCard, true);
+      if (preview.card?.kind === 'results') {
+        assert.equal(preview.card.gameId, gA);
+        assert.equal(preview.card.matches.length, 1);
+        const m = preview.card.matches[0];
+        assert.deepEqual(m.teamA.map((p) => p.name), ['owner', 'gameAdmin']);
+        assert.equal(m.teamA[0].you, true, 'the owner is "you"');
+        assert.deepEqual(m.sets, [{ teamA: 6, teamB: 4 }, { teamA: 6, teamB: 3 }]);
+        assert.equal(m.winner, 'teamA');
+      }
+      const modelView = await call('enter_match_score', P.owner, { gameId: gA, sets, lineup });
+      const modelPreview = (modelView.result.data as { preview: Record<string, unknown> }).preview;
+      assert.ok(modelPreview.lines && !('card' in modelPreview) && !('linesInCard' in modelPreview), 'no card for the model');
       const outcome = await confirm('enter_match_score', P.owner, plan);
       assert.ok(!outcome.failed, outcome.message);
       assert.equal(outcome.message, EN['result.scoreSaved'].replace('{{score}}', '6-4 6-3'));
@@ -253,12 +271,25 @@ async function main(): Promise<void> {
       assert.equal(data.matches[0].outcome, 'teamA');
       assert.ok(data.matches[0].teamB.some((p) => p.you));
       assert.equal(((await getResults.handler(await ctxFor(P.owner), { gameId: gA })).data as { canEnterResults: boolean }).canEnterResults, true);
+      const readCard = (read as AgentToolResultWithCard).card;
+      assert.equal(readCard?.kind, 'results');
+      if (readCard?.kind === 'results') {
+        assert.equal(readCard.resultsStatus, 'IN_PROGRESS');
+        assert.equal(readCard.matchCount, 1);
+        assert.equal(readCard.matches[0].winner, 'teamA');
+        assert.ok(readCard.matches[0].teamB.some((p) => p.you));
+        assert.ok(readCard.title, 'titled like the game card');
+        assert.equal(readCard.standings, undefined, 'no podium before FINAL');
+      }
+      assert.ok(!JSON.stringify(read.data).includes('"winner"'), 'card fields stay out of the model data');
 
       // Finish: critical card, then parity with POST /recalculate.
       const fin = await propose('finish_results', P.owner, { gameId: gA });
       assert.ok(fin.preview.lines.some((l) => l.to === '1 of 1'), JSON.stringify(fin.preview.lines));
       assert.ok(warnings(fin.preview).includes(EN['warn.bets']));
       assert.ok(!warnings(fin.preview).includes(EN['warn.ratings']), 'affectsRating=false: no rating note');
+      assert.equal(fin.preview.card?.kind, 'results', 'finish card shows the board');
+      assert.equal(fin.preview.linesInCard, undefined, 'finish keeps its summary lines');
       const finOutcome = await confirm('finish_results', P.owner, fin.plan);
       assert.ok(!finOutcome.failed, finOutcome.message);
       assert.equal((await http(P.owner.userId, 'POST', `/game/${gB}/recalculate`)).status, 200);
@@ -271,6 +302,10 @@ async function main(): Promise<void> {
       assert.deepEqual(await winners(gA), await winners(gB), 'same outcomes as the HTTP finish');
       const finalRead = (await getResults.handler(await ctxFor(P.player), { gameId: gA })).data as { standings?: unknown[] };
       assert.equal(finalRead.standings?.length, 4);
+      const finalCard = ((await getResults.handler(await ctxFor(P.player), { gameId: gA })) as AgentToolResultWithCard).card;
+      assert.ok(finalCard?.kind === 'results' && finalCard.resultsStatus === 'FINAL');
+      assert.equal(finalCard.standings?.length, 3, 'podium only');
+      assert.ok(finalCard.standings?.some((row) => row.isWinner));
 
       // FINAL: both writes hand off to the game page; nothing proposed.
       for (const name of ['enter_match_score', 'finish_results'] as const) {

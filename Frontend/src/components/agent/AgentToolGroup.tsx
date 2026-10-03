@@ -5,7 +5,9 @@ import { AlertCircle, Check, ChevronDown, Loader2 } from 'lucide-react';
 import type { AgentToolItemData } from '@/features/agent/agentTimeline';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { AgentEntityList } from './AgentEntityCard';
+import { entitiesBesideCard } from '@/features/agent/agentToolCards';
 import { AgentMemorySavedChip } from './AgentMemorySavedChip';
+import { AgentToolCard } from './AgentToolCard';
 import { AgentWebImageStrip, AgentWebResults } from './AgentWebResults';
 
 type StepState = AgentToolItemData['status'];
@@ -159,6 +161,7 @@ function ToolStepRow({ tool }: { tool: AgentToolItemData }) {
  */
 export const AgentToolGroup = memo(function AgentToolGroup({ tools }: { tools: AgentToolItemData[] }) {
   const { t } = useTranslation();
+  const reducedMotion = usePrefersReducedMotion();
   const [open, setOpen] = useState(false);
   const single = tools.length === 1 ? tools[0] : null;
   const runningTool = tools.find((x) => x.status === 'running') ?? null;
@@ -224,20 +227,23 @@ export const AgentToolGroup = memo(function AgentToolGroup({ tools }: { tools: A
           )}
         </Collapse>
       </div>
-      {tools.map((tool) =>
-        tool.entities.length > 0 || (tool.memorySaved && tool.status !== 'error') ? (
+      {tools.map((tool) => {
+        const card = tool.status === 'error' ? undefined : tool.card;
+        const entities = entitiesBesideCard(tool.entities, card);
+        return card || entities.length > 0 || (tool.memorySaved && tool.status !== 'error') ? (
           <motion.div
             key={tool.callId}
-            initial={{ opacity: 0, y: 6 }}
+            initial={reducedMotion ? false : { opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.28, ease: EASE_OUT }}
             className="flex flex-col gap-2"
           >
-            <AgentEntityList entities={tool.entities} />
+            {card ? <AgentToolCard card={card} /> : null}
+            <AgentEntityList entities={entities} />
             {tool.memorySaved && tool.status !== 'error' ? <AgentMemorySavedChip memory={tool.memorySaved} /> : null}
           </motion.div>
-        ) : null,
-      )}
+        ) : null;
+      })}
     </div>
   );
 });

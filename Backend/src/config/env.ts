@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { GAME_TEXT_LOCALIZATION_GENERATION_ENABLED as PACKAGE_GAME_TEXT_GENERATION_DEFAULT } from '@bandeja/app-locale';
 import { resolveAgentEnvConfig, type AgentEnvConfig } from './agentEnv';
+import { resolveAgentVoiceEnvConfig, type AgentVoiceEnvConfig } from './agentVoiceEnv';
 import { resolveApiRateLimitConfig } from './apiRateLimit';
 import {
   assertProductionJwtAuthConfig,
@@ -283,6 +284,10 @@ export const config = {
    */
   get agent(): AgentEnvConfig {
     return resolveAgentEnvConfig(process.env);
+  },
+  /** Agent voice: dictation, spoken conversation (`/api/agent/voice/*`). Read live. */
+  get agentVoice(): AgentVoiceEnvConfig {
+    return resolveAgentVoiceEnvConfig(process.env);
   },
   /** Global `/api/` IP rate limit. See `apiRateLimit.ts` / #313. */
   apiRateLimit: resolveApiRateLimitConfig({

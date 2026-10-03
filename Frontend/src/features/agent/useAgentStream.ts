@@ -20,6 +20,7 @@ import {
 } from './agentCache';
 import { attachAgentRun } from './agentRunAttach';
 import { useAgentRunStore } from './agentRunStore';
+import { publishAgentRunEvent } from './voice/agentRunEventBus';
 
 export { buildAgentEventsUrl, parseAgentStreamFrame } from './agentRunAttach';
 
@@ -84,7 +85,10 @@ export function useAgentStream({ chatId, runId }: { chatId: string; runId: strin
         buildAgentStreamHeaders({ token: localStorage.getItem('token'), lastEventId, native }),
       native,
       refreshToken: refreshAccessTokenSingleFlight,
-      onEvent: (event) => patchCacheFromEvent(queryClient, chatId, event),
+      onEvent: (event, eventId) => {
+        patchCacheFromEvent(queryClient, chatId, event);
+        publishAgentRunEvent(runId, eventId, event);
+      },
       onTerminal: async () => {
         const run = useAgentRunStore.getState().runs[runId];
         invalidateTouchedGames(queryClient, gameIdsFromEntities(run?.touchedEntities), { wrote: false, userId });

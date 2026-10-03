@@ -83,7 +83,8 @@
       "alwaysAllow": "Permitir siempre",
       "alwaysAsks": "Esta acción siempre pide confirmación",
       "autoHeading": "Hecho automáticamente",
-      "autoApproved": "Hecho automáticamente, tú lo permitiste."
+      "autoApproved": "Hecho automáticamente, tú lo permitiste.",
+      "applying": "Aplicando…"
     },
     "entity": {
       "untitledGame": "Partido",
@@ -249,6 +250,159 @@
       "resets": "Se reinicia",
       "resetsAt": "{{time}} (en {{duration}})",
       "dailyExplain": "Compartido entre todos tus chats de IA. Cuando se agota, el asistente se pausa hasta el reinicio."
+    },
+    "followUps": {
+      "label": "Sugerencias para seguir",
+      "whoMissing": "¿Quién falta todavía?",
+      "weatherNext": "El tiempo para mi próximo partido",
+      "bookFirstSlot": "Reserva el primer horario",
+      "laterSlots": "Muestra horarios más tarde",
+      "otherDay": "Prueba otro día",
+      "standings": "Muestra la clasificación",
+      "nextRound": "Partidos de la próxima jornada",
+      "invitePlayers": "Invita jugadores",
+      "splitCost": "Divide el coste",
+      "postInChat": "Escribe en el chat del partido",
+      "enterScore": "Introduce el resultado",
+      "finishResults": "Cierra los resultados",
+      "showResults": "Muestra los resultados",
+      "remindUnpaid": "Recuerda a quien no ha pagado",
+      "markMyPaid": "Marca mi parte como pagada",
+      "createGameForBooking": "Crea un partido para esta reserva",
+      "findIndoor": "Busca una pista cubierta",
+      "moveGame": "Mueve el partido",
+      "joinBestMatch": "Apúntame al mejor partido",
+      "freeCourtThere": "Busca una pista libre allí",
+      "inviteToNextGame": "Invítalos a mi próximo partido",
+      "replyInChat": "Responde en el chat",
+      "myBookings": "Muestra mis reservas",
+      "retry": "Inténtalo de nuevo",
+      "adminApproveFirst": "Aprueba el primer evento"
+    },
+    "personal": {
+      "loading": "Cargando sugerencias",
+      "enterScore": {
+        "prompt": "Introduce el resultado de mi partido del {{when}}"
+      },
+      "needsPlayers": {
+        "prompt": "Mi partido del {{when}} aún tiene plazas libres: ¿a quién puedo invitar?",
+        "context": "Jugadores: {{playing}}/{{max}}"
+      },
+      "remindPay": {
+        "prompt": "Recuerda a los jugadores que paguen mi partido del {{when}}",
+        "context": "Partes sin pagar: {{count}}"
+      },
+      "pendingInvite": {
+        "prompt": "Cuéntame sobre la invitación de {{name}} para el {{when}}"
+      },
+      "payShare": {
+        "prompt": "Marca como pagada mi parte del partido del {{when}}",
+        "context": "Para {{name}}"
+      },
+      "leagueNext": {
+        "prompt": "¿Qué toca ahora en {{league}}?",
+        "context": "Una liga que organizas"
+      },
+      "nextGameWeather": {
+        "prompt": "¿Qué tiempo hará en mi partido del {{when}}?"
+      }
+    },
+    "cards": {
+      "results": {
+        "status": {
+          "FINAL": "Finalizado",
+          "IN_PROGRESS": "En curso",
+          "NONE": "Sin empezar"
+        },
+        "you": "{{name}} (tú)",
+        "winner": "Ganador",
+        "draw": "Empate",
+        "matchRef": "Ronda {{round}} · Partido {{match}}",
+        "matches": "Partidos: {{count}}",
+        "more": "Más partidos: {{count}}",
+        "noMatches": "Aún no hay partidos",
+        "noPlayers": "Aún no hay jugadores"
+      },
+      "playIntent": {
+        "open": "Buscando",
+        "matched": "Emparejado",
+        "chip": {
+          "days": "Días",
+          "time": "Hora",
+          "clubs": "Clubes",
+          "level": "Nivel",
+          "players": "Jugadores"
+        },
+        "inProposal": "En una propuesta de partido · jugadores: {{count}}",
+        "gamesFit": "Partidos que encajan: {{count}}",
+        "noGames": "Aún no encaja ningún partido"
+      },
+      "weather": {
+        "verdict": {
+          "good": "Buen tiempo para jugar",
+          "risky": "Posible lluvia o viento",
+          "bad": "Mal tiempo para jugar al aire libre",
+          "indoor": "Pistas cubiertas"
+        },
+        "recorded": "Registrado",
+        "bestWindow": "Mejor hora para jugar: {{range}}",
+        "stale": "El pronóstico puede estar desactualizado"
+      }
+    },
+    "voice": {
+      "title": "Conversación por voz",
+      "start": "Hablar con el asistente",
+      "end": "Terminar la conversación por voz",
+      "mute": "Silenciar micrófono",
+      "unmute": "Activar micrófono",
+      "interrupt": "Interrumpir",
+      "keepTalking": "Seguir hablando",
+      "listeningLabel": "Escuchando",
+      "status": {
+        "starting": "Activando el micrófono…",
+        "listening": "Escuchando",
+        "hearing": "Te escucho…",
+        "transcribing": "Entendido…",
+        "thinking": "Pensando…",
+        "speaking": "Hablando",
+        "confirm": "Confirma en la pantalla",
+        "muted": "Micrófono apagado"
+      },
+      "hint": {
+        "starting": "Permite el acceso al micrófono si te lo pide",
+        "listening": "Pregunta por tus partidos, reservas, ligas…",
+        "hearing": "Haz una pausa cuando termines",
+        "transcribing": "Convirtiendo tu voz en texto",
+        "thinking": "Habla cuando quieras para interrumpir",
+        "speaking": "Toca el círculo o simplemente habla para interrumpir",
+        "confirm": "Toca Confirmar o Cancelar arriba, o el círculo para seguir hablando",
+        "muted": "Toca el micrófono para volver a hablar"
+      },
+      "notice": {
+        "micDenied": "Permite el acceso al micrófono en Ajustes para hablar con el asistente.",
+        "micInsecure": "La voz necesita una conexión segura.",
+        "micUnsupported": "Este dispositivo no puede grabar audio aquí.",
+        "notHeard": "No te he entendido. Inténtalo de nuevo.",
+        "transcribeFailed": "No se pudo reconocer la voz. Inténtalo de nuevo.",
+        "sendFailed": "No se pudo enviar. Inténtalo de nuevo.",
+        "speechFailed": "No se pudo leer la respuesta en voz alta. Está en el chat.",
+        "runFailed": "Algo salió mal. Inténtalo de nuevo.",
+        "interrupted": "Conversación por voz en pausa.",
+        "unavailable": "La voz no está disponible ahora.",
+        "budget": "Has alcanzado el límite diario del asistente. Inténtalo mañana.",
+        "rateLimited": "Demasiadas solicitudes de voz. Espera un momento.",
+        "idle": "La conversación por voz terminó tras un minuto en silencio."
+      },
+      "dictation": {
+        "start": "Dictar",
+        "cancel": "Cancelar grabación",
+        "done": "Terminar grabación",
+        "recording": "Grabando…",
+        "transcribing": "Transcribiendo…",
+        "tooShort": "Ha sido muy corto. Habla un poco más."
+      },
+      "confirmPrompt": "{{title}}. Toca Confirmar en la pantalla.",
+      "confirmFallbackTitle": "He preparado el cambio"
     }
   }
 }

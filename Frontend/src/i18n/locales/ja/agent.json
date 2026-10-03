@@ -83,7 +83,8 @@
       "alwaysAllow": "常に許可",
       "alwaysAsks": "この操作は毎回確認が必要です",
       "autoHeading": "自動で実行しました",
-      "autoApproved": "自動で実行しました（許可済み）。"
+      "autoApproved": "自動で実行しました（許可済み）。",
+      "applying": "適用中…"
     },
     "entity": {
       "untitledGame": "試合",
@@ -249,6 +250,159 @@
       "resets": "リセット",
       "resetsAt": "{{time}}（あと{{duration}}）",
       "dailyExplain": "すべてのAIチャットで共有されます。使い切るとリセットまでアシスタントは停止します。"
+    },
+    "followUps": {
+      "label": "続けて聞けること",
+      "whoMissing": "まだ足りないのは誰？",
+      "weatherNext": "次の試合の天気",
+      "bookFirstSlot": "最初の枠を予約して",
+      "laterSlots": "もっと遅い時間を見せて",
+      "otherDay": "別の日で探して",
+      "standings": "順位表を見せて",
+      "nextRound": "次のラウンドの対戦",
+      "invitePlayers": "メンバーを招待して",
+      "splitCost": "費用を割り勘にして",
+      "postInChat": "試合のチャットに投稿して",
+      "enterScore": "スコアを入力して",
+      "finishResults": "結果を確定して",
+      "showResults": "結果を見せて",
+      "remindUnpaid": "未払いの人にリマインドして",
+      "markMyPaid": "自分の分を支払い済みにして",
+      "createGameForBooking": "この予約で試合を作成して",
+      "findIndoor": "屋内コートを探して",
+      "moveGame": "試合の日時を変更して",
+      "joinBestMatch": "いちばん合う試合に参加させて",
+      "freeCourtThere": "そこで空いているコートを探して",
+      "inviteToNextGame": "次の試合に招待して",
+      "replyInChat": "チャットで返信して",
+      "myBookings": "予約一覧を見せて",
+      "retry": "もう一度試して",
+      "adminApproveFirst": "最初のイベントを承認して"
+    },
+    "personal": {
+      "loading": "候補を読み込み中",
+      "enterScore": {
+        "prompt": "{{when}}の試合のスコアを入力して"
+      },
+      "needsPlayers": {
+        "prompt": "{{when}}の試合にまだ空きがある — 誰を誘えばいい？",
+        "context": "メンバー：{{playing}}/{{max}}"
+      },
+      "remindPay": {
+        "prompt": "{{when}}の試合の支払いをメンバーにリマインドして",
+        "context": "未払い：{{count}}件"
+      },
+      "pendingInvite": {
+        "prompt": "{{name}}さんからの{{when}}の招待について教えて"
+      },
+      "payShare": {
+        "prompt": "{{when}}の試合の自分の分を支払い済みにして",
+        "context": "支払先：{{name}}"
+      },
+      "leagueNext": {
+        "prompt": "{{league}}の次の予定は？",
+        "context": "あなたが運営するリーグ"
+      },
+      "nextGameWeather": {
+        "prompt": "{{when}}の試合の天気は？"
+      }
+    },
+    "cards": {
+      "results": {
+        "status": {
+          "FINAL": "確定",
+          "IN_PROGRESS": "入力中",
+          "NONE": "未開始"
+        },
+        "you": "{{name}}（あなた）",
+        "winner": "勝者",
+        "draw": "引き分け",
+        "matchRef": "第{{round}}ラウンド · 第{{match}}試合",
+        "matches": "試合数：{{count}}",
+        "more": "ほかの試合：{{count}}",
+        "noMatches": "まだ試合はありません",
+        "noPlayers": "まだプレーヤーがいません"
+      },
+      "playIntent": {
+        "open": "募集中",
+        "matched": "マッチ済み",
+        "chip": {
+          "days": "日程",
+          "time": "時間",
+          "clubs": "クラブ",
+          "level": "レベル",
+          "players": "プレーヤー"
+        },
+        "inProposal": "マッチ提案中 · プレーヤー：{{count}}",
+        "gamesFit": "条件に合うゲーム：{{count}}",
+        "noGames": "条件に合うゲームはまだありません"
+      },
+      "weather": {
+        "verdict": {
+          "good": "プレー日和",
+          "risky": "雨や風の可能性",
+          "bad": "屋外でのプレーには悪天候",
+          "indoor": "屋内コート"
+        },
+        "recorded": "記録",
+        "bestWindow": "プレーに最適な時間：{{range}}",
+        "stale": "予報が古い可能性があります"
+      }
+    },
+    "voice": {
+      "title": "音声会話",
+      "start": "アシスタントと話す",
+      "end": "音声会話を終了",
+      "mute": "マイクをオフ",
+      "unmute": "マイクをオン",
+      "interrupt": "中断",
+      "keepTalking": "話を続ける",
+      "listeningLabel": "聞いています",
+      "status": {
+        "starting": "マイクを起動中…",
+        "listening": "聞いています",
+        "hearing": "聞き取り中…",
+        "transcribing": "了解…",
+        "thinking": "考え中…",
+        "speaking": "話しています",
+        "confirm": "画面で確認してください",
+        "muted": "マイクはオフです"
+      },
+      "hint": {
+        "starting": "求められたらマイクへのアクセスを許可してください",
+        "listening": "試合、予約、リーグについて聞いてみましょう…",
+        "hearing": "話し終えたら少し間を空けてください",
+        "transcribing": "音声をテキストに変換しています",
+        "thinking": "いつでも話しかけて中断できます",
+        "speaking": "円をタップするか話しかけると中断します",
+        "confirm": "上の「確認」か「キャンセル」をタップ、または円をタップして会話を続けます",
+        "muted": "マイクをタップすると再び話せます"
+      },
+      "notice": {
+        "micDenied": "アシスタントと話すには、設定でマイクへのアクセスを許可してください。",
+        "micInsecure": "音声には安全な接続が必要です。",
+        "micUnsupported": "このデバイスではここで録音できません。",
+        "notHeard": "聞き取れませんでした。もう一度どうぞ。",
+        "transcribeFailed": "音声を認識できませんでした。もう一度お試しください。",
+        "sendFailed": "送信できませんでした。もう一度お試しください。",
+        "speechFailed": "返答を読み上げられませんでした。内容はチャットにあります。",
+        "runFailed": "問題が発生しました。もう一度お試しください。",
+        "interrupted": "音声会話を一時停止しました。",
+        "unavailable": "現在、音声は利用できません。",
+        "budget": "本日のアシスタント利用上限に達しました。明日もう一度お試しください。",
+        "rateLimited": "音声リクエストが多すぎます。少しお待ちください。",
+        "idle": "1分間無音だったため、音声会話を終了しました。"
+      },
+      "dictation": {
+        "start": "音声入力",
+        "cancel": "録音をキャンセル",
+        "done": "録音を終了",
+        "recording": "録音中…",
+        "transcribing": "文字起こし中…",
+        "tooShort": "短すぎます。もう少し長く話してください。"
+      },
+      "confirmPrompt": "{{title}}。画面で「確認」をタップしてください。",
+      "confirmFallbackTitle": "変更を準備しました"
     }
   }
 }

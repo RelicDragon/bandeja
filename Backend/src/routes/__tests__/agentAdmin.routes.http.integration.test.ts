@@ -142,7 +142,9 @@ void (async () => {
     assert.equal(row.userId, owner.userId);
     assert.equal(row.day, new Date().toISOString().slice(0, 10));
     assert.deepEqual([row.runs, row.inputTokens, row.outputTokens, row.totalTokens], [2, 150, 15, 165]);
-    assert.deepEqual(Object.keys(row).sort(), ['day', 'inputTokens', 'outputTokens', 'runs', 'totalTokens', 'user', 'userId']);
+    assert.deepEqual(Object.keys(row).sort(), ['cachedInputTokens', 'day', 'inputTokens', 'outputTokens', 'runs', 'totalTokens', 'user', 'userId']);
+    const endReasons = (res.body.data as { endReasons: { endReason: string | null; runs: number }[] }).endReasons;
+    assert.equal(endReasons.reduce((sum, r) => sum + r.runs, 0), 2, 'end reason counts cover the runs in the window');
     assert.deepEqual(Object.keys(row.user ?? {}).sort(), ['firstName', 'id', 'lastName'], 'no contact fields on usage users');
 
     res = await call(globalAdmin.userId, '/usage?days=1');

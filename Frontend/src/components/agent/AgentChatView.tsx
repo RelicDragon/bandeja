@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, Hourglass, MoreHorizontal, RotateCcw, Sparkles, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Hourglass, MoreHorizontal, RotateCcw, X } from 'lucide-react';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { getBackAction } from '@/utils/backNavigation';
@@ -40,7 +40,11 @@ import {
 } from '@/features/agent/agentImages';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import type { AgentErrorCode, AgentWebImage } from '@shared/agentContract';
+import { AgentGlyph } from './AgentGlyph';
 import { AgentComposer } from './AgentComposer';
+import { AgentVoiceDock } from './AgentVoiceDock';
+import { useAgentVoiceConversation } from '@/features/agent/voice/useAgentVoiceConversation';
+import type { AgentVoiceCloseReason, AgentVoiceNotice } from '@/features/agent/voice/agentVoiceSession';
 import { AgentMarkdown } from './AgentMarkdown';
 import { AgentMessageActions, AgentMessageEditor } from './AgentMessageActions';
 import { AgentToolGroup } from './AgentToolGroup';
@@ -50,9 +54,10 @@ import { useAgentClientExecution, useAgentClientResume } from '@/queries/agent/u
 import { AgentChatMenuSheet, AgentDeleteChatDialog, AgentRenameDialog } from './AgentChatMenu';
 import { AgentContextHint, AgentContextMeterButton, AgentContextSheet } from './AgentContextMeter';
 import {
-  AGENT_EXAMPLE_PROMPT_KEYS,
   readAgentInitialPrompt,
 } from './agentExamplePrompts';
+import { AgentFollowUpChips } from './AgentFollowUpChips';
+import { AgentSuggestedPrompts } from './AgentSuggestedPrompts';
 
 const STICK_THRESHOLD_PX = 80;
 const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -297,10 +302,10 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
   const send = useCallback(
     async (
       text: string,
-      opts: { localId?: string; edit?: AgentEditTarget } = {},
-    ) => {
+      opts: { localId?: string; edit?: AgentEditTarget; voice?: boolean } = {},
+    ): Promise<string | null> => {
       const trimmed = text.trim();
-      if (!trimmed) return;
+      if (!trimmed) return null;
       const localId = opts.localId ?? `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const edit = opts.edit;
       stickRef.current = true;
@@ -309,21 +314,54 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
         { localId, text: trimmed, failed: false, code: null, ...(edit ? { edit } : {}) },
       ]);
       try {
-        await sendMutation.mutateAsync({ text: trimmed, ...(edit ? { edit } : {}) });
+        const { runId } = await sendMutation.mutateAsync({
+          text: trimmed,
+          ...(edit ? { edit } : {}),
+          ...(opts.voice ? { voice: true } : {}),
+        });
         setPending((prev) => prev.filter((p) => p.localId !== localId));
+        return runId;
       } catch (err) {
         const code = agentErrorCodeOf(err);
         setPending((prev) => prev.map((p) => (p.localId === localId ? { ...p, failed: true, code } : p)));
+        if (opts.voice) throw err;
+        return null;
       }
     },
     [sendMutation],
   );
 
+  // ---- voice conversation (docs/domains/agent.md § Voice): the dock replaces the composer ----
+  const hasPendingAction = Boolean(detail?.actions.some((a) => a.status === 'PENDING'));
+  const handleVoiceClose = useCallback(
+    (reason: AgentVoiceCloseReason, notice: AgentVoiceNotice | null) => {
+      if (notice) toast(t(`agent.voice.notice.${notice}`));
+      else if (reason === 'idle') toast(t('agent.voice.notice.idle'));
+    },
+    [t],
+  );
+  const voice = useAgentVoiceConversation({
+    serverRunId,
+    running,
+    pendingAction: hasPendingAction,
+    send: async (text) => {
+      const runId = await send(text, { voice: true });
+      if (!runId) throw new Error('voice send failed');
+      return runId;
+    },
+    cancelRun: async (runId) => {
+      await cancelMutation.mutateAsync(runId);
+    },
+    onClose: handleVoiceClose,
+    confirmPrompt: (title) => t('agent.voice.confirmPrompt', { title: title ?? t('agent.voice.confirmFallbackTitle') }),
+  });
+  const voiceActive = voice.active;
+
   // Slot / booking cards send through the chat (hidden ref tokens, docs/domains/agent.md).
   const sendingNow = pending.some((p) => !p.failed);
   const cardSendApi = useMemo<AgentSendApi>(
-    () => ({ send: (text) => void send(text), disabled: running || sendingNow }),
-    [send, running, sendingNow],
+    () => ({ send: (text) => void send(text, { voice: voiceActive }).catch(() => {}), disabled: running || sendingNow }),
+    [send, running, sendingNow, voiceActive],
   );
 
   const handleSend = () => {
@@ -518,15 +556,20 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
               <ArrowLeft size={20} className="text-gray-700 rtl:rotate-180 dark:text-gray-300" />
             </button>
           ) : null}
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-white">
-            <Sparkles size={18} aria-hidden />
-          </div>
-          <div className="min-w-0 flex-1">
+          <div className={`min-w-0 flex-1 ${embedded ? 'ps-1' : ''}`}>
             <h1 className="truncate text-base font-semibold text-gray-900 dark:text-white" dir="auto">
               {title}
             </h1>
             {running ? (
-              <p className="text-xs text-primary-600 dark:text-primary-400">
+              <p className="flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400">
+                <span className="relative flex h-2 w-2 flex-shrink-0" aria-hidden>
+                  {queued ? null : (
+                    <span className="absolute inset-0 rounded-full bg-primary-400 opacity-75 motion-safe:animate-ping" />
+                  )}
+                  <span
+                    className={`relative h-2 w-2 rounded-full ${queued ? 'bg-primary-300 motion-safe:animate-pulse dark:bg-primary-700' : 'bg-primary-500'}`}
+                  />
+                </span>
                 {queued ? t('agent.status.queued') : t('agent.status.working')}
               </p>
             ) : null}
@@ -621,6 +664,22 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
               ))}
             </AnimatePresence>
 
+            {detail ? (
+              <AgentFollowUpChips
+                messages={detail.messages}
+                actions={detail.actions}
+                hidden={
+                  running ||
+                  pending.length > 0 ||
+                  draft.trim() !== '' ||
+                  editCutSeq != null ||
+                  editingId != null ||
+                  runError != null
+                }
+                onPick={(text) => void send(text)}
+              />
+            ) : null}
+
             <AnimatePresence initial={false} mode="popLayout">
               {queued ? (
                 <StatusFade key="queued">
@@ -662,15 +721,38 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
         className="absolute bottom-0 left-0 right-0 z-50 flex-shrink-0 border-transparent !bg-transparent"
       >
         <AgentContextHint usage={usage} onNewChat={startNewChat} creating={createChatMutation.isPending} />
-        <AgentComposer
-          value={draft}
-          onChange={setDraft}
-          onSend={handleSend}
-          onStop={handleStop}
-          running={running}
-          stopping={cancelMutation.isPending}
-          disabled={!detail}
-        />
+        <AnimatePresence mode="wait" initial={false}>
+          {voiceActive ? (
+            <motion.div
+              key="voice"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, transition: { duration: 0.15 } }}
+              transition={ITEM_ENTER}
+            >
+              <AgentVoiceDock state={voice.state} session={voice.session} onEnd={() => voice.session.stop('user')} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="composer"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0.12 } }}
+              transition={ITEM_ENTER}
+            >
+              <AgentComposer
+                value={draft}
+                onChange={setDraft}
+                onSend={handleSend}
+                onStop={handleStop}
+                onStartVoice={() => void voice.session.start()}
+                running={running}
+                stopping={cancelMutation.isPending}
+                disabled={!detail}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </footer>
 
       <AgentChatMenuSheet
@@ -807,26 +889,14 @@ function EmptyThreadHint({ onPick }: { onPick: (text: string) => void }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-4 py-10 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 text-white shadow-lg">
-        <Sparkles size={26} aria-hidden />
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-600 text-white shadow-lg shadow-violet-500/25 dark:shadow-violet-900/40">
+        <AgentGlyph size={28} />
       </div>
       <div>
         <p className="text-base font-semibold text-gray-900 dark:text-white">{t('agent.empty.chatTitle')}</p>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('agent.empty.chatHint')}</p>
       </div>
-      <div className="flex w-full flex-col gap-2">
-        {AGENT_EXAMPLE_PROMPT_KEYS.map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => onPick(t(key))}
-            className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-start text-sm text-gray-800 transition-colors hover:bg-gray-50 active:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            dir="auto"
-          >
-            {t(key)}
-          </button>
-        ))}
-      </div>
+      <AgentSuggestedPrompts onPick={onPick} />
     </div>
   );
 }

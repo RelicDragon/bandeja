@@ -40,6 +40,7 @@ import { AgentRunFeed } from '../services/agent/agentRunFeed';
 import { sendAgentUserMessage } from '../services/agent/agentSendMessage.service';
 import { AGENT_CLIENT_CAPS_HEADER, parseAgentClientCaps } from '../services/agent/clientExecution/clientCaps';
 import { getAgentClientExecutionService } from '../services/agent/clientExecution/clientExecution.service';
+import { agentVoiceError, speakAgentVoice, transcribeAgentVoice } from '../services/agent/voice/agentVoice.service';
 
 export const AGENT_SSE_KEEPALIVE_MS = 15_000;
 
@@ -94,9 +95,33 @@ export const postMessage = asyncHandler<AuthRequest>(async (req, res) => {
     editMessageId: typeof req.body.editMessageId === 'string' ? req.body.editMessageId : null,
     locale: req.get('X-App-Locale') ?? null,
     clientCaps: parseAgentClientCaps(req.get(AGENT_CLIENT_CAPS_HEADER)),
+    voice: req.body.voice === true,
     quota: 'counted', // `agentMessageLimiter` on the route counted it in the shared store
   });
   res.status(201).json({ success: true, data });
+});
+
+/** Raw `audio/*` body → `AgentVoiceTranscriptionDto`. Nothing is stored but the usage row. */
+export const transcribeVoice = asyncHandler<AuthRequest>(async (req, res) => {
+  const userId = requireUserId(req);
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+    throw agentVoiceError(400, 'VOICE_AUDIO_INVALID', 'Send the recording as an audio/* body');
+  }
+  const query = getValidatedRequestPart<{ durationMs?: number }>(req, 'query');
+  const data = await transcribeAgentVoice({
+    userId,
+    audio: req.body,
+    mimeType: req.get('Content-Type') ?? '',
+    clientDurationMs: query?.durationMs ?? null,
+  });
+  res.json({ success: true, data });
+});
+
+/** `{text}` → MP3 bytes of the spoken sentence. */
+export const speakVoice = asyncHandler<AuthRequest>(async (req, res) => {
+  const audio = await speakAgentVoice({ userId: requireUserId(req), text: String(req.body.text ?? '') });
+  res.set({ 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store', 'Content-Length': String(audio.length) });
+  res.send(audio);
 });
 
 export const cancelRun = asyncHandler<AuthRequest>(async (req, res) => {

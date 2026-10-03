@@ -4,6 +4,7 @@ import {
   type AgentErrorCode,
   type AgentPendingActionDto,
   type AgentStreamEvent,
+  type AgentToolCard,
   type AgentUsage,
   type AgentWebImage,
   type AgentWebView,
@@ -40,6 +41,8 @@ export interface AgentToolStep {
   web?: AgentWebView;
   /** `web_images` pictures, from `tool.finished`. */
   images?: AgentWebImage[];
+  /** Rich result card (slice 9e), from `tool.finished`. */
+  card?: AgentToolCard;
 }
 
 /** `memory.saved` payload (Phase 11): the chip under that tool call offers Undo. */
@@ -178,6 +181,7 @@ function applyEvent(state: AgentRunLiveState, event: AgentStreamEvent): AgentRun
         entities: event.entities ?? [],
         ...(event.web ? { web: event.web } : {}),
         ...(event.images?.length ? { images: event.images } : {}),
+        ...(event.card ? { card: event.card } : {}),
       };
       return {
         ...state,

@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { stripAgentRefTokens } from '@/features/agent/agentBookingCards';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Archive, ArrowUp, ArrowUpRight, Loader2, MessagesSquare, MoreHorizontal, ShieldCheck, ShieldQuestion } from 'lucide-react';
+import { Archive, ArrowUp, Loader2, MessagesSquare, MoreHorizontal, ShieldCheck, ShieldQuestion } from 'lucide-react';
 import type { AgentChatDto, AgentRunStatus } from '@shared/agentContract';
 import { ChatListSkeletonRows } from '@/components/chat/ChatListLoadingSkeleton';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
@@ -21,7 +21,7 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import { AgentChatMenuSheet, AgentDeleteChatDialog, AgentRenameDialog } from './AgentChatMenu';
 import { AgentGlyph } from './AgentGlyph';
-import { AGENT_EXAMPLE_PROMPT_KEYS } from './agentExamplePrompts';
+import { AgentSuggestedPrompts } from './AgentSuggestedPrompts';
 import { formatAgentChatTime } from './agentFormat';
 
 const LONG_PRESS_MS = 480;
@@ -388,23 +388,7 @@ function AgentListEmptyState({ onPick, disabled }: { onPick: (prompt: string) =>
   return (
     <div className="flex flex-col gap-2 px-3 pb-6 pt-2">
       <p className="px-1 pb-1 text-sm text-gray-500 dark:text-gray-400">{t('agent.empty.listHint')}</p>
-      {AGENT_EXAMPLE_PROMPT_KEYS.map((key) => (
-        <button
-          key={key}
-          type="button"
-          disabled={disabled}
-          onClick={() => onPick(t(key))}
-          className="group flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-start text-sm font-medium text-gray-800 transition-colors hover:border-primary-300 active:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-primary-700 dark:active:bg-gray-800"
-          dir="auto"
-        >
-          <span className="min-w-0 flex-1">{t(key)}</span>
-          <ArrowUpRight
-            size={16}
-            className="flex-shrink-0 text-gray-400 transition-colors group-hover:text-primary-500 rtl:-scale-x-100"
-            aria-hidden
-          />
-        </button>
-      ))}
+      <AgentSuggestedPrompts onPick={onPick} disabled={disabled} />
       <p className="px-1 pt-3 text-center text-xs text-gray-400 dark:text-gray-500">{t('agent.disclaimer')}</p>
     </div>
   );

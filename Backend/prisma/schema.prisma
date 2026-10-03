@@ -3826,6 +3826,8 @@ model LlmUsageLog {
   output       String   @db.Text
   inputTokens  Int?
   outputTokens Int?
+  /// Part of `inputTokens` served from the provider's prompt cache (DeepSeek `prompt_cache_hit_tokens`), when reported.
+  cachedInputTokens Int?
   createdAt    DateTime @default(now())
 
   @@index([provider])
@@ -4640,6 +4642,10 @@ model AgentRun {
   steps        Int                  @default(0)
   /// Prompt + reply tokens of the run's latest model call: the chat's current context size.
   contextTokens Int                 @default(0)
+  /// Prompt tokens served from the provider's prefix cache, summed over steps (DeepSeek `prompt_cache_hit_tokens`). Null = provider never reported it.
+  cachedInputTokens Int?
+  /// Why the loop stopped: answered | max_steps | awaiting_confirmation | cancelled | timeout | queue_timeout | interrupted | error. Null = older runs / still open.
+  endReason    String?              @db.VarChar(32)
   /// Queued at. Queue order and the daily budget window use this.
   createdAt    DateTime             @default(now())
   /// Claimed by a worker (QUEUED -> RUNNING).
@@ -4651,6 +4657,8 @@ model AgentRun {
   workerId     String?              @db.VarChar(96)
   /// Client capabilities from `X-Agent-Client-Caps` at enqueue (e.g. `booking-v1`); empty for Telegram / old builds.
   clientCaps   String[]             @default([])
+  /// Voice conversation turn (`voice: true` at enqueue, inherited by confirm follow-ups): the prompt asks for short spoken replies.
+  voice        Boolean              @default(false)
   chat         AgentChat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
   messages     AgentMessage[]
   actions      AgentPendingAction[]

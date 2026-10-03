@@ -1,0 +1,96 @@
+import type { EvalCaseFactory } from '../types';
+import { mentions, onGame, tool } from './helpers';
+
+const upcoming = mentions('names_upcoming_game', (fx) => fx.gameNames.tomorrow, (fx) => fx.gameNames.injection, (fx) => fx.gameNames.full);
+
+export const readCases: EvalCaseFactory = () => [
+  { id: 'reads.my-upcoming.en', area: 'reads', locale: 'en', message: 'What games do I have coming up?', expect: { reply: [upcoming] } },
+  { id: 'reads.my-upcoming.ru', area: 'reads', locale: 'ru', message: 'Какие у меня ближайшие игры?', expect: { reply: [upcoming] } },
+  { id: 'reads.my-upcoming.es', area: 'reads', locale: 'es', message: '¿Qué partidos tengo esta semana?', expect: { reply: [upcoming] } },
+  { id: 'reads.my-upcoming.ar', area: 'reads', locale: 'ar', appLocale: 'ar', message: 'ما هي مبارياتي القادمة هذا الأسبوع؟', expect: { reply: [upcoming] } },
+  { id: 'reads.my-upcoming.zh', area: 'reads', locale: 'zh', message: '我这周有哪些比赛？', expect: { reply: [upcoming] } },
+  { id: 'reads.next-game.ja', area: 'reads', locale: 'ja', message: '次の試合はいつ、どこですか？', expect: { reply: [mentions('names_club', 'Zenit')] } },
+  { id: 'reads.my-upcoming.hi', area: 'reads', locale: 'hi', message: 'इस हफ्ते मेरे कौन-कौन से गेम हैं?', expect: { reply: [upcoming] } },
+  { id: 'reads.next-game.th', area: 'reads', locale: 'th', message: 'เกมถัดไปของฉันคือเมื่อไหร่ และที่ไหน', expect: { reply: [mentions('names_club', 'Zenit')] } },
+  { id: 'reads.my-upcoming.id', area: 'reads', locale: 'id', message: 'Jadwal main padel saya minggu ini apa saja?', expect: { reply: [upcoming] } },
+  {
+    id: 'reads.past-games.en',
+    area: 'reads',
+    locale: 'en',
+    message: 'Which games did I play in the last week?',
+    expect: { tools: [tool('list_my_games', (a) => a.range === 'past')], reply: [mentions('names_past_game', (fx) => fx.gameNames.finished, (fx) => fx.gameNames.unscored)] },
+  },
+  {
+    id: 'reads.roster.ru',
+    area: 'reads',
+    locale: 'ru',
+    message: 'Кто играет в моей завтрашней игре?',
+    expect: { anyTools: [onGame('get_game', 'tomorrow')], reply: [mentions('names_luka', /Luka|Лук/), mentions('names_ivan', /Ivan|Иван/)] },
+  },
+  {
+    id: 'reads.needs-player.en',
+    area: 'reads',
+    locale: 'en',
+    message: 'Is my game tomorrow already full, or do we still need someone?',
+    expect: { reply: [mentions('one_spot_left', /\b(one|1)\b[^.]*\b(spot|place|player|seat|more)/i, /3\s*(\/|of|out of)\s*4/i, /\bthree\b/i)] },
+  },
+  {
+    id: 'reads.search-join.en',
+    area: 'reads',
+    locale: 'en',
+    message: 'Find me a game in my city in the next three days that I could still join.',
+    expect: { tools: [tool('search_games')], reply: [mentions('finds_americano', (fx) => fx.gameNames.americano)] },
+  },
+  {
+    id: 'reads.search-morning.sr',
+    area: 'reads',
+    locale: 'sr',
+    message: 'Ima li neka igra prekosutra ujutru na koju mogu da se prijavim?',
+    expect: { tools: [tool('search_games')], reply: [mentions('finds_americano', (fx) => fx.gameNames.americano)] },
+  },
+  {
+    id: 'reads.clubs.en',
+    area: 'reads',
+    locale: 'en',
+    message: 'Which padel clubs are there in my city?',
+    expect: { tools: [tool('search_clubs')], reply: [mentions('zenit', 'Zenit'), mentions('dunav', 'Dunav')] },
+  },
+  {
+    id: 'reads.club-courts.ru',
+    area: 'reads',
+    locale: 'ru',
+    message: 'Сколько кортов в Zenit Padel Club и есть ли там крытые?',
+    expect: { anyTools: [tool('get_club', (a, fx) => a.clubId === fx.clubs.zenit), tool('search_clubs')], reply: [mentions('four_courts', /\b4\b|четыр/i)] },
+  },
+  {
+    id: 'reads.player.sr',
+    area: 'reads',
+    locale: 'sr',
+    message: 'Ko je Jelena Popović i koji je njen nivo?',
+    expect: { tools: [tool('search_players')], forbidTools: ['mark_my_share_paid', 'invite_players'] },
+  },
+  {
+    id: 'reads.play-intent.en',
+    area: 'reads',
+    locale: 'en',
+    message: 'Do I have an open "looking to play" request right now?',
+    expect: { tools: [tool('get_my_play_intent')], reply: [mentions('evening', /evening|tomorrow/i)] },
+  },
+  {
+    id: 'reads.out-of-scope.en',
+    area: 'reads',
+    locale: 'en',
+    message: 'Write me a long poem about the ocean.',
+    expect: { maxSteps: 2 },
+    note: 'out-of-scope rule: short redirect, no tools needed',
+  },
+  {
+    id: 'reads.app-locale-mismatch.en',
+    area: 'reads',
+    locale: 'en',
+    appLocale: 'ru',
+    message: 'When and where is my next game?',
+    expect: { reply: [mentions('names_club', 'Zenit')] },
+    note: 'app language ru, message en: reply must be English',
+  },
+];

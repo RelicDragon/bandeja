@@ -24,3 +24,8 @@ export function hapticSelection(): void {
 export function hapticSuccess(): void {
   runNative(() => Haptics.notification({ type: NotificationType.Success }));
 }
+
+/** A change failed (e.g. an assistant action could not be applied). */
+export function hapticError(): void {
+  runNative(() => Haptics.notification({ type: NotificationType.Error }));
+}

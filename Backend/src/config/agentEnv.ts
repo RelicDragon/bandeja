@@ -29,6 +29,11 @@ export type AgentEnvConfig = {
   staleRunMs: number;
   /** Phase 11.4: LLM calls the weekly memory consolidation may make per UTC day (all users). 0 = deterministic dedupe only. */
   memoryConsolidationDailyCap: number;
+  /**
+   * Tool groups (`tools/toolGroups.ts`): send only `core` + loaded groups + `load_tools` per
+   * step instead of the whole catalogue. False = every tool the principal may use, every step.
+   */
+  toolGroupsEnabled: boolean;
 };
 
 export const AGENT_DEFAULT_MODEL = 'deepseek-flash';
@@ -38,6 +43,13 @@ function intInRange(raw: string | undefined, fallback: number, min: number, max:
   const parsed = Number.parseInt(raw ?? '', 10);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, parsed));
+}
+
+function flag(raw: string | undefined, fallback: boolean): boolean {
+  const value = (raw ?? '').trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(value)) return true;
+  if (['0', 'false', 'no', 'off'].includes(value)) return false;
+  return fallback;
 }
 
 export function resolveAgentEnvConfig(env: NodeJS.ProcessEnv): AgentEnvConfig {
@@ -58,5 +70,6 @@ export function resolveAgentEnvConfig(env: NodeJS.ProcessEnv): AgentEnvConfig {
     queueMaxWaitMs: intInRange(env.AGENT_QUEUE_MAX_WAIT_MS, 10 * 60 * 1000, 10_000, 24 * 60 * 60 * 1000),
     staleRunMs: intInRange(env.AGENT_STALE_RUN_MS, 30_000, 10_000, 60 * 60 * 1000),
     memoryConsolidationDailyCap: intInRange(env.AGENT_MEMORY_CONSOLIDATION_DAILY_CAP, 200, 0, 100_000),
+    toolGroupsEnabled: flag(env.AGENT_TOOL_GROUPS_ENABLED, true),
   };
 }

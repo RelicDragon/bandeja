@@ -16,6 +16,9 @@ export const LLM_REASON = {
   /** Agent web tools: audit + budget rows (no LLM call; `inputTokens` = token-equivalent charge). */
   AGENT_WEB_SEARCH: 'agent_web_search',
   AGENT_WEB_FETCH: 'agent_web_fetch',
+  /** Agent voice (dictation / conversation): audit + budget rows; `inputTokens` = token-equivalent charge. */
+  AGENT_VOICE_TRANSCRIPTION: 'agent_voice_transcription',
+  AGENT_VOICE_SPEECH: 'agent_voice_speech',
 } as const;
 
 export type LlmReason = (typeof LLM_REASON)[keyof typeof LLM_REASON];
