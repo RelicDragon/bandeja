@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.60 |
-| **Build** | 242 |
-| **Commit** | `db1bb70df19b576addafb44c17fdf808d0c28c6d` |
-| **Short** | `db1bb70df` |
-| **Date** | 2026-10-01 |
-| **Message** | Bump app release to 0.97.60 (build 242) |
+| **Version** | 0.97.61 |
+| **Build** | 243 |
+| **Commit** | `7e8fa4ddf0cc8c58eae752e1c81406dd37dd55b4` |
+| **Short** | `7e8fa4ddf` |
+| **Date** | 2026-10-03 |
+| **Message** | Bump app release to 0.97.61 (build 243) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -70,6 +70,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.61 | 243 | `7e8fa4ddf` | 2026-10-03 |
 | 0.97.60 | 242 | `db1bb70df` | 2026-10-01 |
 | 0.97.59 | 241 | `d4e3e51ac` | 2026-10-01 |
 | 0.97.58 | 240 | `fc56d7708` | 2026-09-30 |
