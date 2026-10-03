@@ -109,6 +109,7 @@ export function YourLeaguesHomeSection({
                   hubGames={unscheduledGames}
                   gamesUnreadCounts={gamesUnreadCounts}
                   titleKey="home.leagueSeasonUnscheduledGames"
+                  defaultOpen={false}
                 />
               </div>
             </div>

@@ -10,16 +10,18 @@ interface YourLeaguesHomeSeasonScheduledGamesExpandableProps {
   hubGames: Game[];
   gamesUnreadCounts: Record<string, number>;
   titleKey: 'home.leagueSeasonScheduledGames' | 'home.leagueSeasonUnscheduledGames';
+  defaultOpen?: boolean;
 }
 
 export function YourLeaguesHomeSeasonScheduledGamesExpandable({
   hubGames,
   gamesUnreadCounts,
   titleKey,
+  defaultOpen = true,
 }: YourLeaguesHomeSeasonScheduledGamesExpandableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
 
   if (hubGames.length === 0) return null;
 
