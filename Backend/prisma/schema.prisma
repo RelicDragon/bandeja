@@ -139,6 +139,8 @@ model User {
   allowMessagesFromNonContacts   Boolean                          @default(true)
   showOnlineStatus               Boolean                          @default(true)
   alwaysShowUserNames            Boolean                          @default(true)
+  /// Game cards show the full player roster (names, levels) instead of the compact seat stack.
+  gameCardFullRoster             Boolean                          @default(false)
   shareGamePhotosToFollowers     Boolean                          @default(true)
   shareGameCreationsToFollowers  Boolean                          @default(true)
   shareGameResultsToFollowers    Boolean                          @default(true)
@@ -4580,7 +4582,13 @@ model AgentChat {
   title      String?              @db.VarChar(120)
   createdAt  DateTime             @default(now())
   updatedAt  DateTime             @updatedAt
+  /// Archived by the user: listed under "Archived" in the app, still readable and writable
+  /// (sending a message moves it back). Hidden from the Telegram assistant's list.
   archivedAt DateTime?
+  /// Deleted by the user (soft delete): hidden from every list and lookup; rows stay on the server.
+  deletedAt  DateTime?
+  /// Pinned to the top of the chat list (most recently pinned first); null = not pinned.
+  pinnedAt   DateTime?
   /// Rolling summary of the turns folded out of the replay window (Phase 11.4; chat-scoped,
   /// not memory). Covers messages with `seq <= summaryThroughSeq`.
   summary           String?              @db.Text
@@ -4594,6 +4602,7 @@ model AgentChat {
   actions    AgentPendingAction[]
 
   @@index([userId, archivedAt, updatedAt])
+  @@index([userId, deletedAt, archivedAt])
 }
 
 model AgentMessage {
@@ -4629,6 +4638,8 @@ model AgentRun {
   inputTokens  Int                  @default(0)
   outputTokens Int                  @default(0)
   steps        Int                  @default(0)
+  /// Prompt + reply tokens of the run's latest model call: the chat's current context size.
+  contextTokens Int                 @default(0)
   /// Queued at. Queue order and the daily budget window use this.
   createdAt    DateTime             @default(now())
   /// Claimed by a worker (QUEUED -> RUNNING).
