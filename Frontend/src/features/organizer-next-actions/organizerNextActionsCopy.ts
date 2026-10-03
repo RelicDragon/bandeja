@@ -55,3 +55,17 @@ export function organizerHintCaption(hint: OrganizerHint, t: TFunction): string 
   }
   return null;
 }
+
+/** The share of the step already done (the ring around the row icon), or `null` when it has no ratio. */
+export function organizerHintProgress(hint: OrganizerHint): number | null {
+  switch (hint.key) {
+    case 'seats':
+      return hint.capacity > 0 ? (hint.capacity - hint.needed) / hint.capacity : null;
+    case 'attendance':
+      return hint.total > 0 ? hint.confirmed / hint.total : null;
+    case 'booking':
+      return hint.state === 'partial' ? 0.5 : 0;
+    case 'cost':
+      return null;
+  }
+}

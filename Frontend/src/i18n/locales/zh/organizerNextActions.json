@@ -1,8 +1,6 @@
 {
   "organizerNextActions": {
     "title": "下一步",
-    "more_other": "还有 {{count}} 项",
-    "less": "收起",
     "seats": {
       "needed_other": "还差 {{count}} 名球员",
       "waiting_other": "{{count}} 人排队中",

@@ -1,10 +1,6 @@
 {
   "organizerNextActions": {
     "title": "Próximos pasos",
-    "more_one": "+{{count}} más",
-    "more_many": "+{{count}} más",
-    "more_other": "+{{count}} más",
-    "less": "Mostrar menos",
     "seats": {
       "needed_one": "Falta {{count}} jugador",
       "needed_many": "Faltan {{count}} jugadores",

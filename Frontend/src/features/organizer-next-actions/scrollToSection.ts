@@ -6,11 +6,11 @@
  * sections, listed here so the block and the sections cannot drift apart.
  */
 export const ORGANIZER_SECTION_SELECTORS = {
-  /** The join-queue list inside `GameParticipants`. */
+  /** The join-queue list inside `GameRoster`. */
   queue: '#game-join-queue',
   /** `GameLinkedBookingsSection`. */
   bookings: '#game-linked-bookings',
-  /** `GameCostCard` (PRD 348 already tags its root). */
+  /** `GameRoster` tags its root while a cost ledger is shown. */
   cost: '[data-cost-card]',
 } as const;
 

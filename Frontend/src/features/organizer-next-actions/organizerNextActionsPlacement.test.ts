@@ -1,7 +1,7 @@
 /**
  * PRD 364 — exactly one surface hosts the organizer's attendance strip.
  *
- * The shell hands `hideAttendanceStrip` to `AttendanceCard` and mounts the
+ * The shell hands `hideAttendanceStrip` to `GameRoster` and mounts the
  * block on `blockEligible`, so the exclusivity below is what stops the strip
  * from ever rendering twice, in either flag state.
  */
@@ -19,12 +19,12 @@ describe('resolveOrganizerSurfacePlacement', () => {
       for (const entityType of ENTITIES) {
         expect(
           resolveOrganizerSurfacePlacement({ flagEnabled: false, viewerRole, entityType, status: 'ANNOUNCED' }),
-        ).toEqual({ blockEligible: false, hideAttendanceStrip: false, hideOpenSpotRow: false });
+        ).toEqual({ blockEligible: false, hideAttendanceStrip: false });
       }
     }
   });
 
-  it('flag on, organizer: the strip and the open-spot row move into the block', () => {
+  it('flag on, organizer: Nudge moves into the block', () => {
     expect(
       resolveOrganizerSurfacePlacement({
         flagEnabled: true,
@@ -32,7 +32,7 @@ describe('resolveOrganizerSurfacePlacement', () => {
         entityType: 'GAME',
         status: 'ANNOUNCED',
       }),
-    ).toEqual({ blockEligible: true, hideAttendanceStrip: true, hideOpenSpotRow: true });
+    ).toEqual({ blockEligible: true, hideAttendanceStrip: true });
   });
 
   it('flag on, inviter: the block mounts (seats only) and nothing else moves', () => {
@@ -43,14 +43,14 @@ describe('resolveOrganizerSurfacePlacement', () => {
         entityType: 'GAME',
         status: 'ANNOUNCED',
       }),
-    ).toEqual({ blockEligible: true, hideAttendanceStrip: false, hideOpenSpotRow: false });
+    ).toEqual({ blockEligible: true, hideAttendanceStrip: false });
   });
 
   it('flag on, participant or guest: unchanged page', () => {
     for (const viewerRole of ['participant', 'none'] as const) {
       expect(
         resolveOrganizerSurfacePlacement({ flagEnabled: true, viewerRole, entityType: 'GAME', status: 'ANNOUNCED' }),
-      ).toEqual({ blockEligible: false, hideAttendanceStrip: false, hideOpenSpotRow: false });
+      ).toEqual({ blockEligible: false, hideAttendanceStrip: false });
     }
   });
 
@@ -58,11 +58,11 @@ describe('resolveOrganizerSurfacePlacement', () => {
     for (const entityType of ['LEAGUE', 'LEAGUE_SEASON', 'EVENT']) {
       expect(
         resolveOrganizerSurfacePlacement({ flagEnabled: true, viewerRole: 'organizer', entityType, status: 'ANNOUNCED' }),
-      ).toEqual({ blockEligible: false, hideAttendanceStrip: false, hideOpenSpotRow: false });
+      ).toEqual({ blockEligible: false, hideAttendanceStrip: false });
     }
     expect(
       resolveOrganizerSurfacePlacement({ flagEnabled: true, viewerRole: 'organizer', entityType: 'GAME', status: 'ARCHIVED' }),
-    ).toEqual({ blockEligible: false, hideAttendanceStrip: false, hideOpenSpotRow: false });
+    ).toEqual({ blockEligible: false, hideAttendanceStrip: false });
   });
 
   it('invariant: a hidden strip always has an eligible block to live in', () => {
@@ -72,7 +72,6 @@ describe('resolveOrganizerSurfacePlacement', () => {
           for (const status of STATUSES) {
             const placement = resolveOrganizerSurfacePlacement({ flagEnabled, viewerRole, entityType, status });
             if (placement.hideAttendanceStrip) expect(placement.blockEligible).toBe(true);
-            expect(placement.hideOpenSpotRow).toBe(placement.hideAttendanceStrip);
           }
         }
       }

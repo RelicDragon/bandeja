@@ -7,7 +7,7 @@
  * "a fact without a possible action is not a hint".
  */
 import { describe, expect, it } from 'vitest';
-import { buildOrganizerNextActions, splitOrganizerHints } from './buildOrganizerNextActions';
+import { buildOrganizerNextActions } from './buildOrganizerNextActions';
 import type {
   OrganizerAttendanceInput,
   OrganizerNextActionsInput,
@@ -55,14 +55,6 @@ const keys = (i: OrganizerNextActionsInput) => buildOrganizerNextActions(i).map(
 describe('buildOrganizerNextActions — order and cap', () => {
   it('lists seats → booking → attendance → cost before results', () => {
     expect(keys(input())).toEqual(['seats', 'booking', 'attendance', 'cost']);
-  });
-
-  it('keeps two rows visible and folds the rest', () => {
-    const hints = buildOrganizerNextActions(input());
-    const { visible, hidden } = splitOrganizerHints(hints, false);
-    expect(visible.map((h) => h.key)).toEqual(['seats', 'booking']);
-    expect(hidden.map((h) => h.key)).toEqual(['attendance', 'cost']);
-    expect(splitOrganizerHints(hints, true).hidden).toEqual([]);
   });
 
   it('never has more than four hints', () => {
@@ -218,7 +210,7 @@ describe('buildOrganizerNextActions — audience and entity gates', () => {
     const hints = buildOrganizerNextActions(
       input({ viewerRole: 'inviter', game: { ...input().game, joinQueues: [{}] } }),
     );
-    expect(hints).toEqual([{ key: 'seats', needed: 1, waiting: 1, action: 'invite' }]);
+    expect(hints).toEqual([{ key: 'seats', needed: 1, capacity: 4, waiting: 1, action: 'invite' }]);
   });
 
   it('gives an inviter nothing once the roster is full or results exist', () => {

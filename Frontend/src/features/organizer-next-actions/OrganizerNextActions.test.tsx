@@ -2,7 +2,7 @@
  * PRD 364 — the "Next steps" block.
  *
  * Rendered to static markup like the other game-details cards: which rows and
- * buttons exist for which hints, the "+N more" fold, the region label, and
+ * buttons exist for which hints, the lead step, the progress rings, the region label, and
  * that zero hints is an empty string — not an empty card.
  */
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -38,8 +38,15 @@ vi.mock('@/components', () => ({
 }));
 
 const { OrganizerNextActions } = await import('./OrganizerNextActions');
+const { organizerHintProgress } = await import('./organizerNextActionsCopy');
 
-const SEATS: OrganizerHint = { key: 'seats', needed: 1, waiting: 2, action: 'reviewQueue' };
+const SEATS: OrganizerHint = {
+  key: 'seats',
+  needed: 1,
+  capacity: 4,
+  waiting: 2,
+  action: 'reviewQueue',
+};
 const BOOKING: OrganizerHint = { key: 'booking', state: 'partial', action: 'seeBookings' };
 const ATTENDANCE: OrganizerHint = {
   key: 'attendance',
@@ -50,7 +57,7 @@ const ATTENDANCE: OrganizerHint = {
 };
 const COST: OrganizerHint = { key: 'cost', unpaid: 2, action: 'review' };
 
-function render(hints: OrganizerHint[], props: { defaultExpanded?: boolean; isNudging?: boolean } = {}) {
+function render(hints: OrganizerHint[], props: { isNudging?: boolean } = {}) {
   return renderToStaticMarkup(
     <OrganizerNextActions hints={hints} onAction={() => undefined} {...props} />,
   );
@@ -73,11 +80,10 @@ describe('OrganizerNextActions', () => {
     expect(html).toContain('organizerNextActions.seats.needed:count=1');
     expect(html).toContain('organizerNextActions.seats.waiting:count=2');
     expect(html).toContain('organizerNextActions.seats.reviewQueue');
-    expect(html).toContain('aria-describedby=');
   });
 
   it('shows Invite when nobody is waiting', () => {
-    const html = render([{ key: 'seats', needed: 2, waiting: 0, action: 'invite' }]);
+    const html = render([{ key: 'seats', needed: 2, capacity: 4, waiting: 0, action: 'invite' }]);
     expect(html).toContain('organizerNextActions.seats.invite');
     expect(html).not.toContain('organizerNextActions.seats.waiting');
   });
@@ -102,31 +108,43 @@ describe('OrganizerNextActions', () => {
     expect(render([{ ...COST, action: 'settle' }])).toContain('organizerNextActions.cost.settle');
   });
 
-  it('shows two rows and folds the rest behind "+N more"', () => {
+  it('shows every step with no fold, each as one button', () => {
     const html = render([SEATS, BOOKING, ATTENDANCE, COST]);
-    expect(html).toContain('data-testid="organizer-hint-seats"');
-    expect(html).toContain('data-testid="organizer-hint-booking"');
-    expect(html).not.toContain('data-testid="organizer-hint-attendance"');
-    expect(html).not.toContain('data-testid="organizer-hint-cost"');
-    expect(html).toContain('organizerNextActions.more:count=2');
-    expect(html).toContain('aria-expanded="false"');
-  });
-
-  it('expands in place to show every row', () => {
-    const html = render([SEATS, BOOKING, ATTENDANCE, COST], { defaultExpanded: true });
-    expect(html).toContain('data-testid="organizer-hint-attendance"');
-    expect(html).toContain('data-testid="organizer-hint-cost"');
-    expect(html).toContain('organizerNextActions.less');
-    expect(html).toContain('aria-expanded="true"');
-  });
-
-  it('has no fold control with two or fewer hints', () => {
-    const html = render([SEATS, BOOKING]);
-    expect(html).not.toContain('organizerNextActions.more');
+    for (const key of ['seats', 'booking', 'attendance', 'cost']) {
+      expect(html).toContain(`data-testid="organizer-hint-${key}"`);
+    }
     expect(html).not.toContain('aria-expanded');
+    expect(html.match(/<button/g)?.length).toBe(4);
+  });
+
+  it('leads with the first step: the only filled action pill', () => {
+    const html = render([BOOKING, COST]);
+    expect(html.match(/bg-primary-600/g)?.length).toBe(1);
+    expect(html.indexOf('bg-primary-600')).toBeLessThan(html.indexOf('organizer-hint-cost'));
+  });
+
+  it('does not lead with a disabled step', () => {
+    expect(render([ATTENDANCE])).not.toContain('bg-primary-600');
+  });
+
+  it('shows the count of open steps', () => {
+    expect(render([SEATS, BOOKING, COST])).toMatch(/tabular-nums[^>]*>3</);
   });
 
   it('never renders an "all done" state', () => {
     expect(render([])).not.toContain('data-card');
+  });
+});
+
+describe('organizerHintProgress', () => {
+  it('fills seats taken out of capacity and confirmed out of playing', () => {
+    expect(organizerHintProgress(SEATS)).toBe(0.75);
+    expect(organizerHintProgress(ATTENDANCE)).toBe(0.5);
+  });
+
+  it('reads booking as empty or half, and cost has no ring', () => {
+    expect(organizerHintProgress({ key: 'booking', state: 'none', action: 'editCourt' })).toBe(0);
+    expect(organizerHintProgress(BOOKING)).toBe(0.5);
+    expect(organizerHintProgress(COST)).toBeNull();
   });
 });

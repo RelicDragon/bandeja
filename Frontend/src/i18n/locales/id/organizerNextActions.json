@@ -1,8 +1,6 @@
 {
   "organizerNextActions": {
     "title": "Langkah berikutnya",
-    "more_other": "+{{count}} lagi",
-    "less": "Tampilkan lebih sedikit",
     "seats": {
       "needed_other": "Butuh {{count}} pemain lagi",
       "waiting_other": "{{count}} menunggu",

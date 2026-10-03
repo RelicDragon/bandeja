@@ -1,9 +1,5 @@
 import { getEntityCapabilities, isEntityTypeId } from '@shared/entityCapabilities';
-import {
-  ORGANIZER_VISIBLE_HINT_LIMIT,
-  type OrganizerHint,
-  type OrganizerNextActionsInput,
-} from './organizerNextActionsTypes';
+import type { OrganizerHint, OrganizerNextActionsInput } from './organizerNextActionsTypes';
 
 /**
  * PRD 364 — pure resolver: `(input) → Hint[]`, in priority order.
@@ -47,20 +43,21 @@ export function buildOrganizerNextActions(input: OrganizerNextActionsInput): Org
 
   if (beforeResults) {
     const playing = game.participants.filter((p) => p.status === 'PLAYING').length;
-    const needed = Math.max(0, (game.maxParticipants ?? 0) - playing);
+    const capacity = game.maxParticipants ?? 0;
+    const needed = Math.max(0, capacity - playing);
     const waiting = game.joinQueues?.length ?? 0;
     const boundedRoster = caps ? !caps.unboundedRoster : true;
 
     if (boundedRoster && needed > 0) {
       if (viewerRole === 'inviter') {
         // A participant with invite rights gets the seats fact and Invite, nothing else.
-        if (input.canInvite) hints.push({ key: 'seats', needed, waiting, action: 'invite' });
+        if (input.canInvite) hints.push({ key: 'seats', needed, capacity, waiting, action: 'invite' });
         return hints;
       }
       if (waiting > 0 && input.canManageQueue) {
-        hints.push({ key: 'seats', needed, waiting, action: 'reviewQueue' });
+        hints.push({ key: 'seats', needed, capacity, waiting, action: 'reviewQueue' });
       } else if (input.canInvite) {
-        hints.push({ key: 'seats', needed, waiting, action: 'invite' });
+        hints.push({ key: 'seats', needed, capacity, waiting, action: 'invite' });
       }
       // No possible action → no hint. A fact without a button is not a next step.
     }
@@ -112,12 +109,3 @@ export function buildOrganizerNextActions(input: OrganizerNextActionsInput): Org
   return hints;
 }
 
-/** The two rows that are always on screen, and the ones behind "+N more". */
-export function splitOrganizerHints(
-  hints: readonly OrganizerHint[],
-  expanded: boolean,
-  limit: number = ORGANIZER_VISIBLE_HINT_LIMIT,
-): { visible: OrganizerHint[]; hidden: OrganizerHint[] } {
-  if (expanded || hints.length <= limit) return { visible: [...hints], hidden: [] };
-  return { visible: hints.slice(0, limit), hidden: hints.slice(limit) };
-}

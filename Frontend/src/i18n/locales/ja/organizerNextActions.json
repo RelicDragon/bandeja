@@ -1,8 +1,6 @@
 {
   "organizerNextActions": {
     "title": "次のステップ",
-    "more_other": "他 {{count}} 件",
-    "less": "閉じる",
     "seats": {
       "needed_other": "あと {{count}} 人必要",
       "waiting_other": "{{count}} 人が待機中",

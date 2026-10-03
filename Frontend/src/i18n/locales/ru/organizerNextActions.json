@@ -1,11 +1,6 @@
 {
   "organizerNextActions": {
     "title": "Что дальше",
-    "more_one": "+{{count}} ещё",
-    "more_few": "+{{count}} ещё",
-    "more_many": "+{{count}} ещё",
-    "more_other": "+{{count}} ещё",
-    "less": "Свернуть",
     "seats": {
       "needed_one": "Нужен ещё {{count}} игрок",
       "needed_few": "Нужно ещё {{count}} игрока",

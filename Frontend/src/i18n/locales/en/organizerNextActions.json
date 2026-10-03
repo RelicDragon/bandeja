@@ -1,9 +1,6 @@
 {
   "organizerNextActions": {
     "title": "Next steps",
-    "more_one": "+{{count}} more",
-    "more_other": "+{{count}} more",
-    "less": "Show less",
     "seats": {
       "needed_one": "{{count}} player needed",
       "needed_other": "{{count}} players needed",

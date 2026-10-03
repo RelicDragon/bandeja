@@ -131,8 +131,7 @@ describe('OrganizerNextActionsSection', () => {
     expect(html).toContain('organizerNextActions.seats.needed:count=1');
     expect(html).toContain('organizerNextActions.booking.notBooked');
     expect(html).toContain('organizerNextActions.booking.editCourt');
-    // Third hint is behind the fold.
-    expect(html).toContain('organizerNextActions.more:count=1');
+    expect(html.indexOf('organizer-hint-attendance')).toBeGreaterThan(booking);
   });
 
   it('counts only UNPAID non-payer shares from the Cost card query', () => {

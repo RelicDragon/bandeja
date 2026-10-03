@@ -2,12 +2,11 @@ import { organizerNextActionsSupportsEntity } from './buildOrganizerNextActions'
 import type { OrganizerViewerRole } from './organizerNextActionsTypes';
 
 /**
- * PRD 364 — which surface hosts the organizer's attendance strip and the
- * open-spot row: the legacy cards, or the "Next steps" block.
+ * PRD 364 — which surface hosts the organizer's Nudge: the Players card tray,
+ * or the "Next steps" block.
  *
- * The shell reads this once per render and passes the answers down, so the
- * strip can never be on screen twice and the flag-off state is byte-for-byte
- * today's page. Kept pure so the exclusivity is unit-tested rather than hoped.
+ * The shell reads this once per render and passes the answer down, so Nudge
+ * can never be on screen twice. Kept pure so the exclusivity is unit-tested rather than hoped.
  */
 export interface OrganizerSurfacePlacementInput {
   flagEnabled: boolean;
@@ -19,10 +18,8 @@ export interface OrganizerSurfacePlacementInput {
 export interface OrganizerSurfacePlacement {
   /** Mount the block (it still renders nothing when it has zero hints). */
   blockEligible: boolean;
-  /** `AttendanceCard` must not render `AttendanceOrganizerStrip`. */
+  /** `GameRoster` must not render Nudge in its tray. */
   hideAttendanceStrip: boolean;
-  /** `GameQueuePanel` must not render the dashed open-spot row for this viewer. */
-  hideOpenSpotRow: boolean;
 }
 
 export function resolveOrganizerSurfacePlacement(
@@ -34,12 +31,11 @@ export function resolveOrganizerSurfacePlacement(
     input.flagEnabled &&
     eligibleEntity &&
     (input.viewerRole === 'organizer' || input.viewerRole === 'inviter');
-  // Only the organizer ever saw the strip and only the organizer gets the
-  // attendance row, so the two moves are the same boolean.
+  // Only the organizer ever saw Nudge, and only the organizer gets the
+  // attendance row in the block.
   const moved = blockEligible && input.viewerRole === 'organizer';
   return {
     blockEligible,
     hideAttendanceStrip: moved,
-    hideOpenSpotRow: moved,
   };
 }

@@ -1,13 +1,6 @@
 {
   "organizerNextActions": {
     "title": "الخطوات التالية",
-    "more_zero": "+{{count}} أخرى",
-    "more_one": "+{{count}} أخرى",
-    "more_two": "+{{count}} أخرى",
-    "more_few": "+{{count}} أخرى",
-    "more_many": "+{{count}} أخرى",
-    "more_other": "+{{count}} أخرى",
-    "less": "عرض أقل",
     "seats": {
       "needed_zero": "يلزم {{count}} لاعب إضافي",
       "needed_one": "يلزم {{count}} لاعب إضافي",

@@ -1,8 +1,6 @@
 {
   "organizerNextActions": {
     "title": "ขั้นตอนถัดไป",
-    "more_other": "อีก {{count}} รายการ",
-    "less": "แสดงน้อยลง",
     "seats": {
       "needed_other": "ต้องการผู้เล่นอีก {{count}} คน",
       "waiting_other": "รออยู่ {{count}} คน",

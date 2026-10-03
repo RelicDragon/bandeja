@@ -11,6 +11,8 @@ export type SeatsHint = {
   key: 'seats';
   /** Seats not taken by a PLAYING participant. Always ≥ 1 when the hint exists. */
   needed: number;
+  /** `maxParticipants` — the ring around the row icon shows `capacity - needed` of it. */
+  capacity: number;
   /** People in the join queue. */
   waiting: number;
   action: 'reviewQueue' | 'invite';
@@ -96,6 +98,3 @@ export interface OrganizerNextActionsInput {
   bookingCoverage: OrganizerBookingCoverage | null;
   cost: OrganizerCostInput | null;
 }
-
-/** How many hints are visible before the "+N more" fold. */
-export const ORGANIZER_VISIBLE_HINT_LIMIT = 2;

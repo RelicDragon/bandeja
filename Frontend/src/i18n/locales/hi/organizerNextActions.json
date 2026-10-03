@@ -1,9 +1,6 @@
 {
   "organizerNextActions": {
     "title": "अगले कदम",
-    "more_one": "+{{count}} और",
-    "more_other": "+{{count}} और",
-    "less": "कम दिखाएँ",
     "seats": {
       "needed_one": "{{count}} खिलाड़ी और चाहिए",
       "needed_other": "{{count}} खिलाड़ी और चाहिए",
