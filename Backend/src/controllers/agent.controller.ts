@@ -9,11 +9,12 @@ import { getValidatedRequestPart } from '../middleware/validateZod';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import {
-  archiveAgentChat,
+  countArchivedAgentChats,
   createAgentChat,
   getAgentChatDetail,
   listAgentChats,
-  renameAgentChat,
+  removeAgentChat,
+  updateAgentChat,
 } from '../services/agent/agentChat.service';
 import {
   AGENT_SSE_KEEPALIVE_FRAME,
@@ -51,8 +52,12 @@ export const listChats = asyncHandler<AuthRequest>(async (req, res) => {
   const userId = requireUserId(req);
   // Lazy expiry, so `activeRun` never points at a run waiting on a dead confirmation.
   await expireStaleAgentActions({ userId }, new Date());
-  const chats = await listAgentChats(userId);
-  res.json({ success: true, data: { chats } });
+  const archived = req.query.archived === '1';
+  const [chats, archivedCount] = await Promise.all([
+    listAgentChats(userId, { archived }),
+    countArchivedAgentChats(userId),
+  ]);
+  res.json({ success: true, data: { chats, archivedCount } });
 });
 
 export const createChat = asyncHandler<AuthRequest>(async (req, res) => {
@@ -68,14 +73,16 @@ export const getChat = asyncHandler<AuthRequest>(async (req, res) => {
 });
 
 export const patchChat = asyncHandler<AuthRequest>(async (req, res) => {
-  const data = await renameAgentChat(requireUserId(req), req.params.chatId, String(req.body.title ?? ''));
+  const { title, pinned, archived } = req.body as { title?: string; pinned?: boolean; archived?: boolean };
+  const data = await updateAgentChat(requireUserId(req), req.params.chatId, { title, pinned, archived });
   res.json({ success: true, data });
 });
 
 export const deleteChat = asyncHandler<AuthRequest>(async (req, res) => {
   const userId = requireUserId(req);
   await getAgentRunService().cancelChatRuns(userId, req.params.chatId);
-  await archiveAgentChat(userId, req.params.chatId);
+  // Store builds send a bare DELETE from their "Archive chat" item; new builds opt in to delete.
+  await removeAgentChat(userId, req.params.chatId, req.query.mode === 'delete' ? 'delete' : 'archive');
   res.json({ success: true, data: { ok: true } });
 });
 
@@ -84,6 +91,7 @@ export const postMessage = asyncHandler<AuthRequest>(async (req, res) => {
     user: { id: requireUserId(req), isAdmin: Boolean(req.user?.isAdmin) },
     chatId: req.params.chatId,
     text: String(req.body.text ?? ''),
+    editMessageId: typeof req.body.editMessageId === 'string' ? req.body.editMessageId : null,
     locale: req.get('X-App-Locale') ?? null,
     clientCaps: parseAgentClientCaps(req.get(AGENT_CLIENT_CAPS_HEADER)),
     quota: 'counted', // `agentMessageLimiter` on the route counted it in the shared store

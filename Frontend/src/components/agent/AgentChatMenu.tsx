@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Archive, Pencil, ShieldCheck } from 'lucide-react';
+import { Archive, ArchiveRestore, Pencil, Pin, PinOff, ShieldCheck, Trash2 } from 'lucide-react';
 import { openAgentPermissionsScreen } from '@/queries/agent/useAgentPermissions';
 import { Drawer, DrawerCloseButton, DrawerContent, DrawerHandle } from '@/components/ui/Drawer';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Button } from '@/components/Button';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 
 const SHEET_ID = 'agent-chat-menu-sheet';
@@ -13,17 +14,32 @@ const TITLE_MAX = 120;
 interface AgentChatMenuSheetProps {
   open: boolean;
   title: string;
+  pinned: boolean;
+  archived: boolean;
   onClose: () => void;
   onRename: () => void;
-  onArchive: () => void;
+  onTogglePin: () => void;
+  onToggleArchive: () => void;
+  onDelete: () => void;
 }
 
-/** ⋯ sheet for one AI chat (header menu and list long-press share it). */
-export function AgentChatMenuSheet({ open, title, onClose, onRename, onArchive }: AgentChatMenuSheetProps) {
+/** ⋯ sheet for one AI chat (header menu and list long-press share it). Archived chats can't be pinned. */
+export function AgentChatMenuSheet({
+  open,
+  title,
+  pinned,
+  archived,
+  onClose,
+  onRename,
+  onTogglePin,
+  onToggleArchive,
+  onDelete,
+}: AgentChatMenuSheetProps) {
   const { t } = useTranslation();
   useBackButtonModal(open, onClose, SHEET_ID);
   const row =
     'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-start text-[15px] transition-colors hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-gray-800 dark:active:bg-gray-800';
+  const plain = `${row} text-gray-900 dark:text-white`;
 
   return (
     <Drawer open={open} handleOnly onOpenChange={(next) => !next && onClose()}>
@@ -40,13 +56,23 @@ export function AgentChatMenuSheet({ open, title, onClose, onRename, onArchive }
           <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />
         </div>
         <div className="flex flex-col px-2" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-          <button type="button" className={`${row} text-gray-900 dark:text-white`} onClick={onRename}>
+          {archived ? null : (
+            <button type="button" className={plain} onClick={onTogglePin}>
+              {pinned ? <PinOff size={18} aria-hidden /> : <Pin size={18} aria-hidden />}
+              {t(pinned ? 'agent.menu.unpin' : 'agent.menu.pin')}
+            </button>
+          )}
+          <button type="button" className={plain} onClick={onRename}>
             <Pencil size={18} aria-hidden />
             {t('agent.menu.rename')}
           </button>
+          <button type="button" className={plain} onClick={onToggleArchive}>
+            {archived ? <ArchiveRestore size={18} aria-hidden /> : <Archive size={18} aria-hidden />}
+            {t(archived ? 'agent.menu.unarchive' : 'agent.menu.archive')}
+          </button>
           <button
             type="button"
-            className={`${row} text-gray-900 dark:text-white`}
+            className={plain}
             onClick={() => {
               onClose();
               openAgentPermissionsScreen();
@@ -55,13 +81,38 @@ export function AgentChatMenuSheet({ open, title, onClose, onRename, onArchive }
             <ShieldCheck size={18} aria-hidden />
             {t('agent.settings.title')}
           </button>
-          <button type="button" className={`${row} text-red-600 dark:text-red-400`} onClick={onArchive}>
-            <Archive size={18} aria-hidden />
-            {t('agent.menu.archive')}
+          <button type="button" className={`${row} text-red-600 dark:text-red-400`} onClick={onDelete}>
+            <Trash2 size={18} aria-hidden />
+            {t('agent.menu.delete')}
           </button>
         </div>
       </DrawerContent>
     </Drawer>
+  );
+}
+
+interface AgentDeleteChatDialogProps {
+  open: boolean;
+  title: string;
+  deleting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+/** Delete hides the chat for good (the server keeps it); Archive is the reversible option. */
+export function AgentDeleteChatDialog({ open, title, deleting, onClose, onConfirm }: AgentDeleteChatDialogProps) {
+  const { t } = useTranslation();
+  return (
+    <ConfirmationModal
+      isOpen={open}
+      title={t('agent.deleteConfirm.title')}
+      message={t('agent.deleteConfirm.message', { title })}
+      confirmText={t('agent.menu.delete')}
+      confirmVariant="danger"
+      isLoading={deleting}
+      onConfirm={onConfirm}
+      onClose={onClose}
+    />
   );
 }
 

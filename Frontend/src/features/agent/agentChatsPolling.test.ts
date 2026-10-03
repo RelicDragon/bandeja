@@ -68,9 +68,9 @@ describe('agent chats list polling', () => {
 
   function observe(responses: AgentChatDto[][]) {
     let i = 0;
-    const queryFn = vi.fn(async () => responses[Math.min(i++, responses.length - 1)]);
-    const observer = new QueryObserver<AgentChatDto[]>(client, {
-      queryKey: ['agent', 'chats', 'u1'],
+    const queryFn = vi.fn(async () => ({ chats: responses[Math.min(i++, responses.length - 1)], archivedCount: 0 }));
+    const observer = new QueryObserver<{ chats: AgentChatDto[]; archivedCount: number }>(client, {
+      queryKey: ['agent', 'chats', 'u1', 'main'],
       queryFn,
       ...agentChatsPollingOptions,
     });
@@ -106,7 +106,9 @@ describe('agent chats list polling', () => {
   });
 
   it('a list with an active run is stale at once, an idle one is not', () => {
-    expect(agentChatsPollingOptions.staleTime({ state: { data: [chat('a', { id: 'r', status: 'RUNNING' })] } })).toBe(0);
-    expect(agentChatsPollingOptions.staleTime({ state: { data: [chat('a')] } })).toBeGreaterThan(0);
+    expect(
+      agentChatsPollingOptions.staleTime({ state: { data: { chats: [chat('a', { id: 'r', status: 'RUNNING' })] } } }),
+    ).toBe(0);
+    expect(agentChatsPollingOptions.staleTime({ state: { data: { chats: [chat('a')] } } })).toBeGreaterThan(0);
   });
 });

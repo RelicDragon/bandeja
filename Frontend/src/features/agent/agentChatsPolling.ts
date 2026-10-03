@@ -14,7 +14,7 @@ export function hasLiveAgentRun(chats: readonly AgentChatDto[] | undefined): boo
 }
 
 interface ChatsQueryLike {
-  state: { data?: readonly AgentChatDto[] | undefined };
+  state: { data?: { chats: readonly AgentChatDto[] } | undefined };
 }
 
 /**
@@ -23,9 +23,9 @@ interface ChatsQueryLike {
  */
 export const agentChatsPollingOptions = {
   refetchInterval: (query: ChatsQueryLike) =>
-    hasLiveAgentRun(query.state.data) ? AGENT_CHATS_POLL_MS : false,
+    hasLiveAgentRun(query.state.data?.chats) ? AGENT_CHATS_POLL_MS : false,
   staleTime: (query: ChatsQueryLike) =>
-    hasLiveAgentRun(query.state.data) ? 0 : AGENT_CHATS_STALE_MS,
+    hasLiveAgentRun(query.state.data?.chats) ? 0 : AGENT_CHATS_STALE_MS,
 };
 
 export interface FinishedAgentRun {

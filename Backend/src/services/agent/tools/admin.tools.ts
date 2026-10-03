@@ -36,7 +36,7 @@ import {
   toAgentAdminUserSummary,
   type AgentAdminUserSource,
 } from '../dto/adminUser.dto';
-import { agentGameEntity, agentGameSummarySelect, agentGameTitle, toAgentGameSummary } from '../dto/game.dto';
+import { agentGameEntity, agentGameSummarySelect, agentGameTitle, agentLocalTimes, toAgentGameSummary } from '../dto/game.dto';
 import { agentUserDisplayName } from '../dto/user.dto';
 import { agentAdminT } from '../i18n/agentAdminI18n';
 import { agentT, formatAgentDateTime } from '../i18n/agentI18n';
@@ -428,7 +428,7 @@ export const adminUpdateGameTool = defineTool({
       }
       const after = await prisma.game.findUniqueOrThrow({
         where: { id: plan.gameId },
-        select: { startTime: true, endTime: true, timeIsSet: true, cityId: true, clubId: true, courtId: true, isPublic: true, maxParticipants: true },
+        select: { city: { select: { timezone: true } }, startTime: true, endTime: true, timeIsSet: true, cityId: true, clubId: true, courtId: true, isPublic: true, maxParticipants: true },
       });
       return {
         message: agentT(ctx.locale, 'result.updated'),
@@ -437,6 +437,7 @@ export const adminUpdateGameTool = defineTool({
           gameId: plan.gameId,
           startTime: after.timeIsSet ? after.startTime.toISOString() : null,
           endTime: after.timeIsSet ? after.endTime.toISOString() : null,
+          ...agentLocalTimes(after, after.city?.timezone),
           cityId: after.cityId,
           clubId: after.clubId,
           courtId: after.courtId,

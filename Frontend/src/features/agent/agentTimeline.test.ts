@@ -12,7 +12,7 @@ const tool = (callId: string, status: AgentToolItemData['status'] = 'ok'): Agent
 describe('groupAgentTimeline', () => {
   it('folds consecutive tool steps into one group and splits on text', () => {
     const items: AgentTimelineItem[] = [
-      { kind: 'user', key: 'm-u1', text: 'hi' },
+      { kind: 'user', key: 'm-u1', messageId: 'u1', seq: 1, text: 'hi' },
       { kind: 'tool', key: 'm-a-0', tool: tool('c1') },
       { kind: 'tool', key: 'live-r-0', tool: tool('c2', 'running') },
       { kind: 'assistantText', key: 'live-r-1', text: 'Done', streaming: true },
@@ -26,12 +26,12 @@ describe('groupAgentTimeline', () => {
 
   it('keeps keys stable across the live → persisted handover', () => {
     const live: AgentTimelineItem[] = [
-      { kind: 'user', key: 'm-u1', text: 'hi' },
+      { kind: 'user', key: 'm-u1', messageId: 'u1', seq: 1, text: 'hi' },
       { kind: 'tool', key: 'live-r-0', tool: tool('c1') },
       { kind: 'assistantText', key: 'live-r-1', text: 'Hello', streaming: true },
     ];
     const persisted: AgentTimelineItem[] = [
-      { kind: 'user', key: 'm-u1', text: 'hi' },
+      { kind: 'user', key: 'm-u1', messageId: 'u1', seq: 1, text: 'hi' },
       { kind: 'tool', key: 'm-a-0', tool: tool('c1') },
       { kind: 'assistantText', key: 'm-a-1', text: 'Hello', streaming: false },
     ];

@@ -20,7 +20,7 @@ export interface AgentToolItemData {
 }
 
 export type AgentTimelineItem =
-  | { kind: 'user'; key: string; text: string }
+  | { kind: 'user'; key: string; messageId: string; seq: number; text: string }
   | { kind: 'assistantText'; key: string; text: string; streaming: boolean }
   | { kind: 'tool'; key: string; tool: AgentToolItemData }
   | { kind: 'action'; key: string; actionId: string; action: AgentPendingActionDto | null };
@@ -112,7 +112,7 @@ export function buildAgentTimeline(
   for (const m of messages) {
     if (m.role === 'USER') {
       const text = textOf(m);
-      if (text) items.push({ kind: 'user', key: `m-${m.id}`, text });
+      if (text) items.push({ kind: 'user', key: `m-${m.id}`, messageId: m.id, seq: m.seq, text });
       continue;
     }
     m.blocks.forEach((b, i) => {

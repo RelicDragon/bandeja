@@ -6,6 +6,16 @@
     "newChat": "新对话",
     "noMessagesYet": "暂无消息",
     "archived": "对话已归档",
+    "unarchived": "聊天已移回聊天列表",
+    "deleted": "聊天已删除",
+    "pinned": "已置顶",
+    "chatsTab": "聊天",
+    "archivedTab": "已归档",
+    "archivedEmpty": "没有已归档的聊天",
+    "deleteConfirm": {
+      "title": "删除此聊天？",
+      "message": "“{{title}}”将从你的聊天中永久消失。如果只想隐藏，请将其归档。"
+    },
     "selectChat": "选择一个对话或开始新对话",
     "backToChats": "返回对话列表",
     "disclaimer": "助手可能会出错。在你确认之前不会做任何更改。",
@@ -22,12 +32,22 @@
       "open": "对话选项",
       "rename": "重命名",
       "renameTitle": "重命名对话",
-      "archive": "归档对话"
+      "archive": "归档",
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "unarchive": "取消归档",
+      "delete": "删除聊天"
     },
     "composer": {
       "placeholder": "询问你的比赛、联赛、球场…",
       "send": "发送",
       "stop": "停止"
+    },
+    "message": {
+      "share": "分享",
+      "copyFailed": "复制失败",
+      "editHint": "发送后将替换此消息及其之后的所有内容。",
+      "actions": "消息操作"
     },
     "empty": {
       "listTitle": "你的板式网球助手",
@@ -211,6 +231,22 @@
         "unconfigured": "未配置",
         "empty_results": "无结果"
       }
+    },
+    "context": {
+      "meterLabel": "已用上下文：{{percent}}%",
+      "hintWarn": "此对话越来越长。开启新对话可获得更快、更准确的回答。",
+      "hintCritical": "此对话快满了。请开启新对话——较早的消息已开始被遗忘。",
+      "newChat": "新对话",
+      "title": "上下文",
+      "contextUsed": "已使用 {{percent}}% 的上下文",
+      "tokensOf": "{{used}} / {{total}} 个令牌",
+      "explainOk": "每条消息都会把目前的完整对话发送给助手。对话越短，回答越快越准确。",
+      "explainLong": "此对话较长：每条消息都会重新发送全部内容，消耗更多每日额度，回答也会变得不够准确。请开启新对话——已保存的记忆会保留。",
+      "dailyTitle": "每日额度",
+      "left": "剩余令牌",
+      "resets": "重置",
+      "resetsAt": "{{time}}（{{duration}}后）",
+      "dailyExplain": "所有 AI 对话共享。用完后，助手将暂停直到重置。"
     }
   }
 }

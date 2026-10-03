@@ -179,7 +179,7 @@ export const AgentToolGroup = memo(function AgentToolGroup({ tools }: { tools: A
           type="button"
           onClick={() => canExpand && setOpen((v) => !v)}
           aria-expanded={canExpand ? open : undefined}
-          className={`-mx-1.5 inline-flex min-w-0 max-w-full items-center gap-2 rounded-lg px-1.5 py-1 text-[13px] transition-colors duration-200 ${
+          className={`-mx-1.5 inline-flex min-w-0 max-w-[calc(100%+0.75rem)] items-center gap-2 rounded-lg px-1.5 py-1 text-[13px] transition-colors duration-200 ${
             state === 'error' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
           } ${canExpand ? 'cursor-pointer hover:bg-gray-200/50 active:bg-gray-200/80 dark:hover:bg-gray-800/70 dark:active:bg-gray-800' : 'cursor-default'}`}
         >

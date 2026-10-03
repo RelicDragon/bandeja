@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
 import type { AgentChatDetailDto, AgentChatDto, AgentPendingActionDto } from '@shared/agentContract';
-import { agentApi } from '@/api/agent';
+import { agentApi, type AgentChatListData } from '@/api/agent';
 import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 import { agentChatsPollingOptions, finishedAgentRuns } from '@/features/agent/agentChatsPolling';
@@ -11,27 +11,29 @@ import {
   gameIdsFromEntities,
   invalidateTouchedGames,
   patchAgentChatDetail,
+  truncateMessagesFrom,
   upsertAction,
   upsertMessage,
 } from '@/features/agent/agentCache';
+import { withAgentChatPinned, withoutAgentChat, type AgentChatListView } from '@/features/agent/agentChatOrder';
 
 /**
- * AI chat list. Polls every ~5s while a row has a QUEUED/RUNNING run so the row indicator
- * stays live, and refetches a chat's detail (plus the games its run touched, when this
- * device streamed it) once the list sees that run end.
+ * AI chat list (`view`: main or Archived). Polls every ~5s while a row has a QUEUED/RUNNING run
+ * so the row indicator stays live, and refetches a chat's detail (plus the games its run
+ * touched, when this device streamed it) once the list sees that run end.
  */
-export function useAgentChatsQuery(enabled = true) {
+export function useAgentChatsQuery(view: AgentChatListView = 'main', enabled = true) {
   const userId = useAuthStore((s) => s.user?.id);
   const queryClient = useQueryClient();
-  const query = useQuery<AgentChatDto[]>({
-    queryKey: queryKeys.agent.chats(userId ?? 'anon'),
-    queryFn: () => agentApi.listChats(),
+  const query = useQuery<AgentChatListData>({
+    queryKey: queryKeys.agent.chats(userId ?? 'anon', view),
+    queryFn: () => agentApi.listChats({ archived: view === 'archived' }),
     enabled: enabled && Boolean(userId),
     ...agentChatsPollingOptions,
   });
 
   const prevRef = useRef<AgentChatDto[] | undefined>(undefined);
-  const data = query.data;
+  const data = query.data?.chats;
   useEffect(() => {
     const finished = finishedAgentRuns(prevRef.current, data);
     prevRef.current = data;
@@ -83,13 +85,66 @@ export function useRenameAgentChatMutation() {
   });
 }
 
-export function useArchiveAgentChatMutation() {
+/** Optimistic: the row jumps into its pinned / unpinned place before the server answers. */
+export function useSetAgentChatPinnedMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (chatId: string) => agentApi.archiveChat(chatId),
-    onSuccess: (_data, chatId) => {
-      queryClient.setQueriesData<AgentChatDto[]>({ queryKey: queryKeys.agent.chats() }, (prev) =>
-        prev ? prev.filter((c) => c.id !== chatId) : prev,
+    mutationFn: ({ chatId, pinned }: { chatId: string; pinned: boolean }) => agentApi.setChatPinned(chatId, pinned),
+    onMutate: async ({ chatId, pinned }) => {
+      const snapshots = await patchChatLists(queryClient, (list) => ({
+        ...list,
+        chats: withAgentChatPinned(list.chats, chatId, pinned),
+      }));
+      patchAgentChatDetail(queryClient, chatId, (d) => ({ ...d, pinnedAt: pinned ? new Date().toISOString() : null }));
+      return { snapshots };
+    },
+    onError: (_err, { chatId }, ctx) => {
+      restoreChatLists(queryClient, ctx?.snapshots);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chat(chatId) });
+    },
+    onSuccess: (chat, { chatId }) => {
+      patchAgentChatDetail(queryClient, chatId, (d) => ({ ...d, pinnedAt: chat.pinnedAt ?? null }));
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chats() });
+    },
+  });
+}
+
+/** Archive / unarchive. Optimistic: the row leaves its list and the Archived count follows. */
+export function useSetAgentChatArchivedMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ chatId, archived }: { chatId: string; archived: boolean }) =>
+      agentApi.setChatArchived(chatId, archived),
+    onMutate: async ({ chatId, archived }) => {
+      const snapshots = await patchChatLists(queryClient, (list) =>
+        withoutAgentChat(list, chatId, archived ? 1 : -1),
+      );
+      patchAgentChatDetail(queryClient, chatId, (d) => ({
+        ...d,
+        archivedAt: archived ? new Date().toISOString() : null,
+      }));
+      return { snapshots };
+    },
+    onError: (_err, { chatId }, ctx) => {
+      restoreChatLists(queryClient, ctx?.snapshots);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chat(chatId) });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chats() });
+    },
+  });
+}
+
+/** Soft delete: the chat leaves every list for good (the server keeps it). */
+export function useDeleteAgentChatMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ chatId }: { chatId: string; archived: boolean }) => agentApi.deleteChat(chatId),
+    onSuccess: (_data, { chatId, archived }) => {
+      queryClient.setQueriesData<AgentChatListData>({ queryKey: queryKeys.agent.chats() }, (prev) =>
+        prev ? withoutAgentChat(prev, chatId, archived ? -1 : 0) : prev,
       );
       queryClient.removeQueries({ queryKey: queryKeys.agent.chat(chatId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chats() });
@@ -97,15 +152,38 @@ export function useArchiveAgentChatMutation() {
   });
 }
 
+type ChatListSnapshots = Array<[QueryKey, AgentChatListData | undefined]>;
+
+async function patchChatLists(
+  client: QueryClient,
+  patch: (list: AgentChatListData) => AgentChatListData,
+): Promise<ChatListSnapshots> {
+  await client.cancelQueries({ queryKey: queryKeys.agent.chats() });
+  const snapshots = client.getQueriesData<AgentChatListData>({ queryKey: queryKeys.agent.chats() });
+  client.setQueriesData<AgentChatListData>({ queryKey: queryKeys.agent.chats() }, (prev) =>
+    prev ? patch(prev) : prev,
+  );
+  return snapshots;
+}
+
+function restoreChatLists(client: QueryClient, snapshots: ChatListSnapshots | undefined) {
+  for (const [key, data] of snapshots ?? []) client.setQueryData(key, data);
+}
+
+/** `edit`: resend in place of that USER message (it and everything after it are dropped). */
+export type AgentSendVars = { text: string; edit?: { messageId: string; seq: number } };
+
 export function useSendAgentMessageMutation(chatId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (text: string) => agentApi.sendMessage(chatId, text),
-    onSuccess: ({ message, runId }) => {
+    mutationFn: (vars: AgentSendVars) => agentApi.sendMessage(chatId, vars.text, vars.edit?.messageId),
+    onSuccess: ({ message, runId }, vars) => {
       patchAgentChatDetail(queryClient, chatId, (d) => ({
-        ...expirePendingActions(upsertMessage(d, message)),
+        ...expirePendingActions(upsertMessage(vars.edit ? truncateMessagesFrom(d, vars.edit.seq) : d, message)),
         // Runs start QUEUED; `run.queued` / `run.started` move the view on from there.
         activeRun: { id: runId, status: 'QUEUED' },
+        // The server moves an archived chat back to the main list on send.
+        archivedAt: null,
       }));
       void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chats() });
     },

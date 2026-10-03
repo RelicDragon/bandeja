@@ -77,6 +77,7 @@ import {
   agentChatNotFound,
   autoTitleFromText,
   requireOwnedAgentChat,
+  rewindAgentChatToMessage,
   toAgentMessageDto,
   toAgentPendingActionDto,
 } from './agentChat.service';
@@ -177,10 +178,61 @@ function abortReasonOf(signal: AbortSignal): AbortReason {
   return signal.reason === 'timeout' ? 'timeout' : 'cancelled';
 }
 
+type JsonArrayRef = { path: string; array: unknown[] };
+
+/** Arrays in `value` not nested in another array, with a readable path like `data.fixtures`. */
+function collectArrays(value: unknown, path: string, out: JsonArrayRef[]): void {
+  if (Array.isArray(value)) {
+    out.push({ path, array: value });
+  } else if (value && typeof value === 'object') {
+    for (const [key, child] of Object.entries(value)) collectArrays(child, `${path}.${key}`, out);
+  }
+}
+
+/**
+ * Tool result for the model, ≤ `TOOL_CONTENT_MAX_CHARS`. An oversized result keeps valid
+ * JSON: whole items are dropped from the end of the largest list(s) and `truncated` names
+ * each cut list with how many items were omitted, so the model knows the list is
+ * incomplete (a raw slice once hid a fixture and the model reported 4 games of 5).
+ */
 export function serializeToolContent(execution: Pick<AgentToolExecution, 'ok' | 'data'>): string {
   const json = JSON.stringify({ ok: execution.ok, data: execution.data });
   if (json.length <= TOOL_CONTENT_MAX_CHARS) return json;
-  return JSON.stringify({ ok: execution.ok, truncated: true, partial: json.slice(0, TOOL_CONTENT_MAX_CHARS) });
+
+  const data: unknown = JSON.parse(JSON.stringify(execution.data ?? null));
+  const arrays: JsonArrayRef[] = [];
+  collectArrays(data, 'data', arrays);
+  const omitted = new Map<string, number>();
+  const note =
+    'INCOMPLETE: the result was too long, so the last items of the lists below were left out. Do not present these lists as complete: say so, or call the tool again with narrower filters (date, round, group, limit).';
+  const render = () =>
+    JSON.stringify({
+      ok: execution.ok,
+      truncated: { note, omitted: Object.fromEntries(omitted) },
+      data,
+    });
+  let out = render();
+  while (out.length > TOOL_CONTENT_MAX_CHARS) {
+    // Trim the list that currently weighs the most.
+    let target: JsonArrayRef | null = null;
+    let targetSize = 0;
+    for (const ref of arrays) {
+      if (ref.array.length === 0) continue;
+      const size = JSON.stringify(ref.array).length;
+      if (size > targetSize) {
+        target = ref;
+        targetSize = size;
+      }
+    }
+    if (!target) break;
+    const drop = Math.max(1, Math.ceil(target.array.length * Math.min(0.5, (out.length - TOOL_CONTENT_MAX_CHARS) / targetSize)));
+    target.array.splice(target.array.length - drop, drop);
+    omitted.set(target.path, (omitted.get(target.path) ?? 0) + drop);
+    out = render();
+  }
+  if (out.length <= TOOL_CONTENT_MAX_CHARS) return out;
+  // No list left to trim (one huge string): still valid JSON, clearly marked.
+  return JSON.stringify({ ok: execution.ok, truncated: { note }, partial: json.slice(0, TOOL_CONTENT_MAX_CHARS - 600) });
 }
 
 function parseToolArguments(raw: string): { ok: true; value: unknown } | { ok: false } {
@@ -276,6 +328,8 @@ export class AgentRunService {
     userId: string;
     chatId: string;
     text: string;
+    /** Edit: this USER message and everything after it are deleted; `text` replaces it. */
+    editMessageId?: string | null;
     headerLocale?: string | null;
     /** `X-Agent-Client-Caps`, already parsed (`clientExecution/clientCaps.ts`). */
     clientCaps?: readonly string[] | null;
@@ -296,11 +350,15 @@ export class AgentRunService {
     const locale = (input.headerLocale ?? '').trim().slice(0, 16) || null;
 
     const { run, message } = await prisma.$transaction(async (tx) => {
-      const locked = await tx.$queryRaw<{ id: string; title: string | null }[]>`
-        SELECT id, title FROM "AgentChat"
-        WHERE id = ${input.chatId} AND "userId" = ${input.userId} AND "archivedAt" IS NULL
+      const locked = await tx.$queryRaw<{ id: string; title: string | null; archivedAt: Date | null }[]>`
+        SELECT id, title, "archivedAt" FROM "AgentChat"
+        WHERE id = ${input.chatId} AND "userId" = ${input.userId} AND "deletedAt" IS NULL
         FOR UPDATE`;
       if (locked.length === 0) throw agentChatNotFound();
+      // Writing in an archived chat moves it back to the main list.
+      if (locked[0].archivedAt) {
+        await tx.agentChat.update({ where: { id: input.chatId }, data: { archivedAt: null } });
+      }
 
       const busy = await tx.agentRun.findFirst({
         where: { chatId: input.chatId, status: { in: [AgentRunStatus.QUEUED, AgentRunStatus.RUNNING] } },
@@ -324,6 +382,13 @@ export class AgentRunService {
         data: { status: AgentRunStatus.COMPLETED },
       });
 
+      // Edit: rewind after superseding, so outcome messages it appended go with the dropped turns.
+      // Action rows stay (audit); their cards lived in the dropped messages.
+      let title = locked[0].title;
+      if (input.editMessageId) {
+        title = await rewindAgentChatToMessage(tx, input.chatId, input.editMessageId, title);
+      }
+
       const createdRun = await tx.agentRun.create({
         data: {
           chatId: input.chatId,
@@ -339,7 +404,7 @@ export class AgentRunService {
         { chatId: input.chatId, role: AgentMessageRole.USER, blocks: [{ type: 'text', text }], runId: createdRun.id },
         tx,
       );
-      if (!locked[0].title) {
+      if (!title) {
         await tx.agentChat.update({ where: { id: input.chatId }, data: { title: autoTitleFromText(text) || null } });
       }
       return { run: createdRun, message: userMessage };
@@ -381,7 +446,7 @@ export class AgentRunService {
     const run = await prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM "AgentChat"
-        WHERE id = ${input.chatId} AND "userId" = ${input.userId} AND "archivedAt" IS NULL
+        WHERE id = ${input.chatId} AND "userId" = ${input.userId} AND "deletedAt" IS NULL
         FOR UPDATE`;
       if (locked.length === 0) return null;
       const busy = await tx.agentRun.findFirst({
@@ -1062,7 +1127,14 @@ export class AgentRunService {
   ): Promise<void> {
     await prisma.agentRun.updateMany({
       where: { id: run.id },
-      data: { steps, inputTokens: total.inputTokens, outputTokens: total.outputTokens, heartbeatAt: this.deps.now() },
+      data: {
+        steps,
+        inputTokens: total.inputTokens,
+        outputTokens: total.outputTokens,
+        heartbeatAt: this.deps.now(),
+        // The latest call's prompt + reply is what the next turn replays: the chat's context size.
+        ...(stepUsage.inputTokens > 0 ? { contextTokens: stepUsage.inputTokens + stepUsage.outputTokens } : {}),
+      },
     });
     if (stepUsage.inputTokens === 0 && stepUsage.outputTokens === 0 && !output) return;
     void this.deps.logUsage({

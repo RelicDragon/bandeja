@@ -6,6 +6,16 @@
     "newChat": "Obrolan baru",
     "noMessagesYet": "Belum ada pesan",
     "archived": "Obrolan diarsipkan",
+    "unarchived": "Chat dikembalikan ke Chat",
+    "deleted": "Chat dihapus",
+    "pinned": "Disematkan",
+    "chatsTab": "Chat",
+    "archivedTab": "Diarsipkan",
+    "archivedEmpty": "Tidak ada chat yang diarsipkan",
+    "deleteConfirm": {
+      "title": "Hapus chat ini?",
+      "message": "“{{title}}” akan hilang dari chat Anda selamanya. Untuk menyembunyikannya saja, arsipkan."
+    },
     "selectChat": "Pilih obrolan atau mulai yang baru",
     "backToChats": "Kembali ke obrolan",
     "disclaimer": "Asisten bisa keliru. Tidak ada yang berubah sampai kamu mengonfirmasi.",
@@ -22,12 +32,22 @@
       "open": "Opsi obrolan",
       "rename": "Ganti nama",
       "renameTitle": "Ganti nama obrolan",
-      "archive": "Arsipkan obrolan"
+      "archive": "Arsipkan",
+      "pin": "Sematkan",
+      "unpin": "Lepas sematan",
+      "unarchive": "Batal arsipkan",
+      "delete": "Hapus chat"
     },
     "composer": {
       "placeholder": "Tanya soal permainan, liga, klub…",
       "send": "Kirim",
       "stop": "Hentikan"
+    },
+    "message": {
+      "share": "Bagikan",
+      "copyFailed": "Gagal menyalin",
+      "editHint": "Mengirim akan mengganti pesan ini dan semua setelahnya.",
+      "actions": "Tindakan pesan"
     },
     "empty": {
       "listTitle": "Asisten padel kamu",
@@ -211,6 +231,22 @@
         "unconfigured": "belum diatur",
         "empty_results": "tanpa hasil"
       }
+    },
+    "context": {
+      "meterLabel": "Konteks terpakai: {{percent}}%",
+      "hintWarn": "Chat ini makin panjang. Mulai chat baru untuk jawaban yang lebih cepat dan akurat.",
+      "hintCritical": "Chat ini hampir penuh. Mulai chat baru — pesan lama sudah mulai terlupakan.",
+      "newChat": "Chat baru",
+      "title": "Konteks",
+      "contextUsed": "{{percent}}% konteks terpakai",
+      "tokensOf": "{{used}} / {{total}} token",
+      "explainOk": "Setiap pesan mengirim seluruh percakapan ke asisten. Chat yang pendek lebih cepat dan akurat.",
+      "explainLong": "Chat ini panjang: setiap pesan mengirimnya ulang, sehingga lebih banyak memakai batas harian dan jawaban kurang akurat. Mulai chat baru — memori tersimpan tetap ada.",
+      "dailyTitle": "Batas harian",
+      "left": "Sisa token",
+      "resets": "Direset",
+      "resetsAt": "{{time}} ({{duration}} lagi)",
+      "dailyExplain": "Dipakai bersama untuk semua chat AI Anda. Jika habis, asisten berhenti sampai direset."
     }
   }
 }

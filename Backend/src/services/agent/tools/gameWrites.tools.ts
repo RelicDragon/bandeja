@@ -20,7 +20,7 @@ import type { AgentPrincipal } from '../access/agentPrincipal';
 import { assertAgentCanInviteToGame, assertAgentGamePermission } from '../access/agentGameAccess';
 import { proposeAgentAction } from '../agentActionPropose';
 import { isValidTimeZone } from '../agentContext.service';
-import { agentGameTitle } from '../dto/game.dto';
+import { agentGameTitle, agentLocalTimes } from '../dto/game.dto';
 import { AGENT_USER_CARD_SELECT, agentUserDisplayName, agentUserEntity } from '../dto/user.dto';
 import { agentT, formatAgentDateTime } from '../i18n/agentI18n';
 import { defineTool, parseAgentDate } from './registry';
@@ -309,7 +309,7 @@ export const updateGameTool = defineTool({
       }
       const after = await prisma.game.findUniqueOrThrow({
         where: { id: plan.gameId },
-        select: { startTime: true, endTime: true, timeIsSet: true, clubId: true, courtId: true, isPublic: true, maxParticipants: true },
+        select: { city: { select: { timezone: true } }, startTime: true, endTime: true, timeIsSet: true, clubId: true, courtId: true, isPublic: true, maxParticipants: true },
       });
       return {
         message: agentT(ctx.locale, 'result.updated'),
@@ -318,6 +318,7 @@ export const updateGameTool = defineTool({
           gameId: plan.gameId,
           startTime: after.timeIsSet ? after.startTime.toISOString() : null,
           endTime: after.timeIsSet ? after.endTime.toISOString() : null,
+          ...agentLocalTimes(after, after.city?.timezone),
           clubId: after.clubId,
           courtId: after.courtId,
           isPublic: after.isPublic,

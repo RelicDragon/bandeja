@@ -4,6 +4,7 @@
  * scores, no payment fields, no booking provider data.
  */
 import { ParticipantStatus, type Prisma } from '@prisma/client';
+import { agentLocalTimes } from './game.dto';
 import { agentUserDisplayName } from './user.dto';
 
 const SCHEDULE_USER_SELECT = { id: true, firstName: true, lastName: true } satisfies Prisma.UserSelect;
@@ -71,6 +72,7 @@ export function toAgentLeagueFixture(row: LeagueFixtureRow) {
     group: row.leagueGroup ? { groupId: row.leagueGroup.id, name: row.leagueGroup.name } : null,
     startTime: row.timeIsSet ? row.startTime.toISOString() : null,
     endTime: row.timeIsSet ? row.endTime.toISOString() : null,
+    ...agentLocalTimes(row, row.city?.timezone),
     timeIsSet: row.timeIsSet,
     cityTimezone: row.city?.timezone ?? null,
     clubId: row.club?.id ?? null,

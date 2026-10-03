@@ -16,6 +16,7 @@
  * confirm follow-up runs are cancelled instead of executed.
  */
 import assert from 'node:assert/strict';
+import { formatInTimeZone } from 'date-fns-tz';
 import {
   AgentActionStatus,
   AgentRunStatus,
@@ -46,7 +47,7 @@ import { createAgentRunService } from '../agentRun.service';
 import type { AgentLlmClient, AgentLlmStreamChunk, AgentLlmStreamParams } from '../llm/deepseekStream';
 import { AGENT_TOOL_DEFINITIONS } from '../tools';
 import { AGENT_TOOL_AUTHZ_COVERAGE } from '../tools/__tests__/agentToolCoverage';
-import { LEAGUE_SCHEDULE_TOOLS } from '../tools/leagueSchedule.tools';
+import { LEAGUE_SCHEDULE_TOOLS, localDayRange } from '../tools/leagueSchedule.tools';
 import { LEAGUE_WRITE_TOOLS } from '../tools/leagues.write.tools';
 import { AgentToolRegistry, type AgentToolContext, type AgentToolDefinition, type AgentToolResult } from '../tools/registry';
 
@@ -320,6 +321,28 @@ async function main(): Promise<void> {
       const strangerIds = (strangerView.data as { fixtures: { fixtureId: string }[] }).fixtures.map((f) => f.fixtureId);
       assert.ok(strangerIds.includes(fixtureId) && strangerIds.includes(privateFixtureId), 'stranger: all fixtures listed');
       assert.equal((strangerView.data as { canManage: boolean }).canManage, false);
+      // date filter: that local day only, with wall-clock times computed server-side.
+      {
+        const row = await prisma.game.update({
+          where: { id: fixtureId },
+          data: { startTime: new Date('2026-10-02T11:00:00Z'), endTime: new Date('2026-10-02T12:00:00Z'), timeIsSet: true },
+          select: { city: { select: { timezone: true } } },
+        });
+        const tz = row.city?.timezone ?? 'UTC';
+        const localDay = formatInTimeZone(new Date('2026-10-02T11:00:00Z'), tz, 'yyyy-MM-dd');
+        const dayView = await call('get_league_schedule', stranger, { seasonId, date: localDay });
+        const day = dayView.data as { fixtures: { fixtureId: string; localStart: string | null }[]; hasMore: boolean; date: string };
+        const mine = day.fixtures.find((f) => f.fixtureId === fixtureId);
+        assert.ok(mine, 'date filter: fixture on that local day listed');
+        assert.equal(mine!.localStart, formatInTimeZone(new Date('2026-10-02T11:00:00Z'), tz, 'EEE yyyy-MM-dd HH:mm'));
+        assert.ok(day.fixtures.every((f) => f.localStart?.includes(localDay)), 'date filter: only that day');
+        assert.equal(day.hasMore, false);
+        await expectOutcome('schedule, impossible date', 'bad_request', () => call('get_league_schedule', stranger, { seasonId, date: '2026-02-30' }));
+        // DST-safe day bounds: 25 h on the autumn change in Belgrade.
+        const dst = localDayRange('2026-10-25', 'Europe/Belgrade');
+        assert.equal(dst.start.toISOString(), '2026-10-24T22:00:00.000Z');
+        assert.equal(dst.end.toISOString(), '2026-10-25T23:00:00.000Z');
+      }
       await both('stranger, private fixture under public season', stranger, 'forbidden', 'fixture', privateFixtureId);
       tested += 1;
     } finally {

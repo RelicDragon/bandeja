@@ -344,6 +344,10 @@ export interface AgentChatDto {
   title: string | null;
   lastMessagePreview: string | null;
   activeRun: AgentRunSummaryDto | null;
+  /** Pinned to the top of the list; null = not pinned. Absent from servers that predate it. */
+  pinnedAt?: string | null;
+  /** In the Archived list; null = main list. Absent from servers that predate it. */
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -351,6 +355,23 @@ export interface AgentChatDto {
 export interface AgentChatDetailDto extends AgentChatDto {
   messages: AgentMessageDto[];
   actions: AgentPendingActionDto[];
+  /** Context meter + daily budget. Absent from servers that predate it. */
+  usage?: AgentChatUsageDto;
+}
+
+/** Context meter thresholds (share of `contextWindowTokens`): warn shows the "start a new chat" hint. */
+export const AGENT_CONTEXT_WARN_RATIO = 0.5;
+export const AGENT_CONTEXT_CRITICAL_RATIO = 0.75;
+
+export interface AgentChatUsageDto {
+  /** Prompt + reply tokens of the chat's latest model call (what the next turn builds on); 0 before the first reply. */
+  contextTokens: number;
+  contextWindowTokens: number;
+  /** The user's agent tokens today (all chats, web tool charges included). */
+  dailyUsedTokens: number;
+  dailyBudgetTokens: number;
+  /** ISO time of the next budget reset (UTC midnight). */
+  dailyResetsAt: string;
 }
 
 export interface AgentUsage {
@@ -394,13 +415,14 @@ export const AGENT_TERMINAL_EVENT_TYPES: readonly AgentStreamEventType[] = [
 
 /**
  * REST surface (all behind `authenticate`):
- *   GET    /api/agent/chats                   -> { chats: AgentChatDto[] }        (non-archived, updatedAt desc; activeRun set while QUEUED/RUNNING/AWAITING_CONFIRMATION)
+ *   GET    /api/agent/chats                   -> { chats: AgentChatDto[]; archivedCount?: number } (not deleted; ?archived=1 → the Archived list instead; pinned first by pinnedAt desc, then updatedAt desc; activeRun set while QUEUED/RUNNING/AWAITING_CONFIRMATION)
  *   POST   /api/agent/chats                   -> AgentChatDto
- *   GET    /api/agent/chats/:chatId           -> AgentChatDetailDto
- *   PATCH  /api/agent/chats/:chatId {title}   -> AgentChatDto
- *   DELETE /api/agent/chats/:chatId           -> { ok: true }                    (archives)
- *   POST   /api/agent/chats/:chatId/messages {text} -> { message: AgentMessageDto; runId: string }
- *                                                (run starts QUEUED; 409 code CHAT_BUSY if the chat has a QUEUED/RUNNING run)
+ *   GET    /api/agent/chats/:chatId           -> AgentChatDetailDto           (`usage`: context meter + daily budget)
+ *   PATCH  /api/agent/chats/:chatId {title?, pinned?, archived?} -> AgentChatDto  (pin / archive alone keep updatedAt)
+ *   DELETE /api/agent/chats/:chatId           -> { ok: true }                    (bare = archive, for store builds; ?mode=delete = soft delete: hidden everywhere, rows kept)
+ *   POST   /api/agent/chats/:chatId/messages {text, editMessageId?} -> { message: AgentMessageDto; runId: string }
+ *                                                (run starts QUEUED; 409 code CHAT_BUSY if the chat has a QUEUED/RUNNING run;
+ *                                                 `editMessageId`: that USER message and everything after it are deleted first)
  *   GET    /api/agent/runs/:runId/events      -> SSE (see above)
  *   POST   /api/agent/runs/:runId/cancel      -> { ok: true }
  *   POST   /api/agent/actions/:actionId/confirm {remember?: 'always'}

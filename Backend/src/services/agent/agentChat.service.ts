@@ -9,6 +9,7 @@ import type {
   AgentActionResult,
   AgentChatDetailDto,
   AgentChatDto,
+  AgentChatUsageDto,
   AgentContentBlock,
   AgentMessageDto,
   AgentPendingActionDto,
@@ -17,8 +18,10 @@ import type {
   AgentToolRiskTier,
 } from '@bandeja/shared/agentContract';
 import prisma from '../../config/database';
+import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
 import type { AgentLlmMessage } from './llm/deepseekStream';
+import { agentTokensUsedToday, startOfUtcDay } from './agentGuards';
 
 export const AGENT_CHAT_TITLE_MAX = 60;
 const PREVIEW_MAX = 140;
@@ -122,19 +125,27 @@ function toAgentChatDto(chat: ChatListRow): AgentChatDto {
     title: chat.title,
     lastMessagePreview: previewOf(chat.messages),
     activeRun,
+    pinnedAt: chat.pinnedAt?.toISOString() ?? null,
+    archivedAt: chat.archivedAt?.toISOString() ?? null,
     createdAt: chat.createdAt.toISOString(),
     updatedAt: chat.updatedAt.toISOString(),
   };
 }
 
-export async function listAgentChats(userId: string): Promise<AgentChatDto[]> {
+/** `archived`: the Archived list instead of the main one. Deleted chats are never listed. */
+export async function listAgentChats(userId: string, opts: { archived?: boolean } = {}): Promise<AgentChatDto[]> {
   const chats = await prisma.agentChat.findMany({
-    where: { userId, archivedAt: null },
-    orderBy: { updatedAt: 'desc' },
+    where: { userId, deletedAt: null, archivedAt: opts.archived ? { not: null } : null },
+    // Pinned first (most recently pinned on top), then the rest by last activity.
+    orderBy: [{ pinnedAt: { sort: 'desc', nulls: 'last' } }, { updatedAt: 'desc' }],
     take: CHAT_LIST_LIMIT,
     include: CHAT_LIST_INCLUDE,
   });
   return chats.map(toAgentChatDto);
+}
+
+export function countArchivedAgentChats(userId: string): Promise<number> {
+  return prisma.agentChat.count({ where: { userId, deletedAt: null, archivedAt: { not: null } } });
 }
 
 export async function createAgentChat(userId: string): Promise<AgentChatDto> {
@@ -142,48 +153,94 @@ export async function createAgentChat(userId: string): Promise<AgentChatDto> {
   return toAgentChatDto(chat);
 }
 
-/** Owner-scoped, non-archived chat or 404. */
+/** Owner-scoped, non-deleted chat (archived included) or 404. */
 export async function requireOwnedAgentChat(userId: string, chatId: string) {
-  const chat = await prisma.agentChat.findFirst({ where: { id: chatId, userId, archivedAt: null } });
+  const chat = await prisma.agentChat.findFirst({ where: { id: chatId, userId, deletedAt: null } });
   if (!chat) throw agentChatNotFound();
   return chat;
 }
 
 export async function getAgentChatDetail(userId: string, chatId: string): Promise<AgentChatDetailDto> {
   const chat = await prisma.agentChat.findFirst({
-    where: { id: chatId, userId, archivedAt: null },
+    where: { id: chatId, userId, deletedAt: null },
     include: CHAT_LIST_INCLUDE,
   });
   if (!chat) throw agentChatNotFound();
-  const [messagesDesc, actions] = await Promise.all([
+  const [messagesDesc, actions, usage] = await Promise.all([
     prisma.agentMessage.findMany({
       where: { chatId },
       orderBy: { seq: 'desc' },
       take: CHAT_DETAIL_MESSAGE_LIMIT,
     }),
     prisma.agentPendingAction.findMany({ where: { chatId, userId }, orderBy: { createdAt: 'asc' } }),
+    getAgentChatUsage(userId, chatId),
   ]);
   return {
     ...toAgentChatDto(chat),
     messages: messagesDesc.reverse().map(toAgentMessageDto),
     actions: actions.map(toAgentPendingActionDto),
+    usage,
   };
 }
 
-export async function renameAgentChat(userId: string, chatId: string, title: string): Promise<AgentChatDto> {
-  await requireOwnedAgentChat(userId, chatId);
-  const chat = await prisma.agentChat.update({
-    where: { id: chatId },
-    data: { title: title.trim().slice(0, AGENT_CHAT_TITLE_MAX) || null },
-    include: CHAT_LIST_INCLUDE,
-  });
+/** Context = the latest run that reached the model; daily = the budget `assertAgentBudget` enforces. */
+export async function getAgentChatUsage(userId: string, chatId: string, now = new Date()): Promise<AgentChatUsageDto> {
+  const agentConfig = config.agent;
+  const [lastRun, dailyUsedTokens] = await Promise.all([
+    prisma.agentRun.findFirst({
+      where: { chatId, userId, contextTokens: { gt: 0 } },
+      orderBy: { createdAt: 'desc' },
+      select: { contextTokens: true },
+    }),
+    agentTokensUsedToday(userId, now),
+  ]);
+  const resetsAt = startOfUtcDay(now);
+  resetsAt.setUTCDate(resetsAt.getUTCDate() + 1);
+  return {
+    contextTokens: lastRun?.contextTokens ?? 0,
+    contextWindowTokens: agentConfig.contextWindowTokens,
+    dailyUsedTokens,
+    dailyBudgetTokens: agentConfig.dailyTokenBudget,
+    dailyResetsAt: resetsAt.toISOString(),
+  };
+}
+
+/**
+ * The PATCH route: rename, pin and/or archive. Pin and archive alone keep `updatedAt` (the row's
+ * time and order). Archive cancels nothing; pending confirmations stay usable in the chat.
+ */
+export async function updateAgentChat(
+  userId: string,
+  chatId: string,
+  patch: { title?: string; pinned?: boolean; archived?: boolean },
+): Promise<AgentChatDto> {
+  const current = await requireOwnedAgentChat(userId, chatId);
+  const data: Prisma.AgentChatUpdateInput = {};
+  if (patch.title !== undefined) data.title = patch.title.trim().slice(0, AGENT_CHAT_TITLE_MAX) || null;
+  if (patch.pinned !== undefined && patch.pinned !== (current.pinnedAt != null)) {
+    data.pinnedAt = patch.pinned ? new Date() : null;
+  }
+  if (patch.archived !== undefined && patch.archived !== (current.archivedAt != null)) {
+    data.archivedAt = patch.archived ? new Date() : null;
+  }
+  if (patch.title === undefined) data.updatedAt = current.updatedAt;
+  const chat = await prisma.agentChat.update({ where: { id: chatId }, data, include: CHAT_LIST_INCLUDE });
   return toAgentChatDto(chat);
 }
 
-/** Archive (the DELETE route). Cancels nothing by itself; the route cancels a live run first. */
-export async function archiveAgentChat(userId: string, chatId: string): Promise<void> {
+/**
+ * The DELETE route. `delete`: a soft delete — the chat disappears from the app and the Telegram
+ * assistant but its rows stay on the server. `archive`: what store builds mean by DELETE (their
+ * only list action was "Archive chat"). Cancels nothing by itself; the route cancels a live run
+ * first.
+ */
+export async function removeAgentChat(userId: string, chatId: string, mode: 'delete' | 'archive'): Promise<void> {
   await requireOwnedAgentChat(userId, chatId);
-  await prisma.agentChat.update({ where: { id: chatId }, data: { archivedAt: new Date() } });
+  const now = new Date();
+  await prisma.agentChat.update({
+    where: { id: chatId },
+    data: mode === 'delete' ? { deletedAt: now, pinnedAt: null } : { archivedAt: now },
+  });
   await prisma.agentPendingAction.updateMany({
     where: { chatId, userId, status: AgentActionStatus.PENDING },
     data: { status: AgentActionStatus.EXPIRED },
@@ -207,6 +264,38 @@ export function autoTitleFromText(text: string): string {
   const cut = oneLine.slice(0, AGENT_CHAT_TITLE_MAX - 1);
   const lastSpace = cut.lastIndexOf(' ');
   return `${(lastSpace > 20 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+/**
+ * Edit a user message (the HTTP send with `editMessageId`): delete it and every later message,
+ * drop a rolling summary that covered any of them, and re-derive an auto title that came from
+ * the edited text. Caller holds the chat row lock. Returns the title to keep (null = re-title
+ * from the new text).
+ */
+export async function rewindAgentChatToMessage(
+  tx: Prisma.TransactionClient,
+  chatId: string,
+  messageId: string,
+  title: string | null,
+): Promise<string | null> {
+  const target = await tx.agentMessage.findFirst({
+    where: { id: messageId, chatId, role: AgentMessageRole.USER },
+    select: { seq: true, content: true },
+  });
+  if (!target) {
+    throw new ApiError(404, 'Message not found', true, { code: 'validation.invalidInput' });
+  }
+  const earlierUser = await tx.agentMessage.count({
+    where: { chatId, role: AgentMessageRole.USER, seq: { lt: target.seq } },
+  });
+  await tx.agentMessage.deleteMany({ where: { chatId, seq: { gte: target.seq } } });
+  await tx.agentChat.updateMany({
+    where: { id: chatId, summaryThroughSeq: { gte: target.seq } },
+    data: { summary: null, summaryThroughSeq: null, summaryTainted: false, summaryUpdatedAt: null },
+  });
+  const oldText = textOfBlocks(blocksOf(target));
+  if (earlierUser === 0 && title && title === autoTitleFromText(oldText)) return null;
+  return title;
 }
 
 export type AppendAgentMessageInput = {

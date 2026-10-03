@@ -6,6 +6,16 @@
     "newChat": "New chat",
     "noMessagesYet": "No messages yet",
     "archived": "Chat archived",
+    "unarchived": "Chat moved back to Chats",
+    "deleted": "Chat deleted",
+    "pinned": "Pinned",
+    "chatsTab": "Chats",
+    "archivedTab": "Archived",
+    "archivedEmpty": "No archived chats",
+    "deleteConfirm": {
+      "title": "Delete this chat?",
+      "message": "“{{title}}” will disappear from your chats for good. To just hide it, archive it instead."
+    },
     "selectChat": "Pick a chat or start a new one",
     "backToChats": "Back to chats",
     "disclaimer": "The assistant can make mistakes. Nothing changes until you confirm it.",
@@ -22,12 +32,22 @@
       "open": "Chat options",
       "rename": "Rename",
       "renameTitle": "Rename chat",
-      "archive": "Archive chat"
+      "archive": "Archive",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "unarchive": "Unarchive",
+      "delete": "Delete chat"
     },
     "composer": {
       "placeholder": "Ask about your games, leagues, clubs…",
       "send": "Send",
       "stop": "Stop"
+    },
+    "message": {
+      "share": "Share",
+      "copyFailed": "Copy failed",
+      "editHint": "Sending replaces this message and everything after it.",
+      "actions": "Message actions"
     },
     "empty": {
       "listTitle": "Your padel assistant",
@@ -211,6 +231,22 @@
         "unconfigured": "not set up",
         "empty_results": "no results"
       }
+    },
+    "context": {
+      "meterLabel": "Context used: {{percent}}%",
+      "hintWarn": "This chat is getting long. Start a new chat for faster, more accurate answers.",
+      "hintCritical": "This chat is almost full. Start a new chat — older messages are already being forgotten.",
+      "newChat": "New chat",
+      "title": "Context",
+      "contextUsed": "{{percent}}% of context used",
+      "tokensOf": "{{used}} / {{total}} tokens",
+      "explainOk": "Each message sends the conversation so far to the assistant. Shorter chats are faster and more accurate.",
+      "explainLong": "This chat is long: every message resends it, which costs more of your daily limit and makes answers less precise. Start a new chat — saved memory carries over.",
+      "dailyTitle": "Daily limit",
+      "left": "Tokens left",
+      "resets": "Resets",
+      "resetsAt": "{{time}} (in {{duration}})",
+      "dailyExplain": "Shared across all your AI chats. When it runs out, the assistant pauses until the reset."
     }
   }
 }

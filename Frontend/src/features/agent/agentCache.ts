@@ -15,6 +15,11 @@ export function upsertMessage(detail: AgentChatDetailDto, message: AgentMessageD
   return { ...detail, messages };
 }
 
+/** Pure: an edited user message rewinds the chat — drop it and every later message. */
+export function truncateMessagesFrom(detail: AgentChatDetailDto, seq: number): AgentChatDetailDto {
+  return { ...detail, messages: detail.messages.filter((m) => m.seq < seq) };
+}
+
 /** Pure: insert or replace an action. */
 export function upsertAction(detail: AgentChatDetailDto, action: AgentPendingActionDto): AgentChatDetailDto {
   const exists = detail.actions.some((a) => a.id === action.id);

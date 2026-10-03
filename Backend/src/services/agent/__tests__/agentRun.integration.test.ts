@@ -221,6 +221,43 @@ void (async () => {
       console.log('happy path: ok');
     }
 
+    // 1b. edit a user message: rewind to it, drop later turns, re-title, resend --------------
+    {
+      const llm = new ScriptedLlm([textStep('First answer.')]);
+      const { service } = makeService(llm);
+      const chatId = await newChat(owner.userId);
+      const first = await service.enqueueRun({ userId: owner.userId, chatId, text: 'Typo questoin' });
+      await service.waitForRun(first.runId);
+      const second = await service.enqueueRun({ userId: owner.userId, chatId, text: 'Follow-up' });
+      await service.waitForRun(second.runId);
+      assert.equal((await getAgentChatDetail(owner.userId, chatId)).messages.length, 4);
+
+      // Only USER messages of this chat can be edited.
+      const answerId = (await getAgentChatDetail(owner.userId, chatId)).messages[1].id;
+      await expectApiError(service.enqueueRun({ userId: owner.userId, chatId, text: 'x', editMessageId: answerId }), 404);
+      const otherChat = await newChat(owner.userId);
+      await expectApiError(
+        service.enqueueRun({ userId: owner.userId, chatId: otherChat, text: 'x', editMessageId: first.message.id }),
+        404,
+      );
+
+      const llm2 = new ScriptedLlm([textStep('Fixed answer.')]);
+      const edited = makeService(llm2);
+      const resent = await edited.service.enqueueRun({
+        userId: owner.userId,
+        chatId,
+        text: 'Typo question',
+        editMessageId: first.message.id,
+      });
+      assert.equal(resent.message.seq, 1, 'the edit takes the edited message’s place');
+      await edited.service.waitForRun(resent.runId);
+      const detail = await getAgentChatDetail(owner.userId, chatId);
+      assert.deepEqual(detail.messages.map((m) => [m.seq, m.role]), [[1, 'USER'], [2, 'ASSISTANT']]);
+      assert.equal(detail.title, 'Typo question', 'auto title follows the edited first message');
+      assert.deepEqual(llm2.calls[0].messages.slice(1).map((m) => m.role), ['user'], 'dropped turns never reach the model');
+      console.log('edit rewind: ok');
+    }
+
     // 2. queue ordering + caps + LLM bound + cancel QUEUED ------------------------------------
     {
       const llm = new GatedLlm();

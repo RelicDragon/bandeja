@@ -6,6 +6,7 @@
  * (visible to all), so the listing and `get_game` on a fixture always agree.
  */
 import { EntityType, GameStatus, ParticipantRole, ResultsStatus, type Prisma } from '@prisma/client';
+import { fromZonedTime } from 'date-fns-tz';
 import { z } from 'zod/v4';
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
@@ -34,6 +35,7 @@ export async function loadVisibleLeagueSeason(principal: AgentPrincipal, seasonI
       name: true,
       entityType: true,
       club: { select: { name: true } },
+      city: { select: { timezone: true } },
       leagueSeason: { select: { id: true, league: { select: { name: true } } } },
     },
   });
@@ -43,10 +45,34 @@ export async function loadVisibleLeagueSeason(principal: AgentPrincipal, seasonI
   return { game, title: (game.name ?? '').trim() || game.leagueSeason.league.name || agentGameTitle(game) };
 }
 
+/** UTC bounds of one wall-clock day in `timezone` (DST-safe: each midnight converted separately). */
+export function localDayRange(date: string, timezone: string): { start: Date; end: Date } {
+  const [y, m, d] = date.split('-').map(Number);
+  const day = new Date(Date.UTC(y, m - 1, d));
+  if (day.getUTCFullYear() !== y || day.getUTCMonth() !== m - 1 || day.getUTCDate() !== d) {
+    throw new ApiError(400, 'date must be a real day (YYYY-MM-DD)');
+  }
+  const next = new Date(Date.UTC(y, m - 1, d + 1));
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const nextDate = `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
+  const range = { start: fromZonedTime(`${date}T00:00:00`, timezone), end: fromZonedTime(`${nextDate}T00:00:00`, timezone) };
+  if (Number.isNaN(range.start.getTime()) || Number.isNaN(range.end.getTime())) {
+    throw new ApiError(400, `Unknown timezone ${timezone}`);
+  }
+  return range;
+}
+
 const scheduleInput = z
   .object({
     seasonId: ID.describe('League season id (the season game id)'),
     roundId: ID.optional().describe('Only this round (ids from the rounds list); without it: unfinished fixtures of the season'),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional()
+      .describe(
+        'Only fixtures starting on this local day (YYYY-MM-DD, season city timezone), finished ones included. Use it for "today\'s / tomorrow\'s league games".',
+      ),
     groupId: ID.optional().describe('Only this group (ids from get_league_season)'),
     limit: z.number().int().min(1).max(60).default(30),
   })
@@ -55,7 +81,7 @@ const scheduleInput = z
 export const getLeagueScheduleTool = defineTool({
   name: 'get_league_schedule',
   description:
-    'Get the schedule of a league season: its rounds (number, regular/playoff, whether the start announcement was sent) and fixtures (fixtureId, round, group, time, club, court, teams, status). Without roundId lists the unfinished fixtures, soonest first, unscheduled last.',
+    'Get the schedule of a league season: its rounds (number, regular/playoff, whether the start announcement was sent) and fixtures (fixtureId, round, group, localStart/localEnd in the season city time, club, court, teams, status). With date: the fixtures of that day; with roundId: that round; with neither: the unfinished fixtures, soonest first, unscheduled last. If hasMore is true the list is incomplete.',
   kind: 'read',
   scope: 'user',
   input: scheduleInput,
@@ -71,6 +97,8 @@ export const getLeagueScheduleTool = defineTool({
     if (args.roundId && !rounds.some((round) => round.id === args.roundId)) {
       throw new ApiError(404, 'Round not found');
     }
+    const timezone = game.city?.timezone || ctx.timezone;
+    const day = args.date ? localDayRange(args.date, timezone) : null;
     const where: Prisma.GameWhereInput = {
       AND: [
         agentVisibleGamesWhere(principal),
@@ -78,9 +106,11 @@ export const getLeagueScheduleTool = defineTool({
           parentId: game.id,
           entityType: EntityType.LEAGUE,
           ...(args.groupId ? { leagueGroupId: args.groupId } : {}),
-          ...(args.roundId
-            ? { leagueRoundId: args.roundId }
-            : { resultsStatus: { not: ResultsStatus.FINAL }, status: { not: GameStatus.ARCHIVED } }),
+          ...(args.roundId ? { leagueRoundId: args.roundId } : {}),
+          ...(day ? { timeIsSet: true, startTime: { gte: day.start, lt: day.end } } : {}),
+          ...(!args.roundId && !day
+            ? { resultsStatus: { not: ResultsStatus.FINAL }, status: { not: GameStatus.ARCHIVED } }
+            : {}),
         },
       ],
     };
@@ -103,7 +133,12 @@ export const getLeagueScheduleTool = defineTool({
         rounds: rounds.map(toAgentLeagueRound),
         roundId: args.roundId ?? null,
         groupId: args.groupId ?? null,
+        date: args.date ?? null,
+        timezone,
         total,
+        shown: fixtures.length,
+        /** More fixtures match than were returned: narrow (date, round, group) or raise limit. */
+        hasMore: total > fixtures.length,
         fixtures: fixtures.map(toAgentLeagueFixture),
       },
       summary: agentLeagueT(ctx.locale, 'summary.schedule', { title, count: total }),

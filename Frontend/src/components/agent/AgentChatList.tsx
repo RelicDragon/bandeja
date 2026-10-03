@@ -1,21 +1,25 @@
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { stripAgentRefTokens } from '@/features/agent/agentBookingCards';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { ArrowUp, ArrowUpRight, Loader2, MoreHorizontal, ShieldCheck, ShieldQuestion } from 'lucide-react';
+import { Archive, ArrowUp, ArrowUpRight, Loader2, MessagesSquare, MoreHorizontal, ShieldCheck, ShieldQuestion } from 'lucide-react';
 import type { AgentChatDto, AgentRunStatus } from '@shared/agentContract';
 import { ChatListSkeletonRows } from '@/components/chat/ChatListLoadingSkeleton';
+import { SegmentedSwitch } from '@/components/SegmentedSwitch';
+import type { AgentChatListView } from '@/features/agent/agentChatOrder';
 import {
   useAgentChatsQuery,
-  useArchiveAgentChatMutation,
   useCreateAgentChatMutation,
+  useDeleteAgentChatMutation,
   useRenameAgentChatMutation,
+  useSetAgentChatArchivedMutation,
+  useSetAgentChatPinnedMutation,
 } from '@/queries/agent/useAgentQueries';
 import { openAgentPermissionsScreen } from '@/queries/agent/useAgentPermissions';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
-import { AgentChatMenuSheet, AgentRenameDialog } from './AgentChatMenu';
+import { AgentChatMenuSheet, AgentDeleteChatDialog, AgentRenameDialog } from './AgentChatMenu';
 import { AgentGlyph } from './AgentGlyph';
 import { AGENT_EXAMPLE_PROMPT_KEYS } from './agentExamplePrompts';
 import { formatAgentChatTime } from './agentFormat';
@@ -32,12 +36,25 @@ interface AgentChatListProps {
 
 export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = false }: AgentChatListProps) {
   const { t } = useTranslation();
-  const chatsQuery = useAgentChatsQuery();
+  const [view, setView] = useState<AgentChatListView>('main');
+  const mainQuery = useAgentChatsQuery('main');
+  const archivedQuery = useAgentChatsQuery('archived', view === 'archived');
+  const chatsQuery = view === 'archived' ? archivedQuery : mainQuery;
   const createMutation = useCreateAgentChatMutation();
-  const archiveMutation = useArchiveAgentChatMutation();
+  const pinMutation = useSetAgentChatPinnedMutation();
+  const archiveMutation = useSetAgentChatArchivedMutation();
+  const deleteMutation = useDeleteAgentChatMutation();
   const renameMutation = useRenameAgentChatMutation();
   const [menuChat, setMenuChat] = useState<AgentChatDto | null>(null);
   const [renameChat, setRenameChat] = useState<AgentChatDto | null>(null);
+  const [deleteChat, setDeleteChat] = useState<AgentChatDto | null>(null);
+
+  // The switch only exists while something is archived; the last unarchive drops back to Chats.
+  const archivedCount = mainQuery.data?.archivedCount ?? 0;
+  const showViewSwitch = archivedCount > 0;
+  useEffect(() => {
+    if (view === 'archived' && mainQuery.isSuccess && archivedCount === 0) setView('main');
+  }, [view, mainQuery.isSuccess, archivedCount]);
 
   const startChat = (initialPrompt?: string) => {
     if (createMutation.isPending) return;
@@ -47,9 +64,30 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
     });
   };
 
-  const chats = chatsQuery.data ?? [];
+  const chats = useMemo(() => chatsQuery.data?.chats ?? [], [chatsQuery.data]);
   const showSkeleton = chatsQuery.isPending;
   const isEmpty = chatsQuery.isSuccess && chats.length === 0;
+  const pinned = view === 'main' ? chats.filter((c) => c.pinnedAt) : [];
+  const rest = view === 'main' ? chats.filter((c) => !c.pinnedAt) : chats;
+
+  const renderRows = (rows: AgentChatDto[]) => (
+    <div className="mx-3 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+      {rows.map((chat) => (
+        <AgentChatRow
+          key={chat.id}
+          chat={chat}
+          selected={chat.id === selectedChatId}
+          onOpen={() => onOpenChat(chat.id)}
+          onMenu={() => setMenuChat(chat)}
+        />
+      ))}
+    </div>
+  );
+  const sectionLabel = (label: string) => (
+    <p className="px-4 pb-1.5 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+      {label}
+    </p>
+  );
 
   return (
     <div className={fillHeight ? 'flex h-full min-h-0 flex-col' : 'flex flex-col'}>
@@ -95,6 +133,23 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
             )}
           </span>
         </button>
+        {showViewSwitch ? (
+          <SegmentedSwitch
+            tabs={[
+              { id: 'main', label: t('agent.chatsTab'), icon: MessagesSquare },
+              { id: 'archived', label: t('agent.archivedTab'), icon: Archive, badge: archivedCount },
+            ]}
+            activeId={view}
+            onChange={(id) => setView(id as AgentChatListView)}
+            showOnlyActiveTabText={false}
+            badgeStyle="inline"
+            fullWidth
+            size="sm"
+            layoutId="agentChatListView"
+            ariaLabel={t('agent.listTitle')}
+            className="mt-3"
+          />
+        ) : null}
       </div>
 
       <div className={fillHeight ? 'min-h-0 flex-1 overflow-y-auto pb-24' : ''}>
@@ -111,25 +166,22 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
             </button>
           </div>
         ) : null}
-        {isEmpty ? (
+        {isEmpty && view === 'main' ? (
           <AgentListEmptyState disabled={createMutation.isPending} onPick={(prompt) => startChat(prompt)} />
         ) : null}
-        {chats.length > 0 ? (
+        {isEmpty && view === 'archived' ? (
+          <p className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">{t('agent.archivedEmpty')}</p>
+        ) : null}
+        {pinned.length > 0 ? (
           <>
-            <p className="px-4 pb-1.5 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              {t('agent.recent')}
-            </p>
-            <div className="mx-3 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-              {chats.map((chat) => (
-                <AgentChatRow
-                  key={chat.id}
-                  chat={chat}
-                  selected={chat.id === selectedChatId}
-                  onOpen={() => onOpenChat(chat.id)}
-                  onMenu={() => setMenuChat(chat)}
-                />
-              ))}
-            </div>
+            {sectionLabel(t('agent.pinned'))}
+            {renderRows(pinned)}
+          </>
+        ) : null}
+        {rest.length > 0 ? (
+          <>
+            {view === 'main' ? sectionLabel(t('agent.recent')) : <div className="h-2" />}
+            {renderRows(rest)}
           </>
         ) : null}
       </div>
@@ -137,19 +189,55 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
       <AgentChatMenuSheet
         open={menuChat != null}
         title={menuChat?.title?.trim() || t('agent.newChat')}
+        pinned={Boolean(menuChat?.pinnedAt)}
+        archived={Boolean(menuChat?.archivedAt)}
         onClose={() => setMenuChat(null)}
         onRename={() => {
           setRenameChat(menuChat);
           setMenuChat(null);
         }}
-        onArchive={() => {
+        onTogglePin={() => {
           const target = menuChat;
           setMenuChat(null);
           if (!target) return;
-          archiveMutation.mutate(target.id, {
-            onSuccess: () => toast.success(t('agent.archived')),
-            onError: (err) => toast.error(extractApiErrorMessage(err, t)),
-          });
+          pinMutation.mutate(
+            { chatId: target.id, pinned: !target.pinnedAt },
+            { onError: (err) => toast.error(extractApiErrorMessage(err, t)) },
+          );
+        }}
+        onToggleArchive={() => {
+          const target = menuChat;
+          setMenuChat(null);
+          if (!target) return;
+          const archived = !target.archivedAt;
+          archiveMutation.mutate(
+            { chatId: target.id, archived },
+            {
+              onSuccess: () => toast.success(t(archived ? 'agent.archived' : 'agent.unarchived')),
+              onError: (err) => toast.error(extractApiErrorMessage(err, t)),
+            },
+          );
+        }}
+        onDelete={() => {
+          setDeleteChat(menuChat);
+          setMenuChat(null);
+        }}
+      />
+      <AgentDeleteChatDialog
+        open={deleteChat != null}
+        title={deleteChat?.title?.trim() || t('agent.newChat')}
+        deleting={deleteMutation.isPending}
+        onClose={() => setDeleteChat(null)}
+        onConfirm={() => {
+          const target = deleteChat;
+          if (!target) return;
+          deleteMutation.mutate(
+            { chatId: target.id, archived: Boolean(target.archivedAt) },
+            {
+              onSuccess: () => toast.success(t('agent.deleted')),
+              onError: (err) => toast.error(extractApiErrorMessage(err, t)),
+            },
+          );
         }}
       />
       <AgentRenameDialog
@@ -235,83 +323,62 @@ const AgentChatRow = memo(function AgentChatRow({ chat, selected, onOpen, onMenu
       onPointerUp={clearPress}
       onPointerCancel={clearPress}
       onPointerLeave={clearPress}
-      className={`chat-list-row flex cursor-pointer select-none items-center gap-3 border-b border-gray-100 py-3 pe-2 ps-4 transition-colors last:border-b-0 dark:border-gray-800 ${
+      className={`chat-list-row cursor-pointer select-none border-b border-gray-100 py-2.5 pe-2 ps-4 transition-colors last:border-b-0 dark:border-gray-800 ${
         selected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 active:bg-gray-100 dark:hover:bg-gray-800 dark:active:bg-gray-800'
       }`}
     >
-      <AgentStatusDot status={status} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="truncate text-[15px] font-semibold text-gray-900 dark:text-white" dir="auto">
-            {chat.title?.trim() || t('agent.newChat')}
-          </h3>
-          <span className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-            {formatAgentChatTime(chat.updatedAt, settings.locale, settings.hour12)}
-          </span>
-        </div>
-        <div className="mt-0.5 flex items-center gap-1.5">
-          {running ? (
-            <span className="flex-shrink-0 text-xs font-medium text-primary-600 dark:text-primary-400">
-              {t('agent.status.working')}
-            </span>
-          ) : queued ? (
-            <span className="flex-shrink-0 text-xs font-medium text-primary-600 dark:text-primary-400">
-              {t('agent.status.queued')}
-            </span>
-          ) : awaiting ? (
-            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-amber-100/80 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-              <ShieldQuestion size={11} aria-hidden />
-              {t('agent.status.needsConfirmation')}
-            </span>
-          ) : null}
-          <p className="min-w-0 flex-1 truncate text-[13px] text-gray-500 dark:text-gray-400" dir="auto">
-            {chat.lastMessagePreview ? stripAgentRefTokens(chat.lastMessagePreview) : t('agent.noMessagesYet')}
-          </p>
-        </div>
+      {/* Two lines, full width: title + time on top, status / preview + ⋯ below. The ⋯ sits
+          under the time so it no longer steals width from the title. */}
+      <div className="flex items-baseline gap-2 pe-1.5">
+        <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-gray-900 dark:text-white" dir="auto">
+          {chat.title?.trim() || t('agent.newChat')}
+        </h3>
+        <span className="flex-shrink-0 text-xs tabular-nums text-gray-500 dark:text-gray-400">
+          {formatAgentChatTime(chat.updatedAt, settings.locale, settings.hour12)}
+        </span>
       </div>
-      <button
-        type="button"
-        aria-label={t('agent.menu.open')}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onMenu();
-        }}
-        className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-      >
-        <MoreHorizontal size={18} aria-hidden />
-      </button>
+      <div className="flex items-center gap-1.5">
+        {running || queued ? (
+          <span className="inline-flex flex-shrink-0 items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-400">
+            <AgentStatusDot status={status} />
+            {t(running ? 'agent.status.working' : 'agent.status.queued')}
+          </span>
+        ) : awaiting ? (
+          <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-amber-100/80 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+            <ShieldQuestion size={11} aria-hidden />
+            {t('agent.status.needsConfirmation')}
+          </span>
+        ) : null}
+        <p className="min-w-0 flex-1 truncate text-[13px] text-gray-500 dark:text-gray-400" dir="auto">
+          {chat.lastMessagePreview ? stripAgentRefTokens(chat.lastMessagePreview) : t('agent.noMessagesYet')}
+        </p>
+        <button
+          type="button"
+          aria-label={t('agent.menu.open')}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onMenu();
+          }}
+          className="-my-1 flex h-7 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+        >
+          <MoreHorizontal size={18} aria-hidden />
+        </button>
+      </div>
     </div>
   );
 });
 
-const STATUS_DOT_LABEL_KEYS: Partial<Record<AgentRunStatus, string>> = {
-  RUNNING: 'agent.status.working',
-  QUEUED: 'agent.status.queued',
-  AWAITING_CONFIRMATION: 'agent.status.needsConfirmation',
-};
-
-/** Leading status marker for a chat row: working (pulse), queued, needs OK, or idle. */
+/** Live-run marker in front of "Working…" / "Queued": pings while running, pulses while queued. */
 function AgentStatusDot({ status }: { status?: AgentRunStatus }) {
-  const { t } = useTranslation();
-  const labelKey = status ? STATUS_DOT_LABEL_KEYS[status] : undefined;
   const color =
-    status === 'RUNNING'
-      ? 'bg-primary-500'
-      : status === 'QUEUED'
-        ? 'bg-primary-300 motion-safe:animate-pulse dark:bg-primary-700'
-        : status === 'AWAITING_CONFIRMATION'
-          ? 'bg-amber-500'
-          : 'bg-gray-300 dark:bg-gray-600';
+    status === 'RUNNING' ? 'bg-primary-500' : 'bg-primary-300 motion-safe:animate-pulse dark:bg-primary-700';
   return (
-    <span className="relative flex h-2.5 w-2.5 flex-shrink-0" title={labelKey ? t(labelKey) : undefined}>
+    <span className="relative flex h-2 w-2 flex-shrink-0" aria-hidden>
       {status === 'RUNNING' ? (
-        <span
-          className="absolute inset-0 rounded-full bg-primary-400 opacity-75 motion-safe:animate-ping"
-          aria-hidden
-        />
+        <span className="absolute inset-0 rounded-full bg-primary-400 opacity-75 motion-safe:animate-ping" />
       ) : null}
-      <span className={`relative h-2.5 w-2.5 rounded-full ${color}`} aria-hidden />
+      <span className={`relative h-2 w-2 rounded-full ${color}`} />
     </span>
   );
 }

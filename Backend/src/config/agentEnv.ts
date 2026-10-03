@@ -8,6 +8,8 @@ export type AgentEnvConfig = {
   baseUrl: string;
   /** input + output tokens per user per UTC day, summed from `AgentRun`. */
   dailyTokenBudget: number;
+  /** Context size the chat meter measures against (the in-chat "start a new chat" hint). */
+  contextWindowTokens: number;
   rateLimitMax: number;
   rateLimitWindowMs: number;
   maxSteps: number;
@@ -43,6 +45,7 @@ export function resolveAgentEnvConfig(env: NodeJS.ProcessEnv): AgentEnvConfig {
     model: (env.AGENT_MODEL || '').trim() || AGENT_DEFAULT_MODEL,
     baseUrl: ((env.AGENT_BASE_URL || '').trim() || AGENT_DEFAULT_BASE_URL).replace(/\/$/, ''),
     dailyTokenBudget: intInRange(env.AGENT_DAILY_TOKEN_BUDGET, 1_500_000, 0, 100_000_000),
+    contextWindowTokens: intInRange(env.AGENT_CONTEXT_WINDOW_TOKENS, 128_000, 1_000, 10_000_000),
     rateLimitMax: intInRange(env.AGENT_RATE_LIMIT_MAX, 30, 1, 10_000),
     rateLimitWindowMs: intInRange(env.AGENT_RATE_LIMIT_WINDOW_MS, 10 * 60 * 1000, 1000, 24 * 60 * 60 * 1000),
     maxSteps: intInRange(env.AGENT_MAX_STEPS, 8, 1, 20),

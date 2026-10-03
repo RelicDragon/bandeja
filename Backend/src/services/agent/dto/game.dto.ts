@@ -4,9 +4,31 @@
  * Game `name` / `description` are user-written text and reach the model as DATA only.
  */
 import { ParticipantStatus, type Prisma } from '@prisma/client';
+import { formatInTimeZone } from 'date-fns-tz';
 import type { AgentEntityRef } from '@bandeja/shared/agentContract';
 
 const DESCRIPTION_MAX = 600;
+const LOCAL_FORMAT = 'EEE yyyy-MM-dd HH:mm';
+
+/**
+ * Wall-clock start/end in the game's city timezone, computed here so the model never
+ * converts UTC itself (it got offsets wrong). Null when the time isn't set or the zone is
+ * missing/invalid; then the model only has the UTC `startTime`.
+ */
+export function agentLocalTimes(
+  row: { startTime: Date; endTime: Date; timeIsSet: boolean },
+  timezone: string | null | undefined,
+): { localStart: string | null; localEnd: string | null } {
+  if (!row.timeIsSet || !timezone) return { localStart: null, localEnd: null };
+  try {
+    return {
+      localStart: formatInTimeZone(row.startTime, timezone, LOCAL_FORMAT),
+      localEnd: formatInTimeZone(row.endTime, timezone, LOCAL_FORMAT),
+    };
+  } catch {
+    return { localStart: null, localEnd: null };
+  }
+}
 
 export function agentGameSummarySelect(viewerId: string) {
   return {
@@ -65,6 +87,7 @@ export function toAgentGameSummary(row: AgentGameSummaryRow) {
     resultsStatus: row.resultsStatus,
     startTime: row.timeIsSet ? row.startTime.toISOString() : null,
     endTime: row.timeIsSet ? row.endTime.toISOString() : null,
+    ...agentLocalTimes(row, row.city?.timezone),
     timeIsSet: row.timeIsSet,
     cityTimezone: row.city?.timezone ?? null,
     cityName: row.city?.name ?? null,

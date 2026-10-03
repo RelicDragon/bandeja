@@ -242,8 +242,13 @@ export const queryKeys = {
   /** AI agent chats (docs/plans/ai-agent.md). Streaming state is not Query — see `features/agent`. */
   agent: {
     all: ['agent'] as const,
-    chats: (userId?: string) =>
-      userId != null ? (['agent', 'chats', userId] as const) : (['agent', 'chats'] as const),
+    /** `AgentChatListData`; `view` = main list or Archived. No args = every list (invalidation). */
+    chats: (userId?: string, view?: 'main' | 'archived') =>
+      userId != null
+        ? view != null
+          ? (['agent', 'chats', userId, view] as const)
+          : (['agent', 'chats', userId] as const)
+        : (['agent', 'chats'] as const),
     chat: (chatId: string) => ['agent', 'chat', chatId] as const,
     permissions: (userId?: string) =>
       userId != null ? (['agent', 'permissions', userId] as const) : (['agent', 'permissions'] as const),

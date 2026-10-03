@@ -6,6 +6,16 @@
     "newChat": "Nuevo chat",
     "noMessagesYet": "Aún no hay mensajes",
     "archived": "Chat archivado",
+    "unarchived": "Chat devuelto a Conversaciones",
+    "deleted": "Chat eliminado",
+    "pinned": "Fijados",
+    "chatsTab": "Conversaciones",
+    "archivedTab": "Archivados",
+    "archivedEmpty": "No hay chats archivados",
+    "deleteConfirm": {
+      "title": "¿Eliminar este chat?",
+      "message": "«{{title}}» desaparecerá de tus chats para siempre. Para solo ocultarlo, archívalo."
+    },
     "selectChat": "Elige un chat o empieza uno nuevo",
     "backToChats": "Volver a los chats",
     "disclaimer": "El asistente puede equivocarse. Nada cambia hasta que lo confirmes.",
@@ -22,12 +32,22 @@
       "open": "Opciones del chat",
       "rename": "Renombrar",
       "renameTitle": "Renombrar chat",
-      "archive": "Archivar chat"
+      "archive": "Archivar",
+      "pin": "Fijar",
+      "unpin": "Desfijar",
+      "unarchive": "Desarchivar",
+      "delete": "Eliminar chat"
     },
     "composer": {
       "placeholder": "Pregunta por tus partidos, ligas, clubes…",
       "send": "Enviar",
       "stop": "Detener"
+    },
+    "message": {
+      "share": "Compartir",
+      "copyFailed": "No se pudo copiar",
+      "editHint": "Al enviar se reemplazará este mensaje y todo lo que viene después.",
+      "actions": "Acciones del mensaje"
     },
     "empty": {
       "listTitle": "Tu asistente de pádel",
@@ -211,6 +231,22 @@
         "unconfigured": "sin configurar",
         "empty_results": "sin resultados"
       }
+    },
+    "context": {
+      "meterLabel": "Contexto usado: {{percent}}%",
+      "hintWarn": "Este chat se está alargando. Empieza uno nuevo para respuestas más rápidas y precisas.",
+      "hintCritical": "Este chat está casi lleno. Empieza uno nuevo: ya se están olvidando los mensajes antiguos.",
+      "newChat": "Nuevo chat",
+      "title": "Contexto",
+      "contextUsed": "{{percent}}% del contexto usado",
+      "tokensOf": "{{used}} de {{total}} tokens",
+      "explainOk": "Cada mensaje envía la conversación completa al asistente. Los chats cortos son más rápidos y precisos.",
+      "explainLong": "Este chat es largo: cada mensaje lo reenvía, lo que gasta más de tu límite diario y hace las respuestas menos precisas. Empieza un chat nuevo; la memoria guardada se conserva.",
+      "dailyTitle": "Límite diario",
+      "left": "Tokens restantes",
+      "resets": "Se reinicia",
+      "resetsAt": "{{time}} (en {{duration}})",
+      "dailyExplain": "Compartido entre todos tus chats de IA. Cuando se agota, el asistente se pausa hasta el reinicio."
     }
   }
 }

@@ -20,7 +20,7 @@ export async function listBotChats(userId: string): Promise<AgentChatDto[]> {
 
 export async function getCurrentAgentChat(userId: string): Promise<{ id: string; title: string | null } | null> {
   return prisma.agentChat.findFirst({
-    where: { userId, archivedAt: null },
+    where: { userId, archivedAt: null, deletedAt: null },
     orderBy: { updatedAt: 'desc' },
     select: { id: true, title: true },
   });

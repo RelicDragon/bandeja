@@ -219,11 +219,49 @@ void (async () => {
     assert.deepEqual(frameTypes(synthetic.body), ['run.started', 'run.cancelled']);
     assert.ok(frameIds(synthetic.body).every((id) => id > AGENT_SYNTHETIC_EVENT_ID_BASE));
 
-    // --- cancel + archive ---------------------------------------------------------------------------
+    // --- cancel + pin + archive + delete -------------------------------------------------------------
     assert.equal((await call(player.userId, 'POST', `/runs/${oldRun.id}/cancel`)).status, 404);
     assert.equal((await call(owner.userId, 'POST', `/runs/${oldRun.id}/cancel`)).status, 200);
-    assert.equal((await call(owner.userId, 'DELETE', `/chats/${chat.id}`)).status, 200);
-    assert.equal((await call(owner.userId, 'GET', `/chats/${chat.id}`)).status, 404, 'archived chat is gone');
+    type ListBody = { chats: { id: string; pinnedAt: string | null; archivedAt: string | null }[]; archivedCount: number };
+    const listOf = async (path: string) => (await call(owner.userId, 'GET', path)).body.data as ListBody;
+    res = await call(owner.userId, 'POST', '/chats', {});
+    const second = res.body.data as { id: string; updatedAt: string };
+    chatIds.push(second.id);
+    assert.deepEqual((await listOf('/chats')).chats.map((c) => c.id), [second.id, chat.id], 'newest first');
+    assert.equal((await call(owner.userId, 'PATCH', `/chats/${chat.id}`, {})).status, 400, 'empty patch');
+    assert.equal((await call(player.userId, 'PATCH', `/chats/${chat.id}`, { pinned: true })).status, 404);
+    const beforePin = await prisma.agentChat.findUniqueOrThrow({ where: { id: chat.id } });
+    res = await call(owner.userId, 'PATCH', `/chats/${chat.id}`, { pinned: true });
+    assert.equal(res.status, 200);
+    assert.ok((res.body.data as { pinnedAt: string | null }).pinnedAt);
+    const afterPin = await prisma.agentChat.findUniqueOrThrow({ where: { id: chat.id } });
+    assert.equal(afterPin.updatedAt.getTime(), beforePin.updatedAt.getTime(), 'pinning keeps updatedAt');
+    assert.deepEqual((await listOf('/chats')).chats.map((c) => c.id), [chat.id, second.id], 'pinned first');
+
+    // Archive moves the chat to ?archived=1; it stays readable.
+    assert.equal((await call(owner.userId, 'PATCH', `/chats/${second.id}`, { archived: true })).status, 200);
+    let main = await listOf('/chats');
+    assert.deepEqual(main.chats.map((c) => c.id), [chat.id]);
+    assert.equal(main.archivedCount, 1);
+    const archivedList = await listOf('/chats?archived=1');
+    assert.deepEqual(archivedList.chats.map((c) => c.id), [second.id]);
+    assert.ok(archivedList.chats[0].archivedAt);
+    assert.equal((await call(owner.userId, 'GET', `/chats/${second.id}`)).status, 200, 'archived chat is readable');
+    assert.equal((await call(owner.userId, 'PATCH', `/chats/${second.id}`, { archived: false })).status, 200);
+    assert.equal((await listOf('/chats')).archivedCount, 0, 'unarchived');
+
+    // Bare DELETE (store builds' "Archive chat") archives; ?mode=delete hides it everywhere, row kept.
+    assert.equal((await call(owner.userId, 'DELETE', `/chats/${second.id}`)).status, 200);
+    assert.deepEqual((await listOf('/chats?archived=1')).chats.map((c) => c.id), [second.id], 'bare DELETE archives');
+    assert.equal((await call(owner.userId, 'DELETE', `/chats/${chat.id}?mode=delete`)).status, 200);
+    assert.equal((await call(owner.userId, 'GET', `/chats/${chat.id}`)).status, 404, 'deleted chat is gone');
+    assert.equal((await call(owner.userId, 'PATCH', `/chats/${chat.id}`, { archived: false })).status, 404);
+    main = await listOf('/chats');
+    assert.deepEqual(main.chats.map((c) => c.id), []);
+    assert.equal(main.archivedCount, 1, 'deleted chats are not counted');
+    const deletedRow = await prisma.agentChat.findUniqueOrThrow({ where: { id: chat.id } });
+    assert.ok(deletedRow.deletedAt, 'deleted chat stays on the server');
+    assert.equal(deletedRow.pinnedAt, null);
 
     console.log('agent.routes.http.integration.test.ts: ok');
   } catch (error) {

@@ -234,7 +234,18 @@ function testAccumulator() {
 
   const big = serializeToolContent({ ok: true, data: { blob: 'x'.repeat(40_000) } });
   assert.ok(big.length < 17_000);
-  assert.equal(JSON.parse(big).truncated, true);
+  assert.ok(JSON.parse(big).truncated.note.startsWith('INCOMPLETE'));
+
+  // Lists are cut by whole items, stay valid JSON and say how many were left out.
+  const fixtures = Array.from({ length: 200 }, (_, i) => ({ fixtureId: `f${i}`, teams: [['A'.repeat(60)], ['B'.repeat(60)]] }));
+  const listed = JSON.parse(serializeToolContent({ ok: true, data: { total: 200, fixtures, rounds: [{ id: 'r1' }] } }));
+  assert.ok(JSON.stringify(listed).length <= 16_000);
+  assert.equal(listed.data.total, 200);
+  assert.deepEqual(listed.data.rounds, [{ id: 'r1' }], 'small lists are kept');
+  assert.equal(listed.data.fixtures[0].fixtureId, 'f0', 'items are dropped from the end');
+  assert.equal(listed.truncated.omitted['data.fixtures'] + listed.data.fixtures.length, 200);
+  const small = JSON.parse(serializeToolContent({ ok: true, data: { fixtures: [1, 2] } }));
+  assert.equal(small.truncated, undefined);
   console.log('tool call accumulator: ok');
 }
 

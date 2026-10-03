@@ -3,20 +3,23 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, Hourglass, MoreHorizontal, RotateCcw, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Hourglass, MoreHorizontal, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { getBackAction } from '@/utils/backNavigation';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import {
   useAgentChatQuery,
-  useArchiveAgentChatMutation,
   useCancelAgentRunMutation,
+  useDeleteAgentChatMutation,
+  useCreateAgentChatMutation,
   useConfirmAgentActionMutation,
   confirmVarsActionId,
   type ConfirmAgentActionVars,
   useRejectAgentActionMutation,
   useRenameAgentChatMutation,
+  useSetAgentChatArchivedMutation,
+  useSetAgentChatPinnedMutation,
   useSendAgentMessageMutation,
 } from '@/queries/agent/useAgentQueries';
 import { useAgentStream } from '@/features/agent/useAgentStream';
@@ -27,15 +30,18 @@ import { isLiveAgentRunStatus } from '@/features/agent/agentChatsPolling';
 import { buildAgentTimeline, groupAgentTimeline, type AgentRenderItem } from '@/features/agent/agentTimeline';
 import { agentErrorCodeOf, agentErrorKey } from '@/features/agent/agentErrors';
 import { AgentSendContext, type AgentSendApi } from '@/features/agent/agentSendContext';
-import { stripAgentRefTokens } from '@/features/agent/agentBookingCards';
+import { agentRefToken, parseAgentRefTokens, stripAgentRefTokens } from '@/features/agent/agentBookingCards';
+import { agentMarkdownToPlainText } from '@/features/agent/agentMessageShare';
 import type { AgentErrorCode } from '@shared/agentContract';
 import { AgentComposer } from './AgentComposer';
 import { AgentMarkdown } from './AgentMarkdown';
+import { AgentMessageActions, AgentMessageEditor } from './AgentMessageActions';
 import { AgentToolGroup } from './AgentToolGroup';
 import { AgentActionCard } from './AgentActionCard';
 import { AgentClientActionCard } from './AgentClientActionCard';
 import { useAgentClientExecution, useAgentClientResume } from '@/queries/agent/useAgentClientExecution';
-import { AgentChatMenuSheet, AgentRenameDialog } from './AgentChatMenu';
+import { AgentChatMenuSheet, AgentDeleteChatDialog, AgentRenameDialog } from './AgentChatMenu';
+import { AgentContextHint, AgentContextMeterButton, AgentContextSheet } from './AgentContextMeter';
 import {
   AGENT_EXAMPLE_PROMPT_KEYS,
   readAgentInitialPrompt,
@@ -51,6 +57,13 @@ interface PendingSend {
   text: string;
   failed: boolean;
   code: AgentErrorCode | null;
+  /** Edit of a stored USER message: it and everything after it are hidden while this sends. */
+  edit?: AgentEditTarget;
+}
+
+interface AgentEditTarget {
+  messageId: string;
+  seq: number;
 }
 
 interface AgentChatViewProps {
@@ -103,12 +116,29 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
   const runClientAction = useAgentClientExecution(chatId);
   useAgentClientResume();
   const renameMutation = useRenameAgentChatMutation();
-  const archiveMutation = useArchiveAgentChatMutation();
+  const pinMutation = useSetAgentChatPinnedMutation();
+  const archiveMutation = useSetAgentChatArchivedMutation();
+  const deleteMutation = useDeleteAgentChatMutation();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState<PendingSend[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
+  const usage = detail?.usage;
+  const createChatMutation = useCreateAgentChatMutation();
+  const startNewChat = useCallback(() => {
+    if (createChatMutation.isPending) return;
+    createChatMutation.mutate(undefined, {
+      onSuccess: (chat) => {
+        setContextOpen(false);
+        navigate(`/ai/${encodeURIComponent(chat.id)}`, { replace: true });
+      },
+      onError: (err) => toast.error(extractApiErrorMessage(err, t)),
+    });
+  }, [createChatMutation, navigate, t]);
 
   useEffect(() => {
     if (embedded) return;
@@ -191,10 +221,39 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_THRESHOLD_PX;
   };
 
-  const timeline = useMemo(
-    () => (detail ? groupAgentTimeline(buildAgentTimeline(detail.messages, detail.actions, live)) : []),
-    [detail, live],
+  // An edit in flight rewinds the view to before the edited message (the server does the same).
+  const editCutSeq = pending.reduce<number | null>(
+    (min, p) => (p.edit && (min == null || p.edit.seq < min) ? p.edit.seq : min),
+    null,
   );
+  const timeline = useMemo(() => {
+    if (!detail) return [];
+    if (editCutSeq == null) return groupAgentTimeline(buildAgentTimeline(detail.messages, detail.actions, live));
+    const kept = detail.messages.filter((m) => m.seq < editCutSeq);
+    return groupAgentTimeline(buildAgentTimeline(kept, detail.actions, null));
+  }, [detail, live, editCutSeq]);
+
+  // Copy / Share on a reply: on its last text block, covering every text block of that turn.
+  const replyTextByKey = useMemo(() => {
+    const out = new Map<string, string>();
+    let texts: string[] = [];
+    let lastKey: string | null = null;
+    const close = () => {
+      if (lastKey && texts.length) out.set(lastKey, texts.map(agentMarkdownToPlainText).join('\n\n'));
+      texts = [];
+      lastKey = null;
+    };
+    for (const item of timeline) {
+      if (item.kind === 'user') close();
+      else if (item.kind === 'assistantText') {
+        texts.push(item.text);
+        lastKey = item.key;
+      }
+    }
+    // The turn still being written gets its actions once the run ends.
+    if (!running) close();
+    return out;
+  }, [timeline, running]);
 
   // Keys on screen when the chat first loaded: that history shows at once; anything later types in.
   const initialKeysRef = useRef<Set<string> | null>(null);
@@ -210,16 +269,21 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
 
   // ---- sending ----
   const send = useCallback(
-    async (text: string, localId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`) => {
+    async (
+      text: string,
+      opts: { localId?: string; edit?: AgentEditTarget } = {},
+    ) => {
       const trimmed = text.trim();
       if (!trimmed) return;
+      const localId = opts.localId ?? `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const edit = opts.edit;
       stickRef.current = true;
       setPending((prev) => [
         ...prev.filter((p) => p.localId !== localId),
-        { localId, text: trimmed, failed: false, code: null },
+        { localId, text: trimmed, failed: false, code: null, ...(edit ? { edit } : {}) },
       ]);
       try {
-        await sendMutation.mutateAsync(trimmed);
+        await sendMutation.mutateAsync({ text: trimmed, ...(edit ? { edit } : {}) });
         setPending((prev) => prev.filter((p) => p.localId !== localId));
       } catch (err) {
         const code = agentErrorCodeOf(err);
@@ -284,24 +348,85 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
 
   const title = detail?.title?.trim() || t('agent.newChat');
 
-  const handleArchive = () => {
+  const isArchived = Boolean(detail?.archivedAt);
+  const handleTogglePin = () => {
     setMenuOpen(false);
-    archiveMutation.mutate(chatId, {
-      onSuccess: () => navigate(AGENT_LIST_URL, { replace: true }),
-      onError: (err) => toast.error(extractApiErrorMessage(err, t)),
+    pinMutation.mutate(
+      { chatId, pinned: !detail?.pinnedAt },
+      { onError: (err) => toast.error(extractApiErrorMessage(err, t)) },
+    );
+  };
+  // Archiving returns to the list (as before); unarchiving keeps the thread open.
+  const handleToggleArchive = () => {
+    setMenuOpen(false);
+    const archived = !isArchived;
+    archiveMutation.mutate(
+      { chatId, archived },
+      {
+        onSuccess: () => {
+          toast.success(t(archived ? 'agent.archived' : 'agent.unarchived'));
+          if (archived) navigate(AGENT_LIST_URL, { replace: true });
+        },
+        onError: (err) => toast.error(extractApiErrorMessage(err, t)),
+      },
+    );
+  };
+  const handleDelete = () => {
+    deleteMutation.mutate(
+      { chatId, archived: isArchived },
+      {
+        onSuccess: () => {
+          toast.success(t('agent.deleted'));
+          navigate(AGENT_LIST_URL, { replace: true });
+        },
+        onError: (err) => toast.error(extractApiErrorMessage(err, t)),
+      },
+    );
+  };
+
+  const editBlocked = running || sendingNow;
+  // Ref tokens stay hidden while editing and ride along on the resend (slot / booking cards).
+  const submitEdit = (item: Extract<AgentRenderItem, { kind: 'user' }>, text: string) => {
+    const tokens = parseAgentRefTokens(item.text).map((r) => agentRefToken(r.kind, r.ref));
+    setEditingId(null);
+    void send(tokens.length ? `${text} ${tokens.join(' ')}` : text, {
+      edit: { messageId: item.messageId, seq: item.seq },
     });
   };
 
   const renderItem = (item: AgentRenderItem) => {
     switch (item.kind) {
       case 'user':
-        return <UserBubble text={item.text} />;
-      case 'assistantText':
+        if (editingId === item.messageId) {
+          return (
+            <AgentMessageEditor
+              initialText={stripAgentRefTokens(item.text)}
+              onCancel={() => setEditingId(null)}
+              onSubmit={(text) => submitEdit(item, text)}
+              submitDisabled={editBlocked}
+            />
+          );
+        }
         return (
-          <div className="max-w-full text-gray-900 dark:text-gray-100">
-            <AgentMarkdown text={item.text} streaming={item.streaming} animate={arrivedLive(item.key)} />
+          <div className="group">
+            <UserBubble text={item.text} />
+            <AgentMessageActions
+              align="end"
+              getText={() => stripAgentRefTokens(item.text)}
+              onEdit={() => setEditingId(item.messageId)}
+              editDisabled={editBlocked}
+            />
           </div>
         );
+      case 'assistantText': {
+        const replyText = replyTextByKey.get(item.key);
+        return (
+          <div className="group max-w-full text-gray-900 dark:text-gray-100">
+            <AgentMarkdown text={item.text} streaming={item.streaming} animate={arrivedLive(item.key)} />
+            {replyText ? <AgentMessageActions align="start" getText={() => replyText} /> : null}
+          </div>
+        );
+      }
       case 'toolGroup':
         return <AgentToolGroup tools={item.tools} />;
       case 'action':
@@ -338,8 +463,8 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
       (lastSegment.kind === 'tool' && live?.tools[lastSegment.callId]?.status !== 'running'));
   // A client-side attach failure only matters while the server still has the run active.
   const runError =
-    !running && live?.phase === 'failed' && !(live.connectionFailed && serverRunId == null) ? live.error : null;
-  const runStopped = !running && live?.phase === 'cancelled';
+    editCutSeq == null && !running && live?.phase === 'failed' && !(live.connectionFailed && serverRunId == null) ? live.error : null;
+  const runStopped = editCutSeq == null && !running && live?.phase === 'cancelled';
   const isEmpty = detailQuery.isSuccess && timeline.length === 0 && pending.length === 0 && !running;
 
   return (
@@ -380,6 +505,7 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
               </p>
             ) : null}
           </div>
+          <AgentContextMeterButton usage={usage} onClick={() => setContextOpen(true)} />
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -445,12 +571,22 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                       <span>{t(agentErrorKey(p.code))}</span>
                       <button
                         type="button"
-                        onClick={() => void send(p.text, p.localId)}
+                        onClick={() => void send(p.text, { localId: p.localId, edit: p.edit })}
                         className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-medium dark:border-red-900/60"
                       >
                         <RotateCcw size={12} aria-hidden />
                         {t('common.retry')}
                       </button>
+                      {p.edit ? (
+                        <button
+                          type="button"
+                          onClick={() => setPending((prev) => prev.filter((x) => x.localId !== p.localId))}
+                          className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-medium dark:border-red-900/60"
+                        >
+                          <X size={12} aria-hidden />
+                          {t('common.cancel')}
+                        </button>
+                      ) : null}
                     </div>
                   ) : null}
                 </motion.div>
@@ -497,6 +633,7 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
         data-cap-chat-composer
         className="absolute bottom-0 left-0 right-0 z-50 flex-shrink-0 border-transparent !bg-transparent"
       >
+        <AgentContextHint usage={usage} onNewChat={startNewChat} creating={createChatMutation.isPending} />
         <AgentComposer
           value={draft}
           onChange={setDraft}
@@ -516,7 +653,28 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
           setMenuOpen(false);
           setRenameOpen(true);
         }}
-        onArchive={handleArchive}
+        pinned={Boolean(detail?.pinnedAt)}
+        archived={isArchived}
+        onTogglePin={handleTogglePin}
+        onToggleArchive={handleToggleArchive}
+        onDelete={() => {
+          setMenuOpen(false);
+          setDeleteOpen(true);
+        }}
+      />
+      <AgentDeleteChatDialog
+        open={deleteOpen}
+        title={title}
+        deleting={deleteMutation.isPending}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDelete}
+      />
+      <AgentContextSheet
+        open={contextOpen}
+        usage={usage}
+        onClose={() => setContextOpen(false)}
+        onNewChat={startNewChat}
+        creating={createChatMutation.isPending}
       />
       <AgentRenameDialog
         open={renameOpen}

@@ -6,6 +6,16 @@
     "newChat": "Novi čet",
     "noMessagesYet": "Još nema poruka",
     "archived": "Čet je arhiviran",
+    "unarchived": "Čet je vraćen u Četove",
+    "deleted": "Čet je obrisan",
+    "pinned": "Zakačeno",
+    "chatsTab": "Četovi",
+    "archivedTab": "Arhiva",
+    "archivedEmpty": "Nema arhiviranih četova",
+    "deleteConfirm": {
+      "title": "Obrisati ovaj čet?",
+      "message": "„{{title}}“ će zauvek nestati iz vaših četova. Ako želite samo da ga sklonite, arhivirajte ga."
+    },
     "selectChat": "Izaberite čet ili započnite novi",
     "backToChats": "Nazad na četove",
     "disclaimer": "Asistent može da pogreši. Ništa se ne menja dok ne potvrdite.",
@@ -22,12 +32,22 @@
       "open": "Opcije četa",
       "rename": "Preimenuj",
       "renameTitle": "Preimenuj čet",
-      "archive": "Arhiviraj čet"
+      "archive": "Arhiviraj",
+      "pin": "Zakači",
+      "unpin": "Otkači",
+      "unarchive": "Vrati iz arhive",
+      "delete": "Obriši čet"
     },
     "composer": {
       "placeholder": "Pitajte o igrama, ligama, klubovima…",
       "send": "Pošalji",
       "stop": "Zaustavi"
+    },
+    "message": {
+      "share": "Podeli",
+      "copyFailed": "Kopiranje nije uspelo",
+      "editHint": "Slanje zamenjuje ovu poruku i sve posle nje.",
+      "actions": "Radnje sa porukom"
     },
     "empty": {
       "listTitle": "Vaš padel asistent",
@@ -211,6 +231,22 @@
         "unconfigured": "nije podešen",
         "empty_results": "bez rezultata"
       }
+    },
+    "context": {
+      "meterLabel": "Iskorišćen kontekst: {{percent}}%",
+      "hintWarn": "Ovaj čet postaje dug. Započnite novi za brže i preciznije odgovore.",
+      "hintCritical": "Ovaj čet je skoro pun. Započnite novi — starije poruke se već zaboravljaju.",
+      "newChat": "Novi čet",
+      "title": "Kontekst",
+      "contextUsed": "Iskorišćeno {{percent}}% konteksta",
+      "tokensOf": "{{used}} / {{total}} tokena",
+      "explainOk": "Svaka poruka šalje asistentu ceo dosadašnji razgovor. Kraći četovi su brži i precizniji.",
+      "explainLong": "Ovaj čet je dug: svaka poruka ga ponovo šalje, što troši više dnevnog limita i smanjuje preciznost odgovora. Započnite novi čet — sačuvana memorija ostaje.",
+      "dailyTitle": "Dnevni limit",
+      "left": "Preostalo tokena",
+      "resets": "Resetuje se",
+      "resetsAt": "{{time}} (za {{duration}})",
+      "dailyExplain": "Zajednički za sve vaše AI četove. Kada se potroši, asistent pauzira do resetovanja."
     }
   }
 }

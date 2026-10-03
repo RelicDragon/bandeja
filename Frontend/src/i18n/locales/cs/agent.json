@@ -6,6 +6,16 @@
     "newChat": "Nový chat",
     "noMessagesYet": "Zatím žádné zprávy",
     "archived": "Chat archivován",
+    "unarchived": "Chat vrácen do Chatů",
+    "deleted": "Chat smazán",
+    "pinned": "Připnuté",
+    "chatsTab": "Chaty",
+    "archivedTab": "Archiv",
+    "archivedEmpty": "Žádné archivované chaty",
+    "deleteConfirm": {
+      "title": "Smazat tento chat?",
+      "message": "„{{title}}“ natrvalo zmizí z vašich chatů. Pokud ho chcete jen skrýt, archivujte ho."
+    },
     "selectChat": "Vyberte chat nebo začněte nový",
     "backToChats": "Zpět na chaty",
     "disclaimer": "Asistent se může mýlit. Nic se nezmění, dokud to nepotvrdíte.",
@@ -22,12 +32,22 @@
       "open": "Možnosti chatu",
       "rename": "Přejmenovat",
       "renameTitle": "Přejmenovat chat",
-      "archive": "Archivovat chat"
+      "archive": "Archivovat",
+      "pin": "Připnout",
+      "unpin": "Odepnout",
+      "unarchive": "Vrátit z archivu",
+      "delete": "Smazat chat"
     },
     "composer": {
       "placeholder": "Zeptejte se na hry, ligy, kluby…",
       "send": "Odeslat",
       "stop": "Zastavit"
+    },
+    "message": {
+      "share": "Sdílet",
+      "copyFailed": "Kopírování se nezdařilo",
+      "editHint": "Odesláním nahradíte tuto zprávu a vše, co následuje.",
+      "actions": "Akce zprávy"
     },
     "empty": {
       "listTitle": "Váš padelový asistent",
@@ -211,6 +231,22 @@
         "unconfigured": "nenastaveno",
         "empty_results": "bez výsledků"
       }
+    },
+    "context": {
+      "meterLabel": "Využitý kontext: {{percent}} %",
+      "hintWarn": "Tento chat se prodlužuje. Začněte nový pro rychlejší a přesnější odpovědi.",
+      "hintCritical": "Tento chat je téměř plný. Začněte nový – starší zprávy se už zapomínají.",
+      "newChat": "Nový chat",
+      "title": "Kontext",
+      "contextUsed": "Využito {{percent}} % kontextu",
+      "tokensOf": "{{used}} / {{total}} tokenů",
+      "explainOk": "Každá zpráva posílá asistentovi celou dosavadní konverzaci. Kratší chaty jsou rychlejší a přesnější.",
+      "explainLong": "Tento chat je dlouhý: každá zpráva ho posílá znovu, což spotřebuje více denního limitu a snižuje přesnost odpovědí. Začněte nový chat – uložená paměť zůstane.",
+      "dailyTitle": "Denní limit",
+      "left": "Zbývá tokenů",
+      "resets": "Obnovení",
+      "resetsAt": "{{time}} (za {{duration}})",
+      "dailyExplain": "Sdílený pro všechny vaše AI chaty. Po vyčerpání se asistent pozastaví až do obnovení."
     }
   }
 }

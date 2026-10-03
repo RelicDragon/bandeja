@@ -20,6 +20,12 @@ import {
  * server stores it on the run, so tools may propose client-executed bookings.
  */
 export const AGENT_CLIENT_CAPS = 'booking-v1';
+
+/** One `GET /agent/chats` page: the main or the Archived list, plus the archived total. */
+export interface AgentChatListData {
+  chats: AgentChatDto[];
+  archivedCount: number;
+}
 const caps = { headers: { [AGENT_CLIENT_CAPS_HEADER]: AGENT_CLIENT_CAPS } };
 
 /**
@@ -27,9 +33,13 @@ const caps = { headers: { [AGENT_CLIENT_CAPS_HEADER]: AGENT_CLIENT_CAPS } };
  * the run event stream is not here — it is a raw `fetch` in `features/agent/useAgentStream.ts`.
  */
 export const agentApi = {
-  listChats: async (): Promise<AgentChatDto[]> => {
-    const response = await api.get<ApiResponse<{ chats: AgentChatDto[] }>>('/agent/chats', caps);
-    return response.data.data.chats;
+  /** `archived`: the Archived list instead of the main one. `archivedCount` is always the archived total. */
+  listChats: async (opts: { archived?: boolean } = {}): Promise<AgentChatListData> => {
+    const response = await api.get<ApiResponse<{ chats: AgentChatDto[]; archivedCount?: number }>>('/agent/chats', {
+      ...caps,
+      params: opts.archived ? { archived: '1' } : undefined,
+    });
+    return { chats: response.data.data.chats, archivedCount: response.data.data.archivedCount ?? 0 };
   },
 
   createChat: async (): Promise<AgentChatDto> => {
@@ -54,17 +64,41 @@ export const agentApi = {
     return response.data.data;
   },
 
-  archiveChat: async (chatId: string): Promise<void> => {
-    await api.delete<ApiResponse<{ ok: true }>>(`/agent/chats/${encodeURIComponent(chatId)}`, caps);
+  setChatPinned: async (chatId: string, pinned: boolean): Promise<AgentChatDto> => {
+    const response = await api.patch<ApiResponse<AgentChatDto>>(
+      `/agent/chats/${encodeURIComponent(chatId)}`,
+      { pinned },
+      caps,
+    );
+    return response.data.data;
+  },
+
+  setChatArchived: async (chatId: string, archived: boolean): Promise<AgentChatDto> => {
+    const response = await api.patch<ApiResponse<AgentChatDto>>(
+      `/agent/chats/${encodeURIComponent(chatId)}`,
+      { archived },
+      caps,
+    );
+    return response.data.data;
+  },
+
+  /** Soft delete: the chat is hidden everywhere; the server keeps its rows. (Bare DELETE archives.) */
+  deleteChat: async (chatId: string): Promise<void> => {
+    await api.delete<ApiResponse<{ ok: true }>>(`/agent/chats/${encodeURIComponent(chatId)}`, {
+      ...caps,
+      params: { mode: 'delete' },
+    });
   },
 
   sendMessage: async (
     chatId: string,
     text: string,
+    /** Edit: the server drops this USER message and everything after it, then sends `text`. */
+    editMessageId?: string,
   ): Promise<{ message: AgentMessageDto; runId: string }> => {
     const response = await api.post<ApiResponse<{ message: AgentMessageDto; runId: string }>>(
       `/agent/chats/${encodeURIComponent(chatId)}/messages`,
-      { text },
+      editMessageId ? { text, editMessageId } : { text },
       caps,
     );
     return response.data.data;

@@ -22,6 +22,7 @@ import { LeagueBroadcastService } from '../../league/broadcast.service';
 import type { AgentPrincipal } from '../access/agentPrincipal';
 import { agentGameNotFound, assertAgentCanViewGame, assertAgentGamePermission } from '../access/agentGameAccess';
 import { proposeAgentAction } from '../agentActionPropose';
+import { agentLocalTimes } from '../dto/game.dto';
 import { agentT } from '../i18n/agentI18n';
 import { agentLeagueT } from '../i18n/agentLeagueI18n';
 import { loadVisibleLeagueSeason } from './leagueSchedule.tools';
@@ -184,7 +185,7 @@ export const rescheduleLeagueFixtureTool = defineTool({
       }
       const after = await prisma.game.findUniqueOrThrow({
         where: { id: plan.fixtureId },
-        select: { startTime: true, endTime: true, timeIsSet: true, clubId: true, courtId: true },
+        select: { city: { select: { timezone: true } }, startTime: true, endTime: true, timeIsSet: true, clubId: true, courtId: true },
       });
       return {
         message: agentLeagueT(ctx.locale, 'result.fixtureUpdated'),
@@ -193,6 +194,7 @@ export const rescheduleLeagueFixtureTool = defineTool({
           fixtureId: plan.fixtureId,
           startTime: after.timeIsSet ? after.startTime.toISOString() : null,
           endTime: after.timeIsSet ? after.endTime.toISOString() : null,
+          ...agentLocalTimes(after, after.city?.timezone),
           clubId: after.clubId,
           courtId: after.courtId,
         },

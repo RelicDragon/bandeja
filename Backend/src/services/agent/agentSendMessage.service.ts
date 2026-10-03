@@ -15,6 +15,8 @@ export type SendAgentUserMessageInput = {
   user: { id: string; isAdmin: boolean };
   chatId: string;
   text: string;
+  /** Edit: rewind the chat to this USER message (dropped with everything after it) and resend. */
+  editMessageId?: string | null;
   /** Reply language hint (`X-App-Locale` over HTTP, the bot language in Telegram). */
   locale: string | null;
   /** Parsed `X-Agent-Client-Caps` (app only; Telegram and old builds: none). Stored on the run. */
@@ -34,6 +36,7 @@ export async function sendAgentUserMessage(
     userId: input.user.id,
     chatId: input.chatId,
     text: input.text,
+    editMessageId: input.editMessageId ?? null,
     headerLocale: input.locale,
     clientCaps: input.clientCaps ?? null,
   });

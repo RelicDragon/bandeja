@@ -47,24 +47,45 @@ noteAgentMessageRateStoreInitialized(config.agent.rateLimitWindowMs);
 
 router.use(authenticate);
 
-router.get('/chats', agentController.listChats);
+router.get(
+  '/chats',
+  validateZod({ query: z.object({ archived: z.enum(['0', '1']).optional() }) }),
+  agentController.listChats,
+);
 router.post('/chats', agentController.createChat);
 router.get('/chats/:chatId', validateZod({ params: chatParams }), agentController.getChat);
 router.patch(
   '/chats/:chatId',
   validateZod({
     params: chatParams,
-    body: z.object({ title: z.string().trim().min(1).max(AGENT_CHAT_TITLE_MAX) }),
+    body: z
+      .object({
+        title: z.string().trim().min(1).max(AGENT_CHAT_TITLE_MAX).optional(),
+        pinned: z.boolean().optional(),
+        archived: z.boolean().optional(),
+      })
+      .refine((body) => body.title !== undefined || body.pinned !== undefined || body.archived !== undefined, {
+        message: 'Nothing to update',
+      }),
   }),
   agentController.patchChat,
 );
-router.delete('/chats/:chatId', validateZod({ params: chatParams }), agentController.deleteChat);
+// Bare DELETE archives (store builds); `?mode=delete` is the soft delete.
+router.delete(
+  '/chats/:chatId',
+  validateZod({ params: chatParams, query: z.object({ mode: z.enum(['delete', 'archive']).optional() }) }),
+  agentController.deleteChat,
+);
 router.post(
   '/chats/:chatId/messages',
   agentMessageLimiter,
   validateZod({
     params: chatParams,
-    body: z.object({ text: z.string().trim().min(1).max(AGENT_MESSAGE_MAX_LENGTH) }),
+    // `editMessageId`: rewind to that USER message (it and everything after are dropped) and resend.
+    body: z.object({
+      text: z.string().trim().min(1).max(AGENT_MESSAGE_MAX_LENGTH),
+      editMessageId: idParam.optional(),
+    }),
   }),
   agentController.postMessage,
 );
