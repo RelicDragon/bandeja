@@ -28,15 +28,29 @@ interface AgentComposerProps {
   running: boolean;
   stopping?: boolean;
   disabled?: boolean;
+  /** Why sending is paused (rate limit / daily budget): replaces the placeholder and disables input. */
+  pausedReason?: string | null;
 }
 
 /**
  * Pill composer forked from `MessageInput` (no mentions, media, drafts). Mic = dictation into
  * the draft (still editable before sending); the waveform button starts a voice conversation.
  */
-export function AgentComposer({ value, onChange, onSend, onStop, onStartVoice, running, stopping, disabled }: AgentComposerProps) {
+export function AgentComposer({
+  value,
+  onChange,
+  onSend,
+  onStop,
+  onStartVoice,
+  running,
+  stopping,
+  disabled: disabledProp,
+  pausedReason,
+}: AgentComposerProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const disabled = Boolean(disabledProp || pausedReason);
   const { inputContainerRef } = useMessageInputMultiline(value, 0);
   const hasText = value.trim().length > 0;
   const canSend = !disabled && !running && hasText;
@@ -79,16 +93,27 @@ export function AgentComposer({ value, onChange, onSend, onStop, onStartVoice, r
     el.style.height = `${Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, el.scrollHeight))}px`;
   }, [value, recording]);
 
+  // Send / Stop swap the button under the pointer: keep focus in the text field (the keyboard stays up).
+  const keepFocus = useCallback(() => {
+    const active = document.activeElement;
+    if (!active || !formRef.current?.contains(active)) return;
+    requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true }));
+  }, []);
+
   const submit = useCallback(
     (e?: FormEvent) => {
       e?.preventDefault();
       if (running) {
+        keepFocus();
         onStop();
         return;
       }
-      if (canSend) onSend();
+      if (canSend) {
+        keepFocus();
+        onSend();
+      }
     },
-    [running, canSend, onSend, onStop],
+    [running, canSend, onSend, onStop, keepFocus],
   );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -103,11 +128,11 @@ export function AgentComposer({ value, onChange, onSend, onStop, onStartVoice, r
   const roundBtn =
     'message-input-action-btn flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50';
   const gradient =
-    'bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white hover:scale-105 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800';
+    'bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white hover:scale-105 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800';
 
   return (
     <div className="p-3 overflow-visible">
-      <form onSubmit={submit} className="relative mx-auto max-w-3xl overflow-visible">
+      <form ref={formRef} onSubmit={submit} className="relative mx-auto max-w-3xl overflow-visible">
         <div
           ref={inputContainerRef}
           className="message-input-panel relative min-w-0 w-full max-w-full overflow-visible rounded-[24px] border border-gray-200 bg-white transition-all dark:border-gray-700 dark:bg-gray-800"
@@ -133,7 +158,7 @@ export function AgentComposer({ value, onChange, onSend, onStop, onStartVoice, r
                   return (
                     <span
                       key={i}
-                      className="w-[3px] rounded-full bg-blue-500/80 transition-[height] duration-100 dark:bg-blue-400/80"
+                      className="w-[3px] rounded-full bg-primary-500/80 transition-[height] duration-100 dark:bg-primary-400/80"
                       style={{ height: `${Math.max(3, Math.round(Math.min(1, level * 1.6) * 28))}px` }}
                     />
                   );
@@ -160,7 +185,9 @@ export function AgentComposer({ value, onChange, onSend, onStop, onStartVoice, r
                 rows={1}
                 dir="auto"
                 disabled={disabled || transcribing}
-                placeholder={transcribing ? t('agent.voice.dictation.transcribing') : t('agent.composer.placeholder')}
+                placeholder={
+                  pausedReason ?? (transcribing ? t('agent.voice.dictation.transcribing') : t('agent.composer.placeholder'))
+                }
                 aria-label={t('agent.composer.placeholder')}
                 className="block w-full resize-none overflow-y-auto rounded-[24px] bg-transparent py-3 pe-[6.25rem] ps-5 text-[15px] text-gray-900 outline-none placeholder:text-gray-400 disabled:opacity-60 dark:text-gray-100 dark:placeholder:text-gray-500"
                 style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT }}

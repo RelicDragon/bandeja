@@ -19,12 +19,17 @@
  *   tool_call blocks) → `message.saved` → every call of the step: `tool.started` /
  *   registry.executeTool / `tool.finished` (consecutive reads run concurrently; writes and
  *   memory tools one at a time, in order) → save TOOL message → `message.saved` → next step.
- *   Messages: static rules, history, then the per-turn snapshot right before the latest user
- *   message (prompt-cache prefix, `agentContext.service.ts`). Tools: with
- *   `AGENT_TOOL_GROUPS_ENABLED`, core + `load_tools` + loaded groups (`tools/toolGroups.ts`).
+ *   Messages: static rules, then the append-only history; the run stores its turn (snapshot,
+ *   user text, language reminder) on its USER message so the next turn replays it unchanged
+ *   (prompt-cache prefix, `agentContext.service.ts`). Tools: with `AGENT_TOOL_GROUPS_ENABLED`,
+ *   core + `load_tools` + every group the chat has used (`tools/toolGroups.ts`).
  *   The run records `endReason`, and the provider's prompt-cache hits as `cachedInputTokens`. No tool calls: save
  *   ASSISTANT text → `message.saved` → `run.completed`. Wall clock `AGENT_RUN_TIMEOUT_MS`
- *   from claim. The executor heartbeats every 2s; a heartbeat that finds the row no longer
+ *   from claim. Before each step: daily budget re-check (`BUDGET_EXCEEDED`) and the context
+ *   trim (`trimAgentContext`). A model call is retried / falls back before any output
+ *   (`streamModelStep`); `max_tokens` is `AGENT_MAX_OUTPUT_TOKENS`, and a reply cut at it never
+ *   runs its tool calls. Tool handlers have a deadline (`AGENT_TOOL_TIMEOUT_MS`, registry).
+ *   After the run: the rolling chat summary, off the critical path (`refreshChatSummary`). The executor heartbeats every 2s; a heartbeat that finds the row no longer
  *   RUNNING (cancelled from another process) aborts the loop. Runs never depend on an SSE
  *   listener.
  *
@@ -53,7 +58,7 @@
  * `memory.saved` right after its `tool.finished` (no card, no pause).
  */
 import os from 'node:os';
-import { AgentMessageRole, AgentRunStatus, Prisma, type AgentMessage, type AgentRun } from '@prisma/client';
+import { AgentActionStatus, AgentMessageRole, AgentRunStatus, Prisma, type AgentMessage, type AgentRun } from '@prisma/client';
 import type {
   AgentContentBlock,
   AgentErrorCode,
@@ -76,7 +81,13 @@ import {
   type AgentAutoApproveOptions,
   type AgentAutoApproveResult,
 } from './agentActionAutoApprove';
-import { expireStaleAgentActions, supersedePendingAgentActions } from './agentActionOutcome';
+import {
+  closeAgentAction,
+  expiredClosing,
+  expireStaleAgentActions,
+  readStoredActionArgs,
+  supersedePendingAgentActions,
+} from './agentActionOutcome';
 import { sweepExpiredAgentClientLeases } from './clientExecution/clientLease';
 import {
   appendAgentMessage,
@@ -84,15 +95,20 @@ import {
   autoTitleFromText,
   requireOwnedAgentChat,
   rewindAgentChatToMessage,
+  textOfBlocks,
   toAgentMessageDto,
   toAgentPendingActionDto,
 } from './agentChat.service';
 import {
   agentMemoryProvenanceFromHistory,
+  agentTurnMessages,
   buildAgentModelHistory,
   buildAgentRunContext,
+  estimateAgentTokens,
+  historyBlocks,
+  historyLlmMessages,
+  trimAgentContext,
   withAgentSnapshot,
-  type AgentChatSummaryState,
   type HistoryMessage,
 } from './agentContext.service';
 import {
@@ -103,6 +119,7 @@ import {
 } from './agentChatSummary.service';
 import { userAskedToRemember } from './agentMemory.service';
 import { getAgentEventStore, type AgentEventStore, type AgentStoredEvent } from './agentEvents';
+import { agentBudgetRetryAt } from './agentBudgetWindow';
 import { agentApiError, agentTokensUsedToday, assertAgentBudget } from './agentGuards';
 import { agentT } from './i18n/agentI18n';
 import {
@@ -111,6 +128,8 @@ import {
   ToolCallAccumulator,
   type AgentLlmClient,
   type AgentLlmMessage,
+  type AgentLlmStreamChunk,
+  type AgentLlmStreamParams,
   type AgentLlmToolCall,
 } from './llm/deepseekStream';
 import { Semaphore } from './llm/semaphore';
@@ -126,6 +145,19 @@ import {
 } from './tools/toolGroups';
 
 const TOOL_CONTENT_MAX_CHARS = 16_000;
+/** A `retry-after` longer than this is cut to it (the run has a 60s wall clock). */
+const LLM_RETRY_AFTER_MAX_MS = 5_000;
+/** A retry (or the fallback) only starts when at least this much of the run's wall clock is left. */
+const LLM_RETRY_MIN_REMAINING_MS = 5_000;
+/** Wall clock of the post-run rolling-summary call. */
+const CHAT_SUMMARY_TIMEOUT_MS = 30_000;
+
+/**
+ * Added once per run when a step's tool calls were cut off at `max_tokens` (`finish_reason:
+ * length`): those calls are not executed and the step is asked again.
+ */
+export const AGENT_OUTPUT_LIMIT_NUDGE =
+  'Your previous reply was cut off at the output length limit, so its tool calls were not run. Answer again more concisely: fewer or smaller tool calls per step (split the work over several steps), shorter arguments, and a short final answer.';
 const USAGE_LOG_INPUT_MAX_CHARS = 20_000;
 const HEARTBEAT_MS = 2_000;
 const POSITION_BROADCAST_LIMIT = 200;
@@ -155,7 +187,13 @@ export type AgentRunEndReason =
   | 'timeout'
   | 'queue_timeout'
   | 'interrupted'
-  | 'error';
+  | 'error'
+  /** The final answer hit `AGENT_MAX_OUTPUT_TOKENS` (`finish_reason: length`); saved as is. */
+  | 'truncated'
+  /** The provider's content filter stopped the reply (`finish_reason: content_filter`). */
+  | 'content_filter'
+  /** The daily token budget ran out between steps (`run.failed BUDGET_EXCEEDED`). */
+  | 'budget_exceeded';
 
 /** Per-run loop state kept across steps. */
 type AgentRunLoopState = {
@@ -176,6 +214,8 @@ type AgentRunLoopState = {
 
 export type AgentRunDeps = {
   llm: () => AgentLlmClient | null;
+  /** `AGENT_FALLBACK_MODEL`: tried once after the primary's retries (or on 404). Null = none. */
+  fallbackLlm: () => AgentLlmClient | null;
   registry: AgentToolRegistry;
   events: AgentEventStore;
   config: () => AgentEnvConfig;
@@ -206,6 +246,43 @@ class RunAborted extends Error {
   constructor(readonly reason: AbortReason) {
     super(`run ${reason}`);
   }
+}
+
+/** The daily budget ran out before a model step (`assertAgentBudget` only runs at enqueue). */
+class RunBudgetExhausted extends Error {
+  constructor() {
+    super('daily token budget exhausted');
+  }
+}
+
+/** 429 / 408 / 5xx / no status (network, connection) are worth another try. */
+function isRetryableLlmError(error: AgentLlmError): boolean {
+  const { status } = error;
+  return status == null || status === 408 || status === 429 || status >= 500;
+}
+
+/** Jittered exponential backoff (50–100% of `base · 2^(retry-1)`); `retry-after` wins, capped. */
+export function agentLlmRetryDelayMs(retry: number, baseMs: number, retryAfterMs: number | null): number {
+  if (retryAfterMs != null) return Math.min(LLM_RETRY_AFTER_MAX_MS, Math.max(0, retryAfterMs));
+  const exp = baseMs * 2 ** Math.max(0, retry - 1);
+  return Math.round(exp * (0.5 + Math.random() * 0.5));
+}
+
+/** Resolves after `ms`, or at once when `signal` aborts (the caller checks `signal.aborted`). */
+function sleepUnlessAborted(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted || ms <= 0) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(done, ms);
+    function done() {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', done);
+      resolve();
+    }
+    signal.addEventListener('abort', done, { once: true });
+  });
 }
 
 /** Longest text start still held back as possible narration (rule 4 safety net). */
@@ -295,7 +372,7 @@ function parseToolArguments(raw: string): { ok: true; value: unknown } | { ok: f
 }
 
 export function terminalEventForRun(
-  run: Pick<AgentRun, 'status' | 'errorCode' | 'error' | 'inputTokens' | 'outputTokens'>,
+  run: Pick<AgentRun, 'status' | 'errorCode' | 'error' | 'inputTokens' | 'outputTokens'> & Partial<Pick<AgentRun, 'endedAt'>>,
 ): AgentStreamEvent {
   switch (run.status) {
     case AgentRunStatus.COMPLETED:
@@ -307,12 +384,16 @@ export function terminalEventForRun(
       };
     case AgentRunStatus.CANCELLED:
       return { type: 'run.cancelled' };
-    default:
+    default: {
+      const code = (run.errorCode as AgentErrorCode | null) ?? 'INTERNAL';
       return {
         type: 'run.failed',
-        code: (run.errorCode as AgentErrorCode | null) ?? 'INTERNAL',
+        code,
         message: run.status === AgentRunStatus.FAILED ? (run.error ?? null) : 'The run was interrupted',
+        // The budget re-check between steps: the app's limits card counts down to the reset.
+        ...(code === 'BUDGET_EXCEEDED' ? { retryAt: agentBudgetRetryAt(run.endedAt ?? new Date()) } : {}),
       };
+    }
   }
 }
 
@@ -338,7 +419,14 @@ async function publishAgentQueueWake(): Promise<void> {
 
 export class AgentRunService {
   private readonly active = new Map<string, ActiveRun>();
-  private readonly lastPositions = new Map<string, number>();
+  /**
+   * Last `run.queued` position emitted per QUEUED run. Pruned on every broadcast and, for
+   * processes that never broadcast (API-only), on every write: past `queueMaxWaitMs` a run
+   * can't still be QUEUED (the sweep fails it), so older entries are dropped.
+   */
+  private readonly lastPositions = new Map<string, { position: number; at: number }>();
+  /** Post-run work (rolling chat summary) per run id, until it settles; `waitForRun` awaits it. */
+  private readonly afterRun = new Map<string, Promise<void>>();
   private readonly llmGate: Semaphore;
   private draining: Promise<void> | null = null;
   private drainAgain = false;
@@ -366,6 +454,15 @@ export class AgentRunService {
 
   llmCallsInFlight(): number {
     return this.llmGate.active;
+  }
+
+  private rememberPosition(runId: string, position: number): void {
+    const now = Date.now();
+    const maxAgeMs = this.deps.config().queueMaxWaitMs;
+    for (const [id, entry] of this.lastPositions) {
+      if (now - entry.at > maxAgeMs) this.lastPositions.delete(id);
+    }
+    this.lastPositions.set(runId, { position, at: now });
   }
 
   private emit(runId: string, event: AgentStreamEvent): Promise<AgentStoredEvent | null> {
@@ -465,7 +562,7 @@ export class AgentRunService {
 
     await this.deps.events.open(run.id);
     const position = await this.queuePosition(run);
-    this.lastPositions.set(run.id, position);
+    this.rememberPosition(run.id, position);
     await this.emit(run.id, { type: 'run.queued', runId: run.id, chatId: run.chatId, position });
     void this.deps.wake();
     if (!this.stopped) void this.drain();
@@ -527,7 +624,7 @@ export class AgentRunService {
     if (!run) return null;
     await this.deps.events.open(run.id);
     const position = await this.queuePosition(run);
-    this.lastPositions.set(run.id, position);
+    this.rememberPosition(run.id, position);
     await this.emit(run.id, { type: 'run.queued', runId: run.id, chatId: run.chatId, position });
     for (const message of input.messages ?? []) {
       await this.emit(run.id, { type: 'message.saved', message: toAgentMessageDto(message) });
@@ -804,6 +901,11 @@ export class AgentRunService {
       .catch((error) => console.error('[agent] run loop crashed', { runId: run.id, error }))
       .finally(() => {
         this.active.delete(run.id);
+        // Off the critical path, after the slot is free: the next turn replays what this stores.
+        const summary = this.refreshChatSummary(run)
+          .catch((error) => console.error('[agent] chat summary crashed', { runId: run.id, error }))
+          .finally(() => this.afterRun.delete(run.id));
+        this.afterRun.set(run.id, summary);
         if (!this.stopped) void this.drain();
       });
   }
@@ -816,19 +918,26 @@ export class AgentRunService {
       take: POSITION_BROADCAST_LIMIT,
       select: { id: true, chatId: true },
     });
+    // Forget runs that left the queue (claimed / cancelled elsewhere, or past the window):
+    // this process never sees their end, so entries would otherwise pile up.
+    const stillQueued = new Set(queued.map((run) => run.id));
+    for (const runId of this.lastPositions.keys()) {
+      if (!stillQueued.has(runId)) this.lastPositions.delete(runId);
+    }
     for (const [index, run] of queued.entries()) {
       const position = index + 1;
-      if (this.lastPositions.get(run.id) === position) continue;
-      this.lastPositions.set(run.id, position);
+      if (this.lastPositions.get(run.id)?.position === position) continue;
+      this.rememberPosition(run.id, position);
       await this.emit(run.id, { type: 'run.queued', runId: run.id, chatId: run.chatId, position });
     }
   }
 
-  /** Resolves when `runId` has left QUEUED/RUNNING (tests, shutdown). */
+  /** Resolves when `runId` has left QUEUED/RUNNING and its post-run summary settled (tests, shutdown). */
   async waitForRun(runId: string, timeoutMs = 15_000): Promise<AgentRun> {
     const deadline = Date.now() + timeoutMs;
     for (;;) {
       await this.active.get(runId)?.done;
+      await this.afterRun.get(runId);
       const run = await prisma.agentRun.findUniqueOrThrow({ where: { id: runId } });
       if (run.status !== AgentRunStatus.QUEUED && run.status !== AgentRunStatus.RUNNING) return run;
       if (Date.now() > deadline) throw new Error(`run ${runId} still ${run.status}`);
@@ -853,6 +962,7 @@ export class AgentRunService {
   private async executeRun(run: AgentRun, controller: AbortController): Promise<void> {
     const agentConfig = this.deps.config();
     const { signal } = controller;
+    const deadlineAt = Date.now() + agentConfig.runTimeoutMs;
     const timeout = setTimeout(() => controller.abort('timeout'), agentConfig.runTimeoutMs);
     timeout.unref?.();
     const heartbeat = setInterval(() => {
@@ -890,15 +1000,41 @@ export class AgentRunService {
       const history = await prisma.agentMessage.findMany({
         where: { chatId: run.chatId },
         orderBy: { seq: 'asc' },
-        select: { role: true, content: true, llmMessages: true, seq: true },
+        select: { id: true, role: true, content: true, llmMessages: true, seq: true, runId: true },
       });
       const isUntrustedTool = (name: string) => this.deps.registry.get(name)?.untrustedContent === true;
-      const summary = await this.refreshChatSummary(run, llm, history, isUntrustedTool, usage, signal);
+      // The stored summary; a due update runs after this run (`refreshChatSummary`), so this
+      // turn waits for no extra LLM call. Folded turns it doesn't cover yet use the crude fold.
+      const summary = agentChatSummaryFromRow(
+        await prisma.agentChat.findUnique({
+          where: { id: run.chatId },
+          select: { summary: true, summaryThroughSeq: true, summaryTainted: true },
+        }),
+      );
+      // Append-only history (prompt cache): this turn's snapshot + reminder are stored with its
+      // USER message, so the next turn replays exactly what this one sent.
+      const latestUser = [...history].reverse().find((message) => message.role === AgentMessageRole.USER);
+      if (latestUser && latestUser.runId === run.id && !historyLlmMessages(latestUser).length) {
+        const text = textOfBlocks(historyBlocks(latestUser));
+        if (text) {
+          const turn = agentTurnMessages(text, context.snapshot);
+          await prisma.agentMessage.update({
+            where: { id: latestUser.id },
+            data: { llmMessages: turn as unknown as Prisma.InputJsonValue },
+          });
+          latestUser.llmMessages = turn as unknown as Prisma.JsonValue;
+        }
+      }
       const replay = buildAgentModelHistory(history, undefined, summary);
-      // Static rules first (cacheable prefix), the per-turn snapshot right before the latest user message.
+      // Static rules first (cacheable prefix). The snapshot is in the stored turn; follow-up runs
+      // of a turn from before stored snapshots get it placed, unstored (`withAgentSnapshot`).
+      const turnStored = Boolean(latestUser && historyLlmMessages(latestUser).length);
       const messages: AgentLlmMessage[] = [
         { role: 'system', content: context.systemPrompt },
-        ...withAgentSnapshot(replay, context.snapshot),
+        ...(turnStored ? replay : withAgentSnapshot(replay, context.snapshot)),
+        // Voice is per run (a typed turn after a voice turn, or a voice follow-up of a typed
+        // turn): never stored, so it sits after the history.
+        ...(context.voiceRule ? [{ role: 'system' as const, content: context.voiceRule }] : []),
       ];
       const toolCtx: AgentToolContext = {
         principal,
@@ -910,6 +1046,8 @@ export class AgentRunService {
         clientCaps: run.clientCaps ?? [],
         signal,
         web: createAgentWebRunSession(),
+        toolTimeoutMs: agentConfig.toolTimeoutMs,
+        discardLateProposal: (actionId) => this.discardLateProposal(actionId),
       };
       let finalStatus: 'COMPLETED' | 'AWAITING_CONFIRMATION' = 'COMPLETED';
       let endReason: AgentRunEndReason = 'answered';
@@ -918,10 +1056,10 @@ export class AgentRunService {
         tainted: false,
         historyTainted: provenance.historyTainted || Boolean(summary?.tainted),
         userAskedToRemember: userAskedToRemember(provenance.latestUserText),
-        toolGroups: toolGroupsEnabled
-          ? this.initialToolGroups(principal, replay, provenance.latestUserText)
-          : null,
+        toolGroups: toolGroupsEnabled ? this.initialToolGroups(principal, history) : null,
       };
+      /** `AGENT_OUTPUT_LIMIT_NUDGE` was used (once per run). */
+      let outputLimitNudged = false;
 
       for (let step = 1; step <= agentConfig.maxSteps; step += 1) {
         steps = step;
@@ -929,11 +1067,17 @@ export class AgentRunService {
         const accumulator = new ToolCallAccumulator();
         const stepUsage: AgentUsage = { inputTokens: 0, outputTokens: 0 };
         unsavedText = '';
+        // `assertAgentBudget` ran at enqueue; earlier steps (and other runs) may have used it up since.
+        if ((await agentTokensUsedToday(run.userId, this.deps.now())) >= agentConfig.dailyTokenBudget) {
+          throw new RunBudgetExhausted();
+        }
 
         // Rebuilt per step: `load_tools` / a direct call may have appended groups (prefix kept).
         const openAiTools = lastStep
           ? []
           : this.deps.registry.openAiToolsFor(principal, runState.toolGroups ? { groups: runState.toolGroups } : {});
+        const trimmed = trimAgentContext(messages, estimateAgentTokens(openAiTools), agentConfig.contextWindowTokens);
+        if (trimmed) console.warn('[agent] context trimmed', { runId: run.id, step, droppedTurns: trimmed });
         let stepCachedTokens: number | null = null;
         // Narration hold (`isAgentNarrationHeld`): the start of a step's text is held back until
         // it is clearly an answer; a short line followed by read-only tool calls is dropped.
@@ -946,11 +1090,14 @@ export class AgentRunService {
           heldText = '';
           await this.emit(run.id, { type: 'text.delta', text });
         };
-        const release = await this.llmGate.acquire(signal);
-        try {
-          const stream = llm.stream({ messages, tools: openAiTools, signal });
-          for await (const chunk of stream) {
-            if (signal.aborted) break;
+        const { client: stepLlm, finishReason } = await this.streamModelStep({
+          run,
+          primary: llm,
+          messages,
+          tools: openAiTools,
+          signal,
+          deadlineAt,
+          onChunk: async (chunk) => {
             if (chunk.type === 'text') {
               unsavedText += chunk.text;
               if (streaming) {
@@ -966,17 +1113,43 @@ export class AgentRunService {
               stepUsage.outputTokens = chunk.outputTokens;
               if (chunk.cachedInputTokens != null) stepCachedTokens = chunk.cachedInputTokens;
             }
-          }
-        } finally {
-          release();
-        }
+          },
+        });
         usage.inputTokens += stepUsage.inputTokens;
         usage.outputTokens += stepUsage.outputTokens;
         if (stepCachedTokens != null) cache.inputTokens = (cache.inputTokens ?? 0) + stepCachedTokens;
-        await this.recordStepUsage(run, llm, messages, unsavedText, stepUsage, steps, usage, stepCachedTokens, cache.inputTokens);
+        await this.recordStepUsage(run, stepLlm, messages, unsavedText, stepUsage, steps, usage, stepCachedTokens, cache.inputTokens);
+        // Prompt-cache measurement: hits vs misses per step (DeepSeek bills misses at full price).
+        console.info(
+          `[agent] step run=${run.id} step=${step} model=${stepLlm.model} in=${stepUsage.inputTokens} ` +
+            `cacheHit=${stepCachedTokens ?? '-'} cacheMiss=${stepCachedTokens != null ? stepUsage.inputTokens - stepCachedTokens : '-'} ` +
+            `out=${stepUsage.outputTokens} finish=${finishReason ?? '-'}`,
+        );
         if (signal.aborted) throw new RunAborted(abortReasonOf(signal));
 
-        const calls = lastStep ? [] : accumulator.calls(run.id, step);
+        let calls = lastStep ? [] : accumulator.calls(run.id, step);
+        const cut = finishReason === 'length' || finishReason === 'content_filter';
+        if (cut) {
+          console.warn('[agent] reply cut', { runId: run.id, step, finishReason, toolCalls: calls.map((call) => call.function.name) });
+        }
+        if (cut && calls.length > 0) {
+          // The calls' JSON may be incomplete (length) or the reply withheld (filter): never run them.
+          calls = [];
+          if (finishReason === 'length' && !outputLimitNudged && !lastStep) {
+            outputLimitNudged = true;
+            const shown = streaming ? unsavedText.trim() : '';
+            unsavedText = '';
+            if (shown) {
+              // The user already saw this text: keep it, so the live text has a stored message.
+              await this.saveMessage(run.id, run.chatId, AgentMessageRole.ASSISTANT, [{ type: 'text', text: shown }], [
+                { role: 'assistant', content: shown },
+              ]);
+              messages.push({ role: 'assistant', content: shown });
+            }
+            messages.push({ role: 'system', content: AGENT_OUTPUT_LIMIT_NUDGE });
+            continue;
+          }
+        }
         // Held text + only read / memory / load_tools calls = narration ("I'll look for that
         // game."): never shown, saved or replayed. With a write call it is the line above the card.
         const narration =
@@ -984,7 +1157,14 @@ export class AgentRunService {
         if (!narration) await releaseHeld();
         const text = narration ? '' : unsavedText.trim();
         if (calls.length === 0) {
-          endReason = lastStep && agentConfig.maxSteps > 1 ? 'max_steps' : 'answered';
+          endReason =
+            finishReason === 'length'
+              ? 'truncated'
+              : finishReason === 'content_filter'
+                ? 'content_filter'
+                : lastStep && agentConfig.maxSteps > 1
+                  ? 'max_steps'
+                  : 'answered';
           const finalText = text || 'Sorry, I could not produce an answer. Please try again.';
           unsavedText = '';
           await this.saveMessage(run.id, run.chatId, AgentMessageRole.ASSISTANT, [{ type: 'text', text: finalText }], [
@@ -1033,59 +1213,170 @@ export class AgentRunService {
   }
 
   /**
-   * Tool groups at run start (`toolGroups.ts`): groups used in the recent replayed history
-   * (first-use order, so it matches the order the previous turn ended with), then keyword hits
-   * on the latest user message. Only groups the principal can see.
+   * One step's model call. A 429 / 408 / 5xx / network error before anything streamed (no text,
+   * no tool call delta) is retried up to `AGENT_LLM_MAX_RETRIES` times with jittered exponential
+   * backoff (`retry-after` wins, capped), then `AGENT_FALLBACK_MODEL` gets one try (at once on a
+   * 404, the model is missing). Never sleeps into the run's last `LLM_RETRY_MIN_REMAINING_MS`;
+   * an abort ends the wait. Once output has streamed, an error fails the step as before.
    */
-  private initialToolGroups(
-    principal: AgentToolContext['principal'],
-    replay: AgentLlmMessage[],
-    latestUserText: string | null,
-  ): AgentToolGroup[] {
-    const { registry } = this.deps;
-    const available = new Set<AgentToolGroup>(registry.groupsForPrincipal(principal));
-    const groups: AgentToolGroup[] = [];
-    const fromHistory = agentToolGroupsFromHistory(replay, (name) => {
-      const tool = registry.get(name);
-      return tool ? agentToolGroupOf(tool) : undefined;
-    });
-    for (const group of [...fromHistory, ...agentToolGroupsForText(latestUserText)]) {
-      if (available.has(group) && !groups.includes(group)) groups.push(group);
+  private async streamModelStep(params: {
+    run: AgentRun;
+    primary: AgentLlmClient;
+    messages: AgentLlmMessage[];
+    tools: AgentLlmStreamParams['tools'];
+    signal: AbortSignal;
+    deadlineAt: number;
+    onChunk: (chunk: AgentLlmStreamChunk) => Promise<void>;
+  }): Promise<{ client: AgentLlmClient; finishReason: string | null }> {
+    const { run, signal, deadlineAt } = params;
+    const agentConfig = this.deps.config();
+    let client = params.primary;
+    let retries = 0;
+    let onFallback = false;
+    for (;;) {
+      const attempt = await this.attemptModelCall(client, params);
+      if (attempt.ok) return { client, finishReason: attempt.finishReason };
+      const { error } = attempt;
+      const remaining = deadlineAt - Date.now();
+      const missingModel = error.status === 404;
+      if (!onFallback && !missingModel && isRetryableLlmError(error) && retries < agentConfig.llmMaxRetries) {
+        retries += 1;
+        const delay = agentLlmRetryDelayMs(retries, agentConfig.llmRetryBaseMs, error.retryAfterMs);
+        if (remaining - delay >= LLM_RETRY_MIN_REMAINING_MS) {
+          console.warn('[agent] LLM retry', { runId: run.id, model: client.model, retry: retries, delayMs: delay, status: error.status });
+          await sleepUnlessAborted(delay, signal);
+          if (signal.aborted) throw new RunAborted(abortReasonOf(signal));
+          continue;
+        }
+      }
+      const fallback = onFallback ? null : this.deps.fallbackLlm();
+      if (fallback && fallback.model !== client.model && (missingModel || isRetryableLlmError(error)) && remaining >= LLM_RETRY_MIN_REMAINING_MS) {
+        console.warn('[agent] LLM fallback', { runId: run.id, from: client.model, to: fallback.model, status: error.status });
+        onFallback = true;
+        client = fallback;
+        continue;
+      }
+      throw error;
     }
-    return groups;
   }
 
   /**
-   * Phase 11.4 rolling chat summary (`agentChatSummary.service.ts`): returns the summary to
-   * replay (stored, or freshly updated when due and the daily budget allows). Its tokens are
-   * added to the run's usage. Any failure other than an abort keeps the stored summary.
+   * One call, under the LLM semaphore. A retryable failure (an `AgentLlmError` before any
+   * output, run not aborted) comes back as `{ ok: false }`; anything else throws.
    */
-  private async refreshChatSummary(
-    run: AgentRun,
-    llm: AgentLlmClient,
-    history: HistoryMessage[],
-    isUntrustedTool: (name: string) => boolean,
-    usage: AgentUsage,
-    signal: AbortSignal,
-  ): Promise<AgentChatSummaryState | null> {
-    const row = await prisma.agentChat.findUnique({
-      where: { id: run.chatId },
-      select: { summary: true, summaryThroughSeq: true, summaryTainted: true },
-    });
+  private async attemptModelCall(
+    client: AgentLlmClient,
+    params: { messages: AgentLlmMessage[]; tools: AgentLlmStreamParams['tools']; signal: AbortSignal; onChunk: (chunk: AgentLlmStreamChunk) => Promise<void> },
+  ): Promise<{ ok: true; finishReason: string | null } | { ok: false; error: AgentLlmError }> {
+    const { signal } = params;
+    let produced = false;
+    let finishReason: string | null = null;
+    const release = await this.llmGate.acquire(signal);
+    try {
+      const stream = client.stream({
+        messages: params.messages,
+        tools: params.tools,
+        signal,
+        maxTokens: this.deps.config().maxOutputTokens,
+      });
+      for await (const chunk of stream) {
+        if (signal.aborted) break;
+        if ((chunk.type === 'text' && chunk.text) || chunk.type === 'tool_call_delta') produced = true;
+        if (chunk.type === 'finish') finishReason = chunk.reason;
+        await params.onChunk(chunk);
+      }
+      return { ok: true, finishReason };
+    } catch (error) {
+      if (signal.aborted || produced || !(error instanceof AgentLlmError)) throw error;
+      return { ok: false, error };
+    } finally {
+      release();
+    }
+  }
+
+  /** A proposal that landed after its tool deadline: the model never saw it, so close it unseen. */
+  private async discardLateProposal(actionId: string): Promise<void> {
+    const action = await prisma.agentPendingAction.findUnique({ where: { id: actionId } });
+    if (!action || action.status !== AgentActionStatus.PENDING) return;
+    const { locale } = readStoredActionArgs(action.args);
+    await closeAgentAction(
+      prisma,
+      action,
+      [AgentActionStatus.PENDING],
+      { ...expiredClosing(locale), modelNote: 'The tool timed out before this change was shown, so it was NOT made.' },
+      { outcomeMessage: false },
+    );
+  }
+
+  /**
+   * Tool groups at run start (`toolGroups.ts`): every group this chat has used, in first-use
+   * order — tool calls, `load_tools` calls and the keyword hits of each user message at its
+   * place (so the latest message's hits come last). Read from the whole chat, not a window, so
+   * the tools array a turn starts with is the one the previous turn ended with and only ever
+   * grows (the tools precede the messages: any change there misses the cache for the whole
+   * history). Only groups the principal can see.
+   */
+  private initialToolGroups(principal: AgentToolContext['principal'], history: HistoryMessage[]): AgentToolGroup[] {
+    const { registry } = this.deps;
+    const available = new Set<AgentToolGroup>(registry.groupsForPrincipal(principal));
+    const sequence: AgentLlmMessage[] = [];
+    for (const message of history) {
+      if (message.role === AgentMessageRole.USER) {
+        sequence.push({ role: 'user', content: textOfBlocks(historyBlocks(message)) });
+      } else {
+        sequence.push(...historyLlmMessages(message));
+      }
+    }
+    const used = agentToolGroupsFromHistory(
+      sequence,
+      (name) => {
+        const tool = registry.get(name);
+        return tool ? agentToolGroupOf(tool) : undefined;
+      },
+      Number.POSITIVE_INFINITY,
+      agentToolGroupsForText,
+    );
+    return used.filter((group) => available.has(group));
+  }
+
+  /**
+   * Phase 11.4 rolling chat summary (`agentChatSummary.service.ts`), after the run has ended
+   * and freed its slot (`afterRun`, awaited by `waitForRun`): when due and the
+   * daily budget leaves `AGENT_CHAT_SUMMARY_BUDGET_RESERVE`, one tool-less call stores the new
+   * summary for the next turn. Its tokens are added to the finished run (they count against the
+   * budget) and logged as `agent_chat_summary`. Failures only log; the stored summary stays.
+   */
+  private async refreshChatSummary(run: AgentRun): Promise<void> {
+    const llm = this.deps.llm();
+    if (!llm) return;
+    const [row, history] = await Promise.all([
+      prisma.agentChat.findUnique({
+        where: { id: run.chatId },
+        select: { summary: true, summaryThroughSeq: true, summaryTainted: true, deletedAt: true },
+      }),
+      prisma.agentMessage.findMany({
+        where: { chatId: run.chatId },
+        orderBy: { seq: 'asc' },
+        select: { role: true, content: true, llmMessages: true, seq: true },
+      }),
+    ]);
+    if (!row || row.deletedAt) return;
     const stored = agentChatSummaryFromRow(row);
+    const isUntrustedTool = (name: string) => this.deps.registry.get(name)?.untrustedContent === true;
     const plan = planAgentChatSummary(history, stored, isUntrustedTool);
-    if (!plan) return stored;
+    if (!plan) return;
     const now = this.deps.now();
-    const used = (await agentTokensUsedToday(run.userId, now)) + usage.inputTokens + usage.outputTokens;
-    if (this.deps.config().dailyTokenBudget - used < AGENT_CHAT_SUMMARY_BUDGET_RESERVE) return stored;
+    if (this.deps.config().dailyTokenBudget - (await agentTokensUsedToday(run.userId, now)) < AGENT_CHAT_SUMMARY_BUDGET_RESERVE) return;
+    const signal = AbortSignal.timeout(CHAT_SUMMARY_TIMEOUT_MS);
     const release = await this.llmGate.acquire(signal);
     try {
       const result = await updateAgentChatSummary({ chatId: run.chatId, llm, previous: stored, plan, signal, now });
-      usage.inputTokens += result.usage.inputTokens;
-      usage.outputTokens += result.usage.outputTokens;
-      await prisma.agentRun.updateMany({
+      await prisma.agentRun.update({
         where: { id: run.id },
-        data: { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens },
+        data: {
+          inputTokens: { increment: result.usage.inputTokens },
+          outputTokens: { increment: result.usage.outputTokens },
+        },
       });
       void this.deps.logUsage({
         provider: llm.provider,
@@ -1097,11 +1388,8 @@ export class AgentRunService {
         inputTokens: result.usage.inputTokens,
         outputTokens: result.usage.outputTokens,
       });
-      return result.state ?? stored;
     } catch (error) {
-      if (signal.aborted) throw new RunAborted(abortReasonOf(signal));
-      console.error('[agent] chat summary failed; using the stored summary', { runId: run.id, error });
-      return stored;
+      console.error('[agent] chat summary failed; the stored summary stays', { runId: run.id, error });
     } finally {
       release();
     }
@@ -1399,6 +1687,10 @@ export class AgentRunService {
       endReason = 'timeout';
       code = 'TIMEOUT';
       message = 'The assistant took too long to answer';
+    } else if (error instanceof RunBudgetExhausted) {
+      code = 'BUDGET_EXCEEDED';
+      message = 'Daily AI assistant limit reached. Try again tomorrow.';
+      endReason = 'budget_exceeded';
     } else if (error instanceof AgentLlmError) {
       code = 'LLM_ERROR';
       message = 'The AI service is unavailable right now';
@@ -1453,6 +1745,15 @@ export function createAgentRunService(overrides: Partial<AgentRunDeps> = {}): Ag
         apiKey: config.deepseek.apiKey,
         baseUrl: agentConfig.baseUrl,
         model: agentConfig.model,
+      });
+    },
+    fallbackLlm: () => {
+      const agentConfig = config.agent;
+      if (!agentConfig.fallbackModel) return null;
+      return getDefaultAgentLlmClient({
+        apiKey: config.deepseek.apiKey,
+        baseUrl: agentConfig.baseUrl,
+        model: agentConfig.fallbackModel,
       });
     },
     registry: getAgentToolRegistry(),

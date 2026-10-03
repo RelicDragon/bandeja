@@ -47,7 +47,13 @@
       "share": "Bagikan",
       "copyFailed": "Gagal menyalin",
       "editHint": "Mengirim akan mengganti pesan ini dan semua setelahnya.",
-      "actions": "Tindakan pesan"
+      "actions": "Tindakan pesan",
+      "regenerate": "Jawab ulang",
+      "goodReply": "Jawaban bagus",
+      "badReply": "Jawaban buruk",
+      "feedbackPlaceholder": "Apa yang salah? (opsional)",
+      "feedbackThanks": "Terima kasih atas masukanmu",
+      "feedbackFailed": "Masukanmu tidak dapat disimpan"
     },
     "empty": {
       "listTitle": "Asisten padel kamu",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}. Ketuk Konfirmasi di layar.",
       "confirmFallbackTitle": "Saya sudah menyiapkan perubahannya"
+    },
+    "markdown": {
+      "code": "Kode",
+      "copyCode": "Salin kode"
+    },
+    "search": {
+      "open": "Cari obrolan",
+      "placeholder": "Cari obrolan…",
+      "clear": "Hapus pencarian",
+      "empty": "Tidak ada obrolan yang cocok dengan “{{query}}”",
+      "archivedBadge": "Diarsipkan"
+    },
+    "groups": {
+      "today": "Hari ini",
+      "yesterday": "Kemarin",
+      "previous7Days": "7 hari terakhir",
+      "previous30Days": "30 hari terakhir"
+    },
+    "thread": {
+      "jumpToBottom": "Ke pesan terbaru",
+      "jumpToBottomNew": "Ada pesan baru di bawah",
+      "showEarlier": "Tampilkan pesan sebelumnya",
+      "replyFinished": "Balasan selesai"
+    },
+    "limits": {
+      "rateTitle": "Pelan-pelan sedikit",
+      "rateBody": "Kamu mengirim banyak pesan dalam waktu singkat. Kamu bisa mengirim lagi pukul {{time}}.",
+      "rateBodyNoTime": "Kamu mengirim banyak pesan dalam waktu singkat. Tunggu sebentar.",
+      "budgetTitle": "Batas harian tercapai",
+      "budgetBody": "Kamu sudah memakai batas asisten hari ini. Batas direset pukul {{time}}.",
+      "budgetBodyNoTime": "Kamu sudah memakai batas asisten hari ini. Coba lagi besok.",
+      "countdown": "Kembali dalam {{duration}}",
+      "composerPaused": "Dijeda sampai {{time}}",
+      "composerPausedNoTime": "Pengiriman dijeda untuk sementara"
     }
   }
 }

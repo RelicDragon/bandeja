@@ -3,7 +3,14 @@
  * (`Frontend/shared/agentContract.ts`). Every lookup is `where: { id, userId }`, so
  * another user's chat id is a plain 404.
  */
-import { AgentActionStatus, AgentMessageRole, AgentRunStatus, Prisma, type AgentMessage } from '@prisma/client';
+import {
+  AgentActionStatus,
+  AgentMessageFeedback as AgentMessageFeedbackDb,
+  AgentMessageRole,
+  AgentRunStatus,
+  Prisma,
+  type AgentMessage,
+} from '@prisma/client';
 import type {
   AgentActionPreview,
   AgentActionResult,
@@ -12,6 +19,7 @@ import type {
   AgentChatUsageDto,
   AgentContentBlock,
   AgentMessageDto,
+  AgentMessageFeedback,
   AgentPendingActionDto,
   AgentRunSummaryDto,
   AgentActionExecution,
@@ -21,7 +29,8 @@ import prisma from '../../config/database';
 import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
 import type { AgentLlmMessage } from './llm/deepseekStream';
-import { agentTokensUsedToday, startOfUtcDay } from './agentGuards';
+import { agentTokensUsedToday } from './agentGuards';
+import { agentBudgetRetryAt } from './agentBudgetWindow';
 
 export const AGENT_CHAT_TITLE_MAX = 60;
 const PREVIEW_MAX = 140;
@@ -59,7 +68,14 @@ export function toAgentMessageDto(message: AgentMessage): AgentMessageDto {
     blocks: blocksOf(message),
     runId: message.runId,
     createdAt: message.createdAt.toISOString(),
+    ...(message.role === AgentMessageRole.ASSISTANT ? { feedback: agentMessageFeedbackToDto(message.feedback) } : {}),
   };
+}
+
+export function agentMessageFeedbackToDto(feedback: AgentMessage['feedback']): AgentMessageFeedback | null {
+  if (feedback === AgentMessageFeedbackDb.UP) return 'up';
+  if (feedback === AgentMessageFeedbackDb.DOWN) return 'down';
+  return null;
 }
 
 type PendingActionRow = Prisma.AgentPendingActionGetPayload<object>;
@@ -194,14 +210,12 @@ export async function getAgentChatUsage(userId: string, chatId: string, now = ne
     }),
     agentTokensUsedToday(userId, now),
   ]);
-  const resetsAt = startOfUtcDay(now);
-  resetsAt.setUTCDate(resetsAt.getUTCDate() + 1);
   return {
     contextTokens: lastRun?.contextTokens ?? 0,
     contextWindowTokens: agentConfig.contextWindowTokens,
     dailyUsedTokens,
     dailyBudgetTokens: agentConfig.dailyTokenBudget,
-    dailyResetsAt: resetsAt.toISOString(),
+    dailyResetsAt: agentBudgetRetryAt(now),
   };
 }
 

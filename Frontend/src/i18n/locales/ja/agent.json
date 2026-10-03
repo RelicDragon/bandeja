@@ -47,7 +47,13 @@
       "share": "共有",
       "copyFailed": "コピーできませんでした",
       "editHint": "送信すると、このメッセージとそれ以降の内容が置き換えられます。",
-      "actions": "メッセージの操作"
+      "actions": "メッセージの操作",
+      "regenerate": "もう一度回答",
+      "goodReply": "良い回答",
+      "badReply": "良くない回答",
+      "feedbackPlaceholder": "何が問題でしたか？（任意）",
+      "feedbackThanks": "フィードバックありがとうございます",
+      "feedbackFailed": "フィードバックを保存できませんでした"
     },
     "empty": {
       "listTitle": "あなたのパデルアシスタント",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}。画面で「確認」をタップしてください。",
       "confirmFallbackTitle": "変更を準備しました"
+    },
+    "markdown": {
+      "code": "コード",
+      "copyCode": "コードをコピー"
+    },
+    "search": {
+      "open": "チャットを検索",
+      "placeholder": "チャットを検索…",
+      "clear": "検索をクリア",
+      "empty": "「{{query}}」に一致するチャットはありません",
+      "archivedBadge": "アーカイブ済み"
+    },
+    "groups": {
+      "today": "今日",
+      "yesterday": "昨日",
+      "previous7Days": "過去7日間",
+      "previous30Days": "過去30日間"
+    },
+    "thread": {
+      "jumpToBottom": "最新へ移動",
+      "jumpToBottomNew": "下に新しいメッセージがあります",
+      "showEarlier": "以前のメッセージを表示",
+      "replyFinished": "返信が完了しました"
+    },
+    "limits": {
+      "rateTitle": "少しペースを落としてください",
+      "rateBody": "短時間に多くのメッセージが送信されました。{{time}} に再び送信できます。",
+      "rateBodyNoTime": "短時間に多くのメッセージが送信されました。しばらくお待ちください。",
+      "budgetTitle": "1日の上限に達しました",
+      "budgetBody": "本日のアシスタント上限を使い切りました。{{time}} にリセットされます。",
+      "budgetBodyNoTime": "本日のアシスタント上限を使い切りました。明日もう一度お試しください。",
+      "countdown": "あと {{duration}}",
+      "composerPaused": "{{time}} まで一時停止中",
+      "composerPausedNoTime": "送信は一時停止中です"
     }
   }
 }

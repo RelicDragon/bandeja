@@ -4,7 +4,9 @@ import type { AgentActionStatus } from '@prisma/client';
 import type { AuthRequest } from '../middleware/auth';
 import { getValidatedRequestPart } from '../middleware/validateZod';
 import { asyncHandler } from '../utils/asyncHandler';
+import type { AgentMessageFeedback } from '@bandeja/shared/agentContract';
 import { agentUsageForAdmin, listAgentActionsForAdmin } from '../services/agent/agentAudit.service';
+import { listAgentFeedbackForAdmin } from '../services/agent/agentMessageFeedback.service';
 
 export const getAdminAgentActions = asyncHandler<AuthRequest>(async (req, res: Response) => {
   const query = getValidatedRequestPart<{ userId?: string; status?: AgentActionStatus; limit: number }>(req, 'query');
@@ -16,4 +18,10 @@ export const getAdminAgentUsage = asyncHandler<AuthRequest>(async (req, res: Res
   const query = getValidatedRequestPart<{ userId?: string; days: number }>(req, 'query');
   const data = await agentUsageForAdmin(query);
   res.json({ success: true, data });
+});
+
+export const getAdminAgentFeedback = asyncHandler<AuthRequest>(async (req, res: Response) => {
+  const query = getValidatedRequestPart<{ rating: AgentMessageFeedback; limit: number; userId?: string }>(req, 'query');
+  const feedback = await listAgentFeedbackForAdmin(query);
+  res.json({ success: true, data: { feedback } });
 });

@@ -52,6 +52,15 @@ function logChatSyncHttpError(req: Request, err: Error, statusCode: number): voi
   console.error(line);
 }
 
+/** `retryAt` (ISO) in an ApiError's data → `Retry-After` seconds (agent 429s, docs/domains/agent.md). */
+function setRetryAfterHeader(res: Response, err: ApiError): void {
+  const retryAt = err.data?.retryAt;
+  if (typeof retryAt !== 'string') return;
+  const at = Date.parse(retryAt);
+  if (Number.isNaN(at)) return;
+  res.setHeader('Retry-After', String(Math.max(0, Math.ceil((at - Date.now()) / 1000))));
+}
+
 export const errorHandler = (
   err: Error,
   req: Request,
@@ -61,6 +70,7 @@ export const errorHandler = (
   reflectCorsOrigin(req, res);
   if (err instanceof ApiError) {
     logChatSyncHttpError(req, err, err.statusCode);
+    setRetryAfterHeader(res, err);
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,

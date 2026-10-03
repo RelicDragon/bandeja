@@ -68,7 +68,8 @@ export interface AgentRunLiveState {
   /** Every entity seen during the run (for cache invalidation on the terminal event). */
   touchedEntities: AgentEntityRef[];
   lastEventId: string | null;
-  error: { code: AgentErrorCode; message: string | null } | null;
+  /** `retryAt` (ISO): from `run.failed` on a limit (BUDGET_EXCEEDED / RATE_LIMITED); absent on older servers. */
+  error: { code: AgentErrorCode; message: string | null; retryAt?: string | null } | null;
   usage: AgentUsage | null;
   /**
    * `failed` came from the client side (401 after refresh, 403/404 on attach), not from a
@@ -220,7 +221,12 @@ function applyEvent(state: AgentRunLiveState, event: AgentStreamEvent): AgentRun
         usage: event.usage,
       };
     case 'run.failed':
-      return { ...state, phase: 'failed', queuePosition: null, error: { code: event.code, message: event.message } };
+      return {
+        ...state,
+        phase: 'failed',
+        queuePosition: null,
+        error: { code: event.code, message: event.message, ...(event.retryAt ? { retryAt: event.retryAt } : {}) },
+      };
     case 'run.cancelled':
       return { ...state, phase: 'cancelled', queuePosition: null };
     default:

@@ -10,6 +10,7 @@ import {
   type AgentMemoryOverviewDto,
   type AgentMemoryRestore,
   type AgentMessageDto,
+  type AgentMessageFeedback,
   type AgentPendingActionDto,
   type AgentToolPermissionDto,
   type AgentToolPermissionMode,
@@ -127,6 +128,21 @@ export const agentApi = {
       signal,
     });
     return response.data;
+  },
+
+  /** Thumbs up / down on an assistant reply (`null` clears it); `comment` is optional free text. */
+  setMessageFeedback: async (
+    chatId: string,
+    messageId: string,
+    rating: AgentMessageFeedback | null,
+    comment?: string,
+  ): Promise<{ feedback: AgentMessageFeedback | null }> => {
+    const response = await api.put<ApiResponse<{ feedback: AgentMessageFeedback | null }>>(
+      `/agent/chats/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/feedback`,
+      comment ? { rating, comment } : { rating },
+      caps,
+    );
+    return response.data.data;
   },
 
   cancelRun: async (runId: string): Promise<void> => {

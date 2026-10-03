@@ -26,12 +26,12 @@ function isHttpUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
 
-function Badge({ children, tone = 'gray' }: { children: ReactNode; tone?: 'gray' | 'sky' }) {
+function Badge({ children, tone = 'gray' }: { children: ReactNode; tone?: 'gray' | 'info' }) {
   return (
     <span
       className={`rounded-full px-1.5 py-px text-[10px] font-medium ${
-        tone === 'sky'
-          ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300'
+        tone === 'info'
+          ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300'
           : 'bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300'
       }`}
     >
@@ -51,7 +51,7 @@ function ResultLink({ url, title, host, snippet }: { url: string; title: string;
         e.preventDefault();
         void openExternalUrl(url);
       }}
-      className="group block min-w-0 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100 active:bg-gray-100 dark:hover:bg-gray-800/70 dark:active:bg-gray-800/70"
+      className="group block min-w-0 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-100 active:bg-gray-100 dark:hover:bg-gray-800/70 dark:active:bg-gray-800/70"
     >
       <span className="flex min-w-0 items-center gap-1">
         <span
@@ -81,7 +81,7 @@ export const AgentWebResults = memo(function AgentWebResults({ web }: { web: Age
     return (
       <div className="flex flex-col gap-1 border-s-2 border-gray-200 ps-2 dark:border-gray-700">
         <div className="flex flex-wrap items-center gap-1">
-          {web.cached ? <Badge tone="sky">{t('agent.web.cached')}</Badge> : null}
+          {web.cached ? <Badge tone="info">{t('agent.web.cached')}</Badge> : null}
           {web.truncated ? <Badge>{t('agent.web.shortened')}</Badge> : null}
         </div>
         <ResultLink url={web.url} title={web.title ?? web.host} host={web.host} />
@@ -101,7 +101,7 @@ export const AgentWebResults = memo(function AgentWebResults({ web }: { web: Age
       <div className="flex flex-wrap items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
         <span>{web.exhausted ? t('agent.web.failed') : t('agent.web.resultCount', { count: web.results.length })}</span>
         {web.provider ? <Badge>{providerLabel(web.provider)}</Badge> : null}
-        {web.cached ? <Badge tone="sky">{t('agent.web.cached')}</Badge> : null}
+        {web.cached ? <Badge tone="info">{t('agent.web.cached')}</Badge> : null}
       </div>
 
       {web.exhausted ? (
@@ -115,7 +115,7 @@ export const AgentWebResults = memo(function AgentWebResults({ web }: { web: Age
       ) : (
         <>
           {web.answer ? (
-            <div className="rounded-lg bg-gray-50 px-2 py-1.5 dark:bg-gray-800/60">
+            <div className="rounded-xl bg-gray-50 px-2 py-1.5 dark:bg-gray-800/60">
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
                 {t('agent.web.summaryBy', { provider: providerLabel(web.provider) })}
               </p>
@@ -152,7 +152,7 @@ export const AgentWebImageStrip = memo(function AgentWebImageStrip({ images }: {
           onClick={() => open(image.id, shown)}
           aria-label={image.alt ? t('agent.web.openImageNamed', { name: image.alt }) : t('agent.web.openImage')}
           title={image.host}
-          className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 transition-transform active:scale-95 dark:bg-gray-800"
+          className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 transition-transform active:scale-95 dark:bg-gray-800"
         >
           <img
             src={agentImageUrl(image.thumb)}

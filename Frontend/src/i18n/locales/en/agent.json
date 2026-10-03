@@ -47,7 +47,13 @@
       "share": "Share",
       "copyFailed": "Copy failed",
       "editHint": "Sending replaces this message and everything after it.",
-      "actions": "Message actions"
+      "actions": "Message actions",
+      "regenerate": "Regenerate",
+      "goodReply": "Good reply",
+      "badReply": "Bad reply",
+      "feedbackPlaceholder": "What went wrong? (optional)",
+      "feedbackThanks": "Thanks for the feedback",
+      "feedbackFailed": "Could not save your feedback"
     },
     "empty": {
       "listTitle": "Your padel assistant",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}. Tap Confirm on the screen.",
       "confirmFallbackTitle": "I've prepared the change"
+    },
+    "markdown": {
+      "code": "Code",
+      "copyCode": "Copy code"
+    },
+    "search": {
+      "open": "Search chats",
+      "placeholder": "Search chats…",
+      "clear": "Clear search",
+      "empty": "No chats match “{{query}}”",
+      "archivedBadge": "Archived"
+    },
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "previous7Days": "Previous 7 days",
+      "previous30Days": "Previous 30 days"
+    },
+    "thread": {
+      "jumpToBottom": "Jump to latest",
+      "jumpToBottomNew": "New messages below",
+      "showEarlier": "Show earlier messages",
+      "replyFinished": "Reply finished"
+    },
+    "limits": {
+      "rateTitle": "Slow down a little",
+      "rateBody": "You sent a lot of messages in a short time. You can send again at {{time}}.",
+      "rateBodyNoTime": "You sent a lot of messages in a short time. Please wait a moment.",
+      "budgetTitle": "Daily limit reached",
+      "budgetBody": "You've used today's assistant limit. It resets at {{time}}.",
+      "budgetBodyNoTime": "You've used today's assistant limit. Try again tomorrow.",
+      "countdown": "Back in {{duration}}",
+      "composerPaused": "Paused until {{time}}",
+      "composerPausedNoTime": "Sending is paused for now"
     }
   }
 }

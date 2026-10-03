@@ -17,8 +17,8 @@ const CARD =
   'flex w-full min-w-0 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2.5 text-start transition-colors active:bg-gray-50 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700/60 dark:active:bg-gray-700/60';
 
 const STATUS_CLASS: Record<string, string> = {
-  ANNOUNCED: 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  STARTED: 'bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  ANNOUNCED: 'bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
+  STARTED: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
   FINISHED: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
   ARCHIVED: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
 };

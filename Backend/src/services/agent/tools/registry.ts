@@ -19,6 +19,14 @@
  *
  * `executeTool` never throws into the run loop: bad args, ApiErrors (404 stays the same
  * generic "not found") and crashes all come back as `{ ok: false, data: { error } }`.
+ *
+ * Per-call deadline: read handlers and write proposals get `ctx.toolTimeoutMs`
+ * (`AGENT_TOOL_TIMEOUT_MS`, 15s) or the tool's own `timeoutMs`. The handler's `ctx.signal`
+ * aborts at the deadline (or with the run), and a race returns `tool_timeout` even when a
+ * handler ignores the signal. A proposal that still lands after its deadline is handed to
+ * `ctx.discardLateProposal` (the run loop closes it unseen), so no orphan card waits. Memory
+ * tools (DB only) and the execute phase of confirmed writes are never cut: a cut write could
+ * still complete and be reported as failed.
  */
 import { fromZonedTime } from 'date-fns-tz';
 import { z } from 'zod/v4';
@@ -81,6 +89,10 @@ export type AgentToolContext = {
   memoryProvenance?: AgentMemoryProvenance;
   /** Per-run web tool state (call counts, URLs a search returned); set by the run loop. */
   web?: AgentWebRunSession;
+  /** Handler deadline (`AGENT_TOOL_TIMEOUT_MS`); a tool's own `timeoutMs` wins. Default `AGENT_TOOL_DEFAULT_TIMEOUT_MS`. */
+  toolTimeoutMs?: number;
+  /** A write proposal that resolved after its deadline (the model already got `tool_timeout`). */
+  discardLateProposal?: (actionId: string) => Promise<void>;
 };
 
 export type AgentMemoryProvenance = {
@@ -202,7 +214,17 @@ export type AgentToolDefinition<S extends z.ZodType = z.ZodType> = {
    * tool groups on, only `core` and loaded groups are sent to the model. Missing = `core`.
    */
   group?: AgentToolGroup;
+  /**
+   * Handler deadline for this tool (ms), over `AGENT_TOOL_TIMEOUT_MS`: for tools whose own
+   * upstream deadlines are longer (web search chain 15s, live provider availability).
+   */
+  timeoutMs?: number;
 };
+
+/** Handler deadline when the context sets none (`AGENT_TOOL_TIMEOUT_MS` default). */
+export const AGENT_TOOL_DEFAULT_TIMEOUT_MS = 15_000;
+
+const TOOL_TIMED_OUT = Symbol('tool_timeout');
 
 const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_]{1,63}$/;
 
@@ -418,7 +440,19 @@ export class AgentToolRegistry {
       };
     }
     try {
-      const result = await tool.handler({ ...ctx, tool }, parsed.data);
+      const result = await this.runHandler(tool, ctx, parsed.data);
+      if (result === TOOL_TIMED_OUT) {
+        const seconds = Math.round(this.timeoutFor(tool, ctx) / 1000);
+        return {
+          ok: false,
+          data: {
+            error: 'tool_timeout',
+            message: `The tool did not answer within ${seconds}s. Nothing was proposed or changed. Try once more with a narrower request, or tell the user it is not available right now.`,
+          },
+          summary: agentT(locale, 'error.timeout'),
+          label,
+        };
+      }
       return {
         ok: !result.failed,
         data: result.data,
@@ -452,6 +486,39 @@ export class AgentToolRegistry {
       console.error('[agent] tool crashed', { tool: name, error });
       return { ok: false, data: { error: 'internal_error' }, summary: agentT(locale, 'error.internal'), label };
     }
+  }
+
+  private timeoutFor(tool: AgentToolDefinition, ctx: AgentToolContext): number {
+    return tool.timeoutMs ?? ctx.toolTimeoutMs ?? AGENT_TOOL_DEFAULT_TIMEOUT_MS;
+  }
+
+  /** The handler under its deadline (see the header); memory tools run unbounded here. */
+  private async runHandler(
+    tool: AgentToolDefinition,
+    ctx: AgentToolContext,
+    args: unknown,
+  ): Promise<AgentToolResult | typeof TOOL_TIMED_OUT> {
+    if (tool.kind === 'memory') return tool.handler({ ...ctx, tool }, args);
+    const ms = this.timeoutFor(tool, ctx);
+    const deadline = AbortSignal.timeout(ms);
+    const signal = ctx.signal ? AbortSignal.any([ctx.signal, deadline]) : deadline;
+    const running = tool.handler({ ...ctx, tool, signal }, args);
+    const expired = new Promise<typeof TOOL_TIMED_OUT>((resolve) => {
+      if (deadline.aborted) resolve(TOOL_TIMED_OUT);
+      deadline.addEventListener('abort', () => resolve(TOOL_TIMED_OUT), { once: true });
+    });
+    const winner = await Promise.race([running, expired]);
+    if (winner !== TOOL_TIMED_OUT) return winner;
+    console.warn('[agent] tool timed out', { tool: tool.name, ms, runId: ctx.runId });
+    running.then(
+      (late) => {
+        const actionId = late.awaitingConfirmation?.actionId;
+        if (!actionId || !ctx.discardLateProposal) return;
+        ctx.discardLateProposal(actionId).catch((error) => console.error('[agent] late proposal not closed', { actionId, error }));
+      },
+      () => {},
+    );
+    return TOOL_TIMED_OUT;
   }
 }
 

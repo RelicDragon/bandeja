@@ -2,7 +2,12 @@
  * AI agent REST + SSE (`/api/agent`, contract: `Frontend/shared/agentContract.ts`).
  * Every lookup is scoped by `req.userId`; foreign ids are 404.
  */
-import type { AgentChatDto, AgentClientReportRequest, AgentMemoryRestore } from '@bandeja/shared/agentContract';
+import type {
+  AgentChatDto,
+  AgentClientReportRequest,
+  AgentMemoryRestore,
+  AgentMessageFeedback,
+} from '@bandeja/shared/agentContract';
 import prisma from '../config/database';
 import type { AuthRequest } from '../middleware/auth';
 import { getValidatedRequestPart } from '../middleware/validateZod';
@@ -38,6 +43,7 @@ import { loadAgentPrincipal } from '../services/agent/access/agentPrincipal';
 import { getAgentRunService } from '../services/agent/agentRun.service';
 import { AgentRunFeed } from '../services/agent/agentRunFeed';
 import { sendAgentUserMessage } from '../services/agent/agentSendMessage.service';
+import { setAgentMessageFeedback } from '../services/agent/agentMessageFeedback.service';
 import { AGENT_CLIENT_CAPS_HEADER, parseAgentClientCaps } from '../services/agent/clientExecution/clientCaps';
 import { getAgentClientExecutionService } from '../services/agent/clientExecution/clientExecution.service';
 import { agentVoiceError, speakAgentVoice, transcribeAgentVoice } from '../services/agent/voice/agentVoice.service';
@@ -70,6 +76,18 @@ export const getChat = asyncHandler<AuthRequest>(async (req, res) => {
   const userId = requireUserId(req);
   await expireStaleAgentActions({ userId, chatId: req.params.chatId }, new Date());
   const data = await getAgentChatDetail(userId, req.params.chatId);
+  res.json({ success: true, data });
+});
+
+export const setMessageFeedback = asyncHandler<AuthRequest>(async (req, res) => {
+  const { rating, comment } = req.body as { rating: AgentMessageFeedback | null; comment?: string };
+  const data = await setAgentMessageFeedback({
+    userId: requireUserId(req),
+    chatId: req.params.chatId,
+    messageId: req.params.messageId,
+    rating,
+    comment,
+  });
   res.json({ success: true, data });
 });
 

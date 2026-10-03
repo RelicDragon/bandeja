@@ -179,6 +179,25 @@ export function getWeatherTemperatureColor(point: Pick<WeatherHourlyPoint, 'temp
   };
 }
 
+/** Mix towards white so the scale keeps contrast on dark surfaces (blue / rose stops are too dim). */
+const DARK_SURFACE_LIGHTEN = 0.35;
+
+function lightenRgb(color: string, amount: number): string {
+  const match = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(color);
+  if (!match) return color;
+  const channels = [match[1], match[2], match[3]].map(Number);
+  return interpolateRgb(channels, [255, 255, 255], amount);
+}
+
+/**
+ * Temperature text colour for light and dark surfaces. Apply both through CSS variables so the
+ * `dark` class (not a hook) picks one, e.g. `text-[color:var(--t)] dark:text-[color:var(--t-dark)]`.
+ */
+export function getWeatherTemperatureTextColors(temperatureC: number): { light: string; dark: string } {
+  const light = temperatureColorForCelsius(temperatureC);
+  return { light, dark: lightenRgb(light, DARK_SURFACE_LIGHTEN) };
+}
+
 export function formatWeatherTime(
   time: string,
   locale: string,

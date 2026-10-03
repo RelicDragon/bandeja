@@ -22,6 +22,8 @@ export const findAvailableSlotsTool = defineTool({
     'Find bookable court slots at one club (clubId) or at up to 8 clubs of a city (cityId, default home city) on a date. Times are the club\'s local time. Each slot has a confidence: live (checked with the club system now), snapshot (no known conflicts as of asOf, never say "free"), app_only (only app games checked). Returns slotRef values for booking. When the user asked to book or to create a game at a found time, go on and propose it (earliest matching slot unless they chose) instead of only listing the slots.',
   kind: 'read',
   scope: 'user',
+  // Live provider calls (Weltner 15s, Nspadel without its own deadline) for up to 8 clubs.
+  timeoutMs: 25_000,
   input: z
     .object({
       clubId: z.string().min(1).max(64).optional().describe("A club's id (search_clubs / get_club, or a game's clubId), never a game id; omit to search a city"),

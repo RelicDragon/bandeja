@@ -3,9 +3,10 @@
  * All routes authenticate; everything but `GET /me` is behind the feature flag.
  */
 import express, { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { type AugmentedRequest } from 'express-rate-limit';
 import { z } from 'zod';
 import {
+  AGENT_FEEDBACK_COMMENT_MAX_LENGTH,
   AGENT_MEMORY_BODY_MAX_LENGTH,
   AGENT_MESSAGE_MAX_LENGTH,
   AGENT_VOICE_MAX_AUDIO_BYTES,
@@ -33,7 +34,8 @@ const actionParams = z.object({ actionId: idParam });
 
 /**
  * Per-user message limit (`AGENT_RATE_LIMIT_MAX` per `AGENT_RATE_LIMIT_WINDOW_MS`). The store
- * is shared with the Telegram assistant (`agentMessageRateLimit.ts`): one bucket per user.
+ * is shared with the Telegram assistant (`agentMessageRateLimit.ts`): one bucket per user,
+ * in Redis when configured (all processes), else in memory.
  */
 const agentMessageLimiter = rateLimit({
   windowMs: config.agent.rateLimitWindowMs,
@@ -42,10 +44,15 @@ const agentMessageLimiter = rateLimit({
   legacyHeaders: false,
   store: agentMessageRateStore,
   keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
-  message: {
-    success: false,
-    message: AGENT_RATE_LIMIT_MESSAGE,
-    code: 'RATE_LIMITED',
+  // `Retry-After` comes from the library (standard headers); `retryAt` is the same time as ISO.
+  message: (req: express.Request) => {
+    const resetTime = (req as AugmentedRequest).rateLimit?.resetTime;
+    return {
+      success: false,
+      message: AGENT_RATE_LIMIT_MESSAGE,
+      code: 'RATE_LIMITED',
+      ...(resetTime ? { retryAt: resetTime.toISOString() } : {}),
+    };
   },
 });
 noteAgentMessageRateStoreInitialized(config.agent.rateLimitWindowMs);
@@ -113,6 +120,21 @@ router.post(
     }),
   }),
   agentController.postMessage,
+);
+
+// Thumbs on an assistant reply (owner's ASSISTANT messages only; else 404). `rating: null` clears.
+router.put(
+  '/chats/:chatId/messages/:messageId/feedback',
+  validateZod({
+    params: z.object({ chatId: idParam, messageId: idParam }),
+    body: z
+      .object({
+        rating: z.enum(['up', 'down']).nullable(),
+        comment: z.string().max(AGENT_FEEDBACK_COMMENT_MAX_LENGTH).optional(),
+      })
+      .strict(),
+  }),
+  agentController.setMessageFeedback,
 );
 
 // Voice (docs/domains/agent.md § Voice): raw audio in → transcript; text in → audio/mpeg.

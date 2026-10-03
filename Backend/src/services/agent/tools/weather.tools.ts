@@ -120,6 +120,8 @@ export const getWeatherTool = defineTool({
     'Use it when the user plans or discusses an outdoor game, asks whether to play or reschedule, or asks about the weather.',
   kind: 'read',
   scope: 'user',
+  // The day archive's Open-Meteo fetch allows 15s.
+  timeoutMs: 20_000,
   input: z.object({
     gameId: z.string().min(1).max(64).optional().describe('Game id from another tool; do not combine with cityId/date'),
     cityId: z.string().min(1).max(64).optional().describe('City id from list_cities; only with date; defaults to the home city'),

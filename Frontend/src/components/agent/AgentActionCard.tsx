@@ -89,7 +89,7 @@ export const AgentActionCard = memo(function AgentActionCard({
     : failed
       ? 'border-red-200 dark:border-red-900/60'
       : success
-        ? 'border-green-200 dark:border-green-900/60'
+        ? 'border-emerald-200 dark:border-emerald-900/60'
         : 'border-gray-200 dark:border-gray-700';
   const confirm = (always: boolean) => {
     hapticSelection();
@@ -120,6 +120,7 @@ export const AgentActionCard = memo(function AgentActionCard({
                 <button
                   type="button"
                   disabled={busy != null}
+                  data-agent-primary
                   onClick={() => confirm(false)}
                   className={`flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary-600 text-sm font-semibold text-white transition-[colors,opacity,transform] duration-200 hover:bg-primary-700 active:scale-[0.98] motion-reduce:active:scale-100 ${
                     busy === 'confirm' ? 'disabled:opacity-90' : 'disabled:opacity-50'
@@ -234,7 +235,7 @@ export function ActionStatusRow({
   if (success) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="flex items-start gap-1.5 text-sm text-green-700 dark:text-green-400" dir="auto">
+        <div className="flex items-start gap-1.5 text-sm text-emerald-700 dark:text-emerald-400" dir="auto">
           <PopIcon>
             <CheckCircle2 size={16} aria-hidden />
           </PopIcon>

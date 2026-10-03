@@ -47,7 +47,13 @@
       "share": "Compartir",
       "copyFailed": "No se pudo copiar",
       "editHint": "Al enviar se reemplazará este mensaje y todo lo que viene después.",
-      "actions": "Acciones del mensaje"
+      "actions": "Acciones del mensaje",
+      "regenerate": "Volver a responder",
+      "goodReply": "Buena respuesta",
+      "badReply": "Mala respuesta",
+      "feedbackPlaceholder": "¿Qué salió mal? (opcional)",
+      "feedbackThanks": "Gracias por tu opinión",
+      "feedbackFailed": "No se pudo guardar tu opinión"
     },
     "empty": {
       "listTitle": "Tu asistente de pádel",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}. Toca Confirmar en la pantalla.",
       "confirmFallbackTitle": "He preparado el cambio"
+    },
+    "markdown": {
+      "code": "Código",
+      "copyCode": "Copiar código"
+    },
+    "search": {
+      "open": "Buscar chats",
+      "placeholder": "Buscar chats…",
+      "clear": "Borrar búsqueda",
+      "empty": "Ningún chat coincide con «{{query}}»",
+      "archivedBadge": "Archivado"
+    },
+    "groups": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "previous7Days": "Últimos 7 días",
+      "previous30Days": "Últimos 30 días"
+    },
+    "thread": {
+      "jumpToBottom": "Ir a lo más reciente",
+      "jumpToBottomNew": "Mensajes nuevos abajo",
+      "showEarlier": "Ver mensajes anteriores",
+      "replyFinished": "Respuesta terminada"
+    },
+    "limits": {
+      "rateTitle": "Ve un poco más despacio",
+      "rateBody": "Enviaste muchos mensajes en poco tiempo. Podrás volver a enviar a las {{time}}.",
+      "rateBodyNoTime": "Enviaste muchos mensajes en poco tiempo. Espera un momento.",
+      "budgetTitle": "Límite diario alcanzado",
+      "budgetBody": "Has usado el límite de hoy del asistente. Se renueva a las {{time}}.",
+      "budgetBodyNoTime": "Has usado el límite de hoy del asistente. Vuelve a intentarlo mañana.",
+      "countdown": "Disponible en {{duration}}",
+      "composerPaused": "En pausa hasta las {{time}}",
+      "composerPausedNoTime": "El envío está en pausa por ahora"
     }
   }
 }

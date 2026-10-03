@@ -24,6 +24,19 @@ export type AgentErrorCode =
   /** `/confirm` on a client-executed action (booking plan §14.5): only the app can run it (claim → report). */
   | 'CLIENT_EXECUTION_REQUIRED';
 
+/**
+ * Error body of agent REST calls (`{ success: false, message, code }`). On 429 `RATE_LIMITED` (message
+ * quota) and `BUDGET_EXCEEDED` the server adds `retryAt` (ISO) and a `Retry-After` header; the
+ * queued-runs cap (429 `RATE_LIMITED`, "too many questions waiting") has no fixed time and omits it.
+ * Absent from servers that predate it.
+ */
+export interface AgentApiErrorBody {
+  success: false;
+  code: AgentErrorCode;
+  message: string;
+  retryAt?: string;
+}
+
 /** Typed references the UI renders as cards/links. Built from tool data, never from model text. */
 export type AgentEntityRef =
   | {
@@ -484,7 +497,18 @@ export interface AgentMessageDto {
   blocks: AgentContentBlock[];
   runId: string | null;
   createdAt: string;
+  /** The user's rating of an assistant reply. Absent from servers that predate it. */
+  feedback?: AgentMessageFeedback | null;
 }
+
+export type AgentMessageFeedback = 'up' | 'down';
+
+/** `PUT /api/agent/chats/:chatId/messages/:messageId/feedback` response. */
+export interface AgentMessageFeedbackResponse {
+  feedback: AgentMessageFeedback | null;
+}
+
+export const AGENT_FEEDBACK_COMMENT_MAX_LENGTH = 500;
 
 export interface AgentRunSummaryDto {
   id: string;
@@ -563,7 +587,8 @@ export type AgentStreamEvent =
    */
   | { type: 'memory.saved'; callId: string; memory: { id: string; name: string; description: string; created: boolean } }
   | { type: 'run.completed'; status: 'COMPLETED' | 'AWAITING_CONFIRMATION'; usage: AgentUsage }
-  | { type: 'run.failed'; code: AgentErrorCode; message: string | null }
+  /** `retryAt` (ISO): when retrying can succeed — set on `BUDGET_EXCEEDED` (next UTC midnight). */
+  | { type: 'run.failed'; code: AgentErrorCode; message: string | null; retryAt?: string }
   | { type: 'run.cancelled' };
 
 export type AgentStreamEventType = AgentStreamEvent['type'];
@@ -585,6 +610,8 @@ export const AGENT_TERMINAL_EVENT_TYPES: readonly AgentStreamEventType[] = [
  *                                                (run starts QUEUED; 409 code CHAT_BUSY if the chat has a QUEUED/RUNNING run;
  *                                                 `editMessageId`: that USER message and everything after it are deleted first;
  *                                                 `voice: true`: a voice-conversation turn, the reply is written to be read aloud)
+ *   PUT    /api/agent/chats/:chatId/messages/:messageId/feedback {rating: AgentMessageFeedback | null, comment?: string (≤500)}
+ *                                              -> AgentMessageFeedbackResponse  (owner's ASSISTANT messages only; else 404; null clears)
  *   POST   /api/agent/voice/transcriptions   raw audio body (Content-Type audio/*) -> AgentVoiceTranscriptionDto
  *                                              (≤ AGENT_VOICE_MAX_AUDIO_BYTES and AGENT_VOICE_MAX_AUDIO_MS; 400 code VOICE_AUDIO_INVALID,
  *                                               503 code VOICE_UNAVAILABLE, 429 RATE_LIMITED / BUDGET_EXCEEDED)

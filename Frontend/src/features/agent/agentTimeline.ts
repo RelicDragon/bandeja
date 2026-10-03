@@ -27,7 +27,8 @@ export interface AgentToolItemData {
 
 export type AgentTimelineItem =
   | { kind: 'user'; key: string; messageId: string; seq: number; text: string }
-  | { kind: 'assistantText'; key: string; text: string; streaming: boolean }
+  /** `messageId`: the stored ASSISTANT message (absent while the text is still live). */
+  | { kind: 'assistantText'; key: string; text: string; streaming: boolean; messageId?: string }
   | { kind: 'tool'; key: string; tool: AgentToolItemData }
   | { kind: 'action'; key: string; actionId: string; action: AgentPendingActionDto | null };
 
@@ -137,7 +138,7 @@ export function buildAgentTimeline(
     m.blocks.forEach((b, i) => {
       const key = `m-${m.id}-${i}`;
       if (b.type === 'text') {
-        if (b.text.trim()) items.push({ kind: 'assistantText', key, text: b.text, streaming: false });
+        if (b.text.trim()) items.push({ kind: 'assistantText', key, text: b.text, streaming: false, messageId: m.id });
       } else if (b.type === 'tool_call') {
         if (renderedCalls.has(b.callId)) return;
         renderedCalls.add(b.callId);

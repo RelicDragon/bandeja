@@ -351,7 +351,7 @@
                     </div>
                 </div>
                 <p class="translation-queue-worker">
-                    Read-only audit. Every write the agent proposed and what happened to it (newest 50), plus daily token usage (last 14 days, UTC). The user id filter applies to both tables.
+                    Read-only audit. Every write the agent proposed and what happened to it (newest 50), daily token usage and reply ratings (last 14 days, UTC), and the newest 50 thumbs-down replies. The user id filter applies to every table.
                 </p>
                 <h2 class="section-subtitle">Actions</h2>
                 <div class="table-container">
@@ -383,6 +383,34 @@
                             </tr>
                         </thead>
                         <tbody id="agentUsageBody"></tbody>
+                    </table>
+                </div>
+                <h2 class="section-subtitle">Feedback per day</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Day (UTC)</th>
+                                <th>Thumbs up</th>
+                                <th>Thumbs down</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentFeedbackDaysBody"></tbody>
+                    </table>
+                </div>
+                <h2 class="section-subtitle">Recent thumbs-down</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rated</th>
+                                <th>User</th>
+                                <th>Question</th>
+                                <th>Reply</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentFeedbackBody"></tbody>
                     </table>
                 </div>
             </div>

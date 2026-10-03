@@ -17,7 +17,7 @@ import {
 } from '@/features/agent/agentBookingCards';
 
 const STATE_CLASS: Record<AgentBookingEntity['state'], string> = {
-  CONFIRMED: 'bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  CONFIRMED: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
   CANCELLED: 'bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300',
   PAST: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
   UNKNOWN: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',

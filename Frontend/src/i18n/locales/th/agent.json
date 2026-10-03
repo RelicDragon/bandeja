@@ -47,7 +47,13 @@
       "share": "แชร์",
       "copyFailed": "คัดลอกไม่สำเร็จ",
       "editHint": "การส่งจะแทนที่ข้อความนี้และทุกอย่างหลังจากนั้น",
-      "actions": "การทำงานของข้อความ"
+      "actions": "การทำงานของข้อความ",
+      "regenerate": "ตอบใหม่",
+      "goodReply": "คำตอบดี",
+      "badReply": "คำตอบไม่ดี",
+      "feedbackPlaceholder": "มีอะไรผิดพลาด? (ไม่บังคับ)",
+      "feedbackThanks": "ขอบคุณสำหรับความคิดเห็น",
+      "feedbackFailed": "บันทึกความคิดเห็นไม่ได้"
     },
     "empty": {
       "listTitle": "ผู้ช่วยพาเดลของคุณ",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}} แตะยืนยันบนหน้าจอ",
       "confirmFallbackTitle": "เตรียมการเปลี่ยนแปลงไว้แล้ว"
+    },
+    "markdown": {
+      "code": "โค้ด",
+      "copyCode": "คัดลอกโค้ด"
+    },
+    "search": {
+      "open": "ค้นหาแชท",
+      "placeholder": "ค้นหาแชท…",
+      "clear": "ล้างการค้นหา",
+      "empty": "ไม่มีแชทที่ตรงกับ “{{query}}”",
+      "archivedBadge": "เก็บถาวรแล้ว"
+    },
+    "groups": {
+      "today": "วันนี้",
+      "yesterday": "เมื่อวาน",
+      "previous7Days": "7 วันที่ผ่านมา",
+      "previous30Days": "30 วันที่ผ่านมา"
+    },
+    "thread": {
+      "jumpToBottom": "ไปที่ข้อความล่าสุด",
+      "jumpToBottomNew": "มีข้อความใหม่ด้านล่าง",
+      "showEarlier": "แสดงข้อความก่อนหน้า",
+      "replyFinished": "ตอบเสร็จแล้ว"
+    },
+    "limits": {
+      "rateTitle": "ช้าลงอีกนิด",
+      "rateBody": "คุณส่งข้อความจำนวนมากในเวลาสั้นๆ ส่งได้อีกครั้งเวลา {{time}}",
+      "rateBodyNoTime": "คุณส่งข้อความจำนวนมากในเวลาสั้นๆ โปรดรอสักครู่",
+      "budgetTitle": "ถึงขีดจำกัดรายวันแล้ว",
+      "budgetBody": "คุณใช้โควตาผู้ช่วยของวันนี้หมดแล้ว จะรีเซ็ตเวลา {{time}}",
+      "budgetBodyNoTime": "คุณใช้โควตาผู้ช่วยของวันนี้หมดแล้ว ลองใหม่พรุ่งนี้",
+      "countdown": "ใช้ได้อีกใน {{duration}}",
+      "composerPaused": "หยุดชั่วคราวถึง {{time}}",
+      "composerPausedNoTime": "หยุดการส่งชั่วคราว"
     }
   }
 }

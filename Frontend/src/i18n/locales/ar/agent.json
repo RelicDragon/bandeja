@@ -47,7 +47,13 @@
       "share": "مشاركة",
       "copyFailed": "تعذّر النسخ",
       "editHint": "سيؤدي الإرسال إلى استبدال هذه الرسالة وكل ما بعدها.",
-      "actions": "إجراءات الرسالة"
+      "actions": "إجراءات الرسالة",
+      "regenerate": "إعادة الإجابة",
+      "goodReply": "رد جيد",
+      "badReply": "رد سيئ",
+      "feedbackPlaceholder": "ما المشكلة؟ (اختياري)",
+      "feedbackThanks": "شكرًا على ملاحظاتك",
+      "feedbackFailed": "تعذّر حفظ ملاحظاتك"
     },
     "empty": {
       "listTitle": "مساعدك في البادل",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}. اضغط تأكيد على الشاشة.",
       "confirmFallbackTitle": "جهّزتُ التغيير"
+    },
+    "markdown": {
+      "code": "الرمز",
+      "copyCode": "نسخ الرمز"
+    },
+    "search": {
+      "open": "البحث في المحادثات",
+      "placeholder": "ابحث في المحادثات…",
+      "clear": "مسح البحث",
+      "empty": "لا توجد محادثات تطابق «{{query}}»",
+      "archivedBadge": "مؤرشفة"
+    },
+    "groups": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "previous7Days": "آخر 7 أيام",
+      "previous30Days": "آخر 30 يومًا"
+    },
+    "thread": {
+      "jumpToBottom": "الانتقال إلى الأحدث",
+      "jumpToBottomNew": "رسائل جديدة في الأسفل",
+      "showEarlier": "عرض الرسائل السابقة",
+      "replyFinished": "اكتمل الرد"
+    },
+    "limits": {
+      "rateTitle": "تمهّل قليلًا",
+      "rateBody": "أرسلت رسائل كثيرة في وقت قصير. يمكنك الإرسال مجددًا في {{time}}.",
+      "rateBodyNoTime": "أرسلت رسائل كثيرة في وقت قصير. يُرجى الانتظار قليلًا.",
+      "budgetTitle": "تم بلوغ الحد اليومي",
+      "budgetBody": "استخدمت حد المساعد لهذا اليوم. يتجدد في {{time}}.",
+      "budgetBodyNoTime": "استخدمت حد المساعد لهذا اليوم. حاول مجددًا غدًا.",
+      "countdown": "متاح بعد {{duration}}",
+      "composerPaused": "متوقف حتى {{time}}",
+      "composerPausedNoTime": "الإرسال متوقف حاليًا"
     }
   }
 }

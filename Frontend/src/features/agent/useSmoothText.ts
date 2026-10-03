@@ -34,7 +34,6 @@ export function useSmoothText(target: string, animate: boolean): { text: string;
   useEffect(() => {
     if (!typing) {
       accRef.current = target.length;
-      setShown(target.length);
       return;
     }
     // A rewritten / shorter text: never show past the new end.
@@ -62,6 +61,8 @@ export function useSmoothText(target: string, animate: boolean): { text: string;
     return () => cancelAnimationFrame(raf);
   }, [target, typing]);
 
+  // Not typing (history, reduced motion): the whole text now, not after the effect's extra render.
+  if (!typing) return { text: target, revealing: false };
   const end = Math.min(target.length, safeCut(target, shown));
   return { text: target.slice(0, end), revealing: end < target.length };
 }

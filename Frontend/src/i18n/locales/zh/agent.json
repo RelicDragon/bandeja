@@ -47,7 +47,13 @@
       "share": "分享",
       "copyFailed": "复制失败",
       "editHint": "发送后将替换此消息及其之后的所有内容。",
-      "actions": "消息操作"
+      "actions": "消息操作",
+      "regenerate": "重新回答",
+      "goodReply": "回答不错",
+      "badReply": "回答不好",
+      "feedbackPlaceholder": "哪里有问题？（可选）",
+      "feedbackThanks": "感谢你的反馈",
+      "feedbackFailed": "无法保存你的反馈"
     },
     "empty": {
       "listTitle": "你的板式网球助手",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}。请在屏幕上点击确认。",
       "confirmFallbackTitle": "我已准备好更改"
+    },
+    "markdown": {
+      "code": "代码",
+      "copyCode": "复制代码"
+    },
+    "search": {
+      "open": "搜索聊天",
+      "placeholder": "搜索聊天…",
+      "clear": "清除搜索",
+      "empty": "没有与“{{query}}”匹配的聊天",
+      "archivedBadge": "已归档"
+    },
+    "groups": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "previous7Days": "过去 7 天",
+      "previous30Days": "过去 30 天"
+    },
+    "thread": {
+      "jumpToBottom": "跳到最新",
+      "jumpToBottomNew": "下方有新消息",
+      "showEarlier": "显示更早的消息",
+      "replyFinished": "回复已完成"
+    },
+    "limits": {
+      "rateTitle": "请稍慢一点",
+      "rateBody": "你在短时间内发送了很多消息。{{time}} 后可再次发送。",
+      "rateBodyNoTime": "你在短时间内发送了很多消息。请稍等片刻。",
+      "budgetTitle": "已达到每日上限",
+      "budgetBody": "你已用完今天的助手额度，将于 {{time}} 重置。",
+      "budgetBodyNoTime": "你已用完今天的助手额度，请明天再试。",
+      "countdown": "{{duration}} 后恢复",
+      "composerPaused": "暂停至 {{time}}",
+      "composerPausedNoTime": "暂时无法发送"
     }
   }
 }

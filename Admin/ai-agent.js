@@ -3,7 +3,8 @@
  *
  * `GET /admin/agent/actions` is the log of every write the agent proposed and
  * what happened to it; `GET /admin/agent/usage` is daily (UTC) token sums per
- * user from agent runs. Nothing here mutates: no confirm/reject buttons.
+ * user from agent runs plus thumbs up/down per day; `GET /admin/agent/feedback`
+ * lists the newest thumbs-down replies. Nothing here mutates: no confirm/reject buttons.
  */
 
 const AGENT_ACTION_STATUS_BADGE = {
@@ -115,13 +116,55 @@ function renderAgentUsage(rows) {
         .join('');
 }
 
+function renderAgentFeedbackDays(days) {
+    const body = document.getElementById('agentFeedbackDaysBody');
+    if (!body) return;
+    if (!days.length) {
+        body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:2rem">No ratings in this range.</td></tr>';
+        return;
+    }
+    body.innerHTML = days
+        .map(
+            (day) => `<tr>
+                <td>${escapeHtml(day.day)}</td>
+                <td>${day.up}</td>
+                <td>${day.down}</td>
+            </tr>`
+        )
+        .join('');
+}
+
+function renderAgentFeedback(items) {
+    const body = document.getElementById('agentFeedbackBody');
+    if (!body) return;
+    if (!items.length) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem">No thumbs-down replies.</td></tr>';
+        return;
+    }
+    body.innerHTML = items
+        .map(
+            (item) => `<tr>
+                <td>${escapeHtml(formatDate(item.feedbackAt || item.createdAt))}</td>
+                <td title="${escapeHtmlAttr(item.user?.id)}">${escapeHtml(agentUserLabel(item.user))}</td>
+                <td>${escapeHtml(item.userText || '—')}</td>
+                <td title="${escapeHtmlAttr(`chat ${item.chatId} · message ${item.messageId}`)}">${escapeHtml(item.text || '—')}</td>
+                <td>${escapeHtml(item.comment || '—')}</td>
+            </tr>`
+        )
+        .join('');
+}
+
 async function loadAiAgentPage() {
     const actionsBody = document.getElementById('agentActionsBody');
     const usageBody = document.getElementById('agentUsageBody');
+    const feedbackDaysBody = document.getElementById('agentFeedbackDaysBody');
+    const feedbackBody = document.getElementById('agentFeedbackBody');
     if (!actionsBody || !usageBody) return;
     const loading = '<tr><td colspan="6" style="text-align:center;padding:2rem">Loading…</td></tr>';
     actionsBody.innerHTML = loading;
     usageBody.innerHTML = loading;
+    if (feedbackDaysBody) feedbackDaysBody.innerHTML = loading;
+    if (feedbackBody) feedbackBody.innerHTML = loading;
 
     const userId = agentFilterUserId();
     const status = document.getElementById('agentActionStatus')?.value || '';
@@ -132,9 +175,13 @@ async function loadAiAgentPage() {
     if (userId) usageParams.set('userId', userId);
     const usageQs = usageParams.toString();
 
-    const [actionsResult, usageResult] = await Promise.allSettled([
+    const feedbackParams = new URLSearchParams({ rating: 'down', limit: '50' });
+    if (userId) feedbackParams.set('userId', userId);
+
+    const [actionsResult, usageResult, feedbackResult] = await Promise.allSettled([
         apiRequest(`/admin/agent/actions?${actionParams.toString()}`),
         apiRequest(`/admin/agent/usage${usageQs ? `?${usageQs}` : ''}`),
+        apiRequest(`/admin/agent/feedback?${feedbackParams.toString()}`),
     ]);
     const errorRow = (error) =>
         `<tr><td colspan="6" class="error">${escapeHtml(error?.message || 'Failed to load')}</td></tr>`;
@@ -146,8 +193,15 @@ async function loadAiAgentPage() {
     }
     if (usageResult.status === 'fulfilled') {
         renderAgentUsage(usageResult.value.data?.rows || []);
+        renderAgentFeedbackDays(usageResult.value.data?.feedback || []);
     } else {
         usageBody.innerHTML = errorRow(usageResult.reason);
+        if (feedbackDaysBody) feedbackDaysBody.innerHTML = errorRow(usageResult.reason);
+    }
+    if (feedbackResult.status === 'fulfilled') {
+        renderAgentFeedback(feedbackResult.value.data?.feedback || []);
+    } else if (feedbackBody) {
+        feedbackBody.innerHTML = errorRow(feedbackResult.reason);
     }
 }
 

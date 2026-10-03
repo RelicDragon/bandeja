@@ -47,7 +47,13 @@
       "share": "Podeli",
       "copyFailed": "Kopiranje nije uspelo",
       "editHint": "Slanje zamenjuje ovu poruku i sve posle nje.",
-      "actions": "Radnje sa porukom"
+      "actions": "Radnje sa porukom",
+      "regenerate": "Odgovori ponovo",
+      "goodReply": "Dobar odgovor",
+      "badReply": "Loš odgovor",
+      "feedbackPlaceholder": "Šta nije u redu? (opciono)",
+      "feedbackThanks": "Hvala na povratnoj informaciji",
+      "feedbackFailed": "Povratna informacija nije sačuvana"
     },
     "empty": {
       "listTitle": "Vaš padel asistent",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}. Dodirni Potvrdi na ekranu.",
       "confirmFallbackTitle": "Pripremio sam izmenu"
+    },
+    "markdown": {
+      "code": "Kod",
+      "copyCode": "Kopiraj kod"
+    },
+    "search": {
+      "open": "Pretraži četove",
+      "placeholder": "Pretraži četove…",
+      "clear": "Obriši pretragu",
+      "empty": "Nema četova za „{{query}}“",
+      "archivedBadge": "Arhivirano"
+    },
+    "groups": {
+      "today": "Danas",
+      "yesterday": "Juče",
+      "previous7Days": "Prethodnih 7 dana",
+      "previous30Days": "Prethodnih 30 dana"
+    },
+    "thread": {
+      "jumpToBottom": "Na najnovije",
+      "jumpToBottomNew": "Nove poruke ispod",
+      "showEarlier": "Prikaži ranije poruke",
+      "replyFinished": "Odgovor je gotov"
+    },
+    "limits": {
+      "rateTitle": "Malo sporije",
+      "rateBody": "Poslali ste mnogo poruka za kratko vreme. Ponovo možete slati u {{time}}.",
+      "rateBodyNoTime": "Poslali ste mnogo poruka za kratko vreme. Sačekajte malo.",
+      "budgetTitle": "Dnevni limit je dostignut",
+      "budgetBody": "Iskoristili ste današnji limit asistenta. Obnavlja se u {{time}}.",
+      "budgetBodyNoTime": "Iskoristili ste današnji limit asistenta. Pokušajte sutra.",
+      "countdown": "Ponovo za {{duration}}",
+      "composerPaused": "Pauzirano do {{time}}",
+      "composerPausedNoTime": "Slanje je trenutno pauzirano"
     }
   }
 }

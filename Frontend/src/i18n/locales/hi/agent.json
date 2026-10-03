@@ -47,7 +47,13 @@
       "share": "साझा करें",
       "copyFailed": "कॉपी नहीं हो सका",
       "editHint": "भेजने पर यह संदेश और उसके बाद का सब कुछ बदल जाएगा।",
-      "actions": "संदेश क्रियाएँ"
+      "actions": "संदेश क्रियाएँ",
+      "regenerate": "फिर से जवाब दें",
+      "goodReply": "अच्छा जवाब",
+      "badReply": "खराब जवाब",
+      "feedbackPlaceholder": "क्या गलत हुआ? (वैकल्पिक)",
+      "feedbackThanks": "आपकी प्रतिक्रिया के लिए धन्यवाद",
+      "feedbackFailed": "आपकी प्रतिक्रिया सहेजी नहीं जा सकी"
     },
     "empty": {
       "listTitle": "आपका पैडल सहायक",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}. स्क्रीन पर पुष्टि करें पर टैप करें।",
       "confirmFallbackTitle": "मैंने बदलाव तैयार कर दिया है"
+    },
+    "markdown": {
+      "code": "कोड",
+      "copyCode": "कोड कॉपी करें"
+    },
+    "search": {
+      "open": "चैट खोजें",
+      "placeholder": "चैट खोजें…",
+      "clear": "खोज साफ़ करें",
+      "empty": "“{{query}}” से मेल खाती कोई चैट नहीं",
+      "archivedBadge": "संग्रहीत"
+    },
+    "groups": {
+      "today": "आज",
+      "yesterday": "कल",
+      "previous7Days": "पिछले 7 दिन",
+      "previous30Days": "पिछले 30 दिन"
+    },
+    "thread": {
+      "jumpToBottom": "नवीनतम पर जाएँ",
+      "jumpToBottomNew": "नीचे नए संदेश हैं",
+      "showEarlier": "पुराने संदेश दिखाएँ",
+      "replyFinished": "जवाब पूरा हुआ"
+    },
+    "limits": {
+      "rateTitle": "थोड़ा धीरे",
+      "rateBody": "आपने कम समय में बहुत सारे संदेश भेजे हैं। आप {{time}} पर फिर से भेज सकेंगे।",
+      "rateBodyNoTime": "आपने कम समय में बहुत सारे संदेश भेजे हैं। कृपया थोड़ा रुकें।",
+      "budgetTitle": "दैनिक सीमा पूरी हो गई",
+      "budgetBody": "आपने आज की सहायक सीमा इस्तेमाल कर ली है। यह {{time}} पर रीसेट होगी।",
+      "budgetBodyNoTime": "आपने आज की सहायक सीमा इस्तेमाल कर ली है। कल फिर कोशिश करें।",
+      "countdown": "{{duration}} में फिर उपलब्ध",
+      "composerPaused": "{{time}} तक रुका हुआ",
+      "composerPausedNoTime": "भेजना अभी रुका हुआ है"
     }
   }
 }

@@ -21,6 +21,7 @@ export const AGENT_I18N_EN = {
   'error.internal': 'Something went wrong',
   'error.unknownTool': 'Unknown tool',
   'error.cancelled': 'Cancelled',
+  'error.timeout': 'Took too long',
   'label.loadTools': 'Getting ready',
   'summary.toolsLoaded': 'Ready',
 

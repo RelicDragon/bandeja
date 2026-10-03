@@ -69,6 +69,7 @@ import * as adminAdController from '../controllers/adminAd.controller';
 import * as adminReferralController from '../controllers/adminReferral.controller';
 import * as agentAdminController from '../controllers/agentAdmin.controller';
 import { AGENT_AUDIT_ACTIONS_MAX, AGENT_AUDIT_USAGE_MAX_DAYS } from '../services/agent/agentAudit.service';
+import { AGENT_FEEDBACK_ADMIN_LIST_MAX } from '../services/agent/agentMessageFeedback.service';
 import { validateZod } from '../middleware/validateZod';
 import { z } from 'zod';
 import {
@@ -287,6 +288,19 @@ router.get(
     }),
   }),
   agentAdminController.getAdminAgentUsage,
+);
+// Rated assistant replies (thumbs), newest first, with the user message they answered.
+router.get(
+  '/agent/feedback',
+  requireAdmin,
+  validateZod({
+    query: z.object({
+      rating: z.enum(['up', 'down']).default('down'),
+      userId: z.string().trim().min(1).max(64).optional(),
+      limit: z.coerce.number().int().min(1).max(AGENT_FEEDBACK_ADMIN_LIST_MAX).default(50),
+    }),
+  }),
+  agentAdminController.getAdminAgentFeedback,
 );
 
 export default router;

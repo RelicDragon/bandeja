@@ -1,10 +1,11 @@
 /**
- * Admin audit of the AI agent (`GET /api/admin/agent/actions|usage`, `requireAdmin`).
+ * Admin audit of the AI agent (`GET /api/admin/agent/actions|usage|feedback`, `requireAdmin`).
  * `AgentPendingAction` is the audit log of every write the agent proposed and what
  * happened to it; `AgentRun` token sums are the usage. Read-only.
  */
 import { AgentActionStatus, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
+import { agentFeedbackByDay } from './agentMessageFeedback.service';
 
 export const AGENT_AUDIT_ACTIONS_MAX = 200;
 export const AGENT_AUDIT_USAGE_MAX_DAYS = 90;
@@ -83,9 +84,12 @@ export async function agentUsageForAdmin(filter: { days: number; userId?: string
     select: { id: true, firstName: true, lastName: true },
   });
   const byId = new Map(users.map((user) => [user.id, user]));
+  const feedback = await agentFeedbackByDay(since, filter.userId);
   return {
     since: since.toISOString(),
     days,
+    /** Thumbs up / down on assistant replies per UTC day (rating time), newest first. */
+    feedback,
     endReasons: endReasons.map((row) => ({
       endReason: row.endReason,
       runs: Number(row.runs),

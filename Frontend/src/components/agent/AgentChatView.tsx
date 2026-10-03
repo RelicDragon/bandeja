@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, Hourglass, MoreHorizontal, RotateCcw, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ChevronUp, Hourglass, MoreHorizontal, RotateCcw, X } from 'lucide-react';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { getBackAction } from '@/utils/backNavigation';
@@ -21,6 +21,7 @@ import {
   useSetAgentChatArchivedMutation,
   useSetAgentChatPinnedMutation,
   useSendAgentMessageMutation,
+  useSetAgentMessageFeedbackMutation,
 } from '@/queries/agent/useAgentQueries';
 import { useAgentStream } from '@/features/agent/useAgentStream';
 import { agentRunIdToAttach } from '@/features/agent/agentRunAttach';
@@ -28,7 +29,16 @@ import { useAgentRun } from '@/features/agent/agentRunStore';
 import { isTerminalPhase } from '@/features/agent/agentRunReducer';
 import { isLiveAgentRunStatus } from '@/features/agent/agentChatsPolling';
 import { buildAgentTimeline, groupAgentTimeline, type AgentRenderItem } from '@/features/agent/agentTimeline';
-import { agentErrorCodeOf, agentErrorKey } from '@/features/agent/agentErrors';
+import {
+  agentErrorCodeOf,
+  agentErrorKey,
+  agentErrorRetryAt,
+  agentRunFailureRetryAt,
+  isAgentLimitCode,
+} from '@/features/agent/agentErrors';
+import { useAgentLimitClock, useAgentResetTime, type AgentLimit } from '@/features/agent/agentLimits';
+import { lastAgentReplyKey, lastAgentUserItem } from '@/features/agent/agentRenderItemEqual';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { AgentSendContext, type AgentSendApi } from '@/features/agent/agentSendContext';
 import { agentRefToken, parseAgentRefTokens, stripAgentRefTokens } from '@/features/agent/agentBookingCards';
 import { agentMarkdownToPlainText } from '@/features/agent/agentMessageShare';
@@ -39,17 +49,15 @@ import {
   type AgentImagesContextValue,
 } from '@/features/agent/agentImages';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
-import type { AgentErrorCode, AgentWebImage } from '@shared/agentContract';
+import type { AgentErrorCode, AgentMessageFeedback, AgentWebImage } from '@shared/agentContract';
 import { AgentGlyph } from './AgentGlyph';
 import { AgentComposer } from './AgentComposer';
 import { AgentVoiceDock } from './AgentVoiceDock';
 import { useAgentVoiceConversation } from '@/features/agent/voice/useAgentVoiceConversation';
 import type { AgentVoiceCloseReason, AgentVoiceNotice } from '@/features/agent/voice/agentVoiceSession';
-import { AgentMarkdown } from './AgentMarkdown';
-import { AgentMessageActions, AgentMessageEditor } from './AgentMessageActions';
-import { AgentToolGroup } from './AgentToolGroup';
-import { AgentActionCard } from './AgentActionCard';
-import { AgentClientActionCard } from './AgentClientActionCard';
+import { AgentTimelineItem, UserBubble, type AgentTimelineHandlers } from './AgentTimelineItem';
+import { AgentJumpToBottom } from './AgentJumpToBottom';
+import { AgentLimitCard, AgentRunErrorBanner } from './AgentLimitCard';
 import { useAgentClientExecution, useAgentClientResume } from '@/queries/agent/useAgentClientExecution';
 import { AgentChatMenuSheet, AgentDeleteChatDialog, AgentRenameDialog } from './AgentChatMenu';
 import { AgentContextHint, AgentContextMeterButton, AgentContextSheet } from './AgentContextMeter';
@@ -63,6 +71,13 @@ const STICK_THRESHOLD_PX = 80;
 const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const ITEM_ENTER = { duration: 0.32, ease: EASE_OUT };
 const AGENT_LIST_URL = '/?tab=ai';
+/** Only the newest rows animate layout; settled history is not measured on every update. */
+const LAYOUT_TAIL = 4;
+/** Long chats: past this many rows only the newest `WINDOW_SIZE` render, "Show earlier" adds more. */
+const WINDOW_THRESHOLD = 80;
+const WINDOW_SIZE = 60;
+const WINDOW_STEP = 40;
+const REPLY_FINISHED_CLEAR_MS = 4000;
 
 interface PendingSend {
   localId: string;
@@ -171,6 +186,11 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
   const footerRef = useRef<HTMLElement>(null);
   const stickRef = useRef(true);
   const [footerHeight, setFooterHeight] = useState(88);
+  // Mirrors `stickRef` for rendering: the jump-to-bottom button shows while scrolled away.
+  const [atBottom, setAtBottom] = useState(true);
+  // New content arrived below while scrolled away: a dot on the jump button.
+  const [unseenBelow, setUnseenBelow] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   const followRafRef = useRef<number | null>(null);
   const initialScrollDoneRef = useRef(false);
@@ -209,6 +229,23 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     followRafRef.current = requestAnimationFrame(step);
   }, []);
 
+  const stickToBottom = useCallback(() => {
+    stickRef.current = true;
+    setAtBottom(true);
+    setUnseenBelow(false);
+  }, []);
+
+  const jumpToBottom = useCallback(() => {
+    stickToBottom();
+    const el = scrollRef.current;
+    if (reducedMotion && el) {
+      stopFollowing();
+      el.scrollTop = el.scrollHeight;
+      return;
+    }
+    scrollToBottom();
+  }, [reducedMotion, scrollToBottom, stickToBottom, stopFollowing]);
+
   useEffect(() => stopFollowing, [stopFollowing]);
 
   useEffect(() => {
@@ -230,7 +267,10 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     const el = scrollRef.current;
     // Our own glide: don't let its intermediate positions unstick the view.
     if (!el || followRafRef.current != null) return;
-    stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_THRESHOLD_PX;
+    const stuck = el.scrollHeight - el.scrollTop - el.clientHeight < STICK_THRESHOLD_PX;
+    stickRef.current = stuck;
+    setAtBottom(stuck);
+    if (stuck) setUnseenBelow(false);
   };
 
   // An edit in flight rewinds the view to before the edited message (the server does the same).
@@ -285,18 +325,53 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     if (!running) close();
     return out;
   }, [timeline, running]);
+  const lastReplyKey = useMemo(() => lastAgentReplyKey(timeline, replyTextByKey), [timeline, replyTextByKey]);
+  const lastUserItem = useMemo(() => lastAgentUserItem(timeline), [timeline]);
+  const feedbackByMessageId = useMemo(() => {
+    const out = new Map<string, AgentMessageFeedback>();
+    for (const m of detail?.messages ?? []) if (m.feedback) out.set(m.id, m.feedback);
+    return out;
+  }, [detail?.messages]);
 
   // Keys on screen when the chat first loaded: that history shows at once; anything later types in.
   const initialKeysRef = useRef<Set<string> | null>(null);
   if (initialKeysRef.current == null && detail) initialKeysRef.current = new Set(timeline.map((i) => i.key));
   const arrivedLive = (key: string) => initialKeysRef.current != null && !initialKeysRef.current.has(key);
 
+  // Long chats: only the newest rows render; "Show earlier messages" reveals more, keeping the
+  // view where it was. Set once when the chat loads; new rows append without hiding older ones.
+  const [hiddenBefore, setHiddenBefore] = useState<number | null>(null);
+  if (hiddenBefore == null && detail) {
+    setHiddenBefore(timeline.length > WINDOW_THRESHOLD ? timeline.length - WINDOW_SIZE : 0);
+  }
+  const hiddenCount = Math.max(0, Math.min(hiddenBefore ?? 0, timeline.length - WINDOW_SIZE));
+  const visibleTimeline = useMemo(() => (hiddenCount > 0 ? timeline.slice(hiddenCount) : timeline), [timeline, hiddenCount]);
+  const revealAnchorRef = useRef<{ height: number; top: number } | null>(null);
+  const showEarlier = () => {
+    const el = scrollRef.current;
+    if (el) revealAnchorRef.current = { height: el.scrollHeight, top: el.scrollTop };
+    setHiddenBefore(Math.max(0, hiddenCount - WINDOW_STEP));
+  };
+  useLayoutEffect(() => {
+    const anchor = revealAnchorRef.current;
+    const el = scrollRef.current;
+    if (!anchor || !el) return;
+    revealAnchorRef.current = null;
+    el.scrollTop = anchor.top + (el.scrollHeight - anchor.height);
+  }, [hiddenCount]);
+
   const lastItem = timeline[timeline.length - 1];
   const contentSignature = `${timeline.length}:${lastItem?.kind === 'assistantText' ? lastItem.text.length : 0}:${pending.length}`;
   useLayoutEffect(() => {
     if (stickRef.current) scrollToBottom();
+    else if (initialScrollDoneRef.current) setUnseenBelow(true);
     if (timeline.length > 0) initialScrollDoneRef.current = true;
   }, [contentSignature, scrollToBottom, timeline.length]);
+
+  // ---- limits: a refused send (429) or a `run.failed` on the rate limit / daily budget ----
+  const [sendLimit, setSendLimit] = useState<AgentLimit | null>(null);
+  const dailyResetsAtRef = useRef<string | undefined>(undefined);
+  dailyResetsAtRef.current = usage?.dailyResetsAt;
 
   // ---- sending ----
   const send = useCallback(
@@ -308,7 +383,7 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
       if (!trimmed) return null;
       const localId = opts.localId ?? `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const edit = opts.edit;
-      stickRef.current = true;
+      stickToBottom();
       setPending((prev) => [
         ...prev.filter((p) => p.localId !== localId),
         { localId, text: trimmed, failed: false, code: null, ...(edit ? { edit } : {}) },
@@ -320,16 +395,54 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
           ...(opts.voice ? { voice: true } : {}),
         });
         setPending((prev) => prev.filter((p) => p.localId !== localId));
+        setSendLimit(null);
         return runId;
       } catch (err) {
         const code = agentErrorCodeOf(err);
         setPending((prev) => prev.map((p) => (p.localId === localId ? { ...p, failed: true, code } : p)));
+        if (isAgentLimitCode(code)) {
+          setSendLimit({ code, retryAt: agentErrorRetryAt(err, { dailyResetsAt: dailyResetsAtRef.current }) });
+        }
         if (opts.voice) throw err;
         return null;
       }
     },
-    [sendMutation],
+    [sendMutation, stickToBottom],
   );
+
+  // Thinking: nothing streamed yet, waiting after a confirmation, or every tool step returned
+  // and the model hasn't started its next text / call.
+  const lastSegment = live?.segments[live.segments.length - 1];
+  const showThinking =
+    running &&
+    !queued &&
+    (!lastSegment ||
+      lastSegment.kind === 'action' ||
+      (lastSegment.kind === 'tool' && live?.tools[lastSegment.callId]?.status !== 'running'));
+  // A client-side attach failure only matters while the server still has the run active.
+  const runError =
+    editCutSeq == null && !running && live?.phase === 'failed' && !(live.connectionFailed && serverRunId == null) ? live.error : null;
+  const runStopped = editCutSeq == null && !running && live?.phase === 'cancelled';
+  const isEmpty = detailQuery.isSuccess && timeline.length === 0 && pending.length === 0 && !running;
+
+  const runLimit = useMemo<AgentLimit | null>(
+    () =>
+      runError && isAgentLimitCode(runError.code)
+        ? { code: runError.code, retryAt: agentRunFailureRetryAt(runError.code, runError.retryAt, usage?.dailyResetsAt) }
+        : null,
+    [runError, usage?.dailyResetsAt],
+  );
+  const limit = sendLimit ?? runLimit;
+  const limitClock = useAgentLimitClock(limit?.retryAt ?? null);
+  // Paused until `retryAt`; a limit with no known time only explains itself.
+  const sendPaused = limit != null && limitClock.active;
+  const showLimitCard = limit != null && (limitClock.active || limit.retryAt == null);
+  const limitResetTime = useAgentResetTime(sendPaused ? (limit?.retryAt ?? null) : null);
+  const composerPausedReason = sendPaused
+    ? limitResetTime
+      ? t('agent.limits.composerPaused', { time: limitResetTime })
+      : t('agent.limits.composerPausedNoTime')
+    : null;
 
   // ---- voice conversation (docs/domains/agent.md § Voice): the dock replaces the composer ----
   const hasPendingAction = Boolean(detail?.actions.some((a) => a.status === 'PENDING'));
@@ -360,8 +473,11 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
   // Slot / booking cards send through the chat (hidden ref tokens, docs/domains/agent.md).
   const sendingNow = pending.some((p) => !p.failed);
   const cardSendApi = useMemo<AgentSendApi>(
-    () => ({ send: (text) => void send(text, { voice: voiceActive }).catch(() => {}), disabled: running || sendingNow }),
-    [send, running, sendingNow, voiceActive],
+    () => ({
+      send: (text) => void send(text, { voice: voiceActive }).catch(() => {}),
+      disabled: running || sendingNow || sendPaused,
+    }),
+    [send, running, sendingNow, sendPaused, voiceActive],
   );
 
   const handleSend = () => {
@@ -401,13 +517,25 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
       onError: (err) => toast.error(extractApiErrorMessage(err, t)),
     });
   };
-  const handleAlwaysAllow = (actionId: string) => handleConfirm({ actionId, remember: 'always' });
   const busyFor = (actionId: string): 'confirm' | 'always' | 'reject' | null => {
     if (confirmMutation.isPending && confirmVarsActionId(confirmMutation.variables) === actionId) {
       return typeof confirmMutation.variables === 'string' ? 'confirm' : 'always';
     }
     if (rejectMutation.isPending && rejectMutation.variables === actionId) return 'reject';
     return null;
+  };
+
+  const feedbackMutation = useSetAgentMessageFeedbackMutation(chatId);
+  const handleFeedback = (messageId: string, rating: AgentMessageFeedback | null, comment?: string) => {
+    feedbackMutation.mutate(
+      { messageId, rating, ...(comment ? { comment } : {}) },
+      {
+        onSuccess: () => {
+          if (comment) toast.success(t('agent.message.feedbackThanks'));
+        },
+        onError: () => toast.error(t('agent.message.feedbackFailed')),
+      },
+    );
   };
 
   const title = detail?.title?.trim() || t('agent.newChat');
@@ -448,7 +576,7 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     );
   };
 
-  const editBlocked = running || sendingNow;
+  const editBlocked = running || sendingNow || sendPaused;
   // Ref tokens stay hidden while editing and ride along on the resend (slot / booking cards).
   const submitEdit = (item: Extract<AgentRenderItem, { kind: 'user' }>, text: string) => {
     const tokens = parseAgentRefTokens(item.text).map((r) => agentRefToken(r.kind, r.ref));
@@ -457,79 +585,96 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
       edit: { messageId: item.messageId, seq: item.seq },
     });
   };
-
-  const renderItem = (item: AgentRenderItem) => {
-    switch (item.kind) {
-      case 'user':
-        if (editingId === item.messageId) {
-          return (
-            <AgentMessageEditor
-              initialText={stripAgentRefTokens(item.text)}
-              onCancel={() => setEditingId(null)}
-              onSubmit={(text) => submitEdit(item, text)}
-              submitDisabled={editBlocked}
-            />
-          );
-        }
-        return (
-          <div className="group">
-            <UserBubble text={item.text} />
-            <AgentMessageActions
-              align="end"
-              getText={() => stripAgentRefTokens(item.text)}
-              onEdit={() => setEditingId(item.messageId)}
-              editDisabled={editBlocked}
-            />
-          </div>
-        );
-      case 'assistantText': {
-        const replyText = replyTextByKey.get(item.key);
-        return (
-          <div className="group max-w-full text-gray-900 dark:text-gray-100">
-            <AgentMarkdown text={item.text} streaming={item.streaming} animate={arrivedLive(item.key)} />
-            {replyText ? <AgentMessageActions align="start" getText={() => replyText} /> : null}
-          </div>
-        );
-      }
-      case 'toolGroup':
-        return <AgentToolGroup tools={item.tools} />;
-      case 'action':
-        if (item.action?.execution === 'client') {
-          return (
-            <AgentClientActionCard
-              action={item.action}
-              rejecting={busyFor(item.actionId) === 'reject'}
-              onReject={handleReject}
-              onRun={(actionId) => void runClientAction(actionId)}
-            />
-          );
-        }
-        return (
-          <AgentActionCard
-            action={item.action}
-            busy={busyFor(item.actionId)}
-            onConfirm={handleConfirm}
-            onReject={handleReject}
-            onAlwaysAllow={handleAlwaysAllow}
-          />
-        );
-    }
+  // Retry a failed run / Regenerate the last reply: resend the newest own message unchanged,
+  // through the edit path (the server rewinds to it and runs again).
+  const resendLastUser = () => {
+    if (!lastUserItem || editBlocked) return;
+    submitEdit(lastUserItem, stripAgentRefTokens(lastUserItem.text));
   };
 
-  // Thinking: nothing streamed yet, waiting after a confirmation, or every tool step returned
-  // and the model hasn't started its next text / call.
-  const lastSegment = live?.segments[live.segments.length - 1];
-  const showThinking =
-    running &&
-    !queued &&
-    (!lastSegment ||
-      lastSegment.kind === 'action' ||
-      (lastSegment.kind === 'tool' && live?.tools[lastSegment.callId]?.status !== 'running'));
-  // A client-side attach failure only matters while the server still has the run active.
-  const runError =
-    editCutSeq == null && !running && live?.phase === 'failed' && !(live.connectionFailed && serverRunId == null) ? live.error : null;
-  const runStopped = editCutSeq == null && !running && live?.phase === 'cancelled';
-  const isEmpty = detailQuery.isSuccess && timeline.length === 0 && pending.length === 0 && !running;
+  // Focus: back to the Edit button after cancelling an edit.
+  const focusEditKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = focusEditKeyRef.current;
+    if (!key || editingId) return;
+    focusEditKeyRef.current = null;
+    requestAnimationFrame(() =>
+      contentRef.current
+        ?.querySelector<HTMLElement>(`[data-agent-item="${cssEscape(key)}"] [data-agent-edit]`)
+        ?.focus({ preventScroll: true }),
+    );
+  }, [editingId]);
+
+  // One stable handlers object: rows re-render only when their own data changes. The ref holds
+  // this render's closures; the memoized wrappers always call the latest ones.
+  const handlersImplRef = useRef<Omit<AgentTimelineHandlers, 'alwaysAllow'> | null>(null);
+  handlersImplRef.current = {
+    startEdit: (messageId) => setEditingId(messageId),
+    cancelEdit: (key) => {
+      focusEditKeyRef.current = key;
+      setEditingId(null);
+    },
+    submitEdit,
+    regenerate: resendLastUser,
+    feedback: handleFeedback,
+    confirm: handleConfirm,
+    reject: handleReject,
+    runClientAction: (actionId) => void runClientAction(actionId),
+  };
+  const handlers = useMemo<AgentTimelineHandlers>(
+    () => ({
+      startEdit: (messageId) => handlersImplRef.current?.startEdit(messageId),
+      cancelEdit: (key) => handlersImplRef.current?.cancelEdit(key),
+      submitEdit: (item, text) => handlersImplRef.current?.submitEdit(item, text),
+      regenerate: () => handlersImplRef.current?.regenerate(),
+      feedback: (messageId, rating, comment) => handlersImplRef.current?.feedback(messageId, rating, comment),
+      confirm: (vars) => handlersImplRef.current?.confirm(vars),
+      reject: (actionId) => handlersImplRef.current?.reject(actionId),
+      alwaysAllow: (actionId) => handlersImplRef.current?.confirm({ actionId, remember: 'always' }),
+      runClientAction: (actionId) => handlersImplRef.current?.runClientAction(actionId),
+    }),
+    [],
+  );
+
+  // Focus: a confirmation card that arrives while the chat is open gets its primary button,
+  // unless the user is typing.
+  const focusedActionKeysRef = useRef(new Set<string>());
+  useEffect(() => {
+    const fresh = timeline.find(
+      (item) =>
+        item.kind === 'action' &&
+        item.action?.status === 'PENDING' &&
+        initialKeysRef.current != null &&
+        !initialKeysRef.current.has(item.key) &&
+        !focusedActionKeysRef.current.has(item.key),
+    );
+    if (!fresh) return;
+    focusedActionKeysRef.current.add(fresh.key);
+    const active = document.activeElement;
+    if (active instanceof HTMLTextAreaElement && active.value.trim() !== '') return;
+    const raf = requestAnimationFrame(() =>
+      contentRef.current
+        ?.querySelector<HTMLElement>(`[data-agent-item="${cssEscape(fresh.key)}"] [data-agent-primary]`)
+        ?.focus({ preventScroll: true }),
+    );
+    return () => cancelAnimationFrame(raf);
+  }, [timeline]);
+
+  // Screen readers: streamed text is `aria-busy` (not read per character); one short
+  // "Reply finished" status when a run ends with an answer.
+  const [replyAnnouncement, setReplyAnnouncement] = useState('');
+  const wasRunningRef = useRef(running);
+  const livePhase = live?.phase;
+  useEffect(() => {
+    const ended = wasRunningRef.current && !running;
+    wasRunningRef.current = running;
+    if (!ended || (livePhase !== 'completed' && livePhase !== 'awaiting_confirmation')) return;
+    setReplyAnnouncement(t('agent.thread.replyFinished'));
+    const timer = window.setTimeout(() => setReplyAnnouncement(''), REPLY_FINISHED_CLEAR_MS);
+    return () => window.clearTimeout(timer);
+  }, [running, livePhase, t]);
+
+  const showJump = !atBottom && timeline.length > 0;
 
   return (
     <div
@@ -596,7 +741,14 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
           className="thread-message-scroll h-full overflow-y-auto overscroll-contain"
           style={{ paddingBottom: footerHeight + 12 }}
         >
-          <div ref={contentRef} className="mx-auto flex max-w-3xl flex-col gap-3 px-4 pt-4">
+          <div
+            ref={contentRef}
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+            aria-label={title}
+            className="mx-auto flex max-w-3xl flex-col gap-3 px-4 pt-4"
+          >
             {detailQuery.isPending ? <ThreadSkeleton /> : null}
             {detailQuery.isError ? (
               <div className="flex flex-col items-center gap-3 py-16 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -613,56 +765,88 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
             ) : null}
             {isEmpty ? <EmptyThreadHint onPick={(text) => void send(text)} /> : null}
 
-            <AnimatePresence initial={false}>
-              {timeline.map((item) => (
-                <motion.div
-                  key={item.key}
-                  layout="position"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={ITEM_ENTER}
-                >
-                  <AgentSendContext.Provider value={cardSendApi}>
-                    <AgentImagesContext.Provider value={imagesApi}>{renderItem(item)}</AgentImagesContext.Provider>
-                  </AgentSendContext.Provider>
-                </motion.div>
-              ))}
-              {pending.map((p) => (
-                <motion.div
-                  key={p.localId}
-                  layout="position"
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={ITEM_ENTER}
-                  style={{ transformOrigin: '100% 100%' }}
-                >
-                  <UserBubble text={p.text} sending={!p.failed} />
-                  {p.failed ? (
-                    <div className="mt-1 flex items-center justify-end gap-2 text-xs text-red-600 dark:text-red-400">
-                      <span>{t(agentErrorKey(p.code))}</span>
-                      <button
-                        type="button"
-                        onClick={() => void send(p.text, { localId: p.localId, edit: p.edit })}
-                        className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-medium dark:border-red-900/60"
+            {hiddenCount > 0 ? (
+              <button
+                type="button"
+                onClick={showEarlier}
+                className="mx-auto inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <ChevronUp size={14} aria-hidden />
+                {t('agent.thread.showEarlier')}
+              </button>
+            ) : null}
+
+            <AgentSendContext.Provider value={cardSendApi}>
+              <AgentImagesContext.Provider value={imagesApi}>
+                <AnimatePresence initial={false}>
+                  {visibleTimeline.map((item, i) => {
+                    const arrived = arrivedLive(item.key);
+                    const layoutOn = i >= visibleTimeline.length - LAYOUT_TAIL;
+                    const messageId =
+                      item.kind === 'assistantText' ? item.messageId : undefined;
+                    return (
+                      <motion.div
+                        key={item.key}
+                        data-agent-item={item.key}
+                        layout={layoutOn ? 'position' : false}
+                        initial={arrived ? { opacity: 0, y: 10 } : false}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={ITEM_ENTER}
                       >
-                        <RotateCcw size={12} aria-hidden />
-                        {t('common.retry')}
-                      </button>
-                      {p.edit ? (
-                        <button
-                          type="button"
-                          onClick={() => setPending((prev) => prev.filter((x) => x.localId !== p.localId))}
-                          className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-medium dark:border-red-900/60"
-                        >
-                          <X size={12} aria-hidden />
-                          {t('common.cancel')}
-                        </button>
+                        <AgentTimelineItem
+                          item={item}
+                          handlers={handlers}
+                          editing={item.kind === 'user' && editingId === item.messageId}
+                          editBlocked={editBlocked}
+                          replyText={replyTextByKey.get(item.key)}
+                          animate={arrived}
+                          canRegenerate={item.key === lastReplyKey && !running && lastUserItem != null}
+                          feedback={messageId ? (feedbackByMessageId.get(messageId) ?? null) : null}
+                          busy={item.kind === 'action' ? busyFor(item.actionId) : null}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                  {pending.map((p) => (
+                    <motion.div
+                      key={p.localId}
+                      layout="position"
+                      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={ITEM_ENTER}
+                      style={{ transformOrigin: '100% 100%' }}
+                    >
+                      <UserBubble text={p.text} sending={!p.failed} />
+                      {p.failed ? (
+                        <div className="mt-1 flex items-center justify-end gap-2 text-xs text-red-600 dark:text-red-400">
+                          <span>{t(agentErrorKey(p.code))}</span>
+                          {sendPaused ? null : (
+                            <button
+                              type="button"
+                              onClick={() => void send(p.text, { localId: p.localId, edit: p.edit })}
+                              className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-medium dark:border-red-900/60"
+                            >
+                              <RotateCcw size={12} aria-hidden />
+                              {t('common.retry')}
+                            </button>
+                          )}
+                          {p.edit ? (
+                            <button
+                              type="button"
+                              onClick={() => setPending((prev) => prev.filter((x) => x.localId !== p.localId))}
+                              className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-medium dark:border-red-900/60"
+                            >
+                              <X size={12} aria-hidden />
+                              {t('common.cancel')}
+                            </button>
+                          ) : null}
+                        </div>
                       ) : null}
-                    </div>
-                  ) : null}
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </AgentImagesContext.Provider>
+            </AgentSendContext.Provider>
 
             {detail ? (
               <AgentFollowUpChips
@@ -674,7 +858,8 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                   draft.trim() !== '' ||
                   editCutSeq != null ||
                   editingId != null ||
-                  runError != null
+                  runError != null ||
+                  sendPaused
                 }
                 onPick={(text) => void send(text)}
               />
@@ -697,12 +882,18 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                   <ThinkingDots label={t('agent.status.thinking')} />
                 </StatusFade>
               ) : null}
-              {runError ? (
+              {showLimitCard && limit ? (
+                <StatusFade key="limit">
+                  <AgentLimitCard limit={limit} msLeft={limitClock.msLeft} />
+                </StatusFade>
+              ) : null}
+              {runError && !(showLimitCard && runLimit) ? (
                 <StatusFade key="error">
-                  <div className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
-                    <AlertCircle size={16} className="mt-0.5 flex-shrink-0" aria-hidden />
-                    <span>{t(agentErrorKey(runError.code))}</span>
-                  </div>
+                  <AgentRunErrorBanner
+                    code={runError.code}
+                    onRetry={lastUserItem ? resendLastUser : undefined}
+                    retryDisabled={editBlocked}
+                  />
                 </StatusFade>
               ) : null}
               {runStopped ? (
@@ -713,6 +904,9 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
             </AnimatePresence>
           </div>
         </div>
+        <div className="sr-only" role="status" aria-live="polite">
+          {replyAnnouncement}
+        </div>
       </main>
 
       <footer
@@ -720,6 +914,7 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
         data-cap-chat-composer
         className="absolute bottom-0 left-0 right-0 z-50 flex-shrink-0 border-transparent !bg-transparent"
       >
+        <AgentJumpToBottom visible={showJump} unread={unseenBelow || (showJump && running)} onJump={jumpToBottom} />
         <AgentContextHint usage={usage} onNewChat={startNewChat} creating={createChatMutation.isPending} />
         <AnimatePresence mode="wait" initial={false}>
           {voiceActive ? (
@@ -749,6 +944,7 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                 running={running}
                 stopping={cancelMutation.isPending}
                 disabled={!detail}
+                pausedReason={composerPausedReason}
               />
             </motion.div>
           )}
@@ -812,19 +1008,8 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
   );
 }
 
-function UserBubble({ text, sending = false }: { text: string; sending?: boolean }) {
-  return (
-    <div className="flex justify-end">
-      <div
-        dir="auto"
-        className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-ee-md bg-blue-600 px-3.5 py-2 text-[15px] leading-relaxed text-white transition-opacity ${
-          sending ? 'opacity-70' : ''
-        }`}
-      >
-        {stripAgentRefTokens(text)}
-      </div>
-    </div>
-  );
+function cssEscape(value: string): string {
+  return typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape(value) : value.replace(/["\\]/g, '\\$&');
 }
 
 function StatusFade({ children }: { children: ReactNode }) {

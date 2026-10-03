@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Droplets, Wind } from 'lucide-react';
 import type { AgentWeatherCard as AgentWeatherCardData, AgentWeatherCardHour } from '@shared/agentContract';
@@ -6,7 +6,7 @@ import type { WeatherConditionKey } from '@/types';
 import { WeatherIcon } from '@/components/weather/WeatherIcon';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { formatWeatherPrecipitationAmount, getWeatherTemperatureColor, shouldUseFahrenheit } from '@/utils/weather';
+import { formatWeatherPrecipitationAmount, getWeatherTemperatureTextColors, shouldUseFahrenheit } from '@/utils/weather';
 import {
   agentToolCardPath,
   formatCardClock,
@@ -34,6 +34,12 @@ const CONDITIONS = new Set<WeatherConditionKey>([
 
 /** "18:00–19:30" isolated left-to-right so an RTL sentence doesn't flip the range. */
 const ltrRange = (from: string, to: string) => `\u2066${from}–${to}\u2069`;
+
+/** Light / dark temperature colours as CSS variables; the `dark` class picks one. */
+function temperatureStyle(tempC: number): CSSProperties {
+  const { light, dark } = getWeatherTemperatureTextColors(tempC);
+  return { '--agent-temp': light, '--agent-temp-dark': dark } as CSSProperties;
+}
 
 const conditionOf = (key: string): WeatherConditionKey => (CONDITIONS.has(key as WeatherConditionKey) ? (key as WeatherConditionKey) : 'unknown');
 
@@ -69,7 +75,10 @@ function HourColumn({
     >
       <span className="text-[11px] tabular-nums text-gray-500 dark:text-gray-400">{label}</span>
       <WeatherIcon conditionKey={conditionOf(hour.condition)} isDay={hour.isDay} size={18} />
-      <span className="text-sm font-semibold tabular-nums" style={{ color: getWeatherTemperatureColor({ temperatureC: hour.tempC }).textColor }}>
+      <span
+        className="text-sm font-semibold tabular-nums text-[color:var(--agent-temp)] dark:text-[color:var(--agent-temp-dark)]"
+        style={temperatureStyle(hour.tempC)}
+      >
         {formatCardTemperature(hour.tempC, fahrenheit)}
       </span>
       <span

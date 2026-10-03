@@ -6,8 +6,9 @@
  *     an `untrustedContent` call in the folded turns taints the plan;
  *   - history: summary block (quoted, taint note) + crude fold of the uncovered rest; no summary
  *     → the old fold; fences in a summary are neutralised;
- *   - run loop: one extra LLM call stores the summary (`throughSeq`, sticky taint), its tokens are
- *     on the run and logged as `agent_chat_summary`, the next run replays it without a new call;
+ *   - run loop: after the answer (off the critical path), one extra LLM call stores the summary
+ *     (`throughSeq`, sticky taint), its tokens are on the run and logged as `agent_chat_summary`,
+ *     the next run replays it without a new call;
  *     a tainted summary keeps `save_memory` refused (provenance); no budget left → crude fold,
  *     no call; a failing summary call doesn't fail the run.
  *
@@ -176,20 +177,19 @@ void (async () => {
     {
       const chat = await createAgentChat(alice.id);
       await seedTurns(chat.id, AGENT_HISTORY_MAX_USER_TURNS + AGENT_CHAT_SUMMARY_MIN_NEW_TURNS - 1, 1);
-      const llm = new ScriptedLlm([textStep('SUMMARY: the user planned games; a game chat was read.', 500), textStep('Sure.')]);
+      const llm = new ScriptedLlm([textStep('Sure.'), textStep('SUMMARY: the user planned games; a game chat was read.', 500)]);
       const service = makeService(llm);
       const { runId } = await service.enqueueRun({ userId: alice.id, chatId: chat.id, text: 'And one more thing' });
       const run = await service.waitForRun(runId);
       assert.equal(run.status, AgentRunStatus.COMPLETED);
-      assert.equal(llm.calls.length, 2, 'one summary call + the answer');
-      assert.deepEqual(llm.calls[0].tools ?? [], [], 'the summary call has no tools');
-      assert.match(llm.calls[0].messages[1].content as string, /quoted from a game chat/);
+      assert.equal(llm.calls.length, 2, 'the answer, then one summary call after the run');
+      assert.ok(llm.calls[0].messages.some((m) => String(m.content).startsWith(AGENT_FOLD_HEADER)), 'the answer did not wait: it replays the crude fold');
+      assert.deepEqual(llm.calls[1].tools ?? [], [], 'the summary call has no tools');
+      assert.match(llm.calls[1].messages[1].content as string, /quoted from a game chat/);
       const stored = await prisma.agentChat.findUniqueOrThrow({ where: { id: chat.id } });
       assert.equal(stored.summary, 'SUMMARY: the user planned games; a game chat was read.');
       assert.equal(stored.summaryTainted, true, 'tainted summary');
       assert.ok(stored.summaryThroughSeq && stored.summaryThroughSeq > 0);
-      const system = llm.calls[1].messages.find((m) => m.role === 'system' && String(m.content).startsWith(AGENT_SUMMARY_HEADER));
-      assert.ok(system && String(system.content).includes('SUMMARY: the user planned') && String(system.content).includes(AGENT_SUMMARY_TAINT_NOTE), 'the answer call replays the summary');
       assert.ok(run.inputTokens >= 510, 'summary tokens are on the run (count against the budget)');
       assert.ok(logged.some((e) => e.reason === LLM_REASON.AGENT_CHAT_SUMMARY && e.userId === alice.id && e.inputTokens === 500));
 
@@ -199,7 +199,8 @@ void (async () => {
       const next = await second.enqueueRun({ userId: alice.id, chatId: chat.id, text: 'Thanks' });
       await second.waitForRun(next.runId);
       assert.equal(llm2.calls.length, 2, 'no summary call when not due');
-      assert.ok(llm2.calls[0].messages.some((m) => String(m.content).includes('SUMMARY: the user planned')));
+      const system = llm2.calls[0].messages.find((m) => m.role === 'system' && String(m.content).startsWith(AGENT_SUMMARY_HEADER));
+      assert.ok(system && String(system.content).includes('SUMMARY: the user planned') && String(system.content).includes(AGENT_SUMMARY_TAINT_NOTE), 'the next turn replays the stored summary');
       const toolReply = llm2.calls[1].messages.filter((m) => m.role === 'tool').at(-1);
       assert.match(String(toolReply?.content), /forbidden/, 'a tainted chat keeps save_memory refused');
       assert.equal(await prisma.agentMemory.count({ where: { userId: alice.id } }), 0);
@@ -218,7 +219,7 @@ void (async () => {
       assert.ok(broke.calls[0].messages.some((m) => String(m.content).startsWith(AGENT_FOLD_HEADER)), 'crude fold instead');
       assert.equal((await prisma.agentChat.findUniqueOrThrow({ where: { id: chat.id } })).summary, null);
 
-      const flaky = new ScriptedLlm([failingStep, textStep('Still answered.')]);
+      const flaky = new ScriptedLlm([textStep('Still answered.'), failingStep]);
       const other = makeService(flaky);
       const originalError = console.error;
       console.error = () => {};

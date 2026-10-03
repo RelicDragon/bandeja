@@ -2,7 +2,8 @@
  * `/api/agent` over real HTTP through the full `app` (real dev DB, no LLM):
  * feature flag + allowlist, ownership 404s, error codes, per-user rate limit, and the
  * SSE endpoint (headers, no gzip, `?after=` / `Last-Event-ID` replay, live frames,
- * close on terminal, synthetic replay from the DB), and confirm / reject of a pending action.
+ * close on terminal, synthetic replay from the DB, coalesced text deltas), confirm / reject of a
+ * pending action, and message feedback (thumbs).
  */
 import './agentRoutesTestEnv';
 import assert from 'node:assert/strict';
@@ -36,7 +37,7 @@ void (async () => {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const text = await res.text();
-    return { status: res.status, body: (text ? JSON.parse(text) : {}) as Json };
+    return { status: res.status, headers: res.headers, body: (text ? JSON.parse(text) : {}) as Json };
   };
 
   /** Raw SSE read: resolves with headers + full body once the server ends the stream. */
@@ -104,6 +105,8 @@ void (async () => {
     res = await call(owner.userId, 'POST', `/chats/${chat.id}/messages`, { text: 'hello' });
     assert.equal(res.status, 429);
     assert.equal(res.body.code, 'RATE_LIMITED');
+    assert.ok(Date.parse(String(res.body.retryAt)) > Date.now(), 'retryAt: when the window resets');
+    assert.ok(Number(res.headers.get('retry-after')) > 0, 'Retry-After header');
     res = await call(player.userId, 'POST', `/chats/${chat.id}/messages`, { text: 'hello' });
     assert.equal(res.status, 404, 'limit is per user, not global');
 
@@ -180,6 +183,8 @@ void (async () => {
     await store.append(liveRun.id, { type: 'run.started', runId: liveRun.id, chatId: chat.id });
     await store.append(liveRun.id, { type: 'text.delta', text: 'Hello' });
     await store.append(liveRun.id, { type: 'text.delta', text: ' there' });
+    await store.flush(liveRun.id); // consecutive deltas are coalesced into one (id 2)
+    await store.append(liveRun.id, { type: 'tool.started', callId: 'c1', name: 'get_game', label: 'Game' });
 
     assert.equal((await sse(player.userId, `/runs/${liveRun.id}/events`)).status, 404, 'foreign run = 404');
     const live = sse(owner.userId, `/runs/${liveRun.id}/events?after=1`, { 'Last-Event-ID': '2' }, () => {
@@ -195,11 +200,12 @@ void (async () => {
     assert.equal(liveResult.headers['x-accel-buffering'], 'no');
     assert.equal(liveResult.headers['content-encoding'], undefined, 'compression bypassed');
     assert.deepEqual(frameIds(liveResult.body), [3, 4, 5], 'replay after max(after, Last-Event-ID) then live');
-    assert.deepEqual(frameTypes(liveResult.body), ['text.delta', 'text.delta', 'run.completed']);
+    assert.deepEqual(frameTypes(liveResult.body), ['tool.started', 'text.delta', 'run.completed']);
 
     // Already finished: replay only (from the start, text deltas included), then close.
     const done = await sse(owner.userId, `/runs/${liveRun.id}/events`);
     assert.deepEqual(frameIds(done.body), [1, 2, 3, 4, 5]);
+    assert.match(done.body, /"text":"Hello there"/, 'a coalesced delta is an ordinary delta');
     await prisma.agentRun.update({ where: { id: liveRun.id }, data: { status: AgentRunStatus.COMPLETED, endedAt: new Date() } });
 
     // --- SSE: QUEUED run, no log in this process → fresh log; cancel over HTTP closes it ------------
@@ -218,6 +224,42 @@ void (async () => {
     const synthetic = await sse(owner.userId, `/runs/${oldRun.id}/events?after=5`);
     assert.deepEqual(frameTypes(synthetic.body), ['run.started', 'run.cancelled']);
     assert.ok(frameIds(synthetic.body).every((id) => id > AGENT_SYNTHETIC_EVENT_ID_BASE));
+
+    // --- message feedback (thumbs) ------------------------------------------------------------------
+    {
+      const maxSeq = (await prisma.agentMessage.aggregate({ where: { chatId: chat.id }, _max: { seq: true } }))._max.seq ?? 0;
+      const asked = await prisma.agentMessage.create({
+        data: { chatId: chat.id, seq: maxSeq + 1, role: 'USER', content: [{ type: 'text', text: 'When is my game?' }] },
+      });
+      const reply = await prisma.agentMessage.create({
+        data: { chatId: chat.id, seq: maxSeq + 2, role: 'ASSISTANT', content: [{ type: 'text', text: 'Tomorrow at 18:00.' }] },
+      });
+      const feedbackPath = (messageId: string, chatId = chat.id) => `/chats/${chatId}/messages/${messageId}/feedback`;
+      assert.equal((await call(player.userId, 'PUT', feedbackPath(reply.id), { rating: 'up' })).status, 404, 'foreign chat = 404');
+      assert.equal((await call(owner.userId, 'PUT', feedbackPath(asked.id), { rating: 'up' })).status, 404, 'user message = 404');
+      assert.equal((await call(owner.userId, 'PUT', feedbackPath(`missing-${fixture.suffix}`), { rating: 'up' })).status, 404);
+      assert.equal((await call(owner.userId, 'PUT', feedbackPath(reply.id, `other-${fixture.suffix}`), { rating: 'up' })).status, 404, 'wrong chat = 404');
+      assert.equal((await call(owner.userId, 'PUT', feedbackPath(reply.id), { rating: 'meh' })).status, 400);
+      assert.equal((await call(owner.userId, 'PUT', feedbackPath(reply.id), { rating: 'down', comment: 'x'.repeat(501) })).status, 400);
+      res = await call(owner.userId, 'PUT', feedbackPath(reply.id), { rating: 'down', comment: ' Wrong day ' });
+      assert.equal(res.status, 200);
+      assert.deepEqual(res.body.data, { feedback: 'down' });
+      let row = await prisma.agentMessage.findUniqueOrThrow({ where: { id: reply.id } });
+      assert.equal(row.feedback, 'DOWN');
+      assert.equal(row.feedbackComment, 'Wrong day');
+      assert.ok(row.feedbackAt);
+      type DetailMessage = { id: string; role: string; feedback?: string | null };
+      const messages = ((await call(owner.userId, 'GET', `/chats/${chat.id}`)).body.data as { messages: DetailMessage[] }).messages;
+      assert.equal(messages.find((m) => m.id === reply.id)?.feedback, 'down', 'feedback in the message DTO');
+      assert.ok(!('feedback' in (messages.find((m) => m.id === asked.id) ?? {})), 'absent on user messages');
+      res = await call(owner.userId, 'PUT', feedbackPath(reply.id), { rating: null });
+      assert.deepEqual(res.body.data, { feedback: null });
+      row = await prisma.agentMessage.findUniqueOrThrow({ where: { id: reply.id } });
+      assert.equal(row.feedback, null);
+      assert.equal(row.feedbackComment, null, 'clearing drops the comment');
+      res = await call(owner.userId, 'PUT', feedbackPath(reply.id), { rating: 'up' });
+      assert.deepEqual(res.body.data, { feedback: 'up' });
+    }
 
     // --- cancel + pin + archive + delete -------------------------------------------------------------
     assert.equal((await call(player.userId, 'POST', `/runs/${oldRun.id}/cancel`)).status, 404);

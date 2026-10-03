@@ -4,7 +4,8 @@
  * Uses the `openai` SDK that `services/ai/ai.service.ts` already points at DeepSeek,
  * rather than the raw `fetch` + manual SSE parsing travel-bandeja needed in plain JS:
  * the SDK parses the SSE stream, types the chunks, honours an AbortSignal and retries
- * nothing on its own (`maxRetries: 0`, the run has a 60s wall clock). `IAiService` is
+ * nothing on its own (`maxRetries: 0`): the run loop retries a step itself, only while nothing
+ * has streamed yet and within the run's wall clock (`agentRun.service.ts`). `IAiService` is
  * untouched. Thinking is disabled on every call, like the rest of the backend's
  * DeepSeek usage (reasoning tokens would blow the step budget and are not shown).
  * `parallel_tool_calls` is not sent: DeepSeek already returns several calls in one step by
@@ -45,6 +46,8 @@ export type AgentLlmStreamParams = {
   /** Omit (or empty) to force a text answer. */
   tools?: AgentOpenAiTool[];
   signal: AbortSignal;
+  /** `max_tokens` for the reply (`AGENT_MAX_OUTPUT_TOKENS`); omitted = provider default. */
+  maxTokens?: number;
 };
 
 export interface AgentLlmClient {
@@ -57,6 +60,8 @@ export class AgentLlmError extends Error {
   constructor(
     message: string,
     readonly status: number | null = null,
+    /** Parsed `retry-after` header (ms), when the provider sent one. */
+    readonly retryAfterMs: number | null = null,
   ) {
     super(message);
     this.name = 'AgentLlmError';
@@ -85,6 +90,7 @@ export class DeepSeekAgentLlmClient implements AgentLlmClient {
           stream: true,
           stream_options: { include_usage: true },
           temperature: 0.3,
+          ...(params.maxTokens ? { max_tokens: params.maxTokens } : {}),
           thinking: { type: 'disabled' },
         } as OpenAI.Chat.ChatCompletionCreateParamsStreaming,
         { signal: params.signal },
@@ -138,10 +144,32 @@ function toAgentLlmError(error: unknown, signal: AbortSignal): unknown {
   // Aborts are the loop's own cancellation/timeout: let the caller classify them.
   if (signal.aborted) return error;
   if (error instanceof OpenAI.APIError) {
-    return new AgentLlmError(`LLM request failed (${error.status ?? 'network'}): ${error.message}`, error.status ?? null);
+    return new AgentLlmError(
+      `LLM request failed (${error.status ?? 'network'}): ${error.message}`,
+      error.status ?? null,
+      retryAfterMs(error.headers),
+    );
   }
   if (error instanceof Error) return new AgentLlmError(`LLM request failed: ${error.message}`);
   return new AgentLlmError('LLM request failed');
+}
+
+/** `retry-after` (seconds or an HTTP date) → ms; also DeepSeek-style `retry-after-ms`. */
+export function retryAfterMs(headers: unknown, now = Date.now()): number | null {
+  const read = (name: string): string | null => {
+    if (!headers) return null;
+    if (typeof (headers as Headers).get === 'function') return (headers as Headers).get(name);
+    const value = (headers as Record<string, unknown>)[name];
+    return typeof value === 'string' ? value : null;
+  };
+  const ms = Number.parseFloat(read('retry-after-ms') ?? '');
+  if (Number.isFinite(ms) && ms >= 0) return ms;
+  const raw = read('retry-after')?.trim();
+  if (!raw) return null;
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  const at = Date.parse(raw);
+  return Number.isFinite(at) ? Math.max(0, at - now) : null;
 }
 
 /**
@@ -174,7 +202,8 @@ export class ToolCallAccumulator {
   }
 }
 
-let defaultClient: { key: string; client: AgentLlmClient } | null = null;
+/** One client per base URL + model (primary and `AGENT_FALLBACK_MODEL`). */
+const defaultClients = new Map<string, AgentLlmClient>();
 
 /** Real client from env; null when `DEEPSEEK_API_KEY` is missing. */
 export function getDefaultAgentLlmClient(options: {
@@ -184,8 +213,10 @@ export function getDefaultAgentLlmClient(options: {
 }): AgentLlmClient | null {
   if (!options.apiKey) return null;
   const key = `${options.baseUrl}|${options.model}|${options.apiKey.length}`;
-  if (!defaultClient || defaultClient.key !== key) {
-    defaultClient = { key, client: new DeepSeekAgentLlmClient(options) };
+  let client = defaultClients.get(key);
+  if (!client) {
+    client = new DeepSeekAgentLlmClient(options);
+    defaultClients.set(key, client);
   }
-  return defaultClient.client;
+  return client;
 }

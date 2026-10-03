@@ -1,6 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
-import type { AgentChatDetailDto, AgentChatDto, AgentPendingActionDto } from '@shared/agentContract';
+import type {
+  AgentChatDetailDto,
+  AgentChatDto,
+  AgentMessageFeedback,
+  AgentPendingActionDto,
+} from '@shared/agentContract';
 import { agentApi, type AgentChatListData } from '@/api/agent';
 import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
@@ -186,6 +191,43 @@ export function useSendAgentMessageMutation(chatId: string) {
         archivedAt: null,
       }));
       void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chats() });
+    },
+  });
+}
+
+export type AgentFeedbackVars = { messageId: string; rating: AgentMessageFeedback | null; comment?: string };
+
+function withMessageFeedback(
+  detail: AgentChatDetailDto,
+  messageId: string,
+  feedback: AgentMessageFeedback | null,
+): AgentChatDetailDto {
+  if (!detail.messages.some((m) => m.id === messageId)) return detail;
+  return { ...detail, messages: detail.messages.map((m) => (m.id === messageId ? { ...m, feedback } : m)) };
+}
+
+/**
+ * Thumbs on an assistant reply. Optimistic: the cached message's `feedback` flips at once and
+ * goes back to what it was if the server refuses (the caller toasts).
+ */
+export function useSetAgentMessageFeedbackMutation(chatId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ messageId, rating, comment }: AgentFeedbackVars) =>
+      agentApi.setMessageFeedback(chatId, messageId, rating, comment),
+    // No cancelQueries: a refetch in flight (run just ended) must still land; onSuccess re-applies.
+    onMutate: ({ messageId, rating }) => {
+      const detail = queryClient.getQueryData<AgentChatDetailDto>(queryKeys.agent.chat(chatId));
+      const previous = detail?.messages.find((m) => m.id === messageId)?.feedback ?? null;
+      patchAgentChatDetail(queryClient, chatId, (d) => withMessageFeedback(d, messageId, rating));
+      return { previous };
+    },
+    onError: (_err, { messageId }, ctx) => {
+      // Only this message: the rest of the detail may have moved on (streamed replies).
+      patchAgentChatDetail(queryClient, chatId, (d) => withMessageFeedback(d, messageId, ctx?.previous ?? null));
+    },
+    onSuccess: ({ feedback }, { messageId }) => {
+      patchAgentChatDetail(queryClient, chatId, (d) => withMessageFeedback(d, messageId, feedback ?? null));
     },
   });
 }

@@ -21,7 +21,9 @@ import { createAgentPermissionFixture } from '../access/__tests__/agentPermissio
 import { createAgentChat, getAgentChatDetail } from '../agentChat.service';
 import { AGENT_SNAPSHOT_HEADER, buildAgentRunContext } from '../agentContext.service';
 import { InMemoryAgentEventStore } from '../agentEvents';
-import { createAgentRunService, type AgentRunService } from '../agentRun.service';
+import { AGENT_OUTPUT_LIMIT_NUDGE, createAgentRunService, type AgentRunService } from '../agentRun.service';
+import { agentTokensUsedToday } from '../agentGuards';
+import { agentBudgetRetryAt } from '../agentBudgetWindow';
 import {
   AgentLlmError,
   type AgentLlmClient,
@@ -37,9 +39,11 @@ type Step = (params: AgentLlmStreamParams) => AsyncIterable<AgentLlmStreamChunk>
 
 class ScriptedLlm implements AgentLlmClient {
   readonly provider = 'test';
-  readonly model = 'scripted';
   readonly calls: AgentLlmStreamParams[] = [];
-  constructor(private readonly steps: Step[]) {}
+  constructor(
+    private readonly steps: Step[],
+    readonly model = 'scripted',
+  ) {}
   stream(params: AgentLlmStreamParams): AsyncIterable<AgentLlmStreamChunk> {
     this.calls.push({ ...params, messages: [...params.messages] });
     const step = this.steps[Math.min(this.calls.length - 1, this.steps.length - 1)];
@@ -107,12 +111,18 @@ class GatedLlm extends ScriptedLlm {
 
 function makeService(
   llm: AgentLlmClient | null,
-  options: { config?: Partial<AgentEnvConfig> | (() => Partial<AgentEnvConfig>); tools?: AgentToolDefinition[]; workerId?: string } = {},
+  options: {
+    config?: Partial<AgentEnvConfig> | (() => Partial<AgentEnvConfig>);
+    tools?: AgentToolDefinition[];
+    workerId?: string;
+    fallback?: AgentLlmClient;
+  } = {},
 ) {
   const events = new InMemoryAgentEventStore();
   const base = resolveAgentEnvConfig({});
   const service = createAgentRunService({
     llm: () => llm,
+    fallbackLlm: () => options.fallback ?? null,
     events,
     registry: new AgentToolRegistry(options.tools ?? AGENT_TOOL_DEFINITIONS),
     config: () => ({ ...base, ...(typeof options.config === 'function' ? options.config() : options.config) }),
@@ -254,10 +264,15 @@ void (async () => {
       const next = await second.service.enqueueRun({ userId: owner.userId, chatId, text: 'And now?' });
       await second.service.waitForRun(next.runId);
       const nextCall = llm2.calls[0].messages;
-      assert.deepEqual(nextCall.slice(1).map((m) => m.role), ['user', 'assistant', 'tool', 'assistant', 'system', 'user', 'system']);
+      assert.deepEqual(nextCall.slice(1).map((m) => m.role), ['system', 'user', 'system', 'assistant', 'tool', 'assistant', 'system', 'user', 'system']);
       assert.equal(nextCall[0].content, secondCall[0].content, 'static prompt identical turn over turn');
-      // The previous turn's snapshot and reminder are per-turn only: the history itself replays byte-identically.
-      assert.deepEqual(nextCall.slice(1, 4), [secondCall[2], ...secondCall.slice(4)], 'history replays byte-identically');
+      // Append-only history: the previous turn (its snapshot and reminder included) replays
+      // exactly as its last step sent it, so the whole previous request is a cached prefix.
+      assert.deepEqual(nextCall.slice(0, secondCall.length), secondCall, 'previous request is a prefix of the next');
+      assert.deepEqual(nextCall[secondCall.length], { role: 'assistant', content: 'You have one game.' });
+      assert.ok((nextCall.at(-3)?.content as string).startsWith(AGENT_SNAPSHOT_HEADER), 'a fresh snapshot for the new turn');
+      const storedTurn = await prisma.agentMessage.findFirstOrThrow({ where: { runId: next.runId, role: AgentMessageRole.USER } });
+      assert.deepEqual(storedTurn.llmMessages, nextCall.slice(-3), 'the turn triple is stored on the USER message');
       console.log('happy path: ok');
     }
 
@@ -429,12 +444,17 @@ void (async () => {
         yield { type: 'text', text: '' };
         throw new AgentLlmError('LLM request failed (500): boom', 500);
       };
-      const broken = makeService(new ScriptedLlm([failing]));
+      const brokenLlm = new ScriptedLlm([failing]);
+      const broken = makeService(brokenLlm, { config: { llmRetryBaseMs: 1 } });
       const originalError = console.error;
+      const originalWarn = console.warn;
       console.error = () => {};
+      console.warn = () => {};
       const failed = await broken.service.enqueueRun({ userId: owner.userId, chatId, text: 'fail' });
       await broken.service.waitForRun(failed.runId);
       console.error = originalError;
+      console.warn = originalWarn;
+      assert.equal(brokenLlm.calls.length, 3, 'a 500 before any output is retried twice');
       const failedEvent = (await eventsOf(broken.events, failed.runId)).at(-1);
       assert.equal(failedEvent?.type, 'run.failed');
       assert.equal((failedEvent as { code: string }).code, 'LLM_ERROR');
@@ -445,6 +465,188 @@ void (async () => {
       await expectApiError(poor.service.enqueueRun({ userId: owner.userId, chatId, text: 'hi' }), 429, 'BUDGET_EXCEEDED');
       await expectApiError(makeService(null).service.enqueueRun({ userId: owner.userId, chatId, text: 'hi' }), 503, 'LLM_ERROR');
       console.log('timeout + llm error + budget: ok');
+    }
+
+    // 5b. retries, fallback model, max_tokens, finish_reason length, budget between steps ------
+    {
+      const quiet = async <T>(work: () => Promise<T>): Promise<T> => {
+        const [originalError, originalWarn] = [console.error, console.warn];
+        console.error = () => {};
+        console.warn = () => {};
+        try {
+          return await work();
+        } finally {
+          console.error = originalError;
+          console.warn = originalWarn;
+        }
+      };
+      const failWith = (status: number | null, retryAfterMs: number | null = null): Step =>
+        async function* () {
+          yield* [];
+          throw new AgentLlmError(`LLM request failed (${status ?? 'network'})`, status, retryAfterMs);
+        };
+      const chatId = await newChat(owner.userId);
+
+      // 429 then success: retried, the answer streams once; max_tokens is sent on every call.
+      const flaky = new ScriptedLlm([failWith(429, 5), textStep('Recovered.')]);
+      const retrying = makeService(flaky, { config: { llmRetryBaseMs: 1, maxOutputTokens: 1234 } });
+      const ok = await quiet(async () => {
+        const { runId } = await retrying.service.enqueueRun({ userId: owner.userId, chatId, text: 'retry me' });
+        return retrying.service.waitForRun(runId);
+      });
+      assert.equal(ok.status, AgentRunStatus.COMPLETED);
+      assert.equal(flaky.calls.length, 2);
+      assert.deepEqual(flaky.calls.map((call) => call.maxTokens), [1234, 1234]);
+
+      // Output already streamed: never retried (the user saw it).
+      const midway: Step = async function* () {
+        yield { type: 'text', text: 'Half an ans' };
+        throw new AgentLlmError('LLM request failed (503)', 503);
+      };
+      const once = new ScriptedLlm([midway, textStep('never')]);
+      const noRetry = makeService(once, { config: { llmRetryBaseMs: 1 } });
+      const cut = await quiet(async () => {
+        const { runId } = await noRetry.service.enqueueRun({ userId: owner.userId, chatId, text: 'stream then fail' });
+        return noRetry.service.waitForRun(runId);
+      });
+      assert.equal(cut.status, AgentRunStatus.FAILED);
+      assert.equal(cut.errorCode, 'LLM_ERROR');
+      assert.equal(once.calls.length, 1);
+
+      // Primary exhausted (500 × 3) → the fallback model answers once.
+      const down = new ScriptedLlm([failWith(500)]);
+      const backup = new ScriptedLlm([textStep('From the fallback.')], 'fallback-model');
+      const withFallback = makeService(down, { config: { llmRetryBaseMs: 1 }, fallback: backup });
+      const viaFallback = await quiet(async () => {
+        const { runId } = await withFallback.service.enqueueRun({ userId: owner.userId, chatId, text: 'fallback please' });
+        return withFallback.service.waitForRun(runId);
+      });
+      assert.equal(viaFallback.status, AgentRunStatus.COMPLETED);
+      assert.equal(down.calls.length, 3);
+      assert.equal(backup.calls.length, 1);
+      // 404 (model missing): straight to the fallback, no retries.
+      const missing = new ScriptedLlm([failWith(404)]);
+      const backup2 = new ScriptedLlm([textStep('Fallback again.')], 'fallback-model');
+      const onMissing = makeService(missing, { config: { llmRetryBaseMs: 1 }, fallback: backup2 });
+      await quiet(async () => {
+        const { runId } = await onMissing.service.enqueueRun({ userId: owner.userId, chatId, text: 'missing model' });
+        return onMissing.service.waitForRun(runId);
+      });
+      assert.equal(missing.calls.length, 1);
+      assert.equal(backup2.calls.length, 1);
+      // 400: not retried, no fallback.
+      const bad = new ScriptedLlm([failWith(400)]);
+      const backup3 = new ScriptedLlm([textStep('never')], 'fallback-model');
+      const onBad = makeService(bad, { config: { llmRetryBaseMs: 1 }, fallback: backup3 });
+      const badRun = await quiet(async () => {
+        const { runId } = await onBad.service.enqueueRun({ userId: owner.userId, chatId, text: 'bad request' });
+        return onBad.service.waitForRun(runId);
+      });
+      assert.equal(badRun.errorCode, 'LLM_ERROR');
+      assert.deepEqual([bad.calls.length, backup3.calls.length], [1, 0]);
+
+      // finish_reason length with tool calls: not executed, asked again once with the nudge.
+      const cutCall: Step = async function* () {
+        yield { type: 'tool_call_delta', index: 0, id: 'call_cut', name: 'list_cities', arguments: '{"que' };
+        yield { type: 'usage', inputTokens: 100, outputTokens: 4096 };
+        yield { type: 'finish', reason: 'length' };
+      };
+      const truncating = new ScriptedLlm([cutCall, textStep('Short answer.')]);
+      const lengthy = makeService(truncating);
+      const { runId: lengthRunId } = await lengthy.service.enqueueRun({ userId: owner.userId, chatId, text: 'long please' });
+      const lengthRun = await quiet(() => lengthy.service.waitForRun(lengthRunId));
+      assert.equal(lengthRun.status, AgentRunStatus.COMPLETED);
+      assert.equal(lengthRun.endReason, 'answered');
+      assert.ok(!(await typesOf(lengthy.events, lengthRunId)).includes('tool.started'), 'cut tool calls never run');
+      assert.equal(truncating.calls[1].messages.at(-1)?.content, AGENT_OUTPUT_LIMIT_NUDGE);
+      assert.equal(await prisma.agentMessage.count({ where: { runId: lengthRunId, role: AgentMessageRole.TOOL } }), 0);
+      // A final text cut at max_tokens is saved as is and recorded.
+      const cutText: Step = async function* () {
+        yield { type: 'text', text: 'A very long answer that' };
+        yield { type: 'usage', inputTokens: 100, outputTokens: 4096 };
+        yield { type: 'finish', reason: 'length' };
+      };
+      const truncatedText = makeService(new ScriptedLlm([cutText]));
+      const { runId: textRunId } = await truncatedText.service.enqueueRun({ userId: owner.userId, chatId, text: 'longer' });
+      const textRun = await quiet(() => truncatedText.service.waitForRun(textRunId));
+      assert.equal(textRun.status, AgentRunStatus.COMPLETED);
+      assert.equal(textRun.endReason, 'truncated');
+      const savedText = await prisma.agentMessage.findFirstOrThrow({ where: { runId: textRunId, role: AgentMessageRole.ASSISTANT } });
+      assert.deepEqual(savedText.llmMessages, [{ role: 'assistant', content: 'A very long answer that' }]);
+
+      // Budget re-checked before every step: step 1 spends it, step 2 never starts.
+      const spent = await agentTokensUsedToday(owner.userId, new Date());
+      const hungry = new ScriptedLlm([toolCallStep('list_cities', {}), textStep('never')]);
+      const tight = makeService(hungry, { config: { dailyTokenBudget: spent + 50 } });
+      const { runId: budgetRunId } = await tight.service.enqueueRun({ userId: owner.userId, chatId, text: 'spend it' });
+      const budgetRun = await tight.service.waitForRun(budgetRunId);
+      assert.equal(hungry.calls.length, 1);
+      assert.equal(budgetRun.status, AgentRunStatus.FAILED);
+      assert.equal(budgetRun.errorCode, 'BUDGET_EXCEEDED');
+      assert.equal(budgetRun.endReason, 'budget_exceeded');
+      const budgetEvent = (await eventsOf(tight.events, budgetRunId)).at(-1);
+      assert.equal(budgetEvent?.type, 'run.failed');
+      assert.equal((budgetEvent as { code: string }).code, 'BUDGET_EXCEEDED');
+      assert.equal((budgetEvent as { retryAt?: string }).retryAt, agentBudgetRetryAt(budgetRun.endedAt!), 'retryAt = next UTC midnight');
+      assert.equal(await prisma.agentMessage.count({ where: { runId: budgetRunId, role: AgentMessageRole.TOOL } }), 1, 'step 1 kept');
+      console.log('retries + fallback + max_tokens + length + budget between steps: ok');
+    }
+
+    // 5c. per-tool deadline: a hung read answers tool_timeout; a late proposal is closed unseen ----
+    {
+      const hungRead = defineTool({
+        name: 'fake_hung_read',
+        description: 'Test-only read that never answers and ignores its signal.',
+        kind: 'read',
+        scope: 'user',
+        input: z.object({}).strict(),
+        timeoutMs: 50,
+        label: () => 'Hanging',
+        handler: () => new Promise(() => {}),
+      });
+      let lateActionId: string | null = null;
+      const slowWrite = defineTool({
+        name: 'fake_slow_write',
+        description: 'Test-only write whose proposal lands after its deadline.',
+        kind: 'write',
+        riskTier: 'critical',
+        scope: 'user',
+        input: z.object({}).strict(),
+        timeoutMs: 30,
+        label: () => 'Preparing slowly',
+        confirm: { authorize: async () => {}, execute: async () => ({ message: 'ok' }) },
+        handler: async (ctx) => {
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          const action = await prisma.agentPendingAction.create({
+            data: { runId: ctx.runId!, chatId: ctx.chatId!, userId: ctx.principal.userId, toolName: 'fake_slow_write', args: {}, preview: { title: 'x', lines: [], warnings: [] }, expiresAt: new Date(Date.now() + 60_000) },
+          });
+          lateActionId = action.id;
+          return { data: { status: 'awaiting_user_confirmation', actionId: action.id }, summary: 'Waiting', awaitingConfirmation: { actionId: action.id } };
+        },
+      });
+      const llm = new ScriptedLlm([
+        multiCallStep([
+          { name: 'fake_hung_read', args: {}, id: 'call_hung' },
+          { name: 'fake_slow_write', args: {}, id: 'call_slow' },
+        ]),
+        textStep('That took too long.'),
+      ]);
+      const { service } = makeService(llm, { tools: [...AGENT_TOOL_DEFINITIONS, hungRead, slowWrite] });
+      const chatId = await newChat(owner.userId);
+      const originalWarn = console.warn;
+      console.warn = () => {};
+      const { runId } = await service.enqueueRun({ userId: owner.userId, chatId, text: 'try the slow tools', headerLocale: 'en' });
+      const run = await service.waitForRun(runId);
+      await until(async () => Boolean(lateActionId) && (await prisma.agentPendingAction.findUniqueOrThrow({ where: { id: lateActionId! } })).status !== AgentActionStatus.PENDING, 'late proposal closed');
+      console.warn = originalWarn;
+      assert.equal(run.status, AgentRunStatus.COMPLETED, 'the run goes on after a tool timeout');
+      const toolMessage = await prisma.agentMessage.findFirstOrThrow({ where: { runId, role: AgentMessageRole.TOOL } });
+      const replies = toolMessage.llmMessages as { content: string }[];
+      assert.deepEqual(replies.map((reply) => JSON.parse(reply.content).data.error), ['tool_timeout', 'tool_timeout']);
+      assert.equal((toolMessage.content as unknown as { summary: string }[])[0].summary, agentT('en', 'error.timeout'));
+      assert.equal((await prisma.agentPendingAction.findUniqueOrThrow({ where: { id: lateActionId! } })).status, AgentActionStatus.EXPIRED);
+      assert.equal(await prisma.agentMessage.count({ where: { chatId, role: AgentMessageRole.TOOL } }), 1, 'no outcome message for an unseen proposal');
+      console.log('tool deadline: ok');
     }
 
     // 6. write-tool pause (phase-3 hook) ---------------------------------------------------------

@@ -59,7 +59,7 @@ function progressKey(
 function Row({ tone, icon, children }: { tone: 'muted' | 'ok' | 'warn' | 'bad'; icon: ReactNode; children: ReactNode }) {
   const color = {
     muted: 'text-gray-600 dark:text-gray-300',
-    ok: 'text-green-700 dark:text-green-400',
+    ok: 'text-emerald-700 dark:text-emerald-400',
     warn: 'text-amber-700 dark:text-amber-300',
     bad: 'text-red-600 dark:text-red-400',
   }[tone];
@@ -166,7 +166,7 @@ export const AgentClientActionCard = memo(function AgentClientActionCard({
     action.status === 'PENDING' || running
       ? 'border-primary-300 dark:border-primary-700'
       : action.status === 'EXECUTED' && !action.result?.partial && action.result?.ok !== false
-        ? 'border-green-200 dark:border-green-900/60'
+        ? 'border-emerald-200 dark:border-emerald-900/60'
         : action.status === 'FAILED' || action.status === 'UNKNOWN'
           ? 'border-red-200 dark:border-red-900/60'
           : 'border-gray-200 dark:border-gray-700';

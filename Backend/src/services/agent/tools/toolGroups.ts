@@ -247,19 +247,22 @@ export function loadToolsGroupsFromArguments(raw: string | unknown): AgentToolGr
   return Array.isArray(groups) ? groups.filter(isAgentToolGroup) : [];
 }
 
-/** How many of the latest user turns keep a group loaded. */
+/** Default window of `agentToolGroupsFromHistory` (the run loop passes the whole chat instead). */
 export const AGENT_TOOL_GROUP_HISTORY_TURNS = 8;
 
 /**
- * Groups used in the recent replayed history, in order of first use: the group of every tool
- * call plus the groups of every `load_tools` call, within the last
- * `AGENT_TOOL_GROUP_HISTORY_TURNS` user turns. Deterministic, so a turn re-derives the same
- * order the previous turn ended with (prefix-cache friendly).
+ * Groups used in the history, in order of first use: the group of every tool call plus the
+ * groups of every `load_tools` call (and, with `textGroups`, the keyword groups of every user
+ * message at its place), within the last `maxUserTurns` user turns. Deterministic, so a turn
+ * re-derives the same order the previous turn ended with (prefix-cache friendly). The run loop
+ * reads the whole chat (`Infinity`), so a loaded group stays for the rest of the chat and the
+ * tools array only ever grows.
  */
 export function agentToolGroupsFromHistory(
   messages: readonly AgentLlmMessage[],
   groupOf: (toolName: string) => AgentToolGroup | undefined,
   maxUserTurns = AGENT_TOOL_GROUP_HISTORY_TURNS,
+  textGroups?: (text: string) => readonly AgentToolGroup[],
 ): AgentToolGroup[] {
   let start = 0;
   let seen = 0;
@@ -274,6 +277,10 @@ export function agentToolGroupsFromHistory(
     if (group && group !== 'core' && !out.includes(group)) out.push(group);
   };
   for (const message of messages.slice(start)) {
+    if (message.role === 'user' && textGroups) {
+      for (const group of textGroups(message.content)) add(group);
+      continue;
+    }
     if (message.role !== 'assistant') continue;
     for (const call of message.tool_calls ?? []) {
       if (call.function.name === LOAD_TOOLS_NAME) {

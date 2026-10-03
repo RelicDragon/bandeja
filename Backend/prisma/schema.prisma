@@ -3835,6 +3835,8 @@ model LlmUsageLog {
   @@index([userId])
   @@index([reason])
   @@index([createdAt])
+  /// `agentTokensUsedToday`: one user's rows since UTC midnight.
+  @@index([userId, createdAt])
 }
 
 enum AdCampaignStatus {
@@ -4559,6 +4561,12 @@ enum AgentMessageRole {
   TOOL
 }
 
+/// The user's thumbs on an assistant reply (`AgentMessageFeedback` 'up' | 'down' on the wire).
+enum AgentMessageFeedback {
+  UP
+  DOWN
+}
+
 enum AgentRunStatus {
   QUEUED
   RUNNING
@@ -4619,11 +4627,17 @@ model AgentMessage {
   llmMessages Json?
   runId       String?
   createdAt   DateTime         @default(now())
+  /// The owner's rating of an ASSISTANT message (null = none / cleared). Admin: `GET /api/admin/agent/feedback`.
+  feedback        AgentMessageFeedback?
+  /// Optional note with the rating (≤500 chars).
+  feedbackComment String?               @db.VarChar(500)
+  feedbackAt      DateTime?
   chat        AgentChat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
   run         AgentRun?        @relation(fields: [runId], references: [id], onDelete: SetNull)
 
   @@unique([chatId, seq])
   @@index([runId])
+  @@index([feedback, feedbackAt])
 }
 
 model AgentRun {

@@ -34,6 +34,21 @@ export type AgentEnvConfig = {
    * step instead of the whole catalogue. False = every tool the principal may use, every step.
    */
   toolGroupsEnabled: boolean;
+  /**
+   * Model tried once when the primary's retries are exhausted (or at once on a 404 model-not-found).
+   * Null = no fallback.
+   */
+  fallbackModel: string | null;
+  /** `max_tokens` sent on every agent model call (one step's reply). */
+  maxOutputTokens: number;
+  /** Retries of one step's model call on 429 / 5xx / network errors, only before anything streamed. */
+  llmMaxRetries: number;
+  /** First retry delay; doubles per retry, jittered (a `retry-after` header wins, capped). */
+  llmRetryBaseMs: number;
+  /** Per-call deadline of a tool's handler (reads and write proposals); a tool's `timeoutMs` overrides it. */
+  toolTimeoutMs: number;
+  /** Weight of prompt-cache hit tokens in the daily budget (`agentTokensUsedToday`); 1 = full price. */
+  cachedTokenWeight: number;
 };
 
 export const AGENT_DEFAULT_MODEL = 'deepseek-flash';
@@ -43,6 +58,12 @@ function intInRange(raw: string | undefined, fallback: number, min: number, max:
   const parsed = Number.parseInt(raw ?? '', 10);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, parsed));
+}
+
+function ratio(raw: string | undefined, fallback: number): number {
+  const parsed = Number.parseFloat(raw ?? '');
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(0, Math.min(1, parsed));
 }
 
 function flag(raw: string | undefined, fallback: boolean): boolean {
@@ -71,5 +92,12 @@ export function resolveAgentEnvConfig(env: NodeJS.ProcessEnv): AgentEnvConfig {
     staleRunMs: intInRange(env.AGENT_STALE_RUN_MS, 30_000, 10_000, 60 * 60 * 1000),
     memoryConsolidationDailyCap: intInRange(env.AGENT_MEMORY_CONSOLIDATION_DAILY_CAP, 200, 0, 100_000),
     toolGroupsEnabled: flag(env.AGENT_TOOL_GROUPS_ENABLED, true),
+    fallbackModel: (env.AGENT_FALLBACK_MODEL || '').trim() || null,
+    // DeepSeek's chat models allow up to 8k output tokens; an agent step rarely needs half of that.
+    maxOutputTokens: intInRange(env.AGENT_MAX_OUTPUT_TOKENS, 4096, 256, 65_536),
+    llmMaxRetries: intInRange(env.AGENT_LLM_MAX_RETRIES, 2, 0, 5),
+    llmRetryBaseMs: intInRange(env.AGENT_LLM_RETRY_BASE_MS, 500, 0, 10_000),
+    toolTimeoutMs: intInRange(env.AGENT_TOOL_TIMEOUT_MS, 15_000, 1_000, 120_000),
+    cachedTokenWeight: ratio(env.AGENT_CACHED_TOKEN_WEIGHT, 0.1),
   };
 }

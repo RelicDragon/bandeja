@@ -47,7 +47,13 @@
       "share": "Sdílet",
       "copyFailed": "Kopírování se nezdařilo",
       "editHint": "Odesláním nahradíte tuto zprávu a vše, co následuje.",
-      "actions": "Akce zprávy"
+      "actions": "Akce zprávy",
+      "regenerate": "Odpovědět znovu",
+      "goodReply": "Dobrá odpověď",
+      "badReply": "Špatná odpověď",
+      "feedbackPlaceholder": "Co bylo špatně? (nepovinné)",
+      "feedbackThanks": "Děkujeme za zpětnou vazbu",
+      "feedbackFailed": "Zpětnou vazbu se nepodařilo uložit"
     },
     "empty": {
       "listTitle": "Váš padelový asistent",
@@ -403,6 +409,40 @@
       },
       "confirmPrompt": "{{title}}. Klepněte na obrazovce na Potvrdit.",
       "confirmFallbackTitle": "Připravil jsem změnu"
+    },
+    "markdown": {
+      "code": "Kód",
+      "copyCode": "Kopírovat kód"
+    },
+    "search": {
+      "open": "Hledat chaty",
+      "placeholder": "Hledat chaty…",
+      "clear": "Vymazat hledání",
+      "empty": "Žádný chat neodpovídá „{{query}}“",
+      "archivedBadge": "Archivováno"
+    },
+    "groups": {
+      "today": "Dnes",
+      "yesterday": "Včera",
+      "previous7Days": "Posledních 7 dní",
+      "previous30Days": "Posledních 30 dní"
+    },
+    "thread": {
+      "jumpToBottom": "Na nejnovější",
+      "jumpToBottomNew": "Níže jsou nové zprávy",
+      "showEarlier": "Zobrazit starší zprávy",
+      "replyFinished": "Odpověď je hotová"
+    },
+    "limits": {
+      "rateTitle": "Trochu zpomalte",
+      "rateBody": "Poslali jste hodně zpráv v krátké době. Znovu můžete psát v {{time}}.",
+      "rateBodyNoTime": "Poslali jste hodně zpráv v krátké době. Chvíli počkejte.",
+      "budgetTitle": "Denní limit vyčerpán",
+      "budgetBody": "Vyčerpali jste dnešní limit asistenta. Obnoví se v {{time}}.",
+      "budgetBodyNoTime": "Vyčerpali jste dnešní limit asistenta. Zkuste to zítra.",
+      "countdown": "Znovu za {{duration}}",
+      "composerPaused": "Pozastaveno do {{time}}",
+      "composerPausedNoTime": "Odesílání je zatím pozastaveno"
     }
   }
 }
