@@ -8,7 +8,7 @@ import {
 import { useFullscreenImageGestures } from './useFullscreenImageGestures';
 
 export type FullscreenImageZoomHandle = {
-  resetTransform: () => void;
+  resetTransform: (animated?: boolean) => void;
   isZoomed: () => boolean;
 };
 
@@ -16,9 +16,10 @@ type FullscreenImageZoomProps = {
   src: string;
   alt?: string;
   active: boolean;
-  onTap?: () => void;
+  /** Single tap (after the double-tap window), in client coordinates. */
+  onTap?: (clientX: number, clientY: number) => void;
   onDismiss?: () => void;
-  onDismissOffsetChange?: (offsetY: number) => void;
+  onDismissOffsetChange?: (offsetY: number, settle?: boolean) => void;
   onZoomChange?: (zoomed: boolean) => void;
   onHorizontalSwipeStart?: () => void;
   onHorizontalSwipeMove?: (offsetX: number) => void;
@@ -177,10 +178,11 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
           return;
         }
 
+        const { clientX, clientY } = e;
         pendingTapTimerRef.current = setTimeout(() => {
           pendingTapTimerRef.current = null;
           if (isGestureBusy() || isZoomed()) return;
-          onTapRef.current?.();
+          onTapRef.current?.(clientX, clientY);
         }, DOUBLE_TAP_MS);
       },
       [clearPendingTap, isGestureBusy, isZoomed, toggleDoubleTapZoom],

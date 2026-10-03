@@ -194,8 +194,7 @@ describe('FullscreenImageViewer chat gallery navigation', () => {
     });
 
     const mediaButton = document.querySelector('[data-testid="fullscreen-media-image"] button')!;
-    const chrome = document.querySelector('[data-testid="fullscreen-media-counter"]')?.parentElement
-      ?.parentElement?.parentElement;
+    const chrome = document.querySelector('[data-testid="fullscreen-media-chrome"]');
     expect(chrome?.getAttribute('aria-hidden')).toBe('false');
 
     act(() => click(mediaButton));

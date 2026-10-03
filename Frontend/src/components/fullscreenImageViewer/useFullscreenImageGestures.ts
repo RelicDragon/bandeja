@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useGesture } from '@use-gesture/react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import {
   IDENTITY_IMAGE_VIEW_TRANSFORM,
   IMAGE_VIEW_DOUBLE_TAP_SCALE,
@@ -17,13 +18,25 @@ import {
 } from './imageViewTransform';
 
 const WHEEL_ZOOM_SENSITIVITY = 0.0032;
+/** Settle curve for snap-back, double-tap zoom and the dismiss fly-out. */
+const SETTLE_TRANSITION = 'transform 320ms cubic-bezier(0.2, 0.9, 0.25, 1)';
+/** Drag distance over which the image shrinks to its smallest dismiss scale. */
+const DISMISS_SCALE_DISTANCE_PX = 520;
+const DISMISS_MIN_SCALE = 0.7;
+
+type PaintOptions = {
+  dismissX?: number;
+  dismissY?: number;
+  animate?: boolean;
+};
 
 type UseFullscreenImageGesturesArgs = {
   enabled: boolean;
   containerRef: React.RefObject<HTMLElement | null>;
   contentRef: React.RefObject<HTMLElement | null>;
   onDismiss?: () => void;
-  onDismissOffsetChange?: (offsetY: number) => void;
+  /** `settle` is true when the offset animates (snap-back / fly-out) rather than tracking a finger. */
+  onDismissOffsetChange?: (offsetY: number, settle?: boolean) => void;
   onZoomChange?: (zoomed: boolean) => void;
   onHorizontalSwipeStart?: () => void;
   onHorizontalSwipeMove?: (offsetX: number) => void;
@@ -31,7 +44,7 @@ type UseFullscreenImageGesturesArgs = {
 };
 
 export type FullscreenImageGestureApi = {
-  resetTransform: () => void;
+  resetTransform: (animated?: boolean) => void;
   isZoomed: () => boolean;
   /** True while drag/pinch is in progress — callers should ignore tap-close. */
   isGestureBusy: () => boolean;
@@ -61,6 +74,9 @@ export function useFullscreenImageGestures({
   onHorizontalSwipeMove,
   onHorizontalSwipeEnd,
 }: UseFullscreenImageGesturesArgs): FullscreenImageGestureApi {
+  const reduceMotion = usePrefersReducedMotion();
+  const reduceMotionRef = useRef(reduceMotion);
+  reduceMotionRef.current = reduceMotion;
   const transformRef = useRef<ImageViewTransform>(
     copyImageViewTransform(IDENTITY_IMAGE_VIEW_TRANSFORM),
   );
@@ -81,15 +97,18 @@ export function useFullscreenImageGestures({
   onHorizontalSwipeEndRef.current = onHorizontalSwipeEnd;
 
   const paint = useCallback(
-    (next: ImageViewTransform, dismissY = 0) => {
+    (next: ImageViewTransform, { dismissX = 0, dismissY = 0, animate = false }: PaintOptions = {}) => {
       transformRef.current = next;
       dismissOffsetRef.current = dismissY;
       const el = contentRef.current;
       if (!el) return;
-      const base = imageViewTransformCss(next);
-      el.style.transform = dismissY
-        ? `${base} translate3d(0, ${dismissY}px, 0)`
-        : base;
+      // Same transform function list in every state so the settle transition
+      // interpolates component-wise instead of falling back to matrix blending.
+      const dismissScale =
+        1 - (1 - DISMISS_MIN_SCALE) * Math.min(1, dismissY / DISMISS_SCALE_DISTANCE_PX);
+      el.style.transition = animate && !reduceMotionRef.current ? SETTLE_TRANSITION : 'none';
+      el.style.transform =
+        `translate3d(${dismissX}px, ${dismissY}px, 0) scale(${dismissScale}) ${imageViewTransformCss(next)}`;
       const zoomed = isImageViewZoomed(next);
       if (zoomedRef.current !== zoomed) {
         zoomedRef.current = zoomed;
@@ -99,27 +118,27 @@ export function useFullscreenImageGestures({
     [contentRef],
   );
 
-  const resetTransform = useCallback(() => {
+  const resetTransform = useCallback((animated = false) => {
     gestureBusyRef.current = false;
-    paint(copyImageViewTransform(IDENTITY_IMAGE_VIEW_TRANSFORM), 0);
-    onDismissOffsetChangeRef.current?.(0);
+    paint(copyImageViewTransform(IDENTITY_IMAGE_VIEW_TRANSFORM), { animate: animated });
+    onDismissOffsetChangeRef.current?.(0, animated);
   }, [paint]);
 
   const isZoomed = useCallback(() => isImageViewZoomed(transformRef.current), []);
   const isGestureBusy = useCallback(() => gestureBusyRef.current, []);
 
   const setDismissOffset = useCallback(
-    (y: number) => {
-      const next = Math.max(0, y);
-      paint(transformRef.current, next);
-      onDismissOffsetChangeRef.current?.(next);
+    (x: number, y: number, animate = false) => {
+      const nextY = Math.max(0, y);
+      paint(transformRef.current, { dismissX: nextY > 0 ? x : 0, dismissY: nextY, animate });
+      onDismissOffsetChangeRef.current?.(nextY, animate);
     },
     [paint],
   );
 
   const endDragGesture = useCallback(() => {
     gestureBusyRef.current = false;
-    if (dismissOffsetRef.current > 0) setDismissOffset(0);
+    if (dismissOffsetRef.current > 0) setDismissOffset(0, 0, true);
   }, [setDismissOffset]);
 
   const clampCurrentPan = useCallback(
@@ -135,12 +154,15 @@ export function useFullscreenImageGestures({
   const toggleDoubleTapZoom = useCallback(
     (clientX: number, clientY: number) => {
       if (isImageViewZoomed(transformRef.current)) {
-        resetTransform();
+        resetTransform(true);
         return;
       }
       const container = containerRef.current;
       if (!container) {
-        paint({ ...IDENTITY_IMAGE_VIEW_TRANSFORM, scale: IMAGE_VIEW_DOUBLE_TAP_SCALE });
+        paint(
+          { ...IDENTITY_IMAGE_VIEW_TRANSFORM, scale: IMAGE_VIEW_DOUBLE_TAP_SCALE },
+          { animate: true },
+        );
         return;
       }
       const point = relativeToCenter(container, clientX, clientY);
@@ -153,6 +175,7 @@ export function useFullscreenImageGestures({
             point.y,
           ),
         ),
+        { animate: true },
       );
     },
     [clampCurrentPan, containerRef, paint, resetTransform],
@@ -236,18 +259,18 @@ export function useFullscreenImageGestures({
 
           if (mode !== 'dismiss') return { mode };
 
-          if (my > 8 && Math.abs(my) > Math.abs(mx)) {
-            gestureBusyRef.current = true;
-            if (event.cancelable) event.preventDefault();
-            setDismissOffset(my);
-          } else if (dismissOffsetRef.current > 0 && my <= 8) {
-            setDismissOffset(0);
-          }
+          // Once committed to dismiss, the image follows the finger freely and
+          // shrinks with distance; the backdrop fades in step.
+          gestureBusyRef.current = true;
+          if (event.cancelable) event.preventDefault();
+          setDismissOffset(mx, my);
 
           if (last) {
             const offset = dismissOffsetRef.current;
             if (shouldDismissImageView(offset, vy, false)) {
               gestureBusyRef.current = false;
+              const height = containerRef.current?.clientHeight || window.innerHeight;
+              setDismissOffset(mx, offset + height * 0.6, true);
               onDismissRef.current?.();
             } else {
               endDragGesture();
@@ -276,7 +299,7 @@ export function useFullscreenImageGestures({
         );
         if (last) {
           gestureBusyRef.current = false;
-          if (shouldSnapImageViewToFit(transformRef.current)) resetTransform();
+          if (shouldSnapImageViewToFit(transformRef.current)) resetTransform(true);
         }
         return memo;
       },
@@ -292,12 +315,12 @@ export function useFullscreenImageGestures({
         if (!enabled) return memo;
         if (canceled) {
           gestureBusyRef.current = false;
-          if (shouldSnapImageViewToFit(transformRef.current)) resetTransform();
+          if (shouldSnapImageViewToFit(transformRef.current)) resetTransform(true);
           return memo;
         }
         if (event.cancelable) event.preventDefault();
         gestureBusyRef.current = true;
-        if (dismissOffsetRef.current > 0) setDismissOffset(0);
+        if (dismissOffsetRef.current > 0) setDismissOffset(0, 0);
 
         const container = containerRef.current;
         if (!container) return memo;
@@ -329,7 +352,7 @@ export function useFullscreenImageGestures({
 
         if (last) {
           gestureBusyRef.current = false;
-          if (shouldSnapImageViewToFit(transformRef.current)) resetTransform();
+          if (shouldSnapImageViewToFit(transformRef.current)) resetTransform(true);
           return undefined;
         }
         return { prevScale: nextScale, originX, originY };
@@ -341,7 +364,7 @@ export function useFullscreenImageGestures({
         if (event.ctrlKey) return;
 
         event.preventDefault();
-        if (dismissOffsetRef.current > 0) setDismissOffset(0);
+        if (dismissOffsetRef.current > 0) setDismissOffset(0, 0);
         const container = containerRef.current;
         if (!container) return;
 

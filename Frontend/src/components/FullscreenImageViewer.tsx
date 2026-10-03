@@ -15,6 +15,7 @@ import {
   PictureInPicture2,
   Play,
   X,
+  ZoomOut,
 } from 'lucide-react';
 import { animate, motion, useDragControls, useMotionValue, useTransform } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
@@ -30,7 +31,6 @@ import toast from 'react-hot-toast';
 import { copyImageToClipboard } from '@/utils/copyImageToClipboard';
 import { downloadImage } from '@/utils/downloadImage';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
-import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
@@ -74,6 +74,26 @@ interface FullscreenImageViewerProps {
 const SINGLE_IMAGE_ID = 'fullscreen-single-image';
 const SWIPE_DISTANCE_PX = 64;
 const SWIPE_VELOCITY_PX_S = 520;
+/** Gap between neighbouring slides while swiping. */
+const SLIDE_GAP_PX = 20;
+const BACKDROP_ALPHA = 0.96;
+/** Drag-down distance at which the backdrop has fully faded out. */
+const DISMISS_FADE_DISTANCE_PX = 320;
+const CLOSE_ANIMATION_MS = 200;
+const SETTLE_EASE = [0.2, 0.9, 0.25, 1] as const;
+const BACKDROP_SETTLE_TRANSITION = 'background-color 320ms cubic-bezier(0.2, 0.9, 0.25, 1)';
+
+/**
+ * The viewer is always dark, so its controls ignore the app theme: smoked glass
+ * with a hairline ring reads on both bright photos and the black backdrop.
+ */
+const VIEWER_GLASS =
+  'bg-black/40 text-white ring-1 ring-inset ring-white/15 backdrop-blur-xl backdrop-saturate-150 shadow-[0_6px_20px_rgba(0,0,0,0.35)]';
+const VIEWER_PRESS =
+  'transition-[background-color,transform,opacity] duration-150 ease-out active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 disabled:pointer-events-none disabled:opacity-50';
+const VIEWER_ICON_BUTTON = `flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${VIEWER_GLASS} ${VIEWER_PRESS} hover:bg-black/55 active:bg-white/20`;
+/** Buttons inside the grouped action pill — the pill carries the glass. */
+const VIEWER_GROUP_BUTTON = `flex h-10 w-10 items-center justify-center rounded-full text-white ${VIEWER_PRESS} hover:bg-white/10 active:bg-white/20`;
 
 function resolveViewerMediaUrl(url: string): string {
   if (!url) return url;
@@ -81,9 +101,20 @@ function resolveViewerMediaUrl(url: string): string {
   return resolveChatMediaUrl(url);
 }
 
+function dismissProgress(offsetY: number): number {
+  return Math.min(1, Math.max(0, offsetY / DISMISS_FADE_DISTANCE_PX));
+}
+
 function dismissBackdropRgba(offsetY: number): string {
-  const opacity = Math.max(0.28, 0.94 - offsetY / 360);
-  return `rgba(0,0,0,${opacity})`;
+  return `rgba(0,0,0,${(BACKDROP_ALPHA * (1 - dismissProgress(offsetY))).toFixed(3)})`;
+}
+
+/** Taps on the letterbox around the media close; taps on the media itself toggle controls. */
+function isPointOutsideElement(element: Element | null | undefined, x: number, y: number): boolean {
+  if (!element) return false;
+  const rect = element.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return false;
+  return x < rect.left || x > rect.right || y < rect.top || y > rect.bottom;
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -141,8 +172,8 @@ function AdjacentMediaPreview({ item }: { item: FullscreenMediaItem }) {
             preload="metadata"
             className="max-h-full max-w-full object-contain"
           />
-          <span className="absolute flex h-16 w-16 items-center justify-center rounded-full bg-black/55 text-white">
-            <Play size={30} fill="currentColor" />
+          <span className={`absolute flex h-16 w-16 items-center justify-center rounded-full ${VIEWER_GLASS}`}>
+            <Play size={28} fill="currentColor" className="ms-1" />
           </span>
         </>
       ) : (
@@ -175,7 +206,36 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 }) => {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
-  useBackButtonModal(usePortaledOverlay && isOpen, onClose, modalId);
+  const [closing, setClosing] = useState(false);
+  const closingRef = useRef(false);
+  const closeTimerRef = useRef<number | null>(null);
+  // Let the media settle and the overlay fade before the parent unmounts us;
+  // unmounting straight away made every close a hard cut.
+  const requestClose = useCallback(() => {
+    if (closingRef.current) return;
+    if (reduceMotion) {
+      onClose();
+      return;
+    }
+    closingRef.current = true;
+    setClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      onClose();
+    }, CLOSE_ANIMATION_MS);
+  }, [onClose, reduceMotion]);
+  useEffect(() => {
+    if (!isOpen) return;
+    closingRef.current = false;
+    setClosing(false);
+  }, [isOpen]);
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+    },
+    []
+  );
+  useBackButtonModal(usePortaledOverlay && isOpen, requestClose, modalId);
   const zoomRef = useRef<FullscreenImageZoomHandle>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const chromeLayerRef = useRef<HTMLDivElement>(null);
@@ -196,14 +256,20 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   const [pipActive, setPipActive] = useState(false);
   const [pipSupported, setPipSupported] = useState(false);
   const [chromeVisible, setChromeVisible] = useState(true);
+  const chromeVisibleRef = useRef(true);
+  chromeVisibleRef.current = chromeVisible;
   const [isZoomed, setIsZoomed] = useState(false);
   const [mediaReady, setMediaReady] = useState(false);
   const [mediaLoadError, setMediaLoadError] = useState(false);
   const dragControls = useDragControls();
   const swipeX = useMotionValue(0);
   const videoDismissY = useMotionValue(0);
-  const previousX = useTransform(swipeX, (x) => `calc(-100% + ${x}px)`);
-  const nextX = useTransform(swipeX, (x) => `calc(100% + ${x}px)`);
+  const previousX = useTransform(swipeX, (x) => `calc(-100% - ${SLIDE_GAP_PX}px + ${x}px)`);
+  const nextX = useTransform(swipeX, (x) => `calc(100% + ${SLIDE_GAP_PX}px + ${x}px)`);
+  const videoDismissScale = useTransform(
+    videoDismissY,
+    (y) => 1 - 0.3 * Math.min(1, Math.max(0, y) / 520)
+  );
 
   const galleryItems = useMemo<FullscreenMediaItem[]>(() => {
     const valid = (mediaItems ?? []).filter((item) => !!item.originalUrl?.trim());
@@ -266,7 +332,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     sawOlderLoadingRef.current = false;
     if (isOpen) zoomRef.current?.resetTransform();
     const backdrop = overlayRef.current ?? containerRef.current;
-    if (backdrop) backdrop.style.backgroundColor = dismissBackdropRgba(0);
+    if (backdrop) {
+      backdrop.style.transition = 'none';
+      backdrop.style.backgroundColor = dismissBackdropRgba(0);
+    }
   }, [activeMediaId, isOpen, shownUrl, swipeX, videoDismissY]);
 
   useEffect(() => {
@@ -298,11 +367,21 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     return () => window.cancelAnimationFrame(frame);
   }, [activeMediaId, isOpen, isVideo, retryKey, shownUrl]);
 
-  useEffect(() => {
+  /**
+   * Chrome opacity is painted imperatively so drags can fade it frame-by-frame
+   * without re-rendering. `fade` null = settle back to the visibility state.
+   */
+  const paintChrome = useCallback((fade: number | null) => {
     const chrome = chromeLayerRef.current;
     if (!chrome) return;
-    chrome.style.opacity = chromeVisible ? '1' : '0';
-  }, [chromeVisible]);
+    const base = chromeVisibleRef.current ? 1 : 0;
+    chrome.style.transition = fade === null ? '' : 'none';
+    chrome.style.opacity = String(fade === null ? base : base * fade);
+  }, []);
+
+  useEffect(() => {
+    paintChrome(null);
+  }, [chromeVisible, paintChrome]);
 
   useEffect(
     () => () => {
@@ -388,8 +467,8 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       if (!target) {
         navigationAnimationRef.current?.stop();
         navigationAnimationRef.current = animate(swipeX, 0, {
-          duration: reduceMotion ? 0 : 0.18,
-          ease: 'easeOut',
+          duration: reduceMotion ? 0 : 0.3,
+          ease: SETTLE_EASE,
         });
         return;
       }
@@ -410,11 +489,13 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       }
 
       navigatingRef.current = true;
-      const width = containerRef.current?.clientWidth || window.innerWidth || 320;
+      const width = (containerRef.current?.clientWidth || window.innerWidth || 320) + SLIDE_GAP_PX;
       navigationAnimationRef.current?.stop();
+      // Finish a fast flick quicker than a slow drag or a button press.
+      const remaining = Math.abs(-delta * width - swipeX.get()) / width;
       const controls = animate(swipeX, -delta * width, {
-        duration: 0.22,
-        ease: [0.22, 0.72, 0.2, 1],
+        duration: 0.16 + 0.16 * remaining,
+        ease: SETTLE_EASE,
       });
       navigationAnimationRef.current = controls;
       void controls.then(finish);
@@ -438,8 +519,8 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     onRequestMoreItemsBefore();
     navigationAnimationRef.current?.stop();
     navigationAnimationRef.current = animate(swipeX, 0, {
-      duration: reduceMotion ? 0 : 0.18,
-      ease: 'easeOut',
+      duration: reduceMotion ? 0 : 0.3,
+      ease: SETTLE_EASE,
     });
   }, [
     hasMoreItemsBefore,
@@ -490,7 +571,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     if (!isOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        requestClose();
         return;
       }
       const target = event.target;
@@ -505,7 +586,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [hasMoreItemsBefore, isOpen, navigateBy, nextItem, onClose, previousItem, requestPrevious]);
+  }, [hasMoreItemsBefore, isOpen, navigateBy, nextItem, previousItem, requestClose, requestPrevious]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -519,14 +600,19 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     };
   }, [isOpen]);
 
-  const handleDismissOffsetChange = useCallback((offsetY: number) => {
+  const handleDismissOffsetChange = useCallback((offsetY: number, settle = false) => {
     const backdrop = overlayRef.current ?? containerRef.current;
-    if (backdrop) backdrop.style.backgroundColor = dismissBackdropRgba(offsetY);
-    const chrome = chromeLayerRef.current;
-    if (chrome) {
-      chrome.style.opacity = offsetY > 40 ? '0.2' : chromeVisible ? '1' : '0';
+    if (backdrop) {
+      backdrop.style.transition = settle && !reduceMotion ? BACKDROP_SETTLE_TRANSITION : 'none';
+      backdrop.style.backgroundColor = dismissBackdropRgba(offsetY);
     }
-  }, [chromeVisible]);
+    if (offsetY <= 0) {
+      paintChrome(null);
+    } else {
+      // Controls clear out quickly so the dragged media is the only thing moving.
+      paintChrome(Math.max(0, 1 - offsetY / 90));
+    }
+  }, [paintChrome, reduceMotion]);
 
   const handleDownload = useCallback(
     async (event: React.MouseEvent) => {
@@ -595,21 +681,23 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 
   const resetView = useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
-    zoomRef.current?.resetTransform();
-    handleDismissOffsetChange(0);
-  }, [handleDismissOffsetChange]);
+    zoomRef.current?.resetTransform(true);
+  }, []);
 
-  const handleMediaTap = useCallback(() => {
-    if (mediaItems?.length) {
-      setChromeVisible((visible) => !visible);
+  const handleMediaTap = useCallback((clientX: number, clientY: number) => {
+    const media = containerRef.current?.querySelector(
+      'img[data-fullscreen-current-image], video'
+    );
+    if (isPointOutsideElement(media, clientX, clientY)) {
+      requestClose();
       return;
     }
-    onClose();
-  }, [mediaItems?.length, onClose]);
+    setChromeVisible((visible) => !visible);
+  }, [requestClose]);
 
   const handleCurrentMediaClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    if (isVideo && !wasDraggingRef.current) handleMediaTap();
+    if (isVideo && !wasDraggingRef.current) handleMediaTap(event.clientX, event.clientY);
   }, [handleMediaTap, isVideo]);
 
   const retryMedia = useCallback(() => {
@@ -624,14 +712,14 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       if ((event.target as HTMLElement).closest('button, video')) return;
       if ((event.target as HTMLElement).closest('[data-fullscreen-image-zoom]')) return;
       if (zoomRef.current?.isZoomed()) return;
-      onClose();
+      requestClose();
     },
-    [onClose]
+    [requestClose]
   );
 
   const handleDragStart = useCallback(() => {
     wasDraggingRef.current = true;
-    if (chromeLayerRef.current) chromeLayerRef.current.style.opacity = '0';
+    navigationAnimationRef.current?.stop();
   }, []);
 
   const applySwipeOffset = useCallback(
@@ -661,16 +749,12 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       } else {
         navigationAnimationRef.current?.stop();
         navigationAnimationRef.current = animate(swipeX, 0, {
-          duration: reduceMotion ? 0 : 0.18,
-          ease: 'easeOut',
+          duration: reduceMotion ? 0 : 0.3,
+          ease: SETTLE_EASE,
         });
-      }
-      if (chromeLayerRef.current) {
-        chromeLayerRef.current.style.opacity = chromeVisible ? '1' : '0';
       }
     },
     [
-      chromeVisible,
       hasMoreItemsBefore,
       navigateBy,
       nextItem,
@@ -733,31 +817,47 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     const dy = Math.max(0, (touch?.clientY ?? origin.y) - origin.y);
     const velocityY = dy / Math.max(1, Date.now() - origin.at);
     if (dy >= 120 || (dy >= 44 && velocityY >= 0.7)) {
-      onClose();
+      const height = containerRef.current?.clientHeight || window.innerHeight;
+      animate(videoDismissY, dy + height * 0.6, {
+        duration: reduceMotion ? 0 : 0.32,
+        ease: SETTLE_EASE,
+      });
+      handleDismissOffsetChange(dy + height * 0.6, true);
+      requestClose();
       return;
     }
-    animate(videoDismissY, 0, { duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' });
-    handleDismissOffsetChange(0);
-  }, [handleDismissOffsetChange, isVideo, onClose, reduceMotion, videoDismissY]);
+    animate(videoDismissY, 0, { duration: reduceMotion ? 0 : 0.32, ease: SETTLE_EASE });
+    handleDismissOffsetChange(0, true);
+  }, [handleDismissOffsetChange, isVideo, reduceMotion, requestClose, videoDismissY]);
 
   if (!isOpen || !activeItem) return null;
+
+  const mediaLabel = t('media.fullscreenItemLabel', {
+    defaultValue: 'Media {{current}} of {{total}}',
+    current: activeIndex + 1,
+    total: galleryItems.length,
+  });
+  const hasPrevious = !!previousItem || hasMoreItemsBefore;
+  const showZoomReset = enableTransform && !isVideo && isZoomed;
 
   const loadingOverlay = !mediaReady && !mediaLoadError ? (
     <div
       className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
       role="status"
       aria-label={t('common.loading')}
+      // Delayed so cached media never flashes a spinner.
+      style={{ animation: reduceMotion ? undefined : 'overlay-fade-in 200ms ease-out 180ms both' }}
     >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/45 backdrop-blur-md">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+      <span className={`flex h-14 w-14 items-center justify-center rounded-full ${VIEWER_GLASS}`}>
+        <Loader2 className="h-7 w-7 animate-spin text-white/90" />
       </span>
     </div>
   ) : null;
   const errorOverlay = mediaLoadError ? (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/25 px-6">
+    <div className="absolute inset-0 z-20 flex items-center justify-center px-6">
       <button
         type="button"
-        className={`rounded-full px-5 py-3 text-sm font-semibold text-white ${OVERLAY_CONTROL_GLASS}`}
+        className={`h-11 rounded-full px-6 text-sm font-semibold ${VIEWER_GLASS} ${VIEWER_PRESS} hover:bg-black/55`}
         onClick={(event) => {
           event.stopPropagation();
           retryMedia();
@@ -769,7 +869,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   ) : null;
   const currentMedia = isVideo ? (
     <div
-      className="relative flex h-full w-full items-center justify-center bg-black"
+      className="relative flex h-full w-full items-center justify-center"
       data-testid="fullscreen-media-video"
     >
       {loadingOverlay}
@@ -781,11 +881,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         poster={shownPreviewUrl !== shownUrl ? shownPreviewUrl : undefined}
         controls
         playsInline
-        aria-label={t('media.fullscreenItemLabel', {
-          defaultValue: 'Media {{current}} of {{total}}',
-          current: activeIndex + 1,
-          total: galleryItems.length,
-        })}
+        aria-label={mediaLabel}
         disablePictureInPicture={false}
         className="max-h-full max-w-full object-contain"
         onCanPlay={() => setMediaReady(true)}
@@ -820,14 +916,10 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         key={`${activeItem.id}-${retryKey}`}
         ref={zoomRef}
         src={shownUrl}
-        alt={t('media.fullscreenItemLabel', {
-          defaultValue: 'Media {{current}} of {{total}}',
-          current: activeIndex + 1,
-          total: galleryItems.length,
-        })}
+        alt={mediaLabel}
         active={zoomActive}
         onTap={handleMediaTap}
-        onDismiss={onClose}
+        onDismiss={requestClose}
         onDismissOffsetChange={handleDismissOffsetChange}
         onZoomChange={setIsZoomed}
         onHorizontalSwipeStart={handleDragStart}
@@ -849,16 +941,12 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       <button
         type="button"
         className="flex h-full w-full items-center justify-center border-0 bg-transparent p-0"
-        onClick={handleMediaTap}
+        onClick={(event) => handleMediaTap(event.clientX, event.clientY)}
       >
         <img
           key={`${activeItem.id}-${retryKey}`}
           src={shownUrl}
-          alt={t('media.fullscreenItemLabel', {
-            defaultValue: 'Media {{current}} of {{total}}',
-            current: activeIndex + 1,
-            total: galleryItems.length,
-          })}
+          alt={mediaLabel}
           draggable={false}
           decoding="async"
           fetchPriority="high"
@@ -896,11 +984,11 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         </motion.div>
       ) : hasMoreItemsBefore ? (
         <motion.div
-          className="pointer-events-none absolute inset-0 z-[5] flex h-full w-full items-center justify-center bg-black"
+          className="pointer-events-none absolute inset-0 z-[5] flex h-full w-full items-center justify-center"
           style={{ x: previousX }}
           aria-hidden
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
+          <span className={`flex h-14 w-14 items-center justify-center rounded-full ${VIEWER_GLASS}`}>
             <Loader2 className="h-7 w-7 animate-spin text-white/85" />
           </span>
         </motion.div>
@@ -916,7 +1004,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 
       <motion.div
         className="absolute inset-0 z-10 h-full w-full min-h-0 min-w-0 pointer-events-auto"
-        style={{ x: swipeX, y: videoDismissY }}
+        style={{ x: swipeX, y: videoDismissY, scale: videoDismissScale }}
         drag={isVideo ? 'x' : false}
         dragControls={dragControls}
         dragListener={false}
@@ -932,31 +1020,58 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         onTouchCancel={handleVideoTouchEnd}
         onClick={handleCurrentMediaClick}
       >
-        {currentMedia}
+        <motion.div
+          className="h-full w-full"
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
+          animate={closing ? { opacity: 0, scale: 0.96 } : { opacity: 1, scale: 1 }}
+          transition={{ duration: closing ? CLOSE_ANIMATION_MS / 1000 : 0.34, ease: SETTLE_EASE }}
+        >
+          {currentMedia}
+        </motion.div>
       </motion.div>
 
       <div
         ref={chromeLayerRef}
-        className="pointer-events-none absolute inset-0 z-50 transition-opacity duration-200"
+        className="pointer-events-none absolute inset-0 z-50 transition-opacity duration-200 ease-out"
         aria-hidden={!chromeVisible}
         inert={!chromeVisible}
+        data-testid="fullscreen-media-chrome"
       >
-        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/45 via-black/15 to-transparent" />
+        <div
+          className={`absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/60 via-black/25 to-transparent transition-opacity duration-300 ${
+            chromeVisible ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
 
         <div
-          className={`absolute inset-x-0 top-0 flex items-center justify-between gap-3 px-3 sm:px-4 ${
-            chromeVisible ? 'pointer-events-auto' : 'pointer-events-none'
+          className={`absolute inset-x-0 top-0 grid grid-cols-[1fr_auto_1fr] items-center gap-2 transition-transform duration-300 ease-[cubic-bezier(0.2,0.9,0.25,1)] ${
+            chromeVisible ? 'pointer-events-auto translate-y-0' : 'pointer-events-none -translate-y-3'
           }`}
           style={{
-            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)',
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.625rem)',
             paddingLeft: 'max(0.75rem, env(safe-area-inset-left))',
             paddingRight: 'max(0.75rem, env(safe-area-inset-right))',
           }}
         >
-          <div className="min-w-[3.25rem]">
+          <div className="flex justify-start">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                requestClose();
+              }}
+              className={VIEWER_ICON_BUTTON}
+              aria-label={t('common.close')}
+            >
+              <X size={22} strokeWidth={2.25} />
+            </button>
+          </div>
+
+          <div className="flex justify-center">
             {galleryItems.length > 1 ? (
               <div
-                className={`inline-flex h-10 items-center rounded-full px-3 text-xs font-semibold tabular-nums text-white ${OVERLAY_CONTROL_GLASS}`}
+                className={`inline-flex h-8 items-center rounded-full px-3 text-[13px] font-semibold tabular-nums tracking-wide text-white/95 ${VIEWER_GLASS}`}
                 aria-live="polite"
                 data-testid="fullscreen-media-counter"
               >
@@ -968,60 +1083,51 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
             ) : null}
           </div>
 
-          <div className="flex items-center gap-2">
-            {!isVideo ? (
+          <div className="flex justify-end">
+            <div className={`flex items-center gap-0.5 rounded-full p-0.5 ${VIEWER_GLASS}`}>
+              {!isVideo ? (
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  disabled={isCopying}
+                  className={VIEWER_GROUP_BUTTON}
+                  aria-label={t('media.copyImage')}
+                >
+                  {isCopying ? <Loader2 size={19} className="animate-spin" /> : <Copy size={19} />}
+                </button>
+              ) : null}
+              {isVideo && pipSupported ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handlePiP();
+                  }}
+                  className={`${VIEWER_GROUP_BUTTON} ${pipActive ? 'bg-white/20' : ''}`}
+                  aria-label={t('chat.videoPictureInPicture', { defaultValue: 'Picture in picture' })}
+                  aria-pressed={pipActive}
+                >
+                  <PictureInPicture2 size={19} />
+                </button>
+              ) : null}
               <button
                 type="button"
-                onClick={handleCopy}
-                disabled={isCopying}
-                className={`flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
-                aria-label={t('media.copyImage')}
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className={VIEWER_GROUP_BUTTON}
+                aria-label={t('media.download')}
               >
-                {isCopying ? <Loader2 size={21} className="animate-spin" /> : <Copy size={21} />}
+                {isDownloading ? (
+                  <Loader2 size={19} className="animate-spin" />
+                ) : (
+                  <Download size={19} />
+                )}
               </button>
-            ) : null}
-            {isVideo && pipSupported ? (
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void handlePiP();
-                }}
-                className={`flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${OVERLAY_CONTROL_GLASS} ${pipActive ? 'ring-2 ring-white/70' : ''}`}
-                aria-label={t('chat.videoPictureInPicture', { defaultValue: 'Picture in picture' })}
-              >
-                <PictureInPicture2 size={21} />
-              </button>
-            ) : null}
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className={`flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
-              aria-label={t('media.download')}
-            >
-              {isDownloading ? (
-                <Loader2 size={21} className="animate-spin" />
-              ) : (
-                <Download size={21} />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onClose();
-              }}
-              className={`flex h-11 w-11 items-center justify-center rounded-full text-white transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${OVERLAY_CONTROL_GLASS}`}
-              aria-label={t('common.close')}
-            >
-              <X size={22} />
-            </button>
+            </div>
           </div>
         </div>
 
-        {previousItem || hasMoreItemsBefore ? (
+        {hasPrevious ? (
           <button
             type="button"
             onClick={(event) => {
@@ -1029,17 +1135,17 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               requestPrevious();
             }}
             disabled={isLoadingMoreItems}
-            className={`absolute left-3 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white opacity-80 transition-[opacity,transform] hover:opacity-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:flex ${OVERLAY_CONTROL_GLASS} ${
+            className={`absolute top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full sm:flex ${VIEWER_GLASS} ${VIEWER_PRESS} hover:bg-black/55 ${
               chromeVisible ? 'pointer-events-auto' : 'pointer-events-none'
             }`}
-            style={{ left: 'max(0.75rem, env(safe-area-inset-left))' }}
+            style={{ left: 'max(1rem, env(safe-area-inset-left))' }}
             aria-label={t('common.previous')}
             data-testid="fullscreen-media-previous"
           >
             {isLoadingMoreItems ? (
-              <Loader2 size={23} className="animate-spin" />
+              <Loader2 size={22} className="animate-spin" />
             ) : (
-              <ChevronLeft size={29} />
+              <ChevronLeft size={26} strokeWidth={2.25} className="-ms-0.5" />
             )}
           </button>
         ) : null}
@@ -1051,29 +1157,34 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
               event.stopPropagation();
               navigateBy(1);
             }}
-            className={`absolute right-3 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white opacity-80 transition-[opacity,transform] hover:opacity-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:flex ${OVERLAY_CONTROL_GLASS} ${
+            className={`absolute top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full sm:flex ${VIEWER_GLASS} ${VIEWER_PRESS} hover:bg-black/55 ${
               chromeVisible ? 'pointer-events-auto' : 'pointer-events-none'
             }`}
-            style={{ right: 'max(0.75rem, env(safe-area-inset-right))' }}
+            style={{ right: 'max(1rem, env(safe-area-inset-right))' }}
             aria-label={t('common.next')}
             data-testid="fullscreen-media-next"
           >
-            <ChevronRight size={29} />
+            <ChevronRight size={26} strokeWidth={2.25} className="-me-0.5" />
           </button>
         ) : null}
 
-        {enableTransform && !isVideo && isZoomed ? (
+        {enableTransform && !isVideo ? (
           <div
-            className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${
-              chromeVisible ? 'pointer-events-auto' : 'pointer-events-none'
+            className={`absolute inset-x-0 bottom-0 flex justify-center transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.2,0.9,0.25,1)] ${
+              showZoomReset ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-3 opacity-0'
             }`}
-            style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
+            style={{ paddingBottom: 'max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))' }}
           >
             <button
               type="button"
               onClick={resetView}
-              className={`rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${OVERLAY_CONTROL_GLASS}`}
+              tabIndex={showZoomReset ? 0 : -1}
+              aria-hidden={!showZoomReset}
+              className={`flex h-10 items-center gap-2 rounded-full ps-3.5 pe-4 text-sm font-semibold ${VIEWER_GLASS} ${VIEWER_PRESS} hover:bg-black/55 ${
+                showZoomReset && chromeVisible ? 'pointer-events-auto' : 'pointer-events-none'
+              }`}
             >
+              <ZoomOut size={17} />
               {t('media.resetView')}
             </button>
           </div>
@@ -1088,7 +1199,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         ref={overlayRef}
         className="fullscreen-backdrop-overlay fixed inset-0 z-[100] touch-none overscroll-none"
         style={{ backgroundColor: dismissBackdropRgba(0) }}
-        data-state="open"
+        data-state={closing ? 'closed' : 'open'}
         role="dialog"
         aria-modal="true"
         aria-label={t('media.viewerTitle', { defaultValue: 'Media viewer' })}
@@ -1101,12 +1212,14 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 
   return (
     <FullScreenDialog
-      open={isOpen}
-      onClose={onClose}
+      // Closing flips Radix to its exit animation while we stay mounted.
+      open={isOpen && !closing}
+      onClose={requestClose}
       modalId={modalId}
       title={t('media.viewerTitle', { defaultValue: 'Media viewer' })}
       closeOnInteractOutside={false}
-      overlayClassName="fullscreen-backdrop-overlay"
+      // The viewer paints its own (drag-fading) black; the overlay only blurs the app behind.
+      overlayClassName="fullscreen-backdrop-overlay !bg-transparent"
       contentClassName="fullscreen-content-fade-animate overflow-hidden"
       bodyClassName="!overflow-hidden overscroll-none touch-none"
     >
