@@ -287,6 +287,13 @@ async function main(): Promise<void> {
       await geb(gC, `bt-cancel-shared-${s}`, court2.id);
       const sharedOnOther = await geb(gOther, `bt-cancel-shared-${s}`, court2.id);
 
+      // cancelBookings omitted while bookings are linked: the user decides first, nothing proposed.
+      const undecided = await call(P.owner, { gameId: gC });
+      assert.equal(undecided.action, null, 'omitted + linked bookings → nothing proposed');
+      const undecidedData = undecided.result.data as { error: string; linkedCourtBookings: number };
+      assert.equal(undecidedData.error, 'bookings_choice_needed');
+      assert.equal(undecidedData.linkedCourtBookings, 2);
+
       // The club has no provider integration: nothing is cancellable here → nothing proposed.
       const refused = await call(P.owner, { gameId: gC, cancelBookings: true });
       assert.equal(refused.action, null, 'no cancellable linked booking → nothing proposed');
@@ -322,6 +329,9 @@ async function main(): Promise<void> {
       const plain = await call(P.owner, { gameId: gNoBookings, cancelBookings: true });
       assert.ok(plain.action, 'no linked bookings → game-only proposal');
       assert.ok(!warnings(plain.preview!).some((w) => w.startsWith('Only the game is cancelled')));
+      // cancelBookings omitted without linked bookings: the same game-only card (no bookings question).
+      const omitted = await call(P.owner, { gameId: gNoBookings });
+      assert.ok(omitted.action, 'omitted + no bookings → game-only proposal');
       console.log('bookings: ok');
     }
 
@@ -540,7 +550,7 @@ async function main(): Promise<void> {
 
     // --- strict input, locale ---
     {
-      assert.equal(cancelGame.input.safeParse({ gameId: 'x' }).success, false, 'cancelBookings is required');
+      assert.equal(cancelGame.input.safeParse({ gameId: 'x' }).success, true, 'cancelBookings is optional');
       assert.equal(cancelGame.input.safeParse({ gameId: 'x', cancelBookings: false, userId: 'y' }).success, false, 'unknown keys rejected');
       const gR = await mkGame('Cancel ru', OWNER_ONLY);
       const ru = await propose(P.owner, gR, 'ru');

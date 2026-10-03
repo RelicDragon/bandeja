@@ -20,16 +20,19 @@ import {
   type AgentToolGroup,
 } from '../toolGroups';
 import { agentToolGroupOf } from '../registry';
+import { agentPlayerNameVariants } from '../players.tools';
 import {
   AGENT_TOOL_GROUPS_RULE,
   buildAgentStaticSystemPrompt,
   withAgentSnapshot,
+  AGENT_REPLY_LANGUAGE_REMINDER,
 } from '../../agentContext.service';
 import {
   AGENT_CHAT_CONTENT_RULE,
   AGENT_MONEY_RULE,
   AGENT_OUT_OF_SCOPE_RULE,
   AGENT_WEB_CONTENT_RULE,
+  AGENT_WEB_FETCH_RULE,
   AGENT_WRITE_SAFETY_RULES,
   agentToolCapabilityLine,
   buildAgentModelRules,
@@ -359,8 +362,14 @@ async function main() {
     delete process.env.AGENT_WEB_FETCH_ENABLED;
     assert.deepEqual(webNames(), ['web_search', 'web_fetch', 'web_images'], 'one key turns the web tools on');
     assert.ok(buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes(AGENT_WEB_CONTENT_RULE), 'web rule when listed');
+    assert.ok(buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes(AGENT_WEB_FETCH_RULE), 'fetch rule when web_fetch is listed');
+    assert.ok(catalogue.get('web_search')!.description.includes('web_fetch'), 'web_search points to web_fetch when it is listed');
     process.env.AGENT_WEB_FETCH_ENABLED = 'false';
     assert.deepEqual(webNames(), ['web_search', 'web_images'], 'fetch switch hides only web_fetch');
+    const fetchOffRules = buildAgentModelRules(catalogue.toolsForPrincipal(user));
+    assert.ok(fetchOffRules.includes(AGENT_WEB_CONTENT_RULE) && !fetchOffRules.includes('web_fetch'), 'fetch off: the rules never name web_fetch');
+    assert.ok(!catalogue.get('web_search')!.description.includes('web_fetch'), 'fetch off: web_search never names web_fetch');
+    assert.ok(!catalogue.openAiToolsFor(user).some((t) => t.function.description.includes('web_fetch')), 'fetch off: no tool text names web_fetch');
     process.env.AGENT_WEB_SEARCH_ENABLED = 'false';
     assert.deepEqual(webNames(), [], 'kill switch hides both');
     assert.ok(!buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes(AGENT_WEB_CONTENT_RULE), 'no web rule when off');
@@ -450,8 +459,19 @@ async function main() {
       ],
       'SNAP',
     );
-    assert.deepEqual(snap.map((m) => (m.role === 'system' ? 'S' : m.role)), ['user', 'assistant', 'S', 'user', 'assistant', 'tool']);
+    assert.deepEqual(snap.map((m) => (m.role === 'system' ? (m.content === 'SNAP' ? 'S' : 'L') : m.role)), ['user', 'assistant', 'S', 'user', 'L', 'assistant', 'tool']);
+    assert.equal(snap[4].content, AGENT_REPLY_LANGUAGE_REMINDER, 'static language reminder right after the latest user message');
     assert.deepEqual(withAgentSnapshot([], 'SNAP'), [{ role: 'system', content: 'SNAP' }]);
+
+    // search_players spellings: Russian / Serbian Cyrillic and diacritics reach the stored Latin name.
+    const reaches = (query: string, stored: string) =>
+      query.split(/\s+/).every((term) => agentPlayerNameVariants(term).some((v) => stored.toLowerCase().includes(v.toLowerCase())));
+    assert.ok(reaches('Елена Попович', 'Jelena Popović'), 'Russian Cyrillic → Serbian Latin with diacritics');
+    assert.ok(reaches('Јелена Поповић', 'Jelena Popović'), 'Serbian Cyrillic');
+    assert.ok(reaches('Jelena Popovic', 'Jelena Popović'), 'no diacritics');
+    assert.ok(reaches('Душан', 'Dušan'), 'Russian digraph ш → š');
+    assert.ok(reaches('Ђорђе', 'Đorđe'), 'đ');
+    assert.ok(!reaches('Petar', 'Jelena Popović'));
 
     // Keyword preload: conservative, multilingual.
     const kw = (text: string) => agentToolGroupsForText(text);

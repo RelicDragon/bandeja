@@ -18,6 +18,8 @@
  * `proposeCancelWithBookings` (slice 7g): a client-executed plan — the app cancels the
  * reservations the user may cancel, then the post-step deletes the game only if all of them
  * were cancelled (else unlinks the cancelled ones and keeps the game, `partial`).
+ * `cancelBookings` is optional: omitted on a game without linked bookings → the game-only card;
+ * omitted on a game with some → `bookings_choice_needed` (the model asks the user first).
  */
 import { BetStatus, ParticipantRole, type ClubIntegrationType } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -63,8 +65,9 @@ const cancelGameInput = z
     gameId: z.string().min(1).max(64),
     cancelBookings: z
       .boolean()
+      .optional()
       .describe(
-        "true = also cancel the game's court reservations at the club; false = cancel only the game (the reservations stay active)",
+        "Only when the game has linked court bookings (linkedCourtBookings > 0 in get_game / list_my_games): true = also cancel them at the club, false = cancel only the game (they stay active). Omit it when linkedCourtBookings is 0: there is nothing to cancel, so don't ask the user about bookings.",
       ),
   })
   .strict();
@@ -475,7 +478,7 @@ registerAgentClientPostStep('cancel_game', cancelGameWithBookingsPostStep);
 export const cancelGameTool = defineTool({
   name: 'cancel_game',
   description:
-    "Prepare cancelling (deleting) a game the user owns: every participant is notified and the game's chat is archived; open bets and paid cost shares are refunded or cancelled. cancelBookings=false cancels only the game and the court reservations at the club stay active. cancelBookings=true also cancels the reservations the user booked (Booktime / Padeloo / Klikteren, run by the app on Confirm); shared reservations and ones only the club or another person can cancel stay active, and if any planned reservation can't be cancelled the game is kept. Not possible once results exist or for a game with child games. Creates a confirmation card; nothing changes until the user confirms.",
+    "Prepare cancelling (deleting) a game the user owns: every participant is notified and the game's chat is archived; open bets and paid cost shares are refunded or cancelled. Court bookings matter only when the game has some (linkedCourtBookings > 0): with none, call it right away without cancelBookings and don't ask about bookings; with some, ask the user whether to cancel them too unless they already said. cancelBookings=false cancels only the game and the court reservations at the club stay active. cancelBookings=true also cancels the reservations the user booked (Booktime / Padeloo / Klikteren, run by the app on Confirm); shared reservations and ones only the club or another person can cancel stay active, and if any planned reservation can't be cancelled the game is kept. Not possible once results exist or for a game with child games. Creates a confirmation card; nothing changes until the user confirms.",
   kind: 'write',
   riskTier: 'critical',
   scope: 'user',
@@ -486,6 +489,19 @@ export const cancelGameTool = defineTool({
     const game = await authorizeCancelGame(ctx.principal, args.gameId);
     const timezone = gameTimezone(game, ctx.timezone);
     const bookings = await loadLinkedBookings(game, timezone, ctx.locale);
+    // The bookings question only exists when there are bookings: omitted + none → game-only card;
+    // omitted + some → the user decides first (never a silent default either way).
+    if (args.cancelBookings === undefined && bookings.length > 0) {
+      return {
+        data: {
+          error: 'bookings_choice_needed',
+          message: `This game has ${bookings.length} linked court booking(s). Ask the user whether to cancel them at the club too, then call cancel_game again with cancelBookings true or false.`,
+          linkedCourtBookings: bookings.length,
+        },
+        summary: agentCancelGameT(ctx.locale, 'summary.bookingsChoice'),
+        entities: await gameEntityFor(game.id, ctx.principal.userId),
+      };
+    }
     if (args.cancelBookings && bookings.length > 0) return proposeCancelWithBookings(ctx, args, game, bookings, timezone);
     return proposeGameOnlyCancel(ctx, args, game, bookings, timezone);
   },

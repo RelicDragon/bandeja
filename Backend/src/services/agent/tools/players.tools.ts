@@ -5,7 +5,8 @@
  * (`GET /users/invitable-players`, `controllers/user/social.controller.ts`): active users
  * in the principal's current city plus their top co-players, minus self and anyone in a
  * block relation. It matches first/last name only (not Telegram usernames) and returns
- * public card fields only.
+ * public card fields only. Unlike the picker it also matches across Serbian Cyrillic and
+ * diacritics (`agentPlayerNameVariants`): the model often writes a name the way the user did.
  */
 import { Sport, type Prisma } from '@prisma/client';
 import { z } from 'zod/v4';
@@ -25,10 +26,59 @@ import { defineTool } from './registry';
 
 const SPORTS = Object.values(Sport) as [Sport, ...Sport[]];
 
+/** Serbian Cyrillic letters the shared transliteration (Russian-based) doesn't know, to Serbian Latin. */
+const SERBIAN_CYRILLIC: Record<string, string> = {
+  ј: 'j', Ј: 'J', љ: 'lj', Љ: 'Lj', њ: 'nj', Њ: 'Nj', ћ: 'ć', Ћ: 'Ć', ђ: 'đ', Ђ: 'Đ', џ: 'dž', Џ: 'Dž',
+};
+
+export function serbianCyrillicToLatin(text: string): string {
+  return text.replace(/[јЈљЉњЊћЋђЂџЏ]/g, (ch) => SERBIAN_CYRILLIC[ch] ?? ch);
+}
+
+/** Plain-Latin letters that names often carry with a diacritic (Serbian / Croatian / Czech). */
+const DIACRITIC_VARIANTS: Record<string, string[]> = { c: ['č', 'ć'], s: ['š'], z: ['ž'], d: ['đ'] };
+const MAX_DIACRITIC_VARIANTS = 12;
+
+/**
+ * Spellings of a plain-Latin `variant` with the diacritics the stored name may have
+ * ("popovic" → "popović", "popovič"), because the DB filter (`contains`, ILIKE) is
+ * accent-sensitive. Too many combinations → the longest run of letters without such a
+ * letter (≥ 3 chars) instead; the exact match is `matchesPersonSearch` on the rows.
+ */
+export function diacriticSpellings(variant: string): string[] {
+  const latin = variant.toLowerCase();
+  if (!/^[a-z]+$/.test(latin)) return [];
+  let out = [''];
+  for (const ch of latin) {
+    const options = [ch, ...(DIACRITIC_VARIANTS[ch] ?? [])];
+    out = out.flatMap((prefix) => options.map((option) => prefix + option));
+    if (out.length > MAX_DIACRITIC_VARIANTS) {
+      const run = latin.split(/[cszd]/).sort((a, b) => b.length - a.length)[0] ?? '';
+      return run.length >= 3 && run !== latin ? [run] : [];
+    }
+  }
+  return out.filter((spelling) => spelling !== latin);
+}
+
+/**
+ * DB-side name variants of one query term: the shared expansion (`expandNameSearchTerms`:
+ * Russian Cyrillic ↔ Latin, ch/c, zh/j, dj/d …) on the term with Serbian Cyrillic mapped
+ * first, plus diacritic spellings of the plain-Latin variants. So "Елена Попович", "Јелена
+ * Поповић" and "Jelena Popovic" all reach "Jelena Popović".
+ */
+export function agentPlayerNameVariants(term: string): string[] {
+  const expanded = expandNameSearchTerms(serbianCyrillicToLatin(term));
+  // Russian-style digraphs (ш → sh, ж → zh, ч → ch) are one letter in Serbian Latin (š ž č).
+  const base = [...expanded, ...expanded.map((v) => v.toLowerCase().replace(/sh/g, 's').replace(/zh/g, 'z').replace(/ch/g, 'c'))];
+  const all = new Set(base);
+  for (const variant of base) for (const spelling of diacriticSpellings(variant)) all.add(spelling);
+  return [...all].slice(0, 40);
+}
+
 export const searchPlayersTool = defineTool({
   name: 'search_players',
   description:
-    "Find players by name among people in the user's city and people they played with. Returns public profile cards (name, level, trainer flag).",
+    "Find players by name among people in the user's city and people they played with. Matches across Cyrillic and Latin spellings and diacritics, so pass the name as the user wrote it. Returns public profile cards (name, level, trainer flag).",
   kind: 'read',
   scope: 'user',
   input: z.object({
@@ -42,10 +92,11 @@ export const searchPlayersTool = defineTool({
     if (!principal.currentCityId) {
       throw new ApiError(400, 'No home city set');
     }
+    const query = serbianCyrillicToLatin(args.query);
     const terms = args.query.split(/\s+/).filter(Boolean).slice(0, 5);
     const nameWhere: Prisma.UserWhereInput = {
       AND: terms.map((term) => ({
-        OR: expandNameSearchTerms(term).flatMap((variant) => [
+        OR: agentPlayerNameVariants(term).flatMap((variant) => [
           { firstName: { contains: variant, mode: 'insensitive' as const } },
           { lastName: { contains: variant, mode: 'insensitive' as const } },
         ]),
@@ -72,7 +123,7 @@ export const searchPlayersTool = defineTool({
     });
     const coPlayCount = new Map(coPlayers.map((row) => [row.userId, row.gamesTogetherCount]));
     const matched = rows
-      .filter((row) => matchesPersonSearch(args.query, { firstName: row.firstName, lastName: row.lastName }))
+      .filter((row) => matchesPersonSearch(query, { firstName: row.firstName, lastName: row.lastName }))
       .sort((a, b) => (coPlayCount.get(b.id) ?? 0) - (coPlayCount.get(a.id) ?? 0))
       .slice(0, args.limit);
     return {

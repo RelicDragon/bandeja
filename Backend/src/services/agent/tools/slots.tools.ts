@@ -19,12 +19,12 @@ const CLOCK = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:mm');
 export const findAvailableSlotsTool = defineTool({
   name: 'find_available_slots',
   description:
-    'Find bookable court slots at one club (clubId) or at up to 8 clubs of a city (cityId, default home city) on a date. Times are the club\'s local time. Each slot has a confidence: live (checked with the club system now), snapshot (no known conflicts as of asOf, never say "free"), app_only (only app games checked). Returns slotRef values for booking.',
+    'Find bookable court slots at one club (clubId) or at up to 8 clubs of a city (cityId, default home city) on a date. Times are the club\'s local time. Each slot has a confidence: live (checked with the club system now), snapshot (no known conflicts as of asOf, never say "free"), app_only (only app games checked). Returns slotRef values for booking. When the user asked to book or to create a game at a found time, go on and propose it (earliest matching slot unless they chose) instead of only listing the slots.',
   kind: 'read',
   scope: 'user',
   input: z
     .object({
-      clubId: z.string().min(1).max(64).optional().describe('Club id from search_clubs; omit to search a city'),
+      clubId: z.string().min(1).max(64).optional().describe("A club's id (search_clubs / get_club, or a game's clubId), never a game id; omit to search a city"),
       cityId: z.string().min(1).max(64).optional().describe('City id from list_cities; defaults to the home city'),
       date: z.string().describe('YYYY-MM-DD, the club\'s local calendar date'),
       timeFrom: CLOCK.optional().describe('Earliest start, HH:mm club time'),

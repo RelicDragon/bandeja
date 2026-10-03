@@ -225,6 +225,10 @@ export async function findAvailableSlots(
       confidence: result.confidence,
       asOf: result.asOf ? result.asOf.toISOString() : null,
       note: confidenceNote(result, club.timeZone, ctx.locale),
+      // Model-facing: which write plays at these slots (no integration → create_game, no booking).
+      ...(result.confidence === 'app_only' && !result.snapshotMissing
+        ? { bookableInApp: false, toPlayHere: "create_game with this clubId and the slot's start, without courtId (the court is booked with the club directly); create_game_with_booking / book_court cannot book here" }
+        : {}),
       ...(result.status === 'duration_not_supported' ? { allowedDurations: result.allowedDurations } : {}),
       ...(result.hoursKnown ? {} : { hoursUnknown: true }),
       availableAllDay: result.slots.length,

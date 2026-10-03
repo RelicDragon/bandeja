@@ -34,6 +34,7 @@ import { ApiError } from '../../../utils/ApiError';
 import type { AgentPrincipal } from '../access/agentPrincipal';
 import type { AgentWebRunSession } from '../web/agentWebSession';
 import { agentT } from '../i18n/agentI18n';
+import { agentWrongKindIdHints } from './agentIdHints';
 import {
   AGENT_TOOL_GROUP_DESCRIPTIONS,
   AGENT_TOOL_GROUPS,
@@ -432,7 +433,12 @@ export class AgentToolRegistry {
       };
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = apiErrorToToolData(error);
+        const data: Record<string, unknown> = apiErrorToToolData(error);
+        // A not_found on an id of the wrong kind (a game id as clubId): tell the model what it passed.
+        if (data.error === 'not_found') {
+          const hints = await agentWrongKindIdHints(ctx.principal, parsed.data);
+          if (hints.length) data.hint = hints.join(' ');
+        }
         const summaryKey =
           data.error === 'not_found'
             ? 'error.notFound'

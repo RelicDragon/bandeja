@@ -55,7 +55,7 @@ export function agentGameSummarySelect(viewerId: string) {
       select: { role: true, status: true },
     },
     _count: {
-      select: { participants: { where: { status: ParticipantStatus.PLAYING } } },
+      select: { participants: { where: { status: ParticipantStatus.PLAYING } }, externalBookings: true },
     },
   } satisfies Prisma.GameSelect;
 }
@@ -97,6 +97,8 @@ export function toAgentGameSummary(row: AgentGameSummaryRow) {
     isPublic: row.isPublic,
     playingCount: row._count.participants,
     maxParticipants: row.maxParticipants,
+    /** Court bookings linked to the game (`GameExternalBooking`): 0 = no booking to cancel with it. */
+    linkedCourtBookings: row._count.externalBookings,
     levelRange: row.minLevel != null || row.maxLevel != null ? { min: row.minLevel, max: row.maxLevel } : null,
     parentId: row.parentId,
     myRole: mine?.role ?? null,

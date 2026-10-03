@@ -98,8 +98,8 @@ export const saveMemoryTool = defineTool({
         .trim()
         .min(1)
         .max(AGENT_MEMORY_DESCRIPTION_MAX_LENGTH)
-        .describe('One line shown in the memory index, in the user\'s language'),
-      body: z.string().trim().min(1).max(AGENT_MEMORY_BODY_MAX_LENGTH).describe('The note itself, in the user\'s language'),
+        .describe('One line shown in the memory index, in the language of the user\'s latest message'),
+      body: z.string().trim().min(1).max(AGENT_MEMORY_BODY_MAX_LENGTH).describe('The note itself, in the language of the user\'s latest message'),
       type: z.enum(['PREFERENCE', 'FEEDBACK', 'FACT']),
     })
     .strict(),

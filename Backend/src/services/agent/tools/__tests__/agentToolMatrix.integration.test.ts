@@ -329,6 +329,14 @@ async function redTeam(fixture: AgentPermissionFixture, extras: Extras): Promise
   const missing = await registry.executeTool(ctx, 'get_game', { gameId: `missing-${fixture.suffix}` });
   assert.deepEqual({ ...hidden, label: '' }, { ...missing, label: '' });
   assert.deepEqual(hidden.data, { error: 'not_found' });
+  // A visible game id passed as clubId: the not_found says what the id is (never for a hidden game).
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const wrongKind = await registry.executeTool(ctx, 'find_available_slots', { clubId: fixture.games.public, date: tomorrow, durationMinutes: 90 });
+  assert.equal(wrongKind.ok, false);
+  assert.match(String((wrongKind.data as { hint?: string }).hint), /^clubId is a game id \(game "/, 'wrong-kind id hint');
+  assert.ok(!JSON.stringify(wrongKind.data).includes(fixture.games.public), 'the passed id is not echoed');
+  const hiddenAsClub = await registry.executeTool(ctx, 'find_available_slots', { clubId: fixture.games.private, date: tomorrow, durationMinutes: 90 });
+  assert.deepEqual(hiddenAsClub.data, { error: 'not_found' }, 'a hidden game id as clubId: plain not_found');
   // Leagues are for everyone: a stranger reads a private season (a private casual game stays 404 above).
   const strangerSeason = await registry.executeTool(ctx, 'get_league_standings', { seasonId: fixture.games.privateSeason });
   assert.equal(strangerSeason.ok, true, 'stranger reads private season standings');

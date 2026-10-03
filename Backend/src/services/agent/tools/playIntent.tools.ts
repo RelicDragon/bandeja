@@ -23,6 +23,7 @@ import {
   PlayIntentTimeOfDay,
   Sport,
 } from '@prisma/client';
+import { formatInTimeZone } from 'date-fns-tz';
 import { z } from 'zod/v4';
 import type { AgentActionPreview, AgentActionPreviewLine, AgentPlayIntentCard } from '@bandeja/shared/agentContract';
 import prisma from '../../../config/database';
@@ -437,7 +438,11 @@ export const setPlayIntentTool = defineTool({
       dateKeys: draft.dateKeys,
     });
     if (!dateKeys.length) {
-      throw new ApiError(400, 'Pick today, tomorrow or the day after (home city dates)');
+      const [today, tomorrow, after] = PlayIntentService.allowedDateKeys(city.timezone);
+      throw new ApiError(
+        400,
+        `A play request can only cover today (${today}), tomorrow (${tomorrow}) or the day after (${after}), home city dates; the requested day is not one of them. Tell the user and offer one of these days instead of guessing.`,
+      );
     }
     const timeOfDays = draft.timeOfDays ?? [PlayIntentTimeOfDay.ANYTIME];
     const custom = timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM);
@@ -451,7 +456,12 @@ export const setPlayIntentTool = defineTool({
       },
       city.timezone,
     );
-    if (endsAt && endsAt <= ctx.now) throw new ApiError(400, 'That time window has already ended');
+    if (endsAt && endsAt <= ctx.now) {
+      throw new ApiError(
+        400,
+        `That time window has already ended (now is ${formatInTimeZone(ctx.now, city.timezone, 'EEE yyyy-MM-dd HH:mm')} in the home city). Offer a later part of today or the same time tomorrow.`,
+      );
+    }
 
     const body: CreatePlayIntentDto = { ...draft, dateKeys };
     delete body.dayOffsets;

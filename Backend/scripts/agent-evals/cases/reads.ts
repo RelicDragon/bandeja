@@ -85,6 +85,15 @@ export const readCases: EvalCaseFactory = () => [
     note: 'out-of-scope rule: short redirect, no tools needed',
   },
   {
+    id: 'reads.app-locale-sr-message-ru.ru',
+    area: 'reads',
+    locale: 'ru',
+    appLocale: 'sr',
+    message: 'Когда и где моя следующая игра?',
+    expect: { reply: [mentions('names_club', 'Zenit')] },
+    note: 'app language sr, message ru (Cyrillic): the reply must be Russian, not Serbian',
+  },
+  {
     id: 'reads.app-locale-mismatch.en',
     area: 'reads',
     locale: 'en',

@@ -49,7 +49,7 @@ export const AGENT_TOOL_GROUP_DESCRIPTIONS: Record<AgentLoadableToolGroup, strin
   play_intent: '"want to play" status: read, set or cancel it, and see matching players',
   chat: "a game's chat: summarize it or post a message",
   weather: 'weather forecast for a game, club or city',
-  web: 'web search, page fetch and pictures, for facts outside the app',
+  web: 'web search and pictures, for facts outside the app',
   admin: 'platform admin: find users, change user flags, edit any game, approve or decline events',
 };
 

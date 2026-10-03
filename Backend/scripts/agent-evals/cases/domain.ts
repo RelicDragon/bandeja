@@ -107,7 +107,8 @@ export const leagueCases: EvalCaseFactory = (fx) => [
     area: 'league',
     locale: 'en',
     message: 'Show me the standings of my league.',
-    expect: { tools: [tool('get_league_standings', (a, f) => a.seasonId === f.league.seasonId)], reply: [mentions('leader_luka', 'Luka')] },
+    // A standings table is mostly player names (Ilić, Kovač…): the language heuristic reads it as Serbian.
+    expect: { tools: [tool('get_league_standings', (a, f) => a.seasonId === f.league.seasonId)], reply: [mentions('leader_luka', 'Luka')], language: false },
   },
   {
     id: 'league.leader.ru',
@@ -212,7 +213,10 @@ export const webCases: EvalCaseFactory = () => [
     area: 'web',
     locale: 'en',
     message: 'Search the web: what do the official padel rules say about the serve?',
-    expect: { tools: [tool('web_search')], reply: [mentions('underhand', /underhand|below (the )?waist|waist/i)] },
+    expect: {
+      tools: [tool('web_search')],
+      reply: [mentions('underhand', /underhand|below (the )?waist|waist/i), notMentions('no_web_fetch_when_off', /web_fetch/i)],
+    },
   },
   {
     id: 'web.tours.ru',

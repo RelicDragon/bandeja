@@ -242,7 +242,15 @@ async function proposeCreateWithBooking(
   const clubHandoff = handoff(`/clubs/${slot.club.id}`, agentBookingT(locale, 'handoff.openClub'));
   const client = isClientProvider(provider);
   if (!client && !isServerProvider(provider)) {
-    return refusal('no_online_booking', agentBookingT(locale, 'refuse.noIntegration'), clubHandoff);
+    const refused = refusal('no_online_booking', agentBookingT(locale, 'refuse.noIntegration'), clubHandoff);
+    // Model-facing: the game itself can still be created (court booked with the club directly).
+    return {
+      ...refused,
+      data: {
+        ...(refused.data as Record<string, unknown>),
+        nextStep: `To still create the game at this slot without booking the court, call create_game with clubId "${slot.club.id}", startTime "${slot.date}T${slot.startTime}" and the same game fields; when the user already asked for the game, propose it now and tell them to book the court with the club.`,
+      },
+    };
   }
   const refused = client
     ? await clientBookingRefusal(principal, slot, locale, clubHandoff)

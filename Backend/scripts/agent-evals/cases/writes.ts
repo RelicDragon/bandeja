@@ -1,6 +1,6 @@
 import type { EvalCaseFactory, ToolArgs } from '../types';
 import type { EvalFixture } from '../fixtures';
-import { hasLocalClock, isLocalTime, tool, writeOn } from './helpers';
+import { hasLocalClock, isLocalTime, mentions, tool, writeOn } from './helpers';
 
 const patch = (a: ToolArgs) => (a.patch ?? {}) as Record<string, unknown>;
 const invites = (key: keyof EvalFixture['users']) => (a: ToolArgs, fx: EvalFixture) =>
@@ -47,6 +47,14 @@ export const writeCases: EvalCaseFactory = (fx) => [
     expect: { write: { tool: 'invite_players', args: invites('jelena') } },
     note: 'name typed in Russian Cyrillic; stored as Latin "Jelena Popović"',
   },
+  {
+    id: 'writes.invite-cyrillic.sr',
+    area: 'writes',
+    locale: 'sr',
+    message: 'Позови Јелену Поповић на моју сутрашњу игру.',
+    expect: { write: { tool: 'invite_players', args: invites('jelena') } },
+    note: 'Serbian Cyrillic name (ј, ћ), stored as Latin "Jelena Popović": search_players maps it',
+  },
   { id: 'writes.invite.hi', area: 'writes', locale: 'hi', message: 'कल वाले मेरे गेम में Petar Nikolić को इनवाइट कर दो।', expect: { write: { tool: 'invite_players', args: invites('petar') } } },
   {
     id: 'writes.remove-player.cs',
@@ -80,7 +88,15 @@ export const writeCases: EvalCaseFactory = (fx) => [
     message: 'Post in the chat of my game tomorrow: "I\'ll bring new balls".',
     expect: { write: { tool: 'post_to_game_chat', args: (a, f) => a.gameId === f.games.tomorrow && /balls/i.test(String(a.text)) } },
   },
-  { id: 'writes.play-intent.en', area: 'writes', locale: 'en', message: "Let people know I'm looking to play padel on Saturday morning.", expect: { write: { tool: 'set_play_intent' } } },
+  { id: 'writes.play-intent.en', area: 'writes', locale: 'en', message: "Let people know I'm looking to play padel the day after tomorrow, in the morning.", expect: { write: { tool: 'set_play_intent' } } },
+  {
+    id: 'writes.play-intent-far.en',
+    area: 'writes',
+    locale: 'en',
+    message: `Let people know I'm looking to play padel on ${fx.dates.in4} in the morning.`,
+    expect: { write: 'optional', reply: [mentions('offers_allowed_days', /today|tomorrow|day after|only|up to|within/i)] },
+    note: 'play requests cover today to the day after: the tool refuses (bad_request with the allowed dates); explain and offer those days',
+  },
   { id: 'writes.play-intent-cancel.ru', area: 'writes', locale: 'ru', message: 'Отмени мой запрос «ищу игру».', expect: { write: { tool: 'cancel_play_intent' } } },
 
   // --- questions that must NOT write ----------------------------------------------------------

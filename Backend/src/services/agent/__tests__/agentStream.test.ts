@@ -7,7 +7,8 @@ import { AgentMessageRole } from '@prisma/client';
 import type { AgentStreamEvent } from '@bandeja/shared/agentContract';
 import { resolveAgentEnvConfig } from '../../../config/agentEnv';
 import { autoTitleFromText } from '../agentChat.service';
-import { buildAgentModelHistory, resolveAgentLocale, sanitizeToolPairs } from '../agentContext.service';
+import { AGENT_REPLY_LANGUAGE_REMINDER, agentReplyLanguageReminder, buildAgentModelHistory, resolveAgentLocale, sanitizeToolPairs } from '../agentContext.service';
+import { agentMessageLanguage } from '../agentLanguageHint';
 import {
   AGENT_SYNTHETIC_EVENT_ID_BASE,
   buildSyntheticAgentReplay,
@@ -22,7 +23,7 @@ import {
 } from '../agentEvents';
 import { Semaphore } from '../llm/semaphore';
 import { startOfUtcDay } from '../agentGuards';
-import { serializeToolContent } from '../agentRun.service';
+import { AGENT_NARRATION_HOLD_MAX_CHARS, isAgentNarrationHeld, serializeToolContent } from '../agentRun.service';
 import { ToolCallAccumulator, type AgentLlmMessage } from '../llm/deepseekStream';
 
 /** Minimal SSE parser (what a browser does) to prove frames round-trip. */
@@ -324,6 +325,44 @@ function testMisc() {
   console.log('locale / title / config: ok');
 }
 
+function testNarrationHold() {
+  assert.equal(isAgentNarrationHeld(''), true);
+  assert.equal(isAgentNarrationHeld("I'll look for that game."), true, 'one short line is held');
+  assert.equal(isAgentNarrationHeld("I'll look for that game.\n\n"), true, 'trailing blank lines keep it held');
+  assert.equal(isAgentNarrationHeld("Here's what you have:\n\n- Evening"), false, 'a second line with content releases');
+  assert.equal(isAgentNarrationHeld('x'.repeat(AGENT_NARRATION_HOLD_MAX_CHARS + 1)), false, 'long text releases');
+  console.log('narration hold: ok');
+}
+
+function testLanguageHint() {
+  const cases: [string, string | null][] = [
+    ["Thanks. And what's the weather going to be for that game?", 'en'],
+    ["Remember that I'm left-handed and I always play on the left side.", 'en'],
+    ['When and where is my next game?', 'en'],
+    ['Какая погода будет во время моей завтрашней игры?', 'ru'],
+    ['Која је моја следећа игра?', 'sr'],
+    ['Отмени игру Morning americano.', 'ru'],
+    ['Откажи игру Morning americano.', 'sr'],
+    ['Игра Morning americano', null],
+    ['Hvala. Ko još igra sa mnom tada?', null],
+    ['¿Qué recuerdas de mí?', null],
+    ['Hola, que tal el partido', null],
+    ['Invite Jelena Popović to my game tomorrow', null],
+    ['Apakah ada permainan besok?', null],
+    ['明日の試合をキャンセルして', 'ja'],
+    ['明天我的比赛几点', 'zh'],
+    ['พรุ่งนี้ฝนจะตกไหม', 'th'],
+    ['ألغِ مباراتي غدًا', 'ar'],
+    ['कल मेरा गेम कब है', 'hi'],
+    ['ok', null],
+    ['[slot:s1.abc]', null],
+  ];
+  for (const [text, want] of cases) assert.equal(agentMessageLanguage(text), want, text);
+  assert.equal(agentReplyLanguageReminder('Игра Morning americano'), AGENT_REPLY_LANGUAGE_REMINDER, 'unsure → generic');
+  assert.ok(agentReplyLanguageReminder('When is my next game?').startsWith('Reply language: English'));
+  console.log('language hint: ok');
+}
+
 async function main() {
   testSseAndStore();
   await testStores();
@@ -332,6 +371,8 @@ async function main() {
   testAccumulator();
   testHistory();
   testMisc();
+  testNarrationHold();
+  testLanguageHint();
   console.log('agentStream.test.ts: ok');
 }
 

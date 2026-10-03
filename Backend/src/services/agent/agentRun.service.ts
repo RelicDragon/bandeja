@@ -14,7 +14,8 @@
  * remaining QUEUED runs get a `run.queued` with their new position.
  *
  * Loop, per step (≤ `AGENT_MAX_STEPS`; the last step gets no tools so it must answer):
- *   stream completion → `text.delta` → if tool calls: save ASSISTANT message (text +
+ *   stream completion → `text.delta` (a short first line is held: dropped as narration when
+ *   the step ends with read-only tool calls, `isAgentNarrationHeld`) → if tool calls: save ASSISTANT message (text +
  *   tool_call blocks) → `message.saved` → every call of the step: `tool.started` /
  *   registry.executeTool / `tool.finished` (consecutive reads run concurrently; writes and
  *   memory tools one at a time, in order) → save TOOL message → `message.saved` → next step.
@@ -205,6 +206,22 @@ class RunAborted extends Error {
   constructor(readonly reason: AbortReason) {
     super(`run ${reason}`);
   }
+}
+
+/** Longest text start still held back as possible narration (rule 4 safety net). */
+export const AGENT_NARRATION_HOLD_MAX_CHARS = 200;
+
+/**
+ * True while the start of a step's text may still be narration before tool calls ("I'll
+ * look for that game."): a single short line. DeepSeek wrote it in English whatever the
+ * user's language, despite the prompt. Released (streamed) as soon as it has a second line
+ * with content or passes `AGENT_NARRATION_HOLD_MAX_CHARS`, or when the step ends without tool
+ * calls; dropped when the step ends with read-only tool calls. A final answer's first line
+ * therefore streams a moment later; everything after streams as before.
+ */
+export function isAgentNarrationHeld(text: string): boolean {
+  const start = text.trimStart();
+  return start.length <= AGENT_NARRATION_HOLD_MAX_CHARS && !/\n\s*\S/.test(start);
 }
 
 function abortReasonOf(signal: AbortSignal): AbortReason {
@@ -918,6 +935,17 @@ export class AgentRunService {
           ? []
           : this.deps.registry.openAiToolsFor(principal, runState.toolGroups ? { groups: runState.toolGroups } : {});
         let stepCachedTokens: number | null = null;
+        // Narration hold (`isAgentNarrationHeld`): the start of a step's text is held back until
+        // it is clearly an answer; a short line followed by read-only tool calls is dropped.
+        let heldText = '';
+        let streaming = false;
+        const releaseHeld = async () => {
+          streaming = true;
+          if (!heldText) return;
+          const text = heldText;
+          heldText = '';
+          await this.emit(run.id, { type: 'text.delta', text });
+        };
         const release = await this.llmGate.acquire(signal);
         try {
           const stream = llm.stream({ messages, tools: openAiTools, signal });
@@ -925,7 +953,12 @@ export class AgentRunService {
             if (signal.aborted) break;
             if (chunk.type === 'text') {
               unsavedText += chunk.text;
-              await this.emit(run.id, { type: 'text.delta', text: chunk.text });
+              if (streaming) {
+                await this.emit(run.id, { type: 'text.delta', text: chunk.text });
+              } else {
+                heldText += chunk.text;
+                if (!isAgentNarrationHeld(heldText)) await releaseHeld();
+              }
             } else if (chunk.type === 'tool_call_delta') {
               accumulator.add(chunk);
             } else if (chunk.type === 'usage') {
@@ -944,7 +977,12 @@ export class AgentRunService {
         if (signal.aborted) throw new RunAborted(abortReasonOf(signal));
 
         const calls = lastStep ? [] : accumulator.calls(run.id, step);
-        const text = unsavedText.trim();
+        // Held text + only read / memory / load_tools calls = narration ("I'll look for that
+        // game."): never shown, saved or replayed. With a write call it is the line above the card.
+        const narration =
+          !streaming && calls.length > 0 && !calls.some((call) => this.deps.registry.get(call.function.name)?.kind === 'write');
+        if (!narration) await releaseHeld();
+        const text = narration ? '' : unsavedText.trim();
         if (calls.length === 0) {
           endReason = lastStep && agentConfig.maxSteps > 1 ? 'max_steps' : 'answered';
           const finalText = text || 'Sorry, I could not produce an answer. Please try again.';
