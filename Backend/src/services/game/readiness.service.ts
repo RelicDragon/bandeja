@@ -3,6 +3,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { playersPerTeamOf } from '../results/generation/matchUtils';
+import { hasOpenEndedFixedTeams } from '../../shared/matchFormat';
 
 export type GameReadinessDb = typeof prisma | Prisma.TransactionClient;
 
@@ -39,7 +40,8 @@ export class GameReadinessService {
     let teamsReady = false;
     if (game.hasFixedTeams && game.fixedTeams.length > 0) {
       const pairSlotsLayout =
-        maxParticipants > 0 && game.fixedTeams.length * perTeam === maxParticipants;
+        hasOpenEndedFixedTeams(game) ||
+        (maxParticipants > 0 && game.fixedTeams.length * perTeam === maxParticipants);
       const allTeamsHavePlayers = pairSlotsLayout
         ? game.fixedTeams.every(team => team.players.length === perTeam)
         : game.fixedTeams.every(team => team.players.length > 0);

@@ -49,7 +49,7 @@ A clock-derived `FINISHED` is **never persisted** for results-based entity types
 - Roster/join guard: `Backend/src/utils/participantValidation.ts` `validateGameCanAcceptParticipants`
 - Roster-management routes (kick, add/revoke admin, trainer, ownership, join queue, participant chats): `canManageGameRoster` / `canManageGameRosterAsOwner` (`requireRosterMutable` in `Backend/src/middleware/auth.ts`). Plain `canEditGame` only blocks `ARCHIVED` — do not use it for roster mutations
 - Settings guard + frozen field list: `Backend/src/services/game/gameResultsLockedFields.ts`, applied in `Backend/src/services/game/update.service.ts`
-- FE gates: `Frontend/src/pages/GameDetailsShell.tsx` (`canMutateRoster`, `canViewSettings`, `canInvitePlayers`), `Frontend/src/components/GameDetails/GameParticipants.tsx` (`canJoinOrInvite`), `Frontend/src/components/ManageUsersModal.tsx`
+- FE gates: `Frontend/src/pages/GameDetailsShell.tsx` (`canMutateRoster`, `canViewSettings`, `canInvitePlayers`), `Frontend/src/components/GameDetails/roster/RosterJoinPanel.tsx` (`canJoinOrInvite`), `Frontend/src/components/ManageUsersModal.tsx`
 
 `status` remains fine for display (`GameStatusIcon`) and for "active now" list scoping (`sortGames.ts`, `MyTab.tsx`, `homeStaleScheduledGame.ts`, `courtOccupancy.service.ts`).
 

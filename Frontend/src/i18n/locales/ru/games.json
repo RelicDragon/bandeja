@@ -236,6 +236,11 @@
     "joinQueueWaiting_few": "{{count}} ждут",
     "joinQueueWaiting_many": "{{count}} ждут",
     "joinQueueWaiting_other": "{{count}} ждут",
+    "card": {
+      "full": "Мест нет",
+      "openChat": "Открыть чат",
+      "joinQueueShort": "В очередь"
+    },
     "joinAriaSeatsLeft_one": "Добавиться в игру, свободно {{count}} место",
     "joinAriaSeatsLeft_few": "Добавиться в игру, свободно {{count}} места",
     "joinAriaSeatsLeft_many": "Добавиться в игру, свободно {{count}} мест",
@@ -267,6 +272,9 @@
     "teamsUpdatedSuccessfully": "Команды успешно обновлены",
     "playerAlreadyInTeam": "Игрок уже в этой команде",
     "playerAlreadyInAnotherTeam": "Игрок уже в другой команде",
+    "addFixedTeam": "Добавить команду",
+    "removeFixedTeam": "Удалить команду",
+    "fixedTeamRosterDuplicate": "Команда с такой же парой уже есть",
     "playerNotParticipant": "Игрок не является участником этой игры",
     "failedToSaveTeams": "Не удалось сохранить команды",
     "evenPlayersRequired": "Требуется четное количество Игроков",

@@ -249,6 +249,11 @@
     "joinQueueWaiting_few": "{{count}} في الانتظار",
     "joinQueueWaiting_many": "{{count}} في الانتظار",
     "joinQueueWaiting_other": "{{count}} في الانتظار",
+    "card": {
+      "full": "مكتمل",
+      "openChat": "فتح الدردشة",
+      "joinQueueShort": "انتظار"
+    },
     "joinAriaSeatsLeft_zero": "انضم إلى المباراة، متبقٍ {{count}} مقعد",
     "joinAriaSeatsLeft_one": "انضم إلى المباراة، متبقٍ {{count}} مقعد",
     "joinAriaSeatsLeft_two": "انضم إلى المباراة، متبقٍ {{count}} مقعدان",
@@ -284,6 +289,9 @@
     "teamsUpdatedSuccessfully": "تم تحديث الفرق بنجاح",
     "playerAlreadyInTeam": "اللاعب موجود بالفعل في هذا الفريق",
     "playerAlreadyInAnotherTeam": "اللاعب موجود بالفعل في فريق آخر",
+    "addFixedTeam": "إضافة فريق",
+    "removeFixedTeam": "إزالة الفريق",
+    "fixedTeamRosterDuplicate": "يوجد فريق آخر بنفس هذا الثنائي",
     "playerNotParticipant": "اللاعب ليس مشاركًا في هذه المباراة",
     "failedToSaveTeams": "فشل حفظ الفرق",
     "evenPlayersRequired": "يلزم عدد زوجي من اللاعبين",

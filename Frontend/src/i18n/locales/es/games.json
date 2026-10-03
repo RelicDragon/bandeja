@@ -230,6 +230,11 @@
     "joinQueueWaiting_one": "{{count}} esperando",
     "joinQueueWaiting_many": "{{count}} esperando",
     "joinQueueWaiting_other": "{{count}} esperando",
+    "card": {
+      "full": "Completo",
+      "openChat": "Abrir chat",
+      "joinQueueShort": "A la cola"
+    },
     "joinAriaSeatsLeft_one": "Unirme al juego, queda {{count}} plaza",
     "joinAriaSeatsLeft_many": "Unirme al juego, quedan {{count}} plazas",
     "joinAriaSeatsLeft_other": "Unirme al juego, quedan {{count}} plazas",
@@ -259,6 +264,9 @@
     "teamsUpdatedSuccessfully": "Equipos actualizados exitosamente",
     "playerAlreadyInTeam": "El jugador ya está en este equipo",
     "playerAlreadyInAnotherTeam": "El jugador ya está en otro equipo",
+    "addFixedTeam": "Añadir equipo",
+    "removeFixedTeam": "Eliminar equipo",
+    "fixedTeamRosterDuplicate": "Otro equipo ya tiene exactamente esta pareja",
     "playerNotParticipant": "El jugador no es participante de este juego",
     "failedToSaveTeams": "Error al guardar los equipos",
     "evenPlayersRequired": "Se requiere número par de Jugadores",

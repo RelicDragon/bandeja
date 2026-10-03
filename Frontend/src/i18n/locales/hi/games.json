@@ -237,6 +237,11 @@
     "joinSeatsLeftShort_other": "{{count}} बाकी",
     "joinQueueWaiting_one": "{{count}} इंतज़ार में",
     "joinQueueWaiting_other": "{{count}} इंतज़ार में",
+    "card": {
+      "full": "भरा हुआ",
+      "openChat": "चैट खोलें",
+      "joinQueueShort": "कतार में"
+    },
     "joinAriaSeatsLeft_one": "गेम में शामिल हों, {{count}} जगह बाकी",
     "joinAriaSeatsLeft_other": "गेम में शामिल हों, {{count}} जगहें बाकी",
     "joinAriaQueueWaiting_one": "कतार में शामिल हों, {{count}} खिलाड़ी इंतज़ार में",
@@ -264,6 +269,9 @@
     "teamsUpdatedSuccessfully": "टीमें सफलतापूर्वक अपडेट",
     "playerAlreadyInTeam": "खिलाड़ी पहले से इस टीम में है",
     "playerAlreadyInAnotherTeam": "खिलाड़ी पहले से दूसरी टीम में है",
+    "addFixedTeam": "टीम जोड़ें",
+    "removeFixedTeam": "टीम हटाएँ",
+    "fixedTeamRosterDuplicate": "किसी अन्य टीम में पहले से यही जोड़ी है",
     "playerNotParticipant": "खिलाड़ी इस गेम का प्रतिभागी नहीं",
     "failedToSaveTeams": "टीमें सहेजने में विफल",
     "evenPlayersRequired": "सम संख्या खिलाड़ी आवश्यक",

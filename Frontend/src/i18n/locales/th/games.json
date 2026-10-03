@@ -234,6 +234,11 @@
     "joinSeatsLeft_other": "เหลือ {{count}} ที่",
     "joinSeatsLeftShort_other": "เหลือ {{count}}",
     "joinQueueWaiting_other": "{{count}} คนรออยู่",
+    "card": {
+      "full": "เต็ม",
+      "openChat": "เปิดแชท",
+      "joinQueueShort": "ต่อคิว"
+    },
     "joinAriaSeatsLeft_other": "เข้าร่วมเกม เหลือ {{count}} ที่",
     "joinAriaQueueWaiting_other": "เข้าร่วมคิว {{count}} คนรออยู่",
     "statusInQueueWithPosition": "ในคิว · {{position}}",
@@ -259,6 +264,9 @@
     "teamsUpdatedSuccessfully": "อัปเดตทีมเรียบร้อยแล้ว",
     "playerAlreadyInTeam": "ผู้เล่นอยู่ในทีมนี้แล้ว",
     "playerAlreadyInAnotherTeam": "ผู้เล่นอยู่ในทีมอื่นแล้ว",
+    "addFixedTeam": "เพิ่มทีม",
+    "removeFixedTeam": "ลบทีม",
+    "fixedTeamRosterDuplicate": "มีทีมอื่นที่เป็นคู่เดียวกันนี้แล้ว",
     "playerNotParticipant": "ผู้เล่นไม่ใช่ผู้เข้าร่วมในเกมนี้",
     "failedToSaveTeams": "ไม่สามารถบันทึกทีมได้",
     "evenPlayersRequired": "จำนวนผู้เล่นที่ต้องการ",

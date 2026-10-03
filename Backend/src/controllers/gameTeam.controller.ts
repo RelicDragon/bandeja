@@ -5,9 +5,9 @@ import { GameTeamService } from '../services/gameTeam.service';
 export const setGameTeams = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { gameId } = req.params;
-    const { teams } = req.body;
+    const { teams, openEndedList } = req.body;
 
-    const result = await GameTeamService.setGameTeams(gameId, teams);
+    const result = await GameTeamService.setGameTeams(gameId, teams, { openEndedList: openEndedList === true });
 
     res.status(200).json({
       success: true,

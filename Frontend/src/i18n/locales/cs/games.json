@@ -233,6 +233,11 @@
     "joinQueueWaiting_few": "{{count}} čekají",
     "joinQueueWaiting_many": "{{count}} čeká",
     "joinQueueWaiting_other": "{{count}} čeká",
+    "card": {
+      "full": "Plno",
+      "openChat": "Otevřít chat",
+      "joinQueueShort": "Do fronty"
+    },
     "joinAriaSeatsLeft_one": "Připojit se k zápasu, zbývá {{count}} místo",
     "joinAriaSeatsLeft_few": "Připojit se k zápasu, zbývají {{count}} místa",
     "joinAriaSeatsLeft_many": "Připojit se k zápasu, zbývá {{count}} místa",
@@ -264,6 +269,9 @@
     "teamsUpdatedSuccessfully": "Družstva byla úspěšně aktualizována",
     "playerAlreadyInTeam": "Hráč je již v tomto družstvu",
     "playerAlreadyInAnotherTeam": "Hráč je již v jiném družstvu",
+    "addFixedTeam": "Přidat tým",
+    "removeFixedTeam": "Odebrat tým",
+    "fixedTeamRosterDuplicate": "Jiný tým už má přesně tuto dvojici",
     "playerNotParticipant": "Hráč není účastníkem tohoto zápasu",
     "failedToSaveTeams": "Nepodařilo se uložit družstva",
     "evenPlayersRequired": "Je vyžadován sudý počet hráčů",

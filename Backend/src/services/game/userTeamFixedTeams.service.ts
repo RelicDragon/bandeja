@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { UserTeamMemberStatus } from '@prisma/client';
 import { GameTeamService } from '../gameTeam.service';
-import { maxFixedTeamSlots } from '../results/generation/matchUtils';
+import { fixedTeamSlotLimit } from '../../shared/matchFormat';
 
 function logSkip(reason: string, detail: Record<string, unknown>) {
   console.warn(`[userTeamFixedTeams] skip: ${reason}`, detail);
@@ -13,6 +13,8 @@ export async function applyUserTeamToFixedTeamsIfReady(gameId: string, userTeamI
     select: {
       maxParticipants: true,
       playersPerMatch: true,
+      sport: true,
+      entityType: true,
       hasFixedTeams: true,
       allowUserInMultipleTeams: true,
       rounds: { select: { id: true }, take: 1 },
@@ -64,7 +66,7 @@ export async function applyUserTeamToFixedTeamsIfReady(gameId: string, userTeamI
     }
   }
 
-  const maxTeams = maxFixedTeamSlots(game);
+  const maxTeams = fixedTeamSlotLimit(game);
   if (maxTeams < 1) {
     logSkip('max_teams_lt_1', { gameId, userTeamId, maxParticipants: game.maxParticipants });
     return;
@@ -99,5 +101,5 @@ export async function applyUserTeamToFixedTeamsIfReady(gameId: string, userTeamI
     return;
   }
 
-  await GameTeamService.setGameTeams(gameId, teamsPayload);
+  await GameTeamService.setGameTeams(gameId, teamsPayload, { openEndedList: true });
 }

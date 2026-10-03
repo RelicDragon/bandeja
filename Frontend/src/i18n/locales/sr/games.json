@@ -232,6 +232,11 @@
     "joinQueueWaiting_one": "{{count}} čeka",
     "joinQueueWaiting_few": "{{count}} čekaju",
     "joinQueueWaiting_other": "{{count}} čeka",
+    "card": {
+      "full": "Popunjeno",
+      "openChat": "Otvori čet",
+      "joinQueueShort": "U red"
+    },
     "joinAriaSeatsLeft_one": "Pridružiti se igri, slobodno {{count}} mesto",
     "joinAriaSeatsLeft_few": "Pridružiti se igri, slobodna {{count}} mesta",
     "joinAriaSeatsLeft_other": "Pridružiti se igri, slobodno {{count}} mesta",
@@ -261,6 +266,9 @@
     "teamsUpdatedSuccessfully": "Timovi su uspešno ažurirani",
     "playerAlreadyInTeam": "Igrač je već u ovom timu",
     "playerAlreadyInAnotherTeam": "Igrač je već u drugom timu",
+    "addFixedTeam": "Dodaj tim",
+    "removeFixedTeam": "Ukloni tim",
+    "fixedTeamRosterDuplicate": "Drugi tim već ima tačno ovaj par",
     "playerNotParticipant": "Igrač nije učesnik ove igre",
     "failedToSaveTeams": "Greška pri čuvanju timova",
     "evenPlayersRequired": "Potreban parni broj Igrača",

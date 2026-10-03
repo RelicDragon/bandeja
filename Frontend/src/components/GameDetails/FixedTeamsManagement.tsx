@@ -5,15 +5,47 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { TeamPlayerSelector } from './TeamPlayerSelector';
 import { gamesApi } from '@/api/games';
 import { Game, GameTeam, type BasicUser } from '@/types';
-import { Users } from 'lucide-react';
+import { Plus, Trash2, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { canUserEditGameFormat } from '@/utils/gameResults';
-import { maxFixedTeamSlots, playersPerTeamOf } from '@/utils/matchFormat';
+import { fixedTeamSlotLimit, hasOpenEndedFixedTeams, maxFixedTeamSlots, playersPerTeamOf } from '@/utils/matchFormat';
 import { resolveFixedTeamPlayerUser } from '@/utils/resolveFixedTeamPlayerUser';
 import { parseGameSport } from '@/utils/gameSport';
 function playerDisplayName(user: BasicUser): string {
   return [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+}
+
+function emptyTeam(gameId: string, teamNumber: number, id = `temp-${teamNumber}`): GameTeam {
+  return { id, gameId, teamNumber, name: undefined, players: [] };
+}
+
+/** Teams the UI renders: open-ended lists show every team, fixed lists the first N slots. */
+function visibleTeamsOf(teams: GameTeam[], g: Game): GameTeam[] {
+  return hasOpenEndedFixedTeams(g) ? teams : teams.slice(0, maxFixedTeamSlots(g));
+}
+
+function areTeamsReadyFor(teams: GameTeam[], g: Game): boolean {
+  const visible = visibleTeamsOf(teams, g);
+  if (visible.length === 0) return false;
+  const perTeam = playersPerTeamOf(g);
+  return visible.every((team) => team.players.length === perTeam);
+}
+
+/** Server teams → local list. Open-ended keeps exactly what is stored; fixed pads every slot. */
+function toLocalTeams(serverTeams: GameTeam[], g: Game): GameTeam[] {
+  const sorted = [...serverTeams].sort((a, b) => a.teamNumber - b.teamNumber);
+  if (hasOpenEndedFixedTeams(g)) return sorted;
+  const slotCount = maxFixedTeamSlots(g);
+  const local: GameTeam[] = [];
+  for (let i = 1; i <= slotCount; i++) {
+    local.push(sorted.find((team) => team.teamNumber === i) ?? emptyTeam(g.id, i));
+  }
+  return local;
+}
+
+function rosterKey(userIds: string[]): string {
+  return [...userIds].sort().join(':');
 }
 
 interface FixedTeamPlayerSlotProps {
@@ -105,21 +137,9 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   onGameUpdateRef.current = onGameUpdate;
 
   const areTeamsReady = useCallback(
-    (teamsToCheck = teams, g = gameRef.current) => {
-      if (!g || !teamsToCheck || teamsToCheck.length === 0) return false;
-      const n = maxFixedTeamSlots(g);
-      const perTeam = playersPerTeamOf(g);
-      return teamsToCheck.slice(0, n).every((team) => team.players.length === perTeam);
-    },
+    (teamsToCheck = teams, g = gameRef.current) => (g ? areTeamsReadyFor(teamsToCheck, g) : false),
     [teams],
   );
-
-  const isTeamsReady = useCallback((teamsToCheck: GameTeam[], g: Game) => {
-    if (!teamsToCheck || teamsToCheck.length === 0) return false;
-    const n = maxFixedTeamSlots(g);
-    const perTeam = playersPerTeamOf(g);
-    return teamsToCheck.slice(0, n).every((team) => team.players.length === perTeam);
-  }, []);
 
   const fetchTeams = useCallback(async () => {
     const g = gameRef.current;
@@ -130,33 +150,22 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
 
     try {
       setLoading(true);
-      const slotCount = maxFixedTeamSlots(g);
-      const localTeams: GameTeam[] = [];
-
-      for (let i = 1; i <= slotCount; i++) {
-        localTeams.push({
-          id: `temp-${i}`,
-          gameId: g.id,
-          teamNumber: i,
-          name: undefined,
-          players: []
-        });
-      }
+      // Default slots; open-ended lists with nothing saved yet use them as a starting suggestion.
+      const localTeams = Array.from({ length: maxFixedTeamSlots(g) }, (_, i) => emptyTeam(g.id, i + 1));
 
       try {
         const response = await gamesApi.getFixedTeams(g.id);
         if (gameRef.current?.id !== g.id) return;
 
         const existingTeams = response.data;
-
-        const mergedTeams = localTeams.map((localTeam) => {
-          const existingTeam = existingTeams.find((team) => team.teamNumber === localTeam.teamNumber);
-          return existingTeam || localTeam;
-        });
+        const mergedTeams =
+          hasOpenEndedFixedTeams(g) && existingTeams.length === 0
+            ? localTeams
+            : toLocalTeams(existingTeams, g);
 
         setTeams(mergedTeams);
 
-        const ready = isTeamsReady(mergedTeams, g);
+        const ready = areTeamsReadyFor(mergedTeams, g);
         if (g.teamsReady !== ready) {
           onGameUpdateRef.current({
             ...g,
@@ -167,7 +176,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
         if (gameRef.current?.id !== g.id) return;
 
         setTeams(localTeams);
-        const ready = isTeamsReady(localTeams, g);
+        const ready = areTeamsReadyFor(localTeams, g);
         if (g.teamsReady !== ready) {
           onGameUpdateRef.current({
             ...g,
@@ -180,13 +189,13 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     } finally {
       if (gameRef.current?.id === g.id) setLoading(false);
     }
-  }, [isTeamsReady]);
+  }, []);
 
   useEffect(() => {
     if (game?.id) {
       fetchTeams();
     }
-  }, [game?.id, game?.maxParticipants, game?.entityType, game?.leagueRoundId, fetchTeams]);
+  }, [game?.id, game?.maxParticipants, game?.entityType, game?.leagueRoundId, game?.allowUserInMultipleTeams, fetchTeams]);
 
   const handlePlayerSelect = async (playerId: string) => {
     if (selectedTeamIndex === null || !game?.id) return;
@@ -210,6 +219,17 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
 
       if (playerInAnotherTeam) {
         toast.error(t('games.playerAlreadyInAnotherTeam'));
+        return;
+      }
+    }
+
+    if (game.allowUserInMultipleTeams && currentTeam.players.length + 1 === perTeam) {
+      const key = rosterKey([...currentTeam.players.map((p) => p.userId), playerId]);
+      const duplicate = teams.some(
+        (team, index) => index !== selectedTeamIndex && rosterKey(team.players.map((p) => p.userId)) === key,
+      );
+      if (duplicate) {
+        toast.error(t('games.fixedTeamRosterDuplicate'));
         return;
       }
     }
@@ -292,37 +312,32 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       return;
     }
 
-    const slotCount = maxFixedTeamSlots(game);
     const teamsData = [];
-    for (let i = 1; i <= slotCount; i++) {
-      const team = updatedTeams.find((t) => t.teamNumber === i);
-      teamsData.push({
-        teamNumber: i,
-        name: team?.name,
-        playerIds: team?.players.map((p) => p.userId) ?? [],
+    if (hasOpenEndedFixedTeams(game)) {
+      updatedTeams.forEach((team, index) => {
+        teamsData.push({
+          teamNumber: index + 1,
+          name: team.name,
+          playerIds: team.players.map((p) => p.userId),
+        });
       });
+    } else {
+      const slotCount = maxFixedTeamSlots(game);
+      for (let i = 1; i <= slotCount; i++) {
+        const team = updatedTeams.find((t) => t.teamNumber === i);
+        teamsData.push({
+          teamNumber: i,
+          name: team?.name,
+          playerIds: team?.players.map((p) => p.userId) ?? [],
+        });
+      }
     }
 
     try {
-      const response = await gamesApi.setFixedTeams(game.id, teamsData);
-
-      const slotCount = maxFixedTeamSlots(game);
-      const updatedLocalTeams: GameTeam[] = [];
-
-      for (let i = 1; i <= slotCount; i++) {
-        const savedTeam = response.data.fixedTeams?.find((team: GameTeam) => team.teamNumber === i);
-        if (savedTeam) {
-          updatedLocalTeams.push(savedTeam);
-        } else {
-          updatedLocalTeams.push({
-            id: `temp-${i}`,
-            gameId: game.id,
-            teamNumber: i,
-            name: undefined,
-            players: []
-          });
-        }
-      }
+      const response = await gamesApi.setFixedTeams(game.id, teamsData, {
+        openEndedList: hasOpenEndedFixedTeams(game),
+      });
+      const updatedLocalTeams = toLocalTeams(response.data.fixedTeams ?? [], game);
 
       setTeams(updatedLocalTeams);
       // Update game state in parent component, preserving current status and adding teamsReady
@@ -338,11 +353,28 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     }
   };
 
+  const handleAddTeam = () => {
+    if (!game?.id || teams.length >= fixedTeamSlotLimit(game)) return;
+    setTeams([...teams, emptyTeam(game.id, teams.length + 1, `temp-new-${Date.now()}`)]);
+  };
+
+  const handleRemoveTeam = async (teamIndex: number) => {
+    if (!game?.id) return;
+    const removed = teams[teamIndex];
+    const updatedTeams = teams
+      .filter((_, index) => index !== teamIndex)
+      .map((team, index) => ({ ...team, teamNumber: index + 1 }));
+    setTeams(updatedTeams);
+    onGameUpdate({ ...game, teamsReady: areTeamsReady(updatedTeams) });
+    // A never-saved empty team only lived locally — nothing to persist.
+    if (removed && removed.players.length === 0 && removed.id.startsWith('temp-')) return;
+    await saveTeams(updatedTeams);
+  };
+
   const hasEmptySlots = () => {
     if (!teams || teams.length === 0 || !game) return false;
-    const n = maxFixedTeamSlots(game);
     const perTeam = playersPerTeamOf(game);
-    const visible = teams.slice(0, n);
+    const visible = visibleTeamsOf(teams, game);
     const totalSlots = visible.length * perTeam;
     const filledSlots = visible.reduce((total, team) => total + team.players.length, 0);
     return filledSlots < totalSlots;
@@ -357,8 +389,8 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     return embedded ? spinner : <Card>{spinner}</Card>;
   }
 
-  // Check if max participants is odd - fixed teams require even number
-  if (game.maxParticipants % 2 !== 0) {
+  // Check if max participants is odd - fixed teams require even number (overlapping rosters do not)
+  if (game.maxParticipants % 2 !== 0 && !hasOpenEndedFixedTeams(game)) {
     const body = (
       <div className="text-center py-6">
         <div className="text-yellow-600 dark:text-yellow-400 mb-2">
@@ -414,11 +446,12 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
     );
   }
 
-  const slotCount = maxFixedTeamSlots(game);
+  const openEnded = hasOpenEndedFixedTeams(game);
+  const visibleTeams = visibleTeamsOf(teams, game);
   const playersPerTeam = playersPerTeamOf(game);
   const main = (
     <>
-      {teams?.slice(0, slotCount).map((team, index) => {
+      {visibleTeams.map((team, index) => {
         const openSelector = () => {
           if (!canEdit) return;
           setSelectedTeamIndex(index);
@@ -451,9 +484,30 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
                 );
               })}
             </div>
+            {openEnded && canEdit ? (
+              <button
+                type="button"
+                onClick={() => handleRemoveTeam(index)}
+                aria-label={t('games.removeFixedTeam')}
+                className="flex w-9 shrink-0 items-center justify-center border-s border-gray-200/90 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:border-gray-700/70 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              >
+                <Trash2 size={14} />
+              </button>
+            ) : null}
           </div>
         );
       })}
+
+      {openEnded && canEdit && teams.length < fixedTeamSlotLimit(game) ? (
+        <button
+          type="button"
+          onClick={handleAddTeam}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-300 py-2.5 text-xs font-medium text-gray-500 hover:border-primary-400 hover:bg-primary-50/60 hover:text-primary-600 dark:border-gray-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
+        >
+          <Plus size={14} />
+          {t('games.addFixedTeam')}
+        </button>
+      ) : null}
 
 
       {showPlayerSelector && selectedTeamIndex !== null && hasEmptySlots() && canEdit && (
@@ -470,8 +524,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
               : teams.flatMap((team) => team.players.map((p) => p.userId))
           }
           unavailableLabelById={Object.fromEntries(
-            teams
-              .slice(0, slotCount)
+            visibleTeams
               .flatMap((team) =>
                 team.players.map((p) => [p.userId, `${t('games.teamNumber')} ${team.teamNumber}`] as const),
               ),

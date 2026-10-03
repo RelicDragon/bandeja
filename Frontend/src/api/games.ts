@@ -381,8 +381,12 @@ export const gamesApi = {
     return response.data;
   },
 
-  setFixedTeams: async (id: string, teams: GameTeamData[]) => {
-    const response = await api.post<ApiResponse<Game>>(`/game-teams/game/${id}/teams`, { teams });
+  /** `openEndedList`: `teams` is the complete list (league season with overlapping rosters). */
+  setFixedTeams: async (id: string, teams: GameTeamData[], opts: { openEndedList?: boolean } = {}) => {
+    const response = await api.post<ApiResponse<Game>>(`/game-teams/game/${id}/teams`, {
+      teams,
+      ...(opts.openEndedList ? { openEndedList: true } : {}),
+    });
     return response.data;
   },
 

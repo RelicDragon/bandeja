@@ -5,7 +5,7 @@ import { GameService } from './game/game.service';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { LeagueSyncService } from './league/sync.service';
 import { EntityType } from '@prisma/client';
-import { maxFixedTeamSlots } from './results/generation/matchUtils';
+import { fixedTeamSlotLimit, hasOpenEndedFixedTeams, maxFixedTeamSlots } from '../shared/matchFormat';
 import { projectUserForSportContext } from './user/userSportProfile.service';
 
 const FIXED_TEAM_PLAYER_USER_SELECT = USER_SELECT_WITH_SPORT_PROFILES;
@@ -63,7 +63,11 @@ async function syncLeagueSeasonAfterFixedTeamsChange(gameId: string) {
 }
 
 export class GameTeamService {
-  static async setGameTeams(gameId: string, teams: GameTeamData[]) {
+  /**
+   * `openEndedList`: caller sent the complete team list. Store builds that predate open-ended
+   * league teams only know slots 1..maxFixedTeamSlots, so without it the extra teams are kept.
+   */
+  static async setGameTeams(gameId: string, teams: GameTeamData[], opts: { openEndedList?: boolean } = {}) {
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${gameId} FOR UPDATE`);
 
@@ -83,24 +87,50 @@ export class GameTeamService {
         throw new ApiError(400, 'Cannot set fixed pairs after game has started');
       }
 
-      const slotCount = maxFixedTeamSlots(game);
-      if (slotCount < 1) {
+      const slotLimit = fixedTeamSlotLimit(game);
+      if (slotLimit < 1) {
         throw new ApiError(400, 'Game must allow at least one fixed pair');
       }
+      const openEnded = hasOpenEndedFixedTeams(game);
 
+      const accepted = (Array.isArray(teams) ? teams : [])
+        .filter((t) => typeof t.teamNumber === 'number' && Number.isFinite(t.teamNumber) && t.teamNumber >= 1)
+        .sort((a, b) => a.teamNumber - b.teamNumber);
+      if (openEnded && !opts.openEndedList) {
+        const legacyCount = maxFixedTeamSlots(game);
+        const kept = await tx.gameTeam.findMany({
+          where: { gameId, teamNumber: { gt: legacyCount } },
+          include: { players: { select: { userId: true } } },
+          orderBy: { teamNumber: 'asc' },
+        });
+        accepted.splice(
+          0,
+          accepted.length,
+          ...accepted.filter((t) => t.teamNumber <= legacyCount),
+          ...kept.map((t) => ({
+            teamNumber: t.teamNumber,
+            name: t.name ?? undefined,
+            playerIds: t.players.map((p) => p.userId),
+          })),
+        );
+      }
+      if (openEnded && accepted.length > slotLimit) {
+        throw new ApiError(400, `At most ${slotLimit} fixed teams are allowed`);
+      }
+
+      // Open-ended lists store exactly the submitted teams, renumbered 1..k; fixed lists keep every slot.
       const byNumber = new Map<number, string[]>();
       const nameByNumber = new Map<number, string | undefined>();
-      for (const t of teams) {
-        const n = t.teamNumber;
-        if (typeof n !== 'number' || !Number.isFinite(n) || n < 1 || n > slotCount) {
-          continue;
-        }
+      accepted.forEach((t, index) => {
+        const n = openEnded ? index + 1 : t.teamNumber;
+        if (n > slotLimit) return;
         const ids = Array.isArray(t.playerIds) ? t.playerIds.filter((id) => typeof id === 'string' && id.length > 0) : [];
         byNumber.set(n, ids);
         if (t.name !== undefined) {
           nameByNumber.set(n, t.name);
         }
-      }
+      });
+      const slotCount = openEnded ? byNumber.size : slotLimit;
 
       const allPlayerIds = [...byNumber.values()].flat();
       const uniquePlayerIds = new Set(allPlayerIds);

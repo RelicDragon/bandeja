@@ -74,6 +74,8 @@ Test: `npm run test:league-permissions` (`Backend/src/routes/__tests__/league.ro
 
 Fixture create uses `gameCreation.util.ts` (`createLeagueGame` / `createLeaguePlayoffGame`). Match pairing engines for **games** (americano etc.) live under `Backend/src/services/results/generation/`; league RR uses `generation/fixedTeamsRoundRobin.ts`.
 
+Season fixed teams (Game details → Fixed teams on the `LEAGUE_SEASON` game) normally have `maxParticipants / playersPerTeam` slots. With `allowUserInMultipleTeams` the list is **open-ended** (`hasOpenEndedFixedTeams` / `fixedTeamSlotLimit` in `shared/matchFormat.ts`): organizers add/remove teams, up to the distinct-pair count (cap 64). Clients send `openEndedList: true` with the full list; without it (store builds) teams beyond the legacy slot count are preserved.
+
 For a full fixed-team round robin, the season creates enough REGULAR rounds for its largest group. Each group generates fixtures only for its own single cycle: even `n` teams play `n−1` rounds, odd `n` teams play `n` rounds with one bye per round. Smaller groups have no fixtures in later shared rounds. Manual **Create round** can intentionally start another cycle. Recreate applies the same per-group limit while preserving protected fixtures.
 
 AI agent (season owner/admin, with a confirmation card): `get_league_schedule`, `reschedule_league_fixture` (time / club / court), `send_league_round_start_message` — [agent.md § League-owner tools](./agent.md#league-owner-tools-phase-4a-toolsleagueswritetoolsts-toolsleaguescheduletoolsts).

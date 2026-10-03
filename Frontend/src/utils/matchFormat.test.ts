@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   capPlayerIds,
+  fixedTeamSlotLimit,
+  hasOpenEndedFixedTeams,
   maxFixedTeamSlots,
   maxPlayersPerTeamForGame,
   playersPerMatchOf,
@@ -142,5 +144,26 @@ describe('capPlayerIds', () => {
   it('slices to max per team', () => {
     expect(capPlayerIds(['a', 'b', 'c'], 2)).toEqual(['a', 'b']);
     expect(capPlayerIds(['a'], 2)).toEqual(['a']);
+  });
+});
+
+describe('open-ended fixed teams', () => {
+  const season = { entityType: 'LEAGUE_SEASON', allowUserInMultipleTeams: true, playersPerMatch: 4 };
+
+  it('only applies to league seasons with overlapping rosters', () => {
+    expect(hasOpenEndedFixedTeams(season)).toBe(true);
+    expect(hasOpenEndedFixedTeams({ ...season, allowUserInMultipleTeams: false })).toBe(false);
+    expect(hasOpenEndedFixedTeams({ ...season, entityType: 'GAME' })).toBe(false);
+  });
+
+  it('raises the limit to distinct pairs, capped', () => {
+    expect(fixedTeamSlotLimit({ ...season, maxParticipants: 6 })).toBe(15);
+    expect(fixedTeamSlotLimit({ ...season, maxParticipants: 5 })).toBe(10);
+    expect(fixedTeamSlotLimit({ ...season, maxParticipants: 40 })).toBe(64);
+  });
+
+  it('keeps the automatic count otherwise', () => {
+    expect(fixedTeamSlotLimit({ ...season, allowUserInMultipleTeams: false, maxParticipants: 8 })).toBe(4);
+    expect(fixedTeamSlotLimit({ ...season, playersPerMatch: 2, maxParticipants: 8 })).toBe(8);
   });
 });

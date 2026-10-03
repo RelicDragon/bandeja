@@ -234,6 +234,11 @@
     "joinSeatsLeft_other": "残り{{count}}枠",
     "joinSeatsLeftShort_other": "残り{{count}}",
     "joinQueueWaiting_other": "{{count}}人待ち",
+    "card": {
+      "full": "満員",
+      "openChat": "チャットを開く",
+      "joinQueueShort": "順番待ち"
+    },
     "joinAriaSeatsLeft_other": "ゲームに参加する、残り{{count}}枠",
     "joinAriaQueueWaiting_other": "キューに入る、{{count}}人待ち",
     "statusInQueueWithPosition": "キュー中 · {{position}}",
@@ -259,6 +264,9 @@
     "teamsUpdatedSuccessfully": "チームを更新しました",
     "playerAlreadyInTeam": "プレイヤーはすでにこのチームにいます",
     "playerAlreadyInAnotherTeam": "プレイヤーはすでに別のチームにいます",
+    "addFixedTeam": "チームを追加",
+    "removeFixedTeam": "チームを削除",
+    "fixedTeamRosterDuplicate": "同じペアのチームがすでにあります",
     "playerNotParticipant": "プレイヤーはこの試合の参加者ではありません",
     "failedToSaveTeams": "チームの保存に失敗しました",
     "evenPlayersRequired": "偶数人数のプレイヤーが必要です",

@@ -234,6 +234,11 @@
     "joinSeatsLeft_other": "sisa {{count}} tempat",
     "joinSeatsLeftShort_other": "sisa {{count}}",
     "joinQueueWaiting_other": "{{count}} menunggu",
+    "card": {
+      "full": "Penuh",
+      "openChat": "Buka obrolan",
+      "joinQueueShort": "Antre"
+    },
     "joinAriaSeatsLeft_other": "Bergabunglah dengan permainan, sisa {{count}} tempat",
     "joinAriaQueueWaiting_other": "Bergabunglah dengan antrian, {{count}} pemain menunggu",
     "statusInQueueWithPosition": "Dalam antrian · {{position}}",
@@ -259,6 +264,9 @@
     "teamsUpdatedSuccessfully": "Tim berhasil diperbarui",
     "playerAlreadyInTeam": "Pemain sudah ada di tim ini",
     "playerAlreadyInAnotherTeam": "Pemain sudah berada di tim lain",
+    "addFixedTeam": "Tambah tim",
+    "removeFixedTeam": "Hapus tim",
+    "fixedTeamRosterDuplicate": "Tim lain sudah memiliki pasangan yang sama persis",
     "playerNotParticipant": "Pemain bukan peserta dalam permainan ini",
     "failedToSaveTeams": "Gagal menyimpan tim",
     "evenPlayersRequired": "Diperlukan jumlah Pemain genap",

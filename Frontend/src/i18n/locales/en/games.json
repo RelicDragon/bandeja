@@ -237,6 +237,11 @@
     "joinSeatsLeftShort_other": "{{count}} left",
     "joinQueueWaiting_one": "{{count}} waiting",
     "joinQueueWaiting_other": "{{count}} waiting",
+    "card": {
+      "full": "Full",
+      "openChat": "Open chat",
+      "joinQueueShort": "Queue"
+    },
     "joinAriaSeatsLeft_one": "Join the game, {{count}} seat left",
     "joinAriaSeatsLeft_other": "Join the game, {{count}} seats left",
     "joinAriaQueueWaiting_one": "Join the queue, {{count}} player waiting",
@@ -264,6 +269,9 @@
     "teamsUpdatedSuccessfully": "Teams updated successfully",
     "playerAlreadyInTeam": "Player is already in this team",
     "playerAlreadyInAnotherTeam": "Player is already in another team",
+    "addFixedTeam": "Add team",
+    "removeFixedTeam": "Remove team",
+    "fixedTeamRosterDuplicate": "Another team already has this exact pair",
     "playerNotParticipant": "Player is not a participant in this game",
     "failedToSaveTeams": "Failed to save teams",
     "evenPlayersRequired": "Even number of Players required",
