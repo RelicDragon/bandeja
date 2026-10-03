@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { UserX } from 'lucide-react';
 import { PremiumName } from '@/components/PremiumName';
-import { attendanceDotStyle } from '@/features/attendance/attendanceVisuals';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import type { RosterRowModel } from './rosterModel';
+import { rowStatusLabelKey, type RosterRowModel } from './rosterModel';
 import { RosterAvatar } from './RosterAvatar';
 import { MoneyPill, type MoneyPillToggle } from './RosterMoney';
 import { RosterRowMenu, type RosterRowMenuItem } from './RosterRowMenu';
@@ -40,7 +39,7 @@ function RosterStatusLine({ row }: { row: RosterRowModel }) {
   if (row.attendance) {
     return (
       <p className={`mt-0.5 truncate text-xs ${STATUS_TONE[row.attendance]}`}>
-        {t(attendanceDotStyle(row.attendance).labelKey)}
+        {t(rowStatusLabelKey(row) ?? '')}
       </p>
     );
   }

@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Plus, UserRound } from 'lucide-react';
-import { attendanceDotStyle } from '@/features/attendance/attendanceVisuals';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import type { RosterRowModel } from './rosterModel';
+import { rowStatusLabelKey, type RosterRowModel } from './rosterModel';
 import { RosterAvatar } from './RosterAvatar';
 import { STATUS_TONE } from './rosterTones';
 
@@ -77,7 +76,7 @@ function Side({
       </p>
       {row.attendance ? (
         <p className={`text-[11px] ${STATUS_TONE[row.attendance]}`}>
-          {t(attendanceDotStyle(row.attendance).labelKey)}
+          {t(rowStatusLabelKey(row) ?? '')}
         </p>
       ) : null}
     </motion.div>

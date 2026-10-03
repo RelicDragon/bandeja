@@ -1,5 +1,5 @@
 import type { CostShare, GameCostSummary } from '@/api/gameCost';
-import type { AttendanceDotState } from '@/features/attendance/attendanceVisuals';
+import { attendanceDotStyle, type AttendanceDotState } from '@/features/attendance/attendanceVisuals';
 import type { BasicUser, Game, GameParticipant } from '@/types';
 
 /**
@@ -31,6 +31,13 @@ export interface RosterRowModel {
   share: CostShare | null;
   isViewer: boolean;
   isPayer: boolean;
+}
+
+/** The answer line under a name. A confirmed owner reads as "Owner" (same green). */
+export function rowStatusLabelKey(row: RosterRowModel): string | null {
+  if (!row.attendance) return null;
+  if (row.attendance === 'CONFIRMED' && row.role === 'OWNER') return 'games.owner';
+  return attendanceDotStyle(row.attendance).labelKey;
 }
 
 export interface RosterGroup {
