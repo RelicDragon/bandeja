@@ -221,6 +221,8 @@
       "summaryBy": "{{provider}} का सारांश",
       "shortened": "छोटा किया गया",
       "details": "वेब परिणाम दिखाएँ",
+      "openImage": "तस्वीर खोलें",
+      "openImageNamed": "तस्वीर खोलें: {{name}}",
       "kind": {
         "rate_limited": "अनुरोध सीमा",
         "auth": "कुंजी अस्वीकृत",

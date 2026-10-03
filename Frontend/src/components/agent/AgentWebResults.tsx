@@ -1,7 +1,8 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ExternalLink } from 'lucide-react';
-import type { AgentWebView } from '@shared/agentContract';
+import type { AgentWebImage, AgentWebView } from '@shared/agentContract';
+import { agentImageUrl, useAgentImages } from '@/features/agent/agentImages';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 
 /**
@@ -130,6 +131,41 @@ export const AgentWebResults = memo(function AgentWebResults({ web }: { web: Age
           </div>
         </>
       )}
+    </div>
+  );
+});
+
+/** A `web_images` step's pictures: tap one to open the fullscreen viewer over this step's set. */
+export const AgentWebImageStrip = memo(function AgentWebImageStrip({ images }: { images: readonly AgentWebImage[] }) {
+  const { t } = useTranslation();
+  const { open } = useAgentImages();
+  // Pictures whose source failed: dropped from the strip and from the swipe set.
+  const [failed, setFailed] = useState<ReadonlySet<string>>(() => new Set());
+  const shown = useMemo(() => images.filter((image) => !failed.has(image.id)), [images, failed]);
+  if (!shown.length) return null;
+  return (
+    <div className="flex gap-1.5 overflow-x-auto border-s-2 border-gray-200 pb-1 ps-2 dark:border-gray-700">
+      {shown.map((image) => (
+        <button
+          key={image.id}
+          type="button"
+          onClick={() => open(image.id, shown)}
+          aria-label={image.alt ? t('agent.web.openImageNamed', { name: image.alt }) : t('agent.web.openImage')}
+          title={image.host}
+          className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 transition-transform active:scale-95 dark:bg-gray-800"
+        >
+          <img
+            src={agentImageUrl(image.thumb)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            draggable={false}
+            className="h-full w-full object-cover"
+            onError={() => setFailed((prev) => new Set(prev).add(image.id))}
+          />
+        </button>
+      ))}
     </div>
   );
 });

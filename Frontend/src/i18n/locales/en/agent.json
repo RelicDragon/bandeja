@@ -221,6 +221,8 @@
       "summaryBy": "Summary by {{provider}}",
       "shortened": "shortened",
       "details": "Show web results",
+      "openImage": "Open picture",
+      "openImageNamed": "Open picture: {{name}}",
       "kind": {
         "rate_limited": "rate limited",
         "auth": "key rejected",

@@ -221,6 +221,8 @@
       "summaryBy": "สรุปโดย {{provider}}",
       "shortened": "ย่อแล้ว",
       "details": "แสดงผลลัพธ์จากเว็บ",
+      "openImage": "เปิดรูปภาพ",
+      "openImageNamed": "เปิดรูปภาพ: {{name}}",
       "kind": {
         "rate_limited": "เกินขีดจำกัดคำขอ",
         "auth": "คีย์ถูกปฏิเสธ",

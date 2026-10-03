@@ -47,12 +47,13 @@ export const getLinkPreview = asyncHandler(async (req: AuthRequest, res: Respons
 
 /** HMAC-signed OG/provider image proxy (no Bearer; signature is the auth). */
 export const getLinkPreviewImage = asyncHandler(async (req: AuthRequest, res: Response) => {
-  let image: { url: string; width: number; height: number };
+  let image: ReturnType<typeof verifyProxiedImageParams>;
   try {
     image = verifyProxiedImageParams({
       url: typeof req.query.url === 'string' ? req.query.url : undefined,
       w: typeof req.query.w === 'string' ? req.query.w : undefined,
       h: typeof req.query.h === 'string' ? req.query.h : undefined,
+      fit: typeof req.query.fit === 'string' ? req.query.fit : undefined,
       sig: typeof req.query.sig === 'string' ? req.query.sig : undefined,
     });
   } catch (err) {
@@ -66,6 +67,7 @@ export const getLinkPreviewImage = asyncHandler(async (req: AuthRequest, res: Re
     const { buffer, contentType, etag } = await fetchProxiedImageBytes(image.url, {
       width: image.width,
       height: image.height,
+      fit: image.fit,
       accept: req.get('accept'),
     });
     if (req.get('if-none-match') === etag) {

@@ -1083,6 +1083,7 @@ export class AgentRunService {
           summary: execution.summary,
           ...(execution.entities?.length ? { entities: execution.entities } : {}),
           ...(execution.web ? { web: execution.web } : {}),
+          ...(execution.images?.length ? { images: execution.images } : {}),
         });
         // Phase 11: a memory saved without a card → the "Saved to memory · Undo" chip.
         if (execution.ok && execution.memorySaved) {
@@ -1097,6 +1098,7 @@ export class AgentRunService {
         summary: execution.summary,
         ...(execution.entities?.length ? { entities: execution.entities } : {}),
         ...(execution.web ? { web: execution.web } : {}),
+        ...(execution.images?.length ? { images: execution.images } : {}),
       });
       if (execution.awaitingConfirmation) {
         pendingActionIds.push(execution.awaitingConfirmation.actionId);

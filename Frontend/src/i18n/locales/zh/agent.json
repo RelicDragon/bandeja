@@ -221,6 +221,8 @@
       "summaryBy": "{{provider}} 摘要",
       "shortened": "已截短",
       "details": "显示网络结果",
+      "openImage": "打开图片",
+      "openImageNamed": "打开图片：{{name}}",
       "kind": {
         "rate_limited": "请求受限",
         "auth": "密钥被拒",

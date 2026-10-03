@@ -220,6 +220,33 @@ export type AgentWebView =
     }
   | { kind: 'fetch'; url: string; host: string; title: string | null; cached: boolean; truncated: boolean };
 
+/**
+ * One picture a `web_images` call found. Server-built: `src` / `thumb` are signed image-proxy
+ * paths relative to the API base (`/link-preview/image?…`), never a third-party URL, so the
+ * app never loads an image the server did not vet. The model shows it inline by writing
+ * `![caption](img:<id>)`; an id that no tool step of the chat returned renders nothing.
+ */
+export interface AgentWebImage {
+  /** Stable short id from the image URL (`img:<id>` in assistant markdown). */
+  id: string;
+  /** Whole image within 640×640 (inline). */
+  src: string;
+  /** Whole image within 1600×1600 (fullscreen viewer). */
+  full: string;
+  /** Square crop for the step's thumbnail strip. */
+  thumb: string;
+  alt: string;
+  /** Page the image comes from (http(s)), when the provider knows it. */
+  pageUrl: string | null;
+  /** Hostname without `www.` (page, else image). */
+  host: string;
+  width: number | null;
+  height: number | null;
+}
+
+/** Prefix of an inline image reference in assistant markdown. */
+export const AGENT_IMAGE_REF_PREFIX = 'img:';
+
 export interface AgentActionPreviewLine {
   label: string;
   from: string | null;
@@ -321,7 +348,16 @@ export interface AgentPendingActionDto {
 export type AgentContentBlock =
   | { type: 'text'; text: string }
   | { type: 'tool_call'; callId: string; name: string; label: string }
-  | { type: 'tool_result'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[]; web?: AgentWebView }
+  | {
+      type: 'tool_result';
+      callId: string;
+      ok: boolean;
+      summary: string;
+      entities?: AgentEntityRef[];
+      web?: AgentWebView;
+      /** `web_images` results. A separate field (not a `web` kind) so old app builds ignore it. */
+      images?: AgentWebImage[];
+    }
   | { type: 'action'; actionId: string };
 
 export interface AgentMessageDto {
@@ -392,7 +428,15 @@ export type AgentStreamEvent =
   | { type: 'run.started'; runId: string; chatId: string }
   | { type: 'text.delta'; text: string }
   | { type: 'tool.started'; callId: string; name: string; label: string }
-  | { type: 'tool.finished'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[]; web?: AgentWebView }
+  | {
+      type: 'tool.finished';
+      callId: string;
+      ok: boolean;
+      summary: string;
+      entities?: AgentEntityRef[];
+      web?: AgentWebView;
+      images?: AgentWebImage[];
+    }
   /** A proposed write (PENDING), or one already settled when `action.autoApproved` (EXECUTED / FAILED, no tap). */
   | { type: 'action.pending'; action: AgentPendingActionDto }
   | { type: 'message.saved'; message: AgentMessageDto }

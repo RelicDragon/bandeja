@@ -26,6 +26,7 @@ import type {
   AgentEntityRef,
   AgentStreamEvent,
   AgentToolRiskTier as AgentToolRiskTierContract,
+  AgentWebImage,
   AgentWebView,
 } from '@bandeja/shared/agentContract';
 import { ApiError } from '../../../utils/ApiError';
@@ -100,6 +101,8 @@ export type AgentToolResult = {
   failed?: boolean;
   /** UI view of a web tool step (`web_search` / `web_fetch`), copied to the event and block. */
   web?: AgentWebView;
+  /** `web_images` pictures (server-built proxy paths), copied to the event and block. */
+  images?: AgentWebImage[];
   /**
    * Write tools (phase 3): the pending action this call created. The run loop emits
    * `action.pending` and ends the run as `AWAITING_CONFIRMATION`.
@@ -244,6 +247,7 @@ export type AgentToolExecution = {
   label: string;
   entities?: AgentEntityRef[];
   web?: AgentWebView;
+  images?: AgentWebImage[];
   awaitingConfirmation?: { actionId: string };
   memorySaved?: AgentMemorySavedEvent;
 };
@@ -354,6 +358,7 @@ export class AgentToolRegistry {
         label,
         ...(result.entities?.length ? { entities: result.entities } : {}),
         ...(result.web ? { web: result.web } : {}),
+        ...(result.images?.length ? { images: result.images } : {}),
         ...(result.awaitingConfirmation ? { awaitingConfirmation: result.awaitingConfirmation } : {}),
         ...(result.memorySaved ? { memorySaved: result.memorySaved } : {}),
       };

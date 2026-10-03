@@ -5,6 +5,7 @@ import {
   type AgentPendingActionDto,
   type AgentStreamEvent,
   type AgentUsage,
+  type AgentWebImage,
   type AgentWebView,
 } from '@shared/agentContract';
 
@@ -37,6 +38,8 @@ export interface AgentToolStep {
   entities: AgentEntityRef[];
   /** Web search / fetch view (Phase 13), from `tool.finished`. */
   web?: AgentWebView;
+  /** `web_images` pictures, from `tool.finished`. */
+  images?: AgentWebImage[];
 }
 
 /** `memory.saved` payload (Phase 11): the chip under that tool call offers Undo. */
@@ -174,6 +177,7 @@ function applyEvent(state: AgentRunLiveState, event: AgentStreamEvent): AgentRun
         summary: event.summary,
         entities: event.entities ?? [],
         ...(event.web ? { web: event.web } : {}),
+        ...(event.images?.length ? { images: event.images } : {}),
       };
       return {
         ...state,

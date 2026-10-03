@@ -221,6 +221,8 @@
       "summaryBy": "Shrnutí od {{provider}}",
       "shortened": "zkráceno",
       "details": "Zobrazit výsledky z webu",
+      "openImage": "Otevřít obrázek",
+      "openImageNamed": "Otevřít obrázek: {{name}}",
       "kind": {
         "rate_limited": "limit požadavků",
         "auth": "klíč odmítnut",

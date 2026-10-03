@@ -221,6 +221,8 @@
       "summaryBy": "ملخص من {{provider}}",
       "shortened": "مختصر",
       "details": "عرض نتائج الويب",
+      "openImage": "فتح الصورة",
+      "openImageNamed": "فتح الصورة: {{name}}",
       "kind": {
         "rate_limited": "تجاوز حد الطلبات",
         "auth": "المفتاح مرفوض",

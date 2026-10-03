@@ -1,10 +1,12 @@
 import { memo, type ComponentProps } from 'react';
-import ReactMarkdown, { type Components } from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform, type Components, type UrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import { classifyAgentLink } from '@/features/agent/agentLinks';
+import { agentImageRefId } from '@/features/agent/agentImages';
 import { useSmoothText } from '@/features/agent/useSmoothText';
 import { openExternalUrl } from '@/utils/openExternalUrl';
+import { AgentInlineImage } from './AgentInlineImage';
 
 interface AgentMarkdownProps {
   text: string;
@@ -60,8 +62,21 @@ const COMPONENTS: Components = {
     <th className="border-b border-gray-200 px-2 py-1 text-start font-semibold dark:border-gray-700">{children}</th>
   ),
   td: ({ children }) => <td className="border-b border-gray-100 px-2 py-1 dark:border-gray-800">{children}</td>,
-  img: () => null,
+  // Only `img:<id>` pictures from this chat's `web_images` steps; any other URL renders nothing.
+  img: ({ src, alt }) => {
+    const id = agentImageRefId(typeof src === 'string' ? src : null);
+    return id ? <AgentInlineImage id={id} caption={alt ?? ''} /> : null;
+  },
 };
+
+/** Keeps `img:<id>` image refs (the default transform would blank the unknown scheme). */
+const urlTransform: UrlTransform = (url, key) =>
+  key === 'src' && agentImageRefId(url) ? url : defaultUrlTransform(url);
+
+/** While typing, hide a half-written picture (`![cap](img:ab`) instead of flashing its syntax. */
+function hidePartialImage(text: string): string {
+  return text.replace(/!\[[^\]\n]*(?:\]\([^)\n]*)?$/, '');
+}
 
 /**
  * Assistant markdown: GFM, no raw HTML (react-markdown's default), links vetted by `classifyAgentLink`.
@@ -72,8 +87,8 @@ export const AgentMarkdown = memo(function AgentMarkdown({ text, streaming = fal
   const typing = streaming || smooth.revealing;
   return (
     <div className="agent-markdown break-words text-[15px] leading-relaxed" dir="auto">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={COMPONENTS} skipHtml>
-        {smooth.text}
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={COMPONENTS} urlTransform={urlTransform} skipHtml>
+        {typing ? hidePartialImage(smooth.text) : smooth.text}
       </ReactMarkdown>
       {typing ? (
         <span

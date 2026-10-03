@@ -232,7 +232,7 @@ async function run(): Promise<void> {
         h: params.get('h') ?? undefined,
         sig: params.get('sig') ?? undefined,
       }),
-      { url: source, width: 320, height: 180 }
+      { url: source, width: 320, height: 180, fit: 'cover' }
     );
   }
 

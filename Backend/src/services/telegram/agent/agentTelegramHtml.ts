@@ -53,7 +53,8 @@ export function isWellFormedTelegramHtml(html: string): boolean {
  * the whole chunk is sent as escaped plain text.
  */
 export function agentMarkdownToTelegramHtml(markdown: string): string {
-  const source = (markdown ?? '').replace(/\u0000/g, '');
+  // Inline pictures (`![caption](img:<id>)`) are app-only: Telegram keeps the caption.
+  const source = (markdown ?? '').replace(/\u0000/g, '').replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
   const html = markdownToTelegramHtml(source).replace(ANCHOR_PATTERN, (whole, href: string, label: string) =>
     /^https?:\/\//i.test(href) ? whole : label,
   );

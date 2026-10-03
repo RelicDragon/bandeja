@@ -221,6 +221,8 @@
       "summaryBy": "Сводка от {{provider}}",
       "shortened": "сокращено",
       "details": "Показать результаты из интернета",
+      "openImage": "Открыть картинку",
+      "openImageNamed": "Открыть картинку: {{name}}",
       "kind": {
         "rate_limited": "лимит запросов",
         "auth": "ключ отклонён",

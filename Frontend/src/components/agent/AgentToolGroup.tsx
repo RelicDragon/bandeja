@@ -6,7 +6,7 @@ import type { AgentToolItemData } from '@/features/agent/agentTimeline';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { AgentEntityList } from './AgentEntityCard';
 import { AgentMemorySavedChip } from './AgentMemorySavedChip';
-import { AgentWebResults } from './AgentWebResults';
+import { AgentWebImageStrip, AgentWebResults } from './AgentWebResults';
 
 type StepState = AgentToolItemData['status'];
 
@@ -98,12 +98,16 @@ function StepDetails({ tool, title }: { tool: AgentToolItemData; title: string }
         </p>
       ) : null}
       {tool.web ? <AgentWebResults web={tool.web} /> : null}
+      {tool.images?.length ? <AgentWebImageStrip images={tool.images} /> : null}
     </div>
   );
 }
 
 function stepHasDetails(tool: AgentToolItemData, title: string): boolean {
-  return tool.status !== 'running' && ((Boolean(tool.label) && tool.label !== title) || Boolean(tool.web));
+  return (
+    tool.status !== 'running' &&
+    ((Boolean(tool.label) && tool.label !== title) || Boolean(tool.web) || Boolean(tool.images?.length))
+  );
 }
 
 /** One row inside an expanded group; web results open on their own. */
@@ -124,7 +128,7 @@ function ToolStepRow({ tool }: { tool: AgentToolItemData }) {
         type="button"
         onClick={() => canExpand && setOpen((v) => !v)}
         aria-expanded={canExpand ? open : undefined}
-        aria-label={canExpand && tool.web ? `${title}. ${t('agent.web.details')}` : undefined}
+        aria-label={canExpand && (tool.web || tool.images?.length) ? `${title}. ${t('agent.web.details')}` : undefined}
         className={`flex min-w-0 items-center gap-2 py-0.5 text-start text-xs ${
           tool.status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
         } ${canExpand ? 'cursor-pointer hover:text-gray-700 dark:hover:text-gray-200' : 'cursor-default'}`}

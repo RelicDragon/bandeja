@@ -2,6 +2,7 @@ import type {
   AgentEntityRef,
   AgentMessageDto,
   AgentPendingActionDto,
+  AgentWebImage,
   AgentWebView,
 } from '@shared/agentContract';
 import type { AgentMemorySaved, AgentRunLiveState } from './agentRunReducer';
@@ -17,6 +18,8 @@ export interface AgentToolItemData {
   memorySaved?: AgentMemorySaved;
   /** Web search / fetch view (Phase 13): provider, cached, answer, links. */
   web?: AgentWebView;
+  /** `web_images` pictures (shown inline via `img:<id>` and as the step's thumbnails). */
+  images?: AgentWebImage[];
 }
 
 export type AgentTimelineItem =
@@ -52,7 +55,7 @@ export function buildAgentTimeline(
 
   const persistedResults = new Map<
     string,
-    { ok: boolean; summary: string; entities: AgentEntityRef[]; web?: AgentWebView }
+    { ok: boolean; summary: string; entities: AgentEntityRef[]; web?: AgentWebView; images?: AgentWebImage[] }
   >();
   const persistedCalls = new Set<string>();
   for (const m of messages) {
@@ -63,6 +66,7 @@ export function buildAgentTimeline(
           summary: b.summary,
           entities: b.entities ?? [],
           ...(b.web ? { web: b.web } : {}),
+          ...(b.images?.length ? { images: b.images } : {}),
         });
       } else if (b.type === 'tool_call') {
         persistedCalls.add(b.callId);
@@ -91,6 +95,7 @@ export function buildAgentTimeline(
         entities: result.entities,
         ...memoryOf(callId),
         ...(result.web ? { web: result.web } : {}),
+        ...(result.images ? { images: result.images } : {}),
       };
     }
     const step = live?.tools[callId];
@@ -104,6 +109,7 @@ export function buildAgentTimeline(
         entities: step.entities,
         ...memoryOf(callId),
         ...(step.web ? { web: step.web } : {}),
+        ...(step.images ? { images: step.images } : {}),
       };
     }
     return { callId, label: fallbackLabel, status: liveRunning ? 'running' : 'error', summary: null, entities: [] };
@@ -136,6 +142,7 @@ export function buildAgentTimeline(
             summary: b.summary,
             entities: b.entities ?? [],
             ...(b.web ? { web: b.web } : {}),
+            ...(b.images?.length ? { images: b.images } : {}),
           },
         });
       } else if (b.type === 'action') {

@@ -167,4 +167,5 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   forget_memory: 'memory-cases',
   web_search: 'web-read-cases',
   web_fetch: 'web-read-cases',
+  web_images: 'web-read-cases',
 };

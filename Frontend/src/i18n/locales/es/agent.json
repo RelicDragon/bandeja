@@ -221,6 +221,8 @@
       "summaryBy": "Resumen de {{provider}}",
       "shortened": "recortado",
       "details": "Ver resultados de la web",
+      "openImage": "Abrir imagen",
+      "openImageNamed": "Abrir imagen: {{name}}",
       "kind": {
         "rate_limited": "límite de solicitudes",
         "auth": "clave rechazada",

@@ -32,7 +32,14 @@ import { agentErrorCodeOf, agentErrorKey } from '@/features/agent/agentErrors';
 import { AgentSendContext, type AgentSendApi } from '@/features/agent/agentSendContext';
 import { agentRefToken, parseAgentRefTokens, stripAgentRefTokens } from '@/features/agent/agentBookingCards';
 import { agentMarkdownToPlainText } from '@/features/agent/agentMessageShare';
-import type { AgentErrorCode } from '@shared/agentContract';
+import {
+  AgentImagesContext,
+  agentImageMediaItem,
+  collectAgentChatImages,
+  type AgentImagesContextValue,
+} from '@/features/agent/agentImages';
+import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
+import type { AgentErrorCode, AgentWebImage } from '@shared/agentContract';
 import { AgentComposer } from './AgentComposer';
 import { AgentMarkdown } from './AgentMarkdown';
 import { AgentMessageActions, AgentMessageEditor } from './AgentMessageActions';
@@ -232,6 +239,25 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     const kept = detail.messages.filter((m) => m.seq < editCutSeq);
     return groupAgentTimeline(buildAgentTimeline(kept, detail.actions, null));
   }, [detail, live, editCutSeq]);
+
+  // Pictures (`web_images`): inline in replies, fullscreen with swipe through the chat's pictures.
+  const chatImages = useMemo(() => collectAgentChatImages(timeline), [timeline]);
+  // `initialId` only seeds the viewer; swiping is the viewer's own state.
+  const [imageViewer, setImageViewer] = useState<{ scope: readonly AgentWebImage[]; initialId: string } | null>(null);
+  const imagesApi = useMemo<AgentImagesContextValue>(
+    () => ({
+      byId: chatImages.byId,
+      open: (id, scope) => {
+        const list = scope?.length ? scope : chatImages.gallery;
+        const image = chatImages.byId.get(id);
+        if (!image) return;
+        setImageViewer({ scope: list.some((i) => i.id === id) ? list : [image], initialId: id });
+      },
+    }),
+    [chatImages],
+  );
+  const viewerItems = useMemo(() => (imageViewer ? imageViewer.scope.map(agentImageMediaItem) : []), [imageViewer]);
+  const viewerActiveItem = imageViewer ? viewerItems.find((item) => item.id === `agent-image:${imageViewer.initialId}`) : undefined;
 
   // Copy / Share on a reply: on its last text block, covering every text block of that turn.
   const replyTextByKey = useMemo(() => {
@@ -553,7 +579,9 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                   animate={{ opacity: 1, y: 0 }}
                   transition={ITEM_ENTER}
                 >
-                  <AgentSendContext.Provider value={cardSendApi}>{renderItem(item)}</AgentSendContext.Provider>
+                  <AgentSendContext.Provider value={cardSendApi}>
+                    <AgentImagesContext.Provider value={imagesApi}>{renderItem(item)}</AgentImagesContext.Provider>
+                  </AgentSendContext.Provider>
                 </motion.div>
               ))}
               {pending.map((p) => (
@@ -688,6 +716,16 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
           })
         }
       />
+      {imageViewer && viewerActiveItem ? (
+        <FullscreenImageViewer
+          isOpen
+          imageUrl={viewerActiveItem.originalUrl}
+          mediaItems={viewerItems}
+          initialMediaId={viewerActiveItem.id}
+          onClose={() => setImageViewer(null)}
+          modalId="agent-image-viewer"
+        />
+      ) : null}
     </div>
   );
 }

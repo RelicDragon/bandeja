@@ -221,6 +221,8 @@
       "summaryBy": "Ringkasan dari {{provider}}",
       "shortened": "dipersingkat",
       "details": "Tampilkan hasil web",
+      "openImage": "Buka gambar",
+      "openImageNamed": "Buka gambar: {{name}}",
       "kind": {
         "rate_limited": "batas permintaan",
         "auth": "kunci ditolak",

@@ -20,6 +20,11 @@ export const AGENT_WEB_I18N_EN = {
   'summary.dailyLimit': 'Daily web limit reached',
   'summary.budget': 'Daily AI assistant limit reached',
   'summary.busy': 'Web search is busy, try again in a minute',
+  'label.webImages': 'Looking for pictures: “{{query}}”',
+  'label.webImagesAny': 'Looking for pictures',
+  'summary.imagesFound': 'Pictures found: {{count}}',
+  'summary.imagesNone': 'No pictures found',
+  'summary.imagesUnavailable': 'Picture search is unavailable right now',
 } as const;
 
 export type AgentWebI18nKey = keyof typeof AGENT_WEB_I18N_EN;
@@ -41,6 +46,11 @@ const ru: Dictionary = {
   'summary.dailyLimit': 'Дневной лимит поиска исчерпан',
   'summary.budget': 'Дневной лимит ИИ-ассистента исчерпан',
   'summary.busy': 'Поиск перегружен, попробуйте через минуту',
+  'label.webImages': 'Ищу картинки: «{{query}}»',
+  'label.webImagesAny': 'Ищу картинки',
+  'summary.imagesFound': 'Найдено картинок: {{count}}',
+  'summary.imagesNone': 'Картинки не нашлись',
+  'summary.imagesUnavailable': 'Поиск картинок сейчас недоступен',
 };
 
 const sr: Dictionary = {
@@ -59,6 +69,11 @@ const sr: Dictionary = {
   'summary.dailyLimit': 'Dostignut je dnevni limit pretrage',
   'summary.budget': 'Dostignut je dnevni limit AI asistenta',
   'summary.busy': 'Pretraga je zauzeta, pokušajte za minut',
+  'label.webImages': 'Tražim slike: „{{query}}”',
+  'label.webImagesAny': 'Tražim slike',
+  'summary.imagesFound': 'Pronađeno slika: {{count}}',
+  'summary.imagesNone': 'Slike nisu pronađene',
+  'summary.imagesUnavailable': 'Pretraga slika trenutno nije dostupna',
 };
 
 const es: Dictionary = {
@@ -77,6 +92,11 @@ const es: Dictionary = {
   'summary.dailyLimit': 'Se alcanzó el límite web diario',
   'summary.budget': 'Se alcanzó el límite diario del asistente de IA',
   'summary.busy': 'La búsqueda web está ocupada, inténtalo en un minuto',
+  'label.webImages': 'Buscando imágenes: «{{query}}»',
+  'label.webImagesAny': 'Buscando imágenes',
+  'summary.imagesFound': 'Imágenes encontradas: {{count}}',
+  'summary.imagesNone': 'No se encontraron imágenes',
+  'summary.imagesUnavailable': 'La búsqueda de imágenes no está disponible ahora',
 };
 
 const cs: Dictionary = {
@@ -95,6 +115,11 @@ const cs: Dictionary = {
   'summary.dailyLimit': 'Denní limit webu je vyčerpán',
   'summary.budget': 'Denní limit AI asistenta je vyčerpán',
   'summary.busy': 'Vyhledávání je přetížené, zkuste to za minutu',
+  'label.webImages': 'Hledám obrázky: „{{query}}“',
+  'label.webImagesAny': 'Hledám obrázky',
+  'summary.imagesFound': 'Nalezené obrázky: {{count}}',
+  'summary.imagesNone': 'Žádné obrázky nenalezeny',
+  'summary.imagesUnavailable': 'Hledání obrázků je teď nedostupné',
 };
 
 const ar: Dictionary = {
@@ -113,6 +138,11 @@ const ar: Dictionary = {
   'summary.dailyLimit': 'تم بلوغ حد الويب اليومي',
   'summary.budget': 'تم بلوغ الحد اليومي لمساعد الذكاء الاصطناعي',
   'summary.busy': 'البحث في الويب مشغول، حاول بعد دقيقة',
+  'label.webImages': 'أبحث عن صور: «{{query}}»',
+  'label.webImagesAny': 'أبحث عن صور',
+  'summary.imagesFound': 'الصور التي وُجدت: {{count}}',
+  'summary.imagesNone': 'لم يتم العثور على صور',
+  'summary.imagesUnavailable': 'البحث عن الصور غير متاح حاليًا',
 };
 
 const zh: Dictionary = {
@@ -131,6 +161,11 @@ const zh: Dictionary = {
   'summary.dailyLimit': '今日网络次数已用完',
   'summary.budget': '今日 AI 助手额度已用完',
   'summary.busy': '网络搜索繁忙，请一分钟后再试',
+  'label.webImages': '正在查找图片：“{{query}}”',
+  'label.webImagesAny': '正在查找图片',
+  'summary.imagesFound': '找到的图片：{{count}}',
+  'summary.imagesNone': '未找到图片',
+  'summary.imagesUnavailable': '图片搜索暂时不可用',
 };
 
 const id: Dictionary = {
@@ -149,6 +184,11 @@ const id: Dictionary = {
   'summary.dailyLimit': 'Batas web harian tercapai',
   'summary.budget': 'Batas harian asisten AI tercapai',
   'summary.busy': 'Pencarian web sedang sibuk, coba lagi dalam semenit',
+  'label.webImages': 'Mencari gambar: “{{query}}”',
+  'label.webImagesAny': 'Mencari gambar',
+  'summary.imagesFound': 'Gambar ditemukan: {{count}}',
+  'summary.imagesNone': 'Tidak ada gambar',
+  'summary.imagesUnavailable': 'Pencarian gambar sedang tidak tersedia',
 };
 
 const hi: Dictionary = {
@@ -167,6 +207,11 @@ const hi: Dictionary = {
   'summary.dailyLimit': 'आज की वेब सीमा पूरी हो गई',
   'summary.budget': 'AI सहायक की आज की सीमा पूरी हो गई',
   'summary.busy': 'वेब खोज व्यस्त है, एक मिनट बाद फिर कोशिश करें',
+  'label.webImages': 'तस्वीरें खोज रहा हूँ: “{{query}}”',
+  'label.webImagesAny': 'तस्वीरें खोज रहा हूँ',
+  'summary.imagesFound': 'मिली तस्वीरें: {{count}}',
+  'summary.imagesNone': 'कोई तस्वीर नहीं मिली',
+  'summary.imagesUnavailable': 'तस्वीर खोज अभी उपलब्ध नहीं है',
 };
 
 const th: Dictionary = {
@@ -185,6 +230,11 @@ const th: Dictionary = {
   'summary.dailyLimit': 'ถึงขีดจำกัดเว็บรายวันแล้ว',
   'summary.budget': 'ถึงขีดจำกัดรายวันของผู้ช่วย AI แล้ว',
   'summary.busy': 'การค้นหาเว็บไม่ว่าง ลองใหม่ในอีกหนึ่งนาที',
+  'label.webImages': 'กำลังหารูปภาพ: “{{query}}”',
+  'label.webImagesAny': 'กำลังหารูปภาพ',
+  'summary.imagesFound': 'พบรูปภาพ: {{count}}',
+  'summary.imagesNone': 'ไม่พบรูปภาพ',
+  'summary.imagesUnavailable': 'การค้นหารูปภาพไม่พร้อมใช้งานในขณะนี้',
 };
 
 const ja: Dictionary = {
@@ -203,6 +253,11 @@ const ja: Dictionary = {
   'summary.dailyLimit': '本日のウェブ上限に達しました',
   'summary.budget': '本日のAIアシスタント上限に達しました',
   'summary.busy': 'ウェブ検索が混み合っています。1分後にもう一度お試しください',
+  'label.webImages': '画像を探しています：「{{query}}」',
+  'label.webImagesAny': '画像を探しています',
+  'summary.imagesFound': '見つかった画像：{{count}}',
+  'summary.imagesNone': '画像が見つかりませんでした',
+  'summary.imagesUnavailable': '画像検索は現在利用できません',
 };
 
 export const AGENT_WEB_I18N_TRANSLATIONS: Record<string, Dictionary> = { ru, sr, es, cs, ar, zh, id, hi, th, ja };

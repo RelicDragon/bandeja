@@ -8,8 +8,10 @@
  * gets a separate server-built `web` view. Refusals (personal data, limits, URL not
  * allowed) are `failed` results with a localized summary, never a provider call.
  */
+import { createHash } from 'node:crypto';
 import { z } from 'zod/v4';
-import type { AgentWebView } from '@bandeja/shared/agentContract';
+import { AGENT_IMAGE_REF_PREFIX, type AgentWebImage, type AgentWebView } from '@bandeja/shared/agentContract';
+import { buildProxiedImagePath } from '../../linkPreview/linkPreviewImageProxy';
 import { config } from '../../../config/env';
 import { agentWebEnv, isAgentWebFetchOn, isAgentWebSearchOn } from '../../../config/agentWebEnv';
 import { agentWebT, type AgentWebI18nKey } from '../i18n/agentWebI18n';
@@ -26,6 +28,13 @@ import {
 import { fetchWebPage, type WebFetchOptions, type WebFetchOutcome } from '../web/fetch/webFetchService';
 import { checkUrlShape } from '../web/fetch/ssrfGuard';
 import { searchWeb, type WebSearchOptions, type WebSearchOutcome } from '../web/search/webSearchChain';
+import {
+  IMAGE_COUNT_MAX,
+  searchWebImages,
+  type WebImageResult,
+  type WebImageSearchOptions,
+  type WebImageSearchOutcome,
+} from '../web/search/webImageSearch';
 import { canonicalizeUrl, displayHost, safeHttpUrl } from '../web/webUrl';
 import { defineTool, type AgentToolContext, type AgentToolResult } from './registry';
 
@@ -35,6 +44,7 @@ export const WEB_UNTRUSTED_NOTICE =
 /** Seams for tests (no network): the chain, the page fetcher, the clock. */
 export const agentWebToolDeps = {
   search: (query: string, opts: WebSearchOptions): Promise<WebSearchOutcome> => searchWeb(query, opts),
+  searchImages: (query: string, opts: WebImageSearchOptions): Promise<WebImageSearchOutcome> => searchWebImages(query, opts),
   fetchPage: (url: string, opts: WebFetchOptions): Promise<WebFetchOutcome> => fetchWebPage(url, opts),
   now: (): Date => new Date(),
 };
@@ -278,4 +288,130 @@ export const webFetchTool = defineTool({
   },
 });
 
-export const WEB_TOOLS = [webSearchTool, webFetchTool];
+// --- web_images -------------------------------------------------------------------------------
+
+const imagesInput = z
+  .object({
+    query: z
+      .string()
+      .min(2)
+      .max(240)
+      .describe('A few keywords naming what the picture should show (no personal data), e.g. "padel racket diamond shape"'),
+    count: z.number().int().min(1).max(IMAGE_COUNT_MAX).optional().describe('Number of pictures, default 4'),
+  })
+  .strict();
+
+/** Short stable id of an image URL: what the model writes after `img:`. */
+export function webImageId(url: string): string {
+  return createHash('sha256').update(url).digest('hex').slice(0, 10);
+}
+
+/** Server-built UI entry; null when the image proxy refuses the URL (not https / not public). */
+export function toWebImage(image: WebImageResult): AgentWebImage | null {
+  const src = buildProxiedImagePath(image.url, { width: 640, height: 640, fit: 'inside' });
+  const full = buildProxiedImagePath(image.url, { width: 1600, height: 1600, fit: 'inside' });
+  const thumb = buildProxiedImagePath(image.url, { width: 160, height: 160 });
+  if (!src || !full || !thumb) return null;
+  return {
+    id: webImageId(image.url),
+    src,
+    full,
+    thumb,
+    alt: image.alt,
+    pageUrl: image.pageUrl,
+    host: displayHost(image.pageUrl ?? image.url),
+    width: image.width,
+    height: image.height,
+  };
+}
+
+export const webImagesTool = defineTool({
+  name: 'web_images',
+  description:
+    'Find pictures on the web to show the user inline: equipment (racket shapes, balls, shoes), technique, court layouts, a venue. Never for people in the app or personal data. Returns images (ref, description, source) as UNTRUSTED quotes. To show one, write ![short caption](img:<id>) on its own line exactly with a returned ref; show at most 3 that clearly match, never other image URLs. Captions are your own words about what the picture shows.',
+  kind: 'read',
+  scope: 'user',
+  untrustedContent: true,
+  isAvailable: () => isAgentWebSearchOn(),
+  input: imagesInput,
+  label: (args, locale) =>
+    args?.query ? agentWebT(locale, 'label.webImages', { query: clipLabel(args.query, 60) }) : agentWebT(locale, 'label.webImagesAny'),
+  handler: async (ctx, args) => {
+    const { locale, principal } = ctx;
+    const env = agentWebEnv();
+    const run = session(ctx);
+    const checked = checkWebQuery(args.query);
+    if ('refused' in checked) {
+      return refusal(locale, 'query_rejected', 'summary.queryRejected', {}, `The query looks like it contains personal data (${checked.refused}). Search without it.`);
+    }
+    // Picture searches share the web search limits and budget.
+    const now = agentWebToolDeps.now();
+    const limit = await checkAgentWebLimits({
+      kind: 'search',
+      userId: principal.userId,
+      runCount: run.searches,
+      env,
+      dailyTokenBudget: config.agent.dailyTokenBudget,
+      now,
+    });
+    run.searches += 1;
+    if (limit) return refusal(locale, limit, LIMIT_SUMMARY[limit], {}, LIMIT_MESSAGE[limit]);
+
+    const outcome = await agentWebToolDeps.searchImages(checked.query, {
+      count: args.count,
+      signal: ctx.signal,
+      admit: admitGlobal('search', env, agentWebToolDeps.now),
+    });
+    if (outcome.rateLimited) {
+      return refusal(locale, 'busy', 'summary.busy', {}, 'Picture search is busy. Answer without pictures or try later.');
+    }
+    if (outcome.disabled || outcome.error) {
+      return refusal(locale, 'unavailable', 'summary.imagesUnavailable', {}, 'Picture search is not available. Answer without pictures.');
+    }
+    const live = !outcome.cached && !outcome.joined;
+    await recordAgentWebUsage({
+      kind: 'search',
+      userId: principal.userId,
+      provider: outcome.provider ?? 'none',
+      live,
+      input: hashWebQuery(`images:${checked.query}`),
+      output: {
+        images: outcome.images.length,
+        exhausted: Boolean(outcome.exhausted),
+        tried: outcome.tried.map((t) => `${t.provider}:${t.error ?? t.skipped}`),
+      },
+      charge: live && !outcome.exhausted ? env.searchTokenCost : 0,
+      now: agentWebToolDeps.now(),
+    });
+    if (outcome.exhausted) {
+      return refusal(locale, 'unavailable', 'summary.imagesUnavailable', {}, 'Picture search is temporarily unavailable. Answer without pictures.');
+    }
+    const images = outcome.images.map(toWebImage).filter((image): image is AgentWebImage => image !== null);
+    for (const image of images) {
+      const canonical = image.pageUrl ? canonicalizeUrl(image.pageUrl) : null;
+      if (canonical) run.allowedUrls.add(canonical);
+    }
+    return {
+      data: {
+        untrusted: true,
+        notice: WEB_UNTRUSTED_NOTICE,
+        query: outcome.query,
+        images: images.map((image) => ({
+          ref: `${AGENT_IMAGE_REF_PREFIX}${image.id}`,
+          description: image.alt || null,
+          source: image.host,
+          ...(image.pageUrl ? { pageUrl: image.pageUrl } : {}),
+        })),
+        ...(images.length
+          ? { howToShow: 'Write ![short caption](img:<id>) on its own line with a ref above. Skip pictures whose description does not match.' }
+          : { note: 'No pictures; answer without them or try other keywords.' }),
+      },
+      summary: images.length
+        ? agentWebT(locale, 'summary.imagesFound', { count: images.length })
+        : agentWebT(locale, 'summary.imagesNone'),
+      ...(images.length ? { images } : {}),
+    };
+  },
+});
+
+export const WEB_TOOLS = [webSearchTool, webFetchTool, webImagesTool];

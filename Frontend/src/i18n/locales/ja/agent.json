@@ -221,6 +221,8 @@
       "summaryBy": "{{provider}} による要約",
       "shortened": "短縮済み",
       "details": "ウェブの結果を表示",
+      "openImage": "画像を開く",
+      "openImageNamed": "画像を開く：{{name}}",
       "kind": {
         "rate_limited": "リクエスト上限",
         "auth": "キー拒否",

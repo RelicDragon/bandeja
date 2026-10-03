@@ -13,6 +13,8 @@ const MAX_INPUT_PIXELS = 24_000_000;
 const DEFAULT_WIDTH = 320;
 const DEFAULT_HEIGHT = 180;
 const MAX_DIMENSION = 640;
+/** `inside` images (assistant pictures) also serve the fullscreen viewer. */
+const MAX_INSIDE_DIMENSION = 1600;
 const TRANSFORM_CACHE_MAX = 200;
 const TRANSFORM_CACHE_MAX_BYTES = 32 * 1024 * 1024;
 const TRANSFORM_CACHE_ENTRY_MAX_BYTES = 2 * 1024 * 1024;
@@ -22,6 +24,8 @@ const TRANSFORM_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const TRANSFORM_CACHE_TTL_SEC = TRANSFORM_CACHE_TTL_MS / 1000;
 
 type OutputFormat = 'webp' | 'avif';
+/** `cover` crops to the exact box (link cards); `inside` keeps the whole image within it. */
+export type ProxiedImageFit = 'cover' | 'inside';
 type TransformCacheEntry = {
   at: number;
   buffer: Buffer;
@@ -126,16 +130,26 @@ function hmac(payload: string): string {
   return crypto.createHmac('sha256', signingSecret()).update(payload).digest('base64url');
 }
 
-function dimensions(width?: number, height?: number): { width: number; height: number } {
+function dimensions(
+  width?: number,
+  height?: number,
+  fit: ProxiedImageFit = 'cover'
+): { width: number; height: number } {
+  const max = fit === 'inside' ? MAX_INSIDE_DIMENSION : MAX_DIMENSION;
   const safe = (value: number | undefined, fallback: number) =>
-    Number.isInteger(value) && value! > 0 ? Math.min(value!, MAX_DIMENSION) : fallback;
+    Number.isInteger(value) && value! > 0 ? Math.min(value!, max) : fallback;
   return { width: safe(width, DEFAULT_WIDTH), height: safe(height, DEFAULT_HEIGHT) };
+}
+
+/** Signed payload; `cover` keeps the original shape so already-issued paths stay valid. */
+function signedPayload(width: number, height: number, url: string, fit: ProxiedImageFit): string {
+  return fit === 'inside' ? `inside.${width}.${height}.${url}` : `${width}.${height}.${url}`;
 }
 
 /** Stable path relative to `/api`; safe for message snapshots and CDN caching. */
 export function buildProxiedImagePath(
   imageUrl: string,
-  requested?: { width?: number; height?: number }
+  requested?: { width?: number; height?: number; fit?: ProxiedImageFit }
 ): string | null {
   let safe: string;
   try {
@@ -143,12 +157,14 @@ export function buildProxiedImagePath(
   } catch {
     return null;
   }
-  const { width, height } = dimensions(requested?.width, requested?.height);
-  const sig = hmac(`${width}.${height}.${safe}`);
+  const fit: ProxiedImageFit = requested?.fit === 'inside' ? 'inside' : 'cover';
+  const { width, height } = dimensions(requested?.width, requested?.height, fit);
+  const sig = hmac(signedPayload(width, height, safe, fit));
   const params = new URLSearchParams({
     url: safe,
     w: String(width),
     h: String(height),
+    ...(fit === 'inside' ? { fit } : {}),
     sig,
   });
   return `/link-preview/image?${params.toString()}`;
@@ -158,23 +174,25 @@ export function verifyProxiedImageParams(params: {
   url?: string;
   w?: string;
   h?: string;
+  fit?: string;
   sig?: string;
-}): { url: string; width: number; height: number } {
+}): { url: string; width: number; height: number; fit: ProxiedImageFit } {
   const url = typeof params.url === 'string' ? params.url.trim() : '';
   const sig = typeof params.sig === 'string' ? params.sig.trim() : '';
   const requestedWidth = Number(params.w);
   const requestedHeight = Number(params.h);
   if (!url || !sig) throw new SsrfFetchError('Invalid proxy params');
-  const { width, height } = dimensions(requestedWidth, requestedHeight);
+  const fit: ProxiedImageFit = params.fit === 'inside' ? 'inside' : 'cover';
+  const { width, height } = dimensions(requestedWidth, requestedHeight, fit);
 
-  const expected = hmac(`${width}.${height}.${url}`);
+  const expected = hmac(signedPayload(width, height, url, fit));
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     throw new SsrfFetchError('Invalid proxy signature');
   }
 
-  return { url: assertPublicHttpsUrl(url).toString(), width, height };
+  return { url: assertPublicHttpsUrl(url).toString(), width, height, fit };
 }
 
 export async function fetchProxiedImageBytes(
@@ -183,14 +201,16 @@ export async function fetchProxiedImageBytes(
     fetchFn?: typeof fetch;
     width?: number;
     height?: number;
+    fit?: ProxiedImageFit;
     accept?: string;
   }
 ): Promise<{ buffer: Buffer; contentType: string; etag: string }> {
-  const { width, height } = dimensions(options?.width, options?.height);
+  const fit: ProxiedImageFit = options?.fit === 'inside' ? 'inside' : 'cover';
+  const { width, height } = dimensions(options?.width, options?.height, fit);
   const format: OutputFormat = options?.accept?.includes('image/avif') ? 'avif' : 'webp';
   const cacheKey = crypto
     .createHash('sha256')
-    .update(`${imageUrl}\0${width}\0${height}\0${format}`)
+    .update(`${imageUrl}\0${width}\0${height}\0${format}${fit === 'inside' ? '\0inside' : ''}`)
     .digest('base64url');
   const cached = transformCache.get(cacheKey);
   if (cached && Date.now() - cached.at <= TRANSFORM_CACHE_TTL_MS) return cached;
@@ -222,7 +242,7 @@ export async function fetchProxiedImageBytes(
         limitInputPixels: MAX_INPUT_PIXELS,
       })
         .rotate()
-        .resize(width, height, { fit: 'cover', withoutEnlargement: true });
+        .resize(width, height, { fit, withoutEnlargement: true });
       const output =
         format === 'avif'
           ? await pipeline.avif({ quality: 55, effort: 4 }).toBuffer()

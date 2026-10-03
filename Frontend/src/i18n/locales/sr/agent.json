@@ -221,6 +221,8 @@
       "summaryBy": "Sažetak: {{provider}}",
       "shortened": "skraćeno",
       "details": "Prikaži rezultate sa interneta",
+      "openImage": "Otvori sliku",
+      "openImageNamed": "Otvori sliku: {{name}}",
       "kind": {
         "rate_limited": "limit zahteva",
         "auth": "ključ odbijen",

@@ -98,7 +98,7 @@ async function main() {
   );
   assert.deepEqual(
     AGENT_TOOL_DEFINITIONS.filter((t) => t.untrustedContent).map((t) => t.name),
-    ['summarize_game_chat', 'web_search', 'web_fetch'],
+    ['summarize_game_chat', 'web_search', 'web_fetch', 'web_images'],
     'untrusted-content reads',
   );
   const tiers = Object.fromEntries(
@@ -344,10 +344,10 @@ async function main() {
     delete process.env.BRAVE_SEARCH_API_KEY;
     delete process.env.AGENT_WEB_SEARCH_ENABLED;
     delete process.env.AGENT_WEB_FETCH_ENABLED;
-    assert.deepEqual(webNames(), ['web_search', 'web_fetch'], 'one key turns the web tools on');
+    assert.deepEqual(webNames(), ['web_search', 'web_fetch', 'web_images'], 'one key turns the web tools on');
     assert.ok(buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes(AGENT_WEB_CONTENT_RULE), 'web rule when listed');
     process.env.AGENT_WEB_FETCH_ENABLED = 'false';
-    assert.deepEqual(webNames(), ['web_search'], 'fetch switch hides only web_fetch');
+    assert.deepEqual(webNames(), ['web_search', 'web_images'], 'fetch switch hides only web_fetch');
     process.env.AGENT_WEB_SEARCH_ENABLED = 'false';
     assert.deepEqual(webNames(), [], 'kill switch hides both');
     assert.ok(!buildAgentModelRules(catalogue.toolsForPrincipal(user)).includes(AGENT_WEB_CONTENT_RULE), 'no web rule when off');
