@@ -5,13 +5,7 @@
       "ariaLabel": "Mesto se oslobodilo {{time}}"
     },
     "queue": {
-      "position_one": "Vi ste {{position}}. od {{count}}",
-      "position_few": "Vi ste {{position}}. od {{count}}",
-      "position_other": "Vi ste {{position}}. od {{count}}",
-      "autoFillOn": "Automatsko popunjavanje je uključeno — bićete ubačeni automatski",
-      "autoFillOff": "Organizator prihvata ručno",
-      "waitForOrganizer": "Na listi ste čekanja. Organizator sam bira ko dobija mesto.",
-      "tapToJoin": "Dodirnite „Pridruži se“ kada se mesto oslobodi"
+      "waitForOrganizer": "Na listi ste čekanja. Organizator sam bira ko dobija mesto."
     },
     "settings": {
       "autoFillTitle": "Automatsko popunjavanje iz reda",

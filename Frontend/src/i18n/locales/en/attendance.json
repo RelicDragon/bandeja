@@ -12,7 +12,6 @@
     "unsureToast": "Noted. You can confirm later.",
     "saving": "Saving…",
     "queuedOffline": "Saved. It will sync when you are back online.",
-    "youOrganizer": "You (organizer)",
     "dots": {
       "confirmed": "Confirmed",
       "unanswered": "No answer yet",
@@ -64,6 +63,14 @@
       "noShowWindowClosed": "The no-show window has closed",
       "nudgeCooldown": "You nudged recently. Try again later.",
       "nothingToNudge": "Everyone has already answered"
+    },
+    "roster": {
+      "you": "You",
+      "seatsAria": "{{confirmed}} confirmed, {{unsure}} not sure, {{unanswered}} no answer, {{open}} open spots",
+      "filterLabel": "Filter players",
+      "moreActions": "More actions for {{name}}",
+      "showAll": "Show all {{total}}",
+      "showingOf": "Showing {{shown}} of {{total}}"
     }
   }
 }

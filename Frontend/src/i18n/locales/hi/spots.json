@@ -5,12 +5,7 @@
       "ariaLabel": "{{time}} एक जगह खाली हुई"
     },
     "queue": {
-      "position_one": "आप {{count}} में से {{position}} नंबर पर हैं",
-      "position_other": "आप {{count}} में से {{position}} नंबर पर हैं",
-      "autoFillOn": "ऑटो-फ़िल चालू है, आपको अपने आप शामिल कर लिया जाएगा",
-      "autoFillOff": "आयोजक खुद मंज़ूरी देते हैं",
-      "waitForOrganizer": "आप कतार में हैं। खाली जगह किसे मिलेगी, यह आयोजक तय करते हैं।",
-      "tapToJoin": "जगह खाली होने पर जुड़ें पर टैप करें"
+      "waitForOrganizer": "आप कतार में हैं। खाली जगह किसे मिलेगी, यह आयोजक तय करते हैं।"
     },
     "settings": {
       "autoFillTitle": "कतार से ऑटो-फ़िल",

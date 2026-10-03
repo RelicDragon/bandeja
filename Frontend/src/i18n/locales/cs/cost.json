@@ -140,6 +140,9 @@
           "placeholder": "Telefon, e-mail nebo ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "Váš podíl"
     }
   }
 }

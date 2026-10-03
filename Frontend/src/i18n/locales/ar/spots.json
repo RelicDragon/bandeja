@@ -5,16 +5,7 @@
       "ariaLabel": "تحرر مكان {{time}}"
     },
     "queue": {
-      "position_zero": "ترتيبك {{position}} من {{count}}",
-      "position_one": "ترتيبك {{position}} من {{count}}",
-      "position_two": "ترتيبك {{position}} من {{count}}",
-      "position_few": "ترتيبك {{position}} من {{count}}",
-      "position_many": "ترتيبك {{position}} من {{count}}",
-      "position_other": "ترتيبك {{position}} من {{count}}",
-      "autoFillOn": "الإضافة التلقائية مفعّلة، وسيتم إدخالك تلقائيًا",
-      "autoFillOff": "المنظّم يقبل يدويًا",
-      "waitForOrganizer": "أنت في قائمة الانتظار. المنظّم هو من يختار من يشغل المكان.",
-      "tapToJoin": "اضغط على «انضمام» عندما يتوفّر مكان"
+      "waitForOrganizer": "أنت في قائمة الانتظار. المنظّم هو من يختار من يشغل المكان."
     },
     "settings": {
       "autoFillTitle": "الإضافة التلقائية من قائمة الانتظار",

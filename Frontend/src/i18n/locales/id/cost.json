@@ -137,6 +137,9 @@
           "placeholder": "Telepon, email, atau ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "Bagianmu"
     }
   }
 }

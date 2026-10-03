@@ -140,6 +140,9 @@
           "placeholder": "Телефон, почта или ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "Ваша доля"
     }
   }
 }

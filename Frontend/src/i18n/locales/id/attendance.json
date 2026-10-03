@@ -12,7 +12,6 @@
     "unsureToast": "Dicatat. Kamu bisa konfirmasi nanti.",
     "saving": "Menyimpan…",
     "queuedOffline": "Tersimpan. Akan disinkronkan saat kamu online lagi.",
-    "youOrganizer": "Kamu (penyelenggara)",
     "dots": {
       "confirmed": "Dikonfirmasi",
       "unanswered": "Belum ada jawaban",
@@ -64,6 +63,14 @@
       "noShowWindowClosed": "Batas waktu mencatat ketidakhadiran sudah lewat",
       "nudgeCooldown": "Kamu baru saja mengingatkan. Coba lagi nanti.",
       "nothingToNudge": "Semua orang sudah menjawab"
+    },
+    "roster": {
+      "you": "Kamu",
+      "seatsAria": "Konfirmasi: {{confirmed}}, belum pasti: {{unsure}}, belum menjawab: {{unanswered}}, slot kosong: {{open}}",
+      "filterLabel": "Filter pemain",
+      "moreActions": "Tindakan lain untuk {{name}}",
+      "showAll": "Tampilkan semua ({{total}})",
+      "showingOf": "Menampilkan {{shown}} dari {{total}}"
     }
   }
 }

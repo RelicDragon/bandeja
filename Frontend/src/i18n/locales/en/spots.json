@@ -5,12 +5,7 @@
       "ariaLabel": "A spot opened {{time}}"
     },
     "queue": {
-      "position_one": "You're #{{position}} of {{count}}",
-      "position_other": "You're #{{position}} of {{count}}",
-      "autoFillOn": "Auto-fill is on, you'll be seated automatically",
-      "autoFillOff": "Organizer accepts manually",
-      "waitForOrganizer": "You're in the queue. The organizer seats players for this game.",
-      "tapToJoin": "Tap Join when a spot opens"
+      "waitForOrganizer": "You're in the queue. The organizer seats players for this game."
     },
     "settings": {
       "autoFillTitle": "Auto-fill from queue",

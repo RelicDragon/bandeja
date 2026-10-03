@@ -9,7 +9,7 @@
  * listen for `contextmenu` only, which WebKit does not dispatch for touch — and
  * `.capacitor-app` suppresses the long-press callout anyway — so on iOS the
  * legend it advertised could never be opened, and a keyboard user could not
- * reach it either. `AttendanceLegendButton` is the 44 px companion control; this
+ * reach it either. The (i) next to the roster's seat strip is the companion control; this
  * one is the shortcut for people who press the dot they are asking about.
  */
 import { memo } from 'react';

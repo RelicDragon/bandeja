@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { gamesApi } from '@/api';
 import type { Game } from '@/types';
-import { GameQueuePanel } from './GameQueuePanel';
 import { SeatedFromQueueBanner } from './SeatedFromQueueBanner';
 import { useSpotOpenedRealtime } from './useSpotOpenedRealtime';
 
@@ -10,14 +9,14 @@ export interface SpotOpenedGameSectionProps {
   viewerUserId: string | undefined;
   /** Owner or admin — gets the "Ana joined from the queue" toast. */
   isOrganizer: boolean;
-  /** PRD 364 — the "Next steps" block carries the open-seat fact for this viewer. */
-  hideOpenSpotRow?: boolean;
   onGameUpdate: (game: Game) => void;
 }
 
 /**
  * PRD 347 — everything the game-details page owes a freed seat, in one mount:
- * the queue panel, the one-time seated header and the live socket wiring.
+ * the one-time seated header and the live socket wiring. Open seats are drawn
+ * by the Players card (`GameRoster`); the separate "You're #n of m" panel was
+ * removed as noise.
  *
  * The `?join=1` consumer deliberately does **not** live here. This section is
  * rendered inside the tab content, so on a surface where another tab is active
@@ -29,7 +28,6 @@ export function SpotOpenedGameSection({
   game,
   viewerUserId,
   isOrganizer,
-  hideOpenSpotRow = false,
   onGameUpdate,
 }: SpotOpenedGameSectionProps) {
   const refresh = useCallback(() => {
@@ -51,10 +49,5 @@ export function SpotOpenedGameSection({
     game,
   });
 
-  return (
-    <>
-      <SeatedFromQueueBanner gameId={game.id} seatedLive={seatedLive} />
-      <GameQueuePanel game={game} viewerUserId={viewerUserId} hideOpenSpotRow={hideOpenSpotRow} />
-    </>
-  );
+  return <SeatedFromQueueBanner gameId={game.id} seatedLive={seatedLive} />;
 }

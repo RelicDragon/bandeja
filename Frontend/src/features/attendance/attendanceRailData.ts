@@ -1,7 +1,7 @@
 /**
- * PRD 346 — the right-rail attendance stack's data and its structural comparison.
+ * PRD 346 — the game card attendance glance's data and its structural comparison.
  *
- * Kept out of the component file so `GameCardRightRail`'s hand-written memo
+ * Kept out of the component file so a hand-written memo
  * comparator can import the equality check without pulling in a component.
  */
 

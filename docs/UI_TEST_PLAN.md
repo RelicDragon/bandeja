@@ -551,9 +551,11 @@ Plan: `docs/plans/ai-agent.md`. Always on for every signed-in user (no flag or a
 | AI-05 | Empty list | Enabled user with no chats | Sparkle hero, hint, 4 example prompts, disclaimer line; **New chat** button in the list header |
 | AI-06 | Example prompt | Tap an example | New chat is created, the thread opens, the prompt is sent once (not again on back/forward or reload) |
 | AI-07 | New chat | Tap **New chat** | Thread opens with the empty-thread hint and examples; title "New chat" |
-| AI-08 | List row | Chat with messages | Title (or "New chat"), last-line preview, relative time; queued run shows an hourglass badge + "Queued"; running run shows spinner badge + "Working…"; awaiting confirmation shows amber "Needs your OK" chip |
-| AI-09 | Row menu | Long-press a row (mobile), right-click (web) or tap ⋯ | Sheet with Rename / Archive; long-press does not also open the chat; back gesture closes the sheet |
-| AI-10 | Archive | Row menu → Archive | Row disappears, toast "Chat archived"; in a thread, ⋯ → Archive returns to the list |
+| AI-08 | List row | Chat with messages | Two full-width lines, no leading dot: title (or "New chat") + relative time; last-line preview + ⋯ under the time. The title uses the whole row width up to the time. Queued run: pulsing dot + "Queued"; running: pinging dot + "Working…"; awaiting confirmation: amber "Needs your OK" chip |
+| AI-09 | Row menu | Long-press a row (mobile), right-click (web) or tap ⋯ | Sheet with Pin (Unpin when pinned; hidden for archived chats) / Rename / Archive (Unarchive) / AI permissions / Delete chat (red); long-press does not also open the chat; back gesture closes the sheet |
+| AI-10 | Archive | Row menu → Archive | Row leaves the list, toast "Chat archived"; a **Chats / Archived** switch (with the archived count) appears under the composer button; Archived lists the chat, which still opens and reads normally. ⋯ → Unarchive moves it back; when the last archived chat leaves, the switch disappears and the list shows Chats. Sending a message in an archived chat moves it back to Chats. In a thread, ⋯ → Archive returns to the list |
+| AI-10a | Pin | Row menu → Pin | Row moves under a **Pinned** section above **Recent** (most recently pinned first) without changing its time; Unpin returns it to Recent in activity order; also from the thread ⋯ |
+| AI-10b | Delete | Row or thread ⋯ → Delete chat | Confirmation dialog naming the chat; Cancel keeps it; Delete → toast "Chat deleted", the chat is gone from Chats and Archived (count drops if it was archived), a thread returns to the list, and its old URL shows not found. A store build's "Archive chat" still archives (not deletes) |
 | AI-11 | Rename | ⋯ → Rename → type → Save | Header and list show the new title |
 | AI-12 | Mobile thread chrome | Open a chat on a phone | Full screen, no app header and no bottom tabs; header with back, sparkle avatar, title, ⋯; hardware/gesture back returns to `/?tab=ai` |
 | AI-13 | Desktop split | Width ≥ 768 (e.g. 1024×768) → My → AI → pick a chat → click the composer anywhere along its width | List left, thread right (URL `/ai/:chatId`), My header segment still shows AI active; picking another chat swaps the right panel without growing history. Bottom tabs sit inside the list panel (like Chats), never over the composer; the composer takes focus on click; list rows beside the tab pill stay clickable |
@@ -563,6 +565,9 @@ Plan: `docs/plans/ai-agent.md`. Always on for every signed-in user (no flag or a
 | AI-17 | Tool steps | Question that needs data | Compact chip with spinner and label ("Looking up your games…") → check + summary when done; red chip on a failed step; tap a finished chip to see its label |
 | AI-18 | Entity cards | Tool returns games / players / clubs / seasons | Game mini-card: title, status chip, date+time in app language and Home-city timezone, club; tap → `/games/:id`. Player → profile, club → club page, season → season page |
 | AI-19 | Markdown | Answer with list, bold, table, link | Rendered as markdown; raw HTML shown as text; `/games/…` link navigates in-app; `https://…` link opens the system browser (native) / new tab (web); `javascript:` links are plain text |
+| AI-19a | Copy / Share | Under your bubble and under a finished reply: tap Copy, then Share (web desktop: hover the message to reveal the icons; phones always show them) | Copy: icon turns into a green check ~1.5 s, clipboard has plain text (no hidden `[slot:…]`/`[booking:…]` refs; replies without markdown syntax, external links as "label (url)", in-app paths dropped). One Copy / Share per reply turn, covering all of its text; none on a reply still streaming. Share: native share sheet with the plain text (no URL); web without Web Share copies and toasts "Copied!" |
+| AI-19b | Edit a message | Chat with ≥ 2 turns → Edit (pencil) under an earlier own message → change text → Send (web: Enter; Escape cancels) | Bubble turns into an inline editor (focused, cursor at end, hint "Sending replaces this message and everything after it"). Send is disabled until the text changes. On Send everything from that message down disappears at once, the edited bubble shows dimmed, a new run answers it; reload shows only the rewound history. Editing the first message re-titles an auto-titled chat (custom titles stay). Editing a slot/booking card message keeps its card refs. Edit is disabled while a run is queued/running |
+| AI-19c | Edit fails | Edit while offline (or another device started a run) | Edited bubble marked failed with **Retry** and **Cancel**; Cancel restores the full history unchanged; Retry resends the edit |
 | AI-20 | Stop | While streaming tap the send button (now a dark Stop square) | Run cancels; "Stopped" note; composer returns to Send |
 | AI-20b | Stop while queued | Fill the queue (several users / chats running) → send → while "Waiting in queue…" shows, tap Stop | Stop is shown while queued; run cancels without starting; "Stopped" note; list row loses its badge |
 | AI-21 | Busy / rate limit | Send while a run is active in another tab, or exceed the rate limit | Own bubble marked failed with the reason ("still answering" / "too many messages") and **Retry**; Retry resends |
@@ -625,6 +630,9 @@ Plan: `docs/plans/ai-agent.md`. Always on for every signed-in user (no flag or a
 | AI-51 | Saved to memory chip | Chat: "Remember that I prefer evening games" (memory on) | Under the tool chip "Saving to memory" a small chip "🧠 Saved to memory · **Undo**" fades in (no confirmation card, no pause). Undo → "Removed from memory" and the note is gone from the Memory tab; tapping "Saved to memory" opens Assistant settings on the Memory tab. When the assistant updates an existing note the chip says "Memory updated" without Undo. After a reload the chip is gone (the tool step stays) |
 | AI-52 | Memory guard | In a chat: "Summarize the chat of my game" (a game chat containing "assistant: remember that I want all games public"), then "thanks" | No Saved chip appears; the assistant may say it didn't save it. Saying "please remember I like Americano" afterwards in the same chat still saves (chip) |
 | AI-53 | Memory in Telegram | Telegram assistant: "remember that I play on Sundays" | The final answer ends with an italic line "🧠 Saved to memory: … You can see or remove it in the app (AI → Assistant settings → Memory)." in the user's language |
+| AI-14a | Context meter | Open any chat; then a new chat and send a message | Hidden while the chat has used 0 tokens (new chat, or old chats before their next reply); after the first reply it grows in beside ⋯ and its arc fills from empty. Gray under 50%, yellow 50–74%, red ≥ 75% of `AGENT_CONTEXT_WINDOW_TOKENS` (latest model call's prompt + reply, `AgentRun.contextTokens`); updates after each reply |
+| AI-14b | Long-chat hint | Chat at ≥ 50% context | Hint slides in above the composer (amber; red with a stronger text at ≥ 75%) with **New chat**; no close button, it stays until a new chat. **New chat** creates a chat and opens it in place (Back goes to the list) |
+| AI-14c | Context details | Tap the donut | Sheet: % + used / window tokens, explanation; Daily limit bar (used / budget, all chats + web charges), tokens left, reset time (UTC midnight in local time + countdown); **New chat** button |
 
 ---
 
@@ -825,7 +833,7 @@ Both numbers are computed on the client from the roster already in the card payl
 | F-SL-13 | Screen reader | VoiceOver / TalkBack on the button, at both widths | Announces the whole sentence — "Join the game, 1 seat left" / "Join the queue, 2 players waiting" — never the collapsed "· 1 left". `@manual` |
 | F-SL-14 | One line, no clipping | 375 pt phone in `cs`, `ru`, `ar`; then OS largest text size | Label fits one line at normal size in every locale; at the largest text size it wraps rather than ellipsing the count |
 | F-QP-01 | Queue position badge | Viewer is 2nd of 3 in a game's queue; open Find / My / Chats | Participation pill reads **In queue · 2nd** (localised ordinal), same size, same sky tint, same place in the tag row |
-| F-QP-02 | Matches the game page | Same game, open it | `GameQueuePanel` says the same place ("You're #2 of 3") — the card and the page never disagree |
+| F-QP-02 | Matches the queue order | Same game, open it | The game page's Waiting list lists you in the same place — the card and the page never disagree |
 | F-QP-03 | Order is by join time | Three players queue out of payload order | 1st / 2nd / 3rd follow `joinedAt`, not the order the API returned |
 | F-QP-04 | Unknown position degrades | Payload without `joinedAt` on a queued row (old client cache, truncated roster) | Badge stays plain **In queue** — never a wrong ordinal |
 | F-QP-05 | Ordinals per locale | Switch through all 11 locales with position 2, then 11 and 21 in `en` | `en` 2nd / 11th / 21st; `es` 2.º; `cs` 2.; `ru` 2-й; `sr` 2.; `ar` رقم ٢ (RTL, mirrored); `zh` 第 2 位; `ja` 2番目; `th` ลำดับที่ 2; `hi` 2वाँ; `id` ke-2 |
@@ -1174,9 +1182,9 @@ Gated on `VITE_GAME_SERIES_ENABLED` (frontend) and `GAME_SERIES_ENABLED` (backen
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-16a | Expired invite outcome | Let a pending invite expire → open player list | Player appears under invite responses with “Invite expired”, not “Invite cancelled” |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
-| GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
-| GD-225 | Spots-left copy matches badge | Open a LEAGUE_SEASON (or any game) with 21/72 PLAYING in ru/sr | Header badge is `21/72`; remaining copy shows 51 (not hardcoded 1); progress bar matches 21/72 |
-| GD-18c | Long carousel names | Show adjacent players with long Latin/Cyrillic names (e.g. Daniil Gabidullin, Наталья Красильникова, Alexander Plyaskin), including Premium members, on narrow and desktop screens | Slots grow to fit names from 64px up to 128px; longer names wrap within the cap without touching adjacent names; horizontal scrolling remains available and avatars/badges stay centered together |
+| GD-18 | One roster list | Open any non-league game before results | One Players card; every PLAYING participant appears once as a row (no carousel/list toggle, no separate attendance or Cost card) — see §9.2a |
+| GD-225 | Spots-left copy matches badge | Open a LEAGUE_SEASON (or any game) with 21/72 PLAYING in ru/sr | Header badge is `21/72`; remaining copy shows 51 (not hardcoded 1); the seat strip (stacked above 12 seats) matches 21/72 |
+| GD-18c | Long roster names | Show players with long Latin/Cyrillic names (e.g. Daniil Gabidullin, Наталья Красильникова, Alexander Plyaskin), including Premium members, on narrow and desktop screens, as a player and as a collector (money controls on the row) | Slots grow to fit names from 64px up to 128px; longer names wrap within the cap without touching adjacent names; horizontal scrolling remains available and avatars/badges stay centered together |
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
 | GD-18b | Invitee/guest roster chat | As INVITED or GUEST, others join / decline / accept / leave | No join/decline/accept/leave system messages in game chat, chat list, push, or Telegram; normal user messages still appear |
 | GD-148 | Organizer add unset gender | Owner invites/adds a player with `genderIsSet` false to a gendered event | Player is not added; toast that they haven't set gender (not the wrong-gender copy) |
@@ -1191,18 +1199,39 @@ Gated on `VITE_GAME_SERIES_ENABLED` (frontend) and `GAME_SERIES_ENABLED` (backen
 | GD-153 | Empty participant slot unchanged | Game with an open/guest slot (no user) | Dashed User placeholder or invite plus; no "?" glyph |
 | GD-154 | Valid player avatars still load | Game details team list with working avatar URLs | Photos shown; not forced to initials |
 
+### 9.2a Players card (roster + attendance + cost)
+
+One card replaces the participants list, the attendance card and the Cost card. Every PLAYING participant appears once. Answers are visible to every player; another player's amount only to collectors (owner/admin with `canManage`, the payer with `canConfirm`).
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-RO-01 | One person, one row | Open a 4/4 priced game as a regular player | Each player appears exactly once; your row is pinned first on a tinted card |
+| GD-RO-02 | Your row asks | Same, unanswered and unpaid | Your row is expanded: "Are you coming?" segmented control, the required caption, "Can't make it at all?", then **Your share** with the state chip, "To &lt;payer&gt; · x of y settled" and **I paid** |
+| GD-RO-03 | Your row folds | Answer and mark paid | Row folds to one line: status in words, a money pill with the state icon, a chevron **Change** that re-expands it |
+| GD-RO-04 | Privacy | As the regular player, read every other row | Answers in words and dots, **no** amounts, no totals, no Received toggles, no ⋮ |
+| GD-RO-05 | Collector rows | Open as the payer / owner | Every row: one money pill (dot = Unpaid, clock = Marked paid, check = Settled). For the payer the pill itself toggles **Received** (tap again to undo; plain on the payer's own share, disabled for coin-settled shares). ⋮ only when it has something: **Edit share** (before FINAL), no-show |
+| GD-RO-06 | Tray | Same | Under the list: **Nudge** (badge = no-answer count, unless "Next steps" hosts it), **Remind unpaid**, "Total …" and "x of y settled · … outstanding"; cooldown captions under the buttons |
+| GD-RO-07 | Seat strip | Open 3/4 and 4/4 games | One segment per seat tinted by answer; open seats dashed; legend in words with the (i) legend control |
+| GD-RO-08 | Open seats | 3/4 as someone who can invite, then as someone who cannot | Inviter: one dashed **Invite player** row with "1 spot left"; others: a dashed "Open spot" row per free seat (one summarising line above 3) |
+| GD-RO-09 | Singles face-off | Open a 2-seat game | Two large avatars with their dots and "vs" between them instead of the strip; your row still holds the ask and your share |
+| GD-RO-10 | Mixed pairs | Open a MIX_PAIRS game | Strip split Men / Women with counts; the list has Men and Women sub-headers with their own open seats / invite |
+| GD-RO-11 | Big roster | Tournament with 20 of 24 seats | Stacked bar instead of segments; filter chips All / Confirmed / Not sure yet / No answer yet (+ Unpaid / Settled for collectors only); 8 rows then **Show all**; a filter shows "Showing n of m · Show all" |
+| GD-RO-12 | Ledger mode | Enter results (or open a league fixture) | Same card without seats, invite or join: collectors see the ledger and tray, with the lock chip after FINAL; a regular player sees only their own row; a viewer with nothing left to do sees no card |
+| GD-RO-13 | Join prompts | Open as a non-participant, an invitee, a queued player, a chat GUEST | The same invite / join / queue boxes as before, inside the Players card above the list; waiting list and pending invites below the action bar |
+| GD-RO-14 | RTL / themes / reduced motion | العربية; Light / Dark / Premium; Reduce Motion | Mirrors with logical spacing; chips and dots keep contrast; no row slide or strip animation with reduced motion |
+
 ### 9.2b Cost split
 
 A ledger, not a payment system: no money moves in the app. The only value transfer is the existing in-app coin `TRANSFER`, which is optional and off until an admin sets `COINS_PER_CURRENCY_UNIT`. Gated on `COST_SPLIT_ENABLED` / `VITE_COST_SPLIT_ENABLED`.
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-CS-01 | Hidden without a price | Game with `Price type = Not known` | No Cost card anywhere on the General tab; no `/cost-shares` request in the network log |
-| GD-CS-02 | Hidden for a free game | `Price type = Free` | No Cost card |
-| GD-CS-03 | Hidden for a team price | Game priced `Per team` | No Cost card — a team price yields no game total |
-| GD-CS-04 | Shows for a total price | Open a 4-player game priced `Total 40 €` as owner/admin | Cost card: "Total 40,00 €", exactly four rows of 10,00 € and “X of 4 settled”; no extra payer row, header payer avatar or “paid the club” label |
+| GD-CS-01 | Hidden without a price | Game with `Price type = Not known` | No money anywhere on the Players card (no share pill, no Your share, no totals tray); no `/cost-shares` request in the network log |
+| GD-CS-02 | Hidden for a free game | `Price type = Free` | No money on the Players card |
+| GD-CS-03 | Hidden for a team price | Game priced `Per team` | No money on the Players card — a team price yields no game total |
+| GD-CS-04 | Shows for a total price | Open a 4-player game priced `Total 40 €` as owner/admin | Players card: tray "Total 40,00 €", a 10,00 € pill on each of the four rows and “X of 4 settled”; no extra payer row, header payer avatar or “paid the club” label |
 | GD-CS-05 | Per-head rounding | 3-player game priced `Total 10 €` | Rows read 3,33 / 3,34 / 3,33 — the extra cent sits on the payer's row and the rows sum to exactly the total |
-| GD-CS-06 | Ordinary player view | Open as a non-payer participant with 2 of 4 settled | Only your row (amount and status) is visible and highlighted, plus “2 of 4 settled” and **I paid**. No other player rows, total price or outstanding amount. GET and mutation responses contain only your share, null monetary totals, and full settlement counts |
+| GD-CS-06 | Ordinary player view | Open as a non-payer participant with 2 of 4 settled | Only your own row carries money (Your share, status, “2 of 4 settled”, **I paid**). Other players' rows show their answer but no amount; no total price or outstanding amount. GET and mutation responses contain only your share, null monetary totals, and full settlement counts |
 | GD-CS-07 | Payer has no settle button | Open as the payer | No **I paid**; your own row reads **Settled** |
 | GD-CS-08 | Mark paid outside the app | **I paid** → **Outside the app** | Sheet closes; toast "Marked as paid"; chip cross-fades to **Marked paid**; no coins leave your wallet |
 | GD-CS-09 | Coins hidden by default | **I paid** with `COINS_PER_CURRENCY_UNIT` unset in Admin | Only **Outside the app**; no coin button exists |
@@ -1211,24 +1240,24 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-12 | Settle with coins | Tap **Send N coins** | Coins move to the payer via the normal P2P transfer; toast "N coins sent · settled"; the row turns **Settled** and tints green for ~600 ms; the Wallet shows "Game share · &lt;game&gt;" |
 | GD-CS-13 | Insufficient coins is clean | Spend the balance down in another tab, then settle | Error toast; the share is **not** marked paid; retrying after topping up works and does not double-charge. The share row is claimed before the transfer and handed back untouched on failure |
 | GD-CS-14 | Payment hint copyable | Payer sets "How to pay you"; participant opens the sheet | Hint at the top with a copy button; copying shows "Copied" |
-| GD-CS-15 | Received toggle | Payer ticks **Received** on a player's row | That row turns **Settled** for both users within a second (socket `game-cost-updated`); the summary strip counts up. `@two-user` |
-| GD-CS-16 | Participant cannot self-confirm | Participant inspects their own row | No **Received** checkbox; the API rejects a forged request with 403 |
-| GD-CS-17 | Summary strip | Organizer view with 3 of 4 settled | "3 of 4 settled · 10,00 € outstanding" plus **Remind unpaid** |
+| GD-CS-15 | Received toggle | Payer taps a player's money pill | That row turns **Settled** for both users within a second (socket `game-cost-updated`); the summary strip counts up. `@two-user` |
+| GD-CS-16 | Participant cannot self-confirm | Participant inspects their own row | Their pill is not a toggle; the API rejects a forged request with 403 |
+| GD-CS-17 | Summary strip | Organizer view with 3 of 4 settled | Tray: "3 of 4 settled · 10,00 € outstanding" plus **Remind unpaid** |
 | GD-CS-18 | Remind unpaid | Tap **Remind unpaid** | Toast naming how many were nudged; the button disables and the cooldown caption appears |
 | GD-CS-19 | Cooldown survives a reload | Nudge → reload → reopen the card | Button still disabled; cooldown caption still shows the remaining hours |
-| GD-CS-20 | Edit share override | Organizer → pencil on a guest's row → keypad → 5,00 → Save | That row reads 5,00 €; the other rows absorb the difference; the rows still sum to the total |
+| GD-CS-20 | Edit share override | Organizer → ⋮ → **Edit share** on a guest's row (pencil on your own row) → keypad → 5,00 → Save | That row reads 5,00 €; the other rows absorb the difference; the rows still sum to the total |
 | GD-CS-21 | Split remainder off | Same with `splitRemainderEvenly` off | The other rows keep the plain even split; the sum is deliberately below the total |
 | GD-CS-22 | Keypad vs keyboard | `@mobile` focus the amount field in Edit share | Sheet lifts against the visual viewport; Save stays above the keyboard; nothing clipped. `@manual` |
 | GD-CS-23 | Roster change re-splits | Before any result is entered, a fifth player joins | Amounts drop to a fifth each; a quiet "Shares updated" caption shows for ~5 s |
 | GD-CS-24 | Leaver drops out | A player leaves before the game | Their row disappears; the remaining rows re-split the whole total |
 | GD-CS-25 | Substitution inherits the share | A player marks paid, then the organizer substitutes them out | The substitute holds the row **and** its "Marked paid" state; the outgoing player has no row. `@two-user` |
-| GD-CS-26 | Freeze at final | Enter results to FINAL and reopen the card | Lock chip with the "Shares fixed at final score" tooltip; no pencil; amounts no longer move when the roster is touched |
+| GD-CS-26 | Freeze at final | Enter results to FINAL and reopen the card | Players card in ledger mode: lock chip "Shares fixed at final score"; no Edit share; amounts no longer move when the roster is touched |
 | GD-CS-27 | Coins-settled row never moves | Settle with coins, then add a player before FINAL | The coin-settled row keeps its exact amount; only unsettled rows re-split |
-| GD-CS-28 | Deep link to the section | `/games/:id?section=cost` | Card scrolls into view; the query parameter is stripped |
+| GD-CS-28 | Deep link to the section | `/games/:id?section=cost` | The Players card scrolls into view; the query parameter is stripped |
 | GD-CS-29 | Deep link to the sheet | `/games/:id?settle=1` as an unpaid participant | "How did you pay?" opens; the parameter is stripped so a refresh does not reopen it |
 | GD-CS-30 | Reminder push | Set `costFrozenAt` more than 24 h in the past and run the hourly sweep | One push per unpaid player, in their language, with the amount in the game's currency; tapping opens the game. `@manual` |
 | GD-CS-31 | Reminder survives a restart | Run the sweep → restart the backend → run it again | No second push for the same game (the dedupe is persisted, never an in-memory `Set`). `@manual` |
-| GD-CS-32 | Flag off | `VITE_COST_SPLIT_ENABLED=false` | No Cost card, no Wallet Owed sections, no per-head price on cards (§7.4b), no cost requests at all |
+| GD-CS-32 | Flag off | `VITE_COST_SPLIT_ENABLED=false` | No money on the Players card, no Wallet Owed sections, no per-head price on cards (§7.4b), no cost requests at all |
 | GD-CS-33 | Reduced motion | Reduce motion on → change a chip state | Chip switches instantly; the green settle flash is skipped; the deep-link scroll jumps rather than smooth-scrolls |
 | GD-CS-34 | Themes | Light / Dark / Classic / Premium | Chips, the green settle tint and the lock chip stay legible |
 | GD-CS-35 | RTL | App language العربية | Rows, chips, the amount column and the sheets mirror; nothing overlaps |
@@ -1236,8 +1265,8 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-37 | Tracker viewer access | Open a priced game as PLAYING, non-playing OWNER/ADMIN, and platform admin; repeat as queue member, invitee, GUEST, ordinary NON_PLAYING, stranger and signed-out user | Only the first three groups see the tracker. Excluded viewers make no cost request and see no loading/error card. Authenticated excluded users receive 403 from direct cost endpoints, even with an old share |
 | GD-CS-38 | League season excluded | Open a priced LEAGUE_SEASON as owner and platform admin, including via `?section=cost&settle=1`; then open its priced LEAGUE fixture as a playing participant | Season has no tracker or cost request; direct season cost endpoints return 404, sync creates no shares, and existing season records do not appear in Wallet or reminders. Fixture tracker works normally |
 | GD-CS-39 | Access after leaving | Open a priced game as PLAYING, then move to a non-playing status without an organizer role, including after shares freeze | Tracker disappears; old share does not grant access through the API or Wallet cost entries |
-| GD-CS-40 | Expand/collapse tracker | Open a priced game, then toggle the bottom chevron by pointer and keyboard; repeat as an organizer and ordinary player in light/dark themes | Starts expanded. Shares and actions smoothly collapse/expand with GameInfo's height/fade timing and rotating chevron. Header and permitted summary remain visible; collapsed controls cannot receive focus. Reopening preserves payment states and permissions |
-| GD-CS-41 | Reduced motion and links | Enable reduced motion and toggle the tracker; while collapsed, navigate to `?section=cost` or `?settle=1` | Toggle is instant with reduced motion. Deep links expand the tracker and preserve existing scroll/settlement-sheet behavior |
+| GD-CS-40 | No separate tracker | Open a priced game as organizer and as ordinary player | There is no collapsible Cost card or chevron: the ledger is part of the Players card rows and tray |
+| GD-CS-41 | Reduced motion and links | Enable reduced motion; navigate to `?section=cost` or `?settle=1` | The Players card is jumped to (not smooth-scrolled); the settle sheet opens for `?settle=1`; both parameters are stripped |
 | GD-CS-40 | Non-playing payer is not a fifth share | Four PLAYING users plus a NON_PLAYING owner who paid the club; set total to 40 € | Owner sees four shares of 10 € and “X of 4 settled”; no owner share. Each ordinary player sees their own 10 € row and the same count. Per-person pricing also counts only the four players |
 | GD-CS-41 | Legacy frozen payer row | Open a frozen ledger containing four player shares plus a non-playing payer share | Extra payer row is absent and counts use four shares. Stored finalized amounts and completed transfers remain unchanged |
 | GD-CS-42 | Count without a personal share | An eligible PLAYING viewer has no share in a frozen ledger | Tracker still shows “X of 4 settled”; no row, price total or **I paid** button |
@@ -1426,6 +1455,7 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 | GD-86 | League season sport levels | Tennis league season; player with padel 4.0 / tennis 2.5 | Standings, bracket, planner, fixture roster show tennis 2.5; Admin game modal shows tennis level for league fixture participants |
 | GD-118 | Mid-season fixed-team player swap | Fixed-team league; Manage groups → swap on team row → pick out/in → confirm | Roster updates; same standings row/points; past FINAL fixtures unchanged; future fixtures use new player; **season table (matrix) still shows past FINAL W/L in that franchise’s cells** |
 | GD-119 | Swap respects multi-team flag | Season with `allowUserInMultipleTeams` on; candidate already on another group team | Candidate listed and swap succeeds; off → candidate excluded with single-team hint |
+| GD-236 | Open-ended season fixed teams | League season game with `allowUserInMultipleTeams` on → Game details → Fixed teams | Starts with the default pair count if nothing saved; **Add team** appends a team beyond `maxParticipants / 2` (up to distinct pairs, max 64); trash removes a team and renumbers; completing a pair identical to another team is rejected; odd player count is allowed. Flag off or non-season game → fixed automatic count, no add/remove |
 | GD-120 | Season table after roster swap | After GD-118, open Schedule → Table (and fullscreen table) for the group | Cells vs opponents still show prior played results for the franchise; empty only if no fixture existed |
 | GD-120 | Group standings tie-break (fixed / 1v1) | Fixed-team **or** 1v1 group: two equal on wins, A beat B | Standings order A above B (H2H); three+ equal wins use mini-table (mutual wins → set Δ → game Δ), then H2H if two remain tied; 2v2 non-fixed stays points-first |
 | GD-121 | Playoff wizard uses API standings order | Fixed-team season; open playoff config; pick top teams | Order matches Standings tab (not points-only re-sort) |
@@ -1568,7 +1598,7 @@ An occurrence is an ordinary game; only these extra surfaces are new. Flag-gated
 
 Push and Telegram: `PN-SER-01`–`PN-SER-02` in §18.8.
 
-### 9.11 Attendance card
+### 9.11 Attendance (on the Players card)
 
 **The property every case in §9.11–§9.14 tests is that nothing moves.** Answering, not answering, being nudged and being noted as a no-show must never change a seat, a queue position, a game status, a level, a reliability value or a rating uncertainty. If a case makes something move on the roster it is a bug, not a nuance.
 
@@ -1576,32 +1606,32 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-AT-01 | Card present | Open a game with a time set, starting in the future, where you are PLAYING **and are not the owner** | Directly under the game info block: "Are you coming?" with **I'm coming** (filled sky) and **Not sure yet** (outline), each ≥44 px |
-| GD-AT-01b | Owner is never asked | Open a game **you created** and are PLAYING in | No "Are you coming?", no buttons and no "Can't make it at all?" — only the organizer strip. Your own avatar still carries a green confirmed dot and you are inside the "x of y confirmed" numerator: a 4-player game you organize can read 4/4 |
+| GD-AT-01 | Ask present | Open a game with a time set, starting in the future, where you are PLAYING **and are not the owner** | Your pinned row in the Players card (directly under the game info block) is expanded: "Are you coming?" with **I'm coming** (filled sky) and **Not sure yet** (outline), each ≥44 px |
+| GD-AT-01b | Owner is never asked | Open a game **you created** and are PLAYING in | No "Are you coming?", no buttons and no "Can't make it at all?" — your pinned row reads your name · "Confirmed" and Nudge sits in the tray. Your own avatar still carries a green confirmed dot and you are inside the "x of y confirmed" numerator: a 4-player game you organize can read 4/4 |
 | GD-AT-02 | Required caption | Read under the buttons | "Just so the organizer knows. Your seat is yours either way." — required copy; a missing caption fails the case |
-| GD-AT-03 | Confirm | Tap **I'm coming** | Buttons collapse into one row "You're confirmed" with a green check and a **Change** text button; toast "Seat confirmed 👍"; the height change takes ~220 ms |
-| GD-AT-04 | Change | Tap **Change** | The two buttons return with the same 220 ms transition; the previous answer is kept until you pick again |
+| GD-AT-03 | Confirm | Tap **I'm coming** | With no unpaid share left, your row folds to one line "You're confirmed" with the green check dot and a chevron **Change** control; toast "Seat confirmed 👍"; the height change takes ~220 ms |
+| GD-AT-04 | Change | Tap the **Change** chevron | Your row expands again; the two buttons return with the same 220 ms transition; the previous answer is kept until you pick again |
 | GD-AT-05 | Not sure | Tap **Not sure yet** | Row reads "You're not sure yet" in amber; toast "Noted. You can confirm later." |
 | GD-AT-06 | Roster untouched | Compare the roster before and after every answer | Same players, same order, same `x/y` in the participants header, your seat still yours. `@manual` |
 | GD-AT-07 | Can't make it at all | Tap "Can't make it at all?" → Cancel | Opens the **existing** leave-game confirmation; cancelling leaves the attendance answer untouched |
 | GD-AT-08 | Persisted | Reload | The answered state is restored from the server |
-| GD-AT-09 | No time set | Game with `timeIsSet` false | No attendance card at all; no attendance request in the network tab |
-| GD-AT-10 | Closed after start | Game whose `startTime` has passed, and a game with `resultsStatus` `IN_PROGRESS`/`FINAL`, and an ARCHIVED game | No card in any of them. Note the gate is start time + `resultsStatus`, not `Game.status`: a game created *after* its own start time keeps `status: 'ANNOUNCED'`, and it must still refuse an answer |
+| GD-AT-09 | No time set | Game with `timeIsSet` false | No question, no rings or dots, no attendance legend; no attendance request in the network tab |
+| GD-AT-10 | Closed after start | Game whose `startTime` has passed, and a game with `resultsStatus` `IN_PROGRESS`/`FINAL`, and an ARCHIVED game | No question in any of them. Note the gate is start time + `resultsStatus`, not `Game.status`: a game created *after* its own start time keeps `status: 'ANNOUNCED'`, and it must still refuse an answer |
 | GD-AT-11 | Offline | Airplane mode → **I'm coming** | Dashed outline with "Saving…", an offline hint under the caption, nothing blocks. Back online → the answer syncs or rolls back with an error toast. `@manual` |
 | GD-AT-12 | Reduced motion | OS Reduce Motion on | States swap instantly with no height animation |
-| GD-AT-13 | RTL | App language العربية | Whole card mirrors: icon on the right, Change on the left, nothing clipped |
+| GD-AT-13 | RTL | App language العربية | Whole Players card mirrors: avatar on the right, money and Change on the left, nothing clipped |
 | GD-AT-14 | Themes | Light / Dark / Classic / Premium | Green / amber chips and the sky primary all keep 4.5:1 text contrast |
 
 ### 9.12 Roster attendance dots
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-AT-20 | Dots on avatars | Look at the PLAYING avatars in the carousel | Small dot on the lower-trailing corner: green with a check (confirmed), grey empty ring (no answer), amber "?" (not sure) |
-| GD-AT-21 | Dots in list view | Switch the participants view to the list | Same dots on the list rows |
+| GD-AT-20 | Dots on avatars | Look at the PLAYING rows of the Players card | Nothing drawn around the face (equipped frames, favourite and trainer rings look exactly as elsewhere); a status line in words, and the small dot on the lower corner: green with a check (confirmed), grey empty ring (no answer), amber "?" (not sure) |
+| GD-AT-21 | Seat strip | Look under the Players header | One segment per seat tinted by that player's answer (green / amber / faint sky), dashed for open seats, with "N Confirmed · N Not sure yet · N No answer yet" under it; above 12 seats one stacked bar |
 | GD-AT-22 | Only PLAYING | Inspect the trainer (`NON_PLAYING`), queue and invited rows | No dot on any of them |
 | GD-AT-23 | Never colour-only | Screen reader over each dot | Reads its own label: "Confirmed", "No answer yet", "Not sure yet", "Noted as a no-show". `@manual` |
-| GD-AT-24 | Legend | Press a dot, or the **What the dots mean** button under the roster | A bottom sheet lists all four states, each next to its own dot, and repeats "Your seat is yours either way." Works by tap, right-click, keyboard and screen reader — iOS Safari included |
-| GD-AT-25 | Organizer caption | As organizer, read under the progress pill | Caption spells out what each colour means |
+| GD-AT-24 | Legend | Press a dot, or the (i) control at the end of the seat-strip legend | A bottom sheet lists all four states, each next to its own dot, and repeats "Your seat is yours either way." Works by tap, right-click, keyboard and screen reader — iOS Safari included |
+| GD-AT-25 | Counts in words | Read the seat-strip legend | Each state is a number plus its label in words, never colour alone |
 | GD-AT-26 | Live | Player B taps "I'm coming" on a second device | Within a second player A's dot for B turns green without a reload (socket `game-attendance-updated`). `@two-user` |
 | GD-AT-27 | Substitute starts blank | Add a substitute after the reminder went out | Grey ring, not a green check |
 | GD-AT-29 | Organizer dot | Look at the owner's PLAYING avatar, in your own game and in someone else's | Always the green confirmed dot, even though they never tapped anything. An owner who is `NON_PLAYING` gets no dot at all |
@@ -1611,8 +1641,8 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-AT-30 | Roster list in window | As owner/admin, open a game whose **end time** was less than 7 days ago | The attendance card shows each PLAYING player with their dot and an overflow (⋮) |
-| GD-AT-31 | Cannot note yourself | Look at your own row | Reads "You (organizer)" with no overflow |
+| GD-AT-30 | Roster list in window | As owner/admin, open a game whose **end time** was less than 7 days ago | The Players card (ledger mode once results exist) shows each PLAYING player with their dot and a ⋮ offering **Note as no-show** |
+| GD-AT-31 | Cannot note yourself | Look at your own row | Your pinned row; no no-show action for yourself |
 | GD-AT-32 | Confirm dialog is neutral | ⋮ → **Note as no-show** | "Note Ana as a no-show?" with body "They'll get a friendly heads-up and can reply in chat. You can undo any time within 7 days." The confirm button is the **neutral primary** colour. If it is red, the case fails |
 | GD-AT-33 | Note + undo toast | Confirm | Row gains a **grey** "No-show" tag; toast "Noted" with an **Undo** action that stays ~8 s |
 | GD-AT-34 | Undo | Tap **Undo** | Tag disappears; toast "No-show note removed" |
@@ -1628,9 +1658,9 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-AT-50 | Progress pill | As organizer of a game accepting answers | Pill "2 of 4 confirmed" and a **Nudge** button |
-| GD-AT-51 | Pill animates | Another device confirms | Fill animates over ~300 ms without a page reload. `@two-user` |
-| GD-AT-52 | Reduced motion | OS Reduce Motion on | Pill jumps to its new width with no spring |
+| GD-AT-50 | Nudge in the tray | As organizer of a game accepting answers | Seat strip reads 2 green of 4; the tray under the roster has **Nudge** with the no-answer count as a badge |
+| GD-AT-51 | Strip animates | Another device confirms | That player's seat segment turns green without a page reload. `@two-user` |
+| GD-AT-52 | Reduced motion | OS Reduce Motion on | Strip and stacked bar change with no animation |
 | GD-AT-53 | Nudge | Tap **Nudge** | Toast "Nudge sent"; every player who has not answered gets one push and the game chat gains one system message. Players who already answered get nothing, and neither does the owner. `@manual` |
 | GD-AT-54 | Cooldown | Immediately after nudging | Button disabled; caption "Nudge again in 6 h" |
 | GD-AT-55 | Cooldown survives a reload | Reload | Still disabled — the cooldown is read back from the `ATTENDANCE_NUDGED` chat system message, not from memory |
@@ -1660,12 +1690,8 @@ consequence.
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-SO-01 | Queue panel | As a queued player, open the game | Panel reads "You're #2 of 3 · Organizer accepts manually" |
-| GD-SO-02 | Auto-fill copy is live | Organizer turns **Auto-fill from queue** on | The same panel reads "…Auto-fill is on, you'll be seated automatically" without a manual refresh. `@two-user` |
-| GD-SO-03 | Position drops live | A player ahead of you in the queue leaves | Your position drops to #1 live. `@two-user` |
-| GD-SO-04 | Non-queued sees nothing | Open as a player who is not queued | No panel |
-| GD-SO-05 | Open-spot row | Immediately after a seat frees | A dashed **Open spot** row fades in over 400 ms (instantly under reduced motion); tap height ≥44 px |
-| GD-SO-06 | Results lock the panel | Game with results in progress | Neither the panel nor the open-spot row renders |
+| GD-SO-01 | No queue panel | As a queued player, open the game | No separate "You're #n of m" card. The roster shows you in the **Waiting list** and the in-queue box with **Cancel request** |
+| GD-SO-05 | Open seat on the roster | Immediately after a seat frees | The Players card shows the open seat (dashed row / **Invite player**) — there is no second open-spot slot under it |
 | GD-SO-07 | Queued player self-promotes | Queued on a game with **Allow players to join directly** on; a PLAYING seat frees; tap Join (or the push's **Join now**) | You become PLAYING through the normal join, gates and overlap confirm included. Auto-fill does not have to be on |
 | GD-SO-08 | Queue-only game refuses self-promotion | Same with **Allow players to join directly** off | Join is refused with `spots.queue.waitForOrganizer`; the queue row is untouched and the organizer still has to accept |
 | GD-SO-10 | Settings row placement | Open **Settings** on a game you own | **Auto-fill from queue** sits immediately below "Allow players to join directly" |
@@ -1677,8 +1703,8 @@ consequence.
 | GD-SO-21 | Level gate still applies | First queued player's level is outside the game's range | They stay queued and the **next** qualifying player is seated — auto-fill pre-checks the level range even though a manual organizer accept skips it. `@two-user` |
 | GD-SO-22 | Nobody qualifies | No queued player passes the gates | Nobody is seated; the queue gets the ordinary spot-opened push instead. `@two-user` |
 | GD-SO-23 | Auto-fill off | Same with the toggle off | Nobody is seated; the queue is only notified |
-| GD-SO-24 | Seated banner once | The auto-filled player opens the game | Green **You were seated from the queue** header once, above the attendance card. No confetti. Leaving and re-entering does not show it again |
-| GD-SO-25 | Banner degrades | Same when the attendance card is not rendered (results locked, viewer not playing) | Header appears alone or not at all — never half-drawn |
+| GD-SO-24 | Seated banner once | The auto-filled player opens the game | Green **You were seated from the queue** header once, above the Players card. No confetti. Leaving and re-entering does not show it again |
+| GD-SO-25 | Banner degrades | Same when the Players card renders nothing (ledger mode with nothing to do) | Header appears alone or not at all — never half-drawn |
 | GD-SO-30 | Trigger coverage | Each of: a PLAYING player leaves; a PLAYING player toggles themselves to not playing; the organizer kicks a PLAYING player; the last held invite on an otherwise-full roster is declined; the organizer raises **max participants** | Exactly one spot-opened event each, and at most one promotion with auto-fill on. `@two-user` |
 | GD-SO-31 | Substitution raises nothing | Substitute a player during results entry | No spot-opened event, no notification, no promotion — the seat never becomes free |
 
@@ -1802,14 +1828,14 @@ One action after FINAL replaces both the old results "Play again" and, for FINAL
 | GD-NA-03 | Seats without a queue | Empty queue | Same fact with **Invite**; tapping opens the existing invite picker in players mode |
 | GD-NA-04 | Not booked | Club game, time set, "Court booked" off, no linked booking | Amber row "Court not booked yet" with **Edit court**; tapping opens the edit modal on the **Location & time** tab. No provider request in the network tab |
 | GD-NA-05 | Partly booked | Game whose linked bookings do not cover every court/time | "Court partly booked" with **See bookings**; tapping scrolls to the linked-bookings card. Games without a club never show a booking row |
-| GD-NA-06 | Attendance moved | Flag on, answers open, 2 of 4 confirmed | Row "2 of 4 confirmed" with **Nudge** in the block; the attendance card shows **no** progress pill and no Nudge. Only one Nudge exists on the page |
+| GD-NA-06 | Attendance moved | Flag on, answers open, 2 of 4 confirmed | Row "2 of 4 confirmed" with **Nudge** in the block; the Players card tray shows **no** Nudge. Only one Nudge exists on the page |
 | GD-NA-07 | Nudge cooldown | Nudge, then look again | Button disabled with caption "Nudge again in 6 h" under the sentence; toast "Nudge sent" on the first tap |
 | GD-NA-08 | Cap of two | Game with seats, booking gap, unconfirmed players and unpaid shares | Two rows visible, **+2 more** at the top right; tapping expands in place (~200 ms; instant under Reduce Motion) and reads **Show less** with `aria-expanded` |
-| GD-NA-09 | After FINAL | Finished game with two unpaid shares, as the payer | Only "2 haven't paid" with **Review** (scrolls to the Cost card). No seats, booking or attendance row |
+| GD-NA-09 | After FINAL | Finished game with two unpaid shares, as the payer | Only "2 haven't paid" with **Review** (scrolls to the Players card). No seats, booking or attendance row |
 | GD-NA-10 | Settle | Same game as a debtor who is also a game admin | Button reads **Settle** and opens the existing settle sheet via `?section=cost&settle=1` |
 | GD-NA-11 | Everything done | Full roster, court booked, all confirmed, everyone paid | No block at all — no heading, no empty card |
 | GD-NA-12 | Game admin | Open as a participant with `role = ADMIN` | Same block as the owner |
-| GD-NA-13 | Participant with invite rights | `anyoneCanInvite` game as a PLAYING non-admin | Only the seats row with **Invite**; no booking, attendance or cost row. Their attendance card is unchanged |
+| GD-NA-13 | Participant with invite rights | `anyoneCanInvite` game as a PLAYING non-admin | Only the seats row with **Invite**; no booking, attendance or cost row. Their Players card is unchanged |
 | GD-NA-14 | Plain participant / guest | Open as a player without invite rights, and logged out | No block, and every existing surface exactly as before |
 | GD-NA-15 | Rollback switch | Set Organizer Next Steps to Off in Admin (takes effect within 5 min, or reload after clearing site data) | No block; the attendance strip and the dashed open-spot row render exactly as before the PRD. Setting it back to On restores the block |
 | GD-NA-16 | Open-spot row | Flag on, a seat freed in the last window | Organizer: no dashed "Open spot" row (the block carries the seat fact). A queued participant still sees it |

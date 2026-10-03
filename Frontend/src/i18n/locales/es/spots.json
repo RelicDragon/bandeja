@@ -5,13 +5,7 @@
       "ariaLabel": "Se liberó una plaza {{time}}"
     },
     "queue": {
-      "position_one": "Eres el n.º {{position}} de {{count}}",
-      "position_many": "Eres el n.º {{position}} de {{count}}",
-      "position_other": "Eres el n.º {{position}} de {{count}}",
-      "autoFillOn": "El relleno automático está activado: entrarás sin hacer nada",
-      "autoFillOff": "El organizador acepta a mano",
-      "waitForOrganizer": "Estás en la lista de espera. El organizador decide quién ocupa la plaza.",
-      "tapToJoin": "Toca Unirse cuando se libere una plaza"
+      "waitForOrganizer": "Estás en la lista de espera. El organizador decide quién ocupa la plaza."
     },
     "settings": {
       "autoFillTitle": "Relleno automático desde la cola",

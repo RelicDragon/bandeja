@@ -12,7 +12,6 @@
     "unsureToast": "บันทึกแล้ว ยืนยันภายหลังได้",
     "saving": "กำลังบันทึก…",
     "queuedOffline": "บันทึกแล้ว จะซิงก์เมื่อกลับมาออนไลน์",
-    "youOrganizer": "คุณ (ผู้จัด)",
     "dots": {
       "confirmed": "ยืนยันแล้ว",
       "unanswered": "ยังไม่ตอบ",
@@ -64,6 +63,14 @@
       "noShowWindowClosed": "หมดเวลาบันทึกการไม่มาแล้ว",
       "nudgeCooldown": "คุณเพิ่งเตือนไป ลองใหม่ภายหลัง",
       "nothingToNudge": "ทุกคนตอบแล้ว"
+    },
+    "roster": {
+      "you": "คุณ",
+      "seatsAria": "ยืนยันแล้ว {{confirmed}}, ยังไม่แน่ใจ {{unsure}}, ยังไม่ตอบ {{unanswered}}, ที่ว่าง {{open}}",
+      "filterLabel": "กรองผู้เล่น",
+      "moreActions": "การทำงานเพิ่มเติมสำหรับ {{name}}",
+      "showAll": "แสดงทั้งหมด ({{total}})",
+      "showingOf": "แสดง {{shown}} จาก {{total}}"
     }
   }
 }

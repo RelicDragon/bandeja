@@ -1,5 +1,5 @@
 /**
- * PRD 346 — roster dots, the no-show tag/overflow, the card right-rail stack,
+ * PRD 346 — roster dots, the card right-rail stack,
  * and the optimistic patch.
  *
  * The optimistic patch test is the frontend half of the product invariant: a
@@ -19,7 +19,6 @@ vi.mock('react-i18next', () => ({
 }));
 
 const { AttendanceDot } = await import('./AttendanceDot');
-const { AttendanceRosterActions } = await import('./AttendanceRosterActions');
 const { AttendanceRailSummary } = await import('./AttendanceRailSummary');
 const { ATTENDANCE_RAIL_MAX_PLAYERS, attendanceRailDataEqual, buildAttendanceRailData } =
   await import('./attendanceRailData');
@@ -55,37 +54,6 @@ describe('AttendanceDot', () => {
     const html = renderToStaticMarkup(<AttendanceDot state="CONFIRMED" />);
     expect(html).not.toContain('<button');
     expect(html).toContain('pointer-events-none');
-  });
-});
-
-describe('AttendanceRosterActions', () => {
-  it('renders nothing for a plain row', () => {
-    const html = renderToStaticMarkup(
-      <AttendanceRosterActions state="CONFIRMED" canNote={false} />,
-    );
-    expect(html).toBe('');
-  });
-
-  it('shows the grey no-show tag, never a red one', () => {
-    const html = renderToStaticMarkup(<AttendanceRosterActions state="NO_SHOW" canNote={false} />);
-    expect(html).toContain('attendance.noShow.tag');
-    expect(html).toContain('bg-gray-200');
-    expect(html).not.toContain('red');
-  });
-
-  it('offers the note action to an organizer with a 44 px target', () => {
-    const html = renderToStaticMarkup(
-      <AttendanceRosterActions state="UNANSWERED" canNote onNote={vi.fn()} />,
-    );
-    expect(html).toContain('attendance.noShow.action');
-    expect(html).toContain('h-11 w-11');
-  });
-
-  it('offers undo once a row is already noted', () => {
-    const html = renderToStaticMarkup(
-      <AttendanceRosterActions state="NO_SHOW" canNote onUndo={vi.fn()} />,
-    );
-    expect(html).toContain('attendance.noShow.undoAction');
   });
 });
 

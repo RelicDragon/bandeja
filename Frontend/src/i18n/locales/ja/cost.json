@@ -137,6 +137,9 @@
           "placeholder": "電話番号、メール、ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "あなたの負担額"
     }
   }
 }

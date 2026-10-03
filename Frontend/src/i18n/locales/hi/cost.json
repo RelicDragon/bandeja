@@ -138,6 +138,9 @@
           "placeholder": "फ़ोन, ईमेल या UPI ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "आपका हिस्सा"
     }
   }
 }

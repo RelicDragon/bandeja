@@ -18,7 +18,6 @@ import {
   ManageUsersModal,
   CourtModal,
   GameInfo,
-  GameParticipants,
   GameSettings,
   MultipleCourtsSelector,
   LeagueScheduleTab,
@@ -62,7 +61,7 @@ import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
 import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
 import { GameLinkedBookingsSection } from '@/components/GameDetails/GameLinkedBookingsSection';
-import { GameCostCard } from '@/components/GameDetails/cost/GameCostCard';
+import { GameRoster } from '@/components/GameDetails/roster/GameRoster';
 import { canViewGameCost } from '@/features/cost/costViewModel';
 import { SeriesGameSection } from '@/features/game-series/SeriesGameSection';
 import { SeriesTitleLine } from '@/features/game-series/SeriesTitleLine';
@@ -110,7 +109,6 @@ import { createPortal } from 'react-dom';
 import { canUserViewGameInvites, getGameParticipationState } from '@/utils/gameParticipationState';
 import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { retainGameRoom, releaseGameRoom } from '@/services/gameRoomMembership';
-import { AttendanceCard } from '@/features/attendance/AttendanceCard';
 import { SpotOpenedGameSection } from '@/features/spot-opened/SpotOpenedGameSection';
 import { OrganizerNextActionsSection } from '@/features/organizer-next-actions/OrganizerNextActionsSection';
 import { resolveOrganizerSurfacePlacement } from '@/features/organizer-next-actions/organizerNextActionsPlacement';
@@ -852,13 +850,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     viewerUserId: user?.id,
     enabled: attendanceEnabled,
   });
-  const attendancePlayers = useMemo(
-    () =>
-      (game?.participants ?? [])
-        .filter((p) => p.status === 'PLAYING')
-        .map((p) => ({ userId: p.userId, user: p.user })),
-    [game?.participants],
-  );
   /** Roster dots. Only PLAYING rows get one — see PRD 346 "States and edge cases". */
   const attendanceDotsByUserId = useMemo(() => {
     const rows = attendance.details?.participants;
@@ -1692,40 +1683,63 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             />
           </div>
 
-          {/* PRD 346 — attendance is a courtesy signal: it never changes a seat.
-              The owner is never asked: organizing is the answer, and the backend
-              reads their PLAYING row as CONFIRMED (`isImplicitlyConfirmedOwner`),
-              so they still count in "3 of 4 confirmed". */}
-          <div key="attendance" className="contents">
-            <AttendanceCard
+          {/* One card for the people in this game: roster, "Are you coming?"
+              (PRD 346) and the cost split (PRD 348). Attendance never changes
+              a seat; the owner is never asked (the backend reads their PLAYING
+              row as CONFIRMED). Live while the roster is the subject; a ledger
+              once results are in or for league fixtures — and then it renders
+              nothing when the viewer has nothing left to do. */}
+          <div key="roster" className="contents">
+            <GameRoster
+              game={game}
+              mode={!isLeague && game.resultsStatus === 'NONE' ? 'live' : 'ledger'}
+              myInvites={myInvites}
+              gameInvites={gameInvites}
+              userId={user?.id}
+              isGuest={isGuest}
+              isFull={isFull}
+              isOwner={isOwner}
+              isUserOwner={isUserOwner}
+              isInJoinQueue={isInJoinQueue}
+              isUserPlaying={isUserPlaying}
+              canInvitePlayers={canInvitePlayers}
+              canManageJoinQueue={canManageJoinQueue}
+              canViewSettings={canViewSettings}
+              costEnabled={Boolean(user && canViewGameCost(game, user))}
+              expectCost={(
+                (game.entityType === 'LEAGUE' && game.priceType === 'NOT_KNOWN'
+                  ? game.parent?.priceTotal
+                  : game.priceTotal) ?? 0
+              ) > 0}
               attendance={attendance}
-              canAnswer={isUserPlaying && !isGuest && !isUserOwner}
-              isOrganizer={isOwner}
-              showOrganizerStrip={!organizerPlacement.hideAttendanceStrip}
-              players={attendancePlayers}
-              viewerUserId={user?.id}
-              onRequestLeave={() => setShowLeaveConfirmation(true)}
+              attendanceByUserId={attendanceDotsByUserId}
+              hideNudge={organizerPlacement.hideAttendanceStrip}
+              onJoin={handleJoin}
+              onAddToGame={handleAddToGame}
+              onLeave={() => setShowLeaveConfirmation(true)}
+              onAcceptInvite={handleAcceptInvite}
+              onDeclineInvite={handleDeclineInvite}
+              onCancelInvite={handleCancelInvite}
+              onAcceptJoinQueue={handleAcceptJoinQueue}
+              onDeclineJoinQueue={handleDeclineJoinQueue}
+              onCancelJoinQueue={isOwner ? undefined : handleCancelJoinQueue}
+              onShowPlayerList={(gender) => {
+                setPlayerListMode('players');
+                setPlayerListGender(gender);
+                setShowPlayerList(true);
+              }}
+              onShowManageUsers={() => setShowManageUsers(true)}
+              onEditMaxParticipants={() => {
+                setEditGameInfoInitialTab('participants');
+                setIsEditGameInfoModalOpen(true);
+              }}
+              onShowAttendanceLegend={() => setShowAttendanceLegend(true)}
             />
           </div>
 
           <div key="linked-bookings" className="contents">
             <GameLinkedBookingsSection game={game} courts={courts} clubs={clubs} onGameUpdate={setGame} />
           </div>
-
-          {/* PRD 348 — renders nothing when the game has no splittable price. */}
-          {user && canViewGameCost(game, user) ? (
-            <div key="cost" className="contents">
-              <GameCostCard
-                gameId={game.id}
-                viewerUserId={user.id}
-                expectCost={(
-                  (game.entityType === 'LEAGUE' && game.priceType === 'NOT_KNOWN'
-                    ? game.parent?.priceTotal
-                    : game.priceTotal) ?? 0
-                ) > 0}
-              />
-            </div>
-          ) : null}
 
           {canViewGamePhotos(game, user ? { id: user.id, isAdmin: user.isAdmin } : null) ? (
             <div key="photos" className="contents">
@@ -1787,45 +1801,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             <GameWebCamerasSection game={game} courts={courts} />
           </div>
 
-          {!isLeague && game.resultsStatus === 'NONE' ? (
-            <div key="participants" className="contents">
-              <GameParticipants
-                game={game}
-                myInvites={myInvites}
-                gameInvites={gameInvites}
-                isGuest={isGuest}
-                isFull={isFull}
-                isOwner={isOwner}
-                userId={user?.id}
-                isInJoinQueue={isInJoinQueue}
-                isUserPlaying={isUserPlaying}
-                canInvitePlayers={canInvitePlayers}
-                canManageJoinQueue={canManageJoinQueue}
-                canViewSettings={canViewSettings}
-                onJoin={handleJoin}
-                onAddToGame={handleAddToGame}
-                onLeave={() => setShowLeaveConfirmation(true)}
-                onAcceptInvite={handleAcceptInvite}
-                onDeclineInvite={handleDeclineInvite}
-                onCancelInvite={handleCancelInvite}
-                onAcceptJoinQueue={handleAcceptJoinQueue}
-                onDeclineJoinQueue={handleDeclineJoinQueue}
-                onCancelJoinQueue={isOwner ? undefined : handleCancelJoinQueue}
-                onShowPlayerList={(gender) => {
-                  setPlayerListMode('players');
-                  setPlayerListGender(gender);
-                  setShowPlayerList(true);
-                }}
-                onShowManageUsers={() => setShowManageUsers(true)}
-                onEditMaxParticipants={() => {
-                  setEditGameInfoInitialTab('participants');
-                  setIsEditGameInfoModalOpen(true);
-                }}
-                attendanceByUserId={attendanceDotsByUserId}
-                onShowAttendanceLegend={() => setShowAttendanceLegend(true)}
-              />
-            </div>
-          ) : null}
 
           {/* PRD 347 — queue position, the freed-seat affordance, the one-time
               "seated from the queue" header, and the `?join=1` deep link. */}
@@ -1834,7 +1809,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               game={game}
               viewerUserId={user?.id}
               isOrganizer={isOwner}
-              hideOpenSpotRow={organizerPlacement.hideOpenSpotRow}
               onGameUpdate={setGame}
             />
           </div>

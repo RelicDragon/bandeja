@@ -12,7 +12,6 @@
     "unsureToast": "Poznamenáno. Potvrdit můžeš později.",
     "saving": "Ukládáme…",
     "queuedOffline": "Uloženo. Synchronizujeme, až budeš zase online.",
-    "youOrganizer": "Ty (organizátor)",
     "dots": {
       "confirmed": "Potvrzeno",
       "unanswered": "Zatím bez odpovědi",
@@ -64,6 +63,14 @@
       "noShowWindowClosed": "Lhůta pro označení neúčasti vypršela",
       "nudgeCooldown": "Nedávno jsi připomínal. Zkus to později.",
       "nothingToNudge": "Všichni už odpověděli"
+    },
+    "roster": {
+      "you": "Vy",
+      "seatsAria": "Potvrzeno: {{confirmed}}, nejistí: {{unsure}}, bez odpovědi: {{unanswered}}, volná místa: {{open}}",
+      "filterLabel": "Filtrovat hráče",
+      "moreActions": "Další akce pro {{name}}",
+      "showAll": "Zobrazit vše ({{total}})",
+      "showingOf": "Zobrazeno {{shown}} z {{total}}"
     }
   }
 }

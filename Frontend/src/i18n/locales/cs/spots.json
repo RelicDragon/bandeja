@@ -5,14 +5,7 @@
       "ariaLabel": "Místo se uvolnilo {{time}}"
     },
     "queue": {
-      "position_one": "Jste {{position}}. z {{count}}",
-      "position_few": "Jste {{position}}. z {{count}}",
-      "position_many": "Jste {{position}}. z {{count}}",
-      "position_other": "Jste {{position}}. z {{count}}",
-      "autoFillOn": "Automatické doplnění je zapnuté – nasadíme vás sami",
-      "autoFillOff": "Pořadatel přijímá ručně",
-      "waitForOrganizer": "Jste ve frontě. O obsazení uvolněného místa rozhoduje pořadatel.",
-      "tapToJoin": "Až se místo uvolní, klepněte na Připojit se"
+      "waitForOrganizer": "Jste ve frontě. O obsazení uvolněného místa rozhoduje pořadatel."
     },
     "settings": {
       "autoFillTitle": "Automatické doplnění z fronty",

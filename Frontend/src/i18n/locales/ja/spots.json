@@ -5,11 +5,7 @@
       "ariaLabel": "{{time}}に空きが出ました"
     },
     "queue": {
-      "position_other": "{{count}} 人中 {{position}} 番目です",
-      "autoFillOn": "自動繰り上げがオンです。自動で参加になります",
-      "autoFillOff": "主催者が手動で承認します",
-      "waitForOrganizer": "順番待ちリストに入っています。空き枠に誰が入るかは主催者が決めます。",
-      "tapToJoin": "空きが出たら「参加」をタップ"
+      "waitForOrganizer": "順番待ちリストに入っています。空き枠に誰が入るかは主催者が決めます。"
     },
     "settings": {
       "autoFillTitle": "待機列から自動で繰り上げ",

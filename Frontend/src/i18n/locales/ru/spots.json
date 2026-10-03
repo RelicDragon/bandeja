@@ -5,14 +5,7 @@
       "ariaLabel": "Место освободилось {{time}}"
     },
     "queue": {
-      "position_one": "Вы №{{position}} из {{count}}",
-      "position_few": "Вы №{{position}} из {{count}}",
-      "position_many": "Вы №{{position}} из {{count}}",
-      "position_other": "Вы №{{position}} из {{count}}",
-      "autoFillOn": "Автодобор включён — вас посадят автоматически",
-      "autoFillOff": "Организатор принимает вручную",
-      "waitForOrganizer": "Вы в списке ожидания. Организатор сам решает, кто займёт место.",
-      "tapToJoin": "Нажмите «Присоединиться», когда место освободится"
+      "waitForOrganizer": "Вы в списке ожидания. Организатор сам решает, кто займёт место."
     },
     "settings": {
       "autoFillTitle": "Автодобор из очереди",

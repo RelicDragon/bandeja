@@ -139,6 +139,9 @@
           "placeholder": "Telefon, imejl ili ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "Tvoj deo"
     }
   }
 }

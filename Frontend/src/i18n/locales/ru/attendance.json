@@ -12,7 +12,6 @@
     "unsureToast": "Принято. Подтвердить можно позже.",
     "saving": "Сохраняем…",
     "queuedOffline": "Сохранено. Синхронизируем, когда появится сеть.",
-    "youOrganizer": "Вы (организатор)",
     "dots": {
       "confirmed": "Подтвердил",
       "unanswered": "Ответа пока нет",
@@ -64,6 +63,14 @@
       "noShowWindowClosed": "Срок отметки о неявке истёк",
       "nudgeCooldown": "Вы недавно напоминали. Попробуйте позже.",
       "nothingToNudge": "Все уже ответили"
+    },
+    "roster": {
+      "you": "Вы",
+      "seatsAria": "Подтвердили: {{confirmed}}, не уверены: {{unsure}}, без ответа: {{unanswered}}, свободных мест: {{open}}",
+      "filterLabel": "Фильтр игроков",
+      "moreActions": "Действия для {{name}}",
+      "showAll": "Показать всех ({{total}})",
+      "showingOf": "Показано {{shown}} из {{total}}"
     }
   }
 }

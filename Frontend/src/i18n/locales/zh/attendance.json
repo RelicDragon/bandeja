@@ -12,7 +12,6 @@
     "unsureToast": "已记录，稍后也可以确认。",
     "saving": "保存中…",
     "queuedOffline": "已保存，恢复联网后会同步。",
-    "youOrganizer": "你（组织者）",
     "dots": {
       "confirmed": "已确认",
       "unanswered": "尚未回复",
@@ -64,6 +63,14 @@
       "noShowWindowClosed": "未到场标记的期限已过",
       "nudgeCooldown": "你刚刚提醒过，请稍后再试。",
       "nothingToNudge": "所有人都已回答"
+    },
+    "roster": {
+      "you": "你",
+      "seatsAria": "已确认 {{confirmed}}，不确定 {{unsure}}，未回复 {{unanswered}}，空位 {{open}}",
+      "filterLabel": "筛选球员",
+      "moreActions": "{{name}} 的更多操作",
+      "showAll": "显示全部（{{total}}）",
+      "showingOf": "显示 {{shown}} / {{total}}"
     }
   }
 }

@@ -137,6 +137,9 @@
           "placeholder": "手机号、邮箱或 ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "你的份额"
     }
   }
 }

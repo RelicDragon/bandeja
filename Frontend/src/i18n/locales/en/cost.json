@@ -138,6 +138,9 @@
           "placeholder": "Phone, email or ID"
         }
       }
+    },
+    "roster": {
+      "yourShare": "Your share"
     }
   }
 }

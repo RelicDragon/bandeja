@@ -744,7 +744,7 @@ class PushNotificationService {
 
       // PRD 348 — "Settle your share" lands on the game's Cost card with the
       // settle sheet open (same deep link the Wallet's owed rows use).
-      // `GameCostCard` consumes `?section=cost&settle=1` and strips it.
+      // `GameRoster` (`useRosterCost`) consumes `?section=cost&settle=1` and strips it.
       case 'GAME_COST_REMINDER':
         if (payload?.gameId) {
           navigationService.navigateToPath(

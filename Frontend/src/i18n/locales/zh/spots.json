@@ -5,11 +5,7 @@
       "ariaLabel": "{{time}}空出一个名额"
     },
     "queue": {
-      "position_other": "你排在第 {{position}} 位，共 {{count}} 人",
-      "autoFillOn": "已开启自动补位，会自动帮你入场",
-      "autoFillOff": "由组织者手动通过",
-      "waitForOrganizer": "你已在候补队列中，由组织者决定谁填补空位。",
-      "tapToJoin": "有空位时点击“加入”"
+      "waitForOrganizer": "你已在候补队列中，由组织者决定谁填补空位。"
     },
     "settings": {
       "autoFillTitle": "从队列自动补位",

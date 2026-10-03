@@ -207,12 +207,12 @@ function summaryBar(segs) {
     noshow: { bar: 'bg-gray-400 hatch dark:bg-gray-500', sw: 'bg-gray-400 hatch dark:bg-gray-500', label: 'no-show' },
   };
   const list = segs.filter(s => s.n > 0);
-  const aria = list.map(s => `${s.n} ${kinds[s.k].label}`).join(', ');
+  const aria = list.map(s => `${s.n} ${kinds[s.k].label}${s.k === 'open' && s.n > 1 ? 's' : ''}`).join(', ');
   const bar = list.map(s => `<span style="flex:${s.n}" class="h-full rounded-full ${kinds[s.k].bar}"></span>`).join('');
   const legend = list.map(s => `
     <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
       <span class="h-2.5 w-2.5 rounded-[3px] ${kinds[s.k].sw}" aria-hidden="true"></span>
-      <span><span class="font-semibold tabular-nums text-gray-900 dark:text-white">${s.n}</span> ${kinds[s.k].label}</span>
+      <span><span class="font-semibold tabular-nums text-gray-900 dark:text-white">${s.n}</span> ${kinds[s.k].label}${s.k === 'open' && s.n > 1 ? 's' : ''}</span>
     </span>`).join('<span class="text-gray-300 dark:text-gray-600" aria-hidden="true">·</span>');
   return `
   <div class="mt-3" role="img" aria-label="${aria}">
@@ -263,8 +263,8 @@ function ticketOwner({ amount, payer = true }) {
     <div class="flex min-w-0 flex-1 items-center gap-3 py-3 ps-3.5 pe-3">
       <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-500 text-white shadow-sm shadow-green-500/30">${I('check', 'h-4 w-4', 3)}</span>
       <div class="min-w-0">
-        <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">Confirmed <span class="font-normal text-gray-500 dark:text-gray-400">· You (organizer)</span></p>
-        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Your share</p>
+        <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">Confirmed</p>
+        <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">You (organizer)</p>
       </div>
     </div>
     <div class="relative w-px" aria-hidden="true">
@@ -371,7 +371,7 @@ function attDot(att) {
 function ledgerRow(r) {
   const p = r.p;
   const tags = [];
-  if (r.payer) tags.push(`<span class="inline-flex items-center rounded-full bg-primary-50 px-1.5 py-px text-[11px] font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">paid the club</span>`);
+  if (r.payer) tags.push(`<span class="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-primary-50 px-1.5 py-px text-[11px] font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">paid the club</span>`);
   else tags.push(chip(r.state, 'sm'));
   if (r.att === 'noshow') tags.push(`<span class="inline-flex items-center rounded-full bg-gray-100 px-1.5 py-px text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">No-show</span>`);
   else tags.push(`<span class="truncate">· ${ATT[r.att].word}</span>`);
@@ -518,7 +518,7 @@ function frame3Body() {
     </div>`;
   return `
   <section class="${CARD}">
-    ${cardHeader({ count: '3/4', sub: '1 open seat · you collect', right: toggle })}
+    ${cardHeader({ count: '3/4', sub: '1 open seat', right: toggle })}
     <div class="mt-3">${lineup([
       seat({ ...marko, att: 'yes', owner: true, you: true, money: { state: 'PAYER' } }, { money: true }),
       seat({ ...ana, att: 'yes', money: { amt: '€10', state: 'MARKED_PAID' } }, { money: true }),
@@ -690,9 +690,9 @@ function openSpotsTile(n, canInvite) {
 }
 
 function filterChips(list) {
-  return `<div class="-mx-4 overflow-x-auto no-scrollbar"><div class="flex items-center gap-1.5 px-4" role="tablist" aria-label="Filter players">${list.map(c => c.sep
-    ? `<span class="mx-1 h-5 w-px shrink-0 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>`
-    : `<button type="button" role="tab" aria-selected="${!!c.active}" class="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition after:absolute ${c.active
+  return `<div><div class="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Filter players">${list.map(c => c.sep
+    ? `<span class="basis-full" aria-hidden="true"></span><span class="me-0.5 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 dark:text-gray-500">${I('lock', 'h-3 w-3')}Collector</span>`
+    : `<button type="button" role="tab" aria-selected="${!!c.active}" class="relative flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition after:absolute after:-inset-y-1 after:inset-x-0 ${c.active
         ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
         : 'border border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200'}">${c.sw ? `<span class="h-2 w-2 rounded-[2px] ${c.sw}" aria-hidden="true"></span>` : ''}${c.label}<span class="tabular-nums ${c.active ? 'opacity-70' : 'text-gray-400'}">${c.n}</span></button>`).join('')}</div></div>`;
 }
@@ -747,8 +747,8 @@ function frame7bBody() {
     ${cardHeader({ count: '20/24', sub: 'Americano tournament · 4 open spots' })}
     <button type="button" class="mt-3 flex w-full min-h-11 items-center gap-3 rounded-xl text-start" aria-label="Show all 20 players">
       <span class="flex ps-1">
-        ${stack.map((p, i) => `<span class="relative -ms-2 rounded-full ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ${ringFor(p.att)}" style="z-index:${10 - i}">${avatar(p, 36)}</span>`).join('')}
-        <span class="relative -ms-2 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-[11px] font-semibold tabular-nums text-gray-700 ring-2 ring-white dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-900">+13</span>
+        ${stack.map((p, i) => `<span class="relative -ms-1 rounded-full ring-2 ring-offset-[1.5px] ring-offset-white dark:ring-offset-gray-900 ${ringFor(p.att)}" style="z-index:${10 - i}">${avatar(p, 36)}</span>`).join('')}
+        <span class="relative -ms-1 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-[11px] font-semibold tabular-nums text-gray-700 ring-2 ring-white dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-900">+13</span>
       </span>
       <span class="ms-auto inline-flex items-center gap-0.5 text-xs font-semibold text-primary-600 dark:text-primary-400">Show all${I('chevDown', 'h-3.5 w-3.5')}</span>
     </button>

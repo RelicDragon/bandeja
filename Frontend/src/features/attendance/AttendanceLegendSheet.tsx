@@ -7,10 +7,9 @@
  * detail — a bottom sheet — with each dot drawn next to its own meaning, so the
  * mapping is visual rather than described.
  *
- * It is reached by pressing a dot or the 44 px "What the dots mean" button
- * (`AttendanceLegendButton`); the organizer caption under the progress pill
- * still carries the same information unconditionally, so nothing here is the
- * only route to it.
+ * It is reached by pressing a dot or the (i) control next to the roster's seat
+ * strip legend (`RosterSeatBar`), which also spells every count out in words,
+ * so nothing here is the only route to it.
  */
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
