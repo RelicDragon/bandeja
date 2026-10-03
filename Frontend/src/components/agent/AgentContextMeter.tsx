@@ -6,6 +6,8 @@ import type { AgentChatUsageDto } from '@shared/agentContract';
 import { agentContextLevel, agentContextRatio, type AgentContextLevel } from '@/features/agent/agentContextUsage';
 import { Drawer, DrawerCloseButton, DrawerContent, DrawerHandle } from '@/components/ui/Drawer';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
+import { useAuthStore } from '@/store/authStore';
+import { formatGameTime, resolveDisplaySettings } from '@/utils/displayPreferences';
 
 const SHEET_ID = 'agent-context-sheet';
 const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -190,6 +192,8 @@ export function AgentContextSheet({
 }) {
   const { t, i18n } = useTranslation();
   const fmt = useTokenFormat();
+  const user = useAuthStore((state) => state.user);
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   useBackButtonModal(open, onClose, SHEET_ID);
   if (!usage) return null;
 
@@ -200,10 +204,7 @@ export function AgentContextSheet({
   const dailyRatio = usage.dailyBudgetTokens > 0 ? Math.min(1, usage.dailyUsedTokens / usage.dailyBudgetTokens) : 1;
   const dailyLevel = dailyRatio >= 0.9 ? 'critical' : dailyRatio >= 0.75 ? 'warn' : 'ok';
   const resetsAt = new Date(usage.dailyResetsAt);
-  const resetTime = new Intl.DateTimeFormat(i18n.language, {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(resetsAt);
+  const resetTime = formatGameTime(usage.dailyResetsAt, displaySettings);
   const resetIn = formatDuration(resetsAt.getTime() - Date.now(), i18n.language);
   const barColor = {
     ok: 'bg-primary-500',
