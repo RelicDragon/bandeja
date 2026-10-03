@@ -47,6 +47,13 @@ describe('gameCardPropsEqual', () => {
     expect(gameCardPropsEqual(a, b)).toBe(true);
   });
 
+  it('repaints when the viewer switches the compact / full roster preference', () => {
+    const game = baseGame({ name: 'Test' });
+    const a = { game, user: { id: 'u1', gameCardFullRoster: false }, ...stableHandlers };
+    const b = { game, user: { id: 'u1', gameCardFullRoster: true }, ...stableHandlers };
+    expect(gameCardPropsEqual(a, b)).toBe(false);
+  });
+
   it('detects participant status changes for the viewer', () => {
     const participants = [
       {

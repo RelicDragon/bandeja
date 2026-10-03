@@ -238,6 +238,8 @@
     "showOnlineStatusHint": "Los demás no verán tu estado; tú tampoco verás el estado de otros usuarios.",
     "alwaysShowUserNames": "Mostrar siempre los nombres de usuarios",
     "alwaysShowUserNamesDescription": "Muestra los nombres de participantes en los carruseles de juegos sin mantener pulsado ni tocar el carrusel.",
+    "gameCardFullRoster": "Plantilla completa en las tarjetas",
+    "gameCardFullRosterDescription": "Muestra a cada jugador con su nombre y nivel en las tarjetas de partidos en lugar de la fila compacta de plazas.",
     "gender": "Género",
     "male": "Hombre",
     "female": "Mujer",

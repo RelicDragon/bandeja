@@ -167,6 +167,8 @@
     "showOnlineStatusHint": "अन्य आपकी ऑनलाइन स्थिति नहीं देखेंगे; आप भी दूसरों की नहीं देखेंगे।",
     "alwaysShowUserNames": "हमेशा उपयोगकर्ता नाम दिखाएँ",
     "alwaysShowUserNamesDescription": "कैरॉज़ल होल्ड या टच किए बिना गेम कैरॉज़ल में प्रतिभागी नाम दिखाएँ।",
+    "gameCardFullRoster": "गेम कार्ड पर पूरी सूची",
+    "gameCardFullRosterDescription": "गेम कार्ड पर कॉम्पैक्ट सीट पंक्ति के बजाय हर खिलाड़ी को नाम और स्तर के साथ दिखाएँ।",
     "verbalStatus": "स्थिति",
     "verbalStatusPlaceholder": "आपके मन में क्या है?",
     "bio": "बायो",

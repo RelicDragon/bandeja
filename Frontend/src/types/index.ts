@@ -284,6 +284,8 @@ export interface User extends BasicUser {
   blockedUserIds?: string[];
   showOnlineStatus?: boolean;
   alwaysShowUserNames?: boolean;
+  /** Game cards show the full roster (avatars, names, levels) instead of the compact seat stack. */
+  gameCardFullRoster?: boolean;
   shareGamePhotosToFollowers?: boolean;
   shareGameCreationsToFollowers?: boolean;
   shareGameResultsToFollowers?: boolean;

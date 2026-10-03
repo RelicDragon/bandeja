@@ -167,6 +167,8 @@
     "showOnlineStatusHint": "คนอื่นจะไม่เห็นสถานะออนไลน์ของคุณ คุณจะไม่เห็นสถานะออนไลน์ของผู้ใช้รายอื่น",
     "alwaysShowUserNames": "แสดงชื่อผู้ใช้เสมอ",
     "alwaysShowUserNamesDescription": "แสดงชื่อผู้เข้าร่วมในเกมหมุนโดยไม่ต้องจับหรือสัมผัสวงล้อ",
+    "gameCardFullRoster": "แสดงรายชื่อผู้เล่นทั้งหมดบนการ์ดเกม",
+    "gameCardFullRosterDescription": "แสดงผู้เล่นทุกคนพร้อมชื่อและระดับบนการ์ดเกม แทนแถวที่นั่งแบบย่อ",
     "verbalStatus": "สถานะ",
     "verbalStatusPlaceholder": "คุณคิดอะไรอยู่?",
     "bio": "ไบโอ",

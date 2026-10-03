@@ -1,20 +1,62 @@
 import type { EntityType } from '@/types';
 
-export function getGameCardEntityGradientClasses(entityType: EntityType): string {
+export type GameCardTicketTheme = {
+  /** Tinted "when" stub on the start edge of the card. */
+  stub: string;
+  /** Accent text (day label, entity label). */
+  ink: string;
+  /** Small entity dot in the eyebrow. */
+  dot: string;
+  /** Perforation line colour (`currentColor`). */
+  perf: string;
+};
+
+/** Entity colour lives in the ticket stub only, so a mixed feed stays calm. */
+export function getGameCardTicketTheme(entityType: EntityType): GameCardTicketTheme {
   switch (entityType) {
     case 'TOURNAMENT':
-      return 'bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 dark:from-red-950/25 dark:via-orange-950/15 dark:to-red-950/25 border-s-2 border-red-300 dark:border-red-800 shadow-[0_0_8px_rgba(239,68,68,0.15)] dark:shadow-[0_0_8px_rgba(239,68,68,0.2)]';
+      return {
+        stub: 'bg-gradient-to-b from-rose-50 to-orange-100/70 dark:from-rose-500/[0.14] dark:to-orange-500/[0.06]',
+        ink: 'text-rose-700 dark:text-rose-300',
+        dot: 'bg-rose-500',
+        perf: 'text-rose-300/80 dark:text-rose-400/30',
+      };
     case 'LEAGUE':
     case 'LEAGUE_SEASON':
-      return 'bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-blue-50/60 dark:from-blue-950/25 dark:via-purple-950/15 dark:to-blue-950/25 border-s-2 border-blue-300 dark:border-blue-800 shadow-[0_0_8px_rgba(59,130,246,0.15)] dark:shadow-[0_0_8px_rgba(59,130,246,0.2)]';
+      return {
+        stub: 'bg-gradient-to-b from-indigo-50 to-violet-100/70 dark:from-indigo-500/[0.14] dark:to-violet-500/[0.06]',
+        ink: 'text-indigo-700 dark:text-indigo-300',
+        dot: 'bg-indigo-500',
+        perf: 'text-indigo-300/80 dark:text-indigo-400/30',
+      };
     case 'TRAINING':
-      return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-s-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
+      return {
+        stub: 'bg-gradient-to-b from-emerald-50 to-teal-100/70 dark:from-emerald-500/[0.13] dark:to-teal-500/[0.06]',
+        ink: 'text-emerald-700 dark:text-emerald-300',
+        dot: 'bg-emerald-500',
+        perf: 'text-emerald-300/80 dark:text-emerald-400/30',
+      };
     case 'BAR':
-      return 'bg-gradient-to-br from-yellow-50/60 via-amber-50/40 to-yellow-50/60 dark:from-yellow-950/25 dark:via-amber-950/15 dark:to-yellow-950/25 border-s-2 border-yellow-300 dark:border-yellow-800 shadow-[0_0_8px_rgba(234,179,8,0.15)] dark:shadow-[0_0_8px_rgba(234,179,8,0.2)]';
+      return {
+        stub: 'bg-gradient-to-b from-amber-50 to-yellow-100/70 dark:from-amber-500/[0.14] dark:to-yellow-500/[0.06]',
+        ink: 'text-amber-700 dark:text-amber-300',
+        dot: 'bg-amber-500',
+        perf: 'text-amber-300/90 dark:text-amber-400/30',
+      };
     case 'EVENT':
-      return 'bg-gradient-to-br from-indigo-50/60 via-violet-50/40 to-indigo-50/60 dark:from-indigo-950/25 dark:via-violet-950/15 dark:to-indigo-950/25 border-s-2 border-indigo-300 dark:border-indigo-800 shadow-[0_0_8px_rgba(99,102,241,0.15)] dark:shadow-[0_0_8px_rgba(99,102,241,0.2)]';
+      return {
+        stub: 'bg-gradient-to-b from-indigo-50 to-violet-100/70 dark:from-indigo-500/[0.14] dark:to-violet-500/[0.06]',
+        ink: 'text-indigo-700 dark:text-indigo-300',
+        dot: 'bg-indigo-500',
+        perf: 'text-indigo-300/80 dark:text-indigo-400/30',
+      };
     default:
-      return '';
+      return {
+        stub: 'bg-gradient-to-b from-primary-50 to-primary-100/70 dark:from-primary-500/[0.13] dark:to-primary-500/[0.06]',
+        ink: 'text-primary-700 dark:text-primary-300',
+        dot: 'bg-primary-500',
+        perf: 'text-primary-300/80 dark:text-primary-400/30',
+      };
   }
 }
 

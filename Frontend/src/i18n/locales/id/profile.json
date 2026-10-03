@@ -167,6 +167,8 @@
     "showOnlineStatusHint": "Orang lain tidak akan melihat status online Anda; Anda juga tidak akan melihat status online pengguna lain.",
     "alwaysShowUserNames": "Selalu tampilkan nama pengguna",
     "alwaysShowUserNamesDescription": "Tampilkan nama peserta di carousel permainan tanpa memegang atau menyentuh carousel.",
+    "gameCardFullRoster": "Daftar pemain lengkap di kartu permainan",
+    "gameCardFullRosterDescription": "Tampilkan setiap pemain beserta nama dan levelnya di kartu permainan, bukan baris kursi ringkas.",
     "verbalStatus": "Status",
     "verbalStatusPlaceholder": "Apa yang ada di pikiranmu?",
     "bio": "Biografi",

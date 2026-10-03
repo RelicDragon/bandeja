@@ -1,0 +1,86 @@
+/*
+ * Game card "match ticket" shape.
+ *
+ * The notches on the perforation are real cut-outs (mask), so the page shows
+ * through whatever its background is. Because a mask also clips box-shadow,
+ * depth comes from `filter: drop-shadow` on the wrapper instead.
+ */
+.gc-ticket-wrap {
+  filter: drop-shadow(0 0 0.6px rgb(15 23 42 / 0.22)) drop-shadow(0 6px 14px rgb(15 23 42 / 0.06));
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.35s ease-out;
+}
+
+.dark .gc-ticket-wrap {
+  filter: drop-shadow(0 0 0.6px rgb(255 255 255 / 0.16)) drop-shadow(0 10px 22px rgb(0 0 0 / 0.4));
+}
+
+@media (hover: hover) {
+  .gc-ticket-wrap:hover {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 0.6px rgb(15 23 42 / 0.22)) drop-shadow(0 12px 24px rgb(15 23 42 / 0.11));
+  }
+}
+
+.gc-ticket-wrap:active {
+  transform: scale(0.985);
+}
+
+.gc-ticket {
+  --gc-stub: 78px;
+  --gc-notch-x: var(--gc-stub);
+  --gc-notch-r: 7px;
+  -webkit-mask:
+    radial-gradient(circle var(--gc-notch-r) at var(--gc-notch-x) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--gc-notch-r) at var(--gc-notch-x) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle var(--gc-notch-r) at var(--gc-notch-x) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--gc-notch-r) at var(--gc-notch-x) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+}
+
+[dir='rtl'] .gc-ticket {
+  --gc-notch-x: calc(100% - var(--gc-stub));
+}
+
+/* Dashed perforation between the stub and the body. */
+.gc-perf {
+  width: 1px;
+  background-image: linear-gradient(to bottom, currentColor 50%, transparent 50%);
+  background-size: 1px 6px;
+}
+
+.gc-live-dot {
+  position: relative;
+}
+
+.gc-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.35;
+  animation: gc-live-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes gc-live-ping {
+  75%,
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-ticket-wrap {
+    transition: none;
+  }
+  .gc-ticket-wrap:hover,
+  .gc-ticket-wrap:active {
+    transform: none;
+  }
+  .gc-live-dot::after {
+    animation: none;
+  }
+}

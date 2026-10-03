@@ -238,6 +238,8 @@
     "showOnlineStatusHint": "Ostatní neuvidí váš online stav; vy také neuvidíte stav ostatních.",
     "alwaysShowUserNames": "Vždy zobrazovat jména uživatelů",
     "alwaysShowUserNamesDescription": "Zobrazit jména účastníků v herních karuselech bez držení nebo dotyku karuselu.",
+    "gameCardFullRoster": "Úplná soupiska na kartách her",
+    "gameCardFullRosterDescription": "Zobrazit na kartách her každého hráče se jménem a úrovní místo kompaktní řady míst.",
     "verbalStatus": "Stav",
     "verbalStatusPlaceholder": "Co máte na mysli?",
     "bio": "O mně",

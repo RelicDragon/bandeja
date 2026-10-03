@@ -5,10 +5,11 @@ interface GameCardPlayersPhotoProps {
   className?: string;
 }
 
+/** Main game photo as a small thumbnail at the start of the ticket footer. */
 function GameCardPlayersPhotoInner({ url, className = '' }: GameCardPlayersPhotoProps) {
   return (
     <div
-      className={`size-[7rem] shrink-0 overflow-hidden rounded-xl shadow-sm ring-1 ring-gray-200 transition-shadow duration-300 group-hover:shadow-md dark:ring-gray-700 ${className}`}
+      className={`size-10 shrink-0 overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/10 ${className}`}
     >
       <img
         src={url}

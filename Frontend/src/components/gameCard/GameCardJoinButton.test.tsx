@@ -146,3 +146,29 @@ describe('GameCardJoinButton — unchanged behaviour', () => {
     expect(container.querySelector('[data-testid="join-button-shimmer"]')).toBeNull();
   });
 });
+
+describe('GameCardJoinButton — ticket pill variant', () => {
+  it('keeps the label short; the seat caption beside it carries the count', () => {
+    const button = render({ variant: 'pill', openSeats: 1 });
+    expect(button.textContent).toBe('games.join');
+    expect(button.getAttribute('aria-label')).toBe('games.joinAriaSeatsLeft:{"count":1}');
+  });
+
+  it('names the full action for screen readers when no count is scarce', () => {
+    const button = render({ variant: 'pill', openSeats: 3 });
+    expect(button.getAttribute('aria-label')).toBe('createGame.addMeToGame');
+  });
+
+  it('turns into the queue CTA on a full game', () => {
+    const button = render({ variant: 'pill', hasFreeSlots: false, queueLength: 2 });
+    expect(button.textContent).toBe('games.card.joinQueueShort');
+    expect(button.getAttribute('aria-label')).toBe('games.joinAriaQueueWaiting:{"count":2}');
+  });
+
+  it('still confirms before joining', () => {
+    const onJoin = vi.fn();
+    const button = render({ variant: 'pill', onJoin });
+    act(() => button.click());
+    expect(onJoin).not.toHaveBeenCalled();
+  });
+});

@@ -167,6 +167,8 @@
     "showOnlineStatusHint": "لن يرى الآخرون حالة اتصالك؛ ولن ترى أيضاً حالات اتصال المستخدمين الآخرين.",
     "alwaysShowUserNames": "إظهار أسماء المستخدمين دائماً",
     "alwaysShowUserNamesDescription": "أظهر أسماء المشاركين في قوائم المباريات دون الضغط أو لمس القائمة.",
+    "gameCardFullRoster": "القائمة الكاملة في بطاقات المباريات",
+    "gameCardFullRosterDescription": "اعرض كل لاعب باسمه ومستواه في بطاقات المباريات بدلاً من صف المقاعد المختصر.",
     "verbalStatus": "الحالة",
     "verbalStatusPlaceholder": "بماذا تفكر؟",
     "bio": "نبذة",

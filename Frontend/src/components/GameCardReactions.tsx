@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { MoreHorizontal } from 'lucide-react';
+import { Heart, MoreHorizontal } from 'lucide-react';
 import { gamesApi } from '@/api/games';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
@@ -23,7 +23,19 @@ interface GameCardReactionsProps {
   onReactionsChange: (next: ReactionRow[]) => void;
   className?: string;
   pickerOpens?: 'above' | 'below';
+  /**
+   * Quiet toolbar for the game card ticket: one neutral pill holding the
+   * reaction (long-press / right-click opens the full picker, so there is no
+   * separate "⋯" glyph) followed by `trailing` actions.
+   */
+  bare?: boolean;
+  /** Extra toolbar buttons (bare mode only), drawn after a hairline divider. */
+  trailing?: React.ReactNode;
 }
+
+const LONG_PRESS_MS = 450;
+/** A finger that travels this far is scrolling, not pressing. */
+const PRESS_SLOP_PX = 10;
 
 export function GameCardReactions({
   entityType,
@@ -33,6 +45,8 @@ export function GameCardReactions({
   onReactionsChange,
   className = '',
   pickerOpens = 'above',
+  bare = false,
+  trailing = null,
 }: GameCardReactionsProps) {
   const theme = useMemo(() => getGameCardReactionTheme(entityType), [entityType]);
   const { t } = useTranslation();
@@ -40,6 +54,9 @@ export function GameCardReactions({
   const [pending, setPending] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<number | null>(null);
+  const longPressFired = useRef(false);
+  const pressOrigin = useRef<{ x: number; y: number } | null>(null);
   const [pickerLayout, setPickerLayout] = useState<{
     top?: number;
     bottom?: number;
@@ -159,12 +176,20 @@ export function GameCardReactions({
   const canReact = Boolean(currentUserId);
   const readOnlyEntries = Object.entries(counts);
 
-  if (!canReact && readOnlyEntries.length === 0) {
+  if (!canReact && readOnlyEntries.length === 0 && !(bare && trailing)) {
     return null;
   }
 
+  const cancelLongPress = () => {
+    pressOrigin.current = null;
+    if (longPressTimer.current) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
   const stripPanel = !canReact ? (
-    <div className={`flex items-center gap-0.5 rounded-lg ps-0.5 pe-0.5 py-0 min-h-[28px] ${theme.panel}`}>
+    <div className={`flex items-center gap-0.5 rounded-lg ps-0.5 pe-0.5 py-0 min-h-[28px] ${bare ? '' : theme.panel}`}>
       {readOnlyEntries.map(([emoji, count]) => (
         <div key={emoji} className="flex flex-col items-center justify-center px-0.5 min-w-[22px]">
           <span className="text-sm leading-none">{emoji}</span>
@@ -175,7 +200,7 @@ export function GameCardReactions({
       ))}
     </div>
   ) : (
-    <div className={`flex items-center gap-0 rounded-lg ps-0.5 pe-0.5 py-0 min-h-[28px] ${theme.panel}`}>
+    <div className={`flex items-center gap-0 rounded-lg ps-0.5 pe-0.5 py-0 min-h-[28px] ${bare ? '' : theme.panel}`}>
       <button
         type="button"
         data-reaction-button="true"
@@ -262,6 +287,107 @@ export function GameCardReactions({
           document.body
         )
       : null;
+
+  if (bare) {
+    const chips = (entries: [string, number][]) =>
+      entries.map(([emoji, count]) => (
+        <span key={emoji} className="flex shrink-0 items-center gap-0.5 px-1 leading-none">
+          <span className="text-[13px]">{emoji}</span>
+          {count > 1 ? (
+            <span className="text-[11px] font-medium tabular-nums text-gray-500 dark:text-gray-400">{count}</span>
+          ) : null}
+        </span>
+      ));
+    const heartButton = canReact ? (
+      <button
+        type="button"
+        data-reaction-button="true"
+        disabled={pending}
+        aria-haspopup="dialog"
+        aria-label={t('chat.reactions.addReaction')}
+        title={t('chat.reactions.addReaction')}
+        onClick={(e) => {
+          if (longPressFired.current) {
+            longPressFired.current = false;
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          handleQuickReaction(e);
+        }}
+        onPointerDown={(e) => {
+          longPressFired.current = false;
+          pressOrigin.current = { x: e.clientX, y: e.clientY };
+          if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
+          longPressTimer.current = window.setTimeout(() => {
+            longPressFired.current = true;
+            setPickerOpen(true);
+          }, LONG_PRESS_MS);
+        }}
+        onPointerMove={(e) => {
+          const origin = pressOrigin.current;
+          if (!origin) return;
+          if (Math.abs(e.clientX - origin.x) > PRESS_SLOP_PX || Math.abs(e.clientY - origin.y) > PRESS_SLOP_PX) {
+            cancelLongPress();
+          }
+        }}
+        onPointerUp={cancelLongPress}
+        onPointerLeave={cancelLongPress}
+        onPointerCancel={cancelLongPress}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          cancelLongPress();
+          setPickerOpen(true);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'ContextMenu' || (e.key === 'Enter' && e.shiftKey)) {
+            e.preventDefault();
+            setPickerOpen(true);
+          }
+        }}
+        className="relative flex h-7 min-w-7 shrink-0 select-none items-center justify-center gap-0.5 rounded-full px-1 transition-colors hover:bg-white disabled:opacity-60 dark:hover:bg-white/10 [-webkit-touch-callout:none]"
+      >
+        {pending ? (
+          <span className={`h-3.5 w-3.5 animate-spin rounded-full border-2 ${theme.spinner}`} />
+        ) : userEmoji ? (
+          <>
+            <span className="text-[14px] leading-none">{userEmoji}</span>
+            {counts[userEmoji] > 1 ? (
+              <span className="text-[11px] font-medium tabular-nums leading-none text-gray-500 dark:text-gray-400">
+                {counts[userEmoji]}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <Heart size={15} className="text-gray-500 dark:text-gray-400" aria-hidden />
+        )}
+      </button>
+    ) : null;
+
+    return (
+      <>
+        {pickerPortal}
+        <div
+          ref={rootRef}
+          className={`relative z-30 flex h-8 shrink-0 items-center rounded-full bg-gray-900/[0.04] p-0.5 pointer-events-auto dark:bg-white/[0.06] ${className}`}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {chips(canReact ? otherReactionEntries : readOnlyEntries)}
+          {heartButton}
+          {trailing ? (
+            <>
+              {canReact || readOnlyEntries.length > 0 ? (
+                <span className="mx-0.5 h-4 w-px shrink-0 bg-gray-900/10 dark:bg-white/10" aria-hidden />
+              ) : null}
+              {trailing}
+            </>
+          ) : null}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

@@ -26,6 +26,7 @@ function viewerPrefsKey(user: unknown): string {
     timeFormat?: string;
     weekStart?: string;
     alwaysShowUserNames?: boolean;
+    gameCardFullRoster?: boolean;
     currentCityId?: string;
     currentCity?: { id?: string };
     gender?: string | null;
@@ -37,6 +38,7 @@ function viewerPrefsKey(user: unknown): string {
     u.timeFormat ?? '',
     u.weekStart ?? '',
     u.alwaysShowUserNames === false ? '0' : '1',
+    u.gameCardFullRoster ? '1' : '0',
     u.currentCityId ?? u.currentCity?.id ?? '',
     // PRD 359 — the viewer's gender decides how many MIX_PAIRS seats are open
     // to them, so the join label changes when it does.

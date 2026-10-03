@@ -117,7 +117,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries, payoutMethods } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, gameCardFullRoster, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries, payoutMethods } = req.body;
 
   /**
    * PRD 348 — the organiser's saved "how to pay me" list, copied onto the games
@@ -196,6 +196,10 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     alwaysShowUserNames === undefined
       ? undefined
       : alwaysShowUserNames === true || alwaysShowUserNames === 'true';
+  const normalizedGameCardFullRoster =
+    gameCardFullRoster === undefined
+      ? undefined
+      : gameCardFullRoster === true || gameCardFullRoster === 'true';
 
   const normalizeShareFlag = (v: unknown) =>
     v === undefined ? undefined : v === true || v === 'true';
@@ -297,6 +301,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
         ...(normalizedShowOnlineStatus !== undefined && { showOnlineStatus: normalizedShowOnlineStatus }),
         ...(normalizedAlwaysShowUserNames !== undefined && { alwaysShowUserNames: normalizedAlwaysShowUserNames }),
+        ...(normalizedGameCardFullRoster !== undefined && { gameCardFullRoster: normalizedGameCardFullRoster }),
         ...(normalizedSharePhotos !== undefined && { shareGamePhotosToFollowers: normalizedSharePhotos }),
         ...(normalizedShareCreations !== undefined && { shareGameCreationsToFollowers: normalizedShareCreations }),
         ...(normalizedShareResults !== undefined && { shareGameResultsToFollowers: normalizedShareResults }),

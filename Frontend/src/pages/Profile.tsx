@@ -143,6 +143,7 @@ export const ProfileContent = () => {
   const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(user?.showOnlineStatus !== false);
   const [alwaysShowUserNames, setAlwaysShowUserNames] = useState(user?.alwaysShowUserNames !== false);
+  const [gameCardFullRoster, setGameCardFullRoster] = useState(user?.gameCardFullRoster === true);
   const [shareGamePhotosToFollowers, setShareGamePhotosToFollowers] = useState(user?.shareGamePhotosToFollowers !== false);
   const [shareGameCreationsToFollowers, setShareGameCreationsToFollowers] = useState(user?.shareGameCreationsToFollowers !== false);
   const [shareGameResultsToFollowers, setShareGameResultsToFollowers] = useState(user?.shareGameResultsToFollowers !== false);
@@ -269,6 +270,7 @@ export const ProfileContent = () => {
       setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
       setShowOnlineStatus(user.showOnlineStatus !== false);
       setAlwaysShowUserNames(user.alwaysShowUserNames !== false);
+      setGameCardFullRoster(user.gameCardFullRoster === true);
       setShareGamePhotosToFollowers(user.shareGamePhotosToFollowers !== false);
       setShareGameCreationsToFollowers(user.shareGameCreationsToFollowers !== false);
       setShareGameResultsToFollowers(user.shareGameResultsToFollowers !== false);
@@ -433,6 +435,11 @@ export const ProfileContent = () => {
   const handleAlwaysShowUserNamesChange = (value: boolean) => {
     setAlwaysShowUserNames(value);
     updateProfile({ alwaysShowUserNames: value });
+  };
+
+  const handleGameCardFullRosterChange = (value: boolean) => {
+    setGameCardFullRoster(value);
+    updateProfile({ gameCardFullRoster: value });
   };
 
   const handleShareGamePhotosToFollowersChange = (value: boolean) => {
@@ -1371,6 +1378,21 @@ export const ProfileContent = () => {
               <ToggleSwitch
                 checked={alwaysShowUserNames}
                 onChange={handleAlwaysShowUserNamesChange}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                  {t('profile.gameCardFullRoster')}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('profile.gameCardFullRosterDescription')}
+                </p>
+              </div>
+              <ToggleSwitch
+                checked={gameCardFullRoster}
+                onChange={handleGameCardFullRosterChange}
               />
             </div>
 
