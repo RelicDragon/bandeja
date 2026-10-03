@@ -111,12 +111,13 @@ export default defineConfig(({ command, mode }) => {
   server: {
     port: 3001,
     proxy: {
+      // DEV_API_PROXY_TARGET: point a second dev server at a backend on another port.
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.DEV_API_PROXY_TARGET || 'http://localhost:3000',
         changeOrigin: true,
       },
       '/socket.io/': {
-        target: 'http://localhost:3000',
+        target: process.env.DEV_API_PROXY_TARGET || 'http://localhost:3000',
         changeOrigin: true,
         ws: true,
       },
