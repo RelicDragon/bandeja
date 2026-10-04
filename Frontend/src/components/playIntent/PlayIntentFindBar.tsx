@@ -11,7 +11,7 @@ import { useNavigateWithTracking } from '@/hooks/useNavigateWithTracking';
 import { useTranslation } from 'react-i18next';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { useAuthStore } from '@/store/authStore';
-import { usePlayIntentMutations, usePlayIntentPool } from '@/hooks/usePlayIntent';
+import { useDemandSlots, usePlayIntentMutations, usePlayIntentPool } from '@/hooks/usePlayIntent';
 import { PlayIntentSheet } from './PlayIntentSheet';
 import { PlayIntentLookingStrip } from './PlayIntentLookingStrip';
 import { PlayIntentIdleCtaCard } from './PlayIntentIdleCtaCard';
@@ -26,6 +26,7 @@ import toast from 'react-hot-toast';
 import { SharedPlayIntentDialog } from './SharedPlayIntentDialog';
 import { SharedPlayIntentProgressDialog } from './SharedPlayIntentProgressDialog';
 import { useSharedPlayIntentEntry } from './useSharedPlayIntentEntry';
+import { demandSlotWhen, headlineDemandSlot } from './demandSlots';
 import { PlayIntentUiContext as Ctx, type PlayIntentCtx, usePlayIntentContext as usePlayIntentUi } from './PlayIntentContext';
 
 function humanDays(dateKeys: string[], todayKey: string, t: (k: string) => string): string {
@@ -87,7 +88,7 @@ export function PlayIntentProvider({
   acceptSharedDeepLinks = false,
   children,
 }: ProviderProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const navigateTracked = useNavigateWithTracking();
@@ -123,6 +124,10 @@ export function PlayIntentProvider({
     enabled ? resolvedSport : undefined,
   );
   const { cancel } = usePlayIntentMutations(cityId, resolvedSport);
+  const { data: demandSlots } = useDemandSlots(
+    enabled ? cityId : undefined,
+    enabled ? resolvedSport : undefined,
+  );
 
   const proposal = resolvePlayIntentProposal(pool?.pendingProposal, deepProposal);
   const looking = !!pool?.myIntent || !!proposal;
@@ -310,6 +315,32 @@ export function PlayIntentProvider({
     t,
   );
 
+  const headlineSlot = headlineDemandSlot(demandSlots?.slots);
+  const slotHeadline = useMemo(() => {
+    if (!headlineSlot || !demandSlots) return null;
+    const when = demandSlotWhen(headlineSlot, demandSlots.todayKey, t, i18n.language);
+    if (looking) {
+      return headlineSlot.viewerIn
+        ? t('playIntent.slotAlsoWant', { count: headlineSlot.count, when })
+        : null;
+    }
+    return t('playIntent.slotHeadline', { count: headlineSlot.fitCount, when });
+  }, [demandSlots, headlineSlot, i18n.language, looking, t]);
+  const slotHeadlineMembers = useMemo(
+    () =>
+      // Idle copy counts people at the viewer's level, so show only those faces.
+      (headlineSlot?.members ?? [])
+        .filter((m) => looking || m.fitsViewer)
+        .slice(0, 3)
+        .map((m) => ({
+          userId: m.userId,
+          firstName: m.firstName,
+          lastName: m.lastName,
+          avatar: m.avatar,
+        })),
+    [headlineSlot, looking],
+  );
+
   const stopLooking = useCallback(() => {
     void cancel.mutateAsync(pool?.myIntent?.id).catch(() => {
       toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
@@ -387,6 +418,8 @@ export function PlayIntentProvider({
       othersCount: pool?.total ?? 0,
       stripMembers,
       proposalArrivalToken,
+      slotHeadline,
+      slotHeadlineMembers,
     }),
     [
       enabled,
@@ -401,6 +434,8 @@ export function PlayIntentProvider({
       pool?.total,
       stripMembers,
       proposalArrivalToken,
+      slotHeadline,
+      slotHeadlineMembers,
     ],
   );
 
@@ -436,6 +471,7 @@ export function PlayIntentProvider({
           intent={pool?.myIntent}
           proposal={proposal}
           matchingGames={pool?.matchingGames ?? []}
+          demandSlots={demandSlots}
           onChanged={handleLobbyChanged}
         />
       )}
@@ -470,6 +506,7 @@ export function PlayIntentActiveStrip() {
     proposalArrivalToken,
     openLobby,
     stopLooking,
+    slotHeadline,
   } = usePlayIntentUi();
 
   if (!enabled || !looking) return null;
@@ -482,6 +519,7 @@ export function PlayIntentActiveStrip() {
       othersCount={othersCount}
       stripMembers={stripMembers}
       proposalArrivalToken={proposalArrivalToken}
+      slotLine={slotHeadline}
       onOpenLobby={openLobby}
       onOpenProposal={openLobby}
       onConfirmStop={stopLooking}
@@ -510,6 +548,8 @@ export function PlayIntentIdleCta({
     idleWhenLabel,
     othersCount,
     stripMembers,
+    slotHeadline,
+    slotHeadlineMembers,
   } = usePlayIntentUi();
   const primarySport = getViewerPrimarySport(user);
 
@@ -518,7 +558,11 @@ export function PlayIntentIdleCta({
   // Flag on and three or more looking: the flagged count. Otherwise the card
   // keeps the hint it always had, so switching the flag on never makes the
   // strip say less than before.
-  const hint = lookingCount?.display
+  // A named slot ("3 at your level want Tue · Evening") beats any count: it
+  // says when, and the compose sheet it opens leads with that slot.
+  const hint = slotHeadline
+    ? slotHeadline
+    : lookingCount?.display
     ? t(
         lookingCount.display.window === 'todayAndTomorrow'
           ? 'playIntent.lookingCountTodayAndTomorrow'
@@ -538,7 +582,7 @@ export function PlayIntentIdleCta({
         sport={primarySport}
         title={t('playIntent.wantToPlay')}
         hint={hint}
-        members={stripMembers}
+        members={slotHeadline ? slotHeadlineMembers : stripMembers}
         onClick={openCompose}
       />
     </AnimatedMount>

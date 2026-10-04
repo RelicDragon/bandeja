@@ -97,6 +97,8 @@ function fakeCtx(overrides: Partial<PlayIntentCtx> = {}): PlayIntentCtx {
     othersCount: 0,
     stripMembers: [],
     proposalArrivalToken: 0,
+    slotHeadline: null,
+    slotHeadlineMembers: [],
     ...overrides,
   };
 }

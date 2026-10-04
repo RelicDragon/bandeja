@@ -606,6 +606,11 @@
     "suitableForNovices": {
       "title": "新しいプレイヤー歓迎",
       "hint": "新しいプレイヤーが馴染めるようサポートします。レベル範囲はそのまま適用されます。"
-    }
+    },
+    "lookingNudgeTitle_one": "この時間に{{count}}人がプレー相手を探しています",
+    "lookingNudgeTitle_other": "この時間に{{count}}人がプレー相手を探しています",
+    "lookingNudgeHint": "この時間にプレーしたい人たちです。招待はすぐ届きます",
+    "lookingNudgeInvite_one": "招待",
+    "lookingNudgeInvite_other": "{{count}}人を招待"
   }
 }

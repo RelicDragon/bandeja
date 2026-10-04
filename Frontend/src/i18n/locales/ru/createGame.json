@@ -596,6 +596,15 @@
     "suitableForNovices": {
       "title": "Новичкам рады",
       "hint": "Вы поможете новым игрокам освоиться. Диапазон уровня при этом сохраняется."
-    }
+    },
+    "lookingNudgeTitle_one": "{{count}} игрок ищет игру на это время",
+    "lookingNudgeTitle_few": "{{count}} игрока ищут игру на это время",
+    "lookingNudgeTitle_many": "{{count}} игроков ищут игру на это время",
+    "lookingNudgeTitle_other": "{{count}} игрока ищут игру на это время",
+    "lookingNudgeHint": "Они хотят играть в это время — приглашение придёт сразу",
+    "lookingNudgeInvite_one": "Пригласить",
+    "lookingNudgeInvite_few": "Пригласить {{count}}",
+    "lookingNudgeInvite_many": "Пригласить {{count}}",
+    "lookingNudgeInvite_other": "Пригласить {{count}}"
   }
 }

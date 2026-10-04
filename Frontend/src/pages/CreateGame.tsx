@@ -111,6 +111,9 @@ import { resolveCreateGameRatingFields } from '@/utils/createGameRatingFields';
 import { toastCreateGameFailure } from '@/utils/createGameFailureToast';
 import { resolvePlayIntentCreateLevelRange } from '@/utils/createGamePlayIntentLevelRange';
 import { roundLevelBand } from '@/utils/levelBand';
+import { CreateGameLookingNudge } from '@/components/createGame/CreateGameLookingNudge';
+import { demandMemberAsBasicUser } from '@/components/playIntent/demandSlots';
+import type { InviteLookingMember } from '@/components/playerInvite/lookingTypes';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -130,6 +133,8 @@ interface CreateGameProps {
   matchProposalId?: string;
   playIntentSource?: PlayIntentCreateSource;
   playIntentRosterLevels?: number[];
+  /** Invitee → OPEN play intent; the post-create invite carries it so the intent is reserved. */
+  initialInvitePlayIntentIds?: Record<string, string>;
   onMatchProposalConverted?: () => void;
 }
 
@@ -162,6 +167,7 @@ export const CreateGame = ({
   matchProposalId,
   playIntentSource,
   playIntentRosterLevels,
+  initialInvitePlayIntentIds,
   onMatchProposalConverted,
 }: CreateGameProps) => {
   const { t } = useTranslation();
@@ -299,7 +305,9 @@ export const CreateGame = ({
 
   const applyIntentDefaults = useCallback(
     (intent: CreateFlowIntent) => {
-      if (playIntentSource) {
+      // Play-intent creates (proposal/lobby source, or a demand slot's linked
+      // invites) arrive with a band covering the roster; keep it.
+      if (playIntentSource || initialInvitePlayIntentIds) {
         setIsRatingGame(intent !== 'social');
         return;
       }
@@ -317,7 +325,7 @@ export const CreateGame = ({
       }
       setIsRatingGame(true);
     },
-    [playIntentSource, user, selectedSport],
+    [playIntentSource, initialInvitePlayIntentIds, user, selectedSport],
   );
 
   const [isFormatWizardOpen, setIsFormatWizardOpen] = useState(false);
@@ -395,7 +403,9 @@ export const CreateGame = ({
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>(() => initialInvitedPlayerIds);
   const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>({});
-  const [invitePlayIntentByReceiverId, setInvitePlayIntentByReceiverId] = useState<Record<string, string>>({});
+  const [invitePlayIntentByReceiverId, setInvitePlayIntentByReceiverId] = useState<Record<string, string>>(
+    () => initialInvitePlayIntentIds ?? {},
+  );
   const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>(() => initialInvitedPlayers);
   const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(
     () => entityType === 'TRAINING' && initialCreatorNonPlaying,
@@ -1810,6 +1820,55 @@ export const CreateGame = ({
     },
   });
 
+  // Timing + looking draft for the invite surfaces (modal Looking tab and the
+  // inline nudge). Null until club, date, time and duration are all chosen.
+  const inviteGameTiming = useMemo(() => {
+    const club = clubs.find((c) => c.id === selectedClub);
+    if (!selectedTime || !selectedDate || !duration || !club) return null;
+    try {
+      const start = createDateFromClubTime(selectedDate, selectedTime, club);
+      return {
+        timeIsSet: true,
+        startTime: start.toISOString(),
+        endTime: addHours(start, duration).toISOString(),
+        timeZone: getClubTimezone(club),
+      };
+    } catch {
+      return null;
+    }
+  }, [clubs, duration, selectedClub, selectedDate, selectedTime]);
+  const inviteLookingDraft = useMemo(
+    () =>
+      inviteGameTiming
+        ? {
+            sport: selectedSport,
+            entityType,
+            clubId: selectedClub || null,
+            startTime: inviteGameTiming.startTime,
+            endTime: inviteGameTiming.endTime,
+            timeZone: inviteGameTiming.timeZone,
+            minLevel: playerLevelRange[0],
+            maxLevel: playerLevelRange[1],
+            genderTeams,
+          }
+        : null,
+    [entityType, genderTeams, inviteGameTiming, playerLevelRange, selectedClub, selectedSport],
+  );
+  const handleInviteLookingMembers = (members: InviteLookingMember[]) => {
+    const fresh = members.filter((m) => !invitedPlayerIds.includes(m.userId));
+    if (fresh.length === 0) return;
+    setInvitedPlayerIds((prev) => [...prev, ...fresh.map((m) => m.userId)]);
+    setInvitedPlayers((prev) => [...prev, ...fresh.map(demandMemberAsBasicUser)]);
+    setInvitePlayIntentByReceiverId((prev) => ({
+      ...prev,
+      ...Object.fromEntries(fresh.map((m) => [m.userId, m.intentId])),
+    }));
+  };
+  const freeInviteSlots = Math.max(
+    0,
+    maxParticipants - participants.filter(Boolean).length - invitedPlayerIds.length,
+  );
+
   const showSetupStep = showSportSelector || entityType !== 'BAR';
   const stepNumbers = {
     setup: 1,
@@ -2171,6 +2230,14 @@ export const CreateGame = ({
         />
 
         <div ref={summarySectionRefs.participants}>
+        {entityType !== 'TRAINING' && (
+          <CreateGameLookingNudge
+            lookingDraft={inviteLookingDraft}
+            freeSlots={freeInviteSlots}
+            excludeUserIds={[...invitedPlayerIds, ...(user?.id ? [user.id] : [])]}
+            onInvite={handleInviteLookingMembers}
+          />
+        )}
         <ParticipantsSection
           participants={participants}
           maxParticipants={maxParticipants}
@@ -2281,65 +2348,41 @@ export const CreateGame = ({
         />
       )}
 
-      {isInvitePlayersModalOpen && (() => {
-        const selectedClubData = clubs.find((c) => c.id === selectedClub);
-        let inviteGameTiming: { timeIsSet: boolean; startTime: string; endTime: string; timeZone: string | null } | null = null;
-        if (selectedTime && selectedDate && duration && selectedClubData) {
-          try {
-            const start = createDateFromClubTime(selectedDate, selectedTime, selectedClubData);
-            const end = addHours(start, duration);
-            inviteGameTiming = {
-              timeIsSet: true,
-              startTime: start.toISOString(),
-              endTime: end.toISOString(),
-              timeZone: getClubTimezone(selectedClubData),
-            };
-          } catch {
-            inviteGameTiming = null;
-          }
-        }
-        return (
-          <PlayerListModal
-            onClose={() => setIsInvitePlayersModalOpen(false)}
-            multiSelect={true}
-            gameSport={selectedSport}
-            genderTeams={genderTeams}
-            entityType={entityType}
-            gameTiming={inviteGameTiming}
-            lookingDraft={
-              inviteGameTiming
-                ? {
-                    sport: selectedSport,
-                    entityType,
-                    clubId: selectedClub || null,
-                    startTime: inviteGameTiming.startTime,
-                    endTime: inviteGameTiming.endTime,
-                    timeZone: inviteGameTiming.timeZone,
-                    minLevel: playerLevelRange[0],
-                    maxLevel: playerLevelRange[1],
-                    genderTeams,
-                  }
-                : null
-            }
-            onConfirm={async (playerIds, meta) => {
-              setInvitedPlayerIds(playerIds);
-              setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
-              setInvitePlayIntentByReceiverId(meta?.playIntentIdByReceiverId ?? {});
-              try {
-                const { fetchPlayers, users } = usePlayersStore.getState();
-                await fetchPlayers(undefined, selectedSport);
-                const selectedPlayers = playerIds
-                  .map(id => users[id])
-                  .filter((p): p is BasicUser => p !== undefined);
-                setInvitedPlayers(selectedPlayers);
-              } catch (error) {
-                console.error('Failed to fetch invited players data:', error);
+      {isInvitePlayersModalOpen && (
+        <PlayerListModal
+          onClose={() => setIsInvitePlayersModalOpen(false)}
+          multiSelect={true}
+          gameSport={selectedSport}
+          genderTeams={genderTeams}
+          entityType={entityType}
+          gameTiming={inviteGameTiming}
+          lookingDraft={inviteLookingDraft}
+          onConfirm={async (playerIds, meta) => {
+            setInvitedPlayerIds(playerIds);
+            setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
+            // Keep links made outside the modal (demand slot, inline nudge) for
+            // players still selected; the modal only knows its own Looking rows.
+            setInvitePlayIntentByReceiverId((prev) => {
+              const next: Record<string, string> = { ...(meta?.playIntentIdByReceiverId ?? {}) };
+              for (const id of playerIds) {
+                if (!next[id] && prev[id]) next[id] = prev[id];
               }
-            }}
-            preSelectedIds={invitedPlayerIds}
-          />
-        );
-      })()}
+              return next;
+            });
+            try {
+              const { fetchPlayers, users } = usePlayersStore.getState();
+              await fetchPlayers(undefined, selectedSport);
+              const selectedPlayers = playerIds
+                .map(id => users[id])
+                .filter((p): p is BasicUser => p !== undefined);
+              setInvitedPlayers(selectedPlayers);
+            } catch (error) {
+              console.error('Failed to fetch invited players data:', error);
+            }
+          }}
+          preSelectedIds={invitedPlayerIds}
+        />
+      )}
 
       {isFormatWizardOpen && entityType !== 'BAR' && entityType !== 'TRAINING' && (
         <GameFormatWizard

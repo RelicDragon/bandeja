@@ -22,6 +22,7 @@ import type {
 } from '../services/playIntent/playIntent.schemas';
 import { PlayIntentInvitePoolService } from '../services/playIntent/playIntentInvitePool.service';
 import { PlayIntentLookingCountService } from '../services/playIntent/playIntentLookingCount.service';
+import { PlayIntentDemandSlotsService } from '../services/playIntent/playIntentDemandSlots.service';
 
 export const getMyPlayIntent = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new Error('User ID not found');
@@ -116,6 +117,27 @@ export const getPlayIntentLookingCount = asyncHandler(async (req: AuthRequest, r
   const sport = query.sport ?? parseSport(user?.primarySport);
 
   const result = await PlayIntentLookingCountService.getForViewer(req.userId, cityId, sport);
+  res.json({ success: true, data: result });
+});
+
+/** Open demand by day × part of day — "4 at your level want Tue evening". */
+export const getPlayIntentDemandSlots = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) throw new Error('User ID not found');
+
+  const query = getValidatedRequestPart<ValidatedPlayIntentScopeQuery>(
+    req,
+    'query',
+  );
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { currentCityId: true, primarySport: true },
+  });
+  const cityId = query.cityId ?? user?.currentCityId ?? undefined;
+  if (!cityId) throw new ApiError(400, 'City is required');
+
+  const sport = query.sport ?? parseSport(user?.primarySport);
+
+  const result = await PlayIntentDemandSlotsService.getForViewer(req.userId, cityId, sport);
   res.json({ success: true, data: result });
 });
 

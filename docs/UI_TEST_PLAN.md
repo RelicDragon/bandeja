@@ -1046,6 +1046,7 @@ One boolean the organizer sets; everything here is read-only display. The tag is
 | C-60 | Location sub-step value pills | Pick date, court, time in location block (create + edit location tab) | Sub-step headers show current selection as right-aligned pill (Date: “Sat, Jul 12”; Court: name or “2/3” in multi-court; Start time: “18:00–19:30”); pill is green when the sub-step is done |
 | C-61 | Calendar picker dialog | Tap calendar tile in Date row | Calendar opens as modal dialog with title and close button; picking a date applies it and closes; X, outside tap, or hardware back dismiss without changing the date |
 | C-62 | Create game Looking | Set date/time, open invite picker, Looking tab, pick a looking player, create | Looking tab only after date/time; create sends invite with their play intent linked |
+| C-74 | Looking nudge in Players step | Pick club, date, time where OPEN intents fit | Inline "{n} players are looking for this time" + Invite above the roster; Invite adds them (up to free seats) and the row hides; created invites link their intents |
 | C-63 | No looking chrome | Wallet / team / trainer picker | No Search \| Looking switch |
 
 #### 8.3b Price — per-head preview and payment hint
@@ -2757,6 +2758,13 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 | PI-60 | Create from lobby with MATCH template | Looking any-level with a peer outside host ±0.7 → I’ll create the game → pick Flexible scoring / MATCH → create | Game creates; level band expands to cover the lobby roster (not reset to host ±0.7, not opened to 1–7) |
 | PI-61 | Create from play-intent mismatch toast | From lobby create, switch to link a reservation (or pick a time) outside the looking window, or shrink the level band so a selected player no longer fits → tap create | Create does not succeed silently; a toast explains the mismatch (time / level / club / date) |
 | PI-62 | Play-intent create ignores leftover reservations | Looking at a bookable club that already has a reservation that day → create from lobby | Default CTA is create game (game-only), not “Link reservation”; looking time is used |
+| PI-63 | Demand slot headline | Seed 2+ OPEN intents for tomorrow evening near your level (not seated) | Find idle card / My hero hint: "2 at your level want Tomorrow · Evening" with those faces only; below two fitting people the old hint returns |
+| PI-64 | Who's waiting cards | Tap the idle card | Compose sheet leads with horizontally scrolling slot cards (day · part, "{n} at your level", faces with non-fits dimmed, "{n} more to fill" / "Full game with you"); title clear of the close button; editing an existing intent shows no cards |
+| PI-65 | Create & invite from a slot | Tap Create & invite | Wizard opens on that day at the part's start (next half hour ≥ 1 h out if today's passed), public, party size, shared club if any, band covering you + invitees, only at-your-level players invited; after create each invite links their intent (MATCHED) |
+| PI-66 | Host create from own slot | Look for tomorrow evening, open the lobby, Create & invite on that slot | Created as host: your intent is consumed, invitees linked atomically |
+| PI-67 | I'm in | Not looking; tap I'm in on a slot | Toast "You're in for …"; sheet flips to the lobby; with 3 others compatible a match proposal arrives |
+| PI-68 | Looking strip slot line | Looking in a slot someone else shares | Strip subtitle "{n} more want {when} — tap to make it a game" |
+| PI-69 | Organizer push opens Looking | Create a public game matching OPEN intents; tap the "looking for this time" push | Game opens with the invite modal on the Looking tab; param gone after; a viewer who cannot invite just sees the game |
 
 ---
 

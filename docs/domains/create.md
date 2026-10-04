@@ -48,6 +48,8 @@ Shared ids (examples): Padel Americano 10/20/24, Mexicano 24, Challenger Pool, K
 - Price (`priceType`, currency, total), plus a live **per-head preview** and an optional 120-char payment hint when the price type yields a game total ([economy.md](./economy.md))
 - **Repeat** row (`Once · Weekly · Every 2 weeks`) with an optional **Until** date — see below
 - Invite from Search \| Looking when time is set; browse-city chip; level filter
+- Players step leads with an inline **looking nudge** once club, date and time are set (`CreateGameLookingNudge`, same `POST /play-intents/invite-pool` draft as the modal's Looking tab): "{n} players are looking for this time" + **Invite**, offering OPEN, not-in-proposal people whose request fits this game, up to the free seats; invites carry `playIntentId`. Not for TRAINING
+- Demand-slot create (`play-intent.md` § Demand slots) arrives with `invitePlayIntentIds`; links made outside the modal survive a later modal confirm
 - Floating summary chips when scrolled (`CreateGameSummaryBar`), including a **Repeat** chip while a cadence is selected
 
 #### Repeat (recurring series)

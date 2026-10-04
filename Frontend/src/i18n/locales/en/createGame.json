@@ -606,6 +606,11 @@
     "suitableForNovices": {
       "title": "Novices welcome",
       "hint": "You'll help newer players settle in. The level range still applies."
-    }
+    },
+    "lookingNudgeTitle_one": "{{count}} player is looking for this time",
+    "lookingNudgeTitle_other": "{{count}} players are looking for this time",
+    "lookingNudgeHint": "They asked to play then — your invite reaches them right away",
+    "lookingNudgeInvite_one": "Invite",
+    "lookingNudgeInvite_other": "Invite {{count}}"
   }
 }

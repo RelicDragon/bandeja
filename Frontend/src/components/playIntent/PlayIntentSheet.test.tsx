@@ -2,7 +2,7 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayIntent } from '@/api/playIntents';
 
 const mocks = vi.hoisted(() => ({
@@ -29,7 +29,7 @@ const intent: PlayIntent = {
 };
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
   // i18n/config.ts calls i18n.use(initReactI18next).init(...) at import time
   // (pulled in transitively via useBackButtonModal). Provide a no-op stub.
   initReactI18next: { type: '3rdParty', init: () => {} },
@@ -62,7 +62,12 @@ vi.mock('@/components/ui/Drawer', () => ({
 vi.mock('@/hooks/usePlayIntent', () => ({
   usePlayIntentMutations: () => ({
     cancel: { mutateAsync: mocks.cancel, isPending: false },
+    create: { mutateAsync: vi.fn(), isPending: false },
   }),
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
 }));
 
 vi.mock('@/hooks/usePrefersReducedMotion', () => ({
@@ -85,9 +90,17 @@ vi.mock('./CourtLobbySheet', () => ({
   CourtLobbyPanel: () => <div data-testid="lobby">radar</div>,
 }));
 
+vi.mock('./DemandSlotsSection', () => ({
+  DemandSlotsSection: () => null,
+}));
+
 describe('PlayIntentSheet', () => {
   let container: HTMLDivElement;
   let root: Root;
+
+  beforeAll(async () => {
+    await import('./PlayIntentSheet');
+  }, 60_000);
 
   beforeEach(() => {
     vi.clearAllMocks();

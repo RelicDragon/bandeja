@@ -142,6 +142,23 @@
     "lookingCountToday_one": "{{count}} आज खेलना चाहता है",
     "lookingCountToday_other": "{{count}} आज खेलना चाहते हैं",
     "lookingCountTodayAndTomorrow_one": "{{count}} आज और कल खेलना चाहता है",
-    "lookingCountTodayAndTomorrow_other": "{{count}} आज और कल खेलना चाहते हैं"
+    "lookingCountTodayAndTomorrow_other": "{{count}} आज और कल खेलना चाहते हैं",
+    "slotsTitle": "कौन इंतज़ार कर रहा है",
+    "slotsHint": "गेम बनाने के लिए समय पर टैप करें",
+    "slotFitCount_one": "आपके स्तर के {{count}}",
+    "slotFitCount_other": "आपके स्तर के {{count}}",
+    "slotCount_one": "{{count}} खोज रहा है",
+    "slotCount_other": "{{count}} खोज रहे हैं",
+    "slotYoureIn": "आप शामिल हैं",
+    "slotFullWithYou": "आपके साथ गेम पूरा",
+    "slotSpotsLeft_one": "{{count}} और चाहिए",
+    "slotSpotsLeft_other": "{{count}} और चाहिए",
+    "slotCreate": "बनाएं और बुलाएं",
+    "slotJoin": "मैं भी",
+    "slotJoined": "आप {{when}} के लिए शामिल हैं — भरते ही हम बताएंगे",
+    "slotHeadline_one": "आपके स्तर का {{count}} खिलाड़ी {{when}} खेलना चाहता है",
+    "slotHeadline_other": "आपके स्तर के {{count}} खिलाड़ी {{when}} खेलना चाहते हैं",
+    "slotAlsoWant_one": "{{count}} और {{when}} खेलना चाहता है — गेम बनाने के लिए टैप करें",
+    "slotAlsoWant_other": "{{count}} और {{when}} खेलना चाहते हैं — गेम बनाने के लिए टैप करें"
   }
 }

@@ -142,6 +142,23 @@
     "lookingCountToday_one": "{{count}} คนกำลังหาเกมวันนี้",
     "lookingCountToday_other": "{{count}} คนกำลังหาเกมวันนี้",
     "lookingCountTodayAndTomorrow_one": "{{count}} คนกำลังหาเกมวันนี้และพรุ่งนี้",
-    "lookingCountTodayAndTomorrow_other": "{{count}} คนกำลังหาเกมวันนี้และพรุ่งนี้"
+    "lookingCountTodayAndTomorrow_other": "{{count}} คนกำลังหาเกมวันนี้และพรุ่งนี้",
+    "slotsTitle": "ใครกำลังรอ",
+    "slotsHint": "แตะช่วงเวลาเพื่อสร้างเกม",
+    "slotFitCount_one": "ระดับเดียวกับคุณ {{count}} คน",
+    "slotFitCount_other": "ระดับเดียวกับคุณ {{count}} คน",
+    "slotCount_one": "กำลังหา {{count}} คน",
+    "slotCount_other": "กำลังหา {{count}} คน",
+    "slotYoureIn": "คุณเข้าร่วมแล้ว",
+    "slotFullWithYou": "ครบพอดีเมื่อมีคุณ",
+    "slotSpotsLeft_one": "ขาดอีก {{count}} คน",
+    "slotSpotsLeft_other": "ขาดอีก {{count}} คน",
+    "slotCreate": "สร้างและเชิญ",
+    "slotJoin": "ฉันเล่นด้วย",
+    "slotJoined": "คุณเข้าร่วม {{when}} แล้ว เราจะแจ้งเมื่อคนครบ",
+    "slotHeadline_one": "ผู้เล่นระดับเดียวกับคุณ {{count}} คนอยากเล่น {{when}}",
+    "slotHeadline_other": "ผู้เล่นระดับเดียวกับคุณ {{count}} คนอยากเล่น {{when}}",
+    "slotAlsoWant_one": "อีก {{count}} คนอยากเล่น {{when}} แตะเพื่อสร้างเกม",
+    "slotAlsoWant_other": "อีก {{count}} คนอยากเล่น {{when}} แตะเพื่อสร้างเกม"
   }
 }

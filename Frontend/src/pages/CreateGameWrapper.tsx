@@ -30,6 +30,8 @@ export const CreateGameWrapper = () => {
     matchProposalId?: string;
     playIntentSource?: PlayIntentCreateSource;
     playIntentRosterLevels?: number[];
+    /** Demand-slot create: invitee → their OPEN intent, linked by the post-create invite. */
+    invitePlayIntentIds?: Record<string, string>;
   };
   const queryInitial = useMemo(
     () => createGameDataFromDeepLinkSearch(location.search),
@@ -83,6 +85,7 @@ export const CreateGameWrapper = () => {
       matchProposalId={matchProposalId}
       playIntentSource={state?.playIntentSource}
       playIntentRosterLevels={state?.playIntentRosterLevels}
+      initialInvitePlayIntentIds={state?.invitePlayIntentIds}
       onMatchProposalConverted={() => {
         convertedRef.current = true;
       }}

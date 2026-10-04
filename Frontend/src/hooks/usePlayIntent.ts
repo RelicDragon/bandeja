@@ -68,6 +68,30 @@ export function usePlayIntentPool(cityId?: string | null, sportHint?: string | n
   return query;
 }
 
+/**
+ * Open demand by day × part of day. Keyed under the pool so every pool
+ * invalidation (socket, focus, mutations) refreshes it too; mount it next to
+ * `usePlayIntentPool`, which owns the socket subscription.
+ */
+export function useDemandSlots(
+  cityId?: string | null,
+  sport?: string | null,
+  options?: { enabled?: boolean },
+) {
+  const isAuthenticated = useAuthStore((s) => !!s.user);
+  const normalizedCityId = cityId?.trim() || undefined;
+  const normalizedSport = sport?.trim() || undefined;
+  return useQuery({
+    queryKey: [...playIntentKeys.pool(normalizedCityId), 'slots', normalizedSport] as const,
+    queryFn: () =>
+      playIntentsApi.getDemandSlots({ cityId: normalizedCityId, sport: normalizedSport }),
+    enabled: (options?.enabled ?? true) && isAuthenticated && !!normalizedCityId,
+    refetchInterval: 2 * 60_000,
+    staleTime: 15_000,
+    retry: 1,
+  });
+}
+
 export function usePlayIntentMutations(_cityId?: string | null, _sport?: string | null) {
   const qc = useQueryClient();
   const invalidate = () => {

@@ -606,6 +606,11 @@
     "suitableForNovices": {
       "title": "नए खिलाड़ियों का स्वागत",
       "hint": "आप नए खिलाड़ियों को सहज होने में मदद करेंगे। लेवल रेंज फिर भी लागू रहती है।"
-    }
+    },
+    "lookingNudgeTitle_one": "{{count}} खिलाड़ी इस समय गेम ढूंढ रहा है",
+    "lookingNudgeTitle_other": "{{count}} खिलाड़ी इस समय गेम ढूंढ रहे हैं",
+    "lookingNudgeHint": "वे इसी समय खेलना चाहते हैं — आपका निमंत्रण तुरंत पहुंचेगा",
+    "lookingNudgeInvite_one": "बुलाएं",
+    "lookingNudgeInvite_other": "{{count}} को बुलाएं"
   }
 }

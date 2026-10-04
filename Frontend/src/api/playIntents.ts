@@ -216,6 +216,46 @@ export type CreatePrefill = {
   endTimeOfDay: string | null;
 };
 
+/** One day × part-of-day bucket of open demand (`GET /play-intents/slots`). */
+export type DemandSlotPeriod = 'MORNING' | 'AFTERNOON' | 'EVENING';
+
+export type DemandSlotMember = {
+  userId: string;
+  intentId: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatar: string | null;
+  gender: string | null;
+  level: number | null;
+  /** Level band, close level, gender and (when looking) clubs all work for the viewer. */
+  fitsViewer: boolean;
+};
+
+export type DemandSlot = {
+  key: string;
+  dateKey: string;
+  period: DemandSlotPeriod;
+  windowStart: string;
+  windowEnd: string;
+  count: number;
+  fitCount: number;
+  viewerIn: boolean;
+  /** Clubs every fitting member accepts; `[]` = any club; `null` = they disagree. */
+  clubIds: string[] | null;
+  members: DemandSlotMember[];
+};
+
+export type DemandSlots = {
+  todayKey: string;
+  cityTimezone: string;
+  sport: Sport;
+  partySize: number;
+  viewerLevel: number | null;
+  /** The viewer's OPEN GAME intent in this sport (MATCHED is not offered as a host source). */
+  viewerIntentId: string | null;
+  slots: DemandSlot[];
+};
+
 export const playIntentsApi = {
   getMine: async (params?: { cityId?: string; sport?: string }) => {
     const { data } = await api.get<{ success: boolean; data: PlayIntent | null }>('/play-intents/me', {
@@ -241,6 +281,14 @@ export const playIntentsApi = {
       { params },
     );
     return data.data;
+  },
+
+  getDemandSlots: async (params?: { cityId?: string; sport?: string }) => {
+    const { data } = await api.get<{ success: boolean; data: DemandSlots }>(
+      '/play-intents/slots',
+      { params },
+    );
+    return { ...data.data, slots: data.data.slots ?? [] };
   },
 
   getPool: async (params?: { cityId?: string; sport?: string }) => {

@@ -142,6 +142,23 @@
     "lookingCountToday_one": "{{count}} 人が今日探しています",
     "lookingCountToday_other": "{{count}} 人が今日探しています",
     "lookingCountTodayAndTomorrow_one": "{{count}} 人が今日と明日探しています",
-    "lookingCountTodayAndTomorrow_other": "{{count}} 人が今日と明日探しています"
+    "lookingCountTodayAndTomorrow_other": "{{count}} 人が今日と明日探しています",
+    "slotsTitle": "待っている人",
+    "slotsHint": "時間帯をタップしてゲームを作成",
+    "slotFitCount_one": "同レベル {{count}}人",
+    "slotFitCount_other": "同レベル {{count}}人",
+    "slotCount_one": "{{count}}人が募集中",
+    "slotCount_other": "{{count}}人が募集中",
+    "slotYoureIn": "参加中",
+    "slotFullWithYou": "あなたで満員",
+    "slotSpotsLeft_one": "あと{{count}}人",
+    "slotSpotsLeft_other": "あと{{count}}人",
+    "slotCreate": "作成して招待",
+    "slotJoin": "参加する",
+    "slotJoined": "{{when}}に参加しました。人数がそろったらお知らせします",
+    "slotHeadline_one": "同レベルの{{count}}人が{{when}}にプレーしたい",
+    "slotHeadline_other": "同レベルの{{count}}人が{{when}}にプレーしたい",
+    "slotAlsoWant_one": "ほかに{{count}}人が{{when}}を希望 — タップしてゲーム作成",
+    "slotAlsoWant_other": "ほかに{{count}}人が{{when}}を希望 — タップしてゲーム作成"
   }
 }

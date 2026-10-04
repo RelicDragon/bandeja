@@ -606,6 +606,11 @@
     "suitableForNovices": {
       "title": "Pemain baru disambut",
       "hint": "Kamu akan membantu pemain baru menyesuaikan diri. Rentang level tetap berlaku."
-    }
+    },
+    "lookingNudgeTitle_one": "{{count}} pemain mencari main di waktu ini",
+    "lookingNudgeTitle_other": "{{count}} pemain mencari main di waktu ini",
+    "lookingNudgeHint": "Mereka ingin main di waktu itu — undanganmu langsung sampai",
+    "lookingNudgeInvite_one": "Undang",
+    "lookingNudgeInvite_other": "Undang {{count}}"
   }
 }

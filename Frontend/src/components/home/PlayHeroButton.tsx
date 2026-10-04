@@ -36,6 +36,7 @@ export function PlayHeroButton() {
     othersCount,
     stripMembers,
     proposalArrivalToken,
+    slotHeadline,
   } = usePlayIntentContext();
 
   // Active intent or incoming proposal → swap the hero for the live status card.
@@ -48,6 +49,7 @@ export function PlayHeroButton() {
         othersCount={othersCount}
         stripMembers={stripMembers}
         proposalArrivalToken={proposalArrivalToken}
+        slotLine={slotHeadline}
         onOpenLobby={openLobby}
         onOpenProposal={openLobby}
         onConfirmStop={stopLooking}
@@ -95,7 +97,7 @@ export function PlayHeroButton() {
               {t('home.playHero')}
             </span>
             <span className="block truncate text-xs leading-snug text-muted-foreground">
-              {t('home.playHeroHint')}
+              {slotHeadline ?? t('home.playHeroHint')}
             </span>
           </span>
         </button>

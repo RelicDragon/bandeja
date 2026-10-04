@@ -142,6 +142,23 @@
     "lookingCountToday_one": "{{count}} looking today",
     "lookingCountToday_other": "{{count}} looking today",
     "lookingCountTodayAndTomorrow_one": "{{count}} looking today and tomorrow",
-    "lookingCountTodayAndTomorrow_other": "{{count}} looking today and tomorrow"
+    "lookingCountTodayAndTomorrow_other": "{{count}} looking today and tomorrow",
+    "slotsTitle": "Who's waiting",
+    "slotsHint": "Tap a time to make it a game",
+    "slotFitCount_one": "{{count}} at your level",
+    "slotFitCount_other": "{{count}} at your level",
+    "slotCount_one": "{{count}} looking",
+    "slotCount_other": "{{count}} looking",
+    "slotYoureIn": "You're in",
+    "slotFullWithYou": "Full game with you",
+    "slotSpotsLeft_one": "{{count}} more to fill",
+    "slotSpotsLeft_other": "{{count}} more to fill",
+    "slotCreate": "Create & invite",
+    "slotJoin": "I'm in",
+    "slotJoined": "You're in for {{when}} — we'll ping you when it fills",
+    "slotHeadline_one": "{{count}} at your level wants {{when}}",
+    "slotHeadline_other": "{{count}} at your level want {{when}}",
+    "slotAlsoWant_one": "{{count}} more wants {{when}} — tap to make it a game",
+    "slotAlsoWant_other": "{{count}} more want {{when}} — tap to make it a game"
   }
 }

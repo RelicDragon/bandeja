@@ -606,6 +606,11 @@
     "suitableForNovices": {
       "title": "ยินดีต้อนรับผู้เล่นใหม่",
       "hint": "คุณจะช่วยผู้เล่นใหม่ให้ปรับตัวได้ ช่วงระดับยังคงใช้อยู่"
-    }
+    },
+    "lookingNudgeTitle_one": "มี {{count}} คนกำลังหาเกมช่วงเวลานี้",
+    "lookingNudgeTitle_other": "มี {{count}} คนกำลังหาเกมช่วงเวลานี้",
+    "lookingNudgeHint": "พวกเขาอยากเล่นช่วงนี้ คำเชิญจะถึงทันที",
+    "lookingNudgeInvite_one": "เชิญ",
+    "lookingNudgeInvite_other": "เชิญ {{count}} คน"
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, Pencil, Trash2, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,8 @@ import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import type {
+  DemandSlot,
+  DemandSlots,
   MatchProposalSummary,
   MatchingLobbyGame,
   PlayIntent,
@@ -21,6 +24,8 @@ import type {
 import type { Sport } from '@/types';
 import { PlayIntentComposePanel } from './PlayIntentComposeSheet';
 import { CourtLobbyPanel } from './CourtLobbySheet';
+import { DemandSlotsSection } from './DemandSlotsSection';
+import { demandSlotCreateState, demandSlotIntentBody, demandSlotWhen } from './demandSlots';
 
 type Mode = 'compose' | 'lobby';
 
@@ -40,6 +45,8 @@ type Props = {
   intent?: PlayIntent | null;
   proposal?: MatchProposalSummary | null;
   matchingGames?: MatchingLobbyGame[];
+  /** Open demand by day × part of day (`GET /play-intents/slots`). */
+  demandSlots?: DemandSlots | null;
   onChanged?: () => void;
 };
 
@@ -59,10 +66,13 @@ export function PlayIntentSheet({
   intent,
   proposal,
   matchingGames,
+  demandSlots,
   onChanged,
 }: Props) {
-  const { t } = useTranslation();
-  const { cancel } = usePlayIntentMutations(cityId, sport);
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { cancel, create } = usePlayIntentMutations(cityId, sport);
+  const [joiningSlotKey, setJoiningSlotKey] = useState<string | null>(null);
   const reduceMotion = usePrefersReducedMotion();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [submittedIntent, setSubmittedIntent] = useState<PlayIntent | null>(null);
@@ -92,6 +102,59 @@ export function PlayIntentSheet({
       toast.error(extractApiErrorMessage(err, t));
     }
   };
+
+  const slotsTodayKey = demandSlots?.todayKey ?? todayKey ?? '';
+  const slotsTimezone = demandSlots?.cityTimezone ?? timezone;
+
+  const createFromSlot = (slot: DemandSlot) => {
+    if (!demandSlots || !slotsTimezone) return;
+    const state = demandSlotCreateState({
+      slot,
+      partySize: demandSlots.partySize,
+      sport: demandSlots.sport,
+      timezone: slotsTimezone,
+      todayKey: slotsTodayKey,
+      viewerIntentId: demandSlots.viewerIntentId,
+      viewerLevel: demandSlots.viewerLevel,
+    });
+    onOpenChange(false);
+    navigate('/create-game', { state });
+  };
+
+  const joinSlot = async (slot: DemandSlot) => {
+    if (!cityId || !demandSlots || joiningSlotKey) return;
+    setJoiningSlotKey(slot.key);
+    try {
+      const next = await create.mutateAsync(demandSlotIntentBody(slot, cityId, demandSlots.sport));
+      toast.success(
+        t('playIntent.slotJoined', { when: demandSlotWhen(slot, slotsTodayKey, t, i18n.language) }),
+      );
+      setSubmittedIntent(next);
+      setMode('lobby');
+      onChanged?.();
+    } catch (err) {
+      toast.error(extractApiErrorMessage(err, t));
+    } finally {
+      setJoiningSlotKey(null);
+    }
+  };
+
+  // Compose shows the slots only for a brand-new intent (editing keeps the
+  // form in charge); the lobby shows them to everyone, joining only to spectators.
+  const showSlots =
+    !!demandSlots?.slots.length && (mode === 'lobby' || !activeIntent);
+  const slotsSection = showSlots && demandSlots ? (
+    <DemandSlotsSection
+      className="mt-3"
+      slots={demandSlots.slots}
+      todayKey={slotsTodayKey}
+      partySize={demandSlots.partySize}
+      canJoin={!activeIntent}
+      joiningKey={joiningSlotKey}
+      onCreate={createFromSlot}
+      onJoin={(slot) => void joinSlot(slot)}
+    />
+  ) : null;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -245,6 +308,8 @@ export function PlayIntentSheet({
               </button>
             </div>
           )}
+
+          {slotsSection}
 
           <div>
           {reduceMotion ? (

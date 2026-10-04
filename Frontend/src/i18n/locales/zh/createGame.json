@@ -606,6 +606,11 @@
     "suitableForNovices": {
       "title": "欢迎新手",
       "hint": "你会帮助新球员融入。等级范围仍然适用。"
-    }
+    },
+    "lookingNudgeTitle_one": "{{count}} 人正在找这个时段的比赛",
+    "lookingNudgeTitle_other": "{{count}} 人正在找这个时段的比赛",
+    "lookingNudgeHint": "他们想在这个时间打球，邀请会立即送达",
+    "lookingNudgeInvite_one": "邀请",
+    "lookingNudgeInvite_other": "邀请 {{count}} 人"
   }
 }

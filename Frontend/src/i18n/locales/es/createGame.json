@@ -590,6 +590,11 @@
     "suitableForNovices": {
       "title": "Novatos bienvenidos",
       "hint": "Ayudarás a los jugadores nuevos a integrarse. El rango de nivel sigue aplicándose."
-    }
+    },
+    "lookingNudgeTitle_one": "{{count}} jugador busca partido a esta hora",
+    "lookingNudgeTitle_other": "{{count}} jugadores buscan partido a esta hora",
+    "lookingNudgeHint": "Pidieron jugar a esa hora: tu invitación les llega al instante",
+    "lookingNudgeInvite_one": "Invitar",
+    "lookingNudgeInvite_other": "Invitar a {{count}}"
   }
 }

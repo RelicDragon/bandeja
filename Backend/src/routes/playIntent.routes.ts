@@ -10,6 +10,7 @@ import {
   getMyPlayIntent,
   getPlayIntentInvitePool,
   getPlayIntentLookingCount,
+  getPlayIntentDemandSlots,
   getPlayIntentPool,
   getSharedPlayIntent,
   joinSharedPlayIntent,
@@ -56,6 +57,13 @@ router.get(
   authenticate,
   validateZod({ query: playIntentOptionalScopeQuerySchema }),
   getPlayIntentLookingCount,
+);
+// Open demand grouped by day × part of day, for the lobby's "create and invite" / "I'm in".
+router.get(
+  '/slots',
+  authenticate,
+  validateZod({ query: playIntentOptionalScopeQuerySchema }),
+  getPlayIntentDemandSlots,
 );
 router.post(
   '/invite-pool',

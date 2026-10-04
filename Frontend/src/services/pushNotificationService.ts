@@ -671,12 +671,21 @@ class PushNotificationService {
       case 'MATCH_TIMER_CAP':
       case 'NEW_GAME':
       case 'GAME_MATCHES_INTENT':
-      case 'INTENT_PLAYERS_FOR_GAME':
         if (this.tryNavigateToBracketSchedule(payload)) {
           break;
         }
         if (payload?.gameId) {
           navigationService.navigateToGame(payload.gameId);
+        }
+        break;
+
+      // "N looking for this time" to the organizer: open the game on the
+      // invite modal's Looking tab, so the push ends in an invite, not a read.
+      case 'INTENT_PLAYERS_FOR_GAME':
+        if (payload?.gameId) {
+          navigationService.navigateToPath(
+            `/games/${encodeURIComponent(payload.gameId)}?invite=looking`,
+          );
         }
         break;
 

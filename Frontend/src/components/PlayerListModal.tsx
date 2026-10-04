@@ -103,6 +103,8 @@ interface PlayerListModalProps {
   gameSport?: Sport;
   genderTeams?: GenderTeam;
   entityType?: string;
+  /** Open on the Looking tab (organizer push "N looking for this time"). */
+  initialPane?: 'search' | 'looking';
 }
 
 type GameAvailabilityContext = PlayerListModalGameTiming;
@@ -123,6 +125,7 @@ export const PlayerListModal = ({
   gameSport,
   genderTeams,
   entityType,
+  initialPane = 'search',
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -149,7 +152,7 @@ export const PlayerListModal = ({
   const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters(1));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [inviteListKind, setInviteListKind] = useState<'all' | 'users' | 'teams'>('all');
-  const [invitePane, setInvitePane] = useState<'search' | 'looking'>('search');
+  const [requestedInvitePane, setInvitePane] = useState<'search' | 'looking'>(initialPane);
   const [inviteSportFilter, setInviteSportFilter] = useState<InviteSportFilterValue>('game');
   const [fetchedGameContext, setFetchedGameContext] = useState<GameAvailabilityContext | null>(null);
   const [invitePickerOutcomes, setInvitePickerOutcomes] = useState<GameInviteOutcome[]>([]);
@@ -163,6 +166,8 @@ export const PlayerListModal = ({
   const showTeams = multiSelect && !inviteAsTrainerOnly;
   const showLooking =
     !inviteAsTrainerOnly && Boolean(gameSport) && Boolean(gameId || gameTiming?.timeIsSet);
+  // A Looking deep link on a surface without the Looking tab lands on Search.
+  const invitePane = showLooking ? requestedInvitePane : 'search';
 
   const lookingPool = useInviteLookingPool({
     enabled: showLooking,

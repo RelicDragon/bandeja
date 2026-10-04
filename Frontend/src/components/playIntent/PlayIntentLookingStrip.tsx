@@ -25,6 +25,8 @@ type Props = {
   onOpenProposal: () => void;
   onConfirmStop: () => void;
   proposalArrivalToken?: number;
+  /** "2 also want Tue · Evening" — replaces the generic count when set. */
+  slotLine?: string | null;
 };
 
 export function PlayIntentLookingStrip({
@@ -37,6 +39,7 @@ export function PlayIntentLookingStrip({
   onOpenProposal,
   onConfirmStop,
   proposalArrivalToken = 0,
+  slotLine = null,
 }: Props) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
@@ -89,7 +92,9 @@ export function PlayIntentLookingStrip({
             </div>
             {!proposal && (
               <div className="whitespace-normal break-words text-xs leading-snug text-muted-foreground">
-                {emptyPool
+                {slotLine
+                  ? slotLine
+                  : emptyPool
                   ? t('playIntent.emptyPool')
                   : t('playIntent.othersLooking', { count: othersCount })}
               </div>

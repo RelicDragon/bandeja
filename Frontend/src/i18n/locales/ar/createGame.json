@@ -618,6 +618,19 @@
     "suitableForNovices": {
       "title": "نرحّب باللاعبين الجدد",
       "hint": "ستساعد اللاعبين الجدد على الاندماج. ونطاق المستوى يبقى ساريًا."
-    }
+    },
+    "lookingNudgeTitle_zero": "{{count}} يبحثون عن لعبة في هذا الوقت",
+    "lookingNudgeTitle_one": "{{count}} يبحثون عن لعبة في هذا الوقت",
+    "lookingNudgeTitle_two": "{{count}} يبحثون عن لعبة في هذا الوقت",
+    "lookingNudgeTitle_few": "{{count}} يبحثون عن لعبة في هذا الوقت",
+    "lookingNudgeTitle_many": "{{count}} يبحثون عن لعبة في هذا الوقت",
+    "lookingNudgeTitle_other": "{{count}} يبحثون عن لعبة في هذا الوقت",
+    "lookingNudgeHint": "طلبوا اللعب في هذا الوقت — تصلهم دعوتك فورًا",
+    "lookingNudgeInvite_zero": "ادعُ {{count}}",
+    "lookingNudgeInvite_two": "ادعُ {{count}}",
+    "lookingNudgeInvite_few": "ادعُ {{count}}",
+    "lookingNudgeInvite_many": "ادعُ {{count}}",
+    "lookingNudgeInvite_other": "ادعُ {{count}}",
+    "lookingNudgeInvite_one": "ادعُ"
   }
 }

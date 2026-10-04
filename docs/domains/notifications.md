@@ -9,7 +9,7 @@ Unified dispatch: `Backend/src/services/notification.service.ts`. Types: `Backen
 - Android: `push/fcm.service.ts`.
 - Tokens: `push/push-token.service.ts`. HTTP: `Backend/src/routes/push.routes.ts` — register/renew/remove (`IOS`\|`ANDROID`), test send. Authenticated except invite-action.
 
-**Types** (push modules under `push/notifications/`): game chat, user chat, group chat, bug chat, game system, invites, new game, game reminder, game results, game cancelled, league round start, league game assigned, bets (resolved / needs review / cancelled), transactions, new market item, new bug, auction (outbid / new bid / won / BIN), match timer cap, user team events, play-intent match, `GAME_MATCHES_INTENT`, friends-looking (`INTENT_PLAYERS_FOR_GAME` / `FOLLOWED_USER_PLAY_INTENT`), plus the PRD 345–357 additions below.
+**Types** (push modules under `push/notifications/`): game chat, user chat, group chat, bug chat, game system, invites, new game, game reminder, game results, game cancelled, league round start, league game assigned, bets (resolved / needs review / cancelled), transactions, new market item, new bug, auction (outbid / new bid / won / BIN), match timer cap, user team events, play-intent match, `GAME_MATCHES_INTENT`, friends-looking (`INTENT_PLAYERS_FOR_GAME` / `FOLLOWED_USER_PLAY_INTENT`) — the organizer's `INTENT_PLAYERS_FOR_GAME` tap opens `/games/:id?invite=looking` (invite modal on Looking; older store builds just open the game), plus the PRD 345–357 additions below.
 
 | Type | Preference key | Trigger / audience |
 |------|----------------|--------------------|

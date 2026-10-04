@@ -142,6 +142,23 @@
     "lookingCountToday_one": "{{count}} mencari permainan hari ini",
     "lookingCountToday_other": "{{count}} mencari permainan hari ini",
     "lookingCountTodayAndTomorrow_one": "{{count}} mencari permainan hari ini dan besok",
-    "lookingCountTodayAndTomorrow_other": "{{count}} mencari permainan hari ini dan besok"
+    "lookingCountTodayAndTomorrow_other": "{{count}} mencari permainan hari ini dan besok",
+    "slotsTitle": "Siapa yang menunggu",
+    "slotsHint": "Ketuk waktu untuk membuat permainan",
+    "slotFitCount_one": "{{count}} selevel denganmu",
+    "slotFitCount_other": "{{count}} selevel denganmu",
+    "slotCount_one": "{{count}} mencari",
+    "slotCount_other": "{{count}} mencari",
+    "slotYoureIn": "Kamu ikut",
+    "slotFullWithYou": "Penuh dengan kamu",
+    "slotSpotsLeft_one": "Kurang {{count}}",
+    "slotSpotsLeft_other": "Kurang {{count}}",
+    "slotCreate": "Buat & undang",
+    "slotJoin": "Saya ikut",
+    "slotJoined": "Kamu ikut untuk {{when}} — kami kabari saat penuh",
+    "slotHeadline_one": "{{count}} pemain selevel ingin main {{when}}",
+    "slotHeadline_other": "{{count}} pemain selevel ingin main {{when}}",
+    "slotAlsoWant_one": "{{count}} lagi ingin main {{when}} — ketuk untuk membuat permainan",
+    "slotAlsoWant_other": "{{count}} lagi ingin main {{when}} — ketuk untuk membuat permainan"
   }
 }

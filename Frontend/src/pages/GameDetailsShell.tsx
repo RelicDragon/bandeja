@@ -184,6 +184,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [loading, setLoading] = useState(() => !initialGame || initialGame.id !== id);
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
+  const [playerListInitialPane, setPlayerListInitialPane] = useState<'search' | 'looking'>('search');
   const [playerListGender, setPlayerListGender] = useState<'MALE' | 'FEMALE' | undefined>(undefined);
   const [showManageUsers, setShowManageUsers] = useState(false);
   /** PRD 346 — "What the dots mean", opened from a dot or the legend button. */
@@ -897,6 +898,24 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   // Same rule as `accept-join-queue` / `decline-join-queue` (`canManageGameRoster`):
   // owner or admin of this game. `anyoneCanInvite` widens inviting only.
   const canManageJoinQueue = isOwner;
+
+  // `?invite=looking` (organizer push "N looking for this time"): open the
+  // invite modal on its Looking tab once the game is loaded, then drop the
+  // param so back/refresh do not reopen it.
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('invite') !== 'looking') return;
+    if (!game || game.id !== id) return;
+    if (canInvitePlayers) {
+      setPlayerListMode('players');
+      setPlayerListGender(undefined);
+      setPlayerListInitialPane('looking');
+      setShowPlayerList(true);
+    }
+    const next = new URLSearchParams(location.search);
+    next.delete('invite');
+    const qs = next.toString();
+    navigate({ pathname: location.pathname, search: qs ? `?${qs}` : '' }, { replace: true });
+  }, [canInvitePlayers, game, id, location.pathname, location.search, navigate]);
 
   // PRD 364 — organizer "Next steps". The platform flag decides which surface
   // hosts the attendance strip and the open-spot row; the placement helper
@@ -2171,8 +2190,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           gameSport={parseGameSport(game?.sport)}
           genderTeams={game?.genderTeams}
           entityType={game?.entityType}
+          initialPane={playerListInitialPane}
           onClose={() => {
             setShowPlayerList(false);
+            setPlayerListInitialPane('search');
             setPlayerListMode('players');
             setPlayerListGender(undefined);
           }}

@@ -27,6 +27,13 @@ export type PlayIntentCtx = {
     avatar: string | null;
   }[];
   proposalArrivalToken: number;
+  /**
+   * One-line demand headline from `GET /play-intents/slots` — "3 at your level
+   * want Tue · Evening" (idle) / "2 also want Tue · Evening" (looking) — or
+   * `null` when no slot is worth naming.
+   */
+  slotHeadline: string | null;
+  slotHeadlineMembers: PlayIntentCtx['stripMembers'];
 };
 
 export const PlayIntentUiContext = createContext<PlayIntentCtx | null>(null);

@@ -142,6 +142,23 @@
     "lookingCountToday_one": "{{count}} buscando jugar hoy",
     "lookingCountToday_other": "{{count}} buscando jugar hoy",
     "lookingCountTodayAndTomorrow_one": "{{count}} buscando jugar hoy y mañana",
-    "lookingCountTodayAndTomorrow_other": "{{count}} buscando jugar hoy y mañana"
+    "lookingCountTodayAndTomorrow_other": "{{count}} buscando jugar hoy y mañana",
+    "slotsTitle": "Quién espera",
+    "slotsHint": "Toca una hora para armar el partido",
+    "slotFitCount_one": "{{count}} de tu nivel",
+    "slotFitCount_other": "{{count}} de tu nivel",
+    "slotCount_one": "{{count}} buscando",
+    "slotCount_other": "{{count}} buscando",
+    "slotYoureIn": "Estás dentro",
+    "slotFullWithYou": "Contigo, partido completo",
+    "slotSpotsLeft_one": "Falta {{count}}",
+    "slotSpotsLeft_other": "Faltan {{count}}",
+    "slotCreate": "Crear e invitar",
+    "slotJoin": "Me apunto",
+    "slotJoined": "Te apuntaste para {{when}}; te avisaremos cuando se llene",
+    "slotHeadline_one": "{{count}} de tu nivel quiere {{when}}",
+    "slotHeadline_other": "{{count}} de tu nivel quieren {{when}}",
+    "slotAlsoWant_one": "{{count}} más quiere {{when}}: arma el partido",
+    "slotAlsoWant_other": "{{count}} más quieren {{when}}: arma el partido"
   }
 }

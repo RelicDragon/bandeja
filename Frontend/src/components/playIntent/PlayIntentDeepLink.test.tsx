@@ -3,7 +3,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * PRD 350 / PRD 353 regression: the onboarding finale and the recap outro both
@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
   initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 
@@ -48,6 +48,7 @@ vi.mock('@/hooks/usePlayIntent', () => ({
   usePlayIntentMutations: () => ({
     cancel: { mutateAsync: vi.fn().mockResolvedValue({ cancelled: 0 }) },
   }),
+  useDemandSlots: () => ({ data: undefined }),
 }));
 
 vi.mock('@/api/playIntents', () => ({
@@ -109,6 +110,12 @@ const emptyPool = {
 describe('PlayIntentProvider — ?playIntentOpen=1', () => {
   let container: HTMLDivElement;
   let root: Root;
+
+  // The first dynamic import transforms the provider's whole graph; pay it
+  // once here instead of inside the first test's 5 s budget.
+  beforeAll(async () => {
+    await import('./PlayIntentFindBar');
+  }, 60_000);
 
   beforeEach(() => {
     vi.clearAllMocks();

@@ -594,6 +594,15 @@
     "suitableForNovices": {
       "title": "Nováčci vítáni",
       "hint": "Pomůžete novým hráčům se zorientovat. Rozsah úrovně platí i nadále."
-    }
+    },
+    "lookingNudgeTitle_one": "{{count}} hráč hledá hru na tento čas",
+    "lookingNudgeTitle_few": "{{count}} hráči hledají hru na tento čas",
+    "lookingNudgeTitle_many": "{{count}} hráče hledá hru na tento čas",
+    "lookingNudgeTitle_other": "{{count}} hráčů hledá hru na tento čas",
+    "lookingNudgeHint": "Chtějí hrát právě tehdy — pozvánka jim přijde hned",
+    "lookingNudgeInvite_one": "Pozvat",
+    "lookingNudgeInvite_few": "Pozvat {{count}}",
+    "lookingNudgeInvite_many": "Pozvat {{count}}",
+    "lookingNudgeInvite_other": "Pozvat {{count}}"
   }
 }
