@@ -1,4 +1,4 @@
-import apn from 'apn';
+import * as apn from '@parse/node-apn';
 import { config } from '../../config/env';
 import { PushTokenService } from './push-token.service';
 import { NotificationPayload } from '../../types/notifications.types';
@@ -108,7 +108,7 @@ class PushNotificationService {
       (notification as apn.Notification & { category?: string }).category = resolvedCategory;
     }
     if (payload.threadId) {
-      (notification as apn.Notification & { threadId?: string }).threadId = payload.threadId;
+      notification.threadId = payload.threadId;
     }
     if (shouldSetApnsMutableContent(resolvedCategory, payload.data?.previewImageUrl)) {
       notification.mutableContent = true;

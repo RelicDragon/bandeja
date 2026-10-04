@@ -4,7 +4,8 @@ Unified dispatch: `Backend/src/services/notification.service.ts`. Types: `Backen
 
 ## Push (APNs + FCM)
 
-- iOS: APNs in `push/push-notification.service.ts` (`apn` provider; env `config.apns.*`).
+- iOS: APNs in `push/push-notification.service.ts` (`@parse/node-apn` provider, token auth; env `config.apns.*` / `APNS_*`).
+  - **Library decision (#88):** `@parse/node-apn` replaced the unmaintained `apn@2.2.0`. It is the same API, so the payload, the `apns-topic` (bundle id), the collapse id, the badge, the category, the thread id and mutable-content are all unchanged. Do not consolidate iOS onto FCM. iOS registers through Capacitor `PushNotifications` with no Firebase SDK, so `PushPlatform.IOS` rows hold raw APNs device tokens that `firebase-admin` cannot address, and switching would need a new store build plus token re-registration. There are no VoIP or watch topics; every push is an alert to the app bundle id.
 - Android: `push/fcm.service.ts`.
 - Tokens: `push/push-token.service.ts`. HTTP: `Backend/src/routes/push.routes.ts` — register/renew/remove (`IOS`\|`ANDROID`), test send. Authenticated except invite-action.
 
