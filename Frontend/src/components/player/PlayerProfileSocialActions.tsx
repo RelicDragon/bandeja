@@ -1,5 +1,5 @@
 import { Star, MessageCircle } from 'lucide-react';
-import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 export interface PlayerProfileSocialActionsProps {
   isFavorite: boolean;
@@ -7,7 +7,6 @@ export interface PlayerProfileSocialActionsProps {
   startingChat: boolean;
   onToggleFavorite: () => void;
   onStartChat: () => void;
-  t: TFunction;
 }
 
 export const PlayerProfileSocialActions = ({
@@ -16,11 +15,11 @@ export const PlayerProfileSocialActions = ({
   startingChat,
   onToggleFavorite,
   onStartChat,
-  t,
 }: PlayerProfileSocialActionsProps) => {
-  const followLabel = isFavorite ? t('playerCard.unfollow') : t('playerCard.follow');
-  const followTitle = isBlocked ? t('playerCard.userBlockedCannotFavorite') : followLabel;
-  const messageTitle = isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.message');
+  const { t } = useTranslation('playerCard');
+  const followLabel = isFavorite ? t('unfollow') : t('follow');
+  const followTitle = isBlocked ? t('userBlockedCannotFavorite') : followLabel;
+  const messageTitle = isBlocked ? t('userBlockedCannotChat') : t('message');
 
   return (
     <div className="flex gap-2">
@@ -33,7 +32,7 @@ export const PlayerProfileSocialActions = ({
         aria-label={messageTitle}
       >
         <MessageCircle size={18} className="shrink-0" />
-        <span className="text-sm font-medium">{t('playerCard.message')}</span>
+        <span className="text-sm font-medium">{t('message')}</span>
       </button>
       <button
         type="button"

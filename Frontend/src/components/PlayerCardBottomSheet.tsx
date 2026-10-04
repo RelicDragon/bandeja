@@ -325,10 +325,9 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
         startingChat={startingChat}
         onToggleFavorite={handleToggleFavorite}
         onStartChat={handleStartChat}
-        t={t}
       />
     );
-  }, [handleStartChat, handleToggleFavorite, isBlocked, isCurrentUser, startingChat, stats, t]);
+  }, [handleStartChat, handleToggleFavorite, isBlocked, isCurrentUser, startingChat, stats]);
 
   const showRatingLink = !!stats?.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0;
 
@@ -387,7 +386,6 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
                   onStartChat={handleStartChat}
                   onBlockPrimary={handleBlockPrimary}
                   onOpenFullProfile={!isCurrentUser ? actions.openFullProfile : undefined}
-                  t={t}
                   closeSlot={(
                     <DrawerClose asChild>
                       <button type="button" className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
@@ -403,8 +401,8 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
                       type="button"
                       onClick={handleShare}
                       className="px-4 py-2 rounded-xl text-white flex items-center justify-center shadow-md bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700"
-                      title={t('playerCard.shareProfileTitle')}
-                      aria-label={t('playerCard.shareProfileTitle')}
+                      title={t('playerCard:shareProfileTitle')}
+                      aria-label={t('playerCard:shareProfileTitle')}
                     >
                       <Share2 size={18} />
                     </button>
@@ -414,10 +412,10 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
                       type="button"
                       onClick={actions.openFullProfile}
                       className="px-4 py-2 rounded-xl text-white flex items-center gap-2 shadow-md bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700"
-                      title={t('playerCard.openFullProfile')}
+                      title={t('playerCard:openFullProfile')}
                     >
                       <Maximize2 size={18} />
-                      <span className="text-sm">{t('playerCard.openFullProfile')}</span>
+                      <span className="text-sm">{t('playerCard:openFullProfile')}</span>
                     </button>
                   )}
                   <DrawerClose asChild>
@@ -466,7 +464,6 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
                     <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
                       <PlayerCardProfileBody
                         stats={stats}
-                        t={t}
                         isBlocked={isBlocked}
                         showTelegram={!!user}
                         showProfileTabs
@@ -502,7 +499,7 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
         isOpen={showShareModal}
         onClose={handleShareModalClose}
         shareUrl={shareModalUrl}
-        dialogTitle={t('playerCard.shareProfileTitle')}
+        dialogTitle={t('playerCard:shareProfileTitle')}
         modalId="share-modal-profile"
       />
 
@@ -519,9 +516,9 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
       {showBlockConfirmation && stats && !isBlocked && (
         <ConfirmationModal
           isOpen={showBlockConfirmation}
-          title={t('playerCard.blockUser')}
-          message={t('playerCard.blockUserConfirmation', { name: stats.user.firstName || '' }) || `Are you sure you want to block ${stats.user.firstName || ''}? You won't be able to see their messages or interact with them.`}
-          confirmText={t('playerCard.block')}
+          title={t('playerCard:blockUser')}
+          message={t('playerCard:blockUserConfirmation', { name: stats.user.firstName || '' }) || `Are you sure you want to block ${stats.user.firstName || ''}? You won't be able to see their messages or interact with them.`}
+          confirmText={t('playerCard:block')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"
           onConfirm={handleBlockConfirm}

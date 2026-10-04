@@ -19,7 +19,7 @@ export const LevelHistoryTabController = ({ activeTab, onTabChange, darkBgClass 
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('playerCard.last10Events')}
+        {t('playerCard:last10Events')}
       </button>
       <button
         onClick={() => onTabChange('30')}
@@ -29,7 +29,7 @@ export const LevelHistoryTabController = ({ activeTab, onTabChange, darkBgClass 
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('playerCard.last30Events')}
+        {t('playerCard:last30Events')}
       </button>
       <button
         onClick={() => onTabChange('all')}
@@ -39,7 +39,7 @@ export const LevelHistoryTabController = ({ activeTab, onTabChange, darkBgClass 
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('playerCard.allEvents')}
+        {t('playerCard:allEvents')}
       </button>
     </div>
   );

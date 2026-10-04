@@ -56,7 +56,7 @@ export const ConfirmedLevelSection = ({
   const confirmationMeta = [
     approvedWhen ? formatDate(approvedWhen, 'PP') : null,
     approvedAtLevel !== null
-      ? t('playerCard.confirmedAtLevel', { level: approvedAtLevel.toFixed(2) })
+      ? t('playerCard:confirmedAtLevel', { level: approvedAtLevel.toFixed(2) })
       : null,
   ]
     .filter(Boolean)
@@ -71,7 +71,7 @@ export const ConfirmedLevelSection = ({
     <div className="flex flex-col items-center gap-1.5">
       <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
         <Check size={16} strokeWidth={3} />
-        <span className="text-sm font-medium">{t('playerCard.confirmedBy')}</span>
+        <span className="text-sm font-medium">{t('playerCard:confirmedBy')}</span>
       </div>
       {approvedBy && (
         <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 text-sm">

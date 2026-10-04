@@ -22,30 +22,30 @@ export const GamesStatsSection = ({ stats, activeTab, onTabChange, onLevelClick,
           <div className="text-lg font-bold text-green-600 dark:text-green-400">
             {currentStat.wins}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.winsShort')}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard:winsShort')}</div>
         </div>
         <div>
           <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
             {currentStat.ties}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.tiesShort')}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard:tiesShort')}</div>
         </div>
         <div>
           <div className="text-lg font-bold text-red-600 dark:text-red-400">
             {currentStat.losses}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.lossesShort')}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard:lossesShort')}</div>
         </div>
         {currentStat.totalMatches > 0 && (
           <div className="ms-2 ps-4 border-s border-gray-300 dark:border-gray-600">
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {((currentStat.wins / currentStat.totalMatches) * 100).toFixed(1)}% {t('playerCard.winsShort')}
+              {((currentStat.wins / currentStat.totalMatches) * 100).toFixed(1)}% {t('playerCard:winsShort')}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {((currentStat.ties / currentStat.totalMatches) * 100).toFixed(1)}% {t('playerCard.tiesShort')}
+              {((currentStat.ties / currentStat.totalMatches) * 100).toFixed(1)}% {t('playerCard:tiesShort')}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {((currentStat.losses / currentStat.totalMatches) * 100).toFixed(1)}% {t('playerCard.lossesShort')}
+              {((currentStat.losses / currentStat.totalMatches) * 100).toFixed(1)}% {t('playerCard:lossesShort')}
             </div>
           </div>
         )}
@@ -54,7 +54,7 @@ export const GamesStatsSection = ({ stats, activeTab, onTabChange, onLevelClick,
         <div className="text-2xl font-bold text-gray-900 dark:text-white">
           {currentStat.totalMatches}
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.totalGames')}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard:totalGames')}</div>
       </div>
     </div>
   );
@@ -70,7 +70,7 @@ export const GamesStatsSection = ({ stats, activeTab, onTabChange, onLevelClick,
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
-          {t('playerCard.last30Days')}
+          {t('playerCard:last30Days')}
         </button>
         <button
           onClick={() => onTabChange('90')}
@@ -80,7 +80,7 @@ export const GamesStatsSection = ({ stats, activeTab, onTabChange, onLevelClick,
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
-          {t('playerCard.last90Days')}
+          {t('playerCard:last90Days')}
         </button>
         <button
           onClick={() => onTabChange('all')}
@@ -90,7 +90,7 @@ export const GamesStatsSection = ({ stats, activeTab, onTabChange, onLevelClick,
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
-          {t('playerCard.allGames')}
+          {t('playerCard:allGames')}
         </button>
       </div>
 

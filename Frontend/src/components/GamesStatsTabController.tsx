@@ -19,7 +19,7 @@ export const GamesStatsTabController = ({ activeTab, onTabChange, darkBgClass = 
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('playerCard.last30Days')}
+        {t('playerCard:last30Days')}
       </button>
       <button
         onClick={() => onTabChange('90')}
@@ -29,7 +29,7 @@ export const GamesStatsTabController = ({ activeTab, onTabChange, darkBgClass = 
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('playerCard.last90Days')}
+        {t('playerCard:last90Days')}
       </button>
       <button
         onClick={() => onTabChange('all')}
@@ -39,7 +39,7 @@ export const GamesStatsTabController = ({ activeTab, onTabChange, darkBgClass = 
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
         }`}
       >
-        {t('playerCard.allGames')}
+        {t('playerCard:allGames')}
       </button>
     </div>
   );

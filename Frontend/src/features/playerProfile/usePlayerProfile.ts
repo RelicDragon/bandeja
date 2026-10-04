@@ -235,11 +235,11 @@ export function usePlayerProfile(
       if (isBlocked) {
         await blockedUsersApi.unblockUser(playerId);
         setIsBlocked(false);
-        toast.success(t('playerCard.userUnblocked') || 'User unblocked');
+        toast.success(t('playerCard:userUnblocked') || 'User unblocked');
       } else {
         await blockedUsersApi.blockUser(playerId);
         setIsBlocked(true);
-        toast.success(t('playerCard.userBlocked') || 'User blocked');
+        toast.success(t('playerCard:userBlocked') || 'User blocked');
         onBlocked?.();
       }
       if (viewerUserId) {

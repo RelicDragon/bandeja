@@ -1,18 +1,19 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { APP_UI_LANGUAGES } from '@bandeja/app-locale';
-import en from './locales/en';
-import ru from './locales/ru';
-import sr from './locales/sr';
-import es from './locales/es';
-import cs from './locales/cs';
-import ar from './locales/ar';
-import zh from './locales/zh';
-import id from './locales/id';
-import hi from './locales/hi';
-import th from './locales/th';
-import ja from './locales/ja';
+import en, { featureNamespaces as enNs } from './locales/en';
+import ru, { featureNamespaces as ruNs } from './locales/ru';
+import sr, { featureNamespaces as srNs } from './locales/sr';
+import es, { featureNamespaces as esNs } from './locales/es';
+import cs, { featureNamespaces as csNs } from './locales/cs';
+import ar, { featureNamespaces as arNs } from './locales/ar';
+import zh, { featureNamespaces as zhNs } from './locales/zh';
+import id, { featureNamespaces as idNs } from './locales/id';
+import hi, { featureNamespaces as hiNs } from './locales/hi';
+import th, { featureNamespaces as thNs } from './locales/th';
+import ja, { featureNamespaces as jaNs } from './locales/ja';
 import { extractLanguageCode } from '@/utils/displayPreferences';
+import { DEFAULT_NS, FEATURE_NAMESPACES, buildI18nResources } from './namespaces';
 
 export { APP_UI_LANGUAGES };
 
@@ -55,19 +56,23 @@ const getUserLanguage = (): string => {
 };
 
 i18n.use(initReactI18next).init({
-  resources: {
-    en: { translation: en },
-    ru: { translation: ru },
-    sr: { translation: sr },
-    es: { translation: es },
-    cs: { translation: cs },
-    ar: { translation: ar },
-    zh: { translation: zh },
-    id: { translation: id },
-    hi: { translation: hi },
-    th: { translation: th },
-    ja: { translation: ja },
-  },
+  // Eager, bundled resources: owned namespaces (`./namespaces.ts`) sit beside the
+  // flat default `translation` bundle, so no namespace ever loads asynchronously.
+  resources: buildI18nResources({
+    en: { translation: en, featureNamespaces: enNs },
+    ru: { translation: ru, featureNamespaces: ruNs },
+    sr: { translation: sr, featureNamespaces: srNs },
+    es: { translation: es, featureNamespaces: esNs },
+    cs: { translation: cs, featureNamespaces: csNs },
+    ar: { translation: ar, featureNamespaces: arNs },
+    zh: { translation: zh, featureNamespaces: zhNs },
+    id: { translation: id, featureNamespaces: idNs },
+    hi: { translation: hi, featureNamespaces: hiNs },
+    th: { translation: th, featureNamespaces: thNs },
+    ja: { translation: ja, featureNamespaces: jaNs },
+  }),
+  ns: [DEFAULT_NS, ...FEATURE_NAMESPACES],
+  defaultNS: DEFAULT_NS,
   lng: getUserLanguage(),
   fallbackLng: 'en',
   interpolation: {

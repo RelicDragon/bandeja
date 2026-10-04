@@ -65,7 +65,7 @@ export const PlayerItemsToSell = ({ userId, onItemClick }: PlayerItemsToSellProp
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
       <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 px-1">
-        {t('playerCard.itemsToSell')}
+        {t('playerCard:itemsToSell')}
       </h3>
       <div className="overflow-x-auto overflow-y-hidden -mx-6 px-6 scrollbar-hide">
         <div className="flex gap-3 pb-2" style={{ minWidth: 'min-content' }}>

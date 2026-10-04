@@ -188,7 +188,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.gamesWon')}
+                      {t('playerCard:gamesWon')}
                     </span>
                     <span className="text-xl font-semibold text-green-600 dark:text-green-400">
                       {comparison.gamesTogether.wins}
@@ -196,7 +196,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.gamesLost') || 'Losses'}
+                      {t('playerCard:gamesLost') || 'Losses'}
                     </span>
                     <span className="text-xl font-semibold text-red-600 dark:text-red-400">
                       {comparison.gamesTogether.losses}
@@ -204,7 +204,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.gamesTied')}
+                      {t('playerCard:gamesTied')}
                     </span>
                     <span className="text-xl font-semibold text-yellow-600 dark:text-yellow-400">
                       {comparison.gamesTogether.ties}
@@ -212,7 +212,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.winRate')}
+                      {t('playerCard:winRate')}
                     </span>
                     <span className="text-xl font-bold text-gray-900 dark:text-white">
                       {comparison.gamesTogether.winRate}%
@@ -239,7 +239,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.gamesWon')}
+                      {t('playerCard:gamesWon')}
                     </span>
                     <span className="text-xl font-semibold text-green-600 dark:text-green-400">
                       {comparison.gamesAgainst.wins}
@@ -247,7 +247,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.gamesLost') || 'Losses'}
+                      {t('playerCard:gamesLost') || 'Losses'}
                     </span>
                     <span className="text-xl font-semibold text-red-600 dark:text-red-400">
                       {comparison.gamesAgainst.losses}
@@ -255,7 +255,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.gamesTied')}
+                      {t('playerCard:gamesTied')}
                     </span>
                     <span className="text-xl font-semibold text-yellow-600 dark:text-yellow-400">
                       {comparison.gamesAgainst.ties}
@@ -263,7 +263,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.winRate')}
+                      {t('playerCard:winRate')}
                     </span>
                     <span className="text-xl font-bold text-gray-900 dark:text-white">
                       {comparison.gamesAgainst.winRate}%

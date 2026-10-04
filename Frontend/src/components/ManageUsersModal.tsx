@@ -69,7 +69,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
 
   const getRoleTag = (participant: GameParticipant) => {
     if (game.entityType === 'TRAINING' && game.trainerId === participant.userId) {
-      return { text: t('playerCard.isTrainer'), color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
+      return { text: t('playerCard:isTrainer'), color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
     }
     switch (participant.role) {
       case 'OWNER':

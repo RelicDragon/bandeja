@@ -27,10 +27,10 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
           </span>
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              {t('playerCard.levelFeedback.title')}
+              {t('playerCard:levelFeedback.title')}
             </h3>
             <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              {t('playerCard.levelFeedback.pending')}
+              {t('playerCard:levelFeedback.pending')}
             </p>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
   });
   const donutBackground = `conic-gradient(${donutStops.join(', ')})`;
   const chartLabel = ROWS.map((row) =>
-    `${t(`playerCard.levelFeedback.verdict.${row.verdict}`)} ${aggregate.percentages[row.verdict]}%`
+    `${t(`playerCard:levelFeedback.verdict.${row.verdict}`)} ${aggregate.percentages[row.verdict]}%`
   ).join(', ');
 
   return (
@@ -58,12 +58,12 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
       <div className="flex items-center gap-2">
         <BarChart3 size={19} className="text-sky-600 dark:text-sky-300" aria-hidden />
         <h3 className="text-sm font-black text-slate-900 dark:text-white">
-          {t('playerCard.levelFeedback.title')}
+          {t('playerCard:levelFeedback.title')}
         </h3>
       </div>
 
       <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-        {t('playerCard.levelFeedback.basedOn', {
+        {t('playerCard:levelFeedback.basedOn', {
           count: aggregate.totalEvaluations,
           games: aggregate.totalGames,
         })}
@@ -81,7 +81,7 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
               {aggregate.distinctEvaluators}
             </span>
             <span className="mt-0.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t('playerCard.levelFeedback.players')}
+              {t('playerCard:levelFeedback.players')}
             </span>
           </div>
         </div>
@@ -93,7 +93,7 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
               <div key={row.verdict} className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${row.dot}`} aria-hidden />
                 <span className={`min-w-0 flex-1 text-xs ${isDominant ? 'font-black text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-slate-300'}`}>
-                  {t(`playerCard.levelFeedback.verdict.${row.verdict}`)}
+                  {t(`playerCard:levelFeedback.verdict.${row.verdict}`)}
                 </span>
                 <span className={`tabular-nums text-sm ${isDominant ? 'font-black text-slate-900 dark:text-white' : 'font-semibold text-slate-600 dark:text-slate-300'}`}>
                   {aggregate.percentages[row.verdict]}%
@@ -105,7 +105,7 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
       </div>
 
       <p className="mt-4 rounded-xl bg-slate-100 px-3 py-2 text-[11px] leading-relaxed text-slate-500 dark:bg-white/[0.055] dark:text-slate-400">
-        {t('playerCard.levelFeedback.disclaimer')}
+        {t('playerCard:levelFeedback.disclaimer')}
       </p>
     </section>
   );

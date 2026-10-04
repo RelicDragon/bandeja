@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import type { RelationshipPlaceIndex } from '@/utils/profileRelationshipRankings';
 
 const PLACE_LABEL_KEYS = [
-  'playerCard.relationshipPlace1',
-  'playerCard.relationshipPlace2',
-  'playerCard.relationshipPlace3',
+  'playerCard:relationshipPlace1',
+  'playerCard:relationshipPlace2',
+  'playerCard:relationshipPlace3',
 ] as const;
 
 interface RelationshipPlaceSwitchProps {
@@ -48,7 +48,7 @@ export function RelationshipPlaceSwitch({
       className={`grid rounded-full bg-gray-200/70 p-0.5 dark:bg-gray-900/55 ${
         places.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
       }`}
-      aria-label={t('playerCard.relationshipPlaceSwitch')}
+      aria-label={t('playerCard:relationshipPlaceSwitch')}
       role="radiogroup"
       tabIndex={0}
       data-testid="relationship-place-switch"

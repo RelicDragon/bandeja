@@ -30,7 +30,7 @@ const PlayerCardCommonGroupsComponent = ({
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-gray-500 dark:text-gray-400">
         <Users size={32} className="opacity-50" />
-        <p className="text-sm">{t('playerCard.noCommonGroups')}</p>
+        <p className="text-sm">{t('playerCard:noCommonGroups')}</p>
       </div>
     );
   }

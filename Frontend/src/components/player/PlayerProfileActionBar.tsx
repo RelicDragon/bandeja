@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Star, Share2, MessageCircle, Ban, Check, Maximize2 } from 'lucide-react';
-import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import type { UserStats } from '@/api/users';
 
 const ICON_ACTION_CLASS =
@@ -20,7 +20,6 @@ export interface PlayerProfileActionBarProps {
   onShare: () => void;
   onStartChat: () => void;
   onBlockPrimary: () => void;
-  t: TFunction;
   closeSlot?: ReactNode;
   onOpenFullProfile?: () => void;
 }
@@ -36,10 +35,10 @@ export const PlayerProfileActionBar = ({
   onShare,
   onStartChat,
   onBlockPrimary,
-  t,
   closeSlot,
   onOpenFullProfile,
 }: PlayerProfileActionBarProps) => {
+  const { t } = useTranslation('playerCard');
   const iconClass = variant === 'header' ? ICON_ACTION_HEADER_CLASS : ICON_ACTION_CLASS;
   const headerGridCols =
     variant === 'header'
@@ -60,15 +59,15 @@ export const PlayerProfileActionBar = ({
           type="button"
           onClick={onShare}
           className={`${iconClass} text-white bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700`}
-          title={t('playerCard.shareProfileTitle')}
-          aria-label={t('playerCard.shareProfileTitle')}
+          title={t('shareProfileTitle')}
+          aria-label={t('shareProfileTitle')}
         >
           <Share2 size={16} className="text-white" />
         </button>
       )}
       {variant === 'header' && !isCurrentUser && (() => {
-        const followLabel = stats.user.isFavorite ? t('playerCard.unfollow') : t('playerCard.follow');
-        const followTitle = isBlocked ? t('playerCard.userBlockedCannotFavorite') : followLabel;
+        const followLabel = stats.user.isFavorite ? t('unfollow') : t('follow');
+        const followTitle = isBlocked ? t('userBlockedCannotFavorite') : followLabel;
 
         return (
           <button
@@ -95,8 +94,8 @@ export const PlayerProfileActionBar = ({
           onClick={() => onStartChat()}
           disabled={startingChat || isBlocked}
           className={`${iconClass} text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed`}
-          title={t('playerCard.message')}
-          aria-label={t('playerCard.message')}
+          title={t('message')}
+          aria-label={t('message')}
         >
           <MessageCircle size={16} />
         </button>
@@ -109,7 +108,7 @@ export const PlayerProfileActionBar = ({
           className={`${iconClass} text-white ${
             isBlocked ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
           }`}
-          title={isBlocked ? t('playerCard.unblockUser') : t('playerCard.blockUser')}
+          title={isBlocked ? t('unblockUser') : t('blockUser')}
         >
           {isBlocked ? <Check size={16} className="text-white" /> : <Ban size={16} className="scale-x-[-1] text-white" />}
         </button>
@@ -124,8 +123,8 @@ export const PlayerProfileActionBar = ({
           type="button"
           onClick={onOpenFullProfile}
           className={`${variant === 'header' ? 'h-9 w-9 shrink-0 rounded-lg inline-flex items-center justify-center shadow-sm' : iconClass} text-white bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 border border-violet-400/40 dark:border-violet-500/30`}
-          title={t('playerCard.openFullProfile')}
-          aria-label={t('playerCard.openFullProfile')}
+          title={t('openFullProfile')}
+          aria-label={t('openFullProfile')}
         >
           <Maximize2 size={16} className="text-white" />
         </button>

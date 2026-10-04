@@ -1057,7 +1057,7 @@ export const PlayerListModal = ({
                   className="rounded border-gray-300"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                  {t('playerCard.inviteAsTrainer', { defaultValue: 'Invite as trainer' })}
+                  {t('playerCard:inviteAsTrainer', { defaultValue: 'Invite as trainer' })}
                 </span>
               </label>
             )}

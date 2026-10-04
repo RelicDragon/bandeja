@@ -116,7 +116,6 @@ export const UserProfilePage = () => {
         onShare={() => void actions.share()}
         onStartChat={() => void actions.startChat()}
         onBlockPrimary={isBlocked ? () => void actions.unblock() : () => setShowBlockConfirmation(true)}
-        t={t}
       />
     );
     return () => setUserProfileHeaderActions(null);
@@ -228,7 +227,6 @@ export const UserProfilePage = () => {
               <motion.div key="content" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
                 <PlayerCardProfileBody
                   stats={stats}
-                  t={t}
                   isBlocked={isBlocked}
                   showTelegram={showTelegram}
                   edgeToEdge={!!user}
@@ -273,7 +271,7 @@ export const UserProfilePage = () => {
         isOpen={showShareModal}
         onClose={() => { setShowShareModal(false); setShareModalUrl(''); }}
         shareUrl={shareModalUrl}
-        dialogTitle={t('playerCard.shareProfileTitle')}
+        dialogTitle={t('playerCard:shareProfileTitle')}
         modalId="share-modal-user-profile"
       />
 
@@ -288,9 +286,9 @@ export const UserProfilePage = () => {
       {showBlockConfirmation && stats && !isBlocked && userId && (
         <ConfirmationModal
           isOpen={showBlockConfirmation}
-          title={t('playerCard.blockUser')}
-          message={t('playerCard.blockUserConfirmation', { name: stats.user.firstName || '' }) || `Are you sure you want to block ${stats.user.firstName || ''}? You won't be able to see their messages or interact with them.`}
-          confirmText={t('playerCard.block')}
+          title={t('playerCard:blockUser')}
+          message={t('playerCard:blockUserConfirmation', { name: stats.user.firstName || '' }) || `Are you sure you want to block ${stats.user.firstName || ''}? You won't be able to see their messages or interact with them.`}
+          confirmText={t('playerCard:block')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"
           onConfirm={async () => {

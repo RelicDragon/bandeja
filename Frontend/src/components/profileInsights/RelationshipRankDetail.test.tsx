@@ -45,16 +45,16 @@ describe('RelationshipPlaceSwitch', () => {
       <RelationshipPlaceSwitch rankCount={2} placeIndex={0} onChange={() => undefined} />,
     );
     expect(html).toContain('data-testid="relationship-place-switch"');
-    expect(html).toContain('playerCard.relationshipPlace1');
-    expect(html).toContain('playerCard.relationshipPlace2');
-    expect(html).not.toContain('playerCard.relationshipPlace3');
+    expect(html).toContain('playerCard:relationshipPlace1');
+    expect(html).toContain('playerCard:relationshipPlace2');
+    expect(html).not.toContain('playerCard:relationshipPlace3');
   });
 
   it('shows 3rd when three people are ranked', () => {
     const html = renderToStaticMarkup(
       <RelationshipPlaceSwitch rankCount={3} placeIndex={0} onChange={() => undefined} />,
     );
-    expect(html).toContain('playerCard.relationshipPlace3');
+    expect(html).toContain('playerCard:relationshipPlace3');
   });
 });
 
@@ -74,7 +74,7 @@ describe('RelationshipRankDetail', () => {
     );
     expect(html).toContain('Best partner');
     expect(html).toContain('data-testid="relationship-ranking-method"');
-    expect(html).toContain('playerCard.relationshipRankingGames');
+    expect(html).toContain('playerCard:relationshipRankingGames');
     expect(html).toContain('>a</div>');
   });
 

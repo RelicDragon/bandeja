@@ -32,7 +32,7 @@ export const GameCardTrainerBadge = ({ trainer, className = '' }: GameCardTraine
         />
       </span>
       <span className="min-w-0 truncate text-gray-500 dark:text-gray-400">
-        {t('playerCard.isTrainer')}{' '}
+        {t('playerCard:isTrainer')}{' '}
         <span className="font-medium text-gray-800 dark:text-gray-200">{trainerName}</span>
       </span>
       {showRating ? (

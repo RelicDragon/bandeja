@@ -13,9 +13,9 @@ import {
 } from '@/utils/profileRelationshipRankings';
 
 const rankingModeLabels: Record<RelationshipRankingMode, string> = {
-  formulae: 'playerCard.relationshipRankingFormulae',
-  rating: 'playerCard.relationshipRankingRating',
-  games: 'playerCard.relationshipRankingGames',
+  formulae: 'playerCard:relationshipRankingFormulae',
+  rating: 'playerCard:relationshipRankingRating',
+  games: 'playerCard:relationshipRankingGames',
 };
 
 interface RelationshipRankDetailProps {

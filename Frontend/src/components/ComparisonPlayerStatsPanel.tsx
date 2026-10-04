@@ -92,7 +92,7 @@ export const ComparisonPlayerStatsPanel = ({ current, other }: ComparisonPlayerS
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
-          {t('playerCard.last30Days')}
+          {t('playerCard:last30Days')}
         </button>
         <button
           type="button"
@@ -103,7 +103,7 @@ export const ComparisonPlayerStatsPanel = ({ current, other }: ComparisonPlayerS
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
-          {t('playerCard.last90Days')}
+          {t('playerCard:last90Days')}
         </button>
         <button
           type="button"
@@ -114,21 +114,21 @@ export const ComparisonPlayerStatsPanel = ({ current, other }: ComparisonPlayerS
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
-          {t('playerCard.allGames')}
+          {t('playerCard:allGames')}
         </button>
       </div>
 
       <Row
-        label={t('playerCard.gamesLast30Days')}
+        label={t('playerCard:gamesLast30Days')}
         left={current.gamesLast30Days}
         right={other.gamesLast30Days}
       />
 
-      <Row label={t('playerCard.totalGames')} left={cur.totalMatches} right={oth.totalMatches} />
-      <Row label={t('playerCard.winsShort')} left={cur.wins} right={oth.wins} />
-      <Row label={t('playerCard.tiesShort')} left={cur.ties} right={oth.ties} />
-      <Row label={t('playerCard.lossesShort')} left={cur.losses} right={oth.losses} />
-      <RowStr label={t('playerCard.winRate')} left={curWinRate} right={othWinRate} />
+      <Row label={t('playerCard:totalGames')} left={cur.totalMatches} right={oth.totalMatches} />
+      <Row label={t('playerCard:winsShort')} left={cur.wins} right={oth.wins} />
+      <Row label={t('playerCard:tiesShort')} left={cur.ties} right={oth.ties} />
+      <Row label={t('playerCard:lossesShort')} left={cur.losses} right={oth.losses} />
+      <RowStr label={t('playerCard:winRate')} left={curWinRate} right={othWinRate} />
     </div>
   );
 };

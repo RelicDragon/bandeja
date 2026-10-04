@@ -13,7 +13,7 @@ interface RelationshipPersonCardProps {
 
 export function RelationshipPersonCard({ entry }: RelationshipPersonCardProps) {
   const { t } = useTranslation();
-  const fallbackName = t('playerCard.shareProfileFallbackName');
+  const fallbackName = t('playerCard:shareProfileFallbackName');
   const playerName = getPlayerName(entry, fallbackName);
   const ratingNetChange = formatRatingNetChange(entry.ratingNetChange);
 
@@ -37,21 +37,21 @@ export function RelationshipPersonCard({ entry }: RelationshipPersonCardProps) {
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums text-gray-500 dark:text-gray-400">
             <span className="font-semibold text-green-600 dark:text-green-400">
-              {entry.wins}{t('playerCard.winsShort')}
+              {entry.wins}{t('playerCard:winsShort')}
             </span>
             <span className="font-semibold text-red-600 dark:text-red-400">
-              {entry.losses}{t('playerCard.lossesShort')}
+              {entry.losses}{t('playerCard:lossesShort')}
             </span>
             <span className="font-semibold text-yellow-600 dark:text-yellow-400">
-              {entry.ties}{t('playerCard.tiesShort')}
+              {entry.ties}{t('playerCard:tiesShort')}
             </span>
             <span className="text-gray-400 dark:text-gray-500">·</span>
             <span>{entry.winRate}%</span>
             <span className="text-gray-400 dark:text-gray-500">·</span>
             <span
               className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ring-1 ${getRatingNetChangeClass(entry.ratingNetChange)}`}
-              title={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
-              aria-label={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
+              title={t('playerCard:relationshipRatingNetChange', { change: ratingNetChange })}
+              aria-label={t('playerCard:relationshipRatingNetChange', { change: ratingNetChange })}
             >
               Δ {ratingNetChange}
             </span>

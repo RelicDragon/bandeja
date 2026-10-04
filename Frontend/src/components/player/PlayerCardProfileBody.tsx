@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Dumbbell, Hash, ChartLine, Users } from 'lucide-react';
-import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { UserStats } from '@/api/users';
 import { LevelHistoryView } from '@/components/LevelHistoryView';
 import { LevelHistoryLevelPanel } from '@/components/LevelHistoryLevelPanel';
@@ -34,7 +34,6 @@ export type PlayerCardProfileTab = 'statistics' | 'chart' | 'groups';
 
 export interface PlayerCardProfileBodyProps {
   stats: UserStats;
-  t: TFunction;
   isBlocked: boolean;
   showTelegram?: boolean;
   edgeToEdge?: boolean;
@@ -74,7 +73,6 @@ function selectionForSport(sport: Sport | undefined): LevelHistorySelection {
 
 const PlayerCardProfileBodyComponent = ({
   stats,
-  t,
   isBlocked,
   showTelegram = true,
   edgeToEdge = false,
@@ -94,6 +92,7 @@ const PlayerCardProfileBodyComponent = ({
   sportHint,
   celebrationNested = false,
 }: PlayerCardProfileBodyProps) => {
+  const { t } = useTranslation('playerCard');
   const { user } = stats;
   const authUser = useAuthStore((s) => s.user);
   const authUserId = authUser?.id;
@@ -179,12 +178,12 @@ const PlayerCardProfileBodyComponent = ({
     const tabs: SegmentedSwitchTab[] = [];
     if (hasCompetitiveSports) {
       tabs.push(
-        { id: 'statistics', label: t('playerCard.statistics'), icon: Hash },
-        { id: 'chart', label: t('playerCard.chart'), icon: ChartLine },
+        { id: 'statistics', label: t('statistics'), icon: Hash },
+        { id: 'chart', label: t('chart'), icon: ChartLine },
       );
     }
     if (showGroupsTab) {
-      tabs.push({ id: 'groups', label: t('playerCard.groups'), icon: Users });
+      tabs.push({ id: 'groups', label: t('groups'), icon: Users });
     }
     return tabs;
   }, [hasCompetitiveSports, showGroupsTab, t]);
@@ -243,7 +242,7 @@ const PlayerCardProfileBodyComponent = ({
         {isOnline && (
           <span className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-white/95 dark:bg-gray-900/95 px-2 py-0.5 text-xs font-medium shadow border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" aria-hidden />
-            {t('playerCard.online')}
+            {t('online')}
           </span>
         )}
         <div className="relative z-0 flex items-start gap-5 px-4 py-4 pe-12 sm:items-center sm:gap-6">
@@ -268,7 +267,7 @@ const PlayerCardProfileBodyComponent = ({
                 {user.isTrainer && (
                   <div className="bg-blue-500 dark:bg-blue-600 text-white px-3 py-1 rounded-full font-semibold text-sm flex items-center gap-1.5 border-2 border-white dark:border-gray-900 w-fit" style={{ boxShadow: '0 6px 15px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2)' }}>
                     <Dumbbell size={14} className="text-white" />
-                    <span>{t('playerCard.isTrainer')}</span>
+                    <span>{t('isTrainer')}</span>
                   </div>
                 )}
                 <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
@@ -277,7 +276,7 @@ const PlayerCardProfileBodyComponent = ({
             <div className={showsPremiumStatus(user) ? 'premium-name-glow' : undefined}>
               <h2 className="text-2xl font-bold break-words">
                 {user.firstName}
-                {isBlocked && <span className="ms-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
+                {isBlocked && <span className="ms-2 text-lg font-semibold opacity-90">({t('blocked') || 'Blocked'})</span>}
               </h2>
               {user.lastName && <h3 className="text-xl font-semibold break-words">{user.lastName}</h3>}
             </div>
@@ -315,8 +314,8 @@ const PlayerCardProfileBodyComponent = ({
             style={{ backgroundColor: isBlocked ? '#9CA3AF' : '#229ED9' }}
             onMouseEnter={(e) => { if (!isBlocked) e.currentTarget.style.backgroundColor = '#1E8BC3'; }}
             onMouseLeave={(e) => { if (!isBlocked) e.currentTarget.style.backgroundColor = '#229ED9'; }}
-            title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
-            aria-label={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
+            title={isBlocked ? t('userBlockedCannotChat') : t('openTelegramChat')}
+            aria-label={isBlocked ? t('userBlockedCannotChat') : t('openTelegramChat')}
           >
             <Send size={12} className="text-white flex-shrink-0" />
           </button>
@@ -379,7 +378,7 @@ const PlayerCardProfileBodyComponent = ({
             showOnlyActiveTabText={false}
             layoutId="player-card-profile-tabs"
             className="w-fit"
-            ariaLabel={t('playerCard.profileTabs')}
+            ariaLabel={t('profileTabs')}
           />
         </motion.div>
       )}

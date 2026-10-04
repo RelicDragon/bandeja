@@ -80,7 +80,7 @@ export const LevelHistoryAvatarSection = ({
 
         <div className="flex min-h-24 min-w-0 flex-1 flex-col text-start">
           <div className="text-sm text-white">
-            {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
+            {showSocialLevel ? t('rating.socialLevel') : t('playerCard:currentLevel')}
           </div>
           <div className="text-6xl font-bold leading-none text-white">
             {showSocialLevel

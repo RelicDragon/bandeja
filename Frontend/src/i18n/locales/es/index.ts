@@ -1,3 +1,4 @@
+import type { FeatureNamespaceBundles } from '../../namespaces';
 import ads from './ads.json';
 import app from './app.json';
 import attendance from './attendance.json';
@@ -74,6 +75,11 @@ import sportQuestionnaireBadminton from './sportQuestionnaire/badminton.json';
 import sportQuestionnaireTableTennis from './sportQuestionnaire/tableTennis.json';
 import sportQuestionnaireSquash from './sportQuestionnaire/squash.json';
 
+// Owned namespaces (`../../namespaces.ts`): registered on their own, not spread below.
+export const featureNamespaces: FeatureNamespaceBundles = {
+    playerCard: playerCard.playerCard,
+};
+
 export default {
     ...ads,
     ...agent,
@@ -118,7 +124,6 @@ export default {
     ...offline,
     ...pairs,
     ...permissions,
-    ...playerCard,
     ...playStreak,
     ...trophies,
     ...playerInvite,

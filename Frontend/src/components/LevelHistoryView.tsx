@@ -207,7 +207,7 @@ const LevelHistoryViewComponent = ({
       return t(`games.entityTypes.${item.linkEntityType}`);
     }
 
-    return item.eventType ? t(`playerCard.eventType.${item.eventType}`) : '';
+    return item.eventType ? t(`playerCard:eventType.${item.eventType}`) : '';
   };
   
   const maxLevel = currentHistory.length > 0 
@@ -572,10 +572,10 @@ const LevelHistoryViewComponent = ({
                         {data.date}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}: {data.level.toFixed(2)}
+                        {showSocialLevel ? t('rating.socialLevel') : t('playerCard:currentLevel')}: {data.level.toFixed(2)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {t('playerCard.clickToView')}
+                        {t('playerCard:clickToView')}
                       </p>
                     </div>
                   );
@@ -590,9 +590,9 @@ const LevelHistoryViewComponent = ({
 
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              {activeTab === '10' ? t('playerCard.last10EventsTitle') : 
-               activeTab === '30' ? t('playerCard.last30EventsTitle') : 
-               t('playerCard.allEventsTitle')}
+              {activeTab === '10' ? t('playerCard:last10EventsTitle') : 
+               activeTab === '30' ? t('playerCard:last30EventsTitle') : 
+               t('playerCard:allEventsTitle')}
             </h3>
             {currentHistory.slice().reverse().map((item) => {
               const nonRating = isNonRatingEvent(item);
@@ -656,7 +656,7 @@ const LevelHistoryViewComponent = ({
                     </span>
                     {nonRating ? (
                       <span className="px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-                        {t('playerCard.nonRatingEvent')}
+                        {t('playerCard:nonRatingEvent')}
                       </span>
                     ) : (
                       <div className={`flex items-center whitespace-nowrap ${item.levelChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -675,7 +675,7 @@ const LevelHistoryViewComponent = ({
         </>
       ) : showLevelsContent ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          {showSocialLevel ? t('playerCard.noSocialLevelHistory') : t('playerCard.noLevelHistory')}
+          {showSocialLevel ? t('playerCard:noSocialLevelHistory') : t('playerCard:noLevelHistory')}
         </div>
       ) : null}
     </div>

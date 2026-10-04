@@ -3,7 +3,6 @@
 import { act, type ReactNode, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { TFunction } from 'i18next';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
@@ -12,8 +11,10 @@ vi.mock('react-i18next', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-i18next')>();
   return {
     ...actual,
-    useTranslation: () => ({
-      t: (key: string) => key,
+    // Echo keys as `ns:key` so assertions read the same whether a component
+    // uses `useTranslation('playerCard')` or `t('playerCard:key')`.
+    useTranslation: (ns?: string) => ({
+      t: (key: string) => (ns && !key.includes(':') ? `${ns}:${key}` : key),
       i18n: { language: 'en' },
     }),
   };
@@ -134,7 +135,6 @@ class NoopResizeObserver {
 }
 vi.stubGlobal('ResizeObserver', NoopResizeObserver);
 
-const t = ((key: string) => key) as unknown as TFunction;
 const noop = () => {};
 
 function Harness({
@@ -149,7 +149,6 @@ function Harness({
     <MemoryRouter>
       <PlayerCardProfileBody
       stats={fixture}
-      t={t}
       isBlocked={false}
       showProfileTabs
       showGroupsTab
@@ -165,7 +164,7 @@ function Harness({
 }
 
 function profileTabLabels(el: HTMLElement) {
-  const list = el.querySelector('[role="tablist"][aria-label="playerCard.profileTabs"]');
+  const list = el.querySelector('[role="tablist"][aria-label="playerCard:profileTabs"]');
   expect(list).not.toBeNull();
   return Array.from(list!.querySelectorAll('[role="tab"]')).map((b) =>
     b.getAttribute('aria-label'),
@@ -173,7 +172,7 @@ function profileTabLabels(el: HTMLElement) {
 }
 
 function selectorLists(el: HTMLElement) {
-  return el.querySelectorAll('[role="tablist"][aria-label="playerCard.levelHistorySelector"]');
+  return el.querySelectorAll('[role="tablist"][aria-label="playerCard:levelHistorySelector"]');
 }
 
 function clickTab(el: HTMLElement, label: string) {
@@ -188,20 +187,20 @@ describe('PlayerCardProfileBody tabs', () => {
   it('statistics tab shows renamed tabs plus exactly one shared sport selector', () => {
     const el = render(<Harness initialTab="statistics" />);
     expect(profileTabLabels(el)).toEqual([
-      'playerCard.statistics',
-      'playerCard.chart',
-      'playerCard.groups',
+      'playerCard:statistics',
+      'playerCard:chart',
+      'playerCard:groups',
     ]);
     expect(selectorLists(el).length).toBe(1);
-    expect(el.textContent).toContain('playerCard.followers');
-    expect(el.textContent).not.toContain('playerCard.noLevelHistory');
+    expect(el.textContent).toContain('playerCard:followers');
+    expect(el.textContent).not.toContain('playerCard:noLevelHistory');
   });
 
   it('chart tab renders chart content with a single selector (no duplicate panel)', () => {
     const el = render(<Harness initialTab="chart" />);
     expect(selectorLists(el).length).toBe(1);
-    expect(el.textContent).toContain('playerCard.noLevelHistory');
-    expect(el.textContent).not.toContain('playerCard.followers');
+    expect(el.textContent).toContain('playerCard:noLevelHistory');
+    expect(el.textContent).not.toContain('playerCard:followers');
   });
 
   it('social selection survives profile tab switches', () => {
@@ -211,7 +210,7 @@ describe('PlayerCardProfileBody tabs', () => {
     expect(social?.getAttribute('aria-selected')).toBe('true');
     expect(el.textContent).toContain('1.18');
 
-    clickTab(el, 'playerCard.groups');
+    clickTab(el, 'playerCard:groups');
     expect(el.querySelector('[data-testid="groups-content"]')).not.toBeNull();
     expect(selectorLists(el).length).toBe(1);
     expect(
@@ -220,9 +219,9 @@ describe('PlayerCardProfileBody tabs', () => {
       ),
     ).toBe('true');
     expect(el.textContent).toContain('1.18');
-    expect(el.textContent).not.toContain('playerCard.followers');
+    expect(el.textContent).not.toContain('playerCard:followers');
 
-    clickTab(el, 'playerCard.statistics');
+    clickTab(el, 'playerCard:statistics');
     expect(
       el.querySelector('[role="tab"][aria-label="rating.socialLevel"]')?.getAttribute(
         'aria-selected',
@@ -240,9 +239,9 @@ describe('PlayerCardProfileBody tabs', () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(el.textContent).toContain('playerCard.eventType.GAME');
-    expect(el.textContent).toContain('playerCard.eventType.QUESTIONNAIRE');
-    expect(el.textContent).not.toContain('playerCard.noLevelHistory');
+    expect(el.textContent).toContain('playerCard:eventType.GAME');
+    expect(el.textContent).toContain('playerCard:eventType.QUESTIONNAIRE');
+    expect(el.textContent).not.toContain('playerCard:noLevelHistory');
   });
 
   it('multi-sport user gets one external picker plus a social-only panel toggle', () => {

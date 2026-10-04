@@ -32,9 +32,9 @@ interface ProfilePerformanceInsightsProps {
 }
 
 const relationshipRankingModeLabels: Record<RelationshipRankingMode, string> = {
-  formulae: 'playerCard.relationshipRankingFormulae',
-  rating: 'playerCard.relationshipRankingRating',
-  games: 'playerCard.relationshipRankingGames',
+  formulae: 'playerCard:relationshipRankingFormulae',
+  rating: 'playerCard:relationshipRankingRating',
+  games: 'playerCard:relationshipRankingGames',
 };
 
 const FORMULAE_ONLY_MODES: readonly RelationshipRankingMode[] = ['formulae'];
@@ -46,15 +46,15 @@ const streakClasses: Record<StreakResult, string> = {
 };
 
 const streakLabelKey: Record<StreakResult, string> = {
-  win: 'playerCard.streakWin',
-  loss: 'playerCard.streakLoss',
-  tie: 'playerCard.streakTie',
+  win: 'playerCard:streakWin',
+  loss: 'playerCard:streakLoss',
+  tie: 'playerCard:streakTie',
 };
 
 const currentStreakKey: Record<StreakResult, string> = {
-  win: 'playerCard.currentStreakWin',
-  loss: 'playerCard.currentStreakLoss',
-  tie: 'playerCard.currentStreakTie',
+  win: 'playerCard:currentStreakWin',
+  loss: 'playerCard:currentStreakLoss',
+  tie: 'playerCard:currentStreakTie',
 };
 
 const ProfilePerformanceInsightsComponent = ({
@@ -143,7 +143,7 @@ const ProfilePerformanceInsightsComponent = ({
   const relationships = dedupeRelationshipCards([
     {
       key: 'bestPartner' as const,
-      label: t('playerCard.bestPartner'),
+      label: t('playerCard:bestPartner'),
       icon: Trophy,
       entry: firstRankedEntry(resolved.bestPartner),
       ranks: resolved.bestPartner,
@@ -151,7 +151,7 @@ const ProfilePerformanceInsightsComponent = ({
     },
     {
       key: 'worstPartner' as const,
-      label: t('playerCard.worstPartner'),
+      label: t('playerCard:worstPartner'),
       icon: TrendingDown,
       entry: firstRankedEntry(resolved.worstPartner),
       ranks: resolved.worstPartner,
@@ -159,7 +159,7 @@ const ProfilePerformanceInsightsComponent = ({
     },
     {
       key: 'favoriteTarget' as const,
-      label: t('playerCard.favoriteTarget'),
+      label: t('playerCard:favoriteTarget'),
       icon: Crosshair,
       entry: firstRankedEntry(resolved.favoriteTarget),
       ranks: resolved.favoriteTarget,
@@ -167,7 +167,7 @@ const ProfilePerformanceInsightsComponent = ({
     },
     {
       key: 'nemesis' as const,
-      label: t('playerCard.nemesis'),
+      label: t('playerCard:nemesis'),
       icon: ShieldAlert,
       entry: firstRankedEntry(resolved.nemesis),
       ranks: resolved.nemesis,
@@ -186,19 +186,19 @@ const ProfilePerformanceInsightsComponent = ({
   const selectedRanks = selectedRelationship?.ranks ?? [];
   const selectedPlaceIndex = clampRelationshipPlaceIndex(selectedRanks, relationshipPlaceIndex);
   const relationshipFormulaLines = [
-    t('playerCard.relationshipFormulaMatches'),
-    t('playerCard.relationshipFormulaRate'),
-    t('playerCard.relationshipFormulaConfidence'),
-    t('playerCard.relationshipFormulaRatingSignal'),
-    t('playerCard.relationshipFormulaRecordSignal'),
-    t('playerCard.relationshipFormulaScore'),
+    t('playerCard:relationshipFormulaMatches'),
+    t('playerCard:relationshipFormulaRate'),
+    t('playerCard:relationshipFormulaConfidence'),
+    t('playerCard:relationshipFormulaRatingSignal'),
+    t('playerCard:relationshipFormulaRecordSignal'),
+    t('playerCard:relationshipFormulaScore'),
   ];
 
   const currentStreak = insights.streaks.current
     ? t(`${currentStreakKey[insights.streaks.current.result]}_${insights.streaks.current.count === 1 ? 'one' : 'other'}`, {
         count: insights.streaks.current.count,
       })
-    : t('playerCard.noStreakYet');
+    : t('playerCard:noStreakYet');
 
   const selectRelationshipRankingMode = (mode: RelationshipRankingMode) => {
     if (mode === relationshipRankingMode) return;
@@ -228,7 +228,7 @@ const ProfilePerformanceInsightsComponent = ({
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.streaks')}</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard:streaks')}</h3>
               <button
                 type="button"
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
@@ -236,7 +236,7 @@ const ProfilePerformanceInsightsComponent = ({
                     ? 'border-primary-200 bg-primary-50 text-primary-600 dark:border-primary-800 dark:bg-primary-950/50 dark:text-primary-300'
                     : 'border-gray-200/80 bg-white/75 text-gray-500 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300'
                 }`}
-                aria-label={t('playerCard.streakInfo.button')}
+                aria-label={t('playerCard:streakInfo.button')}
                 aria-expanded={showStreakInfo}
                 aria-controls={streakInfoId}
                 onClick={() => setShowStreakInfo((value) => !value)}
@@ -250,7 +250,7 @@ const ProfilePerformanceInsightsComponent = ({
                 </motion.span>
               </button>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.currentStreak')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard:currentStreak')}</p>
           </div>
           <div className="text-end text-sm font-semibold text-gray-900 dark:text-white">
             {currentStreak}
@@ -274,10 +274,10 @@ const ProfilePerformanceInsightsComponent = ({
                   </span>
                   <div className="min-w-0">
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {t('playerCard.streakInfo.title')}
+                      {t('playerCard:streakInfo.title')}
                     </h4>
                     <p className="mt-0.5 text-xs leading-5 text-gray-600 dark:text-gray-300">
-                      {t('playerCard.streakInfo.intro')}
+                      {t('playerCard:streakInfo.intro')}
                     </p>
                   </div>
                 </div>
@@ -297,10 +297,10 @@ const ProfilePerformanceInsightsComponent = ({
                       </span>
                       <div className="min-w-0">
                         <div className="text-xs font-semibold text-gray-800 dark:text-gray-100">
-                          {t(`playerCard.streakInfo.${rule}Title`)}
+                          {t(`playerCard:streakInfo.${rule}Title`)}
                         </div>
                         <p className="mt-0.5 text-xs leading-[1.125rem] text-gray-600 dark:text-gray-300">
-                          {t(`playerCard.streakInfo.${rule}Description`)}
+                          {t(`playerCard:streakInfo.${rule}Description`)}
                         </p>
                       </div>
                     </div>
@@ -308,7 +308,7 @@ const ProfilePerformanceInsightsComponent = ({
                 </div>
 
                 <p className="mt-3 rounded-lg bg-amber-50 px-2.5 py-2 text-xs font-medium leading-[1.125rem] text-amber-900 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:text-amber-200 dark:ring-amber-900/50">
-                  {t('playerCard.streakInfo.example')}
+                  {t('playerCard:streakInfo.example')}
                 </p>
               </div>
             </motion.div>
@@ -317,7 +317,7 @@ const ProfilePerformanceInsightsComponent = ({
 
         {hasStreakData ? (
           <>
-            <div className="flex items-center gap-1.5" aria-label={t('playerCard.last10Games')}>
+            <div className="flex items-center gap-1.5" aria-label={t('playerCard:last10Games')}>
               {Array.from({ length: emptySlots }).map((_, index) => (
                 <span
                   key={`empty-${index}`}
@@ -339,18 +339,18 @@ const ProfilePerformanceInsightsComponent = ({
                 <div className="text-lg font-bold tabular-nums text-green-600 dark:text-green-400">
                   {insights.streaks.longestWin}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.longestWinStreak')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard:longestWinStreak')}</div>
               </div>
               <div className="rounded-lg bg-white/70 dark:bg-gray-800/40 px-3 py-2">
                 <div className="text-lg font-bold tabular-nums text-red-600 dark:text-red-400">
                   {insights.streaks.longestLoss}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.longestLossStreak')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard:longestLossStreak')}</div>
               </div>
             </div>
           </>
         ) : (
-          <div className="text-sm text-gray-500 dark:text-gray-400">{t('playerCard.noStreakYet')}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">{t('playerCard:noStreakYet')}</div>
         )}
       </section>
 
@@ -390,12 +390,12 @@ const ProfilePerformanceInsightsComponent = ({
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
                   <Handshake size={16} className="shrink-0 text-gray-500 dark:text-gray-400" />
-                  <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.partners')}</h3>
+                  <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard:partners')}</h3>
                 </div>
                 <button
                   type="button"
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/75 text-gray-500 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:focus-visible:ring-offset-gray-800"
-                  aria-label={t('playerCard.relationshipInfoButton')}
+                  aria-label={t('playerCard:relationshipInfoButton')}
                   aria-expanded={showRelationshipInfo}
                   aria-controls="profile-relationship-info"
                   onClick={() => setShowRelationshipInfo((value) => !value)}
@@ -410,13 +410,13 @@ const ProfilePerformanceInsightsComponent = ({
                 }`}
               >
                 <div className="rounded-lg border border-primary-100 bg-primary-50/70 px-3 py-2 text-xs leading-5 text-gray-600 dark:border-primary-900/50 dark:bg-primary-950/25 dark:text-gray-300">
-                  <p>{t('playerCard.relationshipInfo')}</p>
+                  <p>{t('playerCard:relationshipInfo')}</p>
                   <div className="mt-2 space-y-1 rounded-md bg-white/60 px-2 py-2 font-mono text-[11px] leading-4 text-gray-700 dark:bg-gray-900/30 dark:text-gray-200">
                     {relationshipFormulaLines.map((line) => (
                       <div key={line}>{line}</div>
                     ))}
                   </div>
-                  <p className="mt-2">{t('playerCard.relationshipFormulaPick')}</p>
+                  <p className="mt-2">{t('playerCard:relationshipFormulaPick')}</p>
                 </div>
               </div>
               {hasRelationshipData ? (
@@ -448,7 +448,7 @@ const ProfilePerformanceInsightsComponent = ({
                           {entry.user.avatar ? (
                             <img
                               src={entry.user.avatar}
-                              alt={getPlayerName(entry, t('playerCard.shareProfileFallbackName'))}
+                              alt={getPlayerName(entry, t('playerCard:shareProfileFallbackName'))}
                               className="h-8 w-8 shrink-0 rounded-full object-cover"
                             />
                           ) : (
@@ -458,7 +458,7 @@ const ProfilePerformanceInsightsComponent = ({
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="min-h-[2.3rem] text-sm font-semibold leading-[1.15rem] text-gray-900 dark:text-white">
-                              {getPlayerNameLines(entry, t('playerCard.shareProfileFallbackName')).map((line, index) => (
+                              {getPlayerNameLines(entry, t('playerCard:shareProfileFallbackName')).map((line, index) => (
                                 <span key={`${line}-${index}`} className="block truncate">
                                   {line}
                                 </span>
@@ -466,21 +466,21 @@ const ProfilePerformanceInsightsComponent = ({
                             </div>
                             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums text-gray-500 dark:text-gray-400">
                               <span className="font-semibold text-green-600 dark:text-green-400">
-                                {entry.wins}{t('playerCard.winsShort')}
+                                {entry.wins}{t('playerCard:winsShort')}
                               </span>
                               <span className="font-semibold text-red-600 dark:text-red-400">
-                                {entry.losses}{t('playerCard.lossesShort')}
+                                {entry.losses}{t('playerCard:lossesShort')}
                               </span>
                               <span className="font-semibold text-yellow-600 dark:text-yellow-400">
-                                {entry.ties}{t('playerCard.tiesShort')}
+                                {entry.ties}{t('playerCard:tiesShort')}
                               </span>
                               <span className="text-gray-400 dark:text-gray-500">·</span>
                               <span>{entry.winRate}%</span>
                               <span className="text-gray-400 dark:text-gray-500">·</span>
                               <span
                                 className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ring-1 ${getRatingNetChangeClass(entry.ratingNetChange)}`}
-                                title={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
-                                aria-label={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
+                                title={t('playerCard:relationshipRatingNetChange', { change: ratingNetChange })}
+                                aria-label={t('playerCard:relationshipRatingNetChange', { change: ratingNetChange })}
                               >
                                 Δ {ratingNetChange}
                               </span>
@@ -492,7 +492,7 @@ const ProfilePerformanceInsightsComponent = ({
                   })}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500 dark:text-gray-400">{t('playerCard.noPartnerStatsYet')}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{t('playerCard:noPartnerStatsYet')}</div>
               )}
 
               {showRankingModeSwitch ? (
@@ -500,7 +500,7 @@ const ProfilePerformanceInsightsComponent = ({
                   className={`mt-3 grid rounded-lg bg-white/70 p-1 shadow-inner ring-1 ring-gray-200/70 dark:bg-gray-800/40 dark:ring-gray-700/70 ${
                     relationshipRankingModes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
                   }`}
-                  aria-label={t('playerCard.relationshipRankingMode')}
+                  aria-label={t('playerCard:relationshipRankingMode')}
                   role="radiogroup"
                 >
                   {relationshipRankingModes.map(({ mode, labelKey }) => {

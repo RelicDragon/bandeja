@@ -9,7 +9,7 @@ import type { BasicUser } from '@/types';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: { count?: number; defaultValue?: string }) =>
-      key === 'playerCard.isTrainer' ? 'Trainer' : (opts?.defaultValue ?? key),
+      key === 'playerCard:isTrainer' ? 'Trainer' : (opts?.defaultValue ?? key),
   }),
 }));
 

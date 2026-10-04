@@ -20,8 +20,8 @@ export function PlayerActivityCounts({
   const games = asCount(gamesPlayed);
   const trainings = asCount(trainingAttendanceCount);
   const quiet = games === 0 && trainings === 0;
-  const gamesLabel = t('playerCard.gamesCount', { count: games });
-  const trainingsLabel = t('playerCard.trainingsCount', { count: trainings });
+  const gamesLabel = t('playerCard:gamesCount', { count: games });
+  const trainingsLabel = t('playerCard:trainingsCount', { count: trainings });
 
   return (
     <p

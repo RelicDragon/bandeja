@@ -118,7 +118,7 @@ export function LevelHistoryLevelSelector({
           showOnlyActiveTabText={false}
           layoutId={layoutId}
           className={switchClass}
-          ariaLabel={t('playerCard.levelHistorySelector')}
+          ariaLabel={t('playerCard:levelHistorySelector')}
         />
       </div>
     );
@@ -136,7 +136,7 @@ export function LevelHistoryLevelSelector({
         showOnlyActiveTabText
         layoutId={layoutId}
         className={switchClass}
-        ariaLabel={t('playerCard.levelHistorySelector')}
+        ariaLabel={t('playerCard:levelHistorySelector')}
       />
     </div>
   );

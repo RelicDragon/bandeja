@@ -44,8 +44,8 @@ describe('PlayerActivityCounts', () => {
     const el = render(
       <PlayerActivityCounts gamesPlayed={12} trainingAttendanceCount={4} />,
     );
-    expect(el.textContent).toContain('playerCard.gamesCount:12');
-    expect(el.textContent).toContain('playerCard.trainingsCount:4');
+    expect(el.textContent).toContain('playerCard:gamesCount:12');
+    expect(el.textContent).toContain('playerCard:trainingsCount:4');
   });
 
   it('shows zero without crashing', () => {
@@ -54,8 +54,8 @@ describe('PlayerActivityCounts', () => {
     );
     const row = el.querySelector('[data-testid="player-activity-counts"]');
     expect(row).not.toBeNull();
-    expect(el.textContent).toContain('playerCard.gamesCount:0');
-    expect(el.textContent).toContain('playerCard.trainingsCount:0');
+    expect(el.textContent).toContain('playerCard:gamesCount:0');
+    expect(el.textContent).toContain('playerCard:trainingsCount:0');
     expect(row?.className).toMatch(/opacity-70/);
   });
 
@@ -66,8 +66,8 @@ describe('PlayerActivityCounts', () => {
         trainingAttendanceCount={undefined}
       />,
     );
-    expect(el.textContent).toContain('playerCard.gamesCount:0');
-    expect(el.textContent).toContain('playerCard.trainingsCount:0');
+    expect(el.textContent).toContain('playerCard:gamesCount:0');
+    expect(el.textContent).toContain('playerCard:trainingsCount:0');
   });
 
   it('keeps the separator inline so it cannot wrap alone', () => {
