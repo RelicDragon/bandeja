@@ -12,7 +12,14 @@
  *   · an edit reverted inside the quiet window sends nothing;
  *   · a linked booking that no longer covers the game is flagged for its
  *     booker, and the booking row itself is never touched;
- *   · an attendance button sent before the change is refused afterwards.
+ *   · an attendance button sent before the change is refused afterwards;
+ *   · a series "this and following" time edit sends ONE combined notice per
+ *     player (their own games, final times), resets attendance per game, is
+ *     claimed exactly once even by concurrent sweepers, excludes a game that
+ *     locked before delivery, and sends nothing when reverted;
+ *   · linking / unlinking a booking that moves the time resets attendance
+ *     (the linker keeps their answer) and queues the same notice; a link that
+ *     matches the current time does nothing.
  *
  * Safe to run against `padelpulse_dev`: every row is namespaced with a run
  * suffix and removed in `finally`. Outbound notifications are suppressed and
@@ -21,17 +28,22 @@
 import assert from 'node:assert/strict';
 import {
   EntityType,
+  GameSeriesCadence,
   GameType,
   ParticipantRole,
   ParticipantStatus,
+  ResultsStatus,
   Sport,
 } from '@prisma/client';
 import prisma from '../../config/database';
 import { GameUpdateService } from '../game/update.service';
 import { setAttendanceFromAction } from '../gameAttendance/gameAttendance.service';
+import { linkBookingToGame, patchGameBookings } from '../game/gameExternalBooking.service';
+import { GameSeriesService } from '../gameSeries/gameSeries.service';
 import {
   attendanceActionPredatesTimeChange,
   runTimeChangeNoticeSweep,
+  type TimeChangeBatchNoticeDelivery,
   type TimeChangeNoticeDelivery,
 } from './gameTimeChange.service';
 import { TIME_CHANGE_NOTICE_MAX_DELAY_MS, TIME_CHANGE_NOTICE_QUIET_MS } from './timeChangeRules';
@@ -46,6 +58,7 @@ void (async () => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const createdUserIds: string[] = [];
   const createdGameIds: string[] = [];
+  const createdSeriesIds: string[] = [];
 
   const city = await prisma.city.create({
     data: { name: `Time change ${suffix}`, country: 'Test', timezone: 'UTC' },
@@ -55,11 +68,16 @@ void (async () => {
   const deliver = async (delivery: TimeChangeNoticeDelivery) => {
     deliveries.push(delivery);
   };
+  const batchDeliveries: TimeChangeBatchNoticeDelivery[] = [];
+  const deliverBatch = async (delivery: TimeChangeBatchNoticeDelivery) => {
+    batchDeliveries.push(delivery);
+  };
   /** Sweep as if the quiet window had closed. */
   const sweepAfterWindow = () =>
     runTimeChangeNoticeSweep({
       now: new Date(Date.now() + TIME_CHANGE_NOTICE_MAX_DELAY_MS + MINUTES),
       deliver,
+      deliverBatch,
     });
 
   try {
@@ -296,8 +314,220 @@ void (async () => {
     const flagged = deliveries[0].recipients.filter((r) => r.bookingNeedsAttention).map((r) => r.userId);
     assert.deepEqual(flagged, [playerA.id], 'only the booker is told their booking needs attention');
 
+    /* --- series "this and following": one notice per player ------------ */
+
+    const seriesSeedStart = new Date(Math.ceil((Date.now() + 2 * 24 * HOURS) / HOURS) * HOURS);
+    const seriesSeed = await prisma.game.create({
+      data: {
+        entityType: EntityType.GAME,
+        sport: Sport.PADEL,
+        gameType: GameType.CLASSIC,
+        cityId: city.id,
+        startTime: seriesSeedStart,
+        endTime: new Date(seriesSeedStart.getTime() + 90 * MINUTES),
+        timeIsSet: true,
+        isPublic: true,
+        maxParticipants: 4,
+      },
+    });
+    createdGameIds.push(seriesSeed.id);
+    await prisma.gameParticipant.createMany({
+      data: [
+        { gameId: seriesSeed.id, userId: owner.id, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING },
+        { gameId: seriesSeed.id, userId: playerA.id, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.PLAYING },
+      ],
+    });
+    const { seriesId } = await GameSeriesService.createSeriesFromGame(seriesSeed.id, owner.id, {
+      cadence: GameSeriesCadence.WEEKLY,
+      name: `Time change series ${suffix}`,
+      horizonDays: 21,
+    });
+    createdSeriesIds.push(seriesId);
+    const seriesGames = await prisma.game.findMany({
+      where: { seriesId },
+      orderBy: { startTime: 'asc' },
+      select: { id: true, startTime: true },
+    });
+    for (const row of seriesGames) if (!createdGameIds.includes(row.id)) createdGameIds.push(row.id);
+    assert.ok(seriesGames.length >= 3, `the series has at least three occurrences (got ${seriesGames.length})`);
+
+    // Known roster on every occurrence: owner + playerA everywhere (answered),
+    // playerB on the first occurrence only, and admin on none.
+    for (const [index, row] of seriesGames.entries()) {
+      await prisma.gameParticipant.deleteMany({ where: { gameId: row.id } });
+      await prisma.gameParticipant.createMany({
+        data: [
+          { gameId: row.id, userId: owner.id, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING },
+          { gameId: row.id, userId: playerA.id, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.PLAYING, attendance: 'CONFIRMED' },
+          ...(index === 0
+            ? [{ gameId: row.id, userId: playerB.id, role: ParticipantRole.PARTICIPANT, status: ParticipantStatus.PLAYING, attendance: 'UNSURE' as const }]
+            : []),
+        ],
+      });
+    }
+
+    const hhmm = (d: Date) => d.toISOString().slice(11, 16);
+    const seriesNewLocal = hhmm(new Date(seriesSeedStart.getTime() + 2 * HOURS));
+    deliveries.length = 0;
+    batchDeliveries.length = 0;
+
+    const seriesEdit = await GameSeriesService.updateSeries(seriesId, owner.id, {
+      scope: 'future',
+      startTimeLocal: seriesNewLocal,
+    });
+    const editedIds = seriesEdit.updatedGameIds;
+    assert.ok(editedIds.length >= 3, 'every unstarted occurrence moved');
+    for (const gameId of editedIds) {
+      const r = await roster(gameId);
+      assert.equal(r[playerA.id].attendance, 'UNANSWERED', 'attendance resets per game');
+    }
+    const batchRows = await prisma.gameTimeChange.findMany({ where: { gameId: { in: editedIds } } });
+    assert.equal(batchRows.length, editedIds.length);
+    assert.ok(batchRows.every((row) => row.noticeBatchKey === `series:${seriesId}`), 'every notice joins the batch');
+
+    // The last occurrence locks before delivery: it drops out of the notice.
+    const lockedLate = editedIds[editedIds.length - 1];
+    await prisma.game.update({ where: { id: lockedLate }, data: { resultsStatus: ResultsStatus.IN_PROGRESS } });
+
+    // Two sweepers at once (two servers / a restart mid-pass): one notice.
+    const [sweepOne, sweepTwo] = await Promise.all([sweepAfterWindow(), sweepAfterWindow()]);
+    assert.equal(sweepOne.batchesSent + sweepTwo.batchesSent, 1, 'the batch is claimed exactly once');
+    assert.equal(sweepOne.claimed + sweepTwo.claimed, editedIds.length);
+    assert.equal(deliveries.length, 0, 'no per-game notices for a series edit');
+    assert.equal(batchDeliveries.length, 1);
+    const batch = batchDeliveries[0];
+    assert.equal(batch.seriesId, seriesId);
+    assert.equal(batch.seriesName, `Time change series ${suffix}`);
+    const sentGameIds = batch.games.map((g) => g.game.id);
+    assert.deepEqual(sentGameIds, editedIds.filter((id) => id !== lockedLate), 'locked games are excluded, earliest first');
+    for (const entry of batch.games) {
+      assert.equal(hhmm(entry.game.startTime), seriesNewLocal, 'the notice carries the new time');
+      assert.equal(hhmm(entry.previousStartTime), hhmm(seriesSeedStart), 'and what players were told before');
+    }
+    const byRecipient = Object.fromEntries(batch.recipients.map((r) => [r.userId, r]));
+    assert.deepEqual(Object.keys(byRecipient).sort(), [playerA.id, playerB.id].sort(), 'one entry per player; the editor (owner) is not told');
+    assert.deepEqual(byRecipient[playerA.id].gameIds, sentGameIds, 'playerA: one notice for all their games');
+    assert.deepEqual(byRecipient[playerB.id].gameIds, [editedIds[0]], 'playerB: only the game they play in');
+    assert.equal(byRecipient[playerA.id].asksAttendance, true);
+
+    const seriesAgain = await sweepAfterWindow();
+    assert.equal(seriesAgain.claimed, 0, 'a delivered batch is never sent twice');
+    assert.equal(batchDeliveries.length, 1);
+
+    // A series edit reverted inside the window sends nothing. (The locked
+    // occurrence stays locked, so the series edit leaves it alone.)
+    await GameSeriesService.updateSeries(seriesId, owner.id, {
+      scope: 'future',
+      startTimeLocal: hhmm(new Date(seriesSeedStart.getTime() + 3 * HOURS)),
+    });
+    await GameSeriesService.updateSeries(seriesId, owner.id, { scope: 'future', startTimeLocal: seriesNewLocal });
+    const seriesReverted = await sweepAfterWindow();
+    assert.equal(seriesReverted.claimed, editedIds.length - 1);
+    assert.equal(seriesReverted.batchesSent, 0, 'back where players were told: no notice');
+    assert.equal(seriesReverted.sent, 0);
+    assert.equal(seriesReverted.skipped.reverted, editedIds.length - 1);
+    assert.equal(batchDeliveries.length, 1);
+    assert.equal(deliveries.length, 0);
+
+    /* --- booking link / unlink that moves the time ------------------------ */
+
+    const linkGame = await makeGame(); // timeOverride false: bookings drive the time
+    deliveries.length = 0;
+    const linkedStart = new Date(originalStart.getTime() + 2 * HOURS);
+    const linkedEnd = new Date(linkedStart.getTime() + 90 * MINUTES);
+    await linkBookingToGame(linkGame.id, admin.id, false, {
+      externalBookingId: `qa-timechange-link-${suffix}`,
+      snapshot: {
+        externalBookingId: `qa-timechange-link-${suffix}`,
+        bookingStart: linkedStart.toISOString(),
+        bookingEnd: linkedEnd.toISOString(),
+      },
+    });
+    const linkedGame = await prisma.game.findUniqueOrThrow({ where: { id: linkGame.id } });
+    assert.equal(linkedGame.startTime.getTime(), linkedStart.getTime(), 'the booking moved the game');
+    rows = await roster(linkGame.id);
+    assert.equal(rows[playerA.id].attendance, 'UNANSWERED', 'a booking-driven move clears answers');
+    assert.equal(rows[admin.id].attendance, 'CONFIRMED', 'the user who linked keeps their answer');
+    state = await prisma.gameTimeChange.findUniqueOrThrow({ where: { gameId: linkGame.id } });
+    assert.ok(state.noticeDueAt, 'a notice is queued');
+    assert.equal(state.editorUserId, admin.id);
+    assert.equal(state.previousStartTime?.getTime(), originalStart.getTime());
+    assert.ok(await attendanceActionPredatesTimeChange(linkGame.id, new Date(Date.now() - 5000)), 'old buttons stop working');
+    await sweepAfterWindow();
+    assert.equal(deliveries.length, 1);
+    assert.equal(deliveries[0].game.id, linkGame.id);
+    assert.deepEqual(
+      deliveries[0].recipients.map((r) => r.userId).sort(),
+      [owner.id, playerA.id, playerB.id].sort(),
+      'same recipients as an edit: PLAYING minus the linker',
+    );
+    assert.equal(deliveries[0].recipients.some((r) => r.bookingNeedsAttention), false, 'the new booking covers the game');
+
+    // Unlinking one of two bookings shrinks the derived time: same behaviour.
+    const secondStart = linkedEnd;
+    const secondEnd = new Date(secondStart.getTime() + 60 * MINUTES);
+    await linkBookingToGame(linkGame.id, admin.id, false, {
+      externalBookingId: `qa-timechange-link2-${suffix}`,
+      snapshot: {
+        externalBookingId: `qa-timechange-link2-${suffix}`,
+        bookingStart: secondStart.toISOString(),
+        bookingEnd: secondEnd.toISOString(),
+      },
+    });
+    assert.equal(
+      (await prisma.game.findUniqueOrThrow({ where: { id: linkGame.id } })).endTime.getTime(),
+      secondEnd.getTime(),
+      'a second adjacent booking extends the game',
+    );
+    await sweepAfterWindow(); // flush the extension notice
+    await prisma.gameParticipant.updateMany({
+      where: { gameId: linkGame.id, userId: { in: [playerA.id, playerB.id] } },
+      data: { attendance: 'CONFIRMED' },
+    });
+    deliveries.length = 0;
+    await patchGameBookings(linkGame.id, playerB.id, true, { remove: [`qa-timechange-link2-${suffix}`] });
+    const unlinked = await prisma.game.findUniqueOrThrow({ where: { id: linkGame.id } });
+    assert.equal(unlinked.endTime.getTime(), linkedEnd.getTime(), 'unlinking moved the end back');
+    rows = await roster(linkGame.id);
+    assert.equal(rows[playerA.id].attendance, 'UNANSWERED', 'an unlink that moves the time clears answers');
+    assert.equal(rows[playerB.id].attendance, 'CONFIRMED', 'the user who unlinked keeps their answer');
+    await sweepAfterWindow();
+    assert.equal(deliveries.length, 1, 'the unlink sends one notice');
+    assert.ok(!deliveries[0].recipients.some((r) => r.userId === playerB.id), 'not to the unlinker');
+
+    // A link that matches the current time changes nothing.
+    const matchGame = await makeGame();
+    deliveries.length = 0;
+    await linkBookingToGame(matchGame.id, owner.id, false, {
+      externalBookingId: `qa-timechange-match-${suffix}`,
+      snapshot: {
+        externalBookingId: `qa-timechange-match-${suffix}`,
+        bookingStart: originalStart.toISOString(),
+        bookingEnd: originalEnd.toISOString(),
+      },
+    });
+    rows = await roster(matchGame.id);
+    assert.equal(rows[playerA.id].attendance, 'CONFIRMED', 'a matching link keeps every answer');
+    assert.equal(rows[playerB.id].attendance, 'UNSURE');
+    assert.equal(
+      await prisma.gameTimeChange.count({ where: { gameId: matchGame.id } }),
+      0,
+      'a matching link queues nothing',
+    );
+    await sweepAfterWindow();
+    assert.equal(deliveries.length, 0);
+
     console.log('gameTimeChange.integration.test.ts: ok');
   } finally {
+    await prisma.gameSeriesRegular
+      .deleteMany({ where: { seriesId: { in: createdSeriesIds } } })
+      .catch(() => undefined);
+    for (const seriesId of createdSeriesIds) {
+      const rows = await prisma.game
+        .findMany({ where: { seriesId }, select: { id: true } })
+        .catch(() => []);
+      for (const row of rows) if (!createdGameIds.includes(row.id)) createdGameIds.push(row.id);
+    }
     await prisma.chatMessage
       .deleteMany({ where: { gameId: { in: createdGameIds } } })
       .catch(() => undefined);
@@ -305,6 +535,9 @@ void (async () => {
       .deleteMany({ where: { contextId: { in: createdGameIds } } })
       .catch(() => undefined);
     await prisma.game.deleteMany({ where: { id: { in: createdGameIds } } }).catch(() => undefined);
+    await prisma.gameSeries
+      .deleteMany({ where: { id: { in: createdSeriesIds } } })
+      .catch(() => undefined);
     await prisma.userSportProfile
       .deleteMany({ where: { userId: { in: createdUserIds } } })
       .catch(() => undefined);

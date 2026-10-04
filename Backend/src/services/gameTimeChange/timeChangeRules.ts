@@ -153,3 +153,71 @@ export function isStaleAttendanceAction(issuedAt: Date, attendanceResetAt: Date 
   if (!attendanceResetAt) return false;
   return Math.floor(issuedAt.getTime() / 1000) < Math.floor(attendanceResetAt.getTime() / 1000);
 }
+
+/* ------------------------------------------------------------------ */
+/* Batches (series "this and following" edits)                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A series "this and following" edit moves many occurrences at once. Their
+ * pending notices share this key, are claimed together and become ONE
+ * combined notice per player instead of one per game.
+ */
+export function seriesTimeChangeBatchKey(seriesId: string): string {
+  return `series:${seriesId}`;
+}
+
+export function seriesIdFromBatchKey(batchKey: string | null | undefined): string | null {
+  if (!batchKey || !batchKey.startsWith('series:')) return null;
+  return batchKey.slice('series:'.length) || null;
+}
+
+/**
+ * A batch is claimed only once every still-pending member is due: the edits
+ * of one batch land within seconds, and each member is capped by
+ * {@link TIME_CHANGE_NOTICE_MAX_DELAY_MS}, so the wait is bounded.
+ */
+export function isBatchDue(members: readonly { noticeDueAt: Date | null }[], now: Date): boolean {
+  const pending = members.filter((m) => m.noticeDueAt !== null);
+  return pending.length > 0 && pending.every((m) => m.noticeDueAt!.getTime() <= now.getTime());
+}
+
+export type BatchNoticeGame<R extends NoticeRosterRow> = {
+  gameId: string;
+  startTime: Date;
+  editorUserId: string | null;
+  roster: readonly R[];
+};
+
+export type BatchNoticeRecipientGames<R extends NoticeRosterRow> = {
+  userId: string;
+  /** The recipient's own games of the batch, earliest first. */
+  gameIds: string[];
+  /** Roster row per game id (for the per-game asks). */
+  rows: Record<string, R>;
+};
+
+/**
+ * One entry per player across the batch: each player is listed once, with
+ * only the games they play in (PLAYING, minus each game's editor).
+ */
+export function groupBatchNoticeRecipients<R extends NoticeRosterRow>(
+  games: readonly BatchNoticeGame<R>[],
+): BatchNoticeRecipientGames<R>[] {
+  const ordered = [...games].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+  const byUser = new Map<string, BatchNoticeRecipientGames<R>>();
+  for (const game of ordered) {
+    for (const row of timeChangeNoticeRecipients(game.roster, game.editorUserId)) {
+      let entry = byUser.get(row.userId);
+      if (!entry) {
+        entry = { userId: row.userId, gameIds: [], rows: {} };
+        byUser.set(row.userId, entry);
+      }
+      if (!entry.rows[game.gameId]) {
+        entry.gameIds.push(game.gameId);
+        entry.rows[game.gameId] = row;
+      }
+    }
+  }
+  return [...byUser.values()];
+}

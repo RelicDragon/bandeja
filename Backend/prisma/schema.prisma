@@ -4450,11 +4450,15 @@ model GameTimeChange {
   lastNoticeSentAt  DateTime?
   /// Bumped on every coalesced edit and on claim, so exactly one sweep delivers.
   version           Int       @default(0)
+  /// Pending notices sharing a key (`series:<seriesId>`) are claimed together and
+  /// sent as one combined notice per player. Null = a notice for this game alone.
+  noticeBatchKey    String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   game              Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([noticeDueAt])
+  @@index([noticeBatchKey])
 }
 
 // A user-entered booking phone, not a verified provider account or access token.

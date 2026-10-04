@@ -16,6 +16,11 @@ import {
 } from '../../shared/gameBooking/contracts';
 import { canMutateGameBookings } from '../../shared/gameBooking/bookingLinkAuthorization';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
+import {
+  publishTrackedScheduleChange,
+  trackScheduleChangeInTx,
+  type RecordScheduleChangeResult,
+} from '../gameTimeChange/gameTimeChange.service';
 
 type Tx = Prisma.TransactionClient;
 
@@ -68,7 +73,30 @@ export function gamePatchAffectsBookingStatus(patch: Record<string, unknown>): b
  * - POST /games/:id/link-booking — linkBookingToGame
  * - PUT /games/:id/booking-snapshots — putGameBookingSnapshots
  * - scripts/fix-booktime-game-times — maintenance batch fix
+ *
+ * Every entry point here except the maintenance scripts runs inside
+ * {@link runBookingLinkTransaction}: a link / unlink / snapshot refresh that
+ * moves the game's time resets attendance and queues the "time changed" notice
+ * exactly like a time edit (same transaction as the time write). The user who
+ * linked or unlinked is the editor; a system recompute has none.
+ * (`PATCH /games/:id` re-syncs inside `GameUpdateService`, which records the
+ * change itself.)
  */
+
+async function runBookingLinkTransaction<T>(
+  gameId: string,
+  editorUserId: string | null,
+  write: (tx: Tx) => Promise<T>,
+): Promise<T> {
+  let change: RecordScheduleChangeResult | null = null;
+  const value = await prisma.$transaction(async (tx) => {
+    const tracked = await trackScheduleChangeInTx(tx, { gameId, editorUserId }, () => write(tx));
+    change = tracked.change;
+    return tracked.value;
+  });
+  await publishTrackedScheduleChange(gameId, editorUserId, change);
+  return value;
+}
 
 export function assertNoLegacyExternalBookingId(data: Record<string, unknown>): void {
   if (Object.prototype.hasOwnProperty.call(data, 'externalBookingId')) {
@@ -421,8 +449,12 @@ async function syncGameBookingState(
 
 export { syncGameBookingState };
 
-export async function recomputeGameBookingStatusForGame(gameId: string): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+/** System recompute (court set changed, backfills): no editor, so a real move resets every answer. */
+export async function recomputeGameBookingStatusForGame(
+  gameId: string,
+  editorUserId: string | null = null,
+): Promise<void> {
+  await runBookingLinkTransaction(gameId, editorUserId, async (tx) => {
     await syncGameBookingState(tx, gameId);
   });
 }
@@ -463,7 +495,7 @@ export async function patchGameBookings(
 
   let previousBookingStatus: GameBookingStatus | null = null;
 
-  await prisma.$transaction(async (tx) => {
+  await runBookingLinkTransaction(gameId, userId, async (tx) => {
     const provider = await resolveGameClubBookingProvider(gameId, tx);
 
     if (remove.length > 0) {
@@ -516,7 +548,7 @@ export async function putGameBookingSnapshots(
   const timeZone = await resolveBooktimeTimezoneForGame(gameId);
   let previousBookingStatus: GameBookingStatus | null = null;
 
-  await prisma.$transaction(async (tx) => {
+  await runBookingLinkTransaction(gameId, userId, async (tx) => {
     const game = await tx.game.findUnique({
       where: { id: gameId },
       select: { timeOverride: true },
@@ -603,7 +635,7 @@ export async function linkBookingToGame(
     resolvedSnapshot.courtId = gamePatch.courtId;
   }
 
-  await prisma.$transaction(async (tx) => {
+  await runBookingLinkTransaction(gameId, userId, async (tx) => {
     const game = await tx.game.findUnique({
       where: { id: gameId },
       select: { id: true, timeOverride: true },

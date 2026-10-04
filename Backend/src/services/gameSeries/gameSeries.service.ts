@@ -12,6 +12,7 @@ import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { TtlCache } from '../../utils/ttlCache';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { GameUpdateService } from '../game/update.service';
+import { seriesTimeChangeBatchKey } from '../gameTimeChange/timeChangeRules';
 import { GameDeleteService } from '../game/delete.service';
 import {
   projectAvailableGameCardPayload,
@@ -1048,7 +1049,11 @@ export class GameSeriesService {
         }
 
         try {
-          await GameUpdateService.updateGame(occurrence.id, patch, series.ownerId, false);
+          // One combined "time changed" notice per player for the whole
+          // batch, not one per occurrence (attendance still resets per game).
+          await GameUpdateService.updateGame(occurrence.id, patch, series.ownerId, false, {
+            timeChangeBatchKey: seriesTimeChangeBatchKey(seriesId),
+          });
           if (scheduleChanged) {
             const nextDayKey = nextOccurrenceOnOrAfter(
               anchorDayKey,

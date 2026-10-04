@@ -1714,6 +1714,13 @@ No proposal or reconfirmation flow exists — the edit is the new time. Detail: 
 | GD-TC-07 | Notice tap | Tap the "Time changed" push | Opens the game details. `@shade` |
 | GD-TC-08 | Booker told | Player C attached the linked reservation; owner moves the game outside it | C's notice adds "Your court booking no longer covers the new time. Update it with the club." `@manual` |
 | GD-TC-09 | Time cleared | Owner clears the time (club admin "clear court" or time not set) | Answers cleared; no "Time changed" notice |
+| GD-TC-10 | Series edit: one notice | Weekly series with 3 upcoming occurrences; A plays in all three, B only in the first; owner edits the series time with "This and following" | Answers reset on every moved occurrence. A gets **one** push/Telegram titled "<series name>: Time changed" saying the upcoming games from <first date> are now <new time> (was <old time>) — not three. B gets the regular single-game notice for their one game (with the Telegram answer buttons). The owner gets nothing. `@manual` |
+| GD-TC-11 | Series edit: different times | Same series, but one occurrence had been moved by hand before the series edit (so old times differ) | A's one notice lists each game on its own dated line "<new> (was <old>)"; more than 5 games show "+N more" |
+| GD-TC-12 | Series notice buttons | Open A's combined Telegram message; tap the push | Telegram has **no** answer buttons, only "Next game" (earliest moved occurrence) and "View series"; the push opens the next moved game |
+| GD-TC-13 | Series edit reverted / locked | Edit the series time and change it back within a minute; separately, lock (start scoring) one occurrence right after a series edit | Revert: no notice at all. Locked occurrence: left out of the combined notice (and of the edit) |
+| GD-TC-14 | Booking link moves the time | Game 18:00 with no time override; admin (answered "I'm coming") links a booking at 20:00 from game details or via the AI agent | Game moves to 20:00; everyone else's answer is cleared, the admin's stays; a date/time chat line posts; players get one "Time changed" notice about a minute later. `@manual` |
+| GD-TC-15 | Booking unlink moves the time | Game derived from two back-to-back bookings (18:00–21:00); unlink the second (game details, agent "unlink booking" or "cancel booking") | Game shrinks to the first booking; answers reset except the unlinker's; one "Time changed" notice. `@manual` |
+| GD-TC-16 | Matching link | Link a booking whose times equal the game's | Nothing resets, no chat line, no notice |
 
 Player card / profile: `PR-AT-01`–`PR-AT-07` in §13.4. Push and Telegram: `PN-AT-01`–`PN-AT-06` in §18.8.
 

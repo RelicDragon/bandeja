@@ -172,6 +172,11 @@ export interface NotificationData {
   goodsId?: string;
   /** PRD 355 — who sent the gift, so the shop can thank them. */
   senderUserId?: string;
+  /**
+   * Time change — comma-separated ids of every game a combined (series batch)
+   * "time changed" notice covers. `gameId` is the next one, which a tap opens.
+   */
+  gameIds?: string;
 }
 
 export interface NotificationPayload {

@@ -47,12 +47,13 @@ export async function resetAttendanceForTimeChangeInTx(
 
 /**
  * Post-commit fan-out so open game pages and card stacks refetch. The payload
- * is about the editor (whose row did not move); clients treat the event as
+ * is about the editor (whose row did not move) — or the owner when a system
+ * change (booking sync) has no editor; clients treat the event as
  * "attendance for this game changed" and refetch the whole summary.
  */
 export async function emitAttendanceResetForTimeChange(
   gameId: string,
-  editorUserId: string,
+  editorUserId: string | null,
 ): Promise<void> {
   const rows = withOwnerImplicitAnswer(
     await prisma.gameParticipant.findMany({
@@ -61,9 +62,13 @@ export async function emitAttendanceResetForTimeChange(
     }),
   );
   const counts = countAttendance(rows);
-  const editorRow = rows.find((row) => row.userId === editorUserId);
+  const editorRow = editorUserId
+    ? rows.find((row) => row.userId === editorUserId)
+    : rows.find((row) => row.role === 'OWNER');
+  const userId = editorRow?.userId ?? editorUserId;
+  if (!userId) return;
   await emitGameAttendanceUpdated(gameId, {
-    userId: editorUserId,
+    userId,
     attendance: editorRow?.attendance ?? 'UNANSWERED',
     confirmedCount: counts.confirmedCount,
     playingCount: counts.playingCount,

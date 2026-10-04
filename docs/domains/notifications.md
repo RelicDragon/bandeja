@@ -23,7 +23,7 @@ Unified dispatch: `Backend/src/services/notification.service.ts`. Types: `Backen
 | `MONTHLY_RECAP_READY` | `sendReminders` | The monthly recap generator produced a recap ([stories.md](./stories.md)) |
 | `GOODS_GIFT_RECEIVED` | `sendWalletNotifications` | Another player gifted a shop item |
 | `GAME_WEATHER_ALERT` | `sendWeatherAlerts` | Outdoor game at rain/wind risk, 12 h out (and once more if the severity class rises) ([weather.md](./weather.md)) |
-| `GAME_TIME_CHANGED` | `sendReminders` | Owner/admin moved a game's start/end — PLAYING participants except the editor, one coalesced notice per burst of edits, push + Telegram (`at:` buttons for everyone but the owner). Tap opens the game ([games.md](./games.md#time-change)) |
+| `GAME_TIME_CHANGED` | `sendReminders` | Owner/admin moved a game's start/end — PLAYING participants except the editor, one coalesced notice per burst of edits, push + Telegram (`at:` buttons for everyone but the owner). Also when linking/unlinking a booking moves the time (the linker is the editor). A series "this and following" edit sends **one combined notice per player** for all their moved games (Telegram: no answer buttons, "Next game" + "View series"; push `deliveryKey` per batch, extra `seriesId` / `gameIds`). Tap opens the game — for a combined notice, the next moved game ([games.md](./games.md#time-change)) |
 
 **Full-game invites** (`INVITE`, push and Telegram) keep the invite and say so: when `isInvitePlaySlotFull(invite)` the body gains `telegram.inviteFullForNow` and the accept button reads **Join waitlist** (`telegram.joinWaitlist`). Accept is unchanged: while full, `InviteService.acceptInvite` queues the invitee (`games.addedToJoinQueue`), and Telegram answers `telegram.inviteQueued` instead of "accepted". Android shows the payload label; iOS `INVITE` is a static category and keeps "Accept" (same action). When a seat frees, `notifyPendingInvitesIfPlayingSlotOpened` re-sends the invite push with `{ spotOpened: true }` → title `telegram.inviteSpotOpenedTitle` ("A spot opened up"). Pinned by `fullInviteCopy.contract.test.ts` (`npm run test:invite-inbox`).
 
@@ -108,7 +108,7 @@ The play-intent contract in [constraints.md](../product/constraints.md) — *cla
 | Referral payout | `ReferralReward.referredUserId @unique` | once per referred user, ever |
 | Monthly recap | the `MonthlyRecap` unique key — a plain `create`, `P2002` means "already done" | once per user per month |
 | Attendance nudge | the newest `ATTENDANCE_NUDGED` **chat system message** | once per game per 6 h |
-| Time changed | `GameTimeChange` row per game: `noticeDueAt` + `version` claim, revalidated at send | one per burst of edits (60 s sliding quiet window, 5 min cap); nothing when the burst ends where it began |
+| Time changed | `GameTimeChange` row per game: `noticeDueAt` + `version` claim, revalidated at send; rows sharing `noticeBatchKey` (series edit) are claimed together, all or nothing | one per burst of edits (60 s sliding quiet window, 5 min cap); one per player per series batch; nothing when the burst ends where it began |
 
 Spot-opened is worth reading as the reference implementation (`services/gameSeat/spotOpenedNotify.service.ts`): claim the row, then `sendWithBackoff` (delays `[1 s, 4 s]`), revalidating `seatIsStillOpen` on every attempt because the roster may have refilled or locked. A **transient** failure releases the claim so the next event retries; a **permanent** one (no channel linked, preferences off, user gone) keeps it.
 

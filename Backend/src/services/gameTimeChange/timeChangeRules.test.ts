@@ -5,14 +5,22 @@ import assert from 'node:assert/strict';
 import {
   classifyScheduleChange,
   evaluateNoticeDelivery,
+  groupBatchNoticeRecipients,
+  isBatchDue,
   isStaleAttendanceAction,
+  seriesIdFromBatchKey,
+  seriesTimeChangeBatchKey,
   nextNoticeDueAt,
   noticeAsksAttendance,
   TIME_CHANGE_NOTICE_MAX_DELAY_MS,
   TIME_CHANGE_NOTICE_QUIET_MS,
   timeChangeNoticeRecipients,
 } from './timeChangeRules';
-import { buildTimeChangeNoticeCopy } from './timeChangeNoticeCopy';
+import {
+  buildTimeChangeBatchNoticeCopy,
+  buildTimeChangeNoticeCopy,
+  TIME_CHANGE_BATCH_LIST_LIMIT,
+} from './timeChangeNoticeCopy';
 
 const NOW = new Date('2026-06-15T12:00:00.000Z');
 const start = new Date('2026-06-20T18:00:00.000Z');
@@ -168,6 +176,100 @@ void (async () => {
   assert.ok(ownerCopy.title.includes(':'), 'non-GAME entities carry their label');
   assert.equal(ownerCopy.lines.length, 1, 'no ask for the owner, no booking line');
   assert.match(ownerCopy.lines[0], /18:00\)$/, 'a different day repeats the old date and time');
+
+  /* --- batches (series "this and following") ------------------------ */
+
+  assert.equal(seriesTimeChangeBatchKey('s1'), 'series:s1');
+  assert.equal(seriesIdFromBatchKey('series:s1'), 's1');
+  assert.equal(seriesIdFromBatchKey(null), null);
+  assert.equal(seriesIdFromBatchKey('other:x'), null);
+
+  const due = new Date(NOW.getTime() - 1000);
+  const notYet = new Date(NOW.getTime() + 1000);
+  assert.equal(isBatchDue([{ noticeDueAt: due }, { noticeDueAt: due }], NOW), true);
+  assert.equal(isBatchDue([{ noticeDueAt: due }, { noticeDueAt: notYet }], NOW), false, 'waits for the slowest member');
+  assert.equal(isBatchDue([{ noticeDueAt: due }, { noticeDueAt: null }], NOW), true, 'claimed members do not block');
+  assert.equal(isBatchDue([], NOW), false);
+
+  const week = 7 * 24 * 60 * 60 * 1000;
+  const grouped = groupBatchNoticeRecipients([
+    {
+      gameId: 'g2',
+      startTime: new Date(start.getTime() + week),
+      editorUserId: 'owner',
+      roster: [
+        { userId: 'owner', status: 'PLAYING', role: 'OWNER' },
+        { userId: 'a', status: 'PLAYING' },
+        { userId: 'c', status: 'PLAYING' },
+      ],
+    },
+    {
+      gameId: 'g1',
+      startTime: start,
+      editorUserId: 'owner',
+      roster: [
+        { userId: 'owner', status: 'PLAYING', role: 'OWNER' },
+        { userId: 'a', status: 'PLAYING' },
+        { userId: 'b', status: 'PLAYING' },
+        { userId: 'q', status: 'IN_QUEUE' },
+      ],
+    },
+  ]);
+  const byUser = Object.fromEntries(grouped.map((g) => [g.userId, g.gameIds]));
+  assert.deepEqual(byUser, { a: ['g1', 'g2'], b: ['g1'], c: ['g2'] }, 'one entry per player, own games only, earliest first');
+
+  const weekly = (n: number, s: Date, e: Date, prev: Date) =>
+    Array.from({ length: n }, (_, i) => ({
+      startTime: new Date(s.getTime() + i * week),
+      endTime: new Date(e.getTime() + i * week),
+      previousStartTime: new Date(prev.getTime() + i * week),
+    }));
+
+  const uniform = await buildTimeChangeBatchNoticeCopy({
+    entityType: 'GAME',
+    seriesName: 'Tuesday padel',
+    games: weekly(3, later, laterEnd, start),
+    timezone: 'UTC',
+    lang: 'en',
+    asksAttendance: true,
+    bookingNeedsAttention: false,
+  });
+  assert.equal(uniform.title, 'Tuesday padel: Time changed');
+  assert.match(uniform.lines[0], /3 upcoming games/);
+  assert.match(uniform.lines[0], /now \S+ 20:00 \(1h 30m\) \(was 18:00\)/, uniform.lines[0]);
+  assert.equal(uniform.lines.length, 2, 'summary + ask');
+  assert.match(uniform.lines[1], /answers were cleared/);
+
+  const mixed = await buildTimeChangeBatchNoticeCopy({
+    entityType: 'GAME',
+    seriesName: 'Tuesday padel',
+    games: [
+      ...weekly(1, later, laterEnd, start),
+      { startTime: new Date(later.getTime() + week + 3600_000), endTime: new Date(laterEnd.getTime() + week + 3600_000), previousStartTime: new Date(start.getTime() + week) },
+    ],
+    timezone: 'UTC',
+    lang: 'en',
+    asksAttendance: false,
+    bookingNeedsAttention: true,
+  });
+  assert.match(mixed.lines[0], /new times for upcoming games \(2\)/);
+  assert.equal(mixed.lines.filter((l) => l.startsWith('• ')).length, 2, 'one dated line per game when times differ');
+  assert.match(mixed.lines[mixed.lines.length - 1], /court booking/);
+
+  const long = await buildTimeChangeBatchNoticeCopy({
+    entityType: 'GAME',
+    games: Array.from({ length: TIME_CHANGE_BATCH_LIST_LIMIT + 2 }, (_, i) => ({
+      startTime: new Date(later.getTime() + i * week + i * 60_000),
+      endTime: new Date(laterEnd.getTime() + i * week),
+      previousStartTime: new Date(start.getTime() + i * week),
+    })),
+    timezone: 'UTC',
+    lang: 'ru',
+    asksAttendance: false,
+    bookingNeedsAttention: false,
+  });
+  assert.equal(long.lines.filter((l) => l.startsWith('• ')).length, TIME_CHANGE_BATCH_LIST_LIMIT);
+  assert.equal(long.lines[long.lines.length - 1], 'и ещё 2');
 
   console.log('timeChangeRules.test.ts: ok');
 })();

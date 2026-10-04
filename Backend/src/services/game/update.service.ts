@@ -16,7 +16,7 @@ import { isGameFormatOnlyUpdate, TRAINING_STRIPPED_FORMAT_KEYS } from '../../sha
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
 import notificationService from '../notification.service';
-import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
 import { publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 import { resolvePaymentMethodWrite } from '../gameCost/paymentMethodsWrite';
@@ -66,6 +66,7 @@ import {
   type RecordScheduleChangeResult,
 } from '../gameTimeChange/gameTimeChange.service';
 import { emitAttendanceResetForTimeChange } from '../gameAttendance/attendanceTimeChange';
+import { postGameTimeChangedChatLine } from '../gameTimeChange/timeChangeChatLine';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -156,7 +157,18 @@ function pickUncheckedGameScalars(src: Record<string, unknown>): Prisma.GameUnch
 }
 
 export class GameUpdateService {
-  static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
+  static async updateGame(
+    id: string,
+    data: any,
+    userId: string,
+    isAdmin: boolean,
+    /**
+     * Internal callers only. `timeChangeBatchKey` groups this edit's "time
+     * changed" notice with the other games of one batch (series "this and
+     * following" edit) into one combined notice per player.
+     */
+    options: { timeChangeBatchKey?: string } = {},
+  ) {
     assertNoLegacyExternalBookingFieldsOnUpdate(data);
 
     // Validate currency if provided
@@ -937,6 +949,7 @@ export class GameUpdateService {
               timeIsSet: locked.timeIsSet,
             },
             next: persisted,
+            batchKey: options.timeChangeBatchKey ?? null,
           });
         }
       }
@@ -1102,40 +1115,12 @@ export class GameUpdateService {
     
     if ((startTimeChanged || endTimeChanged) && (data.startTime !== undefined || data.endTime !== undefined) && newStartTime) {
       try {
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { language: true }
+        await postGameTimeChangedChatLine({
+          gameId: id,
+          editorUserId: userId,
+          noticeQueued: Boolean(scheduleChange?.notice),
+          game: updatedGame,
         });
-
-        const lang = user?.language || 'en';
-        // The game's own city: "changed to 18:00" means 18:00 where the game
-        // is played, not in the editor's home city.
-        const timezone = await getUserTimezoneFromCityId(updatedGame.cityId ?? null);
-        const dateLabel = await getDateLabelInTimezone(newStartTime, timezone, lang, false);
-        const timeStr = await formatDateInTimezone(newStartTime, 'HH:mm', timezone, lang);
-        const dateTime = `${dateLabel} ${timeStr}`;
-
-        const systemMessage = await createSystemMessage(id, {
-          type: SystemMessageType.GAME_DATE_TIME_CHANGED,
-          variables: { dateTime }
-        });
-
-        // The chat line stays the record for everyone. Its push/Telegram skips
-        // the editor, and — when the coalesced "time changed" notice is queued —
-        // the PLAYING players, who get that one notice instead of one ping per
-        // edit.
-        const excludeUserIds = [userId];
-        if (scheduleChange?.notice) {
-          for (const participant of updatedGame.participants) {
-            if (participant.status === 'PLAYING') excludeUserIds.push(participant.userId);
-          }
-        }
-
-        notificationService
-          .sendGameSystemMessageNotification(systemMessage, updatedGame, excludeUserIds)
-          .catch(error => {
-            console.error('Failed to send notification for date/time change:', error);
-          });
       } catch (error) {
         console.error('Failed to create system message for date/time change:', error);
       }
