@@ -11,7 +11,14 @@ import {
   rovingTabIndex,
 } from '@/utils/rovingFocus';
 
-export type SegmentedSwitchIcon = LucideIcon | ComponentType<{ size?: number; className?: string }>;
+/** Props SegmentedSwitch passes to every tab icon; custom icons must forward them to their root. */
+export type SegmentedSwitchIconProps = {
+  size?: number;
+  className?: string;
+  'aria-hidden'?: boolean | 'true' | 'false';
+};
+
+export type SegmentedSwitchIcon = LucideIcon | ComponentType<SegmentedSwitchIconProps>;
 
 export interface SegmentedSwitchTab {
   id: string;

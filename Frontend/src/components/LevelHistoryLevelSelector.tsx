@@ -4,11 +4,31 @@ import type { Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import { SocialLevelIcon } from '@/components/profile/SocialLevelIcon';
-import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
+import {
+  SegmentedSwitch,
+  type SegmentedSwitchIcon,
+  type SegmentedSwitchIconProps,
+  type SegmentedSwitchTab,
+} from '@/components/SegmentedSwitch';
 
 export type LevelHistorySelection =
   | { kind: 'competitive'; sport: Sport }
   | { kind: 'social' };
+
+/** Sport tab icon: keeps its 20px sizing, forwards `size` / `className` / `aria-hidden` from SegmentedSwitch. */
+function sportTabIcon(sport: Sport): SegmentedSwitchIcon {
+  function SportTabIcon({ size, className, ...rest }: SegmentedSwitchIconProps) {
+    return (
+      <SportPublicIcon
+        {...rest}
+        sport={sport}
+        size={size}
+        className={`h-5 w-5 object-contain ${className ?? 'shrink-0'}`}
+      />
+    );
+  }
+  return SportTabIcon;
+}
 
 type LevelHistoryLevelSelectorProps = {
   sports: Sport[];
@@ -42,7 +62,7 @@ export function LevelHistoryLevelSelector({
         next.push({
           id: sport,
           label: t(getSportConfig(sport).labelKey),
-          icon: () => <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />,
+          icon: sportTabIcon(sport),
         });
       }
     }
