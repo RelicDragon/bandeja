@@ -226,6 +226,17 @@ Decision for the i18n namespace migration (issues #71/#72). The ~70 JSON files p
 
 ---
 
+## Novice rank never blocks routes (PRD 358)
+
+Novice mode hides **navigation entry points** only (bottom tabs, home sections, create menus, ads). It never blocks a route: deep links, push taps, invite links, DM and game-chat links must open at any rank. Gate with `hasNoviceFeature` from `@bandeja/shared/novice`, never in a route guard.
+
+- A payload without novice fields is **not** in novice mode (`isNoviceModeActive` → false), so old API shapes and guests never lose UI.
+- `User.noviceRank` is monotonic: recounts (`recountNoviceProgress`) raise it and never lower it, even when results are undone. Counts are recomputed from the DB, never incremented.
+- Existing users were grandfathered (`noviceUnlockedAllAt` set by the migration); only accounts from the last 30 days with no counted game entered novice mode.
+- Paths: `Frontend/shared/novice/index.ts`, `Backend/src/services/novice/`, [domains/novice.md](../domains/novice.md).
+
+---
+
 ## Constraints §2.2 originally missed (still load-bearing)
 
 ### Nspadel is a real booking provider (`NSPADELSUPABASE`)
