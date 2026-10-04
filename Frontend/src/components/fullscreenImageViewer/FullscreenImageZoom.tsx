@@ -14,6 +14,8 @@ export type FullscreenImageZoomHandle = {
 
 type FullscreenImageZoomProps = {
   src: string;
+  /** Low-res stand-in painted under `src` until the original has loaded. */
+  placeholderSrc?: string;
   alt?: string;
   active: boolean;
   /** Single tap (after the double-tap window), in client coordinates. */
@@ -35,6 +37,7 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
   function FullscreenImageZoom(
     {
       src,
+      placeholderSrc,
       alt = '',
       active,
       onTap,
@@ -204,6 +207,16 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
           className="flex h-full w-full items-center justify-center will-change-transform"
           style={{ transformOrigin: 'center center' }}
         >
+          {placeholderSrc && placeholderSrc !== src ? (
+            <img
+              src={placeholderSrc}
+              alt=""
+              aria-hidden
+              draggable={false}
+              data-fullscreen-placeholder-image=""
+              className="absolute inset-0 h-full w-full object-contain pointer-events-none"
+            />
+          ) : null}
           <img
             src={src}
             alt={alt}
@@ -213,7 +226,7 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
             data-fullscreen-current-image=""
             onLoad={onLoad}
             onError={onError}
-            className="max-h-full max-w-full object-contain pointer-events-none"
+            className="relative max-h-full max-w-full object-contain pointer-events-none"
           />
         </div>
       </div>

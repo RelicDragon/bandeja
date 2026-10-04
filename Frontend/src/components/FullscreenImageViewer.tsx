@@ -182,7 +182,7 @@ function AdjacentMediaPreview({ item }: { item: FullscreenMediaItem }) {
           alt=""
           draggable={false}
           decoding="async"
-          className="max-h-full max-w-full object-contain"
+          className="h-full w-full object-contain"
         />
       )}
     </div>
@@ -916,6 +916,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         key={`${activeItem.id}-${retryKey}`}
         ref={zoomRef}
         src={shownUrl}
+        placeholderSrc={mediaReady ? undefined : shownPreviewUrl}
         alt={mediaLabel}
         active={zoomActive}
         onTap={handleMediaTap}
@@ -943,6 +944,15 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         className="flex h-full w-full items-center justify-center border-0 bg-transparent p-0"
         onClick={(event) => handleMediaTap(event.clientX, event.clientY)}
       >
+        {!mediaReady && shownPreviewUrl !== shownUrl ? (
+          <img
+            src={shownPreviewUrl}
+            alt=""
+            aria-hidden
+            draggable={false}
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+        ) : null}
         <img
           key={`${activeItem.id}-${retryKey}`}
           src={shownUrl}
@@ -956,7 +966,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
             setMediaReady(false);
             setMediaLoadError(true);
           }}
-          className="max-h-full max-w-full object-contain"
+          className="relative max-h-full max-w-full object-contain"
         />
       </button>
     </div>
