@@ -71,4 +71,23 @@ describe('trophyCelebrationGate', () => {
     expect(seen).toContain('a');
     window.removeEventListener(gate.TROPHY_CELEBRATION_RELEASED, handler);
   });
+
+  it('novice milestone outranks trophy sheets', async () => {
+    const gate = await import('./trophyCelebrationGate');
+    expect(gate.claimNoviceCelebration()).toBe(true);
+    expect(gate.claimCelebration('a')).toBe(false);
+    gate.releaseNoviceCelebration();
+    expect(gate.claimCelebration('a')).toBe(true);
+  });
+
+  it('novice waits for an open trophy sheet, and blocks new trophy claims meanwhile', async () => {
+    const gate = await import('./trophyCelebrationGate');
+    expect(gate.claimCelebration('a')).toBe(true);
+    expect(gate.claimNoviceCelebration()).toBe(false);
+    gate.markCelebrationShown('a');
+    expect(gate.claimCelebration('b')).toBe(false);
+    expect(gate.claimNoviceCelebration()).toBe(true);
+    gate.releaseNoviceCelebration();
+    expect(gate.claimCelebration('b')).toBe(true);
+  });
 });
