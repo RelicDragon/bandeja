@@ -82,8 +82,9 @@ assert.equal(demandSlotIsOpen('2026-10-05', 'EVENING', TODAY, 0), false, 'past d
 assert.equal(demandSlotIsOpen(TOMORROW, 'MORNING', TODAY, 23 * 60), true);
 
 // --- fit -------------------------------------------------------------------
-assert.equal(demandMemberFitsViewer(viewer, intent('a', { userLevel: 3.7 })), true);
-assert.equal(demandMemberFitsViewer(viewer, intent('a', { userLevel: 3.8 })), false, 'level gap > 0.75');
+assert.equal(demandMemberFitsViewer(viewer, intent('a', { userLevel: 3.5 })), true);
+assert.equal(demandMemberFitsViewer(viewer, intent('a', { userLevel: 3.6 })), false, 'level gap > 0.5');
+assert.equal(demandMemberFitsViewer(viewer, intent('a', { userLevel: 2.5 })), true, 'gap 0.5 below still fits');
 assert.equal(demandMemberFitsViewer(viewer, intent('a', { minLevel: 3.5 })), false, 'viewer below their band');
 assert.equal(demandMemberFitsViewer(viewer, intent('a', { genderTeams: 'WOMEN' })), false);
 assert.equal(demandMemberFitsViewer({ ...viewer, level: null }, intent('a', { userLevel: 6 })), true, 'unknown level passes');

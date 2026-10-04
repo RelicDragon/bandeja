@@ -34,8 +34,8 @@ export const DEMAND_PERIODS: ReadonlyArray<{
 export const DEMAND_MIN_PERIOD_OVERLAP_MINUTES = 60;
 /** Today's period stays offerable while a game this long still fits before it ends. */
 export const DEMAND_MIN_REMAINING_MINUTES = 90;
-/** "At your level": the gap a default create band (host ± 0.7) roughly spans. */
-export const DEMAND_LEVEL_FIT_DELTA = 0.75;
+/** "At your level": within half a level of the viewer. */
+export const DEMAND_LEVEL_FIT_DELTA = 0.5;
 export const DEMAND_SLOTS_CAP = 6;
 export const DEMAND_SLOT_MEMBERS_CAP = 8;
 
