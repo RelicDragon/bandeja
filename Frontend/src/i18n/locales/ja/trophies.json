@@ -50,7 +50,9 @@
         "openCourt": "オープンコート",
         "leto2026": "Leto 2026",
         "tieBreaker": "タイブレーカー",
-        "bugShipped": "バグトラッカー"
+        "bugShipped": "バグトラッカー",
+        "talentScout": "タレントスカウト",
+        "ambassador": "アンバサダー"
       }
     },
     "leaderboard": {
@@ -380,6 +382,34 @@
       "bugShipped50": {
         "title": "リリースレジェンド",
         "description": "バグまたは提案を50件、進行中またはテストから完了またはアーカイブまで進める。"
+      },
+      "talentScout1": {
+        "title": "タレントスカウト",
+        "description": "自分が主催する試合で新人1人の初カウント試合を迎える。"
+      },
+      "talentScout5": {
+        "title": "スカウトネットワーク",
+        "description": "自分が主催する試合で新人5人の初カウント試合を迎える。"
+      },
+      "talentScout15": {
+        "title": "タレントの登竜門",
+        "description": "自分が主催する試合で新人15人の初カウント試合を迎える。"
+      },
+      "talentScout50": {
+        "title": "草の根レジェンド",
+        "description": "自分が主催する試合で新人50人の初カウント試合を迎える。"
+      },
+      "ambassador1": {
+        "title": "アンバサダー",
+        "description": "あなたの試合でデビューした新人1人がレギュラーになった。"
+      },
+      "ambassador5": {
+        "title": "メンターサークル",
+        "description": "あなたの試合でデビューした新人5人がレギュラーになった。"
+      },
+      "ambassador15": {
+        "title": "クラブビルダー",
+        "description": "あなたの試合でデビューした新人15人がレギュラーになった。"
       }
     }
   }

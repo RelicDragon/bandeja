@@ -50,7 +50,9 @@
         "openCourt": "Cancha abierta",
         "leto2026": "Leto 2026",
         "tieBreaker": "Tie-break",
-        "bugShipped": "Bug tracker"
+        "bugShipped": "Bug tracker",
+        "talentScout": "Cazatalentos",
+        "ambassador": "Embajador"
       }
     },
     "leaderboard": {
@@ -380,6 +382,34 @@
       "bugShipped50": {
         "title": "Leyenda del release",
         "description": "Lleva 50 bugs o sugerencias de en curso o pruebas a finalizado o archivado."
+      },
+      "talentScout1": {
+        "title": "Cazatalentos",
+        "description": "Organiza la primera partida contada de un novato en una partida tuya."
+      },
+      "talentScout5": {
+        "title": "Red de ojeadores",
+        "description": "Organiza la primera partida contada de 5 novatos en partidas tuyas."
+      },
+      "talentScout15": {
+        "title": "Cantera de talento",
+        "description": "Organiza la primera partida contada de 15 novatos en partidas tuyas."
+      },
+      "talentScout50": {
+        "title": "Leyenda de base",
+        "description": "Organiza la primera partida contada de 50 novatos en partidas tuyas."
+      },
+      "ambassador1": {
+        "title": "Embajador",
+        "description": "Un novato que debutó contigo llegó a Habitual."
+      },
+      "ambassador5": {
+        "title": "Círculo de mentores",
+        "description": "5 novatos que debutaron contigo llegaron a Habitual."
+      },
+      "ambassador15": {
+        "title": "Constructor de club",
+        "description": "15 novatos que debutaron contigo llegaron a Habitual."
       }
     }
   }

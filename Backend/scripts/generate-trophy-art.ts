@@ -277,6 +277,36 @@ const SPECS: Spec[] = [
     key: 'habit_bug_shipped_50',
     prompt: `${STYLE} Legendary Release Legend crest: ornate gold badge, crowned ladybug with emerald checkmark and release rocket motif, dark badge LARGE bright white numeral "50".`,
   },
+  // Novice mode (PRD 358) — Talent Scout / Ambassador. TrophyArt.tsx points these
+  // keys at placeholder art until the PNGs below are generated.
+  {
+    key: 'habit_talent_scout_1',
+    prompt: `${STYLE} Bronze scout badge: brass spyglass crossed with a small green seedling sprout, round bronze medallion, dark badge LARGE bright white numeral "1".`,
+  },
+  {
+    key: 'habit_talent_scout_5',
+    prompt: `${STYLE} Silver scout badge: polished spyglass over a cluster of green seedlings, silver medallion with teal ribbon, dark badge LARGE bright white numeral "5".`,
+  },
+  {
+    key: 'habit_talent_scout_15',
+    prompt: `${STYLE} Rare scout crest: golden spyglass above a young padel racket sprouting leaves, sapphire accents, dark badge LARGE bright white numeral "15".`,
+  },
+  {
+    key: 'habit_talent_scout_50',
+    prompt: `${STYLE} Legendary scout crest: ornate gold laurel wreath around a glowing seedling growing into a tree, spyglass emblem, dark badge LARGE bright white numeral "50".`,
+  },
+  {
+    key: 'habit_ambassador_1',
+    prompt: `${STYLE} Ambassador medal: two hands in a handshake over a padel ball, polished silver medallion with emerald ribbon, dark badge LARGE bright white numeral "1".`,
+  },
+  {
+    key: 'habit_ambassador_5',
+    prompt: `${STYLE} Ambassador crest: golden handshake emblem with a small star rising above it, sapphire enamel, dark badge LARGE bright white numeral "5".`,
+  },
+  {
+    key: 'habit_ambassador_15',
+    prompt: `${STYLE} Legendary ambassador crest: ornate gold shield with a handshake and a crown of five stars, laurel wreath, dark badge LARGE bright white numeral "15".`,
+  },
 ];
 
 const LETO_REF = path.resolve(__dirname, '../../Frontend/public/bandeja2-white-tr.png');

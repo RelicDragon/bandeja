@@ -50,7 +50,9 @@
         "openCourt": "开放球场",
         "leto2026": "Leto 2026",
         "tieBreaker": "抢七达人",
-        "bugShipped": "缺陷跟踪"
+        "bugShipped": "缺陷跟踪",
+        "talentScout": "星探",
+        "ambassador": "大使"
       }
     },
     "leaderboard": {
@@ -380,6 +382,34 @@
       "bugShipped50": {
         "title": "发布传奇",
         "description": "将 50 个缺陷或建议从进行中或测试推进到已完成或已归档。"
+      },
+      "talentScout1": {
+        "title": "星探",
+        "description": "在你创建的比赛中迎来 1 位新人的首场计入比赛。"
+      },
+      "talentScout5": {
+        "title": "星探网络",
+        "description": "在你创建的比赛中迎来 5 位新人的首场计入比赛。"
+      },
+      "talentScout15": {
+        "title": "人才摇篮",
+        "description": "在你创建的比赛中迎来 15 位新人的首场计入比赛。"
+      },
+      "talentScout50": {
+        "title": "草根传奇",
+        "description": "在你创建的比赛中迎来 50 位新人的首场计入比赛。"
+      },
+      "ambassador1": {
+        "title": "大使",
+        "description": "由你带入门的 1 位新人成为了常客。"
+      },
+      "ambassador5": {
+        "title": "导师圈",
+        "description": "由你带入门的 5 位新人成为了常客。"
+      },
+      "ambassador15": {
+        "title": "俱乐部缔造者",
+        "description": "由你带入门的 15 位新人成为了常客。"
       }
     }
   }

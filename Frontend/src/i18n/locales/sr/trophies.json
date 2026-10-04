@@ -50,7 +50,9 @@
         "openCourt": "Otvoreni teren",
         "leto2026": "Leto 2026",
         "tieBreaker": "Taj-brejk",
-        "bugShipped": "Bug tracker"
+        "bugShipped": "Bug tracker",
+        "talentScout": "Lovac na talente",
+        "ambassador": "Ambasador"
       }
     },
     "leaderboard": {
@@ -380,6 +382,34 @@
       "bugShipped50": {
         "title": "Legenda releasa",
         "description": "Dovedi 50 bugova ili predloga kroz u toku / test do gotovo / arhivirano."
+      },
+      "talentScout1": {
+        "title": "Lovac na talente",
+        "description": "Novajlija koji su odigrali prvu priznatu igru u tvojoj igri: 1."
+      },
+      "talentScout5": {
+        "title": "Mreža skauta",
+        "description": "Novajlija koji su odigrali prvu priznatu igru u tvojoj igri: 5."
+      },
+      "talentScout15": {
+        "title": "Rasadnik talenata",
+        "description": "Novajlija koji su odigrali prvu priznatu igru u tvojoj igri: 15."
+      },
+      "talentScout50": {
+        "title": "Legenda od nule",
+        "description": "Novajlija koji su odigrali prvu priznatu igru u tvojoj igri: 50."
+      },
+      "ambassador1": {
+        "title": "Ambasador",
+        "description": "Novajlija koje si doveo, a postali su Redovni: 1."
+      },
+      "ambassador5": {
+        "title": "Krug mentora",
+        "description": "Novajlija koje si doveo, a postali su Redovni: 5."
+      },
+      "ambassador15": {
+        "title": "Graditelj kluba",
+        "description": "Novajlija koje si doveo, a postali su Redovni: 15."
       }
     }
   }

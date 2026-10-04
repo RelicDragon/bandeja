@@ -34,6 +34,10 @@ export type HabitProgressCounters = {
   tieBreakSetWins?: number;
   /** Bugs/suggestions shipped through in-progress/test to finished/archived. */
   bugShippedCount?: number;
+  /** Novice mode: newcomers whose first counted game was in a game this user owns. */
+  talentScoutCount?: number;
+  /** Novice mode: newcomers this user debuted who reached Regular. */
+  ambassadorCount?: number;
 };
 
 export type CabinetEntry = {
@@ -85,6 +89,12 @@ export function habitProgressForDefinition(
   }
   if (definition.ruleKind === 'HABIT_BUG_SHIPPED') {
     return { current: Math.min(counters.bugShippedCount ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_TALENT_SCOUT') {
+    return { current: Math.min(counters.talentScoutCount ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_AMBASSADOR') {
+    return { current: Math.min(counters.ambassadorCount ?? 0, target), target };
   }
   return null;
 }

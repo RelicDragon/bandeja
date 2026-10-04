@@ -49,7 +49,7 @@ FE Vite points at `packages/app-locale/src/index.ts` (source). Backend resolves 
 
 npm `"name": "@bandeja/shared"`. Backend dependency `"@bandeja/shared": "file:../Frontend/shared"`. Frontend also aliases `@shared` → this folder.
 
-`package.json` `exports`: `./booking`, `./booking/*`, `./clubIntegration`, `./gameBooking/*`, `./achievements`, `./achievements/*`, `./*`.
+`package.json` `exports`: `./booking`, `./booking/*`, `./clubIntegration`, `./gameBooking/*`, `./achievements`, `./achievements/*`, `./novice`, `./*`.
 
 Backend **also** keeps `Backend/src/shared/` copies of many of the same files (`createTemplates.ts`, `sport.ts`, `gameFormat/`, `officiating*`, `strictValidation.ts`, …). Keep them in sync:
 
@@ -77,6 +77,7 @@ When editing templates or booking helpers, change **canonical** `Frontend/shared
 | `entityCapabilities.ts` | per-`EntityType` roster/results rules |
 | `eventApproval.ts` | `EVENT_APPROVAL_STATUS` |
 | `achievements/` | catalog, eligibility, pin slots |
+| `novice/` | novice-mode ranks, feature unlock map, `isNoviceModeActive` / `hasNoviceFeature` (PRD 358; BE imports `@bandeja/shared/novice`, no BE copy) |
 | `playIntentRealtime.ts` | socket event names/payloads (BE re-exports via `@bandeja/shared/playIntentRealtime`) |
 | `playIntentCreateSource.ts` | create-source enum for looking-to-play → game |
 | `systemMessages/` | roster lifecycle translation keys |

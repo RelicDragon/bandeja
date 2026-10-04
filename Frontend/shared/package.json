@@ -31,6 +31,10 @@
       "types": "./dist/achievements/*.d.ts",
       "default": "./dist/achievements/*.js"
     },
+    "./novice": {
+      "types": "./dist/novice/index.d.ts",
+      "default": "./dist/novice/index.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "default": "./dist/*.js"

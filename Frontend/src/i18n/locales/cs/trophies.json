@@ -50,7 +50,9 @@
         "openCourt": "Otevřený kurt",
         "leto2026": "Leto 2026",
         "tieBreaker": "Tie-break",
-        "bugShipped": "Bug tracker"
+        "bugShipped": "Bug tracker",
+        "talentScout": "Lovec talentů",
+        "ambassador": "Ambasador"
       }
     },
     "leaderboard": {
@@ -380,6 +382,34 @@
       "bugShipped50": {
         "title": "Legenda releasu",
         "description": "Doveď 50 bugů nebo návrhů přes rozpracování nebo test do hotovo/archiv."
+      },
+      "talentScout1": {
+        "title": "Lovec talentů",
+        "description": "Nováčci, kteří odehráli první započítanou hru ve tvé hře: 1."
+      },
+      "talentScout5": {
+        "title": "Síť skautů",
+        "description": "Nováčci, kteří odehráli první započítanou hru ve tvé hře: 5."
+      },
+      "talentScout15": {
+        "title": "Líheň talentů",
+        "description": "Nováčci, kteří odehráli první započítanou hru ve tvé hře: 15."
+      },
+      "talentScout50": {
+        "title": "Legenda od základů",
+        "description": "Nováčci, kteří odehráli první započítanou hru ve tvé hře: 50."
+      },
+      "ambassador1": {
+        "title": "Ambasador",
+        "description": "Nováčci, které jsi přivedl a stali se Stálicemi: 1."
+      },
+      "ambassador5": {
+        "title": "Kruh mentorů",
+        "description": "Nováčci, které jsi přivedl a stali se Stálicemi: 5."
+      },
+      "ambassador15": {
+        "title": "Stavitel klubu",
+        "description": "Nováčci, které jsi přivedl a stali se Stálicemi: 15."
       }
     }
   }
