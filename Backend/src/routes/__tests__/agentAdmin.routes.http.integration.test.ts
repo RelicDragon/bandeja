@@ -38,6 +38,7 @@ void (async () => {
   const base = `http://127.0.0.1:${port}/api/admin/agent`;
   const { owner, player, globalAdmin } = fixture.principals;
   const chatIds: string[] = [];
+  const usageLogIds: string[] = [];
   const secret = `transcript-secret-${fixture.suffix}`;
 
   const call = async (userId: string | null, path: string) => {
@@ -169,7 +170,7 @@ void (async () => {
     assert.equal(row.userId, owner.userId);
     assert.equal(row.day, new Date().toISOString().slice(0, 10));
     assert.deepEqual([row.runs, row.inputTokens, row.outputTokens, row.totalTokens], [2, 150, 15, 165]);
-    assert.deepEqual(Object.keys(row).sort(), ['cachedInputTokens', 'day', 'inputTokens', 'outputTokens', 'runs', 'totalTokens', 'user', 'userId']);
+    assert.deepEqual(Object.keys(row).sort(), ['cachedInputTokens', 'costUsd', 'day', 'inputTokens', 'outputTokens', 'runs', 'totalTokens', 'user', 'userId']);
     const endReasons = (res.body.data as { endReasons: { endReason: string | null; runs: number }[] }).endReasons;
     assert.equal(endReasons.reduce((sum, r) => sum + r.runs, 0), 2, 'end reason counts cover the runs in the window');
     assert.deepEqual(Object.keys(row.user ?? {}).sort(), ['firstName', 'id', 'lastName'], 'no contact fields on usage users');
@@ -179,6 +180,62 @@ void (async () => {
     const mine = all.filter((r) => r.userId === owner.userId || r.userId === player.userId);
     assert.deepEqual(mine.map((r) => [r.userId, r.totalTokens]).sort(), [[owner.userId, 165], [player.userId, 10]].sort(), 'unfiltered covers every user');
     assert.ok(!res.text.includes(secret));
+
+    // --- cost (phase 5): per day / user / model from LlmUsageLog, priced by the table ---------------
+    const today = new Date().toISOString().slice(0, 10);
+    const logRow = (data: { model: string; reason: string; inputTokens: number; outputTokens?: number; cachedInputTokens?: number }) =>
+      prisma.llmUsageLog.create({
+        data: { provider: 'test', input: secret, output: secret, userId: owner.userId, outputTokens: 0, ...data },
+      });
+    usageLogIds.push(
+      (await logRow({ model: `cost-model-${fixture.suffix}`, reason: 'agent_chat', inputTokens: 1_000_000, cachedInputTokens: 400_000, outputTokens: 100_000 })).id,
+      (await logRow({ model: 'live', reason: 'agent_web_search', inputTokens: 1000 })).id,
+      (await logRow({ model: `mystery-${fixture.suffix}`, reason: 'agent_chat', inputTokens: 10 })).id,
+      (await logRow({ model: `cost-model-${fixture.suffix}`, reason: 'message_translation', inputTokens: 5_000_000 })).id,
+    );
+    const savedPrices = process.env.AGENT_PRICES_USD_PER_MTOK;
+    process.env.AGENT_PRICES_USD_PER_MTOK = JSON.stringify({
+      [`cost-model-${fixture.suffix.slice(0, 4)}*`]: { input: 1, cachedInput: 0.1, output: 2 },
+      agent_web_search: { input: 8 },
+      broken: { input: 'x' },
+    });
+    try {
+      res = await call(globalAdmin.userId, `/usage?userId=${owner.userId}&days=1`);
+    } finally {
+      if (savedPrices === undefined) delete process.env.AGENT_PRICES_USD_PER_MTOK;
+      else process.env.AGENT_PRICES_USD_PER_MTOK = savedPrices;
+    }
+    type CostSums = { calls: number; inputTokens: number; cachedInputTokens: number; outputTokens: number; costUsd: number; unpricedCalls: number };
+    const cost = res.body.data as {
+      prices: { source: string; table: Record<string, unknown> };
+      budget: { user: number; admin: number; overrides: number };
+      totals: CostSums;
+      costByDay: (CostSums & { day: string; users: number })[];
+      costByUser: (CostSums & { userId: string; user: Record<string, unknown> | null })[];
+      costByModel: (CostSums & { model: string; reason: string | null; priced: boolean })[];
+      rows: (UsageRow & { costUsd: number })[];
+    };
+    assert.ok(cost.budget.user >= 0 && cost.budget.admin >= 0, 'budget tiers reported');
+    assert.equal(cost.totals.calls, 3, 'only agent reasons are costed (message_translation left out)');
+    assert.equal(cost.totals.unpricedCalls, 1, 'the model without a price is counted as unpriced');
+    assert.deepEqual(cost.costByDay.map((d) => [d.day, d.users, d.calls]), [[today, 1, 3]]);
+    assert.deepEqual(cost.costByUser.map((u) => u.userId), [owner.userId]);
+    assert.deepEqual(Object.keys(cost.costByUser[0].user ?? {}).sort(), ['firstName', 'id', 'isAdmin', 'lastName']);
+    const mystery = cost.costByModel.find((m) => m.model === `mystery-${fixture.suffix}`);
+    assert.equal(mystery?.priced, false);
+    if (cost.prices.source === 'env') {
+      assert.ok(!('broken' in cost.prices.table), 'invalid price entries dropped');
+      // 600k miss × $1 + 400k hit × $0.1 + 100k out × $2 = $0.84; 1000 equiv. × $8 / 1M = $0.008.
+      assert.equal(cost.costByModel.find((m) => m.model === `cost-model-${fixture.suffix}`)?.costUsd, 0.84);
+      assert.equal(cost.costByModel.find((m) => m.reason === 'agent_web_search')?.costUsd, 0.008);
+      assert.equal(cost.totals.costUsd, 0.848);
+      assert.equal(cost.costByDay[0].costUsd, 0.848);
+      assert.equal(cost.costByUser[0].costUsd, 0.848);
+      assert.equal(cost.rows[0].costUsd, 0.848, 'day × user rows carry the cost');
+    } else {
+      console.log(`cost assertions skipped: prices come from ${cost.prices.source} (a PlatformSetting row wins over env)`);
+    }
+    assert.ok(!res.text.includes(secret), 'no LlmUsageLog input/output text in the usage response');
 
     // --- feedback (thumbs) --------------------------------------------------------------------------
     res = await call(globalAdmin.userId, `/usage?userId=${owner.userId}&days=1`);
@@ -216,6 +273,7 @@ void (async () => {
   } finally {
     server.close();
     await prisma.agentChat.deleteMany({ where: { id: { in: chatIds } } }).catch((e) => console.error(e));
+    await prisma.llmUsageLog.deleteMany({ where: { id: { in: usageLogIds } } }).catch((e) => console.error(e));
     await fixture.cleanup().catch((e) => console.error(e));
     await prisma.$disconnect();
     process.exit(exitCode);

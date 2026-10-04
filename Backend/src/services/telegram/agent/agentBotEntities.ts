@@ -88,6 +88,21 @@ function offsetLabel(iso: string, timeZone: string): string | null {
 }
 
 /**
+ * When the daily assistant budget resets (`retryAt`, the next UTC midnight) in the user's zone:
+ * "02:00", or "Tue 02:00" when that is another local day than `now`. Unknown / invalid zone →
+ * UTC with a " UTC" suffix.
+ */
+export function formatAgentBotResetTime(iso: string, lang: string, timeZone: string | null | undefined, now: Date = new Date()): string {
+  const known = Boolean(timeZone && offsetLabel(iso, timeZone));
+  const zone = known ? (timeZone as string) : 'UTC';
+  const time = formatTime(iso, zone, lang);
+  const sameDay = dateKey(iso, zone) === dateKey(now.toISOString(), zone);
+  const weekday = sameDay ? null : safeFormat({ timeZone: zone, weekday: 'short' }, lang, iso);
+  const label = weekday ? `${weekday} ${time}` : time;
+  return known ? label : `${label} UTC`;
+}
+
+/**
  * " (GMT+2)"-style label when the club's zone differs from the user's at that instant
  * (compared by offset, so two zones with the same offset don't get a label), or when the
  * user's zone is unknown.

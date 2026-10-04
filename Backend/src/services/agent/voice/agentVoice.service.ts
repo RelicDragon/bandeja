@@ -181,7 +181,7 @@ export async function transcribeAgentVoice(input: {
     throw agentVoiceError(400, 'VOICE_AUDIO_INVALID', 'Recording is too long');
   }
   const durationMs = agentVoiceChargeDurationMs({ parsedMs, clientMs: input.clientDurationMs, bytes: input.audio.length });
-  await assertAgentBudget(input.userId, config.agent.dailyTokenBudget, now);
+  await assertAgentBudget(input.userId, config.agent, now);
 
   const prompt = await vocabularyFor(input.userId);
   let raw: string;
@@ -217,7 +217,7 @@ export async function speakAgentVoice(input: { userId: string; text: string; now
   const now = input.now ?? new Date();
   const text = normalizeAgentSpeechText(input.text);
   if (!text) throw agentVoiceError(400, 'VOICE_AUDIO_INVALID', 'Nothing to say');
-  await assertAgentBudget(input.userId, config.agent.dailyTokenBudget, now);
+  await assertAgentBudget(input.userId, config.agent, now);
 
   let audio: Buffer;
   try {

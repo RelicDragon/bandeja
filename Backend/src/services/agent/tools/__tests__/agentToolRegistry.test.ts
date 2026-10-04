@@ -36,6 +36,7 @@ import {
   AGENT_WRITE_SAFETY_RULES,
   agentToolCapabilityLine,
   buildAgentModelRules,
+  agentAdminRule,
 } from '../../agentContext.service';
 
 const user: AgentPrincipal = {
@@ -317,6 +318,22 @@ async function main() {
     if (tool.scope === 'user') assert.ok(userRules.includes(`- ${tool.name}: `), `user prompt lists ${tool.name}`);
   }
   assert.ok(adminRules.includes('admin_update_game') && adminRules.includes('admin_approve_event'));
+  // Phase 5: the admin rule, only for admins, after the write list (per-principal tail).
+  const adminReads = catalogue.toolsForPrincipal(admin).filter((t) => t.scope === 'admin' && t.kind !== 'write').map((t) => t.name);
+  assert.deepEqual([...adminReads].sort(), ['admin_find_users', 'admin_get_user', 'admin_list_pending_events']);
+  const adminRule = agentAdminRule(adminReads);
+  assert.ok(adminRules.includes(adminRule), 'admins get the admin rule naming the admin read tools');
+  assert.ok(adminRules.indexOf(adminRule) > adminRules.indexOf('What you can change'), 'admin rule sits after the write list');
+  assert.ok(!userRules.includes('Admin: this user is a platform admin'), 'a normal user never gets the admin rule');
+  assert.equal(
+    adminRules.slice(0, adminRules.indexOf('What you can change')),
+    userRules.slice(0, userRules.indexOf('What you can change')),
+    'the admin rule does not touch the shared prefix',
+  );
+  assert.ok(
+    buildAgentModelRules(catalogue.toolsForPrincipal(admin), { toolGroups: true }).includes(adminRule),
+    'admin rule with tool groups on too',
+  );
   for (const rules of [userRules, adminRules]) {
     assert.ok(rules.includes(AGENT_WRITE_SAFETY_RULES), 'safety sentences kept');
     assert.ok(rules.includes(AGENT_OUT_OF_SCOPE_RULE), 'out-of-scope list kept');

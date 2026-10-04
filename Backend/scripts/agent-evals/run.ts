@@ -92,6 +92,7 @@ if (!('AGENT_WEB_FETCH_ENABLED' in args.env)) process.env.AGENT_WEB_FETCH_ENABLE
 // The eval user burns ~2M tokens per full pass; web tools read the daily budget from env
 // (config.agent), not from the run service's overridden config.
 if (!('AGENT_DAILY_TOKEN_BUDGET' in args.env)) process.env.AGENT_DAILY_TOKEN_BUDGET = '100000000';
+if (!('AGENT_ADMIN_DAILY_TOKEN_BUDGET' in args.env)) process.env.AGENT_ADMIN_DAILY_TOKEN_BUDGET = '100000000';
 
 installEvalFetch(process.env.AGENT_BASE_URL?.trim() || 'https://api.deepseek.com');
 

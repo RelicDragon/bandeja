@@ -8,6 +8,7 @@ import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
 import { LLM_REASON } from '../ai/llmReasons';
 import { agentBudgetResetsAt, startOfUtcDay } from './agentBudgetWindow';
+import { resolveAgentDailyBudget, type AgentBudgetConfig, type AgentDailyBudget } from './agentBudget.service';
 
 export { startOfUtcDay };
 
@@ -27,7 +28,7 @@ export function agentApiError(
   });
 }
 
-/** Reasons whose `LlmUsageLog.inputTokens` are web tool charges (docs/plans/ai-agent-web-search.md §13.9). */
+/** Reasons whose `LlmUsageLog.inputTokens` are web tool charges. */
 export const AGENT_WEB_USAGE_REASONS = [LLM_REASON.AGENT_WEB_SEARCH, LLM_REASON.AGENT_WEB_FETCH];
 
 /** Reasons whose `LlmUsageLog.inputTokens` are voice charges (transcription seconds, spoken characters). */
@@ -64,9 +65,29 @@ export async function agentTokensUsedToday(
   return weightedInput + (runs._sum.outputTokens ?? 0) + (metered._sum.inputTokens ?? 0);
 }
 
-export async function assertAgentBudget(userId: string, dailyTokenBudget: number, now: Date): Promise<void> {
-  const used = await agentTokensUsedToday(userId, now);
-  if (used >= dailyTokenBudget) {
+/** Today's use against the user's own budget (`agentBudget.service.ts`: override, admin or user tier). */
+export async function agentBudgetStatus(
+  userId: string,
+  base: AgentBudgetConfig,
+  now: Date,
+  options: { isAdmin?: boolean } = {},
+): Promise<{ used: number; budget: AgentDailyBudget; remaining: number }> {
+  const [used, budget] = await Promise.all([
+    agentTokensUsedToday(userId, now),
+    resolveAgentDailyBudget(userId, base, options),
+  ]);
+  return { used, budget, remaining: Math.max(0, budget.tokens - used) };
+}
+
+/** 429 `BUDGET_EXCEEDED` with `retryAt` = next UTC midnight when the user's budget is used up. */
+export async function assertAgentBudget(
+  userId: string,
+  base: AgentBudgetConfig,
+  now: Date,
+  options: { isAdmin?: boolean } = {},
+): Promise<void> {
+  const { remaining } = await agentBudgetStatus(userId, base, now, options);
+  if (remaining <= 0) {
     throw agentApiError(429, 'BUDGET_EXCEEDED', 'Daily AI assistant limit reached. Try again tomorrow.', {
       retryAt: agentBudgetResetsAt(now),
     });

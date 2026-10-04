@@ -1,12 +1,13 @@
 /**
- * Per-run model context (docs/plans/ai-agent.md §4): the rules, a compact snapshot of the
+ * Per-run model context: the rules, a compact snapshot of the
  * user, and the chat history replayed in OpenAI message format. Longer history is folded,
  * and older facts come back through tools (`list_my_games {range:'past'}`), not the prompt.
  *
  * Prompt-cache layout (DeepSeek caches identical request prefixes; the provider renders
  * system prompt → tools → messages):
  *   1. `systemPrompt`: persona + rules, byte-identical for every user and turn, then the
- *      per-principal "What you can change" list (stable per user) — nothing time-dependent.
+ *      per-principal "What you can change" list (+ the admin rule for admins; stable per
+ *      user) — nothing time-dependent.
  *   2. tools in a deterministic order (`registry.openAiToolsFor`; loaded groups only append).
  *   3. history replay, append-only turn over turn: the fold moves in chunks, old tool results
  *      and snapshots become stubs in chunks (`agentElisionBoundary`).
@@ -133,7 +134,7 @@ export const AGENT_VOICE_RULE =
 export const AGENT_OUT_OF_SCOPE_RULE =
   "Anything not in that list (ownership, resetting results or editing final results, sending coins to people, a league's price, direct messages) isn't available in the assistant yet: say so and point the user to the app (for results: the game page, /games/<gameId>).";
 
-/** Phase 10 (docs/plans/ai-agent-money.md §10.2 rules 3 and 9): cost split reads and records, no invented amounts, no payment details. */
+/** Phase 10: cost split reads and records, no invented amounts, no payment details. */
 export const AGENT_MONEY_RULE =
   "Money (game cost split): list_my_cost_balances, get_game_cost and get_my_wallet read it; for an organizer's \"who paid / who hasn't paid\" across their games or a league season use list_cost_shares (view totals for \"how much was collected / is still outstanding\", view payer for \"how much do I pay and get back\"), then remind_unpaid_shares per game; mark_my_share_paid and confirm_share_received only record a payment made outside the app (no money moves); pay_my_share_with_coins sends the user's in-app coins to the payer (always asks); set_game_price changes a casual game's price to exactly the amount the user said (never a league game or season: the season's price is changed in the app); remind_unpaid_shares nudges the unpaid players, once per game per 24 h. Money amounts come only from tool results; never compute, convert or round them yourself, and never add up different currencies. Payment details (account, phone or tag) are never available to you: name the payment method and send the user to the game's cost in the app (appLink).";
 
@@ -150,7 +151,18 @@ export const AGENT_TOOL_GROUPS_RULE =
 export const AGENT_NO_NARRATION_RULE =
   'No narration: the user sees every word you write, including text sent together with a tool call. When you call tools that only read or look things up, send the tool calls with NO text at all: no preamble, plan or announcement such as "I\'ll look for that game.", "Let me check…", "I\'ll check your games first" or "I\'ll load the tools I need". Write only your final answer, after the results. When you call a write tool, you may add one short sentence about the confirmation card (e.g. "Please confirm below."), in the reply language. Never mention tools, tool groups or loading tools to the user.';
 
-type AgentRuleTool = Pick<AgentToolDefinition, 'name' | 'description' | 'kind' | 'promptHint' | 'group'>;
+type AgentRuleTool = Pick<AgentToolDefinition, 'name' | 'description' | 'kind' | 'promptHint' | 'group'> &
+  Partial<Pick<AgentToolDefinition, 'scope'>>;
+
+/**
+ * Phase 5: how to use the admin tools. Part of the per-principal tail (after the write list),
+ * only when the principal has `scope:'admin'` tools, so the shared prefix stays identical for
+ * every user and a normal user never hears of admin tools. `reads` = the admin read tools listed.
+ */
+export function agentAdminRule(reads: readonly string[]): string {
+  const readPart = reads.length ? ` (${reads.join(', ')}, and the admin changes in the list above)` : ' (the admin changes in the list above)';
+  return `Admin: this user is a platform admin. The admin tools${readPart} act on any user or game on the platform, not only this user's own. Use them only when the user asks for an admin task; for their own games, leagues and profile use the normal tools. Find a person with admin_find_users and pass the id it returned as targetUserId; if several users match, list them briefly and ask which one. Admin changes go through the confirmation card like every other change (rule 6). Show a user's email or phone only when the admin asked for it. Not available even to admins: deleting users or games, acting as another user, passwords, coins and payments, private messages.`;
+}
 
 /** The principal-dependent tail of the rules: the write tools rule 6 refers to. */
 function agentWriteCapabilityLines(tools: ReadonlyArray<AgentRuleTool>, toolGroups: boolean): string[] {
@@ -168,12 +180,18 @@ function agentWriteCapabilityLines(tools: ReadonlyArray<AgentRuleTool>, toolGrou
   return lines;
 }
 
+function agentAdminRuleLines(tools: ReadonlyArray<AgentRuleTool>): string[] {
+  const admin = tools.filter((tool) => tool.scope === 'admin');
+  if (!admin.length) return [];
+  return ['', agentAdminRule(admin.filter((tool) => tool.kind !== 'write').map((tool) => tool.name))];
+}
+
 /**
  * The model rules. Everything up to rule 9 is fixed text (the cacheable prefix; the web
  * rules follow the deployment's web switch, not the user). The "What you can change" list
  * rule 6 refers to comes last and is derived from the write tools the principal actually has
  * (`registry.toolsForPrincipal`, all groups), so admins see the admin tools and nobody is
- * told about tools they cannot call.
+ * told about tools they cannot call. Admins also get `agentAdminRule` after that list.
  */
 export function buildAgentModelRules(
   tools: ReadonlyArray<AgentRuleTool>,
@@ -200,6 +218,7 @@ export function buildAgentModelRules(
     ...(options.toolGroups ? [AGENT_TOOL_GROUPS_RULE] : []),
     '',
     ...agentWriteCapabilityLines(tools, options.toolGroups === true),
+    ...agentAdminRuleLines(tools),
   ].join('\n');
 }
 

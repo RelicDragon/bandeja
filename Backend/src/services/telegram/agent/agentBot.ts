@@ -34,6 +34,7 @@ import {
   type AgentBotCallback,
   type AgentBotLinkOptions,
   actionOutcomeOf,
+  budgetExceededText,
   clientHandoff,
   controlsKeyboard,
   introKeyboard,
@@ -133,13 +134,18 @@ function statusOf(error: unknown): number | null {
   return null;
 }
 
+function retryAtOf(error: unknown): string | null {
+  const retryAt = error instanceof ApiError ? error.data?.retryAt : null;
+  return typeof retryAt === 'string' && !Number.isNaN(Date.parse(retryAt)) ? retryAt : null;
+}
+
 /** ApiError from the shared send path → the user-facing line. */
-export function sendErrorText(error: unknown, lang: string): string {
+export function sendErrorText(error: unknown, lang: string, options: { timeZone?: string | null; now?: Date } = {}): string {
   switch (codeOf(error)) {
     case 'RATE_LIMITED':
       return agentBotT('error.rateLimited', lang);
     case 'BUDGET_EXCEEDED':
-      return agentBotT('error.budget', lang);
+      return budgetExceededText(retryAtOf(error), lang, options.timeZone, options.now);
     case 'CHAT_BUSY':
       return agentBotT('error.busy', lang);
     case 'LLM_ERROR':
@@ -255,7 +261,7 @@ export class TelegramAgentBot {
         console.error('[telegram-agent] send failed', { userId: user.id, error });
       }
       await ctx.api
-        .editMessageText(chatId, status.message_id, escapeTelegramHtml(sendErrorText(error, lang)), {
+        .editMessageText(chatId, status.message_id, escapeTelegramHtml(sendErrorText(error, lang, { timeZone: user.timeZone ?? null })), {
           parse_mode: 'HTML',
           reply_markup: controlsKeyboard(lang),
         })

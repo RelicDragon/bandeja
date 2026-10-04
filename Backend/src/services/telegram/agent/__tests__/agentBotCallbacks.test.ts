@@ -316,7 +316,15 @@ function testSendErrorMapping(): void {
   const err = (status: number, code?: string) => new ApiError(status, 'x', true, code ? { code } : undefined);
   assert.match(sendErrorText(err(409, 'CHAT_BUSY'), 'en'), /still answering/);
   assert.match(sendErrorText(err(429, 'RATE_LIMITED'), 'en'), /Too many messages/);
-  assert.match(sendErrorText(err(429, 'BUDGET_EXCEEDED'), 'en'), /today’s assistant limit/);
+  assert.match(sendErrorText(err(429, 'BUDGET_EXCEEDED'), 'en'), /today’s assistant limit. Try again tomorrow/, 'no retryAt: generic line');
+  // Phase 5: the reset time (next UTC midnight) in the user's zone.
+  const budget = new ApiError(429, 'x', true, { code: 'BUDGET_EXCEEDED', retryAt: '2026-10-06T00:00:00.000Z' });
+  const now = new Date('2026-10-05T10:00:00Z');
+  assert.equal(sendErrorText(budget, 'en', { timeZone: 'America/New_York', now }), 'You’ve reached today’s assistant limit. It resets at 20:00.');
+  assert.equal(sendErrorText(budget, 'en', { timeZone: 'Europe/Belgrade', now }), 'You’ve reached today’s assistant limit. It resets at Tue 02:00.');
+  assert.equal(sendErrorText(budget, 'en', { timeZone: null, now }), 'You’ve reached today’s assistant limit. It resets at Tue 00:00 UTC.');
+  assert.equal(sendErrorText(budget, 'en', { timeZone: 'Not/AZone', now }), 'You’ve reached today’s assistant limit. It resets at Tue 00:00 UTC.');
+  assert.match(sendErrorText(budget, 'ru', { timeZone: 'Europe/Belgrade', now }), /^Дневной лимит ассистента исчерпан\. Он обновится в .*02:00\.$/);
   assert.match(sendErrorText(err(503, 'LLM_ERROR'), 'en'), /unavailable/);
   assert.match(sendErrorText(err(400), 'en'), /too long/);
   assert.match(sendErrorText(new Error('boom'), 'en'), /Something went wrong/);

@@ -29,7 +29,7 @@ import prisma from '../../config/database';
 import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
 import type { AgentLlmMessage } from './llm/deepseekStream';
-import { agentTokensUsedToday } from './agentGuards';
+import { agentBudgetStatus } from './agentGuards';
 import { agentBudgetRetryAt } from './agentBudgetWindow';
 
 export const AGENT_CHAT_TITLE_MAX = 60;
@@ -202,19 +202,20 @@ export async function getAgentChatDetail(userId: string, chatId: string): Promis
 /** Context = the latest run that reached the model; daily = the budget `assertAgentBudget` enforces. */
 export async function getAgentChatUsage(userId: string, chatId: string, now = new Date()): Promise<AgentChatUsageDto> {
   const agentConfig = config.agent;
-  const [lastRun, dailyUsedTokens] = await Promise.all([
+  const [lastRun, daily] = await Promise.all([
     prisma.agentRun.findFirst({
       where: { chatId, userId, contextTokens: { gt: 0 } },
       orderBy: { createdAt: 'desc' },
       select: { contextTokens: true },
     }),
-    agentTokensUsedToday(userId, now),
+    agentBudgetStatus(userId, agentConfig, now),
   ]);
   return {
     contextTokens: lastRun?.contextTokens ?? 0,
     contextWindowTokens: agentConfig.contextWindowTokens,
-    dailyUsedTokens,
-    dailyBudgetTokens: agentConfig.dailyTokenBudget,
+    dailyUsedTokens: daily.used,
+    // The user's own budget (per-user override, admin or user tier), not the global default.
+    dailyBudgetTokens: daily.budget.tokens,
     dailyResetsAt: agentBudgetRetryAt(now),
   };
 }

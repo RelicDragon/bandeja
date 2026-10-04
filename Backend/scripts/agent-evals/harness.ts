@@ -142,6 +142,7 @@ export function createEvalHarness(options: { concurrency: number }): EvalHarness
       return {
         ...live,
         dailyTokenBudget: Number.MAX_SAFE_INTEGER,
+        adminDailyTokenBudget: Number.MAX_SAFE_INTEGER,
         maxQueuedRunsPerUser: 1000,
         maxConcurrentRunsPerUser: 1000,
         maxConcurrentRuns: 1000,

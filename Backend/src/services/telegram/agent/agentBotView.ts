@@ -27,7 +27,7 @@ import {
 import type { InlineKeyboardButton, InlineKeyboardMarkup } from 'grammy/types';
 import { agentToolPermissionText } from '../../agent/i18n/agentToolPermissionI18n';
 import { agentBotT } from './agentBotCopy';
-import { renderEntityTextBlock } from './agentBotEntities';
+import { formatAgentBotResetTime, renderEntityTextBlock } from './agentBotEntities';
 import { renderWebSourcesBlock } from './agentBotWeb';
 import {
   TELEGRAM_MESSAGE_MAX,
@@ -41,7 +41,7 @@ import type { TelegramMessageRender } from './telegramEditThrottler';
 
 export type AgentBotTerminal =
   | { kind: 'completed'; awaitingConfirmation: boolean }
-  | { kind: 'failed'; code: string }
+  | { kind: 'failed'; code: string; retryAt?: string }
   | { kind: 'cancelled' };
 
 export type AgentBotRunState = {
@@ -164,7 +164,7 @@ export function reduceAgentBotRun(state: AgentBotRunState, event: AgentStreamEve
     case 'run.completed':
       return { ...state, terminal: { kind: 'completed', awaitingConfirmation: event.status === 'AWAITING_CONFIRMATION' } };
     case 'run.failed':
-      return { ...state, terminal: { kind: 'failed', code: event.code } };
+      return { ...state, terminal: { kind: 'failed', code: event.code, ...(event.retryAt ? { retryAt: event.retryAt } : {}) } };
     case 'run.cancelled':
       return { ...state, terminal: { kind: 'cancelled' } };
     default:
@@ -421,10 +421,18 @@ export function renderAgentBotStatus(state: AgentBotRunState, lang: string): Tel
   return { html, keyboard: stopKeyboard(lang, state.runId) };
 }
 
-function terminalNote(terminal: AgentBotTerminal, lang: string): string | null {
+/** Daily budget used up: "resets at …" in the user's zone when the time is known. */
+export function budgetExceededText(retryAt: string | null | undefined, lang: string, timeZone?: string | null, now?: Date): string {
+  if (!retryAt || Number.isNaN(Date.parse(retryAt))) return agentBotT('error.budget', lang);
+  return agentBotT('error.budgetUntil', lang, { time: formatAgentBotResetTime(retryAt, lang, timeZone, now) });
+}
+
+function terminalNote(terminal: AgentBotTerminal, lang: string, timeZone: string | null): string | null {
   if (terminal.kind === 'cancelled') return agentBotT('status.stopped', lang);
   if (terminal.kind === 'failed') {
     if (terminal.code === 'TIMEOUT') return agentBotT('error.timeout', lang);
+    // A run stopped mid-way when the daily budget ran out (`run.failed` carries the reset time).
+    if (terminal.code === 'BUDGET_EXCEEDED') return budgetExceededText(terminal.retryAt, lang, timeZone);
     if (terminal.code === 'LLM_ERROR') return agentBotT('error.llm', lang);
     return agentBotT('error.generic', lang);
   }
@@ -456,7 +464,7 @@ export function renderAgentBotFinal(
   const terminal = state.terminal ?? { kind: 'failed', code: 'INTERNAL' };
   const answer = answerTextOf(state);
   const chunks = agentAnswerToTelegramMessages(answer);
-  const note = terminalNote(terminal, lang);
+  const note = terminalNote(terminal, lang, options.userTimeZone ?? null);
   if (note) {
     const noteHtml = `<i>${escapeTelegramHtml(note)}</i>`;
     const last = chunks[chunks.length - 1];

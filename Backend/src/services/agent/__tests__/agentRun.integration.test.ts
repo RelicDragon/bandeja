@@ -24,6 +24,7 @@ import { InMemoryAgentEventStore } from '../agentEvents';
 import { AGENT_OUTPUT_LIMIT_NUDGE, createAgentRunService, type AgentRunService } from '../agentRun.service';
 import { agentTokensUsedToday } from '../agentGuards';
 import { agentBudgetRetryAt } from '../agentBudgetWindow';
+import { resolveAgentDailyBudget } from '../agentBudget.service';
 import {
   AgentLlmError,
   type AgentLlmClient,
@@ -464,7 +465,25 @@ void (async () => {
       const poor = makeService(new ScriptedLlm([textStep('x')]), { config: { dailyTokenBudget: 0 } });
       await expectApiError(poor.service.enqueueRun({ userId: owner.userId, chatId, text: 'hi' }), 429, 'BUDGET_EXCEEDED');
       await expectApiError(makeService(null).service.enqueueRun({ userId: owner.userId, chatId, text: 'hi' }), 503, 'LLM_ERROR');
-      console.log('timeout + llm error + budget: ok');
+
+      // Phase 5: admins have their own daily budget tier (AGENT_ADMIN_DAILY_TOKEN_BUDGET).
+      await prisma.user.update({ where: { id: owner.userId }, data: { isAdmin: true } });
+      try {
+        const adminChatId = await newChat(owner.userId);
+        const adminTier = makeService(new ScriptedLlm([textStep('ok')]), { config: { dailyTokenBudget: 0, adminDailyTokenBudget: 100_000_000 } });
+        const { runId: adminRunId } = await adminTier.service.enqueueRun({ userId: owner.userId, chatId: adminChatId, text: 'hi admin' });
+        assert.equal((await adminTier.service.waitForRun(adminRunId)).status, AgentRunStatus.COMPLETED, 'the admin tier lets an admin past an exhausted user tier');
+        const adminPoor = makeService(new ScriptedLlm([textStep('x')]), { config: { dailyTokenBudget: 100_000_000, adminDailyTokenBudget: 0 } });
+        await expectApiError(adminPoor.service.enqueueRun({ userId: owner.userId, chatId: adminChatId, text: 'hi' }), 429, 'BUDGET_EXCEEDED');
+        // The chat usage meter shows the user's own budget, not the global user tier.
+        const expected = await resolveAgentDailyBudget(owner.userId, resolveAgentEnvConfig(process.env));
+        assert.ok(['admin', 'override'].includes(expected.source), `admin resolves to the admin tier (${expected.source})`);
+        const detail = await getAgentChatDetail(owner.userId, adminChatId);
+        assert.equal(detail.usage?.dailyBudgetTokens, expected.tokens, 'usage.dailyBudgetTokens = the admin tier');
+      } finally {
+        await prisma.user.update({ where: { id: owner.userId }, data: { isAdmin: false } });
+      }
+      console.log('timeout + llm error + budget (user + admin tiers): ok');
     }
 
     // 5b. retries, fallback model, max_tokens, finish_reason length, budget between steps ------

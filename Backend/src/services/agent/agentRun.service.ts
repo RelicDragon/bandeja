@@ -1,5 +1,5 @@
 /**
- * Agent runs: queue + loop (docs/domains/agent.md, docs/plans/ai-agent.md §1, §7).
+ * Agent runs: queue + loop (docs/domains/agent.md).
  *
  * API side (`enqueueRun`): POST message saves the USER message and an `AgentRun(QUEUED)`
  * under a row lock on the chat (one QUEUED/RUNNING run per chat → 409 `CHAT_BUSY`; more
@@ -120,7 +120,8 @@ import {
 import { userAskedToRemember } from './agentMemory.service';
 import { getAgentEventStore, type AgentEventStore, type AgentStoredEvent } from './agentEvents';
 import { agentBudgetRetryAt } from './agentBudgetWindow';
-import { agentApiError, agentTokensUsedToday, assertAgentBudget } from './agentGuards';
+import { agentApiError, agentBudgetStatus, agentTokensUsedToday, assertAgentBudget } from './agentGuards';
+import { resolveAgentDailyBudget } from './agentBudget.service';
 import { agentT } from './i18n/agentI18n';
 import {
   AgentLlmError,
@@ -495,7 +496,7 @@ export class AgentRunService {
     const llm = this.deps.llm();
     if (!llm) throw agentApiError(503, 'LLM_ERROR', 'The AI assistant is not configured');
     const now = this.deps.now();
-    await assertAgentBudget(input.userId, agentConfig.dailyTokenBudget, now);
+    await assertAgentBudget(input.userId, agentConfig, now);
     const locale = (input.headerLocale ?? '').trim().slice(0, 16) || null;
 
     const { run, message } = await prisma.$transaction(async (tx) => {
@@ -591,7 +592,7 @@ export class AgentRunService {
     if (!llm) return null;
     const now = this.deps.now();
     try {
-      await assertAgentBudget(input.userId, agentConfig.dailyTokenBudget, now);
+      await assertAgentBudget(input.userId, agentConfig, now);
     } catch {
       return null;
     }
@@ -988,6 +989,8 @@ export class AgentRunService {
       const llm = this.deps.llm();
       if (!llm) throw new AgentLlmError('The AI assistant is not configured');
       const principal = await loadAgentPrincipal(run.userId);
+      // Resolved once per run (override / admin / user tier); usage is re-read before every step.
+      const dailyBudget = await resolveAgentDailyBudget(run.userId, agentConfig, { isAdmin: principal.isAdmin });
       const toolGroupsEnabled = agentConfig.toolGroupsEnabled;
       const context = await buildAgentRunContext({
         principal,
@@ -1068,7 +1071,7 @@ export class AgentRunService {
         const stepUsage: AgentUsage = { inputTokens: 0, outputTokens: 0 };
         unsavedText = '';
         // `assertAgentBudget` ran at enqueue; earlier steps (and other runs) may have used it up since.
-        if ((await agentTokensUsedToday(run.userId, this.deps.now())) >= agentConfig.dailyTokenBudget) {
+        if ((await agentTokensUsedToday(run.userId, this.deps.now())) >= dailyBudget.tokens) {
           throw new RunBudgetExhausted();
         }
 
@@ -1366,7 +1369,8 @@ export class AgentRunService {
     const plan = planAgentChatSummary(history, stored, isUntrustedTool);
     if (!plan) return;
     const now = this.deps.now();
-    if (this.deps.config().dailyTokenBudget - (await agentTokensUsedToday(run.userId, now)) < AGENT_CHAT_SUMMARY_BUDGET_RESERVE) return;
+    const budget = await agentBudgetStatus(run.userId, this.deps.config(), now);
+    if (budget.remaining < AGENT_CHAT_SUMMARY_BUDGET_RESERVE) return;
     const signal = AbortSignal.timeout(CHAT_SUMMARY_TIMEOUT_MS);
     const release = await this.llmGate.acquire(signal);
     try {

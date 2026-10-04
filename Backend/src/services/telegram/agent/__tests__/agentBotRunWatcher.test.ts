@@ -220,6 +220,15 @@ async function testFailureAndCancelNotes(): Promise<void> {
     assert.match(api.edits(7).at(-1)!.text, /took too long/);
   }
   {
+    // Phase 5: a run stopped mid-way by the daily budget says when it resets (user's zone).
+    const { api, feeds, watcher, binding } = setup();
+    const done = watcher.watch({ ...binding, timeZone: 'Europe/Belgrade' });
+    await settle();
+    await feeds.emit('run_1', { type: 'run.failed', code: 'BUDGET_EXCEEDED', message: null, retryAt: '2026-10-06T00:00:00.000Z' });
+    await done;
+    assert.match(api.edits(7).at(-1)!.text, /today’s assistant limit\. It resets at (\w+ )?02:00\./);
+  }
+  {
     const { api, feeds, watcher, binding } = setup();
     const done = watcher.watch({ ...binding, lang: 'ru' });
     await settle();

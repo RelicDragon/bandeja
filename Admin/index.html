@@ -346,12 +346,21 @@
                             User id
                             <input type="text" id="agentUserId" placeholder="User id" />
                         </label>
+                        <label>
+                            Days
+                            <select id="agentUsageDays">
+                                <option value="7">7</option>
+                                <option value="14" selected>14</option>
+                                <option value="30">30</option>
+                                <option value="90">90</option>
+                            </select>
+                        </label>
                         <button type="button" class="btn-secondary" onclick="loadAiAgentPage()">Apply</button>
                         <button type="button" class="btn-secondary" onclick="resetAiAgentFilters()">Reset</button>
                     </div>
                 </div>
                 <p class="translation-queue-worker">
-                    Read-only audit. Every write the agent proposed and what happened to it (newest 50), daily token usage and reply ratings (last 14 days, UTC), and the newest 50 thumbs-down replies. The user id filter applies to every table.
+                    Read-only audit. Every write the agent proposed and what happened to it (newest 50), estimated cost and daily token usage and reply ratings (last N days, UTC), and the newest 50 thumbs-down replies. The user id filter applies to every table.
                 </p>
                 <h2 class="section-subtitle">Actions</h2>
                 <div class="table-container">
@@ -369,6 +378,58 @@
                         <tbody id="agentActionsBody"></tbody>
                     </table>
                 </div>
+                <h2 class="section-subtitle">Cost</h2>
+                <p class="translation-queue-worker" id="agentCostSummary"></p>
+                <h3 class="section-subtitle">Per day</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Day (UTC)</th>
+                                <th>Users</th>
+                                <th>Calls</th>
+                                <th>Input tokens</th>
+                                <th>Cached input</th>
+                                <th>Output tokens</th>
+                                <th>Est. cost (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentCostDayBody"></tbody>
+                    </table>
+                </div>
+                <h3 class="section-subtitle">Per user (top 50)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Calls</th>
+                                <th>Input tokens</th>
+                                <th>Cached input</th>
+                                <th>Output tokens</th>
+                                <th>Est. cost (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentCostUserBody"></tbody>
+                    </table>
+                </div>
+                <h3 class="section-subtitle">Per model / reason</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Reason</th>
+                                <th>Calls</th>
+                                <th>Input tokens</th>
+                                <th>Cached input</th>
+                                <th>Output tokens</th>
+                                <th>Est. cost (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentCostModelBody"></tbody>
+                    </table>
+                </div>
                 <h2 class="section-subtitle">Usage</h2>
                 <div class="table-container">
                     <table>
@@ -380,6 +441,7 @@
                                 <th>Input tokens</th>
                                 <th>Output tokens</th>
                                 <th>Total tokens</th>
+                                <th>Est. cost (USD)</th>
                             </tr>
                         </thead>
                         <tbody id="agentUsageBody"></tbody>

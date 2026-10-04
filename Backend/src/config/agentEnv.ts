@@ -6,8 +6,18 @@
 export type AgentEnvConfig = {
   model: string;
   baseUrl: string;
-  /** input + output tokens per user per UTC day, summed from `AgentRun`. */
+  /**
+   * Daily budget (budget tokens per UTC day, `agentTokensUsedToday`) of a normal user. The
+   * `AGENT_DAILY_TOKEN_BUDGET` PlatformSetting row wins over the env (`agentBudget.service.ts`).
+   */
   dailyTokenBudget: number;
+  /** Same for platform admins (`User.isAdmin`); `AGENT_ADMIN_DAILY_TOKEN_BUDGET` row wins. */
+  adminDailyTokenBudget: number;
+  /**
+   * Raw JSON price table for the admin cost dashboard (`agentCost.ts`), USD per 1M tokens;
+   * the `AGENT_PRICES_USD_PER_MTOK` PlatformSetting row wins. Null = built-in estimates.
+   */
+  pricesJson: string | null;
   /** Context size the chat meter measures against (the in-chat "start a new chat" hint). */
   contextWindowTokens: number;
   rateLimitMax: number;
@@ -78,6 +88,8 @@ export function resolveAgentEnvConfig(env: NodeJS.ProcessEnv): AgentEnvConfig {
     model: (env.AGENT_MODEL || '').trim() || AGENT_DEFAULT_MODEL,
     baseUrl: ((env.AGENT_BASE_URL || '').trim() || AGENT_DEFAULT_BASE_URL).replace(/\/$/, ''),
     dailyTokenBudget: intInRange(env.AGENT_DAILY_TOKEN_BUDGET, 1_500_000, 0, 100_000_000),
+    adminDailyTokenBudget: intInRange(env.AGENT_ADMIN_DAILY_TOKEN_BUDGET, 10_000_000, 0, 1_000_000_000),
+    pricesJson: (env.AGENT_PRICES_USD_PER_MTOK || '').trim() || null,
     contextWindowTokens: intInRange(env.AGENT_CONTEXT_WINDOW_TOKENS, 128_000, 1_000, 10_000_000),
     rateLimitMax: intInRange(env.AGENT_RATE_LIMIT_MAX, 30, 1, 10_000),
     rateLimitWindowMs: intInRange(env.AGENT_RATE_LIMIT_WINDOW_MS, 10 * 60 * 1000, 1000, 24 * 60 * 60 * 1000),

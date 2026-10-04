@@ -33,6 +33,16 @@ export const PLATFORM_SETTING_KEYS = {
    * as above; the key is reserved here so both PRDs share one flags endpoint.
    */
   FIND_LOOKING_COUNT_ENABLED: 'FIND_LOOKING_COUNT_ENABLED',
+  /**
+   * AI agent daily budgets (`services/agent/agentBudget.service.ts`): whole budget tokens per
+   * UTC day for normal users / admins (no row = the env value), and a JSON object
+   * `{ "<userId>": <tokens> }` of per-user overrides.
+   */
+  AGENT_DAILY_TOKEN_BUDGET: 'AGENT_DAILY_TOKEN_BUDGET',
+  AGENT_ADMIN_DAILY_TOKEN_BUDGET: 'AGENT_ADMIN_DAILY_TOKEN_BUDGET',
+  AGENT_USER_DAILY_TOKEN_BUDGETS: 'AGENT_USER_DAILY_TOKEN_BUDGETS',
+  /** AI agent cost dashboard price table, JSON (`services/agent/agentCost.ts`); no row = env / built-in estimates. */
+  AGENT_PRICES_USD_PER_MTOK: 'AGENT_PRICES_USD_PER_MTOK',
 } as const;
 
 export type PlatformSettingKey =

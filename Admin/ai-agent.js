@@ -3,8 +3,12 @@
  *
  * `GET /admin/agent/actions` is the log of every write the agent proposed and
  * what happened to it; `GET /admin/agent/usage` is daily (UTC) token sums per
- * user from agent runs plus thumbs up/down per day; `GET /admin/agent/feedback`
- * lists the newest thumbs-down replies. Nothing here mutates: no confirm/reject buttons.
+ * user from agent runs, the estimated cost per day / user / model (agent
+ * `LlmUsageLog` rows priced by `AGENT_PRICES_USD_PER_MTOK`), the daily budgets
+ * in force, plus thumbs up/down per day; `GET /admin/agent/feedback` lists the
+ * newest thumbs-down replies. Nothing here mutates: budgets and prices are
+ * Platform settings rows (AGENT_DAILY_TOKEN_BUDGET, AGENT_ADMIN_DAILY_TOKEN_BUDGET,
+ * AGENT_USER_DAILY_TOKEN_BUDGETS, AGENT_PRICES_USD_PER_MTOK).
  */
 
 const AGENT_ACTION_STATUS_BADGE = {
@@ -95,11 +99,82 @@ function toggleAgentActionDetails(index) {
     if (row) row.style.display = row.style.display === 'none' ? '' : 'none';
 }
 
+function agentNumber(value) {
+    return Number(value || 0).toLocaleString('en-US');
+}
+
+function agentUsd(value, unpricedCalls) {
+    const amount = Number(value || 0);
+    const text = amount >= 1 ? `$${amount.toFixed(2)}` : `$${amount.toFixed(4)}`;
+    return unpricedCalls ? `${text} <span class="badge badge-warning" title="${escapeHtmlAttr(`${unpricedCalls} calls without a price`)}">+${unpricedCalls} unpriced</span>` : text;
+}
+
+function agentEmptyRow(colspan, text) {
+    return `<tr><td colspan="${colspan}" style="text-align:center;padding:2rem">${escapeHtml(text)}</td></tr>`;
+}
+
+function renderAgentCost(data) {
+    const summary = document.getElementById('agentCostSummary');
+    if (summary) {
+        const totals = data.totals || {};
+        const budget = data.budget || {};
+        const prices = data.prices || {};
+        const priceSource = { setting: 'Platform setting', env: 'env', default: 'built-in estimates' }[prices.source] || '—';
+        summary.innerHTML = `
+            <strong>Est. total ${agentUsd(totals.costUsd, totals.unpricedCalls)}</strong>
+            over ${escapeHtml(String(data.days || ''))} days since ${escapeHtml(formatDate(data.since))}
+            · ${agentNumber(totals.calls)} LLM / metered calls.
+            Daily budgets: users ${agentNumber(budget.user)}, admins ${agentNumber(budget.admin)} budget tokens,
+            ${agentNumber(budget.overrides)} per-user override(s).
+            Prices: ${escapeHtml(priceSource)} (USD per 1M tokens; set <code>AGENT_PRICES_USD_PER_MTOK</code> in Platform settings).
+            <details><summary>Price table</summary>${agentJsonBlock(prices.table)}</details>`;
+    }
+    const tokenCells = (row) => `
+        <td>${agentNumber(row.inputTokens)}</td>
+        <td>${agentNumber(row.cachedInputTokens)}</td>
+        <td>${agentNumber(row.outputTokens)}</td>
+        <td>${agentUsd(row.costUsd, row.unpricedCalls)}</td>`;
+    const dayBody = document.getElementById('agentCostDayBody');
+    if (dayBody) {
+        const days = data.costByDay || [];
+        dayBody.innerHTML = days.length
+            ? days.map((row) => `<tr><td>${escapeHtml(row.day)}</td><td>${row.users}</td><td>${agentNumber(row.calls)}</td>${tokenCells(row)}</tr>`).join('')
+            : agentEmptyRow(7, 'No agent LLM usage in this range.');
+    }
+    const userBody = document.getElementById('agentCostUserBody');
+    if (userBody) {
+        const users = data.costByUser || [];
+        userBody.innerHTML = users.length
+            ? users
+                  .map(
+                      (row) => `<tr>
+                <td title="${escapeHtmlAttr(row.userId)}">${escapeHtml(agentUserLabel(row.user, row.userId))}${row.user?.isAdmin ? ' <span class="badge badge-info">admin</span>' : ''}</td>
+                <td>${agentNumber(row.calls)}</td>${tokenCells(row)}</tr>`
+                  )
+                  .join('')
+            : agentEmptyRow(6, 'No agent LLM usage in this range.');
+    }
+    const modelBody = document.getElementById('agentCostModelBody');
+    if (modelBody) {
+        const models = data.costByModel || [];
+        modelBody.innerHTML = models.length
+            ? models
+                  .map(
+                      (row) => `<tr>
+                <td><code>${escapeHtml(row.model)}</code>${row.priced ? '' : ' <span class="badge badge-warning">no price</span>'}</td>
+                <td>${escapeHtml(row.reason || '—')}</td>
+                <td>${agentNumber(row.calls)}</td>${tokenCells(row)}</tr>`
+                  )
+                  .join('')
+            : agentEmptyRow(7, 'No agent LLM usage in this range.');
+    }
+}
+
 function renderAgentUsage(rows) {
     const body = document.getElementById('agentUsageBody');
     if (!body) return;
     if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem">No agent runs in this range.</td></tr>';
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem">No agent runs in this range.</td></tr>';
         return;
     }
     body.innerHTML = rows
@@ -111,6 +186,7 @@ function renderAgentUsage(rows) {
                 <td>${row.inputTokens}</td>
                 <td>${row.outputTokens}</td>
                 <td>${row.totalTokens}</td>
+                <td>${row.costUsd == null ? '—' : agentUsd(row.costUsd)}</td>
             </tr>`
         )
         .join('');
@@ -159,10 +235,16 @@ async function loadAiAgentPage() {
     const usageBody = document.getElementById('agentUsageBody');
     const feedbackDaysBody = document.getElementById('agentFeedbackDaysBody');
     const feedbackBody = document.getElementById('agentFeedbackBody');
+    const costBodies = ['agentCostDayBody', 'agentCostUserBody', 'agentCostModelBody']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
     if (!actionsBody || !usageBody) return;
-    const loading = '<tr><td colspan="6" style="text-align:center;padding:2rem">Loading…</td></tr>';
+    const loading = '<tr><td colspan="7" style="text-align:center;padding:2rem">Loading…</td></tr>';
     actionsBody.innerHTML = loading;
     usageBody.innerHTML = loading;
+    costBodies.forEach((body) => {
+        body.innerHTML = loading;
+    });
     if (feedbackDaysBody) feedbackDaysBody.innerHTML = loading;
     if (feedbackBody) feedbackBody.innerHTML = loading;
 
@@ -173,6 +255,8 @@ async function loadAiAgentPage() {
     if (status) actionParams.set('status', status);
     const usageParams = new URLSearchParams();
     if (userId) usageParams.set('userId', userId);
+    const days = document.getElementById('agentUsageDays')?.value || '';
+    if (days) usageParams.set('days', days);
     const usageQs = usageParams.toString();
 
     const feedbackParams = new URLSearchParams({ rating: 'down', limit: '50' });
@@ -184,7 +268,7 @@ async function loadAiAgentPage() {
         apiRequest(`/admin/agent/feedback?${feedbackParams.toString()}`),
     ]);
     const errorRow = (error) =>
-        `<tr><td colspan="6" class="error">${escapeHtml(error?.message || 'Failed to load')}</td></tr>`;
+        `<tr><td colspan="7" class="error">${escapeHtml(error?.message || 'Failed to load')}</td></tr>`;
 
     if (actionsResult.status === 'fulfilled') {
         renderAgentActions(actionsResult.value.data?.actions || []);
@@ -193,9 +277,13 @@ async function loadAiAgentPage() {
     }
     if (usageResult.status === 'fulfilled') {
         renderAgentUsage(usageResult.value.data?.rows || []);
+        renderAgentCost(usageResult.value.data || {});
         renderAgentFeedbackDays(usageResult.value.data?.feedback || []);
     } else {
         usageBody.innerHTML = errorRow(usageResult.reason);
+        costBodies.forEach((body) => {
+            body.innerHTML = errorRow(usageResult.reason);
+        });
         if (feedbackDaysBody) feedbackDaysBody.innerHTML = errorRow(usageResult.reason);
     }
     if (feedbackResult.status === 'fulfilled') {
@@ -208,8 +296,10 @@ async function loadAiAgentPage() {
 function resetAiAgentFilters() {
     const status = document.getElementById('agentActionStatus');
     const userId = document.getElementById('agentUserId');
+    const days = document.getElementById('agentUsageDays');
     if (status) status.value = '';
     if (userId) userId.value = '';
+    if (days) days.value = '14';
     loadAiAgentPage();
 }
 

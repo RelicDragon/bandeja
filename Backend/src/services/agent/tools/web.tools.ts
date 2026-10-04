@@ -1,5 +1,5 @@
 /**
- * Web tools (Phase 13, docs/plans/ai-agent-web-search.md §13.8): `web_search` and
+ * Web tools (Phase 13): `web_search` and
  * `web_fetch`. Both run on the backend, are `kind: 'read'` and `untrustedContent` (a
  * successful call taints the run: no later write in it auto-approves), and are listed only
  * while the feature is on (kill switch + a Tavily or Brave key, `isAvailable`).
@@ -36,6 +36,7 @@ import {
   type WebImageSearchOutcome,
 } from '../web/search/webImageSearch';
 import { canonicalizeUrl, displayHost, safeHttpUrl } from '../web/webUrl';
+import { resolveAgentDailyBudget } from '../agentBudget.service';
 import { defineTool, type AgentToolContext, type AgentToolResult } from './registry';
 
 export const WEB_UNTRUSTED_NOTICE =
@@ -141,7 +142,7 @@ export const webSearchTool = defineTool({
       userId: principal.userId,
       runCount: run.searches,
       env,
-      dailyTokenBudget: config.agent.dailyTokenBudget,
+      dailyTokenBudget: (await resolveAgentDailyBudget(principal.userId, config.agent, { isAdmin: principal.isAdmin })).tokens,
       now,
     });
     run.searches += 1;
@@ -255,7 +256,7 @@ export const webFetchTool = defineTool({
       userId: principal.userId,
       runCount: run.fetches,
       env,
-      dailyTokenBudget: config.agent.dailyTokenBudget,
+      dailyTokenBudget: (await resolveAgentDailyBudget(principal.userId, config.agent, { isAdmin: principal.isAdmin })).tokens,
       now,
     });
     run.fetches += 1;
@@ -367,7 +368,7 @@ export const webImagesTool = defineTool({
       userId: principal.userId,
       runCount: run.searches,
       env,
-      dailyTokenBudget: config.agent.dailyTokenBudget,
+      dailyTokenBudget: (await resolveAgentDailyBudget(principal.userId, config.agent, { isAdmin: principal.isAdmin })).tokens,
       now,
     });
     run.searches += 1;
