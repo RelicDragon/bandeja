@@ -1,3 +1,136 @@
 {
-  "novice": {}
+  "novice": {
+    "celebration": {
+      "continue": "Continue",
+      "done": "Let's go",
+      "congrats": {
+        "firstTitle": "You played your first game!",
+        "gameTitle": "Game #{{number}} done",
+        "subtitle": "Every game you play opens up more of the app.",
+        "won": "You won!",
+        "level": "Level",
+        "wins": "Wins",
+        "ties": "Draws",
+        "losses": "Losses"
+      },
+      "achievements": {
+        "eyebrow": "New achievement",
+        "titleOne": "Achievement unlocked",
+        "titleMany": "Achievements unlocked",
+        "subtitle": "Find them in your trophy cabinet."
+      },
+      "rankUp": {
+        "eyebrow": "Rank up",
+        "title": "You're now {{rank}}",
+        "jumped": "Straight from {{from}} to {{to}}",
+        "ladder": "Rank ladder",
+        "progress": "{{current}}/{{target}} games to Regular",
+        "regularReached": "Top of the ladder"
+      },
+      "ranks": {
+        "newcomer": "Newcomer",
+        "debut": "Debut",
+        "rookie": "Rookie",
+        "contender": "Contender",
+        "challenger": "Challenger",
+        "regular": "Regular"
+      },
+      "features": {
+        "title": "Unlocked for you",
+        "regularTitle": "You're a Regular — the full app is yours",
+        "regularSubtitle": "Everything is open now. Explore at your own pace.",
+        "unlockedName": "{{name}} unlocked",
+        "items": {
+          "homeShell": {
+            "name": "Home",
+            "desc": "Your games, invites and what's next, in one place."
+          },
+          "findTab": {
+            "name": "Find",
+            "desc": "Browse games near you and grab an open spot."
+          },
+          "calendar": {
+            "name": "Calendar",
+            "desc": "See your upcoming games day by day."
+          },
+          "pastGames": {
+            "name": "Past games",
+            "desc": "Look back at your results and scores."
+          },
+          "chatsTab": {
+            "name": "Chats",
+            "desc": "Message players and groups directly."
+          },
+          "followPlayers": {
+            "name": "Following",
+            "desc": "Follow the people you like playing with."
+          },
+          "playStreak": {
+            "name": "Play streak",
+            "desc": "Play every week to grow your streak."
+          },
+          "createGame": {
+            "name": "Game creation",
+            "desc": "Host your own game and invite players."
+          },
+          "topTab": {
+            "name": "Top",
+            "desc": "Rankings and leaderboards in your city."
+          },
+          "levelHistory": {
+            "name": "Level history",
+            "desc": "Watch your level change game by game."
+          },
+          "playerComparison": {
+            "name": "Player comparison",
+            "desc": "Compare your stats head to head."
+          },
+          "leagues": {
+            "name": "Leagues",
+            "desc": "Join a season and play for the table."
+          },
+          "tournaments": {
+            "name": "Tournaments",
+            "desc": "Enter tournaments and chase a podium."
+          },
+          "marketTab": {
+            "name": "Market",
+            "desc": "Buy and sell gear with other players."
+          },
+          "stories": {
+            "name": "Stories",
+            "desc": "Share moments from your games."
+          },
+          "liveRail": {
+            "name": "Live now",
+            "desc": "Follow games being played right now."
+          },
+          "userTeams": {
+            "name": "Teams",
+            "desc": "Build a team with your usual partners."
+          },
+          "aiAssistant": {
+            "name": "AI assistant",
+            "desc": "Ask for games, partners and stats in plain words."
+          },
+          "wallet": {
+            "name": "Wallet",
+            "desc": "Your coins, rewards and bets."
+          },
+          "createLeague": {
+            "name": "League creation",
+            "desc": "Run your own league or tournament."
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "Newcomer",
+      "cardLabel": "Newcomer · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_one": "Brought {{count}} new player",
+      "broughtPlayers_other": "Brought {{count}} new players"
+    }
+  }
 }

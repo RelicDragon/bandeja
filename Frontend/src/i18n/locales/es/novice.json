@@ -1,3 +1,137 @@
 {
-  "novice": {}
+  "novice": {
+    "celebration": {
+      "continue": "Continuar",
+      "done": "¡Vamos!",
+      "congrats": {
+        "firstTitle": "¡Jugaste tu primer partido!",
+        "gameTitle": "Partido n.º {{number}} completado",
+        "subtitle": "Cada partido que juegas desbloquea más de la app.",
+        "won": "¡Ganaste!",
+        "level": "Nivel",
+        "wins": "Victorias",
+        "ties": "Empates",
+        "losses": "Derrotas"
+      },
+      "achievements": {
+        "eyebrow": "Nuevo logro",
+        "titleOne": "Logro desbloqueado",
+        "titleMany": "Logros desbloqueados",
+        "subtitle": "Los encontrarás en tu vitrina de trofeos."
+      },
+      "rankUp": {
+        "eyebrow": "Subes de rango",
+        "title": "Ahora eres {{rank}}",
+        "jumped": "Directo de {{from}} a {{to}}",
+        "ladder": "Escalera de rangos",
+        "progress": "{{current}}/{{target}} partidos para ser Habitual",
+        "regularReached": "Cima de la escalera"
+      },
+      "ranks": {
+        "newcomer": "Recién llegado",
+        "debut": "Debutante",
+        "rookie": "Novato",
+        "contender": "Contendiente",
+        "challenger": "Aspirante",
+        "regular": "Habitual"
+      },
+      "features": {
+        "title": "Desbloqueado para ti",
+        "regularTitle": "Eres Habitual: toda la app es tuya",
+        "regularSubtitle": "Ya está todo abierto. Explora a tu ritmo.",
+        "unlockedName": "{{name}} desbloqueado",
+        "items": {
+          "homeShell": {
+            "name": "Inicio",
+            "desc": "Tus partidos, invitaciones y lo próximo, en un solo lugar."
+          },
+          "findTab": {
+            "name": "Buscar",
+            "desc": "Explora partidos cerca y ocupa una plaza libre."
+          },
+          "calendar": {
+            "name": "Calendario",
+            "desc": "Tus próximos partidos, día a día."
+          },
+          "pastGames": {
+            "name": "Partidos jugados",
+            "desc": "Repasa tus resultados y marcadores."
+          },
+          "chatsTab": {
+            "name": "Mensajes",
+            "desc": "Escribe directamente a jugadores y grupos."
+          },
+          "followPlayers": {
+            "name": "Seguir jugadores",
+            "desc": "Sigue a las personas con las que te gusta jugar."
+          },
+          "playStreak": {
+            "name": "Racha de juego",
+            "desc": "Juega cada semana para alargar tu racha."
+          },
+          "createGame": {
+            "name": "Crear partidos",
+            "desc": "Organiza tu propio partido e invita a jugadores."
+          },
+          "topTab": {
+            "name": "Top",
+            "desc": "Rankings y clasificaciones de tu ciudad."
+          },
+          "levelHistory": {
+            "name": "Historial de nivel",
+            "desc": "Mira cómo cambia tu nivel partido a partido."
+          },
+          "playerComparison": {
+            "name": "Comparar jugadores",
+            "desc": "Compara tus estadísticas cara a cara."
+          },
+          "leagues": {
+            "name": "Ligas",
+            "desc": "Únete a una temporada y lucha por la tabla."
+          },
+          "tournaments": {
+            "name": "Torneos",
+            "desc": "Inscríbete en torneos y busca el podio."
+          },
+          "marketTab": {
+            "name": "Mercado",
+            "desc": "Compra y vende material con otros jugadores."
+          },
+          "stories": {
+            "name": "Historias",
+            "desc": "Comparte momentos de tus partidos."
+          },
+          "liveRail": {
+            "name": "En directo",
+            "desc": "Sigue los partidos que se juegan ahora mismo."
+          },
+          "userTeams": {
+            "name": "Equipos",
+            "desc": "Forma un equipo con tus compañeros de siempre."
+          },
+          "aiAssistant": {
+            "name": "Asistente IA",
+            "desc": "Pide partidos, compañeros y estadísticas con tus palabras."
+          },
+          "wallet": {
+            "name": "Monedero",
+            "desc": "Tus monedas, recompensas y apuestas."
+          },
+          "createLeague": {
+            "name": "Crear ligas",
+            "desc": "Organiza tu propia liga o torneo."
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "Recién llegado",
+      "cardLabel": "Recién llegado · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_one": "Trajo {{count}} jugador nuevo",
+      "broughtPlayers_many": "Trajo {{count}} jugadores nuevos",
+      "broughtPlayers_other": "Trajo {{count}} jugadores nuevos"
+    }
+  }
 }

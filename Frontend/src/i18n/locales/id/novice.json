@@ -1,3 +1,135 @@
 {
-  "novice": {}
+  "novice": {
+    "celebration": {
+      "continue": "Lanjut",
+      "done": "Ayo mulai",
+      "congrats": {
+        "firstTitle": "Kamu sudah main game pertamamu!",
+        "gameTitle": "Game ke-{{number}} selesai",
+        "subtitle": "Setiap game yang kamu mainkan membuka lebih banyak fitur aplikasi.",
+        "won": "Kamu menang!",
+        "level": "Tingkat",
+        "wins": "Menang",
+        "ties": "Seri",
+        "losses": "Kalah"
+      },
+      "achievements": {
+        "eyebrow": "Pencapaian baru",
+        "titleOne": "Pencapaian terbuka",
+        "titleMany": "Beberapa pencapaian terbuka",
+        "subtitle": "Lihat di lemari trofimu."
+      },
+      "rankUp": {
+        "eyebrow": "Naik peringkat",
+        "title": "Sekarang kamu {{rank}}",
+        "jumped": "Langsung dari {{from}} ke {{to}}",
+        "ladder": "Tangga peringkat",
+        "progress": "{{current}}/{{target}} game menuju Reguler",
+        "regularReached": "Puncak tangga"
+      },
+      "ranks": {
+        "newcomer": "Pendatang Baru",
+        "debut": "Debutan",
+        "rookie": "Pemula",
+        "contender": "Penantang Muda",
+        "challenger": "Penantang",
+        "regular": "Reguler"
+      },
+      "features": {
+        "title": "Terbuka untukmu",
+        "regularTitle": "Kamu Reguler — seluruh aplikasi milikmu",
+        "regularSubtitle": "Semuanya sudah terbuka. Jelajahi dengan santai.",
+        "unlockedName": "{{name}} terbuka",
+        "items": {
+          "homeShell": {
+            "name": "Beranda",
+            "desc": "Game, undangan, dan jadwal berikutnya di satu tempat."
+          },
+          "findTab": {
+            "name": "Cari",
+            "desc": "Telusuri game di dekatmu dan ambil slot kosong."
+          },
+          "calendar": {
+            "name": "Kalender",
+            "desc": "Lihat game mendatang hari demi hari."
+          },
+          "pastGames": {
+            "name": "Game sebelumnya",
+            "desc": "Lihat lagi hasil dan skor kamu."
+          },
+          "chatsTab": {
+            "name": "Obrolan",
+            "desc": "Kirim pesan langsung ke pemain dan grup."
+          },
+          "followPlayers": {
+            "name": "Ikuti pemain",
+            "desc": "Ikuti orang yang seru diajak main."
+          },
+          "playStreak": {
+            "name": "Rangkaian main",
+            "desc": "Main tiap minggu untuk memperpanjang rangkaianmu."
+          },
+          "createGame": {
+            "name": "Buat game",
+            "desc": "Adakan game sendiri dan undang pemain."
+          },
+          "topTab": {
+            "name": "Teratas",
+            "desc": "Peringkat dan papan skor di kotamu."
+          },
+          "levelHistory": {
+            "name": "Riwayat level",
+            "desc": "Pantau perubahan levelmu dari game ke game."
+          },
+          "playerComparison": {
+            "name": "Bandingkan pemain",
+            "desc": "Bandingkan statistik secara langsung."
+          },
+          "leagues": {
+            "name": "Liga",
+            "desc": "Ikuti satu musim dan bersaing di klasemen."
+          },
+          "tournaments": {
+            "name": "Turnamen",
+            "desc": "Ikut turnamen dan kejar podium."
+          },
+          "marketTab": {
+            "name": "Pasar",
+            "desc": "Jual beli perlengkapan dengan pemain lain."
+          },
+          "stories": {
+            "name": "Cerita",
+            "desc": "Bagikan momen dari game-mu."
+          },
+          "liveRail": {
+            "name": "Sedang live",
+            "desc": "Ikuti game yang sedang dimainkan sekarang."
+          },
+          "userTeams": {
+            "name": "Tim",
+            "desc": "Bentuk tim dengan partner tetapmu."
+          },
+          "aiAssistant": {
+            "name": "Asisten AI",
+            "desc": "Minta game, partner, dan statistik dengan bahasa sehari-hari."
+          },
+          "wallet": {
+            "name": "Dompet",
+            "desc": "Koin, hadiah, dan taruhanmu."
+          },
+          "createLeague": {
+            "name": "Buat liga",
+            "desc": "Jalankan liga atau turnamenmu sendiri."
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "Pendatang Baru",
+      "cardLabel": "Pendatang Baru · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_other": "Membawa {{count}} pemain baru"
+    }
+  }
 }

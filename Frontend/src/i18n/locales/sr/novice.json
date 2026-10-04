@@ -1,3 +1,137 @@
 {
-  "novice": {}
+  "novice": {
+    "celebration": {
+      "continue": "Nastavi",
+      "done": "Idemo",
+      "congrats": {
+        "firstTitle": "Odigrali ste prvu igru!",
+        "gameTitle": "Igra br. {{number}} je odigrana",
+        "subtitle": "Svaka odigrana igra otključava još delova aplikacije.",
+        "won": "Pobedili ste!",
+        "level": "Nivo",
+        "wins": "Pobede",
+        "ties": "Nerešeno",
+        "losses": "Porazi"
+      },
+      "achievements": {
+        "eyebrow": "Novo dostignuće",
+        "titleOne": "Dostignuće otključano",
+        "titleMany": "Dostignuća otključana",
+        "subtitle": "Pronađite ih u svojoj vitrini trofeja."
+      },
+      "rankUp": {
+        "eyebrow": "Novi rang",
+        "title": "Sada ste {{rank}}",
+        "jumped": "Pravo iz ranga {{from}} u {{to}}",
+        "ladder": "Lestvica rangova",
+        "progress": "{{current}}/{{target}} igara do ranga Redovni",
+        "regularReached": "Vrh lestvice"
+      },
+      "ranks": {
+        "newcomer": "Novajlija",
+        "debut": "Debitant",
+        "rookie": "Početnik",
+        "contender": "Kandidat",
+        "challenger": "Izazivač",
+        "regular": "Redovni"
+      },
+      "features": {
+        "title": "Otključano za vas",
+        "regularTitle": "Vi ste Redovni — cela aplikacija je vaša",
+        "regularSubtitle": "Sve je sada otvoreno. Istražujte svojim tempom.",
+        "unlockedName": "{{name}} – otključano",
+        "items": {
+          "homeShell": {
+            "name": "Početna",
+            "desc": "Vaše igre, pozivnice i šta sledi, na jednom mestu."
+          },
+          "findTab": {
+            "name": "Pretraga",
+            "desc": "Pronađite igre u blizini i zauzmite slobodno mesto."
+          },
+          "calendar": {
+            "name": "Kalendar",
+            "desc": "Vaše predstojeće igre, dan po dan."
+          },
+          "pastGames": {
+            "name": "Prošle igre",
+            "desc": "Pogledajte svoje rezultate i skorove."
+          },
+          "chatsTab": {
+            "name": "Četovi",
+            "desc": "Dopisujte se direktno sa igračima i grupama."
+          },
+          "followPlayers": {
+            "name": "Praćenje",
+            "desc": "Pratite ljude sa kojima volite da igrate."
+          },
+          "playStreak": {
+            "name": "Niz igara",
+            "desc": "Igrajte svake nedelje da biste produžili niz."
+          },
+          "createGame": {
+            "name": "Kreiranje igara",
+            "desc": "Organizujte svoju igru i pozovite igrače."
+          },
+          "topTab": {
+            "name": "Top",
+            "desc": "Rang liste i tabele lidera u vašem gradu."
+          },
+          "levelHistory": {
+            "name": "Istorija nivoa",
+            "desc": "Pratite kako se vaš nivo menja iz igre u igru."
+          },
+          "playerComparison": {
+            "name": "Poređenje igrača",
+            "desc": "Uporedite statistiku jedan na jedan."
+          },
+          "leagues": {
+            "name": "Lige",
+            "desc": "Uključite se u sezonu i borite se za tabelu."
+          },
+          "tournaments": {
+            "name": "Turniri",
+            "desc": "Prijavite se na turnire i jurite postolje."
+          },
+          "marketTab": {
+            "name": "Prodavnica",
+            "desc": "Kupujte i prodajte opremu sa drugim igračima."
+          },
+          "stories": {
+            "name": "Priče",
+            "desc": "Podelite trenutke sa svojih igara."
+          },
+          "liveRail": {
+            "name": "Uživo",
+            "desc": "Pratite igre koje se upravo igraju."
+          },
+          "userTeams": {
+            "name": "Timovi",
+            "desc": "Napravite tim sa stalnim partnerima."
+          },
+          "aiAssistant": {
+            "name": "AI asistent",
+            "desc": "Tražite igre, partnere i statistiku običnim rečima."
+          },
+          "wallet": {
+            "name": "Novčanik",
+            "desc": "Vaši novčići, nagrade i opklade."
+          },
+          "createLeague": {
+            "name": "Kreiranje liga",
+            "desc": "Vodite svoju ligu ili turnir."
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "Novajlija",
+      "cardLabel": "Novajlija · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_one": "Doveo/la {{count}} novog igrača",
+      "broughtPlayers_few": "Doveo/la {{count}} nova igrača",
+      "broughtPlayers_other": "Doveo/la {{count}} novih igrača"
+    }
+  }
 }
