@@ -21,6 +21,9 @@ import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
 import { TrophyCabinet } from '@/components/trophies/TrophyCabinet';
 import { TrophyShowcase } from '@/components/trophies/TrophyShowcase';
 import { TrophyPendingCelebrationHost } from '@/components/trophies/TrophyPendingCelebrationHost';
+import { NewcomerRankPill } from '@/components/novice/badge/NewcomerBadge';
+import { NewPlayersBroughtStat } from '@/components/novice/badge/NewPlayersBroughtStat';
+import { isNewcomerUser } from '@shared/novice';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
 import type { Sport } from '@/types';
@@ -262,8 +265,8 @@ const PlayerCardProfileBodyComponent = ({
             )}
           </div>
           <div className="min-w-0 flex-1 text-start text-white">
-            {(user.isTrainer || user.gender) && (
-              <div className="mb-2 flex items-center gap-2">
+            {(user.isTrainer || user.gender || isNewcomerUser(user)) && (
+              <div className="mb-2 flex flex-wrap items-center gap-2">
                 {user.isTrainer && (
                   <div className="bg-blue-500 dark:bg-blue-600 text-white px-3 py-1 rounded-full font-semibold text-sm flex items-center gap-1.5 border-2 border-white dark:border-gray-900 w-fit" style={{ boxShadow: '0 6px 15px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2)' }}>
                     <Dumbbell size={14} className="text-white" />
@@ -271,6 +274,7 @@ const PlayerCardProfileBodyComponent = ({
                   </div>
                 )}
                 <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
+                <NewcomerRankPill user={user} />
               </div>
             )}
             <div className={showsPremiumStatus(user) ? 'premium-name-glow' : undefined}>
@@ -293,6 +297,11 @@ const PlayerCardProfileBodyComponent = ({
             {playStreak && playStreak.current > 0 && (
               <div className="mt-2">
                 <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} />
+              </div>
+            )}
+            {(stats.newPlayersBroughtCount ?? 0) > 0 && (
+              <div className="mt-2">
+                <NewPlayersBroughtStat count={stats.newPlayersBroughtCount} variant="onPrimary" />
               </div>
             )}
             <div className="mt-2">

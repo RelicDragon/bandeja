@@ -18,6 +18,8 @@ import { PlayerAvatarFace } from './PlayerAvatarFace';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { getDisplayLevelForSport, getUserPrimarySport, formatSportLevelBadgeDisplay, isLevelConfirmedForSport } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
+import { isNewcomerUser } from '@shared/novice';
+import { NewcomerAvatarGlyph, type NewcomerBadgeSize } from '@/components/novice/badge/NewcomerBadge';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './PlayerAvatar.css';
 
@@ -62,9 +64,11 @@ interface PlayerAvatarProps {
   onTouchEnd?: (e: TouchEvent) => void;
   /** Sport for competitive level badge; defaults to the player's primary sport. */
   levelSport?: Sport;
+  /** PRD 358 — 🌱 corner glyph for newcomers (`isNewcomerUser`). Never on face-only sizes. */
+  showNewcomerBadge?: boolean;
 }
 
-export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable = false, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', inlineFaceFlatStack = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd, levelSport }: PlayerAvatarProps) => {
+export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, onRemoveClick, removable = false, showName = true, fullHideName = false, draggable = false, smallLayout = false, extrasmall = false, superTiny = false, inlineFace = false, inlineFacePlain = false, inlineFaceSize = 'sm', inlineFaceFlatStack = false, role, asDiv = false, onDragStart, onDragEnd, onTouchStart, onTouchMove, onTouchEnd, levelSport, showNewcomerBadge = true }: PlayerAvatarProps) => {
   const avatarPresenceKey = `avatar:${useId()}`;
   usePresenceSubscription(
     avatarPresenceKey,
@@ -209,6 +213,17 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const onlineDotClass = player && isOnline ? 'avatar-online-dot' : '';
 
   const faceOnlyLayout = superTiny || inlineFace;
+  // PRD 358 — 🌱 sits in the top-left badge slot; when the role crown owns it,
+  // the top-right slot (unless the remove button owns that one).
+  const hasRoleCrown = role === 'OWNER' || role === 'ADMIN';
+  const newcomerBadgeSize: NewcomerBadgeSize = extrasmall ? 'xs' : smallLayout ? 'sm' : 'md';
+  const newcomerBadgePosition = hasRoleCrown
+    ? removable && onRemoveClick
+      ? null
+      : '-top-1 -right-1'
+    : '-top-1 -left-1';
+  const showNewcomer =
+    showNewcomerBadge && !faceOnlyLayout && newcomerBadgePosition !== null && isNewcomerUser(player);
   const avatarAlt = `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player';
   const avatarFace = (
     <PlayerAvatarFace
@@ -246,6 +261,9 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
         <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
           <Crown size={sizeClasses.crownIcon} className="text-white" />
         </div>
+      )}
+      {showNewcomer && newcomerBadgePosition && (
+        <NewcomerAvatarGlyph size={newcomerBadgeSize} positionClassName={newcomerBadgePosition} />
       )}
       {extrasmall && player.isTrainer && (
         <div className={`absolute -bottom-1 ${trainerBadgeLeftClass} ${levelBadgeClass} z-10 ${player.gender && player.gender !== 'PREFER_NOT_TO_SAY' ? (player.gender === 'MALE' ? 'bg-blue-500 dark:bg-blue-600' : 'bg-pink-500 dark:bg-pink-600') : 'bg-blue-500 dark:bg-blue-600'}`} style={levelBadgeStyle}>
