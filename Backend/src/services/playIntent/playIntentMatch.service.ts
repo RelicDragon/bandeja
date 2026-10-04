@@ -44,6 +44,7 @@ import { rankPlayIntentPoolMembers } from './playIntentPoolRanking';
 import { playIntentDiscoveryDateKeys } from './playIntentDiscoveryWindow';
 import { listMatchingGamesForIntent } from './playIntentMatchingGames.service';
 import { publishMatchingGamesChanged } from './playIntentRealtime';
+import { isNoviceModeActive } from '@bandeja/shared/novice';
 
 const REMATCH_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 const PROPOSAL_TTL_MS = 2 * 60 * 60 * 1000;
@@ -305,6 +306,8 @@ export class PlayIntentMatchService {
       }
     }
 
+    await this.notifyNewcomerDemand(intent.userId, matched);
+
     if (matched.length > 0) {
       const notified = await PlayIntentNotifyService.notifyGameMatchesIntent(
         [intent.userId],
@@ -322,6 +325,35 @@ export class PlayIntentMatchService {
           }
         }
       }
+    }
+  }
+
+  /**
+   * PRD 358 — a novice-mode user's intent fits novice-friendly games
+   * (`suitableForNovices`, open PLAYING slots, overlapping window — already
+   * filtered into `games`): ping those owners, at most 3, deduped per game and
+   * city-local day inside {@link PlayIntentNotifyService.maybeNotifyOwnerNewcomerLooking}.
+   * Independent of whether the newcomer themself was notified.
+   */
+  private static async notifyNewcomerDemand(
+    userId: string,
+    games: Array<{
+      id: string;
+      suitableForNovices: boolean;
+      participants: Array<{ userId: string; role: ParticipantRole }>;
+    }>,
+  ) {
+    const friendly = games.filter((game) => game.suitableForNovices);
+    if (friendly.length === 0) return;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { noviceRank: true, noviceUnlockedAllAt: true },
+    });
+    if (!isNoviceModeActive(user)) return;
+    for (const game of friendly.slice(0, 3)) {
+      const owner = game.participants.find((p) => p.role === ParticipantRole.OWNER);
+      if (!owner?.userId || owner.userId === userId) continue;
+      await PlayIntentNotifyService.maybeNotifyOwnerNewcomerLooking(game.id, owner.userId);
     }
   }
 
