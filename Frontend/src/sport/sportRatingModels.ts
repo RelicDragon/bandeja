@@ -40,7 +40,7 @@ export const SPORT_RATING_MODELS: Record<Sport, SportRatingModel> = {
   [Sports.PADEL]: {
     id: 'bandeja_elo_v1',
     canonical: { min: 1.0, max: 7.0 },
-    questionnaireId: 'padel-v1',
+    questionnaireId: 'padel-v2',
     levelBands: LEVEL_BANDS_6.map((b, i) => ({
       ...b,
       hintKey: `sportRating.padel.band${i + 1}`,
@@ -53,7 +53,7 @@ export const SPORT_RATING_MODELS: Record<Sport, SportRatingModel> = {
   [Sports.TENNIS]: {
     id: 'bandeja_elo_v1',
     canonical: { min: 1.0, max: 7.0 },
-    questionnaireId: 'tennis-v1',
+    questionnaireId: 'tennis-v2',
     levelBands: LEVEL_BANDS_6,
     engine: { maxDeltaPerEvent: 0.2, useScoreMargin: true },
     ratesWhen: { affectsRatingTrue: true },
@@ -63,7 +63,7 @@ export const SPORT_RATING_MODELS: Record<Sport, SportRatingModel> = {
   [Sports.PICKLEBALL]: {
     id: 'bandeja_elo_v1',
     canonical: { min: 1.0, max: 7.0 },
-    questionnaireId: 'pickleball-v1',
+    questionnaireId: 'pickleball-v2',
     levelBands: LEVEL_BANDS_6,
     engine: { maxDeltaPerEvent: 0.2, useScoreMargin: true },
     ratesWhen: { affectsRatingTrue: true },
@@ -73,7 +73,7 @@ export const SPORT_RATING_MODELS: Record<Sport, SportRatingModel> = {
   [Sports.BADMINTON]: {
     id: 'bandeja_elo_v1',
     canonical: { min: 1.0, max: 7.0 },
-    questionnaireId: 'badminton-v1',
+    questionnaireId: 'badminton-v2',
     levelBands: LEVEL_BANDS_6,
     engine: { maxDeltaPerEvent: 0.2, useScoreMargin: true },
     ratesWhen: { affectsRatingTrue: true },
@@ -82,7 +82,7 @@ export const SPORT_RATING_MODELS: Record<Sport, SportRatingModel> = {
   [Sports.TABLE_TENNIS]: {
     id: 'bandeja_elo_v1',
     canonical: { min: 1.0, max: 7.0 },
-    questionnaireId: 'table-tennis-v1',
+    questionnaireId: 'table-tennis-v2',
     levelBands: LEVEL_BANDS_6,
     engine: { maxDeltaPerEvent: 0.2, useScoreMargin: true },
     ratesWhen: { affectsRatingTrue: true },
@@ -92,7 +92,7 @@ export const SPORT_RATING_MODELS: Record<Sport, SportRatingModel> = {
   [Sports.SQUASH]: {
     id: 'bandeja_elo_v1',
     canonical: { min: 1.0, max: 7.0 },
-    questionnaireId: 'squash-v1',
+    questionnaireId: 'squash-v2',
     levelBands: LEVEL_BANDS_6,
     engine: { maxDeltaPerEvent: 0.2, useScoreMargin: true },
     ratesWhen: { affectsRatingTrue: true },

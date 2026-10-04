@@ -8,7 +8,7 @@
   "addSportSubtitle": "About one minute — we'll match you with players at your level.",
   "estimateLink": "Estimate level",
   "title": "Estimate your {{sport}} level",
-  "description": "Answer a few quick questions so we can set your starting level for {{sport}}.",
+  "description": "Answer a few quick questions so we can set your starting level for {{sport}}. Describe how you usually play today, not your best day — starting a bit low is fine, your level rises quickly once you win.",
   "back": "Back",
   "next": "Next",
   "submit": "Continue",

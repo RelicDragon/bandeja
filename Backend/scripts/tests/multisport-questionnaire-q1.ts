@@ -20,17 +20,18 @@ function assert(condition: boolean, message: string): void {
 }
 
 function testPadelRegistry(): void {
-  const padel = getSportConfig(Sport.PADEL).questionnaire;
-  assert(padel?.id === 'padel-v1', 'padel registry questionnaire id');
-  assert(padel?.minQuestions === 5, 'padel has 5 questions');
-  assert(padel?.questionKeys[0] === 'welcome.q1', 'padel reuses welcome i18n keys');
+  const config = getSportConfig(Sport.PADEL);
+  assert(config.questionnaire?.id === 'padel-v2', 'padel current questionnaire is v2');
+  assert(config.questionnaire?.minQuestions === 6, 'padel v2 has 6 questions');
+  assert(config.legacyQuestionnaires?.[0]?.id === 'padel-v1', 'padel v1 kept for unversioned clients');
+  assert(PADEL_QUESTIONNAIRE_V1.minQuestions === 5, 'padel v1 has 5 questions');
 }
 
 function testScoreToLevelBands(): void {
   assert(scoreToLevel(5) === 1.0, 'score 5 → 1.0');
   assert(scoreToLevel(7) === 1.5, 'score 7 → 1.5');
   assert(scoreToLevel(20) === 3.5, 'score 20 → 3.5');
-  assert(PADEL_QUESTIONNAIRE_V1.scoreToLevel(15) === 3.0, 'padel config scoreToLevel');
+  assert(PADEL_QUESTIONNAIRE_V1.score(['C', 'C', 'C', 'C', 'C']) === 3.0, 'padel v1 all-C → 3.0');
 }
 
 function testQuestionnaireServiceGuard(): void {

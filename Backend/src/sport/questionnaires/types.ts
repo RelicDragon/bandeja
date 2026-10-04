@@ -1,9 +1,8 @@
-import type { scoreToLevel } from './scoring';
-
 export type SportQuestionnaireConfig = {
   id: string;
   questionKeys: readonly string[];
   answerOptions: 'ABCD';
-  scoreToLevel: typeof scoreToLevel;
   minQuestions: number;
+  /** Validated A–D answers (one per question key) → starting level. */
+  score: (answers: string[]) => number;
 };

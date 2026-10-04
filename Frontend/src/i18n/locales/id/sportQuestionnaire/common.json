@@ -8,7 +8,7 @@
   "addSportSubtitle": "Sekitar satu menit — kami akan mencocokkan Anda dengan pemain di level Anda.",
   "estimateLink": "Perkirakan level",
   "title": "Perkirakan level {{sport}} Anda",
-  "description": "Jawab beberapa pertanyaan singkat agar kami dapat menetapkan level awal Anda untuk {{sport}}.",
+  "description": "Jawab beberapa pertanyaan singkat agar kami dapat menetapkan level awal Anda untuk {{sport}}. Gambarkan cara Anda biasanya bermain saat ini, bukan di hari terbaik Anda — mulai sedikit lebih rendah tidak apa-apa, level Anda naik cepat begitu Anda menang.",
   "back": "Kembali",
   "next": "Berikutnya",
   "submit": "Lanjutkan",

@@ -1,7 +1,7 @@
 import { Sport, SportLevelSource } from '@prisma/client';
 import prisma from '../../config/database';
-import { validatePadelQuestionnaireAnswers } from '../../sport/questionnaires/padel';
-import { sumAnswerScores, validateAnswers } from '../../sport/questionnaires/scoring';
+import { resolveSubmittedQuestionnaire } from '../../sport/questionnaires';
+import { validateAnswers } from '../../sport/questionnaires/scoring';
 import { isQuestionnaireSuggestedForProfile } from '../../sport/questionnaires/suggested';
 import { getSportConfig } from '../../sport/sportRegistry';
 import type { SportQuestionnaireConfig } from '../../sport/questionnaires/types';
@@ -37,15 +37,8 @@ export function rejectSocialLevelInQuestionnaireBody(body: unknown): void {
   }
 }
 
-function validateAnswersForSport(sport: Sport, answers: unknown): string[] {
-  const config = getQuestionnaireConfig(sport);
-  if (!config) {
-    throw new ApiError(400, 'No questionnaire available for this sport');
-  }
+function validateAnswersFor(config: SportQuestionnaireConfig, answers: unknown): string[] {
   try {
-    if (sport === Sport.PADEL) {
-      return validatePadelQuestionnaireAnswers(answers);
-    }
     return validateAnswers(answers, config.minQuestions);
   } catch (e) {
     throw new ApiError(400, e instanceof Error ? e.message : 'Invalid answers');
@@ -138,12 +131,15 @@ export async function completeSportQuestionnaire(
   const sport = parseSportParam(sportInput);
   assertQuestionnaireApiEnabled();
   rejectSocialLevelInQuestionnaireBody(_body);
-  const qConfig = getQuestionnaireConfig(sport);
-  if (!qConfig) {
+  if (!getQuestionnaireConfig(sport)) {
     throw new ApiError(400, 'No questionnaire available for this sport');
   }
+  const qConfig = resolveSubmittedQuestionnaire(sport, _body?.questionnaireVersion);
+  if (!qConfig) {
+    throw new ApiError(400, 'Unknown questionnaire version for this sport');
+  }
 
-  const validatedAnswers = validateAnswersForSport(sport, answers);
+  const validatedAnswers = validateAnswersFor(qConfig, answers);
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -181,9 +177,7 @@ export async function completeSportQuestionnaire(
     throw new ApiError(400, 'Questionnaire was skipped for this sport');
   }
 
-  const totalScore = sumAnswerScores(validatedAnswers);
-
-  const newLevel = clampSportLevel(qConfig.scoreToLevel(totalScore));
+  const newLevel = clampSportLevel(qConfig.score(validatedAnswers));
   const levelBefore = snapshot.level;
   const now = new Date();
 
@@ -216,7 +210,13 @@ export async function completeSportQuestionnaire(
     });
   });
 
-  console.log('[questionnaire] Completed', { userId, sport, levelAfter: newLevel });
+  console.log('[questionnaire] Completed', {
+    userId,
+    sport,
+    version: qConfig.id,
+    answers: validatedAnswers.join(''),
+    levelAfter: newLevel,
+  });
   return getSportQuestionnaireStatus(userId, sport);
 }
 

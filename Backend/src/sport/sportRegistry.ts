@@ -9,12 +9,12 @@ import {
 import { ApiError } from '../utils/ApiError';
 import { isSportCreatable } from '../utils/multisportFlags';
 import { GAME_TYPES, SCORING_PRESETS, type GameTypeStr, type ScoringPreset as ScoringPresetStr } from '../utils/validators/gameFormat';
-import { BADMINTON_QUESTIONNAIRE_V1 } from './questionnaires/badminton';
-import { PADEL_QUESTIONNAIRE_V1 } from './questionnaires/padel';
-import { PICKLEBALL_QUESTIONNAIRE_V1 } from './questionnaires/pickleball';
-import { SQUASH_QUESTIONNAIRE_V1 } from './questionnaires/squash';
-import { TABLE_TENNIS_QUESTIONNAIRE_V1 } from './questionnaires/tableTennis';
-import { TENNIS_QUESTIONNAIRE_V1 } from './questionnaires/tennis';
+import { BADMINTON_QUESTIONNAIRE_V1, BADMINTON_QUESTIONNAIRE_V2 } from './questionnaires/badminton';
+import { PADEL_QUESTIONNAIRE_V1, PADEL_QUESTIONNAIRE_V2 } from './questionnaires/padel';
+import { PICKLEBALL_QUESTIONNAIRE_V1, PICKLEBALL_QUESTIONNAIRE_V2 } from './questionnaires/pickleball';
+import { SQUASH_QUESTIONNAIRE_V1, SQUASH_QUESTIONNAIRE_V2 } from './questionnaires/squash';
+import { TABLE_TENNIS_QUESTIONNAIRE_V1, TABLE_TENNIS_QUESTIONNAIRE_V2 } from './questionnaires/tableTennis';
+import { TENNIS_QUESTIONNAIRE_V1, TENNIS_QUESTIONNAIRE_V2 } from './questionnaires/tennis';
 import type { SportQuestionnaireConfig } from './questionnaires/types';
 import {
   ROTATION_BY_SPORT,
@@ -58,6 +58,8 @@ export type SportConfig = {
   playtomicSportId?: string;
   implemented: boolean;
   questionnaire?: SportQuestionnaireConfig;
+  /** Superseded questionnaires still scored for old clients, oldest first. */
+  legacyQuestionnaires?: SportQuestionnaireConfig[];
 };
 
 export type { RotationPolicy } from './rotationFormats';
@@ -107,7 +109,7 @@ const SQUASH_SCORING: ScoringPresetStr[] = ['BEST_OF_5_11', 'BEST_OF_3_11', 'CUS
 
 type RallySportExtras = Pick<
   SportConfig,
-  'presetMeta' | 'createTemplates' | 'ratingModel' | 'questionnaire' | 'playtomicSportId'
+  'presetMeta' | 'createTemplates' | 'ratingModel' | 'questionnaire' | 'legacyQuestionnaires' | 'playtomicSportId'
 >;
 
 function rallySportConfig(
@@ -154,7 +156,8 @@ export const SPORT_REGISTRY: Record<Sport, SportConfig> = {
     rotationFormats: ROTATION_BY_SPORT[Sports.PADEL],
     playtomicSportId: 'PADEL',
     implemented: true,
-    questionnaire: PADEL_QUESTIONNAIRE_V1,
+    questionnaire: PADEL_QUESTIONNAIRE_V2,
+    legacyQuestionnaires: [PADEL_QUESTIONNAIRE_V1],
     presetMeta: PADEL_PRESET_META,
     createTemplates: [
       'PADEL_AMERICANO_10',
@@ -179,7 +182,8 @@ export const SPORT_REGISTRY: Record<Sport, SportConfig> = {
     rotationFormats: ROTATION_BY_SPORT[Sports.TENNIS],
     playtomicSportId: 'TENNIS',
     implemented: true,
-    questionnaire: TENNIS_QUESTIONNAIRE_V1,
+    questionnaire: TENNIS_QUESTIONNAIRE_V2,
+    legacyQuestionnaires: [TENNIS_QUESTIONNAIRE_V1],
     presetMeta: TENNIS_PRESET_META,
     createTemplates: ['TENNIS_FAST4_SOCIAL', 'TENNIS_CLASSIC_BO3'],
     ratingModel: TENNIS_RATING_MODEL,
@@ -191,7 +195,8 @@ export const SPORT_REGISTRY: Record<Sport, SportConfig> = {
     'POINTS_21',
     {
       playtomicSportId: 'PICKLEBALL',
-      questionnaire: PICKLEBALL_QUESTIONNAIRE_V1,
+      questionnaire: PICKLEBALL_QUESTIONNAIRE_V2,
+      legacyQuestionnaires: [PICKLEBALL_QUESTIONNAIRE_V1],
       presetMeta: PICKLEBALL_PRESET_META,
       createTemplates: ['PICKLEBALL_SOCIAL_21', 'PICKLEBALL_MATCH_BO3_11', 'PICKLEBALL_KOTC_11'],
       ratingModel: PICKLEBALL_RATING_MODEL,
@@ -204,7 +209,8 @@ export const SPORT_REGISTRY: Record<Sport, SportConfig> = {
     'BEST_OF_3_21',
     {
       playtomicSportId: 'BADMINTON',
-      questionnaire: BADMINTON_QUESTIONNAIRE_V1,
+      questionnaire: BADMINTON_QUESTIONNAIRE_V2,
+      legacyQuestionnaires: [BADMINTON_QUESTIONNAIRE_V1],
       presetMeta: BADMINTON_PRESET_META,
       createTemplates: [
         'BADMINTON_AMERICANO_21',
@@ -222,7 +228,8 @@ export const SPORT_REGISTRY: Record<Sport, SportConfig> = {
     'BEST_OF_3_11',
     {
       playtomicSportId: 'TABLE_TENNIS',
-      questionnaire: TABLE_TENNIS_QUESTIONNAIRE_V1,
+      questionnaire: TABLE_TENNIS_QUESTIONNAIRE_V2,
+      legacyQuestionnaires: [TABLE_TENNIS_QUESTIONNAIRE_V1],
       presetMeta: TABLE_TENNIS_PRESET_META,
       createTemplates: [
         'TT_OPEN_PLAY_11',
@@ -242,7 +249,8 @@ export const SPORT_REGISTRY: Record<Sport, SportConfig> = {
     'BEST_OF_5_11',
     {
       playtomicSportId: 'SQUASH',
-      questionnaire: SQUASH_QUESTIONNAIRE_V1,
+      questionnaire: SQUASH_QUESTIONNAIRE_V2,
+      legacyQuestionnaires: [SQUASH_QUESTIONNAIRE_V1],
       presetMeta: SQUASH_PRESET_META,
       createTemplates: ['SQUASH_QUICK_BO3_11'],
       ratingModel: SQUASH_RATING_MODEL,

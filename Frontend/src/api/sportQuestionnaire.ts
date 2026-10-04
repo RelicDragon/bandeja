@@ -36,10 +36,10 @@ export const sportQuestionnaireApi = {
     }
   },
 
-  complete: async (sport: Sport, answers: string[]) => {
+  complete: async (sport: Sport, answers: string[], questionnaireVersion: string) => {
     const response = await api.post<ApiResponse<User>>(
       `/users/me/sports/${sport}/questionnaire`,
-      { answers },
+      { answers, questionnaireVersion },
     );
     return response.data;
   },

@@ -50,8 +50,8 @@ function testRegistry(): void {
 
   assert(scoreToLevel(5) === 1.0 && scoreToLevel(20) === 3.5, '5q band');
   assert(scoreToLevelFourQuestions(4) === 1.0 && scoreToLevelFourQuestions(16) === 3.5, '4q band');
-  assert(TABLE_TENNIS_QUESTIONNAIRE_V1.scoreToLevel(15) === 3.0, '5q all-C → 3.0');
-  assert(SQUASH_QUESTIONNAIRE_V1.scoreToLevel(20) === 3.5, '5q all-D → 3.5');
+  assert(TABLE_TENNIS_QUESTIONNAIRE_V1.score(['C', 'C', 'C', 'C', 'C']) === 3.0, '5q all-C → 3.0');
+  assert(SQUASH_QUESTIONNAIRE_V1.score(['D', 'D', 'D', 'D', 'D']) === 3.5, '5q all-D → 3.5');
   console.log('ok: Q4 registry + scoring');
 }
 
@@ -111,7 +111,8 @@ async function testCompleteSportQ(sport: Sport): Promise<void> {
   assert(suggestedQuestionnaire === true, `${sport} add suggests Q`);
 
   const answers = answersForSport(sport, 'C');
-  const status = await completeSportQuestionnaire(user.id, sport, answers);
+  const questionnaireVersion = getSportConfig(sport).questionnaire!.id;
+  const status = await completeSportQuestionnaire(user.id, sport, answers, { questionnaireVersion });
   assert(status.completed && !status.suggested, `${sport} completed`);
   assert(status.level >= 1.5 && status.level <= 3.5, `${sport} level in band`);
 
@@ -142,10 +143,10 @@ async function testWrongAnswerCount(sport: Sport): Promise<void> {
   if (!user) return;
 
   await addUserSport(user.id, sport);
-  const n = getSportConfig(sport).questionnaire!.minQuestions;
+  const { minQuestions: n, id: questionnaireVersion } = getSportConfig(sport).questionnaire!;
   let threw = false;
   try {
-    await completeSportQuestionnaire(user.id, sport, Array(n - 1).fill('A'));
+    await completeSportQuestionnaire(user.id, sport, Array(n - 1).fill('A'), { questionnaireVersion });
   } catch (e) {
     threw = e instanceof ApiError && e.statusCode === 400;
   }

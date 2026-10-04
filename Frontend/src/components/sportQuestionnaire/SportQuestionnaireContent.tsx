@@ -98,7 +98,7 @@ export function SportQuestionnaireContent({
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const response = await usersApi.completeSportQuestionnaire(sport, list);
+      const response = await usersApi.completeSportQuestionnaire(sport, list, config.id);
       const user = response.data;
       setAssignedLevel(resolveLevelFromUser(user));
       setCompletedUser(user);

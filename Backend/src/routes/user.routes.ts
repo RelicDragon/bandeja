@@ -4,7 +4,7 @@ import { body, param, query } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
-import { getQuestionnaireForSport } from '../sport/questionnaires';
+import { resolveSubmittedQuestionnaire } from '../sport/questionnaires';
 import { validateAnswers } from '../sport/questionnaires/scoring';
 import { resolveSport } from '../sport/sportRegistry';
 import * as userController from '../controllers/user.controller';
@@ -173,9 +173,9 @@ const sportQuestionnaireAnswersValidator = body('answers')
   .withMessage('answers must be an array')
   .custom((val: unknown, { req }) => {
     const sport = resolveSport((req as AuthRequest).params.sport);
-    const config = getQuestionnaireForSport(sport);
+    const config = resolveSubmittedQuestionnaire(sport, (req as AuthRequest).body?.questionnaireVersion);
     if (!config) {
-      throw new Error('No questionnaire available for this sport');
+      throw new Error('No questionnaire available for this sport and version');
     }
     validateAnswers(val, config.minQuestions);
     return true;

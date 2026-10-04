@@ -413,9 +413,11 @@ export const usersApi = {
     }
   },
 
-  completeSportQuestionnaire: async (sport: Sport, answers: string[]) => {
+  /** `questionnaireVersion` is the registry id the answers were given against; the server scores per version. */
+  completeSportQuestionnaire: async (sport: Sport, answers: string[], questionnaireVersion: string) => {
     const response = await api.post<ApiResponse<User>>(`/users/me/sports/${sport}/questionnaire`, {
       answers,
+      questionnaireVersion,
     });
     return response.data;
   },
