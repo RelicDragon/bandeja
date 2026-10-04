@@ -130,6 +130,71 @@
     },
     "organizer": {
       "broughtPlayers_other": "带来了 {{count}} 位新球友"
+    },
+    "welcome": {
+      "greeting": "你好，{{name}}！",
+      "greetingNoName": "欢迎来到 Bandeja！",
+      "subtitle": "让我们开始你的第一场比赛。",
+      "profile": "个人资料",
+      "firstGameTitle": "你的第一场比赛",
+      "nextGameTitle": "你的下一场比赛",
+      "openGame": "打开比赛",
+      "openChat": "聊天",
+      "directions": "路线",
+      "choiceTitle": "你想做什么？",
+      "playTitle": "我想打球",
+      "playBody": "告诉我们你何时有空——我们帮你找比赛",
+      "learnTitle": "我想学习",
+      "learnBody": "附近的训练和教练",
+      "noviceGamesTitle": "本周适合新手的比赛",
+      "noviceGamesEmpty": "本周还没有适合新手的比赛。告诉我们你何时有空，我们为你匹配。",
+      "trainingsTitle": "即将开始的训练",
+      "trainingsEmpty": "本周还没有训练。",
+      "teaserTitle": "边打边解锁",
+      "teaserMore": "还有更多…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "新人",
+        "debut": "首秀",
+        "rookie": "新秀",
+        "contender": "竞争者",
+        "challenger": "挑战者",
+        "regular": "常客"
+      },
+      "ladderLabel": "通往常客的段位",
+      "progressToRegular": "已完成 {{current}} / {{target}} 场，即可成为常客",
+      "nextUnlock": "{{rank}}解锁：",
+      "unlockAll": {
+        "link": "我很熟悉了——全部显示",
+        "title": "现在显示全部内容？",
+        "message": "所有标签页和功能将立即出现。你的比赛仍会计数，但不再有升段庆祝。",
+        "confirm": "全部显示",
+        "failed": "暂时无法解锁，请重试。"
+      },
+      "features": {
+        "homeShell": "首页",
+        "findTab": "查找",
+        "calendar": "日历",
+        "pastGames": "过往比赛",
+        "chatsTab": "聊天",
+        "followPlayers": "关注球员",
+        "playStreak": "连续打球",
+        "createGame": "创建比赛",
+        "topTab": "排行榜",
+        "levelHistory": "水平历史",
+        "playerComparison": "球员对比",
+        "leagues": "联赛",
+        "tournaments": "锦标赛",
+        "marketTab": "市场",
+        "stories": "动态",
+        "liveRail": "正在直播",
+        "userTeams": "团队",
+        "aiAssistant": "AI 助手",
+        "wallet": "钱包",
+        "createLeague": "创建联赛",
+        "ads": "优惠"
+      }
     }
   }
 }

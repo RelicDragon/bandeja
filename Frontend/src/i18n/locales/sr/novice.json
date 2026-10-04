@@ -132,6 +132,71 @@
       "broughtPlayers_one": "Doveo/la {{count}} novog igrača",
       "broughtPlayers_few": "Doveo/la {{count}} nova igrača",
       "broughtPlayers_other": "Doveo/la {{count}} novih igrača"
+    },
+    "welcome": {
+      "greeting": "Zdravo, {{name}}!",
+      "greetingNoName": "Dobro došli u Bandeja!",
+      "subtitle": "Hajde da pronađemo vašu prvu igru.",
+      "profile": "Profil",
+      "firstGameTitle": "Vaša prva igra",
+      "nextGameTitle": "Vaša sledeća igra",
+      "openGame": "Otvori igru",
+      "openChat": "Čet",
+      "directions": "Navigacija",
+      "choiceTitle": "Šta biste želeli?",
+      "playTitle": "Želim da igram",
+      "playBody": "Recite nam kada ste slobodni — naći ćemo vam igru",
+      "learnTitle": "Želim da učim",
+      "learnBody": "Treninzi i treneri u blizini",
+      "noviceGamesTitle": "Igre za početnike ove nedelje",
+      "noviceGamesEmpty": "Ove nedelje još nema igara za početnike. Recite nam kada ste slobodni i povezaćemo vas.",
+      "trainingsTitle": "Predstojeći treninzi",
+      "trainingsEmpty": "Ove nedelje još nema treninga.",
+      "teaserTitle": "Otključava se dok igrate",
+      "teaserMore": "i još mnogo toga…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Pridošlica",
+        "debut": "Debitant",
+        "rookie": "Početnik",
+        "contender": "Kandidat",
+        "challenger": "Izazivač",
+        "regular": "Redovni igrač"
+      },
+      "ladderLabel": "Rangovi do redovnog igrača",
+      "progressToRegular": "{{current}} od {{target}} igara do ranga Redovni igrač",
+      "nextUnlock": "Sledeće na rangu {{rank}}:",
+      "unlockAll": {
+        "link": "Snalazim se — prikaži mi sve",
+        "title": "Prikazati sve odmah?",
+        "message": "Sve kartice i funkcije pojaviće se odmah. Igre se i dalje računaju, ali više neće biti proslava novih rangova.",
+        "confirm": "Prikaži sve",
+        "failed": "Trenutno nije moguće otključati. Pokušajte ponovo."
+      },
+      "features": {
+        "homeShell": "Početna",
+        "findTab": "Pretraga",
+        "calendar": "Kalendar",
+        "pastGames": "Prošle igre",
+        "chatsTab": "Četovi",
+        "followPlayers": "Praćenje igrača",
+        "playStreak": "Niz igara",
+        "createGame": "Kreiranje igara",
+        "topTab": "Rang liste",
+        "levelHistory": "Istorija nivoa",
+        "playerComparison": "Poređenje igrača",
+        "leagues": "Lige",
+        "tournaments": "Turniri",
+        "marketTab": "Pijaca",
+        "stories": "Priče",
+        "liveRail": "Uživo sada",
+        "userTeams": "Timovi",
+        "aiAssistant": "AI asistent",
+        "wallet": "Novčanik",
+        "createLeague": "Kreiranje liga",
+        "ads": "Ponude"
+      }
     }
   }
 }

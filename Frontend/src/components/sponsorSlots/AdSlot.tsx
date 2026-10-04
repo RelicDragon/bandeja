@@ -10,6 +10,7 @@ import {
   useAdPlacements,
 } from '@/hooks/useAdPlacements';
 import { useAuthStore } from '@/store/authStore';
+import { hasNoviceFeature } from '@shared/novice';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CONTENT_ENTER_Y, LAYOUT_TRANSITION, PANEL_EXIT_Y } from '@/components/motion/motionTokens';
@@ -54,10 +55,12 @@ export const AdSlot = memo(function AdSlot({ placement, className }: AdSlotProps
   const navigate = useNavigate();
   const reduceMotion = usePrefersReducedMotion();
   const userId = useAuthStore((s) => s.user?.id);
+  // PRD 358 — novices never see ads: every slot is empty until Regular.
+  const adsUnlocked = useAuthStore((s) => hasNoviceFeature(s.user, 'ads'));
   const isOnline = useNetworkStore((s) => s.isOnline);
   const { placements, dismissPlacement } = useAdPlacements();
   const eventMeta = useAdPlacementEventMeta(placement);
-  const payload = !isOnline || !userId ? null : placements[placement] ?? null;
+  const payload = !isOnline || !userId || !adsUnlocked ? null : placements[placement] ?? null;
   const revealed = useDeferredAdReveal(payload?.creativeId, reduceMotion);
   const impressionSentRef = useRef(false);
   const [leavingOpen, setLeavingOpen] = useState(false);

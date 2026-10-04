@@ -132,6 +132,71 @@
       "broughtPlayers_one": "Trajo {{count}} jugador nuevo",
       "broughtPlayers_many": "Trajo {{count}} jugadores nuevos",
       "broughtPlayers_other": "Trajo {{count}} jugadores nuevos"
+    },
+    "welcome": {
+      "greeting": "¡Hola, {{name}}!",
+      "greetingNoName": "¡Bienvenido a Bandeja!",
+      "subtitle": "Vamos a por tu primer partido.",
+      "profile": "Perfil",
+      "firstGameTitle": "Tu primer partido",
+      "nextGameTitle": "Tu próximo partido",
+      "openGame": "Abrir partido",
+      "openChat": "Chat del partido",
+      "directions": "Cómo llegar",
+      "choiceTitle": "¿Qué te apetece hacer?",
+      "playTitle": "Quiero jugar",
+      "playBody": "Dinos cuándo estás libre y te buscamos partido",
+      "learnTitle": "Quiero aprender",
+      "learnBody": "Entrenamientos y entrenadores cerca de ti",
+      "noviceGamesTitle": "Partidos para principiantes esta semana",
+      "noviceGamesEmpty": "Aún no hay partidos para principiantes esta semana. Dinos cuándo estás libre y te emparejamos.",
+      "trainingsTitle": "Próximos entrenamientos",
+      "trainingsEmpty": "Aún no hay entrenamientos esta semana.",
+      "teaserTitle": "Se desbloquea a medida que juegas",
+      "teaserMore": "y mucho más…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Recién llegado",
+        "debut": "Debutante",
+        "rookie": "Novato",
+        "contender": "Aspirante",
+        "challenger": "Retador",
+        "regular": "Habitual"
+      },
+      "ladderLabel": "Rangos hasta Habitual",
+      "progressToRegular": "{{current}} de {{target}} partidos para ser Habitual",
+      "nextUnlock": "Siguiente en {{rank}}:",
+      "unlockAll": {
+        "link": "Ya sé moverme por aquí — muéstramelo todo",
+        "title": "¿Mostrar todo ahora?",
+        "message": "Todas las pestañas y funciones aparecerán al instante. Tus partidos seguirán contando, pero ya no habrá celebraciones de rango.",
+        "confirm": "Mostrar todo",
+        "failed": "No se pudo desbloquear ahora. Inténtalo de nuevo."
+      },
+      "features": {
+        "homeShell": "Inicio",
+        "findTab": "Buscar",
+        "calendar": "Calendario",
+        "pastGames": "Partidos pasados",
+        "chatsTab": "Mensajes",
+        "followPlayers": "Seguir jugadores",
+        "playStreak": "Racha de juego",
+        "createGame": "Crear partidos",
+        "topTab": "Clasificaciones",
+        "levelHistory": "Historial de nivel",
+        "playerComparison": "Comparar jugadores",
+        "leagues": "Ligas",
+        "tournaments": "Torneos",
+        "marketTab": "Mercado",
+        "stories": "Historias",
+        "liveRail": "En directo",
+        "userTeams": "Equipos",
+        "aiAssistant": "Asistente IA",
+        "wallet": "Monedero",
+        "createLeague": "Crear ligas",
+        "ads": "Ofertas"
+      }
     }
   }
 }

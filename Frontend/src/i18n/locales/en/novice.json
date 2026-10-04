@@ -131,6 +131,71 @@
     "organizer": {
       "broughtPlayers_one": "Brought {{count}} new player",
       "broughtPlayers_other": "Brought {{count}} new players"
+    },
+    "welcome": {
+      "greeting": "Hi, {{name}}!",
+      "greetingNoName": "Welcome to Bandeja!",
+      "subtitle": "Let's get you to your first game.",
+      "profile": "Profile",
+      "firstGameTitle": "Your first game",
+      "nextGameTitle": "Your next game",
+      "openGame": "Open game",
+      "openChat": "Chat",
+      "directions": "Directions",
+      "choiceTitle": "What would you like to do?",
+      "playTitle": "I want to play",
+      "playBody": "Tell us when you're free — we'll find you a game",
+      "learnTitle": "I want to learn",
+      "learnBody": "Trainings and coaches near you",
+      "noviceGamesTitle": "Beginner-friendly games this week",
+      "noviceGamesEmpty": "No beginner-friendly games this week yet. Tell us when you're free and we'll match you.",
+      "trainingsTitle": "Upcoming trainings",
+      "trainingsEmpty": "No trainings this week yet.",
+      "teaserTitle": "Unlocks as you play",
+      "teaserMore": "and more…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Newcomer",
+        "debut": "Debut",
+        "rookie": "Rookie",
+        "contender": "Contender",
+        "challenger": "Challenger",
+        "regular": "Regular"
+      },
+      "ladderLabel": "Ranks to Regular",
+      "progressToRegular": "{{current}} of {{target}} games to Regular",
+      "nextUnlock": "Next at {{rank}}:",
+      "unlockAll": {
+        "link": "I know my way around — show me everything",
+        "title": "Show everything now?",
+        "message": "All tabs and features appear right away. Your games still count, but there will be no more rank-up celebrations.",
+        "confirm": "Show everything",
+        "failed": "Couldn't unlock right now. Please try again."
+      },
+      "features": {
+        "homeShell": "Home",
+        "findTab": "Find",
+        "calendar": "Calendar",
+        "pastGames": "Past games",
+        "chatsTab": "Chats",
+        "followPlayers": "Follow players",
+        "playStreak": "Play streak",
+        "createGame": "Create games",
+        "topTab": "Rankings",
+        "levelHistory": "Level history",
+        "playerComparison": "Player comparison",
+        "leagues": "Leagues",
+        "tournaments": "Tournaments",
+        "marketTab": "Market",
+        "stories": "Stories",
+        "liveRail": "Live now",
+        "userTeams": "Teams",
+        "aiAssistant": "AI assistant",
+        "wallet": "Wallet",
+        "createLeague": "Create leagues",
+        "ads": "Offers"
+      }
     }
   }
 }

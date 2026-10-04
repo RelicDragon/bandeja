@@ -130,6 +130,71 @@
     },
     "organizer": {
       "broughtPlayers_other": "新しいプレーヤーを{{count}}人連れてきました"
+    },
+    "welcome": {
+      "greeting": "こんにちは、{{name}}さん！",
+      "greetingNoName": "Bandejaへようこそ！",
+      "subtitle": "最初の試合を見つけましょう。",
+      "profile": "プロフィール",
+      "firstGameTitle": "最初の試合",
+      "nextGameTitle": "次の試合",
+      "openGame": "試合を開く",
+      "openChat": "チャット",
+      "directions": "道順",
+      "choiceTitle": "何をしますか？",
+      "playTitle": "プレーしたい",
+      "playBody": "空いている時間を教えてください — 試合を探します",
+      "learnTitle": "習いたい",
+      "learnBody": "近くのトレーニングとコーチ",
+      "noviceGamesTitle": "今週の初心者歓迎の試合",
+      "noviceGamesEmpty": "今週はまだ初心者歓迎の試合がありません。空いている時間を教えてくれればマッチングします。",
+      "trainingsTitle": "今後のトレーニング",
+      "trainingsEmpty": "今週はまだトレーニングがありません。",
+      "teaserTitle": "プレーするほど解放",
+      "teaserMore": "ほかにもたくさん…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "ニューカマー",
+        "debut": "デビュー",
+        "rookie": "ルーキー",
+        "contender": "コンテンダー",
+        "challenger": "チャレンジャー",
+        "regular": "レギュラー"
+      },
+      "ladderLabel": "レギュラーまでのランク",
+      "progressToRegular": "レギュラーまで {{current}} / {{target}} 試合",
+      "nextUnlock": "次は{{rank}}で：",
+      "unlockAll": {
+        "link": "使い方はわかっています — すべて表示",
+        "title": "今すぐすべて表示しますか？",
+        "message": "すべてのタブと機能がすぐに表示されます。試合は引き続きカウントされますが、ランクアップのお祝いはなくなります。",
+        "confirm": "すべて表示",
+        "failed": "今は解除できませんでした。もう一度お試しください。"
+      },
+      "features": {
+        "homeShell": "ホーム",
+        "findTab": "探す",
+        "calendar": "カレンダー",
+        "pastGames": "過去の試合",
+        "chatsTab": "チャット",
+        "followPlayers": "プレイヤーをフォロー",
+        "playStreak": "連続プレー",
+        "createGame": "試合を作成",
+        "topTab": "ランキング",
+        "levelHistory": "レベル履歴",
+        "playerComparison": "プレイヤー比較",
+        "leagues": "リーグ",
+        "tournaments": "トーナメント",
+        "marketTab": "マーケット",
+        "stories": "ストーリー",
+        "liveRail": "ライブ中",
+        "userTeams": "チーム",
+        "aiAssistant": "AIアシスタント",
+        "wallet": "ウォレット",
+        "createLeague": "リーグを作成",
+        "ads": "オファー"
+      }
     }
   }
 }

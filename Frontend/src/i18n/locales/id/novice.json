@@ -130,6 +130,71 @@
     },
     "organizer": {
       "broughtPlayers_other": "Membawa {{count}} pemain baru"
+    },
+    "welcome": {
+      "greeting": "Hai, {{name}}!",
+      "greetingNoName": "Selamat datang di Bandeja!",
+      "subtitle": "Ayo menuju permainan pertamamu.",
+      "profile": "Profil",
+      "firstGameTitle": "Permainan pertamamu",
+      "nextGameTitle": "Permainan berikutnya",
+      "openGame": "Buka permainan",
+      "openChat": "Obrolan",
+      "directions": "Petunjuk arah",
+      "choiceTitle": "Apa yang ingin kamu lakukan?",
+      "playTitle": "Saya ingin bermain",
+      "playBody": "Beri tahu kapan kamu luang — kami carikan permainan",
+      "learnTitle": "Saya ingin belajar",
+      "learnBody": "Latihan dan pelatih di dekatmu",
+      "noviceGamesTitle": "Permainan ramah pemula minggu ini",
+      "noviceGamesEmpty": "Belum ada permainan ramah pemula minggu ini. Beri tahu kapan kamu luang dan kami carikan pasangan.",
+      "trainingsTitle": "Latihan mendatang",
+      "trainingsEmpty": "Belum ada latihan minggu ini.",
+      "teaserTitle": "Terbuka seiring kamu bermain",
+      "teaserMore": "dan lainnya…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Pendatang Baru",
+        "debut": "Debutan",
+        "rookie": "Pemula",
+        "contender": "Kandidat",
+        "challenger": "Penantang",
+        "regular": "Reguler"
+      },
+      "ladderLabel": "Peringkat menuju Reguler",
+      "progressToRegular": "{{current}} dari {{target}} permainan menuju Reguler",
+      "nextUnlock": "Berikutnya di {{rank}}:",
+      "unlockAll": {
+        "link": "Saya sudah paham — tampilkan semuanya",
+        "title": "Tampilkan semuanya sekarang?",
+        "message": "Semua tab dan fitur langsung muncul. Permainanmu tetap dihitung, tetapi tidak ada lagi perayaan kenaikan peringkat.",
+        "confirm": "Tampilkan semua",
+        "failed": "Belum bisa dibuka sekarang. Coba lagi."
+      },
+      "features": {
+        "homeShell": "Beranda",
+        "findTab": "Cari",
+        "calendar": "Kalender",
+        "pastGames": "Permainan lalu",
+        "chatsTab": "Obrolan",
+        "followPlayers": "Ikuti pemain",
+        "playStreak": "Rentetan main",
+        "createGame": "Buat permainan",
+        "topTab": "Peringkat",
+        "levelHistory": "Riwayat level",
+        "playerComparison": "Bandingkan pemain",
+        "leagues": "Liga",
+        "tournaments": "Turnamen",
+        "marketTab": "Pasar",
+        "stories": "Cerita",
+        "liveRail": "Siaran langsung",
+        "userTeams": "Tim",
+        "aiAssistant": "Asisten AI",
+        "wallet": "Dompet",
+        "createLeague": "Buat liga",
+        "ads": "Penawaran"
+      }
     }
   }
 }

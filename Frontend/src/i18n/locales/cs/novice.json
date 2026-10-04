@@ -133,6 +133,71 @@
       "broughtPlayers_few": "Přivedl(a) {{count}} nové hráče",
       "broughtPlayers_many": "Přivedl(a) {{count}} nového hráče",
       "broughtPlayers_other": "Přivedl(a) {{count}} nových hráčů"
+    },
+    "welcome": {
+      "greeting": "Ahoj, {{name}}!",
+      "greetingNoName": "Vítejte v Bandeja!",
+      "subtitle": "Pojďme najít vaši první hru.",
+      "profile": "Profil",
+      "firstGameTitle": "Vaše první hra",
+      "nextGameTitle": "Vaše další hra",
+      "openGame": "Otevřít hru",
+      "openChat": "Chat hry",
+      "directions": "Navigovat",
+      "choiceTitle": "Co chcete dělat?",
+      "playTitle": "Chci hrát",
+      "playBody": "Řekněte nám, kdy máte čas — najdeme vám hru",
+      "learnTitle": "Chci se učit",
+      "learnBody": "Tréninky a trenéři ve vašem okolí",
+      "noviceGamesTitle": "Hry pro začátečníky tento týden",
+      "noviceGamesEmpty": "Tento týden zatím nejsou hry pro začátečníky. Řekněte nám, kdy máte čas, a najdeme vám spoluhráče.",
+      "trainingsTitle": "Nadcházející tréninky",
+      "trainingsEmpty": "Tento týden zatím nejsou žádné tréninky.",
+      "teaserTitle": "Odemyká se, jak hrajete",
+      "teaserMore": "a mnohem víc…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Nováček",
+        "debut": "Debutant",
+        "rookie": "Začátečník",
+        "contender": "Uchazeč",
+        "challenger": "Vyzyvatel",
+        "regular": "Stálý hráč"
+      },
+      "ladderLabel": "Hodnosti ke Stálému hráči",
+      "progressToRegular": "{{current}} z {{target}} her do hodnosti Stálý hráč",
+      "nextUnlock": "Další na hodnosti {{rank}}:",
+      "unlockAll": {
+        "link": "Už se tu vyznám — ukažte mi všechno",
+        "title": "Zobrazit vše hned?",
+        "message": "Všechny karty a funkce se zobrazí hned. Hry se budou dál počítat, ale oslavy nových hodností už nebudou.",
+        "confirm": "Zobrazit vše",
+        "failed": "Teď se to nepodařilo odemknout. Zkuste to znovu."
+      },
+      "features": {
+        "homeShell": "Domů",
+        "findTab": "Hledat",
+        "calendar": "Kalendář",
+        "pastGames": "Minulé hry",
+        "chatsTab": "Chaty",
+        "followPlayers": "Sledování hráčů",
+        "playStreak": "Herní série",
+        "createGame": "Vytváření her",
+        "topTab": "Žebříčky",
+        "levelHistory": "Historie úrovně",
+        "playerComparison": "Porovnání hráčů",
+        "leagues": "Ligy",
+        "tournaments": "Turnaje",
+        "marketTab": "Tržiště",
+        "stories": "Příběhy",
+        "liveRail": "Právě živě",
+        "userTeams": "Týmy",
+        "aiAssistant": "AI asistent",
+        "wallet": "Peněženka",
+        "createLeague": "Vytváření lig",
+        "ads": "Nabídky"
+      }
     }
   }
 }

@@ -6,7 +6,7 @@ import { useDeepLinkStore } from '@/store/deepLinkStore';
 import { useOnboardingStatus, useSetOnboardingStatusCache } from '@/hooks/useOnboardingStatus';
 import { emitOnboardingEvent } from './onboardingAnalytics';
 import { resolvePostOnboardingPath } from './onboardingGate';
-import { consumePostOnboardingPath } from './postOnboardingPath';
+import { consumePostOnboardingPath, noviceFinishDestination } from './postOnboardingPath';
 import {
   isSkippableStep,
   nextStep,
@@ -127,7 +127,8 @@ export function useOnboardingFlow(): OnboardingFlow {
     const intercepted = consumePostOnboardingPath();
     const pending = intercepted ?? pendingAuthPath;
     if (pendingAuthPath) setPendingAuthPath(null);
-    navigate(resolvePostOnboardingPath(pending, finishDestination.current), { replace: true });
+    const fallback = noviceFinishDestination(finishDestination.current, useAuthStore.getState().user);
+    navigate(resolvePostOnboardingPath(pending, fallback), { replace: true });
   }, [navigate, pendingAuthPath, setPendingAuthPath]);
 
   const advance = useCallback(() => {

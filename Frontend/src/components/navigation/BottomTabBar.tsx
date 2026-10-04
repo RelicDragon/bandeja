@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBottomTabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useDesktop } from '@/hooks/useDesktop';
-import { memo, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { parseLocation } from '@/utils/urlSchema';
 import { resolveBottomTabActiveId, type BottomTabId } from '@/utils/bottomTabActiveId';
@@ -14,6 +14,22 @@ import { hasEnabledSports } from '@/utils/profileSports';
 import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
 import { UnreadBadge } from '@/components/UnreadBadge';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { filterNoviceBottomTabs } from '@/utils/noviceShell';
+import { readLastRenderedTabIds, rememberRenderedTabIds } from './bottomTabReveal';
+
+function NoviceTabReveal({ reveal, delay, children }: { reveal: boolean; delay: number; children: ReactNode }) {
+  if (!reveal) return <>{children}</>;
+  return (
+    <motion.div
+      className="flex h-full"
+      initial={{ opacity: 0, scale: 0.4, width: 0 }}
+      animate={{ opacity: 1, scale: 1, width: 'auto' }}
+      transition={{ type: 'spring', stiffness: 260, damping: 22, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -22,7 +38,7 @@ interface BottomTabBarProps {
   animateEntry?: boolean;
 }
 
-const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPath, animateEntry = false }: BottomTabBarProps) => {
+const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPath, animateEntry: animateEntryProp = false }: BottomTabBarProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -80,11 +96,35 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
         path: '/leaderboard',
       },
     ];
-    if (!showGameTabs) {
-      return all.filter((tab) => tab.id !== 'my' && tab.id !== 'find');
+    const sportTabs = showGameTabs ? all : all.filter((tab) => tab.id !== 'my' && tab.id !== 'find');
+    // PRD 358 — novice ranks reveal tabs one by one; only the entry point hides,
+    // the route itself still renders when reached by a link.
+    return filterNoviceBottomTabs(user, sportTabs);
+  }, [t, tabBadges.chats, showGameTabs, user]);
+
+  const tabIdsKey = tabs.map((tab) => tab.id).join(',');
+  // Keyed on the id set only, so the reveal survives unrelated re-renders.
+  const { revealedTabIds, revealWholeBar } = useMemo(() => {
+    const previous = readLastRenderedTabIds();
+    const ids = tabIdsKey ? (tabIdsKey.split(',') as BottomTabId[]) : [];
+    if (!previous || reduceMotion) {
+      return { revealedTabIds: new Set<BottomTabId>(), revealWholeBar: false };
     }
-    return all;
-  }, [t, tabBadges.chats, showGameTabs]);
+    if (previous.size === 0) {
+      // First appearance for a novice (Welcome → Debut): the whole bar slides in.
+      return { revealedTabIds: new Set<BottomTabId>(), revealWholeBar: ids.length > 0 };
+    }
+    return {
+      revealedTabIds: new Set(ids.filter((id) => !previous.has(id))),
+      revealWholeBar: false,
+    };
+  }, [tabIdsKey, reduceMotion]);
+
+  const animateEntry = animateEntryProp || revealWholeBar;
+
+  useEffect(() => {
+    rememberRenderedTabIds(tabIdsKey ? (tabIdsKey.split(',') as BottomTabId[]) : []);
+  }, [tabIdsKey]);
 
 
   const handleTabClick = (tab: BottomTabId, path: string) => {
@@ -120,6 +160,133 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
         : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
     }`;
 
+  const renderTab = (tab: (typeof tabs)[number], index: number) => {
+    const Icon = tab.icon;
+    const isActive = effectivePage !== null && effectivePage === tab.id;
+    const currentDay = new Date().getDate();
+    const isCalendarTab = tab.id === 'find';
+    const tabButtonClass =
+      `flex flex-col items-center justify-center px-3 h-full relative group ${isPremiumTheme ? 'premium-tab' : ''}`;
+
+    if (!useRichTabMotion) {
+      return (
+        <button
+          key={tab.id}
+          type="button"
+          ref={(el) => { tabRefs.current[index] = el; }}
+          onClick={() => handleTabClick(tab.id, tab.path)}
+          aria-label={tab.label}
+          aria-current={isActive ? 'page' : undefined}
+          className={tabButtonClass}
+        >
+          {isActive ? (
+            <div className="bottom-tab-active-surface absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10" />
+          ) : null}
+          <div
+            className={`relative transition-transform duration-200 ${
+              isActive ? 'translate-y-[7px] scale-[1.3]' : ''
+            }`}
+          >
+            <div className={isCalendarTab ? 'relative' : undefined}>
+              <Icon size={24} className={iconClass(isActive)} />
+              {isCalendarTab ? (
+                <span
+                  className={`absolute mt-1 inset-0 flex items-center justify-center text-[8px] font-bold leading-none pointer-events-none ${iconClass(isActive)}`}
+                  style={{ paddingTop: '2px' }}
+                >
+                  {currentDay}
+                </span>
+              ) : null}
+            </div>
+            {tab.badge != null ? (
+              <UnreadBadge count={tab.badge} size="sm" className="bottom-tab-badge absolute -top-2 -right-2" />
+            ) : null}
+          </div>
+          <div className="h-[14px] flex items-center justify-center">
+            {!isActive ? (
+              <span className="bottom-tab-label text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200">
+                {tab.label}
+              </span>
+            ) : null}
+          </div>
+        </button>
+      );
+    }
+
+    return (
+      <motion.button
+        key={tab.id}
+        ref={(el) => { tabRefs.current[index] = el; }}
+        onClick={() => handleTabClick(tab.id, tab.path)}
+        aria-label={tab.label}
+        aria-current={isActive ? 'page' : undefined}
+        className={tabButtonClass}
+        whileTap={{ scale: 0.85 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+      >
+        <motion.div
+          className="relative"
+          initial={false}
+          animate={{
+            scale: isActive ? 1.3 : 1,
+            y: isActive ? 7 : 0,
+          }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
+          <motion.div
+            className={isCalendarTab ? 'relative' : undefined}
+            initial={false}
+            animate={{
+              scale: isActive ? 1.3 : 1,
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            <Icon size={24} className={iconClass(isActive)} />
+            {isCalendarTab ? (
+              <span
+                className={`absolute mt-1 inset-0 flex items-center justify-center text-[8px] font-bold leading-none pointer-events-none ${iconClass(isActive)}`}
+                style={{ paddingTop: '2px' }}
+              >
+                {currentDay}
+              </span>
+            ) : null}
+          </motion.div>
+
+          {tab.badge != null ? (
+            <UnreadBadge count={tab.badge} size="sm" className="bottom-tab-badge absolute -top-2 -right-2" />
+          ) : null}
+        </motion.div>
+
+        <div className="h-[14px] flex items-center justify-center">
+          <AnimatePresence mode="wait" initial={false}>
+            {!isActive ? (
+              <motion.span
+                key="label"
+                initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25, duration: 0.2 }}
+                className="bottom-tab-label text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
+              >
+                {tab.label}
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
+        </div>
+
+        {isActive ? (
+          <motion.div
+            className="bottom-tab-active-surface absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10"
+            layoutId="activeTab"
+            layoutScroll={false}
+            initial={false}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          />
+        ) : null}
+      </motion.button>
+    );
+  };
+
   const tabBarBody = (
     <>
       <ClubAdminFab />
@@ -130,137 +297,19 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
             className={`pointer-events-none absolute inset-0 rounded-2xl bg-white/95 dark:bg-gray-900/95 ${isPremiumTheme ? 'premium-tab-backplate' : ''}`}
           />
           <div className="relative isolate z-[1] px-1 flex items-center justify-center h-16">
-          {tabs.map((tab, index) => {
-            const Icon = tab.icon;
-            const isActive = effectivePage !== null && effectivePage === tab.id;
-            const currentDay = new Date().getDate();
-            const isCalendarTab = tab.id === 'find';
-            const tabButtonClass =
-              `flex flex-col items-center justify-center px-3 h-full relative group ${isPremiumTheme ? 'premium-tab' : ''}`;
-
-            if (!useRichTabMotion) {
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  ref={(el) => { tabRefs.current[index] = el; }}
-                  onClick={() => handleTabClick(tab.id, tab.path)}
-                  aria-label={tab.label}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={tabButtonClass}
-                >
-                  {isActive ? (
-                    <div className="bottom-tab-active-surface absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10" />
-                  ) : null}
-                  <div
-                    className={`relative transition-transform duration-200 ${
-                      isActive ? 'translate-y-[7px] scale-[1.3]' : ''
-                    }`}
-                  >
-                    <div className={isCalendarTab ? 'relative' : undefined}>
-                      <Icon size={24} className={iconClass(isActive)} />
-                      {isCalendarTab ? (
-                        <span
-                          className={`absolute mt-1 inset-0 flex items-center justify-center text-[8px] font-bold leading-none pointer-events-none ${iconClass(isActive)}`}
-                          style={{ paddingTop: '2px' }}
-                        >
-                          {currentDay}
-                        </span>
-                      ) : null}
-                    </div>
-                    {tab.badge != null ? (
-                      <UnreadBadge count={tab.badge} size="sm" className="bottom-tab-badge absolute -top-2 -right-2" />
-                    ) : null}
-                  </div>
-                  <div className="h-[14px] flex items-center justify-center">
-                    {!isActive ? (
-                      <span className="bottom-tab-label text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200">
-                        {tab.label}
-                      </span>
-                    ) : null}
-                  </div>
-                </button>
-              );
-            }
-
-            return (
-              <motion.button
-                key={tab.id}
-                ref={(el) => { tabRefs.current[index] = el; }}
-                onClick={() => handleTabClick(tab.id, tab.path)}
-                aria-label={tab.label}
-                aria-current={isActive ? 'page' : undefined}
-                className={tabButtonClass}
-                whileTap={{ scale: 0.85 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                <motion.div
-                  className="relative"
-                  initial={false}
-                  animate={{
-                    scale: isActive ? 1.3 : 1,
-                    y: isActive ? 7 : 0,
-                  }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                >
-                  <motion.div
-                    className={isCalendarTab ? 'relative' : undefined}
-                    initial={false}
-                    animate={{
-                      scale: isActive ? 1.3 : 1,
-                    }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                  >
-                    <Icon size={24} className={iconClass(isActive)} />
-                    {isCalendarTab ? (
-                      <span
-                        className={`absolute mt-1 inset-0 flex items-center justify-center text-[8px] font-bold leading-none pointer-events-none ${iconClass(isActive)}`}
-                        style={{ paddingTop: '2px' }}
-                      >
-                        {currentDay}
-                      </span>
-                    ) : null}
-                  </motion.div>
-
-                  {tab.badge != null ? (
-                    <UnreadBadge count={tab.badge} size="sm" className="bottom-tab-badge absolute -top-2 -right-2" />
-                  ) : null}
-                </motion.div>
-
-                <div className="h-[14px] flex items-center justify-center">
-                  <AnimatePresence mode="wait" initial={false}>
-                    {!isActive ? (
-                      <motion.span
-                        key="label"
-                        initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -4, scale: 0.8 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 25, duration: 0.2 }}
-                        className="bottom-tab-label text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
-                      >
-                        {tab.label}
-                      </motion.span>
-                    ) : null}
-                  </AnimatePresence>
-                </div>
-
-                {isActive ? (
-                  <motion.div
-                    className="bottom-tab-active-surface absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10"
-                    layoutId="activeTab"
-                    layoutScroll={false}
-                    initial={false}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                ) : null}
-              </motion.button>
-            );
-          })}
+          {tabs.map((tab, index) => (
+            <NoviceTabReveal key={tab.id} reveal={revealedTabIds.has(tab.id)} delay={0.15 + index * 0.05}>
+              {renderTab(tab, index)}
+            </NoviceTabReveal>
+          ))}
           </div>
         </div>
       </div>
     </>
   );
+
+  // Newcomers (Welcome page) have no tab yet: no bar at all.
+  if (tabs.length === 0) return null;
 
   if (useMotionShell) {
     return (

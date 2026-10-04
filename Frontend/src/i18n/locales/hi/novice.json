@@ -131,6 +131,71 @@
     "organizer": {
       "broughtPlayers_one": "{{count}} नया खिलाड़ी लाए",
       "broughtPlayers_other": "{{count}} नए खिलाड़ी लाए"
+    },
+    "welcome": {
+      "greeting": "नमस्ते, {{name}}!",
+      "greetingNoName": "Bandeja में आपका स्वागत है!",
+      "subtitle": "चलिए आपका पहला गेम ढूँढते हैं।",
+      "profile": "प्रोफ़ाइल",
+      "firstGameTitle": "आपका पहला गेम",
+      "nextGameTitle": "आपका अगला गेम",
+      "openGame": "गेम खोलें",
+      "openChat": "चैट",
+      "directions": "रास्ता",
+      "choiceTitle": "आप क्या करना चाहेंगे?",
+      "playTitle": "मुझे खेलना है",
+      "playBody": "बताइए आप कब खाली हैं — हम आपके लिए गेम ढूँढेंगे",
+      "learnTitle": "मुझे सीखना है",
+      "learnBody": "आपके पास ट्रेनिंग और कोच",
+      "noviceGamesTitle": "इस हफ़्ते शुरुआती खिलाड़ियों के लिए गेम",
+      "noviceGamesEmpty": "इस हफ़्ते अभी शुरुआती खिलाड़ियों के लिए कोई गेम नहीं है। बताइए आप कब खाली हैं, हम साथी ढूँढ देंगे।",
+      "trainingsTitle": "आने वाली ट्रेनिंग",
+      "trainingsEmpty": "इस हफ़्ते अभी कोई ट्रेनिंग नहीं है।",
+      "teaserTitle": "खेलते-खेलते अनलॉक होगा",
+      "teaserMore": "और भी बहुत कुछ…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "नवागंतुक",
+        "debut": "पदार्पण",
+        "rookie": "नौसिखिया",
+        "contender": "दावेदार",
+        "challenger": "चुनौतीकर्ता",
+        "regular": "नियमित खिलाड़ी"
+      },
+      "ladderLabel": "नियमित खिलाड़ी तक की रैंक",
+      "progressToRegular": "नियमित खिलाड़ी बनने तक {{target}} में से {{current}} गेम",
+      "nextUnlock": "अगला {{rank}} पर:",
+      "unlockAll": {
+        "link": "मुझे सब पता है — सब कुछ दिखाएँ",
+        "title": "अभी सब कुछ दिखाएँ?",
+        "message": "सभी टैब और सुविधाएँ तुरंत दिखेंगी। आपके गेम गिने जाते रहेंगे, लेकिन रैंक बढ़ने का जश्न अब नहीं होगा।",
+        "confirm": "सब दिखाएँ",
+        "failed": "अभी अनलॉक नहीं हो सका। फिर से कोशिश करें।"
+      },
+      "features": {
+        "homeShell": "होम",
+        "findTab": "खोजें",
+        "calendar": "कैलेंडर",
+        "pastGames": "पिछले गेम",
+        "chatsTab": "चैट",
+        "followPlayers": "खिलाड़ियों को फ़ॉलो करें",
+        "playStreak": "खेल सिलसिला",
+        "createGame": "गेम बनाएँ",
+        "topTab": "रैंकिंग",
+        "levelHistory": "लेवल इतिहास",
+        "playerComparison": "खिलाड़ी तुलना",
+        "leagues": "लीग",
+        "tournaments": "टूर्नामेंट",
+        "marketTab": "मार्केट",
+        "stories": "स्टोरीज़",
+        "liveRail": "अभी लाइव",
+        "userTeams": "टीमें",
+        "aiAssistant": "AI सहायक",
+        "wallet": "वॉलेट",
+        "createLeague": "लीग बनाएँ",
+        "ads": "ऑफ़र"
+      }
     }
   }
 }

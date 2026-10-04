@@ -32,6 +32,17 @@ export function showsNoviceWelcome(user: NoviceUser): boolean {
   return isNoviceModeActive(user) && !hasNoviceFeature(user, 'homeShell');
 }
 
+/**
+ * The shell swaps in the Welcome page only for the plain home route (`/`,
+ * no `?tab=`). Every other place — Find, chats, a game, a profile, `/?tab=ai`
+ * — renders as usual, so links, pushes and invites always open their screen.
+ */
+export function rendersNoviceWelcome(place: string, search: string, user: NoviceUser): boolean {
+  if (place !== 'home') return false;
+  if (new URLSearchParams(search).get('tab')) return false;
+  return showsNoviceWelcome(user);
+}
+
 export function isBottomTabUnlocked(user: NoviceUser, tab: BottomTabId): boolean {
   return hasNoviceFeature(user, BOTTOM_TAB_NOVICE_FEATURE[tab]);
 }

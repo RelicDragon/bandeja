@@ -6,6 +6,7 @@ import { useEffectiveAdSportsByPlacement } from '@/hooks/useAdPlacements';
 import { useAuthStore } from '@/store/authStore';
 import { resolveAdClickLocale } from '@/utils/adClickPersonalization';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { hasNoviceFeature } from '@shared/novice';
 
 const CALENDAR_TAG_REFRESH_MS = 60_000;
 const DEFAULT_CALENDAR_TAG_COLOR = '#7C3AED';
@@ -51,7 +52,9 @@ export function useAdCalendarTags() {
     isAuthenticated &&
     Boolean(user?.id) &&
     Boolean(userCityId) &&
-    isOnline;
+    isOnline &&
+    // PRD 358 — calendar ad tags are ads: none while novice mode is on.
+    hasNoviceFeature(user, 'ads');
   const query = useQuery({
     queryKey: [
       'ads',

@@ -27,6 +27,8 @@ import { SeriesPage } from './SeriesPage';
 import { useAuthStore } from '@/store/authStore';
 import { hasEnabledSports } from '@/utils/profileSports';
 import { isMainTabRootPath, scrollAppToTop } from '@/utils/appScroll';
+import { rendersNoviceWelcome } from '@/utils/noviceShell';
+import { NoviceWelcomePage } from './NoviceWelcomePage';
 
 const AgentChatRoute = lazy(() =>
   import('@/components/agent/AgentTab').then((m) => ({ default: m.AgentChatRoute })),
@@ -63,6 +65,9 @@ export const MainPage = () => {
   );
 
   const showGameTabs = hasEnabledSports(user);
+  // PRD 358 — a Newcomer's plain home (`/`) is the full-screen Welcome page;
+  // every other route renders normally (novice rank never blocks a route).
+  const showNoviceWelcome = showGameTabs && rendersNoviceWelcome(parsed.place, location.search, user);
 
   useLayoutEffect(() => {
     if (!isMainTabRootPath(location.pathname)) return;
@@ -151,6 +156,10 @@ export const MainPage = () => {
         return <MyTab />;
     }
   }, [parsed.place]);
+
+  if (showNoviceWelcome) {
+    return <NoviceWelcomePage />;
+  }
 
   const isChatPage = isChatShellPlace(parsed.place);
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||

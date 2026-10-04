@@ -133,6 +133,71 @@
       "broughtPlayers_few": "Привёл {{count}} новых игроков",
       "broughtPlayers_many": "Привёл {{count}} новых игроков",
       "broughtPlayers_other": "Привёл {{count}} нового игрока"
+    },
+    "welcome": {
+      "greeting": "Привет, {{name}}!",
+      "greetingNoName": "Добро пожаловать в Bandeja!",
+      "subtitle": "Давайте найдём вашу первую игру.",
+      "profile": "Профиль",
+      "firstGameTitle": "Ваша первая игра",
+      "nextGameTitle": "Ваша следующая игра",
+      "openGame": "Открыть игру",
+      "openChat": "Чат",
+      "directions": "Маршрут",
+      "choiceTitle": "Чем займёмся?",
+      "playTitle": "Хочу играть",
+      "playBody": "Скажите, когда вы свободны, — мы подберём игру",
+      "learnTitle": "Хочу учиться",
+      "learnBody": "Тренировки и тренеры рядом",
+      "noviceGamesTitle": "Игры для новичков на этой неделе",
+      "noviceGamesEmpty": "На этой неделе пока нет игр для новичков. Скажите, когда вы свободны, — мы подберём партнёров.",
+      "trainingsTitle": "Ближайшие тренировки",
+      "trainingsEmpty": "На этой неделе тренировок пока нет.",
+      "teaserTitle": "Откроется по мере игр",
+      "teaserMore": "и многое другое…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Новичок",
+        "debut": "Дебютант",
+        "rookie": "Начинающий",
+        "contender": "Претендент",
+        "challenger": "Соперник",
+        "regular": "Постоянный игрок"
+      },
+      "ladderLabel": "Ранги до постоянного игрока",
+      "progressToRegular": "{{current}} из {{target}} игр до ранга «Постоянный игрок»",
+      "nextUnlock": "Дальше — {{rank}}:",
+      "unlockAll": {
+        "link": "Я уже разбираюсь — покажите всё",
+        "title": "Показать всё сразу?",
+        "message": "Все вкладки и функции появятся сразу. Игры продолжат засчитываться, но праздничных экранов за новые ранги больше не будет.",
+        "confirm": "Показать всё",
+        "failed": "Не удалось открыть всё. Попробуйте ещё раз."
+      },
+      "features": {
+        "homeShell": "Главная",
+        "findTab": "Поиск",
+        "calendar": "Календарь",
+        "pastGames": "Прошедшие игры",
+        "chatsTab": "Чаты",
+        "followPlayers": "Подписки на игроков",
+        "playStreak": "Серия игр",
+        "createGame": "Создание игр",
+        "topTab": "Рейтинги",
+        "levelHistory": "История уровня",
+        "playerComparison": "Сравнение игроков",
+        "leagues": "Лиги",
+        "tournaments": "Турниры",
+        "marketTab": "Маркет",
+        "stories": "Истории",
+        "liveRail": "Сейчас в эфире",
+        "userTeams": "Команды",
+        "aiAssistant": "ИИ-ассистент",
+        "wallet": "Кошелёк",
+        "createLeague": "Создание лиг",
+        "ads": "Предложения"
+      }
     }
   }
 }
