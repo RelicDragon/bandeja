@@ -667,6 +667,7 @@ class PushNotificationService {
       case 'GAME_REMINDER':
       case 'GAME_RESULTS':
       case 'GAME_CANCELLED':
+      case 'GAME_TIME_CHANGED':
       case 'MATCH_TIMER_CAP':
       case 'NEW_GAME':
       case 'GAME_MATCHES_INTENT':

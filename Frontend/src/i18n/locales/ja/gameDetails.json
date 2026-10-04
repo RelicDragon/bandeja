@@ -114,6 +114,7 @@
     "linkedBookings": {
       "fullyCovered": "予約完了",
       "notFullyCovered": "一部未予約",
+      "timeMismatch": "試合の新しい時間をカバーしていません。クラブで変更してください（アプリでは変更されません）。",
       "refreshAriaLabel": "予約ステータスを確認",
       "refreshStillActive": "クラブアカウントで予約はまだ有効です",
       "refreshCheckFailed": "予約ステータスを確認できませんでした。もう一度お試しください。",

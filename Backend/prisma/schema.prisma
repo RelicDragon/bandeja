@@ -249,7 +249,7 @@ model User {
   agentPendingActions            AgentPendingAction[]
   agentToolPermissions           AgentToolPermission[]
   agentMemories                  AgentMemory[]
-  /// AI assistant memory master switch (docs/plans/ai-agent-memory.md §11.1). OFF: memory is
+  /// AI assistant memory master switch. OFF: memory is
   /// neither read into the prompt nor offered to the model; stored rows stay, dormant.
   agentMemoryEnabled             Boolean                          @default(true)
   /// Last weekly memory consolidation pass for this user (Phase 11.4).
@@ -914,6 +914,7 @@ model Game {
   costShares                 GameCostShare[]
   spotOpenedDeliveries       SpotOpenedDelivery[]
   liveGameNotifyDeliveries   LiveGameNotifyDelivery[]
+  timeChange                 GameTimeChange?
 
   @@unique([seriesId, seriesOccurrenceDate])
   @@index([clubId])
@@ -4428,6 +4429,34 @@ model LiveGameNotifyDelivery {
   @@index([createdAt])
 }
 
+/// Time change: per-game state for owner/admin time edits.
+/// `attendanceResetAt` is when PLAYING answers were last cleared by a schedule
+/// change — an attendance action (push token, Telegram button) issued before it
+/// answers for the old time and is refused. The notice fields hold the one
+/// pending "time changed" notice: edits inside the quiet window coalesce into a
+/// single notice that carries the final time; `previous*` is the schedule
+/// players were last told about, so an edit reverted inside the window sends
+/// nothing. Durable and claimed by `version`, never an in-process set.
+model GameTimeChange {
+  gameId            String    @id
+  attendanceResetAt DateTime?
+  /// Latest editor of the pending burst; excluded from the notice.
+  editorUserId      String?
+  previousStartTime DateTime?
+  previousEndTime   DateTime?
+  /// Null when no notice is pending.
+  pendingSince      DateTime?
+  noticeDueAt       DateTime?
+  lastNoticeSentAt  DateTime?
+  /// Bumped on every coalesced edit and on claim, so exactly one sweep delivers.
+  version           Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  game              Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([noticeDueAt])
+}
+
 // A user-entered booking phone, not a verified provider account or access token.
 model UserClubWeltnerAuth {
   id          String   @id @default(cuid())
@@ -4551,7 +4580,7 @@ model ExternalBookingMirrorSync {
 }
 
 // ---------------------------------------------------------------------------
-// AI agent chats (docs/domains/agent.md, docs/plans/ai-agent.md §2).
+// AI agent chats (docs/domains/agent.md).
 // Separate from ChatContextType on purpose: no unread state, no other members.
 // ---------------------------------------------------------------------------
 
@@ -4737,7 +4766,7 @@ model AgentToolPermission {
   @@unique([userId, toolName])
 }
 
-/// AI assistant memory (Phase 11, docs/plans/ai-agent-memory.md): durable facts about the user,
+/// AI assistant memory (Phase 11): durable facts about the user,
 /// written by the model (MODEL_INFERRED) or the user (USER_ASKED). Self-scoped, ≤ 50 per user,
 /// body ≤ 500 chars; never grants privilege. Used only while `User.agentMemoryEnabled`.
 enum AgentMemoryType {

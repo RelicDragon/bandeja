@@ -6,6 +6,7 @@ import { LinkedBookingsList } from '@/components/gameLocationTime/LinkedBookings
 import { LinkedBookingCoverageBadge } from '@/components/GameDetails/LinkedBookingCoverageBadge';
 import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
+import { gameLinkedBookingIdsNeedingAttention } from '@/utils/gameHasConfirmedClubBooking';
 import { gamesApi } from '@/api';
 import type { Club, Court, Game } from '@/types';
 
@@ -22,7 +23,11 @@ function resolveGameClub(game: Game, clubs?: Club[]): Club | undefined {
 
 export function GameLinkedBookingsSection({ game, courts, clubs, onGameUpdate }: GameLinkedBookingsSectionProps) {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(false);
+  // A booking left behind by a time change opens the section, so the flag is
+  // seen without hunting for it.
+  const [isExpanded, setIsExpanded] = useState(
+    () => gameLinkedBookingIdsNeedingAttention(game).size > 0,
+  );
   const hasClub = Boolean(game.clubId || game.club || game.court?.club);
   const club = resolveGameClub(game, clubs);
   const links = game.linkedBookings ?? [];

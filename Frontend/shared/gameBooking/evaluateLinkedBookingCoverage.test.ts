@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateLinkedBookingCoverage } from './evaluateLinkedBookingCoverage';
+import {
+  evaluateLinkedBookingCoverage,
+  findLinkedBookingsNeedingAttention,
+} from './evaluateLinkedBookingCoverage';
 
 const gameWindow = {
   startTime: '2026-06-12T10:00:00.000Z',
@@ -63,5 +66,53 @@ describe('evaluateLinkedBookingCoverage', () => {
     );
     expect(result.requiredBookingCount).toBe(3);
     expect(result.fullyCovered).toBe(true);
+  });
+});
+
+describe('findLinkedBookingsNeedingAttention', () => {
+  it('flags nothing while the bookings still span the game', () => {
+    expect(
+      findLinkedBookingsNeedingAttention(
+        [{ bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime }],
+        gameWindow,
+      ),
+    ).toEqual([]);
+  });
+
+  it('flags nothing when back-to-back slots cover the game between them', () => {
+    expect(
+      findLinkedBookingsNeedingAttention(
+        [
+          { bookingStart: '2026-06-12T10:00:00.000Z', bookingEnd: '2026-06-12T11:00:00.000Z' },
+          { bookingStart: '2026-06-12T11:00:00.000Z', bookingEnd: '2026-06-12T12:00:00.000Z' },
+        ],
+        gameWindow,
+      ),
+    ).toEqual([]);
+  });
+
+  it('flags the booking left behind when the game moves later', () => {
+    expect(
+      findLinkedBookingsNeedingAttention(
+        [{ bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime }],
+        { startTime: '2026-06-12T11:00:00.000Z', endTime: '2026-06-12T13:00:00.000Z' },
+      ),
+    ).toEqual([0]);
+  });
+
+  it('flags only the bookings that do not span the new window', () => {
+    expect(
+      findLinkedBookingsNeedingAttention(
+        [
+          { bookingStart: '2026-06-12T09:00:00.000Z', bookingEnd: '2026-06-12T13:00:00.000Z' },
+          { bookingStart: '2026-06-12T10:00:00.000Z', bookingEnd: '2026-06-12T11:00:00.000Z' },
+        ],
+        { startTime: '2026-06-12T11:00:00.000Z', endTime: '2026-06-12T14:00:00.000Z' },
+      ),
+    ).toEqual([0, 1]);
+  });
+
+  it('flags a booking with no times at all', () => {
+    expect(findLinkedBookingsNeedingAttention([{}], gameWindow)).toEqual([0]);
   });
 });

@@ -62,6 +62,8 @@ export enum NotificationType {
   GOODS_GIFT_RECEIVED = 'GOODS_GIFT_RECEIVED',
   /** PRD 357 — rain / wind risk on an upcoming outdoor game. */
   GAME_WEATHER_ALERT = 'GAME_WEATHER_ALERT',
+  /** Time change — the game's time changed (Time-critical, collapsed per game). */
+  GAME_TIME_CHANGED = 'GAME_TIME_CHANGED',
 }
 
 export interface NotificationAction {

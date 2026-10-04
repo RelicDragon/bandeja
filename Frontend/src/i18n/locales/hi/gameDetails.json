@@ -114,6 +114,7 @@
     "linkedBookings": {
       "fullyCovered": "पूरी तरह बुक",
       "notFullyCovered": "पूरी तरह बुक नहीं",
+      "timeMismatch": "खेल के नए समय को कवर नहीं करती। क्लब से इसे बदलवाएँ; ऐप इसे नहीं बदलता।",
       "refreshAriaLabel": "आरक्षण स्थिति जाँचें",
       "refreshStillActive": "आपके क्लब खाते में आरक्षण अभी सक्रिय है",
       "refreshCheckFailed": "आरक्षण स्थिति जाँच नहीं हो सकी। फिर कोशिश करें।",

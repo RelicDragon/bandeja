@@ -60,6 +60,7 @@
       "generic": "Nije moguće sačuvati vaš odgovor",
       "notParticipant": "Odgovoriti mogu samo igrači ove igre",
       "answersClosed": "Potvrde dolaska za ovu igru su zatvorene",
+      "timeChanged": "Vreme igre je promenjeno. Odgovori ponovo iz najnovije poruke.",
       "noShowWindowClosed": "Rok za beleženje nedolaska je istekao",
       "nudgeCooldown": "Nedavno ste podsetili. Pokušajte kasnije.",
       "nothingToNudge": "Svi su već odgovorili"

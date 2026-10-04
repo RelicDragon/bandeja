@@ -104,6 +104,7 @@
     "linkedBookings": {
       "fullyCovered": "Completamente reservado",
       "notFullyCovered": "No completamente reservado",
+      "timeMismatch": "No cubre la nueva hora del partido. Cámbiala con el club; la app no la modifica.",
       "refreshAriaLabel": "Comprobar estado de la reserva",
       "refreshStillActive": "La reserva sigue activa en tu cuenta del club",
       "refreshCheckFailed": "No se pudo comprobar el estado de la reserva. Inténtalo de nuevo.",

@@ -23,6 +23,7 @@ Unified dispatch: `Backend/src/services/notification.service.ts`. Types: `Backen
 | `MONTHLY_RECAP_READY` | `sendReminders` | The monthly recap generator produced a recap ([stories.md](./stories.md)) |
 | `GOODS_GIFT_RECEIVED` | `sendWalletNotifications` | Another player gifted a shop item |
 | `GAME_WEATHER_ALERT` | `sendWeatherAlerts` | Outdoor game at rain/wind risk, 12 h out (and once more if the severity class rises) ([weather.md](./weather.md)) |
+| `GAME_TIME_CHANGED` | `sendReminders` | Owner/admin moved a game's start/end — PLAYING participants except the editor, one coalesced notice per burst of edits, push + Telegram (`at:` buttons for everyone but the owner). Tap opens the game ([games.md](./games.md#time-change)) |
 
 **Full-game invites** (`INVITE`, push and Telegram) keep the invite and say so: when `isInvitePlaySlotFull(invite)` the body gains `telegram.inviteFullForNow` and the accept button reads **Join waitlist** (`telegram.joinWaitlist`). Accept is unchanged: while full, `InviteService.acceptInvite` queues the invitee (`games.addedToJoinQueue`), and Telegram answers `telegram.inviteQueued` instead of "accepted". Android shows the payload label; iOS `INVITE` is a static category and keeps "Accept" (same action). When a seat frees, `notifyPendingInvitesIfPlayingSlotOpened` re-sends the invite push with `{ spotOpened: true }` → title `telegram.inviteSpotOpenedTitle` ("A spot opened up"). Pinned by `fullInviteCopy.contract.test.ts` (`npm run test:invite-inbox`).
 
@@ -66,6 +67,7 @@ Both answers are **background** actions — they post and never open the app.
 - **Android.** `fcm.service.ts` sets `nativeHandler = 'attendance_actions'` whenever the reminder carries `attendanceActionToken`. `ChatReplyMessagingService` routes it to `AttendanceNotificationHelper`, which builds the two buttons from the payload's localized titles (`R.string.attendance_confirm` / `attendance_unsure` are only the fallback) and points them at `AttendanceActionReceiver`. The receiver posts the token to `/push/invite-action` off the main thread and then replaces the reminder with the localized acknowledgement. It reuses the reminder's own notification id, so the 2 h message replaces the 24 h one.
 - **iOS.** The `GAME_REMINDER` category registers `confirm` / `unsure` with no `foreground` option. With the webview alive, `pushNotificationService.handleNotificationAction` posts the token and invalidates the game's attendance query. On a cold start the webview is not ready, so `BandejaPushNotificationDelegate` hands the response to `AttendanceActionHandler` — the same layering `ChatReplyHandler` uses for the inline chat reply.
 - **Both platforms** need the acknowledgement text to travel with the push (`attendanceConfirmedAck` / `attendanceUnsureAck`, localized per recipient in `game-reminder-push.notification.ts`): the shade handler has no i18n of its own, and the `/push/invite-action` response returns a translation *key*, not a string.
+- **Stale after a time change.** A shade or Telegram answer issued before the game's time changed (token `iat` / message date older than `GameTimeChange.attendanceResetAt`) is refused with `errors.attendance.timeChanged` — it answered for the old time.
 - Failure is silent by design. Offline or a 5xx leaves the reminder answerable — there is no deadline — and a 4xx (stale token, player already left) quietly dismisses it.
 
 #### Series and weather in the shade (PRD 345 / 357)
@@ -106,6 +108,7 @@ The play-intent contract in [constraints.md](../product/constraints.md) — *cla
 | Referral payout | `ReferralReward.referredUserId @unique` | once per referred user, ever |
 | Monthly recap | the `MonthlyRecap` unique key — a plain `create`, `P2002` means "already done" | once per user per month |
 | Attendance nudge | the newest `ATTENDANCE_NUDGED` **chat system message** | once per game per 6 h |
+| Time changed | `GameTimeChange` row per game: `noticeDueAt` + `version` claim, revalidated at send | one per burst of edits (60 s sliding quiet window, 5 min cap); nothing when the burst ends where it began |
 
 Spot-opened is worth reading as the reference implementation (`services/gameSeat/spotOpenedNotify.service.ts`): claim the row, then `sendWithBackoff` (delays `[1 s, 4 s]`), revalidating `seatIsStillOpen` on every attempt because the roster may have refilled or locked. A **transient** failure releases the claim so the next event retries; a **permanent** one (no channel linked, preferences off, user gone) keeps it.
 

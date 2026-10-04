@@ -56,6 +56,12 @@ export type PushInviteActionScope = {
   kind: PushInviteActionKind;
   targetId: string;
   action: PushInviteAction;
+  /**
+   * Set by {@link verifyPushInviteActionToken} from the token's `iat`; ignored
+   * when signing. Lets a handler refuse an action issued before the state it
+   * answers changed (attendance after a time change).
+   */
+  issuedAt?: Date;
 };
 
 function isPushInviteActionKind(value: unknown): value is PushInviteActionKind {
@@ -80,9 +86,13 @@ export function signPushInviteActionToken(scope: PushInviteActionScope): string 
   if (!isAllowedPair(scope.kind, scope.action)) {
     throw new Error(`Unsupported push invite action: ${scope.kind}/${scope.action}`);
   }
+  const { userId, kind, targetId, action } = scope;
   return jwt.sign(
     {
-      ...scope,
+      userId,
+      kind,
+      targetId,
+      action,
       typ: 'push_invite_action',
       ver: TOKEN_VERSION,
       jti: randomUUID(),
@@ -121,5 +131,6 @@ export function verifyPushInviteActionToken(token: string): PushInviteActionScop
     kind: payload.kind,
     targetId: payload.targetId,
     action: payload.action,
+    ...(typeof payload.iat === 'number' ? { issuedAt: new Date(payload.iat * 1000) } : {}),
   };
 }

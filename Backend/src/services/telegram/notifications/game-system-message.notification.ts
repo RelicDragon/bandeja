@@ -27,8 +27,11 @@ export async function sendGameSystemMessageNotification(
   api: Api,
   message: any,
   game: any,
-  excludeUserId?: string
+  excludeUserId?: string | readonly string[]
 ) {
+  const excluded = new Set(
+    excludeUserId === undefined ? [] : typeof excludeUserId === 'string' ? [excludeUserId] : excludeUserId,
+  );
 
   const chatType = message.chatType as ChatType;
   const participants = await prisma.gameParticipant.findMany({
@@ -50,7 +53,7 @@ export async function sendGameSystemMessageNotification(
     const user = participant.user;
     // Skip the user whose own action triggered this system message (e.g. a user
     // accepting their own invite should not be notified that they joined the game).
-    if (excludeUserId && user.id === excludeUserId) continue;
+    if (excluded.has(user.id)) continue;
     if (participant.status === 'INVITED') continue;
     if (
       isInviteOnlyChatViewerStatus(participant.status) &&

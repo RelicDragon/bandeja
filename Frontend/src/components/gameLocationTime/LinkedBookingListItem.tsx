@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import type { Club, Court, Game } from '@/types';
 import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
@@ -24,6 +24,8 @@ type LinkedBookingListItemProps = {
   isOwner: boolean;
   onRefreshOwnership: () => Promise<UserBooktimeBookingIdsResult | null>;
   readOnly: boolean;
+  /** The booking no longer covers the game's time (time change) — flag it, never move it. */
+  needsAttention?: boolean;
   onRemove?: (externalBookingId: string) => void;
   onBookingUnlinked?: () => void | Promise<void>;
 };
@@ -49,6 +51,7 @@ export function LinkedBookingListItem({
   isOwner,
   onRefreshOwnership,
   readOnly,
+  needsAttention = false,
   onRemove,
   onBookingUnlinked,
 }: LinkedBookingListItemProps) {
@@ -145,16 +148,36 @@ export function LinkedBookingListItem({
 
   return (
     <>
-      <BooktimeBookingRow
-        booking={linkedBookingToRecord(link)}
-        club={booktimeClub}
-        readOnly
-        compact
-        clubTimezone={clubTimezone}
-        courtOverride={courtOverride}
-        linkedGames={linkedGames}
-        trailing={canRefreshUpstream || (!readOnly && onRemove) ? trailing : undefined}
-      />
+      {needsAttention ? (
+        <li data-testid="linked-booking-needs-attention" className="space-y-1">
+          <BooktimeBookingRow
+            booking={linkedBookingToRecord(link)}
+            club={booktimeClub}
+            readOnly
+            compact
+            nested
+            clubTimezone={clubTimezone}
+            courtOverride={courtOverride}
+            linkedGames={linkedGames}
+            trailing={canRefreshUpstream || (!readOnly && onRemove) ? trailing : undefined}
+          />
+          <p className="flex items-start gap-1.5 px-1 text-xs font-medium text-amber-800 dark:text-amber-200">
+            <AlertTriangle size={14} className="mt-px shrink-0" aria-hidden />
+            <span>{t('gameDetails.linkedBookings.timeMismatch')}</span>
+          </p>
+        </li>
+      ) : (
+        <BooktimeBookingRow
+          booking={linkedBookingToRecord(link)}
+          club={booktimeClub}
+          readOnly
+          compact
+          clubTimezone={clubTimezone}
+          courtOverride={courtOverride}
+          linkedGames={linkedGames}
+          trailing={canRefreshUpstream || (!readOnly && onRemove) ? trailing : undefined}
+        />
+      )}
       <LinkedBookingAbsentModal
         isOpen={absentOpen}
         otherLinkedGameCount={otherLinkedGameCount}

@@ -60,6 +60,7 @@
       "generic": "无法保存你的回答",
       "notParticipant": "只有本场比赛的球员可以回答",
       "answersClosed": "该比赛的出席确认已关闭",
+      "timeChanged": "比赛时间已更改。请在最新消息中重新回复。",
       "noShowWindowClosed": "未到场标记的期限已过",
       "nudgeCooldown": "你刚刚提醒过，请稍后再试。",
       "nothingToNudge": "所有人都已回答"

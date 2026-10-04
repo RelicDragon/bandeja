@@ -123,6 +123,9 @@ describe('attendanceErrorKey', () => {
     expect(attendanceErrorKey('errors.attendance.noShowWindowClosed')).toBe(
       'attendance.errors.noShowWindowClosed',
     );
+    expect(attendanceErrorKey('errors.attendance.timeChanged')).toBe(
+      'attendance.errors.timeChanged',
+    );
   });
 
   it('falls back to a generic message rather than leaking a raw code', () => {

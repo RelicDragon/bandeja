@@ -60,6 +60,7 @@
       "generic": "Jawabanmu tidak bisa disimpan",
       "notParticipant": "Hanya pemain di permainan ini yang bisa menjawab",
       "answersClosed": "Konfirmasi kehadiran untuk permainan ini sudah ditutup",
+      "timeChanged": "Waktu permainan telah berubah. Jawab lagi dari pesan terbaru.",
       "noShowWindowClosed": "Batas waktu mencatat ketidakhadiran sudah lewat",
       "nudgeCooldown": "Kamu baru saja mengingatkan. Coba lagi nanti.",
       "nothingToNudge": "Semua orang sudah menjawab"

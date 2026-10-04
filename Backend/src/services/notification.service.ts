@@ -521,7 +521,14 @@ class NotificationService {
     await telegramNotificationService.sendGroupChatNotification(message, groupChannel, sender);
   }
 
-  async sendGameSystemMessageNotification(message: any, game: any, excludeUserId?: string) {
+  async sendGameSystemMessageNotification(
+    message: any,
+    game: any,
+    excludeUserId?: string | readonly string[],
+  ) {
+    const excluded = new Set(
+      excludeUserId === undefined ? [] : typeof excludeUserId === 'string' ? [excludeUserId] : excludeUserId,
+    );
     const chatType = message.chatType as ChatType;
     const participants = await prisma.gameParticipant.findMany({
       where: { gameId: game.id },
@@ -547,7 +554,7 @@ class NotificationService {
       }
       // Skip the user whose own action triggered this system message (e.g. a user
       // accepting their own invite should not be notified that they joined the game).
-      if (excludeUserId && user.id === excludeUserId) continue;
+      if (excluded.has(user.id)) continue;
 
       const isMuted = await ChatMuteService.isChatMuted(user.id, ChatContextType.GAME, game.id);
       if (isMuted) {

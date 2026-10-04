@@ -311,7 +311,16 @@ export function createCallbackHandler(
         }
 
         const lang = getUserLanguage(user.language, ctx.from?.language_code);
-        const saved = await setAttendanceFromAction(user.id, parsed.gameId, parsed.answer);
+        // The message date is when the buttons were sent; a button from before
+        // the game's time changed must not answer for the new time. `0` means
+        // Telegram no longer exposes the message — treat as unknown.
+        const sentAtSeconds = query.message?.date ?? 0;
+        const saved = await setAttendanceFromAction(
+          user.id,
+          parsed.gameId,
+          parsed.answer,
+          sentAtSeconds > 0 ? new Date(sentAtSeconds * 1000) : null,
+        );
 
         if (!saved.ok) {
           await ctx.answerCallbackQuery({

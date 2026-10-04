@@ -114,6 +114,7 @@
     "linkedBookings": {
       "fullyCovered": "محجوز بالكامل",
       "notFullyCovered": "غير محجوز بالكامل",
+      "timeMismatch": "لا يغطي الموعد الجديد للمباراة. عدّله مع النادي؛ التطبيق لا يغيّره.",
       "refreshAriaLabel": "التحقق من حالة الحجز",
       "refreshStillActive": "الحجز ما زال نشطاً في حساب ناديك",
       "refreshCheckFailed": "تعذّر التحقق من حالة الحجز. حاول مرة أخرى.",

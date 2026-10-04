@@ -5,6 +5,7 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { clubToBooktimeRow } from '@/components/booktime/booktimeBookingUtils';
 import { getClubTimezone } from '@/utils/gameTimeDisplay';
 import { useBooktimeUserBookingIds } from '@/hooks/useBooktimeUserBookingIds';
+import { gameLinkedBookingIdsNeedingAttention } from '@/utils/gameHasConfirmedClubBooking';
 import { LinkedBookingListItem } from './LinkedBookingListItem';
 
 type LinkedBookingsListProps = {
@@ -37,6 +38,7 @@ export function LinkedBookingsList({
     () => (resolvedClub ? clubToBooktimeRow(resolvedClub) : null),
     [resolvedClub],
   );
+  const needsAttentionIds = useMemo(() => gameLinkedBookingIdsNeedingAttention(game), [game]);
   const { isOwner, reload } = useBooktimeUserBookingIds(
     booktimeClub?.clubId,
     booktimeClub?.companyId,
@@ -66,6 +68,7 @@ export function LinkedBookingsList({
             isOwner={verifyOwnership && isOwner(link.externalBookingId)}
             onRefreshOwnership={reload}
             readOnly={readOnly}
+            needsAttention={needsAttentionIds.has(link.id)}
             onRemove={onRemove ? (id) => setPendingRemove(id) : undefined}
             onBookingUnlinked={onBookingUnlinked}
           />

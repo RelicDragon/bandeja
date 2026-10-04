@@ -39,7 +39,7 @@ export const ATTENDANCE_RATE_WINDOW_MONTHS = 12;
 /**
  * Fields an attendance write is allowed to put on a `GameParticipant`.
  * Anything outside this set would turn a courtesy signal into an enforcement
- * mechanism — see `docs/plans/prd-345-357/prd-346.md` "Product principle".
+ * mechanism.
  */
 export const ATTENDANCE_PARTICIPANT_WRITABLE_FIELDS = [
   'attendance',
@@ -100,6 +100,21 @@ export function buildAnswerUpdate(
   const update: AttendanceParticipantUpdate = {
     attendance: answer as ParticipantAttendance,
     attendanceUpdatedAt: now,
+  };
+  assertAttendanceUpdateIsSafe(update);
+  return update;
+}
+
+/**
+ * Time change — the patch that clears an answer when
+ * the game's time moves. Old "I'm coming" is not evidence for the new time.
+ * Same allow-list as every other attendance write: the seat, the queue and the
+ * rating surface are never part of it, and no-show notes are left alone.
+ */
+export function buildAttendanceResetUpdate(): AttendanceParticipantUpdate {
+  const update: AttendanceParticipantUpdate = {
+    attendance: 'UNANSWERED' as ParticipantAttendance,
+    attendanceUpdatedAt: null,
   };
   assertAttendanceUpdateIsSafe(update);
   return update;

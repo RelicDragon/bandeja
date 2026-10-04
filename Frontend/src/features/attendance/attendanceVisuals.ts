@@ -126,6 +126,8 @@ export function attendanceErrorKey(code: unknown): string {
       return 'attendance.errors.nudgeCooldown';
     case 'nothingToNudge':
       return 'attendance.errors.nothingToNudge';
+    case 'timeChanged':
+      return 'attendance.errors.timeChanged';
     default:
       return 'attendance.errors.generic';
   }

@@ -114,6 +114,7 @@
     "linkedBookings": {
       "fullyCovered": "ถูกจองเต็มแล้ว",
       "notFullyCovered": "ไม่ได้จองเต็ม",
+      "timeMismatch": "ไม่ครอบคลุมเวลาใหม่ของเกม โปรดแก้ไขกับสโมสร แอปจะไม่เปลี่ยนให้",
       "refreshAriaLabel": "ตรวจสอบสถานะการจอง",
       "refreshStillActive": "การจองยังคงใช้งานได้ในบัญชีคลับของคุณ",
       "refreshCheckFailed": "ไม่สามารถตรวจสอบสถานะการจองได้ ลองอีกครั้ง",

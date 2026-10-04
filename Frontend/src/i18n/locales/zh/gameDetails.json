@@ -114,6 +114,7 @@
     "linkedBookings": {
       "fullyCovered": "已全部预订",
       "notFullyCovered": "未全部预订",
+      "timeMismatch": "未覆盖比赛的新时间。请联系球馆修改；应用不会自动更改。",
       "refreshAriaLabel": "检查预订状态",
       "refreshStillActive": "预订在你的俱乐部账户中仍然有效",
       "refreshCheckFailed": "无法检查预订状态，请重试。",

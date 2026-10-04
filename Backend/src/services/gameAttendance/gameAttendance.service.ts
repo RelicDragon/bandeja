@@ -44,17 +44,10 @@ import {
   OWNER_IMPLICIT_ANSWER,
   withOwnerImplicitAnswer,
 } from './attendanceRules';
+import { supportsAttendance } from './attendanceEntityTypes';
+import { attendanceActionPredatesTimeChange } from '../gameTimeChange/gameTimeChange.service';
 
 export { ATTENDANCE_NUDGE_COOLDOWN_HOURS };
-
-/** Entity types that have an attendance question at all. EVENT RSVPs are out of scope. */
-const ATTENDANCE_ENTITY_TYPES: EntityType[] = [
-  EntityType.GAME,
-  EntityType.TOURNAMENT,
-  EntityType.TRAINING,
-  EntityType.LEAGUE,
-  EntityType.BAR,
-];
 
 /** Marker stored in the nudge system message; also how the cooldown is read back. */
 const NUDGE_MESSAGE_MARKER = `"type":"${SystemMessageType.ATTENDANCE_NUDGED}"`;
@@ -84,9 +77,7 @@ const ATTENDANCE_ACTION_TO_ANSWER: Partial<Record<string, AttendanceAnswer>> = {
   unsure: 'UNSURE',
 };
 
-export function supportsAttendance(entityType: EntityType): boolean {
-  return ATTENDANCE_ENTITY_TYPES.includes(entityType);
-}
+export { supportsAttendance };
 
 async function loadGameForAttendance(gameId: string): Promise<AttendanceGame> {
   const game = await prisma.game.findUnique({
@@ -295,8 +286,17 @@ export async function setAttendanceFromAction(
   userId: string,
   gameId: string,
   answer: AttendanceAnswer,
+  /**
+   * When the button was sent (push token `iat`, Telegram message date). A
+   * button sent before the game's time changed answers for the old time, so
+   * it is refused rather than recorded against the new one.
+   */
+  issuedAt?: Date | null,
 ): Promise<{ ok: true } | { ok: false; errorKey: string }> {
   try {
+    if (await attendanceActionPredatesTimeChange(gameId, issuedAt)) {
+      return { ok: false, errorKey: 'errors.attendance.timeChanged' };
+    }
     await setAttendance(gameId, userId, answer);
     return { ok: true };
   } catch (error) {
@@ -566,7 +566,7 @@ registerPushActionHandler('attendance', async (scope) => {
   if (!answer || !isAttendanceAnswer(answer)) {
     return { success: false, message: 'errors.attendance.invalidState' };
   }
-  const saved = await setAttendanceFromAction(scope.userId, scope.targetId, answer);
+  const saved = await setAttendanceFromAction(scope.userId, scope.targetId, answer, scope.issuedAt);
   if (!saved.ok) {
     return { success: false, message: saved.errorKey };
   }

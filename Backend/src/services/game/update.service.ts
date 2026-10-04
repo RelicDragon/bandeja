@@ -61,6 +61,11 @@ import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 import { applyEventUpdateInvariants } from './eventCreateDefaults';
 import { getEntityCapabilities } from '@bandeja/shared/entityCapabilities';
 import { GameSeatService } from '../gameSeat/gameSeat.service';
+import {
+  recordScheduleChangeInTx,
+  type RecordScheduleChangeResult,
+} from '../gameTimeChange/gameTimeChange.service';
+import { emitAttendanceResetForTimeChange } from '../gameAttendance/attendanceTimeChange';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -766,6 +771,12 @@ export class GameUpdateService {
     }
 
     let gameTextWake = false;
+    let scheduleChange = null as RecordScheduleChangeResult | null;
+    const patchTouchesSchedule =
+      data.startTime !== undefined ||
+      data.endTime !== undefined ||
+      data.timeIsSet !== undefined ||
+      data.timeOverride !== undefined;
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${id} FOR UPDATE`);
 
@@ -777,6 +788,10 @@ export class GameUpdateService {
           allowUserInMultipleTeams: true,
           name: true,
           description: true,
+          startTime: true,
+          endTime: true,
+          timeIsSet: true,
+          entityType: true,
         },
       });
       if (!locked) {
@@ -901,6 +916,29 @@ export class GameUpdateService {
       ) {
         const synced = await syncGameBookingState(tx, id);
         bookingStatusBeforeSync = synced.previousBookingStatus;
+      }
+
+      // Time change: read the schedule as persisted — the
+      // booking sync above may have re-derived it from linked bookings — and
+      // compare with what was in force under the row lock.
+      if (patchTouchesSchedule) {
+        const persisted = await tx.game.findUnique({
+          where: { id },
+          select: { startTime: true, endTime: true, timeIsSet: true },
+        });
+        if (persisted) {
+          scheduleChange = await recordScheduleChangeInTx(tx, {
+            gameId: id,
+            entityType: locked.entityType,
+            editorUserId: userId,
+            previous: {
+              startTime: locked.startTime,
+              endTime: locked.endTime,
+              timeIsSet: locked.timeIsSet,
+            },
+            next: persisted,
+          });
+        }
       }
 
       // Keep podium sync in the same transaction as resultsStatus so FINAL never
@@ -1066,11 +1104,13 @@ export class GameUpdateService {
       try {
         const user = await prisma.user.findUnique({
           where: { id: userId },
-          select: { language: true, currentCityId: true }
+          select: { language: true }
         });
 
         const lang = user?.language || 'en';
-        const timezone = await getUserTimezoneFromCityId(user?.currentCityId ?? null);
+        // The game's own city: "changed to 18:00" means 18:00 where the game
+        // is played, not in the editor's home city.
+        const timezone = await getUserTimezoneFromCityId(updatedGame.cityId ?? null);
         const dateLabel = await getDateLabelInTimezone(newStartTime, timezone, lang, false);
         const timeStr = await formatDateInTimezone(newStartTime, 'HH:mm', timezone, lang);
         const dateTime = `${dateLabel} ${timeStr}`;
@@ -1080,12 +1120,31 @@ export class GameUpdateService {
           variables: { dateTime }
         });
 
-        notificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
-          console.error('Failed to send notification for date/time change:', error);
-        });
+        // The chat line stays the record for everyone. Its push/Telegram skips
+        // the editor, and — when the coalesced "time changed" notice is queued —
+        // the PLAYING players, who get that one notice instead of one ping per
+        // edit.
+        const excludeUserIds = [userId];
+        if (scheduleChange?.notice) {
+          for (const participant of updatedGame.participants) {
+            if (participant.status === 'PLAYING') excludeUserIds.push(participant.userId);
+          }
+        }
+
+        notificationService
+          .sendGameSystemMessageNotification(systemMessage, updatedGame, excludeUserIds)
+          .catch(error => {
+            console.error('Failed to send notification for date/time change:', error);
+          });
       } catch (error) {
         console.error('Failed to create system message for date/time change:', error);
       }
+    }
+
+    if (scheduleChange?.resetAttendance) {
+      await emitAttendanceResetForTimeChange(id, userId).catch((error) => {
+        console.error('[GameUpdateService] Failed to emit attendance reset', error);
+      });
     }
 
     if (bookingStatusBeforeSync !== undefined) {

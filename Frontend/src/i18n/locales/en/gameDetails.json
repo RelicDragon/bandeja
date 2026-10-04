@@ -114,6 +114,7 @@
     "linkedBookings": {
       "fullyCovered": "Fully booked",
       "notFullyCovered": "Not fully booked",
+      "timeMismatch": "Doesn't cover the game's new time. Update it with the club; the app won't change it.",
       "refreshAriaLabel": "Check reservation status",
       "refreshStillActive": "Reservation is still active in your club account",
       "refreshCheckFailed": "Could not check reservation status. Try again.",

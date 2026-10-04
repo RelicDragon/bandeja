@@ -61,7 +61,10 @@ assert.deepEqual([...PUSH_INVITE_ACTION_ALLOWED_ACTIONS.weather], ['keep']);
     action: 'keep' as const,
   };
   const token = signPushInviteActionToken(scope);
-  assert.deepEqual(verifyPushInviteActionToken(token), scope);
+  // `issuedAt` (the token's `iat`) rides along for stale-action checks.
+  const { issuedAt, ...verified } = verifyPushInviteActionToken(token);
+  assert.deepEqual(verified, scope);
+  assert.ok(issuedAt instanceof Date);
 }
 
 {

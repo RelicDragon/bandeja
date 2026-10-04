@@ -104,6 +104,7 @@
     "linkedBookings": {
       "fullyCovered": "Potpuno rezervisano",
       "notFullyCovered": "Nije potpuno rezervisano",
+      "timeMismatch": "Ne pokriva novo vreme igre. Izmeni je u klubu — aplikacija je ne menja.",
       "refreshAriaLabel": "Proveri status rezervacije",
       "refreshStillActive": "Rezervacija je i dalje aktivna na tvom klubskom nalogu",
       "refreshCheckFailed": "Status rezervacije nije moguće proveriti. Pokušaj ponovo.",

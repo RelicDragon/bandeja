@@ -153,6 +153,24 @@ viewer has joined that game, and never on a stranger's.
 
 Public rate and counters: [social-and-profile.md](./social-and-profile.md).
 
+### Time change
+
+The owner (or an admin) is authoritative over the schedule. There is **no proposal or reconfirmation flow** — no "propose a new time", no yes/no replies, no apply step. Editing the time in the existing edit flow *is* the change, and three things happen on top of it. All of it lives in the shared update path, `GameUpdateService.updateGame` → `Backend/src/services/gameTimeChange/`, so the game page, league fixture edits, series "this and following" edits, club admin and the AI agent's update/reschedule tools all inherit it.
+
+What counts (`classifyScheduleChange`, entity types with attendance only — not EVENT / LEAGUE_SEASON), comparing the persisted schedule after the update (a linked-booking sync can re-derive times) with the one in force under the row lock:
+
+| Edit | Reset answers | Notice |
+|------|---------------|--------|
+| Time set before and after, start **or** end moved | yes | yes |
+| Time cleared (`timeIsSet` true → false) or set for the first time | yes | no |
+| Same times re-sent, placeholder times moving on a TBD game, any non-time edit | no | no |
+
+1. **Attendance reset.** Every PLAYING answer goes back to `UNANSWERED` (`attendanceUpdatedAt = null`) through the allow-listed `buildAttendanceResetUpdate`, inside the update transaction. The editor keeps their own answer (they picked the time), and the owner keeps reading `CONFIRMED` because that yes is derived. Seats, queue, roles and no-show notes never move. `GameTimeChange.attendanceResetAt` is stamped, and an attendance action issued before it — the push token's `iat`, the Telegram message date — answers `errors.attendance.timeChanged` instead of recording an answer for the old time. A `game-attendance-updated` event follows so open pages refetch.
+2. **One notice.** `GAME_TIME_CHANGED` (preference `sendReminders`, Time-critical tier) goes to PLAYING participants except the editor — never the queue, invitees or a `NON_PLAYING` trainer. Edits coalesce: the first edit opens a 60 s quiet window that slides with each further edit, capped 5 min after the first; `GameTimeChangeScheduler` (every 20 s) claims due rows by `version` and revalidates against the game *now*. The notice carries the final time and the time players were last told; an edit reverted inside the window, a cleared time, a started or locked game sends nothing. The body says "now X (was Y)"; players other than the owner are asked "Are you coming?" (Telegram adds the `at:` buttons). The push `deliveryKey` is per game, so a later notice replaces an earlier one on the lock screen. While the notice is queued, the `GAME_DATE_TIME_CHANGED` chat line still posts for everyone but its push/Telegram skips the PLAYING players (and always the editor), so nobody gets one ping per edit. The chat line's time is rendered in the game's city timezone.
+3. **Linked bookings are flagged, never moved.** Coverage is recalculated by the existing booking sync (`EXTERNAL_FULL` → `EXTERNAL_PARTIAL`, organizer next steps "See bookings"). `findLinkedBookingsNeedingAttention` (`Frontend/shared/gameBooking/evaluateLinkedBookingCoverage.ts`) flags each booking that does not span the new window when the set as a whole no longer covers it; on game details the linked-bookings section opens and each such row says it no longer covers the game's time. A booker who gets the notice is told their booking needs updating with the club. No reservation is moved or cancelled.
+
+Not covered: times re-derived by linking/unlinking a booking (`PATCH /games/:id/bookings`, link-booking) do not go through this path.
+
 ## Game series (recurrence)
 
 A **`GameSeries`** is an organizer-owned recurrence that spawns one ordinary `Game` per occurrence. An occurrence is a normal `GAME` / `TRAINING` / `TOURNAMENT` row with its own roster, results, rating, chat and booking, and every existing rule applies to it unchanged. Flag: `GAME_SERIES_ENABLED` / `VITE_GAME_SERIES_ENABLED` — off means 404, not an empty shell.

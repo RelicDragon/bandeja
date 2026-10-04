@@ -60,6 +60,7 @@
       "generic": "No se pudo guardar tu respuesta",
       "notParticipant": "Solo los jugadores de este partido pueden responder",
       "answersClosed": "Las confirmaciones de asistencia están cerradas para este partido",
+      "timeChanged": "La hora del partido ha cambiado. Responde de nuevo desde el último mensaje.",
       "noShowWindowClosed": "El plazo para marcar una ausencia ha terminado",
       "nudgeCooldown": "Has avisado hace poco. Inténtalo más tarde.",
       "nothingToNudge": "Todos ya han respondido"

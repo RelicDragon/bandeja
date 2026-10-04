@@ -60,6 +60,7 @@
       "generic": "Tvou odpověď se nepodařilo uložit",
       "notParticipant": "Odpovídat mohou jen hráči tohoto zápasu",
       "answersClosed": "Potvrzování účasti je pro tento zápas uzavřené",
+      "timeChanged": "Čas zápasu se změnil. Odpověz znovu z nejnovější zprávy.",
       "noShowWindowClosed": "Lhůta pro označení neúčasti vypršela",
       "nudgeCooldown": "Nedávno jsi připomínal. Zkus to později.",
       "nothingToNudge": "Všichni už odpověděli"

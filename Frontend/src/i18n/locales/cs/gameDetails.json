@@ -101,6 +101,7 @@
     "linkedBookings": {
       "fullyCovered": "Plně rezervováno",
       "notFullyCovered": "Není plně rezervováno",
+      "timeMismatch": "Nepokrývá nový čas zápasu. Uprav ji v klubu — aplikace ji nemění.",
       "refreshAriaLabel": "Zkontrolovat stav rezervace",
       "refreshStillActive": "Rezervace je stále aktivní ve vašem klubovém účtu",
       "refreshCheckFailed": "Stav rezervace se nepodařilo ověřit. Zkuste to znovu.",

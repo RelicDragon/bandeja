@@ -27,6 +27,7 @@ import { GameSeriesScheduler } from './services/gameSeries/gameSeriesScheduler.s
 import { CostShareReminderScheduler } from './services/gameCost/costShareReminderScheduler.service';
 import { AgentMemoryConsolidationScheduler } from './services/agent/agentMemoryConsolidationScheduler.service';
 import { MonthlyRecapScheduler } from './services/recap/monthlyRecapScheduler.service';
+import { GameTimeChangeScheduler } from './services/gameTimeChange/gameTimeChangeScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
@@ -128,6 +129,9 @@ const startServer = async () => {
     const monthlyRecapScheduler = new MonthlyRecapScheduler();
     monthlyRecapScheduler.start();
 
+    const gameTimeChangeScheduler = new GameTimeChangeScheduler();
+    gameTimeChangeScheduler.start();
+
     // Create HTTP server
     const httpServer = createServer(app);
     
@@ -188,6 +192,7 @@ const startServer = async () => {
         costShareReminderScheduler.stop();
         agentMemoryConsolidationScheduler.stop();
         monthlyRecapScheduler.stop();
+        gameTimeChangeScheduler.stop();
         stopQueueWorkers();
         telegramBotService.stop();
         pushNotificationService.shutdown();

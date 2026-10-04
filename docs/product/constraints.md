@@ -155,7 +155,7 @@ Access JWTs stay short-lived (`DEFAULT_JWT_ACCESS_EXPIRES_IN` `30m`). Clients ro
 
 ## PRD 345–357 invariants
 
-Added with the 13-PRD programme (`docs/plans/prd-345-357/`). Each of these was a real defect found in audit before it was closed — they are not theoretical.
+Added with the 13-PRD programme (PRDs 345–357). Each of these was a real defect found in audit before it was closed — they are not theoretical.
 
 ### Attendance is a courtesy signal, never a contract
 
@@ -165,6 +165,10 @@ The **owner's yes is implicit and derived, never stored**: the owner is not aske
 
 - Rules: `Backend/src/services/gameAttendance/attendanceRules.ts`
 - Enforced three ways: a runtime allow-list, a source scan over `services/gameAttendance/`, and `gameAttendance.invariants.integration.test.ts`, which snapshots the roster, users, sport profiles and game before and after every operation
+
+### A time change resets attendance and never moves a booking
+
+The owner (or an admin) is authoritative over the schedule: there is no proposal or reconfirmation flow, an edit simply *is* the new time. When start/end moves on a game with a set time, every PLAYING answer is cleared (the editor's own answer and the owner's derived yes survive), attendance buttons sent before the change are refused (`GameTimeChange.attendanceResetAt` vs the push token `iat` / Telegram message date), and PLAYING players except the editor get **one** coalesced "time changed" notice. Linked bookings are only *flagged* when they no longer cover the game — the app never moves or cancels a reservation. The logic lives in the shared update path (`GameUpdateService.updateGame` → `services/gameTimeChange/`), so every caller (game page, league fixtures, series edits, club admin, AI agent tools) inherits it; do not re-implement it per surface. The reset still goes through the attendance allow-list (`buildAttendanceResetUpdate`), and the notice claim is a durable versioned row, never an in-process set. Detail: [games.md](../domains/games.md#time-change).
 
 ### Coins: atomic, idempotent, and authorised server-side
 

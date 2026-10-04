@@ -23,6 +23,7 @@ import {
   attendanceRateWindowStart,
   buildAnswerUpdate,
   buildAttendanceCallbackData,
+  buildAttendanceResetUpdate,
   buildNoShowNoteUpdate,
   buildNoShowUndoUpdate,
   computeAttendanceRate,
@@ -60,6 +61,9 @@ assert.deepEqual(buildNoShowNoteUpdate('user_1', NOW), {
   noShowNotedAt: NOW,
 });
 assert.deepEqual(buildNoShowUndoUpdate(), { noShowNotedById: null, noShowNotedAt: null });
+// Time change — a moved game clears the answer and nothing else (no-show
+// notes, seat, queue and rating are outside the patch).
+assert.deepEqual(buildAttendanceResetUpdate(), { attendance: 'UNANSWERED', attendanceUpdatedAt: null });
 
 /* ------------------------------------------------------------------ */
 /* The write allow-list                                                */
@@ -409,7 +413,7 @@ for (const file of sourceFiles) {
 
   // Every participant write goes through a guarded builder.
   const participantWrites = source.match(/gameParticipant\.update(Many)?\(/g) ?? [];
-  const guardedWrites = source.match(/data: build(AnswerUpdate|NoShowNoteUpdate|NoShowUndoUpdate)\(/g) ?? [];
+  const guardedWrites = source.match(/data: build(AnswerUpdate|NoShowNoteUpdate|NoShowUndoUpdate|AttendanceResetUpdate)\(/g) ?? [];
   assert.equal(
     participantWrites.length,
     guardedWrites.length,

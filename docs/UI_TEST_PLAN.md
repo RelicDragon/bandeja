@@ -102,7 +102,7 @@ Frontend/e2e/
 - `@two devices` — iPhone (Capacitor or web) + paired Apple Watch on same account
 - `@watch` — Apple Watch scoring app (BandejaWatch)
 - `@widget` — Capacitor home-screen Next Game widget (iOS and/or Android device)
-- `@shade` — a notification **action button** in the OS shade / lock screen. `invite_actions`, `play_intent_actions` and `attendance_actions` are wired natively; series and weather actions currently exist on Telegram and in-app only (`docs/product/not-shipped.md`)
+- `@shade` — a notification **action button** in the OS shade / lock screen. `invite_actions`, `play_intent_actions`, `attendance_actions`, `series_actions` and `weather_actions` / `weather_organizer_actions` are wired natively (`docs/domains/notifications.md`)
 
 ---
 
@@ -542,7 +542,7 @@ Push: `PN-RC-01`–`PN-RC-03` in §18.8. Archive: `PR-RC-01`–`PR-RC-05` in §1
 
 ### 6.8 AI assistant (`/?tab=ai`, `/ai/:chatId`)
 
-Plan: `docs/plans/ai-agent.md`. Always on for every signed-in user (no flag or allowlist). Run every case on iOS, Android and web.
+Always on for every signed-in user (no flag or allowlist). Run every case on iOS, Android and web.
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
@@ -659,7 +659,7 @@ Plan: `docs/plans/ai-agent.md`. Always on for every signed-in user (no flag or a
 | AI-66 | Voice on devices | iOS (17+ and an older iOS if available), Android, web Chrome / Safari; with and without headphones / Bluetooth | Reply audible on the loudspeaker (not the earpiece) while the mic is open; mute button stops listening (orb grey) and tap unmutes; Arabic mirrors the dock; all 11 languages translated |
 | AI-14a | Context meter | Open any chat; then a new chat and send a message | Hidden while the chat has used 0 tokens (new chat, or old chats before their next reply); after the first reply it grows in beside ⋯ and its arc fills from empty. Gray under 50%, yellow 50–74%, red ≥ 75% of `AGENT_CONTEXT_WINDOW_TOKENS` (latest model call's prompt + reply, `AgentRun.contextTokens`); updates after each reply |
 | AI-14b | Long-chat hint | Chat at ≥ 50% context | Hint slides in above the composer (amber; red with a stronger text at ≥ 75%) with **New chat**; no close button, it stays until a new chat. **New chat** creates a chat and opens it in place (Back goes to the list) |
-| AI-14c | Context details | Tap the donut | Sheet: % + used / window tokens, explanation; Daily limit bar (used / budget, all chats + web charges), tokens left, reset time (UTC midnight in local time + countdown); **New chat** button |
+| AI-14c | Context details | Tap the donut | Sheet: % + used / window tokens, explanation; Daily limit bar (used / the user's own budget — an admin sees the admin tier, a user with a `AGENT_USER_DAILY_TOKEN_BUDGETS` entry sees that number; all chats + web / voice charges), tokens left, reset time (UTC midnight in local time + countdown); **New chat** button |
 
 ---
 
@@ -1149,6 +1149,7 @@ Gated on `VITE_GAME_SERIES_ENABLED` (frontend) and `GAME_SERIES_ENABLED` (backen
 | GD-86b | Linked booking occupancy pill | Game details “From your reservations” row for a booking longer than the game window | Occupancy pill matches My Bookings for that reservation (partial when game covers only part of the slot) |
 | GD-89 | Linked bookings coverage badge | Game with linked bookings where count or booking window does not cover game courts/time; viewer owns linked reservation | Section header shows blue “Not fully booked” badge |
 | GD-90 | Linked bookings fully covered badge | Game with enough linked bookings spanning full `startTime`–`endTime` for required courts; viewer owns linked reservation | Section header shows green check “Fully booked” badge |
+| GD-90b | Linked booking left behind by a time change | Game with one linked reservation covering its time; owner edits the time with "change game time only" (keep the reservation) to a window the booking does not cover; viewer owns the reservation | Coverage badge turns blue "Not fully booked"; the "From your reservations" section is **open** on load; the booking row carries an amber "Doesn't cover the game's new time…" line; the reservation itself is unchanged at the club (same court and times); organizer next steps shows the booking row with "See bookings" |
 | GD-103 | Linked booking status in game info (non-owner) | Game with `linkedBookings`; viewer is not the Booktime reservation owner (participant, guest, or other user) | “From your reservations” section hidden; game info club row shows green “Fully booked” or blue “Not fully booked” badge instead of manual court booked text |
 | GD-117 | Court booking status change notify | Participant or waitlisted player on game; owner toggles court booked / links or unlinks reservation so `bookingStatus` changes | Game chat system message with new status; push + Telegram to playing + waitlist (not pending invites), same channels as club/date-time change |
 | GD-87 | Linked booking refresh (owner) | Game details linked booking that exists in viewer's Booktime account | Refresh icon on row; success toast if still active |
@@ -1648,6 +1649,9 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 | GD-AT-12 | Reduced motion | OS Reduce Motion on | States swap instantly with no height animation |
 | GD-AT-13 | RTL | App language العربية | Whole Players card mirrors: avatar on the right, money and Change on the left, nothing clipped |
 | GD-AT-14 | Themes | Light / Dark / Classic / Premium | Green / amber chips and the sky primary all keep 4.5:1 text contrast |
+| GD-AT-15 | Reminder shade answer | Receive the 24 h reminder push on a real device (iOS and Android), app in the background **and** force-quit; long-press / expand it | Two buttons, **I'm coming** and **Not sure yet**, labels in the app language. Tapping either answers without opening the app, the reminder goes away, and a quiet card reads "Seat confirmed 👍" / "Noted. You can confirm later."; game details then show the answer and the organizer's dot turns green / amber. Roster, seat and queue unchanged. `@shade` `@manual` |
+| GD-AT-16 | Reminder body tap | Tap the reminder body (not a button) | Opens that game's details, same as a reminder without buttons. `@shade` `@manual` |
+| GD-AT-17 | Shade answer offline / stale | Airplane mode → tap **I'm coming**; separately, leave the game and then tap the old reminder's button | Offline: no error shown, the answer did not land and can be given later in game details. Left game: the card is dismissed and nothing is re-added to the roster. `@shade` `@manual` |
 
 ### 9.12 Roster attendance dots
 
@@ -1693,6 +1697,22 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 | GD-AT-55 | Cooldown survives a reload | Reload | Still disabled — the cooldown is read back from the `ATTENDANCE_NUDGED` chat system message, not from memory |
 | GD-AT-56 | Everyone answered | Nudge with no unanswered players | "Everyone has already answered"; nothing is sent |
 | GD-AT-57 | No enforcement controls | Open Game settings | **No** attendance deadline control, **no** auto-release toggle, **no** attendance setting of any kind. If one appears, the case fails |
+
+### 9.13b Time change (owner/admin edits the time)
+
+No proposal or reconfirmation flow exists — the edit is the new time. Detail: `docs/domains/games.md#time-change`.
+
+| ID | Case | Steps | Expected |
+|----|------|-------|----------|
+| GD-TC-01 | Answers reset | Players A (I'm coming) and B (Not sure) on an upcoming game; owner moves the start by 2 h | A and B show no answer (empty ring) and are asked "Are you coming?" again; the owner still reads confirmed; seats, queue and no-show notes unchanged. Open pages update without reload (`game-attendance-updated`) |
+| GD-TC-02 | Editor keeps their answer | An admin who answered "I'm coming" moves the time | The admin's own answer stays; everyone else's is cleared |
+| GD-TC-03 | Non-time edit | Rename the game or change the price | No answer changes; no "time changed" push |
+| GD-TC-04 | One notice | Move the time, then fix it again within a minute | Players (not the editor, not queue/trainer) get **one** "Time changed" push/Telegram about a minute after the last edit, showing the final time and "was <original>"; the chat shows a date/time line per edit but PLAYING players get no push for those lines. `@manual` |
+| GD-TC-05 | Reverted edit | Move the time and move it back within a minute | No "Time changed" notice at all. `@manual` |
+| GD-TC-06 | Old button refused | Keep a 24 h reminder (push or Telegram) unanswered; owner moves the time; tap "I'm coming" on the **old** reminder | Telegram alert "The game time changed. Answer again from the latest message."; the shade action quietly does nothing; the answer stays empty. Answering from the new notice or in the app works. `@manual` |
+| GD-TC-07 | Notice tap | Tap the "Time changed" push | Opens the game details. `@shade` |
+| GD-TC-08 | Booker told | Player C attached the linked reservation; owner moves the game outside it | C's notice adds "Your court booking no longer covers the new time. Update it with the club." `@manual` |
+| GD-TC-09 | Time cleared | Owner clears the time (club admin "clear court" or time not set) | Answers cleared; no "Time changed" notice |
 
 Player card / profile: `PR-AT-01`–`PR-AT-07` in §13.4. Push and Telegram: `PN-AT-01`–`PN-AT-06` in §18.8.
 
@@ -2972,7 +2992,7 @@ Every action button below is a **signed push action token** (`kind` + `targetId`
 | X-54b | Admin via serve + tunnel | `./Admin/run-ssh.sh` → `./Admin/serve.sh` → open `http://127.0.0.1:9010/` → API `/api` → login | Login + admin API succeed (same-origin proxy to tunneled `:3000`) |
 | X-54c | Admin file:// blocked | Open `Admin/index.html` as `file://` | Blocking message; instructs serve.sh + `http://127.0.0.1:9010/` |
 | X-54d | Admin local backend | Backend on `:3000` → `./Admin/serve.sh --dev` → login API `/api` | Admin talks to local API via proxy |
-| X-54e | Admin AI agent audit | Admin → AI Agent → pick status / enter user id → Apply; click Details on a row | Actions table (time, user, tool, status badge, preview title) filtered; Details expands preview lines, args JSON, result; usage table shows daily tokens per user; Feedback per day shows thumbs up / down counts; Recent thumbs-down lists question, reply excerpt and comment (user id filter applies); no mutation buttons |
+| X-54e | Admin AI agent audit | Admin → AI Agent → pick status / enter user id / days → Apply; click Details on a row | Actions table (time, user, tool, status badge, preview title) filtered; Details expands preview lines, args JSON, result; Cost summary (est. total, budget tiers users / admins / overrides, price source + table), cost per day, per user (admin badge) and per model / reason ("no price" badge, "+n unpriced") tables follow the days and user id filters; usage table shows daily tokens and est. cost per user; Feedback per day shows thumbs up / down counts; Recent thumbs-down lists question, reply excerpt and comment (user id filter applies); no mutation buttons |
 
 ### 18.10 Software keyboard (Capacitor + mobile web, `@manual`)
 
@@ -3725,6 +3745,7 @@ Needs a DeepSeek key and a linked account. Behavior: [domains/agent.md § Telegr
 | T-AI-34 | Telegram 409 hand-off | Tap ✅ on an older card of a client-executed action | Alert "Only the app can make this change. Open it to confirm."; the card's buttons become ✖ Reject · 📱 Open in app (no error) |
 | T-AI-35 | Telegram unknown / partial | A client action whose lease expired unreported; a multi-court Nspadel/Weltner booking where only some courts were booked | "⚠️ Result unknown — check Connected clubs" + **🔌 Connected clubs** button; partial → "⚠️ Partly done" + the server message (e.g. "2 of 3 courts booked") + the create-game handoff button |
 | T-AI-36 | Telegram web sources | In Telegram: "What are the official padel serve rules?" | Under the answer: "🔎 Web search (Brave)" (or Tavily, ", cached" on a repeat) and up to 5 "• <title> — host" links (max 8 overall, "…and N more"); a read page adds "📄 Read: <host>". Links open in the browser |
+| T-AI-37 | Telegram daily budget | Use up the daily budget (or set `AGENT_USER_DAILY_TOKEN_BUDGETS` = `{"<your id>": 0}` in Admin → Platform settings, wait ≤ 60 s), then ask in Telegram | "You've reached today's assistant limit. It resets at <time>." in your current city's time (a weekday when the reset is another local day); a run cut mid-way by the budget ends with the same line instead of "Something went wrong". Set the row back to `{}` → asking works again within a minute |
 
 ---
 

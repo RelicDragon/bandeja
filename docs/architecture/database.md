@@ -166,8 +166,9 @@ One-shot payout: `referredUserId` **unique** (idempotency key), `referrerUserId`
 |-------|-----|---------|
 | `SpotOpenedDelivery` | unique `[userId, gameId, dayKey, kind]` | "a spot opened" (`SpotOpenedKind` = which audience) |
 | `LiveGameNotifyDelivery` | unique `[userId, gameId]` | "someone you follow is live" |
+| `GameTimeChange` | `gameId` (1:1 with `Game`, Cascade) | Time change: `attendanceResetAt` (attendance actions issued earlier are stale) and the one pending "time changed" notice (`previousStartTime`/`EndTime` = what players were last told, `pendingSince`, `noticeDueAt`, `version` claim). See [games.md](../domains/games.md#time-change) |
 
-Both are persisted **on purpose**: the older reminder dedupe uses in-memory `Set`s and loses state on restart. Anything that must not double-fire uses a delivery table or a persisted timestamp.
+All are persisted **on purpose**: the older reminder dedupe uses in-memory `Set`s and loses state on restart. Anything that must not double-fire uses a delivery table or a persisted timestamp.
 
 ## Canonical enums (schema values)
 

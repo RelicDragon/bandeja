@@ -101,6 +101,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'Game not found',
     'errors.attendance.notSupported': 'Attendance is not available here',
     'errors.attendance.answersClosed': 'Attendance answers are closed for this game',
+    // Time change.
+    'timeChange.title': "Time changed",
+    'timeChange.body': "{{place}}: now {{newTime}} (was {{oldTime}})",
+    'timeChange.answerAgain': "Your earlier answer was cleared. Are you coming?",
+    'timeChange.bookingAttention': "Your court booking no longer covers the new time. Update it with the club.",
+    'errors.attendance.timeChanged': "The game time has changed. Answer again from the latest message.",
     'errors.attendance.notParticipant': 'Only players in this game can answer',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'Game not found',
@@ -477,6 +483,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'Игра не найдена',
     'errors.attendance.notSupported': 'Здесь подтверждение участия недоступно',
     'errors.attendance.answersClosed': 'Подтверждение участия для этой игры закрыто',
+    // Time change.
+    'timeChange.title': "Время изменено",
+    'timeChange.body': "{{place}}: теперь {{newTime}} (было {{oldTime}})",
+    'timeChange.answerAgain': "Ваш прошлый ответ сброшен. Вы придёте?",
+    'timeChange.bookingAttention': "Ваша бронь корта больше не покрывает новое время. Измените её в клубе.",
+    'errors.attendance.timeChanged': "Время игры изменилось. Ответьте ещё раз из последнего сообщения.",
     'errors.attendance.notParticipant': 'Отвечать могут только игроки этой игры',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'Игра не найдена',
@@ -850,6 +862,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'Igra nije pronađena',
     'errors.attendance.notSupported': 'Potvrda dolaska ovde nije dostupna',
     'errors.attendance.answersClosed': 'Potvrde dolaska za ovu igru su zatvorene',
+    // Time change.
+    'timeChange.title': "Vreme je promenjeno",
+    'timeChange.body': "{{place}}: sada {{newTime}} (bilo {{oldTime}})",
+    'timeChange.answerAgain': "Tvoj raniji odgovor je poništen. Dolaziš li?",
+    'timeChange.bookingAttention': "Tvoja rezervacija terena više ne pokriva novo vreme. Izmeni je u klubu.",
+    'errors.attendance.timeChanged': "Vreme igre je promenjeno. Odgovori ponovo iz najnovije poruke.",
     'errors.attendance.notParticipant': 'Odgovoriti mogu samo igrači ove igre',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'Igra nije pronađena',
@@ -1219,6 +1237,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'Partido no encontrado',
     'errors.attendance.notSupported': 'La confirmación de asistencia no está disponible aquí',
     'errors.attendance.answersClosed': 'Las confirmaciones de asistencia están cerradas para este partido',
+    // Time change.
+    'timeChange.title': "Cambio de hora",
+    'timeChange.body': "{{place}}: ahora {{newTime}} (antes {{oldTime}})",
+    'timeChange.answerAgain': "Tu respuesta anterior se ha borrado. ¿Vienes?",
+    'timeChange.bookingAttention': "Tu reserva de pista ya no cubre la nueva hora. Cámbiala con el club.",
+    'errors.attendance.timeChanged': "La hora del partido ha cambiado. Responde de nuevo desde el último mensaje.",
     'errors.attendance.notParticipant': 'Solo los jugadores de este partido pueden responder',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'Partido no encontrado',
@@ -1588,6 +1612,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'Zápas nenalezen',
     'errors.attendance.notSupported': 'Potvrzení účasti zde není dostupné',
     'errors.attendance.answersClosed': 'Potvrzování účasti je pro tento zápas uzavřené',
+    // Time change.
+    'timeChange.title': "Čas se změnil",
+    'timeChange.body': "{{place}}: nyní {{newTime}} (dříve {{oldTime}})",
+    'timeChange.answerAgain': "Tvoje dřívější odpověď byla smazána. Přijdeš?",
+    'timeChange.bookingAttention': "Tvoje rezervace kurtu už nepokrývá nový čas. Uprav ji v klubu.",
+    'errors.attendance.timeChanged': "Čas zápasu se změnil. Odpověz znovu z nejnovější zprávy.",
     'errors.attendance.notParticipant': 'Odpovídat mohou jen hráči tohoto zápasu',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'Hra nebyla nalezena',
@@ -1955,6 +1985,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'المباراة غير موجودة',
     'errors.attendance.notSupported': 'تأكيد الحضور غير متاح هنا',
     'errors.attendance.answersClosed': 'تأكيد الحضور مغلق لهذه المباراة',
+    // Time change.
+    'timeChange.title': "تغيّر الموعد",
+    'timeChange.body': "{{place}}: الآن {{newTime}} (كان {{oldTime}})",
+    'timeChange.answerAgain': "تم مسح إجابتك السابقة. هل ستحضر؟",
+    'timeChange.bookingAttention': "حجز الملعب الخاص بك لم يعد يغطي الموعد الجديد. عدّله مع النادي.",
+    'errors.attendance.timeChanged': "تغيّر موعد المباراة. أجب مرة أخرى من أحدث رسالة.",
     'errors.attendance.notParticipant': 'يمكن للاعبي هذه المباراة فقط الرد',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'لم يتم العثور على المباراة',
@@ -2319,6 +2355,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': '未找到比赛',
     'errors.attendance.notSupported': '此处不支持出席确认',
     'errors.attendance.answersClosed': '该比赛的出席确认已关闭',
+    // Time change.
+    'timeChange.title': "时间已更改",
+    'timeChange.body': "{{place}}：现在 {{newTime}}（原为 {{oldTime}}）",
+    'timeChange.answerAgain': "你之前的回复已清除。你会来吗？",
+    'timeChange.bookingAttention': "你的场地预订已不再覆盖新时间。请联系球馆修改。",
+    'errors.attendance.timeChanged': "比赛时间已更改。请在最新消息中重新回复。",
     'errors.attendance.notParticipant': '只有本场比赛的球员可以回答',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': '未找到该球局',
@@ -2688,6 +2730,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'Permainan tidak ditemukan',
     'errors.attendance.notSupported': 'Konfirmasi kehadiran tidak tersedia di sini',
     'errors.attendance.answersClosed': 'Konfirmasi kehadiran untuk permainan ini sudah ditutup',
+    // Time change.
+    'timeChange.title': "Waktu berubah",
+    'timeChange.body': "{{place}}: sekarang {{newTime}} (sebelumnya {{oldTime}})",
+    'timeChange.answerAgain': "Jawaban sebelumnya sudah dihapus. Kamu datang?",
+    'timeChange.bookingAttention': "Pemesanan lapanganmu tidak lagi mencakup waktu baru. Ubah dengan klub.",
+    'errors.attendance.timeChanged': "Waktu permainan telah berubah. Jawab lagi dari pesan terbaru.",
     'errors.attendance.notParticipant': 'Hanya pemain di permainan ini yang bisa menjawab',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'Permainan tidak ditemukan',
@@ -3057,6 +3105,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'खेल नहीं मिला',
     'errors.attendance.notSupported': 'यहाँ उपस्थिति पुष्टि उपलब्ध नहीं है',
     'errors.attendance.answersClosed': 'इस खेल के लिए उपस्थिति पुष्टि बंद है',
+    // Time change.
+    'timeChange.title': "समय बदल गया",
+    'timeChange.body': "{{place}}: अब {{newTime}} (पहले {{oldTime}})",
+    'timeChange.answerAgain': "आपका पिछला जवाब हटा दिया गया है। क्या आप आ रहे हैं?",
+    'timeChange.bookingAttention': "आपकी कोर्ट बुकिंग अब नए समय को कवर नहीं करती। क्लब से इसे बदलवाएँ।",
+    'errors.attendance.timeChanged': "खेल का समय बदल गया है। नवीनतम संदेश से फिर से जवाब दें।",
     'errors.attendance.notParticipant': 'केवल इस खेल के खिलाड़ी जवाब दे सकते हैं',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'गेम नहीं मिला',
@@ -3426,6 +3480,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': 'ไม่พบเกม',
     'errors.attendance.notSupported': 'ที่นี่ยืนยันการมาเล่นไม่ได้',
     'errors.attendance.answersClosed': 'ปิดการยืนยันการมาเล่นสำหรับเกมนี้แล้ว',
+    // Time change.
+    'timeChange.title': "เวลาเปลี่ยนแล้ว",
+    'timeChange.body': "{{place}}: ตอนนี้ {{newTime}} (เดิม {{oldTime}})",
+    'timeChange.answerAgain': "คำตอบก่อนหน้าของคุณถูกล้างแล้ว คุณจะมาไหม?",
+    'timeChange.bookingAttention': "การจองคอร์ตของคุณไม่ครอบคลุมเวลาใหม่แล้ว โปรดแก้ไขกับสโมสร",
+    'errors.attendance.timeChanged': "เวลาเกมเปลี่ยนแล้ว โปรดตอบใหม่จากข้อความล่าสุด",
     'errors.attendance.notParticipant': 'เฉพาะผู้เล่นในเกมนี้เท่านั้นที่ตอบได้',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'ไม่พบเกมนี้',
@@ -3795,6 +3855,12 @@ const translations: Record<string, Record<string, string>> = {
     'errors.attendance.gameNotFound': '試合が見つかりません',
     'errors.attendance.notSupported': 'ここでは参加確認を利用できません',
     'errors.attendance.answersClosed': 'この試合の参加確認は締め切られました',
+    // Time change.
+    'timeChange.title': "時間が変更されました",
+    'timeChange.body': "{{place}}：{{newTime}}に変更（変更前 {{oldTime}}）",
+    'timeChange.answerAgain': "以前の回答はリセットされました。参加しますか？",
+    'timeChange.bookingAttention': "コート予約が新しい時間をカバーしていません。クラブで変更してください。",
+    'errors.attendance.timeChanged': "試合の時間が変更されました。最新のメッセージから回答し直してください。",
     'errors.attendance.notParticipant': 'この試合の参加者のみ回答できます',
     // PRD 357 — weather alerts for outdoor games.
     'errors.weather.gameNotFound': 'ゲームが見つかりません',

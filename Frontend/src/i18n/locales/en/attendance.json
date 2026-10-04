@@ -60,6 +60,7 @@
       "generic": "Could not save your answer",
       "notParticipant": "Only players in this game can answer",
       "answersClosed": "Attendance answers are closed for this game",
+      "timeChanged": "The game time changed. Answer again from the latest message.",
       "noShowWindowClosed": "The no-show window has closed",
       "nudgeCooldown": "You nudged recently. Try again later.",
       "nothingToNudge": "Everyone has already answered"

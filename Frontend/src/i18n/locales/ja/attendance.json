@@ -60,6 +60,7 @@
       "generic": "回答を保存できませんでした",
       "notParticipant": "この試合の参加者のみ回答できます",
       "answersClosed": "この試合の参加確認は締め切られました",
+      "timeChanged": "試合の時間が変更されました。最新のメッセージから回答し直してください。",
       "noShowWindowClosed": "不参加を記録できる期間は終了しました",
       "nudgeCooldown": "最近リマインドしました。あとで試してください。",
       "nothingToNudge": "全員がすでに回答しています"

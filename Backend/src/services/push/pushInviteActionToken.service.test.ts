@@ -13,7 +13,20 @@ const scope = {
   action: 'accept' as const,
 };
 const token = signPushInviteActionToken(scope);
-assert.deepEqual(verifyPushInviteActionToken(token), scope);
+const withoutIssuedAt = ({ issuedAt: _issuedAt, ...rest }: PushInviteActionScope) => rest;
+const verified = verifyPushInviteActionToken(token);
+assert.deepEqual(withoutIssuedAt(verified), scope);
+// `issuedAt` comes from the JWT `iat` (whole seconds) — handlers use it to refuse
+// a button sent before the state it answers changed (attendance after a time change).
+assert.ok(verified.issuedAt instanceof Date);
+assert.ok(Math.abs(verified.issuedAt.getTime() - Date.now()) < 5000);
+// Passing `issuedAt` when signing never smuggles it into the token.
+assert.notEqual(
+  verifyPushInviteActionToken(
+    signPushInviteActionToken({ ...scope, issuedAt: new Date('2000-01-01T00:00:00Z') }),
+  ).issuedAt?.getUTCFullYear(),
+  2000,
+);
 assert.throws(() => verifyPushInviteActionToken(`${token}x`));
 assert.throws(() => verifyPushInviteActionToken('short'));
 
@@ -28,7 +41,7 @@ const widened: PushInviteActionScope[] = [
 ];
 for (const candidate of widened) {
   assert.deepEqual(
-    verifyPushInviteActionToken(signPushInviteActionToken(candidate)),
+    withoutIssuedAt(verifyPushInviteActionToken(signPushInviteActionToken(candidate))),
     candidate,
     `${candidate.kind}/${candidate.action} must round-trip`,
   );

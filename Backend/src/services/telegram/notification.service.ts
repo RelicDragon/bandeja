@@ -34,6 +34,10 @@ import {
   sendGameWeatherAlertTelegram,
   type WeatherAlertTelegramPayload,
 } from './notifications/game-weather-alert.notification';
+import {
+  sendGameTimeChangedTelegram,
+  type GameTimeChangedTelegramPayload,
+} from './notifications/game-time-changed.notification';
 import type { PlayIntentTelegramResult } from './notifications/play-intent.notification';
 import { NotificationType } from '../../types/notifications.types';
 
@@ -82,7 +86,11 @@ class TelegramNotificationService {
     await sendGameCard(api, gameId, telegramId);
   }
 
-  async sendGameSystemMessageNotification(message: any, game: any, excludeUserId?: string) {
+  async sendGameSystemMessageNotification(
+    message: any,
+    game: any,
+    excludeUserId?: string | readonly string[],
+  ) {
     if (!this.bot) return;
     await sendGameSystemMessageNotification(this.bot.api, message, game, excludeUserId);
   }
@@ -224,6 +232,14 @@ class TelegramNotificationService {
   ): Promise<boolean> {
     if (!this.bot) return false;
     return sendGameWeatherAlertTelegram(this.bot.api, payload);
+  }
+
+  /** Time change — "the time changed", with re-answer buttons. */
+  async sendGameTimeChangedNotification(
+    payload: GameTimeChangedTelegramPayload,
+  ): Promise<boolean> {
+    if (!this.bot) return false;
+    return sendGameTimeChangedTelegram(this.bot.api, payload);
   }
 }
 

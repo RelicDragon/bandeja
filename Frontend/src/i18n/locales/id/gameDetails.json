@@ -114,6 +114,7 @@
     "linkedBookings": {
       "fullyCovered": "Sudah penuh dipesan",
       "notFullyCovered": "Belum sepenuhnya dipesan",
+      "timeMismatch": "Tidak mencakup waktu baru permainan. Ubah dengan klub; aplikasi tidak mengubahnya.",
       "refreshAriaLabel": "Periksa status reservasi",
       "refreshStillActive": "Reservasi masih aktif di akun klub Anda",
       "refreshCheckFailed": "Tidak dapat memeriksa status reservasi. Coba lagi.",
