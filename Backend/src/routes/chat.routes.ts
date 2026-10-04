@@ -289,16 +289,18 @@ router.get(
 router.get('/games/:gameId/messages', getGameMessages);
 router.get('/bugs/:bugId/messages', getBugMessages);
 router.get('/games/:gameId/participants', getGameParticipants);
-router.get('/games/:gameId/unread-count', getGameUnreadCount); // legacy repair/debug — prefer GET /chat/unread-objects?shape=counts
+// Legacy unread endpoints: the current web client does not call them; old store builds do (#247,
+// docs/domains/chat.md "Legacy unread HTTP endpoints"). Keep until AppVersionRequirement excludes those builds.
+router.get('/games/:gameId/unread-count', getGameUnreadCount); // legacy: store builds <= 166
 router.post(
   '/games/unread-counts',
   validate([
     body('gameIds').isArray().withMessage('Game IDs must be an array'),
     body('gameIds.*').notEmpty().withMessage('Game ID cannot be empty')
   ]),
-  getGamesUnreadCounts // legacy repair/debug
+  getGamesUnreadCounts // legacy: store builds <= 119
 );
-router.get('/unread-count', getUnreadCount); // legacy repair/debug — prefer GET /chat/unread-totals or unread-objects?shape=counts
+router.get('/unread-count', getUnreadCount); // legacy: store builds <= 119 — use GET /chat/unread-totals or unread-objects?shape=counts
 router.get('/unread-totals', getUnreadTotals);
 router.post(
   '/list-row-previews',
@@ -410,7 +412,7 @@ router.delete(
 router.get('/user-chats', getUserChats);
 router.get('/user-chats/with/:userId', getOrCreateChatWithUser);
 router.get('/user-chats/:chatId/messages', getUserChatMessages);
-router.get('/user-chats/:chatId/unread-count', getUserChatUnreadCount); // legacy repair/debug
+router.get('/user-chats/:chatId/unread-count', getUserChatUnreadCount); // legacy: store builds <= 166
 router.post('/user-chats/:chatId/mark-all-read', markUserChatAsRead);
 router.post('/user-chats/:chatId/pin', pinUserChat);
 router.delete('/user-chats/:chatId/pin', unpinUserChat);
@@ -425,7 +427,7 @@ router.post(
   respondToChatRequest
 );
 router.post(
-  '/user-chats/unread-counts', // legacy repair/debug
+  '/user-chats/unread-counts', // legacy: every store build <= 244 (playersStore.addChat)
   validate([
     body('chatIds').isArray().withMessage('Chat IDs must be an array'),
     body('chatIds.*').notEmpty().withMessage('Chat ID cannot be empty')

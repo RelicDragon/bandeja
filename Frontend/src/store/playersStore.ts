@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { chatApi, type ChatMessage, UserChat } from '@/api/chat';
 import { usersApi, type InvitablePlayer, type NearbyInvitableCity } from '@/api/users';
 import { useAuthStore } from './authStore';
-import { useUnreadStore } from '@/store/unreadStore';
+import { selectContextUnread } from '@/store/unreadStore';
 import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
 import { mergeInvitablePlayer } from '@/utils/mergeInvitablePlayer';
@@ -368,19 +368,11 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       };
     });
 
-    try {
-      const unreadResponse = await chatApi.getUserChatsUnreadCounts([chat.id]);
-      const n = unreadResponse.data?.[chat.id];
-      if (n != null && n > 0) {
-        useUnreadStore.getState().applySocketDelta({
-          contextType: 'USER',
-          contextId: chat.id,
-          unreadCount: n,
-        });
-        syncUserThreadIndexFromUnreadMap({ [chat.id]: n });
-      }
-    } catch (error) {
-      console.error('Failed to fetch unread count for new chat:', error);
+    // Unread authority is the snapshot + socket store (GET /chat/unread-objects), which
+    // already covers every USER context; no legacy per-chat unread fetch (#247).
+    const n = selectContextUnread('USER', chat.id);
+    if (n > 0) {
+      syncUserThreadIndexFromUnreadMap({ [chat.id]: n });
     }
   },
 

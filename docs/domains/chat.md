@@ -192,6 +192,20 @@ FE: `unreadStore.ts` (thin Zustand over `unreadProjection.ts`) + `unreadSnapshot
 
 BE authority: `unreadAuthority/`, `unreadSnapshot.service.ts`. Unread SQL is cursor-only (`chatReadUnreadSql.ts`).
 
+**Legacy unread HTTP endpoints (#247).** Clients read unread state from `GET /chat/unread-objects?shape=counts|objects` and `GET /chat/unread-totals`, and get mark-read authority envelopes from the mark-read responses. The current web client calls none of the endpoints below. They stay because shipped store builds call them, and those builds run their own bundled web code with no OTA update (`docs/APP_RELEASE.md`). Remove an endpoint only after `AppVersionRequirement.minBuildNumber` excludes every build that calls it. Do not return 410, because old apps would show broken badges.
+
+| Endpoint | Last store build that calls it |
+|----------|-------------------------------|
+| `GET /chat/unread-count` | 119 (0.96.0) |
+| `POST /chat/games/unread-counts` | 119 |
+| `POST /group-channels/unread-counts` | 119 |
+| `GET /chat/games/:gameId/unread-count` | 166 (0.96.52) |
+| `GET /chat/user-chats/:chatId/unread-count` | 166 |
+| `GET /group-channels/:id/unread-count` | 166 |
+| `POST /chat/user-chats/unread-counts` | 244 (0.97.62); the next store build stops calling it |
+
+On 2026-10-05, iOS `minBuildNumber` was 115 and Android was 120. Active iOS builds 115–145 still sent traffic to these endpoints.
+
 ## Game chat lifecycle
 
 From CONTEXT.md. `GameChatViewerAccessService.resolve`:

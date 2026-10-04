@@ -4,7 +4,6 @@ import { emptyUnreadTotals } from '@/services/chat/unreadSnapshot';
 
 const applySocketDeltaMock = vi.fn();
 const refreshAllMock = vi.fn().mockResolvedValue(undefined);
-const getUnreadCountForContextMock = vi.fn().mockResolvedValue(0);
 
 const baseByContext: Record<string, number> = {};
 const displayedByContext: Record<string, number> = {};
@@ -56,7 +55,6 @@ vi.mock('@/services/chat/unreadProjectionEffects', () => ({
 
 vi.mock('@/api/chat', () => ({
   chatApi: {
-    getUnreadCountForContext: (...args: unknown[]) => getUnreadCountForContextMock(...args),
     markContextRead: vi.fn().mockResolvedValue({}),
   },
 }));
@@ -89,7 +87,6 @@ describe('unreadCoordinator Phase 0 harm-reduction (#236)', () => {
   beforeEach(() => {
     applySocketDeltaMock.mockClear();
     refreshAllMock.mockClear();
-    getUnreadCountForContextMock.mockClear();
     Object.keys(baseByContext).forEach((k) => delete baseByContext[k]);
     Object.keys(displayedByContext).forEach((k) => delete displayedByContext[k]);
   });
@@ -102,7 +99,6 @@ describe('unreadCoordinator Phase 0 harm-reduction (#236)', () => {
     expect(applySocketDeltaMock).toHaveBeenCalledWith(
       expect.objectContaining({ unreadCount: 0, clock: authorityAck.clock })
     );
-    expect(getUnreadCountForContextMock).not.toHaveBeenCalled();
     expect(refreshAllMock).not.toHaveBeenCalled();
   });
 
@@ -111,7 +107,6 @@ describe('unreadCoordinator Phase 0 harm-reduction (#236)', () => {
 
     onMarkReadBatchFlushSuccess(key, authorityAck);
 
-    expect(getUnreadCountForContextMock).not.toHaveBeenCalled();
     expect(refreshAllMock).not.toHaveBeenCalled();
   });
 
@@ -123,7 +118,6 @@ describe('unreadCoordinator Phase 0 harm-reduction (#236)', () => {
     expect(applySocketDeltaMock).toHaveBeenCalledWith(
       expect.objectContaining({ unreadCount: 0, clock: authorityAck.clock })
     );
-    expect(getUnreadCountForContextMock).not.toHaveBeenCalled();
     expect(refreshAllMock).not.toHaveBeenCalled();
   });
 
@@ -137,6 +131,5 @@ describe('unreadCoordinator Phase 0 harm-reduction (#236)', () => {
     onMarkReadBatchFlushFailure(key);
 
     expect(refreshAllMock).toHaveBeenCalled();
-    expect(getUnreadCountForContextMock).not.toHaveBeenCalled();
   });
 });

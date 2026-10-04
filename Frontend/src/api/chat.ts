@@ -640,34 +640,6 @@ export const chatApi = {
     return { groupChannels: {}, userChats: {} };
   },
 
-  getUnreadCount: async () => {
-    const cacheKey = 'unread-count-global';
-    const cached = unreadCountCache.get(cacheKey);
-    const now = Date.now();
-
-    if (cached && (now - cached.timestamp) < UNREAD_COUNT_CACHE_TTL) {
-      return cached.data;
-    }
-
-    if (unreadApiCacheState.unreadCountPromise) {
-      return unreadApiCacheState.unreadCountPromise;
-    }
-
-    unreadApiCacheState.unreadCountPromise = api.get<ApiResponse<{ count: number }>>('/chat/unread-count').then(response => {
-      unreadCountCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
-      setTimeout(() => {
-        unreadCountCache.delete(cacheKey);
-        unreadApiCacheState.unreadCountPromise = null;
-      }, UNREAD_COUNT_CACHE_TTL);
-      return response.data;
-    }).catch(error => {
-      unreadApiCacheState.unreadCountPromise = null;
-      throw error;
-    });
-
-    return unreadApiCacheState.unreadCountPromise;
-  },
-
   getUnreadTotals: async () => {
     const cacheKey = 'unread-totals-global';
     const cached = unreadCountCache.get(cacheKey);
@@ -760,17 +732,6 @@ export const chatApi = {
     return response.data.data;
   },
 
-  getGameUnreadCount: async (gameId: string) => {
-    const response = await api.get<ApiResponse<{ count: number }>>(`/chat/games/${gameId}/unread-count`);
-    return response.data;
-  },
-
-  getGamesUnreadCounts: async (gameIds: string[]): Promise<Record<string, number>> => {
-    const response = await api.post<ApiResponse<Record<string, number>>>(`/chat/games/unread-counts`, { gameIds });
-    const body = response.data as ApiResponse<Record<string, number>> & Record<string, number>;
-    return (body?.data != null ? body.data : body) ?? {};
-  },
-
   markAllMessagesAsRead: async (gameId: string, chatTypes?: ChatType[]) => {
     const response = await api.post<ApiResponse<{ count: number }>>(`/chat/games/${gameId}/mark-all-read`, {
       chatTypes: chatTypes || []
@@ -807,16 +768,6 @@ export const chatApi = {
     );
     seedMaxPeerFromMessagesResponse(response.data);
     return response.data.data;
-  },
-
-  getUserChatUnreadCount: async (chatId: string) => {
-    const response = await api.get<ApiResponse<{ count: number }>>(`/chat/user-chats/${chatId}/unread-count`);
-    return response.data;
-  },
-
-  getUserChatsUnreadCounts: async (chatIds: string[]) => {
-    const response = await api.post<ApiResponse<Record<string, number>>>(`/chat/user-chats/unread-counts`, { chatIds });
-    return response.data;
   },
 
   markUserChatAsRead: async (chatId: string) => {
@@ -966,16 +917,6 @@ export const chatApi = {
     return response.data.data;
   },
 
-  getGroupChannelUnreadCount: async (id: string) => {
-    const response = await api.get<ApiResponse<{ count: number }>>(`/group-channels/${id}/unread-count`);
-    return response.data;
-  },
-
-  getGroupChannelsUnreadCounts: async (groupIds: string[]) => {
-    const response = await api.post<ApiResponse<Record<string, number>>>(`/group-channels/unread-counts`, { groupIds });
-    return response.data;
-  },
-
   markGroupChannelAsRead: async (id: string) => {
     const response = await api.post<ApiResponse<{ count: number }>>(`/group-channels/${id}/mark-read`);
     return response.data;
@@ -1098,22 +1039,6 @@ export const chatApi = {
 
   invalidateUnreadCache: () => {
     invalidateUnreadApiCache();
-  },
-
-  getUnreadCountForContext: async (contextType: ChatContextType, contextId: string): Promise<number> => {
-    if (contextType === 'GAME') {
-      const res = await chatApi.getGameUnreadCount(contextId);
-      return res.data?.count ?? 0;
-    }
-    if (contextType === 'USER') {
-      const res = await chatApi.getUserChatUnreadCount(contextId);
-      return res.data?.count ?? 0;
-    }
-    if (contextType === 'GROUP') {
-      const res = await chatApi.getGroupChannelUnreadCount(contextId);
-      return res.data?.count ?? 0;
-    }
-    return 0;
   },
 
   translateMessage: async (messageId: string) => {

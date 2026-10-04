@@ -12,14 +12,14 @@ describe('invalidateUnreadApiCache (Phase 0 #233)', () => {
   });
 
   it('clears count cache and in-flight promises', () => {
-    unreadCountCache.set('unread-count-global', { data: { count: 3 }, timestamp: Date.now() });
-    unreadApiCacheState.unreadCountPromise = Promise.resolve({ count: 3 });
+    unreadCountCache.set('unread-totals-global', { data: { total: 3 }, timestamp: Date.now() });
+    unreadApiCacheState.unreadTotalsPromise = Promise.resolve({ total: 3 });
     unreadApiCacheState.unreadObjectsInFlight.set('test', Promise.resolve({ success: true, data: {} } as never));
 
     invalidateUnreadApiCache();
 
     expect(unreadCountCache.size).toBe(0);
-    expect(unreadApiCacheState.unreadCountPromise).toBeNull();
+    expect(unreadApiCacheState.unreadTotalsPromise).toBeNull();
     expect(unreadApiCacheState.unreadObjectsInFlight.size).toBe(0);
   });
 });

@@ -22,7 +22,7 @@ router.get('/', authenticate, groupChannelController.getGroupChannels);
 router.get('/public', authenticate, groupChannelController.getPublicGroupChannels);
 
 router.post(
-  '/unread-counts',
+  '/unread-counts', // legacy: store builds <= 119 (#247) — use GET /chat/unread-objects
   authenticate,
   validate([
     body('groupIds').isArray().withMessage('groupIds must be an array'),
@@ -142,7 +142,7 @@ router.get(
 );
 
 router.get(
-  '/:id/unread-count',
+  '/:id/unread-count', // legacy: store builds <= 166 (#247) — use GET /chat/unread-objects
   authenticate,
   validate([
     param('id').notEmpty().withMessage('Group/Channel ID is required'),
