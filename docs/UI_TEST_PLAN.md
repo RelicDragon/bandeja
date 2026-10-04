@@ -3751,7 +3751,7 @@ Needs a DeepSeek key and a linked account. Behavior: [domains/agent.md § Telegr
 
 ---
 
-## 31. Novice mode — celebration, newcomer badge, organizer credit (PRD 358)
+## 31. Novice mode — celebration, newcomer badge, organizer credit, Welcome page, shell (PRD 358)
 
 Domain: `docs/domains/novice.md`. Seed a novice by setting `noviceRank` above `noviceMilestoneSeenRank` (and `noviceUnlockedAllAt = null`) on a user, or finalize results of a game the novice played. Rank-up push: `PN-NV-01`–`PN-NV-02` in §18.8.
 
@@ -3793,6 +3793,39 @@ Domain: `docs/domains/novice.md`. Seed a novice by setting `noviceRank` above `n
 | NV-OR-02 | Player card stat | Open that host's player card | The same count on the card header under the play streak |
 | NV-OR-03 | Zero | Host with no debuts | No chip at all |
 | NV-OR-04 | Trophy cabinet | Host earned Talent Scout / Ambassador | Cards render with placeholder art in the Talent Scout / Ambassador families; locked tiers show progress to the next tier on own profile |
+
+
+### 31.4 Welcome page (Newcomer home)
+
+Seed: a user with `noviceRank = 0`, `noviceUnlockedAllAt = null` (any account created after the migration with no counted game).
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| NV-WP-01 | Lands on Welcome | Finish onboarding as a new user (either closing choice), or open `/` as a Newcomer | Full-screen Welcome page: no app header, **no bottom tab bar**, no ads. Greeting with first name, avatar button top-end, ring **0 of 5 games to Regular**, ladder Newcomer → Debut → Rookie → Contender → Challenger → Regular with Newcomer lit |
+| NV-WP-02 | Onboarding "Play soon" | Pick **Play soon** on the last onboarding step | Welcome page with the Play Intent compose sheet open |
+| NV-WP-03 | No game yet | Newcomer with no upcoming game | No "Your first game" card; the two choices lead |
+| NV-WP-04 | Upcoming game | Join a game (or accept an invite), return home | **Your first game** card on top: game card (time, club), **Chat** → game chat, **Directions** (only when the club has coordinates or an address) → maps, **Open game** → details |
+| NV-WP-05 | Invites | Newcomer with a pending invite | Invites section with Accept / Decline (same gates as My: name, gender, overlap confirm) |
+| NV-WP-06 | I want to play | Tap **I want to play** | Compose sheet opens (city picker first when no city); below: the Play hero (becomes the live "looking" strip after sending) and **Beginner-friendly games this week** — only "Novices welcome" GAMEs with a free slot in the next 7 days, not ones you are in; **Join** joins with Find's gates and opens the game. Empty week → dashed empty note |
+| NV-WP-07 | I want to learn | Tap **I want to learn** | Upcoming trainings for the next 7 days (only your favorite trainer's when one is selected) and the trainers carousel; tapping a trainer selects / clears the favorite |
+| NV-WP-08 | Teaser | Scroll to **Unlocks as you play** | Locked tiles (Chats, Calendar, Rankings, Player comparison, Market, Leagues, Tournaments, Stories, Live now, Play streak, AI assistant) pop in one after another, each with a lock and the rank that reveals it, then "and more…". Reduce Motion → static grid |
+| NV-WP-09 | Profile | Tap the avatar | Own profile opens; back returns to Welcome |
+| NV-WP-10 | Show me everything | Tap **I know my way around — show me everything** → **Show everything** | Confirmation first (Cancel keeps Welcome). Confirm → Welcome fades out, full My tab with every tab; the tab bar slides up. Server `noviceUnlockedAllAt` set; no celebrations ever after (NV-CE-09). Offline → toast, Welcome stays |
+| NV-WP-11 | Mobile chrome | iPhone SE + notched phone, Android, العربية | Content below the status bar / notch and above the home indicator; RTL mirrors the ladder chevrons and arrows; nothing overlaps when the compose sheet raises the keyboard |
+
+### 31.5 Progressive shell, ads, deep links
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| NV-SH-01 | Tabs per rank | Set `noviceRank` 1 → 2 → 3 → 4 → 5 (seen = rank, so no celebration), reopen | Debut: **My, Find** · Rookie: + **Chats** · Contender: + **Top** · Challenger: + **Market** · Regular: all five. Unlock-all at any rank: all five |
+| NV-SH-02 | New tab animates in | Rank goes up while the app is open (finalize results, foreground) | After the celebration the new tab scales into the bar once; Reduce Motion → it just appears |
+| NV-SH-03 | My sections | Rank 1 | Progress card on top (rank, "N of 5 games to Regular", next rank's unlocks, show-everything link); Play hero, Browse games, invites, games list. No stories rail, ads, live rail, teams section or league cards; no calendar (list view, calendar toggle hidden). Rank 4 → stories, live rail, teams, leagues appear; still no ads |
+| NV-SH-04 | My sub-tabs | Rank 1–4 | Header switch shows Calendar + Past only; **AI** appears at Regular. Opening `/?tab=ai` by link still shows the AI tab |
+| NV-SH-05 | Create menu | Tap **+** at rank 1, 2, 4, 5 | Rank 1: Bug only (+ Training for trainers). Rank 2: Game, Bar, Event, Group, Channel. Rank 4: + Story, Team, Listing. Regular: + Tournament, League (when allowed) |
+| NV-SH-06 | No ads for novices | Any novice rank, with an active campaign for your city | No ad card on My, Find, leaderboards; no ad tags on calendar days. Unlock-all or Regular → ads return |
+| NV-SH-07 | Deep links at rank 0 | As a Newcomer open: a game link, game chat push, DM push, invite link, `/find`, `/chats`, `/leaderboard`, `/marketplace`, a club page | Every screen opens normally (no redirect to Welcome); locked tabs render their page, just without a tab bar; back returns to Welcome |
+| NV-SH-08 | Deep links mid-rank | Rank 1, open `/marketplace` or `/leaderboard` by link | Page renders; bar shows only My + Find with neither highlighted |
+| NV-SH-09 | Existing players | Account from before the feature (backfilled `noviceUnlockedAllAt`) or an old API without novice fields | Nothing changes: full shell, ads, all create entries, no progress card |
 
 ---
 
