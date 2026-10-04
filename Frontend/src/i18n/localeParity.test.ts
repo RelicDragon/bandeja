@@ -76,7 +76,7 @@ const LEGACY_CLEAN_NAMESPACES = [
 /** Namespaces owned by the PRD 358–364 program (engagement weeks 1–5). */
 const ENGAGEMENT_NAMESPACES = ['organizerNextActions'] as const;
 
-/** AI agent chats (docs/plans/ai-agent.md). */
+/** AI agent chats. */
 const AGENT_NAMESPACES = ['agent'] as const;
 
 const NAMESPACES = [

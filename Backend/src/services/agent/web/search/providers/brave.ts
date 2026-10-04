@@ -1,6 +1,6 @@
 /**
- * Brave Search adapter (port of travel-bandeja `providers/braveSearch.js`,
- * docs/plans/ai-agent-web-search.md §13.3). Independent index, plain results.
+ * Brave Search adapter (port of travel-bandeja `providers/braveSearch.js`).
+ * Independent index, plain results.
  */
 import { WebSearchError, classifyHttpError, networkError } from '../webSearchError';
 import { clampCount, normalizeResults, timeoutSignal, type WebSearchProvider } from '../providerUtils';

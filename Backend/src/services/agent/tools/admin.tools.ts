@@ -1,5 +1,5 @@
 /**
- * Admin agent tools (phase 5a, docs/plans/ai-agent.md §5 v3): global admins
+ * Admin agent tools (phase 5a): global admins
  * (`User.isAdmin`) manage players and games by prompt.
  *
  *   - Every tool is `scope: 'admin'`: the registry leaves it out of non-admins' tool list and

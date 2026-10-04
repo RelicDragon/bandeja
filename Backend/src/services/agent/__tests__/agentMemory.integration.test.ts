@@ -1,6 +1,6 @@
 /**
  * Phase 11 memory, phases 1-2 (real dev DB + the HTTP app + the run loop with a scripted
- * LLM, no real model; docs/plans/ai-agent-memory.md):
+ * LLM, no real model):
  *   - registry: the four `kind:'memory'` tools, user scope, strict input, `memory-cases` coverage;
  *   - switch OFF: no prompt section, no memory tool listed (rule 6 / write tools unchanged),
  *     every handler refuses with 409 MEMORY_DISABLED (also with a stale principal), `executeTool`

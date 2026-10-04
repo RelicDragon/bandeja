@@ -2,7 +2,6 @@
  * Who the AI agent acts as. Loaded from the DB at run start (and again before a
  * confirmed write) — never taken from model output. No agent tool accepts a user id
  * or actor argument; every handler authorizes against this object.
- * See `docs/plans/ai-agent.md` §0.
  */
 import prisma from '../../../config/database';
 import { AUTH_USER_SELECT, assertUserActive } from '../../../middleware/authToken';

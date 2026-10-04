@@ -1,5 +1,5 @@
 /**
- * `list_cost_shares` (Phase 10, slice 10h, docs/plans/ai-agent-money.md): the organizer's
+ * `list_cost_shares` (Phase 10, slice 10h): the organizer's
  * cross-game view of the cost split ledger. Read only.
  *
  *   - Scope: one league season (`seasonId`, its fixtures; season OWNER/ADMIN or platform

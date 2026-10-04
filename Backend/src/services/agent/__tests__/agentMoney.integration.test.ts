@@ -1,6 +1,6 @@
 /**
  * Phase 10 money tools, slices 10a reads and 10b-10f writes (real dev DB + the HTTP app,
- * no LLM, no run queue; docs/plans/ai-agent-money.md §10.5):
+ * no LLM, no run queue):
  *   - registry: the three reads are registered, `money-read-cases` coverage, strict input;
  *   - visibility: a hidden private game is the same `not_found` as a missing id;
  *     `LEAGUE_SEASON` → unavailable `season` (HTTP 404);

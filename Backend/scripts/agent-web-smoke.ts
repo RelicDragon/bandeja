@@ -1,6 +1,6 @@
 /**
  * Manual smoke check of the agent web tools against the REAL services
- * (docs/plans/ai-agent-web-search.md §13.13). Not part of CI or any test script:
+ *. Not part of CI or any test script:
  * `npm run smoke:agent-web` (reads Backend/.env).
  *
  * One trivial query to Tavily and one to Brave, straight through the adapters (no chain,

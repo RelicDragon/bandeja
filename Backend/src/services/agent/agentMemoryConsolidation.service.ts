@@ -1,5 +1,5 @@
 /**
- * Weekly memory consolidation (Phase 11.4, docs/plans/ai-agent-memory.md §11.5 phase 4).
+ * Weekly memory consolidation (Phase 11.4).
  * A daily pass (`AgentMemoryConsolidationScheduler`) picks users whose last pass is 7+ days
  * old and whose notes changed since (content changes only: a `read_memory` bump keeps
  * `updatedAt`). Per user:

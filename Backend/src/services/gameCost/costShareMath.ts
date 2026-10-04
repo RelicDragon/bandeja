@@ -30,7 +30,7 @@ export function currencyMinorFactor(currency: PriceCurrency): number {
  *
  * `PER_TEAM` is deliberately absent: a team price only yields a game total when
  * the team count is known, and nothing on `Game` states it. Such games show no
- * cost card (documented in `docs/plans/prd-345-357/reports/prd-348.md`).
+ * cost card.
  */
 export const COST_SPLIT_PRICE_TYPES: readonly PriceType[] = ['TOTAL', 'PER_PERSON'];
 

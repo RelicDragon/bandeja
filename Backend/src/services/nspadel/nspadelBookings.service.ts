@@ -348,8 +348,7 @@ function bookingUnknown(): ApiError {
 }
 
 /**
- * Books one court slot at the club and keeps a local receipt (`NspadelBooking`, owner
- * decision #5 of docs/plans/ai-agent-booking.md). The receipt's `idempotencyKey` makes a
+ * Books one court slot at the club and keeps a local receipt (`NspadelBooking`). The receipt's `idempotencyKey` makes a
  * repeat of the same user slot safe:
  *   - CONFIRMED and the slot is still occupied upstream → the same receipt, no second insert;
  *   - CONFIRMED / REJECTED / UNKNOWN and the slot is free again → re-claimed and booked;

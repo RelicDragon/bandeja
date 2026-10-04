@@ -1,5 +1,5 @@
 /**
- * `get_weather` (slice 9d, docs/plans/ai-agent.md §16.4). Read-only, reuses the app's weather
+ * `get_weather` (slice 9d). Read-only, reuses the app's weather
  * services and their fetch + DB cache — no outbound call of its own:
  *   - `{gameId}` → agent visibility first (hidden = missing), then
  *     `WeatherForecastService.getWindowForGame` (what `GET /games/:id/weather` runs).

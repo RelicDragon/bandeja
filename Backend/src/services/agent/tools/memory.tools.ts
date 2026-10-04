@@ -1,5 +1,5 @@
 /**
- * Phase 11 memory tools (docs/plans/ai-agent-memory.md §11.3). `kind: 'memory'`: they touch
+ * Phase 11 memory tools. `kind: 'memory'`: they touch
  * only the signed-in user's own `AgentMemory` rows (no `userId` argument), never app data,
  * so there is no confirmation card. Listed only while `agentMemoryEnabled` is ON (registry);
  * every handler goes through `agentMemory.service.ts`, which re-reads the switch and refuses

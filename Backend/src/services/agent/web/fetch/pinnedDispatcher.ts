@@ -1,6 +1,6 @@
 /**
  * Pin TCP connects to the addresses `resolveHostSafety` approved (port of travel-bandeja
- * `webFetch/pinnedDispatcher.js`, docs/plans/ai-agent-web-search.md §13.7.2).
+ * `webFetch/pinnedDispatcher.js`).
  *
  * `fetch` would resolve DNS again after the check; an attacker-controlled name can answer
  * a public IP first and a private one second (rebinding TOCTOU). The undici connect lookup

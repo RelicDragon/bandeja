@@ -1,6 +1,6 @@
 /**
  * In-memory TTL cache + single-flight shared by web search and web fetch
- * (docs/plans/ai-agent-web-search.md §13.6; port of the `cache` / `inFlight` maps in
+ * (port of the `cache` / `inFlight` maps in
  * travel-bandeja `webSearchChain.js` and `webFetchService.js`).
  *
  * Per process on purpose: prod runs one pm2 process without `REDIS_URL`; with Redis every

@@ -1,5 +1,5 @@
 /**
- * URL helpers for the web tools (docs/plans/ai-agent-web-search.md §13.6; port of
+ * URL helpers for the web tools (port of
  * `safeHttpUrl` / `canonicalizeUrl` in travel-bandeja `webFetchService.js`).
  *
  * The canonical form is the identity used by the fetch cache AND the `web_fetch`

@@ -1,6 +1,5 @@
 /**
- * `web_fetch` page reader (port of travel-bandeja `webFetch/webFetchService.js`,
- * docs/plans/ai-agent-web-search.md §13.7.3).
+ * `web_fetch` page reader (port of travel-bandeja `webFetch/webFetchService.js`).
  *
  * `fetchWebPage(url)` downloads one page with manual redirects (≤ 5, cycle-proof), every
  * hop re-checked by the SSRF guard and connected through a pinned dispatcher; caps time,

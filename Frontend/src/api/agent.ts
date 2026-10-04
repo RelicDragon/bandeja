@@ -31,7 +31,7 @@ export interface AgentChatListData {
 const caps = { headers: { [AGENT_CLIENT_CAPS_HEADER]: AGENT_CLIENT_CAPS } };
 
 /**
- * AI agent chats (docs/plans/ai-agent.md). Wire types live in `@shared/agentContract`;
+ * AI agent chats. Wire types live in `@shared/agentContract`;
  * the run event stream is not here — it is a raw `fetch` in `features/agent/useAgentStream.ts`.
  */
 export const agentApi = {

@@ -1,5 +1,5 @@
 /**
- * Agent DTO and entity ref of a booking (docs/plans/ai-agent-booking.md §14.6–14.7).
+ * Agent DTO and entity ref of a booking.
  * Only the server-minted `ref`: never the provider booking id, court external ids or tokens.
  */
 import { formatInTimeZone } from 'date-fns-tz';

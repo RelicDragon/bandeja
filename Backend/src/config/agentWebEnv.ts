@@ -1,5 +1,5 @@
 /**
- * Agent web search / web fetch env (docs/plans/ai-agent-web-search.md §13.12). Read live
+ * Agent web search / web fetch env. Read live
  * from `process.env` on every call, so tests and a pm2 restart flip it without a rebuild.
  * Key values are only ever compared with '' here; nothing logs them.
  */

@@ -20,7 +20,6 @@
  *
  * Anything not visible gets the exact 404 a missing id gets, so the agent can't be
  * used as a game-existence oracle. Template: `services/results/gameResultsAccess.ts`.
- * See `docs/plans/ai-agent.md` §0.2 and §3.
  */
 import {
   EntityType,

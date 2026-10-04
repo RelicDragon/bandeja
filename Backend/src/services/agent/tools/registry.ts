@@ -1,6 +1,6 @@
 /**
  * Built-in agent tool server: an in-process registry of MCP-style tool definitions
- * (docs/plans/ai-agent.md §1, §5).
+ *.
  *
  * Rules every tool follows:
  *   - The handler authorizes against `ctx.principal` (DB-loaded at run start). No tool
@@ -10,7 +10,7 @@
  *     return `awaitingConfirmation` with a saved `AgentPendingAction` id (phase 3).
  *   - `scope: 'admin'` tools are not even listed to non-admins, and `executeTool`
  *     refuses them for non-admins exactly like an unknown tool.
- *   - `kind: 'memory'` tools (Phase 11, docs/plans/ai-agent-memory.md) touch only the
+ *   - `kind: 'memory'` tools (Phase 11) touch only the
  *     user's own assistant memory: no confirmation card, never app data. They are listed
  *     only while the principal's memory switch is ON (`executeTool` refuses them like an
  *     unknown tool otherwise) and their handlers re-check the switch in the DB.

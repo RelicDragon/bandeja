@@ -1,6 +1,6 @@
 /**
- * UI strings of the agent's `cancel_game` tool (booking phase 7e, docs/plans/ai-agent-booking.md
- * §14.6), in the 11 app languages. English is the fallback for a missing language or key.
+ * UI strings of the agent's `cancel_game` tool (booking phase 7e), in the
+ * 11 app languages. English is the fallback for a missing language or key.
  * `sr` is Serbian Latin.
  */
 import { agentLang } from './agentI18n';

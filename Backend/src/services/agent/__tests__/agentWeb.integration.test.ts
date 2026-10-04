@@ -1,6 +1,5 @@
 /**
- * Phase 13 web tools (real dev DB, scripted LLM, NO network; docs/plans/ai-agent-web-search.md
- * §13.13). The search chain and the page fetcher are stubbed through `agentWebToolDeps`, and
+ * Phase 13 web tools (real dev DB, scripted LLM, NO network). The search chain and the page fetcher are stubbed through `agentWebToolDeps`, and
  * `globalThis.fetch` throws on any call, so a missed stub fails loudly instead of reaching a
  * provider. Covers: availability + forged calls, strict input, personal-data refusal (no
  * call, no row), result envelope + UI view, audit rows (hash, no query text, host only,

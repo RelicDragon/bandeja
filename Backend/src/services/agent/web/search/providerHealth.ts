@@ -1,6 +1,5 @@
 /**
- * Per-provider circuit breaker (port of travel-bandeja `providerHealth.js`,
- * docs/plans/ai-agent-web-search.md §13.5).
+ * Per-provider circuit breaker (port of travel-bandeja `providerHealth.js`).
  *
  * A failing provider cools down for `base(kind) × min(consecutiveFailures, 5)`, capped at
  * 15 min; a `Retry-After` from the provider wins exactly. One success resets it. Memory

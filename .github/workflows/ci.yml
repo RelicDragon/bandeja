@@ -56,7 +56,7 @@ jobs:
       - run: npm run test:play-intent
       - run: npm run test:auth-refresh
       - run: npm run test:auth-refresh-integration
-      # PRD 345-357 — one suite per PRD (see docs/plans/prd-345-357/).
+      # PRD 345-357 — one suite per PRD.
       - run: npm run test:series
       - run: npm run test:attendance
       - run: npm run test:cost-split
@@ -110,7 +110,7 @@ jobs:
       - run: npm run test:game-results-sync
       - run: npm run test:avatar-crop
       - run: npm run test:keyboard-layout
-      # PRD 345-357 — one suite per PRD (see docs/plans/prd-345-357/).
+      # PRD 345-357 — one suite per PRD.
       - run: npm run test:i18n-parity
       - run: npm run test:ui-kit
       - run: npm run test:card-enrichment

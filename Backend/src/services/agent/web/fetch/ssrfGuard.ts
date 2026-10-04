@@ -1,6 +1,5 @@
 /**
- * SSRF guard for `web_fetch` (port of travel-bandeja `webFetch/ssrfGuard.js`, tightened;
- * docs/plans/ai-agent-web-search.md §13.7.1).
+ * SSRF guard for `web_fetch` (port of travel-bandeja `webFetch/ssrfGuard.js`, tightened).
  *
  * `checkUrlShape` enforces the no-network rules (scheme, userinfo, default ports, no IP
  * literals, no internal / single-label names, refused domains). `resolveHostSafety`

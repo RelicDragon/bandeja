@@ -1,5 +1,5 @@
 /**
- * HTML → readable text for `web_fetch` (docs/plans/ai-agent-web-search.md §13.7.4).
+ * HTML → readable text for `web_fetch`.
  *
  * Replaces travel-bandeja's `contentExtractor.js` (cheerio + Readability + linkedom)
  * without new dependencies (decision D4): junk elements removed, main content picked

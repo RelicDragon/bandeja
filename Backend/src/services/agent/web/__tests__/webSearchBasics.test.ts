@@ -1,6 +1,6 @@
 /**
  * Web search building blocks (no network): error model, circuit breaker, rotation, TTL
- * cache, URL helpers, provider adapters (docs/plans/ai-agent-web-search.md §13.13).
+ * cache, URL helpers, provider adapters.
  */
 import assert from 'node:assert/strict';
 import { resolveAgentWebEnvConfig, isAgentWebSearchOn, isAgentWebFetchOn } from '../../../../config/agentWebEnv';

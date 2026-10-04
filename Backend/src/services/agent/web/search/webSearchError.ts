@@ -1,6 +1,5 @@
 /**
- * Error model of the web search chain (port of travel-bandeja `webSearchError.js`,
- * docs/plans/ai-agent-web-search.md §13.3 / §13.5).
+ * Error model of the web search chain (port of travel-bandeja `webSearchError.js`).
  *
  * Adapters throw a `WebSearchError` with raw HTTP facts; the chain classifies it and the
  * health tracker turns the kind into a cooldown. Messages are written by the adapters

@@ -1,5 +1,5 @@
 /**
- * Money tools (Phase 10, docs/plans/ai-agent-money.md): the cost split ledger only.
+ * Money tools (Phase 10): the cost split ledger only.
  *
  * Slice 10a, reads:
  *   - `list_my_cost_balances`: `getOwedSummary` (`GET /transactions/owed`), rows re-filtered

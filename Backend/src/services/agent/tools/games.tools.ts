@@ -1,7 +1,7 @@
 /**
  * Game read tools: `list_my_games`, `search_games`, `get_game`.
  * Visibility is always `agentVisibleGamesWhere` / `assertAgentCanViewGame` — stricter than
- * `GET /games/:id` (docs/plans/ai-agent.md §0.2).
+ * `GET /games/:id`.
  */
 import {
   EntityType,

@@ -1,6 +1,6 @@
 /**
  * Live provider calls from the slot engine are cached for 60 s per key (club, date, duration)
- * and rate-limited per provider (docs/plans/ai-agent-booking.md §14.9): one server IP acts
+ * and rate-limited per provider: one server IP acts
  * for many users, so a burst of agent searches must not hammer Nspadel or Weltner.
  * Concurrent callers of the same key share one in-flight request. In-process only: each
  * API/worker process has its own budget.

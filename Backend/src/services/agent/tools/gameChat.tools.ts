@@ -1,5 +1,5 @@
 /**
- * Game chat tools (slice 9c, docs/plans/ai-agent.md §16.3): `summarize_game_chat` (read)
+ * Game chat tools (slice 9c): `summarize_game_chat` (read)
  * and `post_to_game_chat` (write, standard). Only the game's main (PUBLIC) chat.
  *
  * Access is the chat API's own rule set (`GameChatViewerAccessService`, the check behind

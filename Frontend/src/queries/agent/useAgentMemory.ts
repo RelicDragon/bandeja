@@ -5,7 +5,7 @@ import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 
 /**
- * Assistant memory (Phase 11, docs/plans/ai-agent-memory.md §11.4): the Memory tab of
+ * Assistant memory (Phase 11): the Memory tab of
  * "Assistant settings" and the "Saved to memory · Undo" chip. The switch and deletes are
  * optimistic with rollback; the query only runs while the dialog is open.
  */

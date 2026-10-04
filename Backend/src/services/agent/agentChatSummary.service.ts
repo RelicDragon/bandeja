@@ -1,5 +1,5 @@
 /**
- * Rolling chat summary (Phase 11.4, docs/plans/ai-agent-memory.md §11.5 phase 4). Chat-scoped,
+ * Rolling chat summary (Phase 11.4). Chat-scoped,
  * not memory: it lives on `AgentChat.summary*` and only replaces the plain-truncation fold of
  * the turns that fell out of the replay window (`buildAgentModelHistory`).
  *

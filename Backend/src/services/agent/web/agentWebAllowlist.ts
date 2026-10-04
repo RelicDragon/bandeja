@@ -1,5 +1,5 @@
 /**
- * Which URLs `web_fetch` may read (docs/plans/ai-agent-web-search.md D1, §13.6):
+ * Which URLs `web_fetch` may read:
  *
  *   1. URLs a `web_search` returned earlier in THIS run (session set, so a fetch in the same
  *      step works before the TOOL message is saved);

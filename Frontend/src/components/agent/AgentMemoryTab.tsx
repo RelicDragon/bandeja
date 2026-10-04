@@ -23,7 +23,7 @@ import {
 import { agentMemoryErrorMessage } from './agentMemoryErrors';
 
 /**
- * Memory tab of "Assistant settings" (Phase 11, docs/plans/ai-agent-memory.md §11.4):
+ * Memory tab of "Assistant settings" (Phase 11):
  * the Allow memory switch with the disclosure, the list (dimmed while OFF; delete always,
  * edit only while ON), Remove all, and the Add form pinned at the bottom of the dialog. The
  * dialog is `cap-keyboard-aware-dialog`, so with the software keyboard up it sits on the

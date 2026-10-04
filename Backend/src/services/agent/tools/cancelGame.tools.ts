@@ -1,5 +1,5 @@
 /**
- * `cancel_game` (booking phase 7e, docs/plans/ai-agent-booking.md §14.2, §14.4, §14.6). Critical
+ * `cancel_game` (booking phase 7e). Critical
  * write: never auto-approved, no "Always allow".
  *
  * Guards (propose AND confirm, fresh principal at confirm), same as `DELETE /games/:id`:

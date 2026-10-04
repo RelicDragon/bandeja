@@ -1,5 +1,5 @@
 /**
- * UI strings of the agent's results tools (slice 9b, docs/plans/ai-agent.md §16.2):
+ * UI strings of the agent's results tools (slice 9b):
  * `get_game_results`, `enter_match_score`, `finish_results`, in the 11 app languages.
  * English is the fallback for a missing language or key. `sr` is Serbian Latin.
  */

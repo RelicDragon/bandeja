@@ -1,5 +1,5 @@
 /**
- * UI strings of the agent booking tools (phase 7, docs/plans/ai-agent-booking.md), in the 11
+ * UI strings of the agent booking tools (phase 7), in the 11
  * app languages. Kept apart from `agentI18n.ts` so the shared dictionary stays untouched.
  * English is the fallback for a missing language or key. `sr` is Serbian Latin.
  */

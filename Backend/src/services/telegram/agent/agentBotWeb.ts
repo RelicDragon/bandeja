@@ -1,6 +1,5 @@
 /**
- * Web sources block under a Telegram assistant answer (Phase 13,
- * docs/plans/ai-agent-web-search.md §13.11). Pure; built only from the server's `web` views
+ * Web sources block under a Telegram assistant answer (Phase 13). Pure; built only from the server's `web` views
  * of this run's `web_search` / `web_fetch` steps, never from model text.
  *
  *   🔎 Web search (Brave, cached)

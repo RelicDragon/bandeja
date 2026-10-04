@@ -1,6 +1,6 @@
 /**
  * Helpers shared by the search provider adapters (port of travel-bandeja
- * `providerUtils.js`, docs/plans/ai-agent-web-search.md §13.3). Adds a title cap and
+ * `providerUtils.js`). Adds a title cap and
  * de-duplication by canonical URL.
  */
 import type { AgentWebEnvConfig } from '../../../../config/agentWebEnv';

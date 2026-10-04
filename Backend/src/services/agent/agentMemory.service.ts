@@ -1,5 +1,5 @@
 /**
- * AI assistant memory (Phase 11, docs/plans/ai-agent-memory.md, docs/domains/agent.md "Memory").
+ * AI assistant memory (Phase 11, docs/domains/agent.md "Memory").
  * One service for the HTTP routes (`/agent/memory…`) and the model tools (`tools/memory.tools.ts`).
  *
  * Rules enforced here, whoever calls:

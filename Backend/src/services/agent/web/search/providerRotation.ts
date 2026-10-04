@@ -1,5 +1,5 @@
 /**
- * Provider rotation (docs/plans/ai-agent-web-search.md §13.4). travel-bandeja is "first
+ * Provider rotation. travel-bandeja is "first
  * healthy wins", so with two keys one provider serves everything. Here:
  *
  *   - `lru` (default): healthy candidates by least-recently-attempted first (a process-wide

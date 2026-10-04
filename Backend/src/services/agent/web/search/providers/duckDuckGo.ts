@@ -1,6 +1,6 @@
 /**
  * DuckDuckGo HTML adapter, the keyless last resort (port of travel-bandeja
- * `providers/duckDuckGoSearch.js`, docs/plans/ai-agent-web-search.md §13.3).
+ * `providers/duckDuckGoSearch.js`).
  *
  * Off by default (`AGENT_WEB_SEARCH_DDG_ENABLED`): scraping is ToS-fragile. When enabled
  * the chain appends it after every keyed provider. Parsing is defensive: malformed HTML

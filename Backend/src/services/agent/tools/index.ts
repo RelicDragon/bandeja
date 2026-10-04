@@ -1,5 +1,5 @@
 /**
- * The agent's tool catalogue (docs/plans/ai-agent.md §5). Adding a tool:
+ * The agent's tool catalogue. Adding a tool:
  *   1. `defineTool({ name, description, kind, scope, input, label, handler })` in a
  *      `*.tools.ts` file; output through `services/agent/dto/`.
  *   2. Add it to `AGENT_TOOL_DEFINITIONS` below, inside the `inGroup(...)` of its tool group

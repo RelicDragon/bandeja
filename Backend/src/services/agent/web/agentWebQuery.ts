@@ -1,5 +1,5 @@
 /**
- * Personal-data check on `web_search` queries (docs/plans/ai-agent-web-search.md D6).
+ * Personal-data check on `web_search` queries.
  * Runs before any provider call: a query with an email address, a phone-like digit run or
  * an internal id is refused (the provider would otherwise receive it).
  */

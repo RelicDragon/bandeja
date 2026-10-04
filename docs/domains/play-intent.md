@@ -28,8 +28,6 @@ Rank: direct join first, soonest start, more open slots, `gameMatchScore`, `id`.
 
 `allowDirectJoin` is chrome + CTA only (`Join` / `Ask to join`). A free PLAYING slot is required either way. Queue-only games stay on radar when a slot is free.
 
-Visual/live: `docs/plans/lobby-radar-matching-games.md`.
-
 ## Notify ≠ radar
 
 `GAME_MATCHES_INTENT` (`matchIntentToGames`) is **GAME/BAR only** (not TOURNAMENT/TRAINING/EVENT). A fitting tournament can appear on the radar without a game-fit push. Delivery is transactional per event+user+channel, revalidated, backoff, deduped — not fire-and-forget.
@@ -41,8 +39,6 @@ Socket `play-intent:invalidate` (`PLAY_INTENT_INVALIDATE_EVENT`). Reasons includ
 ## Invite Search \| Looking
 
 Different surface from Find radar. `PlayerListModal` tabs. Population = Browse city + sport + entity (`POST /play-intents/invite-pool`). Fit = Venue/game (5-dot strip, not arena). OPEN+not-in-proposal → reserve + `playIntentId` on invite. MATCHED/in-proposal → unlinked invite, no steal.
-
-`docs/plans/player-invite-looking.md`.
 
 ## Telegram `/play`
 

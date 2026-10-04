@@ -1,5 +1,5 @@
 /**
- * Play-intent tools (slice 9a, docs/plans/ai-agent.md §16.1, docs/domains/play-intent.md):
+ * Play-intent tools (slice 9a, docs/domains/play-intent.md):
  * `get_my_play_intent`, `list_play_intent_matches` (reads) and `set_play_intent`,
  * `cancel_play_intent` (standard writes).
  *

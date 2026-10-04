@@ -1,6 +1,6 @@
 /**
  * `web_fetch` building blocks (no network): SSRF guard, pinned lookup, HTML → text and the
- * fetch service with an injected fetch + DNS (docs/plans/ai-agent-web-search.md §13.13).
+ * fetch service with an injected fetch + DNS.
  */
 import assert from 'node:assert/strict';
 import type { LookupAddress } from 'node:dns';

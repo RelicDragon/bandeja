@@ -1,5 +1,5 @@
 /**
- * `cancel_booking {bookingRef}` (booking slice 7g, docs/plans/ai-agent-booking.md §14.4–14.6).
+ * `cancel_booking {bookingRef}` (booking slice 7g).
  * Critical, client-executed (§14.5 (ii)): the app cancels at Booktime / Padeloo / Klikteren on
  * the user's phone; the server never calls those providers.
  *

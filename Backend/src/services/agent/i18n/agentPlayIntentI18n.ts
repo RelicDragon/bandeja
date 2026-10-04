@@ -1,5 +1,5 @@
 /**
- * UI strings of the agent's play-intent tools (slice 9a, docs/plans/ai-agent.md §16.1), in the
+ * UI strings of the agent's play-intent tools (slice 9a), in the
  * 11 app languages. English is the fallback for a missing language or key. `sr` is Serbian Latin.
  */
 import { agentLang } from './agentI18n';

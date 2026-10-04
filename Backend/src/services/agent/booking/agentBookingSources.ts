@@ -1,6 +1,6 @@
 /**
  * The principal's own court bookings, assembled server-side for the agent
- * (docs/plans/ai-agent-booking.md §14.6 `list_my_bookings`, slice 7a).
+ * (`list_my_bookings`, slice 7a).
  *
  * Sources:
  *   - `GameExternalBooking` rows on games where the principal is OWNER / ADMIN / PLAYING

@@ -1,5 +1,5 @@
 /**
- * Club-timezone helpers for the slot engine (docs/plans/ai-agent-booking.md §14.9).
+ * Club-timezone helpers for the slot engine.
  *
  * Times inside the engine are "business-day minutes": minutes after local midnight of the
  * requested date, which may exceed 1440 for clubs that close after midnight (01:30 on the

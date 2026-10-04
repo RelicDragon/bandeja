@@ -1,5 +1,5 @@
 /**
- * Agent-facing game shapes (docs/plans/ai-agent.md §0.5). Whitelisted Prisma selects:
+ * Agent-facing game shapes. Whitelisted Prisma selects:
  * no `paymentHint` / `paymentMethods`, no cost shares, no chat, no booking provider data.
  * Game `name` / `description` are user-written text and reach the model as DATA only.
  */

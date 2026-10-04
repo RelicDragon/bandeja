@@ -1,5 +1,5 @@
 /**
- * UI strings of the money tools (Phase 10, docs/plans/ai-agent-money.md), in the 11 app
+ * UI strings of the money tools (Phase 10), in the 11 app
  * languages. English is the fallback. `sr` is Serbian Latin. Model-facing notes stay
  * English (they are tool data, not UI).
  */

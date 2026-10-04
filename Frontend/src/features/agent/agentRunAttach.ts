@@ -76,7 +76,7 @@ export interface AgentRunAttachment {
 }
 
 /**
- * Attach to a run's SSE stream (docs/plans/ai-agent.md §1, §8). Live state goes to
+ * Attach to a run's SSE stream. Live state goes to
  * `useAgentRunStore`, which outlives the chat view.
  *
  * - No stored state for the run (first open, page reload, evicted): replays from the start.

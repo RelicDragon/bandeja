@@ -39,8 +39,6 @@ Browse **never** calls `switchCity`. Chat Users: `CityModal` selector mode. Invi
 
 Nearby people expand: named search ≥2 chars, primary city 0 hits, Invite Search or Chat Users only (`expandNearby=1`). Anchor = browse city lat/lon, not GPS. Cap 3 cities, ~80 km same country / 30 km border. Labelled Nearby block; “View {city}” sets Browse. Not on Looking, empty contacts, or clubs.
 
-Detail: `docs/plans/browse-city.md`.
-
 ## Venue
 
 `ClubModal` header chip = venue city, **not** Browse. No query: `GET /clubs/city/:cityId`. Typed query: `getForMap` (lazy). Pick club → game/draft city = `club.cityId`; clear courts/bookings. Browse ↛ Venue; Venue ↛ Browse.

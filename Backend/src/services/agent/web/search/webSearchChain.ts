@@ -1,6 +1,5 @@
 /**
- * Web search failover chain (port of travel-bandeja `webSearchChain.js` + `index.js`,
- * docs/plans/ai-agent-web-search.md §13.3–§13.6).
+ * Web search failover chain (port of travel-bandeja `webSearchChain.js` + `index.js`).
  *
  * The single entry point for a search. It owns the cross-cutting concerns so adapters
  * stay dumb: cache, single-flight, the `admit` hook (global rate limit, checked only on a

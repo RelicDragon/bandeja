@@ -1,5 +1,5 @@
 /**
- * Web tool limits, budget charge and audit (docs/plans/ai-agent-web-search.md §13.9).
+ * Web tool limits, budget charge and audit.
  *
  * Every search / fetch that reached the cache or the network writes one `LlmUsageLog` row
  * (reason `agent_web_search` / `agent_web_fetch`). The rows are the audit AND the limit

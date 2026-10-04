@@ -1,6 +1,6 @@
 /**
  * `slotRef`: the signed, opaque slot handle the model passes to the booking tools
- * (docs/plans/ai-agent-booking.md §14.6). Minted by `find_available_slots`, verified by
+ *. Minted by `find_available_slots`, verified by
  * `book_court` / `create_game_with_booking` (slice 7d) so the model can never book a club,
  * court, time or duration the server did not offer to **this** user in the last 15 minutes.
  *

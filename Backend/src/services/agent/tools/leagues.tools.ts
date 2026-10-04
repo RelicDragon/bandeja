@@ -1,7 +1,7 @@
 /**
  * League read tools: `get_league_season`, `get_league_standings`.
  * HTTP `GET /leagues/:id/standings` checks no visibility, and neither does the agent beyond
- * existence: leagues are for everyone (`assertAgentCanViewLeagueSeason`, docs/plans/ai-agent.md §0.2).
+ * existence: leagues are for everyone (`assertAgentCanViewLeagueSeason`).
  */
 import { EntityType } from '@prisma/client';
 import { z } from 'zod/v4';

@@ -12,7 +12,7 @@ Home city (`user.currentCity`) drives both tabs. Browse city does not. Users wit
 |-------|--------|
 | (none) / `?tab=calendar` | Calendar (default) |
 | `?tab=past-games` | FINISHED/ARCHIVED list (`usePastGames`) |
-| `?tab=ai` | AI assistant chat list (`components/agent/AgentTab.tsx`). Segment always shown (the agent is on for every user). Threads open at `/ai/:chatId`. See `docs/plans/ai-agent.md` |
+| `?tab=ai` | AI assistant chat list (`components/agent/AgentTab.tsx`). Segment always shown (the agent is on for every user). Threads open at `/ai/:chatId`. |
 | `?focus=invites` | Calendar + scroll to `#home-invites-section` (wins over `?tab=past-games` / `?tab=ai`) |
 | `?tab=list` or `?tab=advanced` | Replaced with `/` |
 
@@ -124,7 +124,7 @@ Advanced panel filters AND with chips (`findFilter.ts`): clubs (favorite shortcu
 
 Card join / queue. Blocked: wrong gender, out-of-range level, missing name, overlap confirm. Badges: gender lock, booked (manual blue / external green / partial blue). Find month index is progressive — do not fold continuation into the main query promise (`product/constraints.md`).
 
-Play-intent strip: `PlayIntentFindBar` (Home city). Radar: `play-intent.md`. Invite Search|Looking is a different surface (`plans/player-invite-looking.md`).
+Play-intent strip: `PlayIntentFindBar` (Home city). Radar: `play-intent.md`. Invite Search|Looking is a different surface.
 
 ### Live now rail
 

@@ -1,6 +1,5 @@
 /**
- * Read-only, batched view of many cost ledgers for their organizers (agent `list_cost_shares`,
- * docs/plans/ai-agent-money.md slice 10h).
+ * Read-only, batched view of many cost ledgers for their organizers (agent `list_cost_shares`).
  *
  * Never calls {@link syncGameCostShares}: no row is created, updated or deleted, no payer is
  * stamped, nothing is frozen and nothing is emitted. Per game it returns what the stored

@@ -239,7 +239,7 @@ export const queryKeys = {
   platformFlags: {
     all: ['platformFlags'] as const,
   },
-  /** AI agent chats (docs/plans/ai-agent.md). Streaming state is not Query — see `features/agent`. */
+  /** AI agent chats. Streaming state is not Query — see `features/agent`. */
   agent: {
     all: ['agent'] as const,
     /** `AgentChatListData`; `view` = main list or Archived. No args = every list (invalidation). */
@@ -252,7 +252,7 @@ export const queryKeys = {
     chat: (chatId: string) => ['agent', 'chat', chatId] as const,
     permissions: (userId?: string) =>
       userId != null ? (['agent', 'permissions', userId] as const) : (['agent', 'permissions'] as const),
-    /** Phase 11 memory: `{ enabled, items }` (docs/plans/ai-agent-memory.md). */
+    /** Phase 11 memory: `{ enabled, items }`. */
     memory: (userId?: string) =>
       userId != null ? (['agent', 'memory', userId] as const) : (['agent', 'memory'] as const),
   },

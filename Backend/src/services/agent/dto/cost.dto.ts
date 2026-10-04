@@ -1,5 +1,5 @@
 /**
- * Agent-facing cost split shapes (Phase 10, docs/plans/ai-agent-money.md §10.2).
+ * Agent-facing cost split shapes (Phase 10).
  *
  * Built only from what the `gameCost` services return (already projected per viewer by
  * `projectCostSummary`). Amounts stay integer minor units plus a server-formatted string;

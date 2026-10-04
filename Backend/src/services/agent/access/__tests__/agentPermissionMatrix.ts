@@ -1,5 +1,5 @@
 /**
- * Permission-matrix harness for AI agent tools (`docs/plans/ai-agent.md` §3).
+ * Permission-matrix harness for AI agent tools.
  *
  * Every agent tool gets a matrix: fixed actors × fixed games → expected outcome.
  * Later phases reuse this file:

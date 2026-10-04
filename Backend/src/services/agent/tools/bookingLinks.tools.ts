@@ -1,5 +1,5 @@
 /**
- * Booking ↔ game link tools (phase 7c, docs/plans/ai-agent-booking.md §14.4, §14.6):
+ * Booking ↔ game link tools (phase 7c):
  * `link_booking_to_game`, `unlink_booking`. Both are standard-risk writes.
  *
  * Guards (propose AND confirm, fresh principal at confirm):

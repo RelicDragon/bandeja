@@ -16,7 +16,7 @@
  * needs the owner row) are mirrored at propose time so the
  * card never offers what confirm would refuse. Target checks are stricter than HTTP where
  * the service would do something harmful (demoting the owner via add-admin / set-trainer).
- * Never here: ownership transfer, delete, substitutions (docs/plans/ai-agent.md §5).
+ * Never here: ownership transfer, delete, substitutions.
  */
 import { EntityType, ParticipantRole, ParticipantStatus } from '@prisma/client';
 import { z } from 'zod/v4';

@@ -235,7 +235,7 @@ router.put(
 
 /*
  * Roster routes: the middleware below is the authorization. Non-HTTP callers (the AI
- * agent, docs/plans/ai-agent.md §3) must run `assertGamePermission` from
+ * agent) must run `assertGamePermission` from
  * `services/game/gamePermission.ts` with the same roles/options before the service call.
  *   - Service re-checks nothing (middleware-only): add-admin, revoke-admin,
  *     substitute-participant, enable-participant-chats.

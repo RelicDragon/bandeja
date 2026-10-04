@@ -1,5 +1,5 @@
 /**
- * Results tools (slice 9b, docs/plans/ai-agent.md §16.2, docs/domains/results.md):
+ * Results tools (slice 9b, docs/domains/results.md):
  *   - `get_game_results` (read): the board of a game the agent may show (hidden → 404, and
  *     the HTTP results read rule `assertCanReadGameResults` on top).
  *   - `enter_match_score` (write, standard): the board's manual match PUT

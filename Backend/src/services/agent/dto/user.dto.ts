@@ -1,7 +1,7 @@
 /**
  * Agent-facing user shapes. Whitelist only: a user is what a public profile card shows
  * (name, avatar, trainer flag, per-sport level). Never email, phone, Telegram ids or
- * usernames, wallet, city, payment data or tokens. See docs/plans/ai-agent.md §0.5.
+ * usernames, wallet, city, payment data or tokens.
  */
 import type { Prisma, Sport } from '@prisma/client';
 import type { AgentEntityRef } from '@bandeja/shared/agentContract';

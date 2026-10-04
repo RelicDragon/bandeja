@@ -47,14 +47,6 @@ docs/
     cities.md play-intent.md booking.md club-admin.md marketplace.md
     social-and-profile.md stories.md economy.md subscriptions.md
     ads-and-attribution.md admin.md native.md weather.md presence.md agent.md
-  plans/
-    browse-city.md          Home / Browse / Venue
-    lobby-radar-matching-games.md
-    player-invite-looking.md
-    event-entity.md         EntityType.EVENT
-    ai-agent.md             AI agent plan (phases; phase 0–1 backend built)
-    ai-agent-memory.md      AI agent memory (phase 11; built)
-    ai-agent-web-search.md  AI agent web search + web fetch spec (phase 13)
   ops/
     development.md          local run, env, Prisma, heavy lock
     testing.md              Playwright / Vitest / backend / CI
@@ -91,4 +83,4 @@ Keep these filenames. Code, Cursor rules, and release scripts point at them:
 2. If work would violate `product/constraints.md`, stop and say so.
 3. Feature behavior: `domains/<area>.md`. File locations: `architecture/code-map.md`.
 4. Prisma schema: `Backend/prisma/schema.prisma`. Do not copy CLAUDE.md enums; several are stale.
-5. Empty `plans/` means the file was never written — recreate from code, do not cite missing paths. Load-bearing rules live in `product/constraints.md`, not an ADR folder. Agent boot: `docs/agents/RULES.md`.
+5. Do not cite missing paths; recreate missing context from code. Load-bearing rules live in `product/constraints.md`, not an ADR folder. Agent boot: `docs/agents/RULES.md`.

@@ -1,5 +1,5 @@
 /**
- * UI strings of the agent's game chat tools (slice 9c, docs/plans/ai-agent.md §16.3):
+ * UI strings of the agent's game chat tools (slice 9c):
  * `summarize_game_chat`, `post_to_game_chat`, in the 11 app languages. English is the
  * fallback for a missing language or key. `sr` is Serbian Latin.
  */

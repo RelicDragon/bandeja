@@ -1,7 +1,6 @@
 /**
- * Tavily adapter (port of travel-bandeja `providers/tavilySearch.js`,
- * docs/plans/ai-agent-web-search.md §13.3). LLM-oriented search; returns per-result
- * content plus an optional synthesized `answer`.
+ * Tavily adapter (port of travel-bandeja `providers/tavilySearch.js`).
+ * LLM-oriented search; returns per-result content plus an optional synthesized `answer`.
  *
  * Deviation: the key goes only in the `Authorization` header, never in the JSON body.
  */

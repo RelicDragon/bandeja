@@ -1,6 +1,6 @@
 /**
  * Phase-1 authorization tests for every agent read tool (real dev DB) + red-team read
- * fixtures (docs/plans/ai-agent.md §3). Row letters, actor order:
+ * fixtures. Row letters, actor order:
  *   stranger invited queued player gameAdmin owner leagueOwner globalAdmin
  * A = allow (listed / readable), N = 404 (same as a missing id).
  */

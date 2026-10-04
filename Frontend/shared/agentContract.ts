@@ -1,5 +1,5 @@
 /**
- * AI agent chat wire contract (docs/plans/ai-agent.md).
+ * AI agent chat wire contract.
  *
  * Shared by Backend (`@bandeja/shared/agentContract`) and Frontend (`@shared/agentContract`).
  * REST responses use the usual `{ success: true, data }` envelope; `data` types are below.
@@ -52,7 +52,7 @@ export type AgentEntityRef =
   | { type: 'club'; id: string; name: string; cityName: string | null }
   | { type: 'user'; id: string; name: string; avatar: string | null }
   | {
-      /** A provider court booking (docs/plans/ai-agent-booking.md §14.7). `ref` is the server-minted `bookingRef`. */
+      /** A provider court booking. `ref` is the server-minted `bookingRef`. */
       type: 'booking';
       ref: string;
       clubId: string;
@@ -201,7 +201,7 @@ export function agentEntityKey(entity: AgentEntityRef): string {
   }
 }
 
-/** Search provider that answered a `web_search` (docs/plans/ai-agent-web-search.md §13.11). */
+/** Search provider that answered a `web_search`. */
 export type AgentWebProvider = 'tavily' | 'brave' | 'duckduckgo';
 
 export interface AgentWebSearchLink {
@@ -412,7 +412,7 @@ export interface AgentToolPermissionDto {
   canAlwaysAllow: boolean;
 }
 
-/** Phase 11 memory (docs/plans/ai-agent-memory.md). */
+/** Phase 11 memory. */
 export type AgentMemoryType = 'PREFERENCE' | 'FEEDBACK' | 'FACT';
 /** `USER_ASKED`: the user added it or asked the assistant to remember it ("You added"); `MODEL_INFERRED`: "Learned". */
 export type AgentMemorySource = 'USER_ASKED' | 'MODEL_INFERRED';

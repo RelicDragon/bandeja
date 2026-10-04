@@ -1,6 +1,6 @@
 /**
  * Web search chain (no network; port of travel-bandeja `webSearchChain.test.js` plus the
- * PadelPulse rotation, `admit` and abort cases; docs/plans/ai-agent-web-search.md §13.13).
+ * PadelPulse rotation, `admit` and abort cases).
  * Each test builds its own chain instance, so no shared state leaks between tests.
  */
 import assert from 'node:assert/strict';

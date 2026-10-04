@@ -1,5 +1,5 @@
 /**
- * Per-provider rules of the slot engine (docs/plans/ai-agent-booking.md §14.1, §14.3).
+ * Per-provider rules of the slot engine.
  */
 import type { ClubIntegrationType } from '@prisma/client';
 import type { AgentSlotConfidence } from '@bandeja/shared/agentContract';

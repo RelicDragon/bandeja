@@ -187,7 +187,7 @@ router.put(
 );
 router.delete('/permissions/:toolName', validateZod({ params: toolParams }), agentController.resetToolPermission);
 
-// Memory (Phase 11, docs/plans/ai-agent-memory.md §11.3): the user's own rows only. Add / edit
+// Memory (Phase 11): the user's own rows only. Add / edit
 // while the switch is OFF → 409 MEMORY_DISABLED; delete / clear always allowed.
 const memoryItemParams = z.object({ id: idParam });
 const memoryText = z.string().trim().min(1).max(AGENT_MEMORY_BODY_MAX_LENGTH);

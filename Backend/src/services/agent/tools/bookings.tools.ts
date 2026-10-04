@@ -1,5 +1,5 @@
 /**
- * Booking read tools (phase 7a, docs/plans/ai-agent-booking.md §14.6): `list_my_bookings`.
+ * Booking read tools (phase 7a): `list_my_bookings`.
  * Sources, dedupe, `bookingRef` and `canCancel`: `booking/agentBookingSources.ts`.
  */
 import { z } from 'zod/v4';

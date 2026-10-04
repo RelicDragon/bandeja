@@ -1,5 +1,5 @@
 /**
- * Phase 11.4 (real dev DB, scripted LLM; docs/plans/ai-agent-memory.md §11.5 phase 4):
+ * Phase 11.4 (real dev DB, scripted LLM):
  *
  * Rolling chat summary (`agentChatSummary.service.ts`):
  *   - plan: due only after `AGENT_CHAT_SUMMARY_MIN_NEW_TURNS` folded user turns not yet covered;
