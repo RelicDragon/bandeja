@@ -49,6 +49,8 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.GAME_WEATHER_ALERT]: PreferenceKey.SEND_WEATHER_ALERTS,
   // Time change — Time-critical tier, same switch as cancellations.
   [NotificationType.GAME_TIME_CHANGED]: PreferenceKey.SEND_REMINDERS,
+  // PRD 358 — "your results are in, you reached <rank>".
+  [NotificationType.NOVICE_RANK_UP]: PreferenceKey.SEND_REMINDERS,
 };
 
 export type NotificationPreferenceData = {

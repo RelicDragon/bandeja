@@ -53,6 +53,7 @@ Related: [overview.md](./overview.md), [backend.md](./backend.md), [frontend.md]
 | `me/` | My-tab aggregate |
 | `agent/` | AI agent: run loop, SSE event log, context, tool registry + read tools, DTOs, access guards ([agent.md](../domains/agent.md)) |
 | `achievements/` | trophies |
+| `novice/` | novice mode: counted-game rules, recount + organizer credit, rank-up push copy ([novice.md](../domains/novice.md)) |
 | `bets/` | social bets |
 | `media` / `s3.service.ts` | uploads |
 | `redis/` | Redis client |
@@ -194,6 +195,7 @@ JS policy: `Frontend/shared/nextGame/policy.ts`. JS picker: `Frontend/src/utils/
 | Telegram | `services/telegram/`, `controllers/telegramAuth.controller.ts` | `pages/TelegramAutoLogin.tsx`, `utils/telegramAutoLoginPath.ts` |
 | Weather | `weatherForecast.service.ts` | `hooks/useMonthCalendarWeather.ts`, `queries/weather/` |
 | AI agent (`docs/domains/agent.md`) | `services/agent/` (`agentRun.service.ts` queue + loop, `agentRunQueue.service.ts` worker, `agentEvents.ts` SSE log, `agentContext.service.ts`, `agentMemory.service.ts` (Phase 11 memory), `agentChat.service.ts`, `agentGuards.ts` + `agentBudget.service.ts` (per-user daily budget), `agentAudit.service.ts` + `agentCost.ts` (admin audit + cost dashboard), `agentSendMessage.service.ts` + `agentMessageRateLimit.ts` (shared HTTP/Telegram entry), `agentRunFeed.ts` (replay/subscribe consumer), `llm/deepseekStream.ts`, `tools/` registry + `*.tools.ts`, `dto/`, `access/`, `web/` web search chain + SSRF-guarded fetch, `voice/` speech-to-text / text-to-speech), `controllers/agent.controller.ts`, `routes/agent.routes.ts`, `config/agentEnv.ts`, `config/agentWebEnv.ts`, `config/agentVoiceEnv.ts`, Telegram channel `services/telegram/agent/` | `components/agent/` (`AgentTab` list/split + `AgentChatRoute`, `AgentChatView`, `AgentComposer`, `AgentMarkdown`, `AgentToolChip`, `AgentEntityCard`, `AgentActionCard`, `AgentVoiceDock`), `features/agent/` (`voice/` dictation + voice conversation: VAD, capture, chunker, `AgentVoiceSession`; `useAgentStream` SSE client, `sseParser`, `agentRunReducer` + `agentRunStore`, `agentTimeline`, `agentCache`, `agentLinks`), `api/agent.ts`, `queries/agent/useAgentQueries.ts`, contract `Frontend/shared/agentContract.ts`, i18n `agent.json` |
+| Novice mode (`docs/domains/novice.md`) | `services/novice/`, `services/achievements/noviceHostGrant.service.ts`, `routes/novice.routes.ts`, `controllers/novice.controller.ts` | contract `Frontend/shared/novice/` (`@shared/novice`) |
 | Link-to-app | `services/linkToApp/`, `controllers/linkToApp.controller.ts` | `utils/appAttribution.ts`, `public/link-to-app/`, Admin `link-to-app.js` |
 | Club admin | `services/clubAdmin/` | `clubAdmin/ClubManagementApp`, `pages/clubAdmin/` |
 | User teams | `services/userTeam/` | `pages/UserTeamPage.tsx`, `components/userTeam/`, `store/userTeamsStore.ts` |

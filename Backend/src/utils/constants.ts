@@ -205,6 +205,9 @@ export const USER_SELECT_FIELDS = {
   trainerReviewCount: true,
   weeklyAvailability: true,
   availabilityBucketBoundaries: true,
+  // PRD 358 — 🌱 newcomer badge: `isNewcomerUser(user)` from `@bandeja/shared/novice`.
+  noviceRank: true,
+  noviceUnlockedAllAt: true,
 } as const;
 
 export const USER_SELECT_WITH_SPORT_PROFILES = {
@@ -305,6 +308,9 @@ export const PROFILE_SELECT_FIELDS = {
   appIcon: true,
   mainTheme: true,
   premiumOnboardingCompletedAt: true,
+  // PRD 358 — novice mode (noviceRank / noviceUnlockedAllAt come via USER_SELECT_FIELDS).
+  noviceCountedGames: true,
+  noviceMilestoneSeenRank: true,
   wallet: true,
   totalPoints: true,
   currentCityId: true,

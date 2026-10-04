@@ -34,6 +34,7 @@ import type { Prisma } from '@prisma/client';
 import { getPlayerLevelFeedbackAggregate } from '../../services/player-level-evaluation.service';
 import { countTrainingAttendance } from '../../services/user/trainingAttendanceCount';
 import { getAttendanceRate } from '../../services/gameAttendance/attendanceCounters.service';
+import { countNewcomersDebutedBy } from '../../services/achievements/noviceHostGrant.service';
 
 const COMPARISON_USER_SELECT = {
   ...USER_SELECT_FIELDS,
@@ -314,6 +315,10 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   // reliability or ratingUncertainty, and it stays hidden (the whole object is
   // `null`) until the player has at least `minSample` recorded games, so a
   // single missed game can never read as "0% shows up".
+  // PRD 358 — "Brought N new players": newcomers whose first counted game was
+  // in a game this user owns (all sports).
+  const newPlayersBroughtCount = await countNewcomersDebutedBy(userId);
+
   const attendanceSummary = await getAttendanceRate(userId, sport).catch(() => null);
   const attendance =
     attendanceSummary && attendanceSummary.rate !== null
@@ -338,6 +343,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       levelFeedback,
       trainingAttendanceCount,
       attendance,
+      newPlayersBroughtCount,
       ...(allSportsAggregates
         ? {
             gamesStatsAllSports: allSportsAggregates.gamesStats,

@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError';
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
+import { onGameEndedForNovice } from './novice/noviceProgress.service';
 import {
   ensureSportInEnabled,
   resolveUserSportSnapshot,
@@ -112,6 +113,9 @@ export async function finishTraining(gameId: string, userId: string): Promise<vo
     }
   });
   await cleanupInviteParticipantsForEndedGame(gameId);
+  // PRD 358 — "Finish Training" makes the training a counted game for every
+  // PLAYING participant who was not noted as a no-show.
+  await onGameEndedForNovice(gameId);
 }
 
 export async function updateParticipantLevel(

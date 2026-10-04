@@ -86,6 +86,7 @@ import {
   findLeaderboardLastPlace,
 } from './winLossStreakResult';
 import { onGameFinalizedForAttendance } from '../gameAttendance/gameAttendance.service';
+import { onGameEndedForNovice } from '../novice/noviceProgress.service';
 import { refreshPairStatsForGame } from '../pairStat/pairStat.service';
 import { onGameFinalizedForReferral } from '../referral/referralReward.service';
 import { onGameFinalizedForCost } from '../gameCost/onGameFinalizedForCost';
@@ -1068,6 +1069,13 @@ export async function recalculateGameOutcomes(
   // are a cache of a derivable query and must never be able to fail, slow down
   // or roll back finalization. Nothing here touches rating or level.
   await onGameFinalizedForAttendance(gameId);
+
+  // PRD 358 — novice rank, debut host + Talent Scout / Ambassador, rank-up
+  // push. Post-commit like the counters around it: it recounts from committed
+  // FINAL status + GameOutcome rows (idempotent, rank never lowered) in its own
+  // per-user transaction, so it can never roll back or deadlock a result, and a
+  // re-finalization of an edited result is a no-op for anyone already counted.
+  await onGameEndedForNovice(gameId);
 
   // PRD 352 — materialized pair stats. Post-commit for the same reason: they
   // are a cache of a derivable query, they recompute (never increment) so a

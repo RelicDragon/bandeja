@@ -16,6 +16,7 @@ import { loadOrganizeHabitCounters } from './organizeGrant.service';
 import { loadPartnerHabitCounters } from './partnerGrant.service';
 import { loadTieBreakHabitCounters } from './tieBreakGrant.service';
 import { loadBugShippedHabitCounters } from './bugShippedGrant.service';
+import { loadNoviceHostHabitCounters } from './noviceHostGrant.service';
 
 export type TrophyDefinitionView = {
   id: string;
@@ -201,12 +202,14 @@ export async function buildTrophiesPayload(params: {
   const partner = await loadPartnerHabitCounters(params.userId);
   const tiebreak = await loadTieBreakHabitCounters(params.userId);
   const bugShipped = await loadBugShippedHabitCounters(params.userId);
+  const noviceHost = await loadNoviceHostHabitCounters(params.userId);
   const counters: HabitProgressCounters = {
     ...params.counters,
     ...organize,
     ...partner,
     ...tiebreak,
     ...bugShipped,
+    ...noviceHost,
   };
 
   await purgeOrphanPinsForUser({ userId: params.userId });

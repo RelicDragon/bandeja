@@ -64,6 +64,8 @@ export enum NotificationType {
   GAME_WEATHER_ALERT = 'GAME_WEATHER_ALERT',
   /** Time change — the game's time changed (Time-critical, collapsed per game). */
   GAME_TIME_CHANGED = 'GAME_TIME_CHANGED',
+  /** PRD 358 — novice mode: results raised the recipient's novice rank. Opens `/`. */
+  NOVICE_RANK_UP = 'NOVICE_RANK_UP',
 }
 
 export interface NotificationAction {
@@ -172,6 +174,10 @@ export interface NotificationData {
   goodsId?: string;
   /** PRD 355 — who sent the gift, so the shop can thank them. */
   senderUserId?: string;
+  /** PRD 358 — `NOVICE_RANK_UP`: the novice rank reached (`'1'`…`'5'`). */
+  noviceRank?: string;
+  /** PRD 358 — `'1'` on an `INTENT_PLAYERS_FOR_GAME` owner ping raised by a newcomer. */
+  newcomer?: string;
 }
 
 export interface NotificationPayload {
