@@ -34,7 +34,8 @@ import {
   type OAuthLinkMergePending,
 } from '@/utils/oauthAccountLink';
 import { canUnlinkAuthMethod } from '@/utils/accountAuthMethods';
-import { Gender, User } from '@/types';
+import { Gender, User, type GameCardRosterMode } from '@/types';
+import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { PayoutMethodsSettings } from '@/components/payments/PayoutMethodsSettings';
 import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import type { OAuthLinkResponseData } from '@/utils/oauthAccountLink';
@@ -143,7 +144,7 @@ export const ProfileContent = () => {
   const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(user?.showOnlineStatus !== false);
   const [alwaysShowUserNames, setAlwaysShowUserNames] = useState(user?.alwaysShowUserNames !== false);
-  const [gameCardFullRoster, setGameCardFullRoster] = useState(user?.gameCardFullRoster === true);
+  const [gameCardRosterMode, setGameCardRosterMode] = useState<GameCardRosterMode>(user?.gameCardRosterMode ?? 'AUTO');
   const [shareGamePhotosToFollowers, setShareGamePhotosToFollowers] = useState(user?.shareGamePhotosToFollowers !== false);
   const [shareGameCreationsToFollowers, setShareGameCreationsToFollowers] = useState(user?.shareGameCreationsToFollowers !== false);
   const [shareGameResultsToFollowers, setShareGameResultsToFollowers] = useState(user?.shareGameResultsToFollowers !== false);
@@ -270,7 +271,7 @@ export const ProfileContent = () => {
       setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
       setShowOnlineStatus(user.showOnlineStatus !== false);
       setAlwaysShowUserNames(user.alwaysShowUserNames !== false);
-      setGameCardFullRoster(user.gameCardFullRoster === true);
+      setGameCardRosterMode(user.gameCardRosterMode ?? 'AUTO');
       setShareGamePhotosToFollowers(user.shareGamePhotosToFollowers !== false);
       setShareGameCreationsToFollowers(user.shareGameCreationsToFollowers !== false);
       setShareGameResultsToFollowers(user.shareGameResultsToFollowers !== false);
@@ -437,9 +438,9 @@ export const ProfileContent = () => {
     updateProfile({ alwaysShowUserNames: value });
   };
 
-  const handleGameCardFullRosterChange = (value: boolean) => {
-    setGameCardFullRoster(value);
-    updateProfile({ gameCardFullRoster: value });
+  const handleGameCardRosterModeChange = (value: GameCardRosterMode) => {
+    setGameCardRosterMode(value);
+    updateProfile({ gameCardRosterMode: value });
   };
 
   const handleShareGamePhotosToFollowersChange = (value: boolean) => {
@@ -1381,18 +1382,27 @@ export const ProfileContent = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between gap-4 py-2">
-              <div className="flex-1 min-w-0">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                  {t('profile.gameCardFullRoster')}
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {t('profile.gameCardFullRosterDescription')}
-                </p>
-              </div>
-              <ToggleSwitch
-                checked={gameCardFullRoster}
-                onChange={handleGameCardFullRosterChange}
+            <div className="py-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                {t('profile.gameCardRoster')}
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {t('profile.gameCardRosterDescription')}
+              </p>
+              <SegmentedSwitch
+                className="mt-2"
+                layoutId="profile-game-card-roster"
+                ariaLabel={t('profile.gameCardRoster')}
+                fullWidth
+                size="sm"
+                showOnlyActiveTabText={false}
+                activeId={gameCardRosterMode}
+                onChange={(id) => handleGameCardRosterModeChange(id as GameCardRosterMode)}
+                tabs={[
+                  { id: 'AUTO', label: t('profile.gameCardRosterAuto') },
+                  { id: 'COMPACT', label: t('profile.gameCardRosterCompact') },
+                  { id: 'FULL', label: t('profile.gameCardRosterFull') },
+                ]}
               />
             </div>
 

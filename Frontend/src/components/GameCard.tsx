@@ -13,6 +13,8 @@ import { GameCardTitle } from '@/components/gameCard/GameCardTitle';
 import { GameCardStub } from '@/components/gameCard/GameCardStub';
 import { GameCardTagRow } from '@/components/gameCard/GameCardTagRow';
 import { GameCardSeatStack } from '@/components/gameCard/GameCardSeatStack';
+import { GameCardAvatar } from '@/components/gameCard/GameCardAvatar';
+import { gameCardAvatarUrl } from '@/utils/gameCardAvatarUrl';
 import { GameCardPerHeadPrice } from '@/components/gameCard/GameCardPerHeadPrice';
 import { gameCardHasVisibleTitle } from '@/utils/gameCardVisibleTitle';
 import { hasOpenSpotHighlight } from '@/features/spot-opened/spotOpenedWindow';
@@ -72,7 +74,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
-import { Bookmark, CalendarCheck, CheckCircle2, MapPin, MessageCircle, Plane, Users } from 'lucide-react';
+import { Bookmark, CalendarCheck, CheckCircle2, ChevronDown, MapPin, MessageCircle, Plane, Users } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
 import { shouldShowWeatherPill } from '@/features/weather-alerts/weatherRiskDisplay';
 import '@/components/gameCard/GameCardTicket.css';
@@ -117,6 +121,9 @@ const GameCardMatch = memo(function GameCardMatch({
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [reactions, setReactions] = useState(() => game.reactions ?? []);
+  /** AUTO roster mode: this card's own compact ↔ full toggle. */
+  const [rosterExpanded, setRosterExpanded] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
   const lastSyncedGameIdRef = useRef(game.id);
   useEffect(() => {
     const next = game.reactions ?? [];
@@ -303,6 +310,11 @@ const GameCardMatch = memo(function GameCardMatch({
 
   const openNoteModal = useCallback(() => setShowNoteModal(true), []);
   const closeNoteModal = useCallback(() => setShowNoteModal(false), []);
+  const handleRosterToggle = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setRosterExpanded((open) => !open);
+  }, []);
+
   const handleNoteButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     e.preventDefault();
@@ -333,11 +345,16 @@ const GameCardMatch = memo(function GameCardMatch({
   const spotJustOpened = hasOpenSpotHighlight(game);
   const showNoteBookmark = !userNoteDisplay && Boolean(effectiveUser);
   const showReactions = Boolean(effectiveUser?.id) || reactions.length > 0;
-  const showFullRoster = effectiveUser?.gameCardFullRoster === true;
+  const rosterMode = effectiveUser?.gameCardRosterMode ?? 'AUTO';
+  const showFullRoster = rosterMode === 'FULL';
+  // AUTO starts compact; a toggle after the seats expands this card's roster in place.
+  const canExpandRoster = rosterMode === 'AUTO' && playingParticipants.length > 0;
+  const rosterOpen = canExpandRoster && rosterExpanded;
   const carouselAutoHideNames = effectiveUser?.alwaysShowUserNames === false;
 
   const theme = getGameCardTicketTheme(game.entityType);
   const venueLabel = eventVenueLabel(game);
+  const avatarUrl = gameCardAvatarUrl(game);
   // An unnamed classic game has no title of its own; the venue reads as one.
   const titleIsVenue = !hasVisibleTitle && Boolean(venueLabel);
   const venueLine = titleIsVenue ? game.court?.name ?? null : venueLabel;
@@ -514,19 +531,79 @@ const GameCardMatch = memo(function GameCardMatch({
       </div>
     );
   } else {
+    const rosterTransition = reducedMotion
+      ? { duration: 0 }
+      : { type: 'spring' as const, stiffness: 420, damping: 38, mass: 0.8 };
     footer = (
-      <div className="flex items-center gap-2.5 border-t border-gray-900/[0.06] px-3.5 py-2.5 dark:border-white/[0.06]">
-        {mainPhotoUrl ? <GameCardPlayersPhoto url={mainPhotoUrl} /> : null}
-        <GameCardSeatStack
-          participants={playingParticipants}
-          maxParticipants={isBar ? null : maxParticipants}
-          viewerId={viewerId}
-          placeByUserId={standingPlaceByUserId}
-          standingMedalMode={standingMedalMode}
-          attendanceRail={attendanceRail}
-        />
-        {caption}
-        {footerActions}
+      <div className="border-t border-gray-900/[0.06] dark:border-white/[0.06]">
+        <AnimatePresence initial={false}>
+          {rosterOpen ? (
+            <motion.div
+              key="full-roster"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={rosterTransition}
+              className="overflow-hidden"
+            >
+              <div className="-mb-2 px-2.5 pt-1.5">
+                <PlayersCarousel
+                  participants={playingParticipants}
+                  userId={effectiveUser?.id}
+                  shouldShowCrowns={true}
+                  autoHideNames={carouselAutoHideNames}
+                  placeByUserId={standingPlaceByUserId}
+                  standingMedalMode={standingMedalMode}
+                />
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5">
+          {mainPhotoUrl ? <GameCardPlayersPhoto url={mainPhotoUrl} /> : null}
+          <AnimatePresence initial={false}>
+            {rosterOpen ? null : (
+              <motion.div
+                key="seat-stack"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: reducedMotion ? 0 : 0.12 } }}
+                transition={rosterTransition}
+                className="flex shrink-0 origin-left rtl:origin-right"
+              >
+                <GameCardSeatStack
+                  participants={playingParticipants}
+                  maxParticipants={isBar ? null : maxParticipants}
+                  viewerId={viewerId}
+                  placeByUserId={standingPlaceByUserId}
+                  standingMedalMode={standingMedalMode}
+                  attendanceRail={attendanceRail}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {canExpandRoster ? (
+            <button
+              type="button"
+              onClick={handleRosterToggle}
+              onPointerDown={stopPress}
+              onMouseDown={stopPress}
+              aria-expanded={rosterOpen}
+              aria-label={t(rosterOpen ? 'games.card.showCompactRoster' : 'games.card.showFullRoster')}
+              title={t(rosterOpen ? 'games.card.showCompactRoster' : 'games.card.showFullRoster')}
+              className="-ms-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-900/[0.04] text-gray-500 transition-colors hover:bg-gray-900/[0.08] hover:text-gray-800 dark:bg-white/[0.06] dark:text-gray-400 dark:hover:bg-white/[0.1] dark:hover:text-gray-100"
+            >
+              <ChevronDown
+                size={15}
+                strokeWidth={2.25}
+                className={`transition-transform duration-300 ease-out motion-reduce:transition-none ${rosterOpen ? 'rotate-180' : ''}`}
+                aria-hidden
+              />
+            </button>
+          ) : null}
+          {caption}
+          {footerActions}
+        </div>
       </div>
     );
   }
@@ -552,15 +629,24 @@ const GameCardMatch = memo(function GameCardMatch({
             />
             <div className={`gc-perf my-2 shrink-0 ${theme.perf}`} aria-hidden />
 
-            <div className="min-w-0 flex-1 pb-3 pe-3 ps-3.5 pt-2.5">
+            <div className="@container/gcbody min-w-0 flex-1 pb-3 pe-3 ps-3.5 pt-2.5">
               {/* Eyebrow: fire / entity · sport · format, reactions at the end */}
               <div className="flex min-h-[28px] items-center gap-1.5">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[10.5px] font-semibold uppercase leading-none tracking-[0.08em] text-gray-500 dark:text-gray-400">
                   {showFireIcon ? (
                     <AnnouncedFireIcon className="!-mt-0.5 !h-4 !w-4 shrink-0 [&>canvas]:!max-h-4 [&>canvas]:!max-w-4" />
                   ) : (
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${theme.dot}`} aria-hidden />
+                    <span
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${theme.dot} ${
+                        avatarUrl ? 'hidden @min-[11rem]/gcbody:block' : ''
+                      }`}
+                      aria-hidden
+                    />
                   )}
+                  {/* Below an 11rem body (320 pt phones) the title cannot spare the tile's width: the avatar shrinks into the eyebrow. */}
+                  {avatarUrl ? (
+                    <GameCardAvatar url={avatarUrl} variant="chip" className="@min-[11rem]/gcbody:hidden" />
+                  ) : null}
                   <span className={`shrink-0 ${theme.ink}`}>{t(`games.entityTypes.${game.entityType}`)}</span>
                   {showSportTag ? (
                     <>
@@ -581,38 +667,43 @@ const GameCardMatch = memo(function GameCardMatch({
                 {toolbar}
               </div>
 
-              <h3 className="mt-1 line-clamp-2 text-[15.5px] font-semibold leading-[1.3] tracking-[-0.01em] text-gray-900 dark:text-white">
-                {hasVisibleTitle ? (
-                  <GameCardTitle game={game} />
-                ) : (
-                  venueLabel ?? t(`games.entityTypes.${game.entityType}`)
-                )}
-              </h3>
+              <div className="mt-1 flex min-w-0 items-start gap-2.5">
+                {avatarUrl ? <GameCardAvatar url={avatarUrl} className="hidden @min-[11rem]/gcbody:block" /> : null}
+                <div className="min-w-0 flex-1">
+                  <h3 className="line-clamp-2 text-[15.5px] font-semibold leading-[1.3] tracking-[-0.01em] text-gray-900 dark:text-white">
+                    {hasVisibleTitle ? (
+                      <GameCardTitle game={game} />
+                    ) : (
+                      venueLabel ?? t(`games.entityTypes.${game.entityType}`)
+                    )}
+                  </h3>
 
-              {(venueLine || (isDifferentCity && game.city?.name)) && (
-                <p className="mt-1 flex min-w-0 items-center gap-1 text-[12.5px] text-gray-500 dark:text-gray-400">
-                  {isDifferentCity && game.city?.name ? (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[11px] font-medium leading-none text-amber-700 dark:text-amber-300">
-                      <Plane size={10} className="shrink-0" aria-hidden />
-                      {translateCity(game.city.id, game.city.name, game.city.country)}
-                    </span>
-                  ) : null}
-                  {venueLine ? (
-                    <>
-                      <MapPin size={12} className="shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
-                      <span className="truncate">
-                        {venueLine}
-                        {!titleIsVenue && game.court?.name ? (
-                          <>
-                            <span className="text-gray-300 dark:text-gray-600"> · </span>
-                            {game.court.name}
-                          </>
-                        ) : null}
-                      </span>
-                    </>
-                  ) : null}
-                </p>
-              )}
+                  {(venueLine || (isDifferentCity && game.city?.name)) && (
+                    <p className="mt-1 flex min-w-0 items-center gap-1 text-[12.5px] text-gray-500 dark:text-gray-400">
+                      {isDifferentCity && game.city?.name ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[11px] font-medium leading-none text-amber-700 dark:text-amber-300">
+                          <Plane size={10} className="shrink-0" aria-hidden />
+                          {translateCity(game.city.id, game.city.name, game.city.country)}
+                        </span>
+                      ) : null}
+                      {venueLine ? (
+                        <>
+                          <MapPin size={12} className="shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
+                          <span className="truncate">
+                            {venueLine}
+                            {!titleIsVenue && game.court?.name ? (
+                              <>
+                                <span className="text-gray-300 dark:text-gray-600"> · </span>
+                                {game.court.name}
+                              </>
+                            ) : null}
+                          </span>
+                        </>
+                      ) : null}
+                    </p>
+                  )}
+                </div>
+              </div>
 
               {timeHintText ? (
                 <p className="mt-0.5 flex items-center gap-1 text-[11.5px] text-gray-500 dark:text-gray-400">

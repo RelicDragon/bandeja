@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['sr'] = `<h1>Politika privatnosti i Korisnički ugovor</h1>
 <p><strong>Aplikacija:</strong> Padel Bandeja<br>
 <strong>Datum stupanja na snagu:</strong> 12.01.2025<br>
-<strong>Poslednje ažuriranje:</strong> 01.10.2026<br>
+<strong>Poslednje ažuriranje:</strong> 04.10.2026<br>
 Primenjuje se širom sveta</p>
 
 <h2>1. Politika privatnosti</h2>
@@ -177,9 +177,9 @@ Primenjuje se širom sveta</p>
 
 <h3>2.12 Kontakt informacije</h3>
 <p>Za pitanja, probleme ili za ostvarivanje vaših prava u vezi sa ličnim podacima, molimo kontaktirajte nas:</p>
-<p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p><strong>Email:</strong> <a href="mailto:privacy@bandeja.me">privacy@bandeja.me</a></p>
 
 <div class="footer">
-<p>Ovaj dokument je poslednji put ažuriran 01.10.2026. Zadržavamo pravo da ažuriramo ovu politiku i ugovor u bilo kom trenutku.</p>
-<p>Kontakt: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p>Ovaj dokument je poslednji put ažuriran 04.10.2026. Zadržavamo pravo da ažuriramo ovu politiku i ugovor u bilo kom trenutku.</p>
+<p>Kontakt: <a href="mailto:support@bandeja.me">support@bandeja.me</a></p>
 </div>`;

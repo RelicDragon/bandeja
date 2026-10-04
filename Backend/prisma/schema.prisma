@@ -139,8 +139,8 @@ model User {
   allowMessagesFromNonContacts   Boolean                          @default(true)
   showOnlineStatus               Boolean                          @default(true)
   alwaysShowUserNames            Boolean                          @default(true)
-  /// Game cards show the full player roster (names, levels) instead of the compact seat stack.
-  gameCardFullRoster             Boolean                          @default(false)
+  /// How game cards draw the roster: compact seat stack, full roster, or compact with a per-card expand toggle.
+  gameCardRosterMode             GameCardRosterMode               @default(AUTO)
   shareGamePhotosToFollowers     Boolean                          @default(true)
   shareGameCreationsToFollowers  Boolean                          @default(true)
   shareGameResultsToFollowers    Boolean                          @default(true)
@@ -4767,4 +4767,12 @@ model AgentMemory {
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, name])
+}
+
+/// Game card roster presentation (Profile setting).
+enum GameCardRosterMode {
+  /// Compact seat stack with a per-card toggle to expand the full roster.
+  AUTO
+  COMPACT
+  FULL
 }

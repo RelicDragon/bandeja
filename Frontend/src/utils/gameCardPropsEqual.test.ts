@@ -47,11 +47,14 @@ describe('gameCardPropsEqual', () => {
     expect(gameCardPropsEqual(a, b)).toBe(true);
   });
 
-  it('repaints when the viewer switches the compact / full roster preference', () => {
+  it('repaints when the viewer switches the roster mode', () => {
     const game = baseGame({ name: 'Test' });
-    const a = { game, user: { id: 'u1', gameCardFullRoster: false }, ...stableHandlers };
-    const b = { game, user: { id: 'u1', gameCardFullRoster: true }, ...stableHandlers };
-    expect(gameCardPropsEqual(a, b)).toBe(false);
+    const auto = { game, user: { id: 'u1', gameCardRosterMode: 'AUTO' }, ...stableHandlers };
+    const full = { game, user: { id: 'u1', gameCardRosterMode: 'FULL' }, ...stableHandlers };
+    const compact = { game, user: { id: 'u1', gameCardRosterMode: 'COMPACT' }, ...stableHandlers };
+    expect(gameCardPropsEqual(auto, full)).toBe(false);
+    expect(gameCardPropsEqual(auto, compact)).toBe(false);
+    expect(gameCardPropsEqual(auto, { ...auto, user: { id: 'u1' } })).toBe(true);
   });
 
   it('detects participant status changes for the viewer', () => {

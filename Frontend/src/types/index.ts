@@ -6,6 +6,8 @@ export type { Sport };
 
 export type SportLevelSource = 'DEFAULT' | 'QUESTIONNAIRE' | 'MANUAL' | 'PLAYTOMIC';
 
+export type GameCardRosterMode = 'AUTO' | 'COMPACT' | 'FULL';
+
 export interface UserSportProfile {
   sport: Sport;
   level: number;
@@ -284,8 +286,8 @@ export interface User extends BasicUser {
   blockedUserIds?: string[];
   showOnlineStatus?: boolean;
   alwaysShowUserNames?: boolean;
-  /** Game cards show the full roster (avatars, names, levels) instead of the compact seat stack. */
-  gameCardFullRoster?: boolean;
+  /** How game cards draw the roster; `AUTO` (default) is compact with a per-card expand toggle. */
+  gameCardRosterMode?: GameCardRosterMode;
   shareGamePhotosToFollowers?: boolean;
   shareGameCreationsToFollowers?: boolean;
   shareGameResultsToFollowers?: boolean;

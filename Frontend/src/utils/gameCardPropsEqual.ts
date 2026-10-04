@@ -26,7 +26,7 @@ function viewerPrefsKey(user: unknown): string {
     timeFormat?: string;
     weekStart?: string;
     alwaysShowUserNames?: boolean;
-    gameCardFullRoster?: boolean;
+    gameCardRosterMode?: string;
     currentCityId?: string;
     currentCity?: { id?: string };
     gender?: string | null;
@@ -38,7 +38,7 @@ function viewerPrefsKey(user: unknown): string {
     u.timeFormat ?? '',
     u.weekStart ?? '',
     u.alwaysShowUserNames === false ? '0' : '1',
-    u.gameCardFullRoster ? '1' : '0',
+    u.gameCardRosterMode ?? 'AUTO',
     u.currentCityId ?? u.currentCity?.id ?? '',
     // PRD 359 — the viewer's gender decides how many MIX_PAIRS seats are open
     // to them, so the join label changes when it does.
@@ -192,6 +192,9 @@ function buildGameRenderSignature(game: Game): string {
     game.sport,
     game.gameType,
     game.name ?? '',
+    // The title tile (`gameCardAvatarUrl`): own avatar, or the season's for a league round.
+    game.avatar ?? '',
+    game.parent?.leagueSeason?.game?.avatar ?? '',
     game.isPublic ? '1' : '0',
     game.affectsRating ? '1' : '0',
     game.hasFixedTeams ? '1' : '0',

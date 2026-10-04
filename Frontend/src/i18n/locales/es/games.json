@@ -233,7 +233,9 @@
     "card": {
       "full": "Completo",
       "openChat": "Abrir chat",
-      "joinQueueShort": "A la cola"
+      "joinQueueShort": "A la cola",
+      "showFullRoster": "Mostrar todos los jugadores",
+      "showCompactRoster": "Mostrar menos jugadores"
     },
     "joinAriaSeatsLeft_one": "Unirme al juego, queda {{count}} plaza",
     "joinAriaSeatsLeft_many": "Unirme al juego, quedan {{count}} plazas",

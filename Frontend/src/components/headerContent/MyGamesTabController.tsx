@@ -17,6 +17,9 @@ export const MyGamesTabController = () => {
 
   const handleTabChange = (id: string) => {
     const newParams = new URLSearchParams(isAgentChatPath ? '' : searchParams);
+    // `focus=invites` is a one-shot bell intent; carrying it over would force the
+    // calendar and re-scroll to invites on every sub-tab click.
+    newParams.delete('focus');
     if (id === 'calendar') {
       newParams.delete('tab');
     } else {

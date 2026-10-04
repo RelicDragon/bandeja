@@ -237,7 +237,9 @@
     "card": {
       "full": "已满",
       "openChat": "打开聊天",
-      "joinQueueShort": "排队"
+      "joinQueueShort": "排队",
+      "showFullRoster": "显示所有球员",
+      "showCompactRoster": "收起球员"
     },
     "joinAriaSeatsLeft_other": "加入比赛，剩 {{count}} 个位置",
     "joinAriaQueueWaiting_other": "加入候补，{{count}} 人等候",

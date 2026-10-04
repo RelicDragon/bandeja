@@ -43,6 +43,8 @@ export const FIND_CARD_GAME_SELECT = {
   sport: true,
   gameType: true,
   name: true,
+  /** Game avatar URL — drawn as the card's title tile. */
+  avatar: true,
   clubId: true,
   courtId: true,
   cityId: true,

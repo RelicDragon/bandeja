@@ -240,7 +240,9 @@
     "card": {
       "full": "Full",
       "openChat": "Open chat",
-      "joinQueueShort": "Queue"
+      "joinQueueShort": "Queue",
+      "showFullRoster": "Show all players",
+      "showCompactRoster": "Show fewer players"
     },
     "joinAriaSeatsLeft_one": "Join the game, {{count}} seat left",
     "joinAriaSeatsLeft_other": "Join the game, {{count}} seats left",

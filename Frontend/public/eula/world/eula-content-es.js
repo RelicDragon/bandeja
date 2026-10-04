@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['es'] = `<h1>Política de Privacidad y Acuerdo de Usuario</h1>
 <p><strong>Aplicación:</strong> Padel Bandeja<br>
 <strong>Fecha de vigencia:</strong> 12/01/2025<br>
-<strong>Última actualización:</strong> 01/10/2026<br>
+<strong>Última actualización:</strong> 04/10/2026<br>
 Aplica en todo el mundo</p>
 
 <h2>1. Política de Privacidad</h2>
@@ -177,9 +177,9 @@ Aplica en todo el mundo</p>
 
 <h3>2.12 Información de Contacto</h3>
 <p>Para preguntas, inquietudes o para ejercer tus derechos con respecto a datos personales, por favor contáctanos:</p>
-<p><strong>Correo Electrónico:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p><strong>Correo Electrónico:</strong> <a href="mailto:privacy@bandeja.me">privacy@bandeja.me</a></p>
 
 <div class="footer">
-<p>Este documento fue actualizado por última vez el 01/10/2026. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
-<p>Contacto: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p>Este documento fue actualizado por última vez el 04/10/2026. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
+<p>Contacto: <a href="mailto:support@bandeja.me">support@bandeja.me</a></p>
 </div>`;

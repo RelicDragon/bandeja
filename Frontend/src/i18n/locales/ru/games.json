@@ -239,7 +239,9 @@
     "card": {
       "full": "Мест нет",
       "openChat": "Открыть чат",
-      "joinQueueShort": "В очередь"
+      "joinQueueShort": "В очередь",
+      "showFullRoster": "Показать всех игроков",
+      "showCompactRoster": "Свернуть список игроков"
     },
     "joinAriaSeatsLeft_one": "Добавиться в игру, свободно {{count}} место",
     "joinAriaSeatsLeft_few": "Добавиться в игру, свободно {{count}} места",

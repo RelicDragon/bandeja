@@ -4,6 +4,7 @@ import { validateMainThemeUpdate } from '../../services/user/mainTheme';
 import { Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
+import type { GameCardRosterMode } from '@prisma/client';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
 import { ImageProcessor } from '../../utils/imageProcessor';
@@ -32,6 +33,8 @@ import { getUserTimezone } from '../../services/user-timezone.service';
 import { enrichProfileUser } from '../../services/user/userSportProfile.service';
 import { attachPlayStreaksToUser } from '../../services/results/playStreak.service';
 import { attachTrophiesToUser } from '../../services/achievements/achievementProjection.service';
+
+const GAME_CARD_ROSTER_MODES: readonly unknown[] = ['AUTO', 'COMPACT', 'FULL'] satisfies GameCardRosterMode[];
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -117,7 +120,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, gameCardFullRoster, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries, payoutMethods } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, gameCardRosterMode, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries, payoutMethods } = req.body;
 
   /**
    * PRD 348 — the organiser's saved "how to pay me" list, copied onto the games
@@ -196,10 +199,9 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     alwaysShowUserNames === undefined
       ? undefined
       : alwaysShowUserNames === true || alwaysShowUserNames === 'true';
-  const normalizedGameCardFullRoster =
-    gameCardFullRoster === undefined
-      ? undefined
-      : gameCardFullRoster === true || gameCardFullRoster === 'true';
+  if (gameCardRosterMode !== undefined && !GAME_CARD_ROSTER_MODES.includes(gameCardRosterMode)) {
+    throw new ApiError(400, `Invalid gameCardRosterMode. Expected one of: ${GAME_CARD_ROSTER_MODES.join(', ')}`);
+  }
 
   const normalizeShareFlag = (v: unknown) =>
     v === undefined ? undefined : v === true || v === 'true';
@@ -301,7 +303,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
         ...(normalizedShowOnlineStatus !== undefined && { showOnlineStatus: normalizedShowOnlineStatus }),
         ...(normalizedAlwaysShowUserNames !== undefined && { alwaysShowUserNames: normalizedAlwaysShowUserNames }),
-        ...(normalizedGameCardFullRoster !== undefined && { gameCardFullRoster: normalizedGameCardFullRoster }),
+        ...(gameCardRosterMode !== undefined && { gameCardRosterMode: gameCardRosterMode as GameCardRosterMode }),
         ...(normalizedSharePhotos !== undefined && { shareGamePhotosToFollowers: normalizedSharePhotos }),
         ...(normalizedShareCreations !== undefined && { shareGameCreationsToFollowers: normalizedShareCreations }),
         ...(normalizedShareResults !== undefined && { shareGameResultsToFollowers: normalizedShareResults }),

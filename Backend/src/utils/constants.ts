@@ -298,7 +298,7 @@ export const PROFILE_SELECT_FIELDS = {
   allowMessagesFromNonContacts: true,
   showOnlineStatus: true,
   alwaysShowUserNames: true,
-  gameCardFullRoster: true,
+  gameCardRosterMode: true,
   shareGamePhotosToFollowers: true,
   shareGameCreationsToFollowers: true,
   shareGameResultsToFollowers: true,

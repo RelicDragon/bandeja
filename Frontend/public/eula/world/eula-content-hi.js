@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['hi'] = `<h1>गोपनीयता नीति और उपयोगकर्ता समझौता</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 01/10/2026<br>
+<strong>Last updated:</strong> 04/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. गोपनीयता नीति</h2>
@@ -176,9 +176,9 @@ Applies worldwide</p>
 
 <h3>2.12 संपर्क जानकारी</h3>
 <p>व्यक्तिगत डेटा के संबंध में प्रश्नों, चिंताओं या अपने अधिकारों का प्रयोग करने के लिए, कृपया हमसे संपर्क करें:</p>
-<p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p><strong>Email:</strong> <a href="mailto:privacy@bandeja.me">privacy@bandeja.me</a></p>
 
 <div class="footer">
-<p>यह दस्तावेज़ अंतिम बार 01/10/2026 को अद्यतन किया गया था। हम किसी भी समय इस नीति और समझौते को अद्यतन करने का अधिकार सुरक्षित रखते हैं।</p>
-<p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p>यह दस्तावेज़ अंतिम बार 04/10/2026 को अद्यतन किया गया था। हम किसी भी समय इस नीति और समझौते को अद्यतन करने का अधिकार सुरक्षित रखते हैं।</p>
+<p>Contact: <a href="mailto:support@bandeja.me">support@bandeja.me</a></p>
 </div>`;

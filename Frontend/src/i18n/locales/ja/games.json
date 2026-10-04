@@ -237,7 +237,9 @@
     "card": {
       "full": "満員",
       "openChat": "チャットを開く",
-      "joinQueueShort": "順番待ち"
+      "joinQueueShort": "順番待ち",
+      "showFullRoster": "すべてのプレイヤーを表示",
+      "showCompactRoster": "表示を減らす"
     },
     "joinAriaSeatsLeft_other": "ゲームに参加する、残り{{count}}枠",
     "joinAriaQueueWaiting_other": "キューに入る、{{count}}人待ち",

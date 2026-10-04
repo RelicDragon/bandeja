@@ -240,7 +240,9 @@
     "card": {
       "full": "भरा हुआ",
       "openChat": "चैट खोलें",
-      "joinQueueShort": "कतार में"
+      "joinQueueShort": "कतार में",
+      "showFullRoster": "सभी खिलाड़ी दिखाएँ",
+      "showCompactRoster": "कम खिलाड़ी दिखाएँ"
     },
     "joinAriaSeatsLeft_one": "गेम में शामिल हों, {{count}} जगह बाकी",
     "joinAriaSeatsLeft_other": "गेम में शामिल हों, {{count}} जगहें बाकी",

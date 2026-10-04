@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['ja'] = `<h1>プライバシーポリシーと利用規約</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 01/10/2026<br>
+<strong>Last updated:</strong> 04/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. プライバシーポリシー</h2>
@@ -176,9 +176,9 @@ Applies worldwide</p>
 
 <h3>2.12 連絡先情報</h3>
 <p>ご質問、懸念がある場合、または個人データに関する権利を行使する場合は、以下までお問い合わせください。</p>
-<p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p><strong>Email:</strong> <a href="mailto:privacy@bandeja.me">privacy@bandeja.me</a></p>
 
 <div class="footer">
-<p>このドキュメントの最終更新日は 2026 年 10 月 1 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
-<p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p>このドキュメントの最終更新日は 2026 年 10 月 4 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
+<p>Contact: <a href="mailto:support@bandeja.me">support@bandeja.me</a></p>
 </div>`;

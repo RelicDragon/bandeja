@@ -252,7 +252,9 @@
     "card": {
       "full": "مكتمل",
       "openChat": "فتح الدردشة",
-      "joinQueueShort": "انتظار"
+      "joinQueueShort": "انتظار",
+      "showFullRoster": "عرض كل اللاعبين",
+      "showCompactRoster": "عرض لاعبين أقل"
     },
     "joinAriaSeatsLeft_zero": "انضم إلى المباراة، متبقٍ {{count}} مقعد",
     "joinAriaSeatsLeft_one": "انضم إلى المباراة، متبقٍ {{count}} مقعد",

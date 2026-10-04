@@ -235,7 +235,9 @@
     "card": {
       "full": "Popunjeno",
       "openChat": "Otvori čet",
-      "joinQueueShort": "U red"
+      "joinQueueShort": "U red",
+      "showFullRoster": "Prikaži sve igrače",
+      "showCompactRoster": "Prikaži manje igrača"
     },
     "joinAriaSeatsLeft_one": "Pridružiti se igri, slobodno {{count}} mesto",
     "joinAriaSeatsLeft_few": "Pridružiti se igri, slobodna {{count}} mesta",

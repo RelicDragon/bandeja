@@ -81,7 +81,7 @@ const survivorSelect = {
   allowMessagesFromNonContacts: true,
   showOnlineStatus: true,
   alwaysShowUserNames: true,
-  gameCardFullRoster: true,
+  gameCardRosterMode: true,
   appIcon: true,
   trainerRating: true,
   trainerReviewCount: true,
@@ -599,7 +599,8 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
       survivor.allowMessagesFromNonContacts || source.allowMessagesFromNonContacts,
     showOnlineStatus: survivor.showOnlineStatus || source.showOnlineStatus,
     alwaysShowUserNames: survivor.alwaysShowUserNames || source.alwaysShowUserNames,
-    gameCardFullRoster: survivor.gameCardFullRoster || source.gameCardFullRoster,
+    // An explicit choice beats the default.
+    gameCardRosterMode: survivor.gameCardRosterMode !== 'AUTO' ? survivor.gameCardRosterMode : source.gameCardRosterMode,
     appIcon: pickStr(survivor.appIcon, source.appIcon),
     trainerRating,
     trainerReviewCount: trc,

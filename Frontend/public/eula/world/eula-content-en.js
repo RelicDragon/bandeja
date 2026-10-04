@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['en'] = `<h1>Privacy Policy & User Agreement</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 01/10/2026<br>
+<strong>Last updated:</strong> 04/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. Privacy Policy</h2>
@@ -177,9 +177,9 @@ Applies worldwide</p>
 
 <h3>2.12 Contact Information</h3>
 <p>For questions, concerns, or to exercise your rights regarding personal data, please contact us:</p>
-<p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p><strong>Email:</strong> <a href="mailto:privacy@bandeja.me">privacy@bandeja.me</a></p>
 
 <div class="footer">
-<p>This document was last updated on 01/10/2026. We reserve the right to update this policy and agreement at any time.</p>
-<p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p>This document was last updated on 04/10/2026. We reserve the right to update this policy and agreement at any time.</p>
+<p>Contact: <a href="mailto:support@bandeja.me">support@bandeja.me</a></p>
 </div>`;

@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['ar'] = `<h1>سياسة الخصوصية واتفاقية المستخدم</h1>
 <p><strong>التطبيق:</strong> Padel Bandeja<br>
 <strong>تاريخ السريان:</strong> 12/01/2025<br>
-<strong>آخر تحديث:</strong> 01/10/2026<br>
+<strong>آخر تحديث:</strong> 04/10/2026<br>
 تسري في جميع أنحاء العالم</p>
 
 <h2>1. سياسة الخصوصية</h2>
@@ -177,9 +177,9 @@ window.EULAContent['ar'] = `<h1>سياسة الخصوصية واتفاقية ا�
 
 <h3>2.12 معلومات الاتصال</h3>
 <p>للأسئلة أو المخاوف أو لممارسة حقوقك بشأن البيانات الشخصية، يرجى التواصل:</p>
-<p><strong>البريد الإلكتروني:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p><strong>البريد الإلكتروني:</strong> <a href="mailto:privacy@bandeja.me">privacy@bandeja.me</a></p>
 
 <div class="footer">
-<p>آخر تحديث لهذا المستند في 01/10/2026. نحتفظ بحق تحديث هذه السياسة والاتفاقية في أي وقت.</p>
-<p>التواصل: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p>آخر تحديث لهذا المستند في 04/10/2026. نحتفظ بحق تحديث هذه السياسة والاتفاقية في أي وقت.</p>
+<p>التواصل: <a href="mailto:support@bandeja.me">support@bandeja.me</a></p>
 </div>`;

@@ -236,7 +236,9 @@
     "card": {
       "full": "Plno",
       "openChat": "Otevřít chat",
-      "joinQueueShort": "Do fronty"
+      "joinQueueShort": "Do fronty",
+      "showFullRoster": "Zobrazit všechny hráče",
+      "showCompactRoster": "Zobrazit méně hráčů"
     },
     "joinAriaSeatsLeft_one": "Připojit se k zápasu, zbývá {{count}} místo",
     "joinAriaSeatsLeft_few": "Připojit se k zápasu, zbývají {{count}} místa",

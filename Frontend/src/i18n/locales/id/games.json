@@ -237,7 +237,9 @@
     "card": {
       "full": "Penuh",
       "openChat": "Buka obrolan",
-      "joinQueueShort": "Antre"
+      "joinQueueShort": "Antre",
+      "showFullRoster": "Tampilkan semua pemain",
+      "showCompactRoster": "Tampilkan lebih sedikit"
     },
     "joinAriaSeatsLeft_other": "Bergabunglah dengan permainan, sisa {{count}} tempat",
     "joinAriaQueueWaiting_other": "Bergabunglah dengan antrian, {{count}} pemain menunggu",

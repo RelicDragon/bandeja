@@ -237,7 +237,9 @@
     "card": {
       "full": "เต็ม",
       "openChat": "เปิดแชท",
-      "joinQueueShort": "ต่อคิว"
+      "joinQueueShort": "ต่อคิว",
+      "showFullRoster": "แสดงผู้เล่นทั้งหมด",
+      "showCompactRoster": "แสดงผู้เล่นน้อยลง"
     },
     "joinAriaSeatsLeft_other": "เข้าร่วมเกม เหลือ {{count}} ที่",
     "joinAriaQueueWaiting_other": "เข้าร่วมคิว {{count}} คนรออยู่",

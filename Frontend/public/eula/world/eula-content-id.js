@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['id'] = `<h1>Kebijakan Privasi & Perjanjian Pengguna</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 01/10/2026<br>
+<strong>Last updated:</strong> 04/10/2026<br>
 Applies worldwide</p>
 
 <h2>1. Kebijakan Privasi</h2>
@@ -176,9 +176,9 @@ Applies worldwide</p>
 
 <h3>2.12 Informasi Kontak</h3>
 <p>Untuk pertanyaan, kekhawatiran, atau untuk menggunakan hak Anda mengenai data pribadi, silakan hubungi kami:</p>
-<p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p><strong>Email:</strong> <a href="mailto:privacy@bandeja.me">privacy@bandeja.me</a></p>
 
 <div class="footer">
-<p>Dokumen ini terakhir diperbarui pada 01/10/2026. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
-<p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
+<p>Dokumen ini terakhir diperbarui pada 04/10/2026. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
+<p>Contact: <a href="mailto:support@bandeja.me">support@bandeja.me</a></p>
 </div>`;
