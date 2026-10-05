@@ -109,7 +109,8 @@ it('greets a newcomer with progress, both choices and the teaser — no game her
   expect(byTestId('novice-rank-ladder')?.querySelectorAll('li')).toHaveLength(6);
   expect(byTestId('novice-welcome-game-hero')).toBeNull();
   expect(byTestId('novice-welcome-play')?.getAttribute('aria-pressed')).toBe('true');
-  expect(byTestId('play-hero')).not.toBeNull();
+  // The Play card opens compose itself; the hero only appears as the "looking" status strip.
+  expect(byTestId('play-hero')).toBeNull();
   expect(byTestId('novice-welcome-novice-games')?.textContent).toContain('novice.welcome.noviceGamesEmpty');
   expect(byTestId('novice-teaser')).not.toBeNull();
   expect(byTestId('novice-welcome-profile')).not.toBeNull();

@@ -120,7 +120,8 @@ export function WelcomeChoices() {
       >
         {choice === 'play' ? (
           <>
-            <PlayHeroButton />
+            {/* The Play card already opens compose; the hero only adds the "looking" status strip. */}
+            {looking ? <PlayHeroButton /> : null}
             <WelcomeGamesList
               title={t('novice.welcome.noviceGamesTitle')}
               emptyText={t('novice.welcome.noviceGamesEmpty')}

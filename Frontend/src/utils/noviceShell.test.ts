@@ -3,6 +3,7 @@ import type { BottomTabId } from '@/utils/bottomTabActiveId';
 import {
   createMenuNoviceEntries,
   filterNoviceBottomTabs,
+  hasNoviceCreateEntries,
   myTabNoviceSections,
   rendersNoviceWelcome,
   showsNoviceWelcome,
@@ -119,5 +120,13 @@ describe('create menu per rank', () => {
       league: false,
     });
     expect(Object.values(createMenuNoviceEntries(novice(5))).every(Boolean)).toBe(true);
+  });
+
+  it('has no create entries (header hides "+") until Rookie; never hides it outside novice mode', () => {
+    expect(hasNoviceCreateEntries(novice(0))).toBe(false);
+    expect(hasNoviceCreateEntries(novice(1))).toBe(false);
+    expect(hasNoviceCreateEntries(novice(2))).toBe(true);
+    expect(hasNoviceCreateEntries({ ...novice(1), noviceUnlockedAllAt: '2026-10-05T00:00:00.000Z' })).toBe(true);
+    expect(hasNoviceCreateEntries({})).toBe(true);
   });
 });

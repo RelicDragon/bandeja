@@ -156,7 +156,11 @@ function RankLadder({ toRank, reduceMotion }: { toRank: number; reduceMotion: bo
         const reached = r.rank <= toRank;
         const current = r.rank === toRank;
         return (
-          <li key={r.id} className="flex flex-1 items-center" aria-current={current ? 'step' : undefined}>
+          <li
+            key={r.id}
+            className={`flex items-center ${r.rank > 0 ? 'flex-1' : ''}`}
+            aria-current={current ? 'step' : undefined}
+          >
             {r.rank > 0 && (
               <motion.span
                 className={`h-0.5 flex-1 origin-left ${reached ? 'bg-amber-300' : 'bg-white/20'}`}

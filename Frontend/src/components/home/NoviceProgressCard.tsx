@@ -39,21 +39,19 @@ export function NoviceProgressCard() {
             })}
           </p>
           {next ? (
-            <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <span className="shrink-0">
                 {t('novice.shell.nextUnlock', { rank: t(noviceRankLabelKey(noviceRankId(next.rank))) })}
               </span>
-              <span className="flex min-w-0 items-center gap-1 truncate">
-                {next.features.slice(0, 3).map((feature) => {
-                  const Icon = NOVICE_FEATURE_ICONS[feature];
-                  return (
-                    <span key={feature} className="inline-flex items-center gap-0.5 truncate">
-                      <Icon size={12} className="shrink-0" aria-hidden />
-                      <span className="truncate">{t(noviceFeatureLabelKey(feature))}</span>
-                    </span>
-                  );
-                })}
-              </span>
+              {next.features.slice(0, 3).map((feature) => {
+                const Icon = NOVICE_FEATURE_ICONS[feature];
+                return (
+                  <span key={feature} className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap">
+                    <Icon size={12} className="shrink-0" aria-hidden />
+                    {t(noviceFeatureLabelKey(feature))}
+                  </span>
+                );
+              })}
             </div>
           ) : null}
         </div>

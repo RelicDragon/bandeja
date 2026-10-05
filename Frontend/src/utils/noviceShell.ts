@@ -105,3 +105,8 @@ export function createMenuNoviceEntries(user: NoviceUser): CreateMenuNoviceEntri
     listing: hasNoviceFeature(user, 'marketTab'),
   };
 }
+
+/** False while every create entry except Bug is still locked — the header hides "+" then. */
+export function hasNoviceCreateEntries(user: NoviceUser): boolean {
+  return Object.values(createMenuNoviceEntries(user)).some(Boolean);
+}

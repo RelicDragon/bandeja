@@ -10,6 +10,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { handleBack } from '@/utils/backNavigation';
 import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { hasNoviceCreateEntries } from '@/utils/noviceShell';
 
 export const HomeHeaderContent = () => {
   const { t } = useTranslation();
@@ -141,15 +142,18 @@ export const HomeHeaderContent = () => {
           <User size={20} className="text-gray-600 dark:text-gray-400" />
         )}
       </button>
-      <div ref={buttonContainerRef} className="shrink-0">
-        <button
-          onClick={handleCreateClick}
-          className="header-create-button shrink-0 w-9 h-9 p-0 rounded-lg bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors relative z-10 flex items-center justify-center"
-          aria-label={t('games.create')}
-        >
-          <Plus size={20} />
-        </button>
-      </div>
+      {/* PRD 358 — a novice with only "Bug" behind "+" gets no create button. */}
+      {user && (user.isAdmin || user.isTrainer || hasNoviceCreateEntries(user)) ? (
+        <div ref={buttonContainerRef} className="shrink-0">
+          <button
+            onClick={handleCreateClick}
+            className="header-create-button shrink-0 w-9 h-9 p-0 rounded-lg bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors relative z-10 flex items-center justify-center"
+            aria-label={t('games.create')}
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+      ) : null}
       
       <CreateMenuModal
         isOpen={showCreateMenu && !pendingChatType && !showChatForm}

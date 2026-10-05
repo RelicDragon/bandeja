@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { LayoutGrid } from 'lucide-react';
 import { ConfirmationModal } from '@/components';
 import { unlockAllNovice } from '@/hooks/useNovice';
 
@@ -62,6 +63,7 @@ export function NoviceUnlockAllLink({ className, onBeforeUnlock, onUnlockFailed 
         cancelText={t('common.cancel', { defaultValue: 'Cancel' })}
         confirmVariant="primary"
         tone="info"
+        icon={LayoutGrid}
       />
     </>
   );
