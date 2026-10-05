@@ -2452,6 +2452,8 @@ model UserTeam {
   avatar         String?
   originalAvatar String?
   cutAngle       Float            @default(45)
+  /// Palette key from `@bandeja/shared/userTeamColors`; null = app default colour.
+  color          String?          @db.VarChar(16)
   ownerId        String
   size           Int              @default(2)
   createdAt      DateTime         @default(now())

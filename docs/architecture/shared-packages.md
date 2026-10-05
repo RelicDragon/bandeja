@@ -77,6 +77,7 @@ When editing templates or booking helpers, change **canonical** `Frontend/shared
 | `entityCapabilities.ts` | per-`EntityType` roster/results rules |
 | `eventApproval.ts` | `EVENT_APPROVAL_STATUS` |
 | `achievements/` | catalog, eligibility, pin slots |
+| `userTeamColors.ts` | `USER_TEAM_COLORS` palette keys + `isUserTeamColor` for `UserTeam.color` (BE validates via `@bandeja/shared/userTeamColors`, no BE copy; tones are FE-only) |
 | `novice/` | novice-mode ranks, feature unlock map, `isNoviceModeActive` / `hasNoviceFeature` (PRD 358; BE imports `@bandeja/shared/novice`, no BE copy) |
 | `playIntentRealtime.ts` | socket event names/payloads (BE re-exports via `@bandeja/shared/playIntentRealtime`) |
 | `playIntentCreateSource.ts` | create-source enum for looking-to-play → game |

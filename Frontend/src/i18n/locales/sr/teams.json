@@ -38,13 +38,10 @@
     "cutAngleDial": "Podesite kako se dele fotografije igrača",
     "addTeamPhotoTitle": "Dodaj fotografiju tima",
     "addTeamPhotoHint": "Izaberite sliku, pa je isecite",
-    "explainerTitle": "Par, ne grupa",
     "explainerCreate": "Vi i jedan partner — par, ne grupa.",
     "explainerBulletCity": "Ljudi u vašem gradu mogu da vas pozovu u igru kao par.",
     "explainerBulletAdd": "Dodajte se sa stranice para ili sa liste poziva u igri.",
     "explainerBulletFixed": "U igrama sa fiksnim parovima sedite zajedno.",
-    "explainerPage": "Dodajte par u igru ovde, ili sa liste poziva. Drugi u gradu takođe mogu da vas pozovu.",
-    "explainerPagePending": "Pozovite partnera da završite par. Onda možete da ga dodate u igru.",
     "createExplainerTitle": "Napravi par",
     "createPair": "Napravi par",
     "addToGame": "Dodaj u igru",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "Fiksni parovi",
     "partnerAlreadyIn": "Partner je već unutra",
     "partnerInvited": "Partner pozvan",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "Upravljanje",
+    "statusAddPlaceholder": "Dodajte status tima",
+    "recordTitle": "Vaš zajednički učinak",
+    "recordEmpty": "Još niste igrali zajedno. Dodajte par u igru i učinak počinje ovde.",
+    "invitedBy": "{{name}} želi da igra u paru sa vama",
+    "leaveConfirm": "Napustiti ovaj tim? Tim ostaje vašem partneru.",
+    "leftTeam": "Napustili ste tim",
+    "wins": "Pobede",
+    "invitePartnerHint": "Izaberite partnera. Dobiće pozivnicu.",
+    "cutAngleLabel": "Podela",
+    "colorLabel": "Boja",
+    "colors": {
+      "default": "Podrazumevana",
+      "court": "Teren",
+      "lime": "Limeta",
+      "amber": "Ćilibar",
+      "coral": "Koral",
+      "rose": "Ruža",
+      "violet": "Ljubičica",
+      "graphite": "Grafit"
+    }
   }
 }

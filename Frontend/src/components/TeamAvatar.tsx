@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import type { BasicUser, UserTeam } from '@/types';
 import { teamAvatarHalfPlaneClipPath } from '@/utils/teamAvatarClipPolygon';
 import { getTeamAvatarPair } from '@/utils/teamAvatarPair';
+import { userTeamColorTones } from '@/utils/userTeamColor';
 import { teamNameInitials, userInitialsFromBasicUser } from '@/utils/teamAvatarText';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import {
@@ -12,14 +13,18 @@ import {
 import { TeamAvatarParticipantTipShell } from '@/components/TeamAvatarParticipantTipShell';
 import { UserAvatarFallbackImg } from '@/components/UserAvatarFallbackImg';
 
+type Tones = { light: string; dark: string } | null;
+
 function SoloFace({
   user,
   teamName,
   tile,
+  tones,
 }: {
   user: BasicUser;
   teamName: string;
   tile: boolean;
+  tones: Tones;
 }) {
   const useTiny = tile;
   const tinyUrl = useTiny ? userAvatarTinyUrlFromStandard(user.avatar) : null;
@@ -31,7 +36,8 @@ function SoloFace({
     <>
       <div
         aria-hidden={Boolean(src)}
-        className={`flex h-full w-full items-center justify-center bg-primary-600 font-semibold text-white ${textCls}`}
+        className={`flex h-full w-full items-center justify-center font-semibold text-white ${tones ? '' : 'bg-primary-600'} ${textCls}`}
+        style={tones ? { backgroundImage: `linear-gradient(135deg, ${tones.light}, ${tones.dark})` } : undefined}
       >
         {teamNameInitials(teamName)}
       </div>
@@ -47,21 +53,39 @@ function SoloFace({
   );
 }
 
+/** How far (in % of the box) a half's initials sit from the centre, along the seam's normal. */
+const SPLIT_INITIALS_OFFSET = 24;
+
 function SplitFaceHalf({
   user,
   tile,
   clipPath,
   z,
+  side,
+  cutAngle,
+  tones,
 }: {
   user: BasicUser;
   tile: boolean;
   clipPath: string;
   z: string;
+  side: 'first' | 'second';
+  cutAngle: number;
+  tones: Tones;
 }) {
   const tinyUrl = tile ? userAvatarTinyUrlFromStandard(user.avatar) : null;
   const [state, setState] = useAvatarImageFallbackState(`${user.id}:${user.avatar ?? ''}:${tile}`);
   const src = avatarImageSrcToLoad({ avatar: user.avatar, tinyUrl, state });
-  const textCls = tile ? 'text-sm' : 'text-lg';
+  const textCls = tile ? 'text-[10px]' : 'text-lg';
+  // Centre the initials inside this half (along the normal of the seam, the
+  // same normal `teamAvatarHalfPlaneClipPath` uses), so two photo-less players
+  // never print their initials on top of each other at the seam.
+  const rad = (cutAngle * Math.PI) / 180;
+  const sign = side === 'first' ? 1 : -1;
+  const left = 50 + sign * -Math.sin(rad) * SPLIT_INITIALS_OFFSET;
+  const top = 50 + sign * Math.cos(rad) * SPLIT_INITIALS_OFFSET;
+  const tone = tones ? '' : side === 'first' ? 'bg-primary-500' : 'bg-primary-700';
+  const toneStyle = tones ? { backgroundColor: side === 'first' ? tones.light : tones.dark } : undefined;
 
   return (
     <div
@@ -75,9 +99,15 @@ function SplitFaceHalf({
     >
       <div
         aria-hidden={Boolean(src)}
-        className={`flex h-full w-full items-center justify-center bg-primary-600 font-semibold text-white ${textCls}`}
+        className={`relative h-full w-full font-semibold text-white ${tone} ${textCls}`}
+        style={toneStyle}
       >
-        {userInitialsFromBasicUser(user)}
+        <span
+          className="absolute -translate-x-1/2 -translate-y-1/2 leading-none"
+          style={{ left: `${left}%`, top: `${top}%` }}
+        >
+          {userInitialsFromBasicUser(user)}
+        </span>
       </div>
       {src ? (
         <UserAvatarFallbackImg
@@ -108,6 +138,7 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing, part
   const ring = showRing ?? tile;
   const { primary, secondary } = getTeamAvatarPair(team);
   const cutAngle = team.cutAngle ?? 45;
+  const tones = userTeamColorTones(team.color);
   const [customAvatarFailed, setCustomAvatarFailed] = useState(false);
   useEffect(() => {
     setCustomAvatarFailed(false);
@@ -140,7 +171,7 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing, part
   if (!secondary) {
     const inner = (
       <div className={wrapCls}>
-        <SoloFace user={primary} teamName={team.name} tile={tile} />
+        <SoloFace user={primary} teamName={team.name} tile={tile} tones={tones} />
       </div>
     );
     return showParticipantTip ? <TeamAvatarParticipantTipShell team={team}>{inner}</TeamAvatarParticipantTipShell> : inner;
@@ -159,8 +190,8 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing, part
 
   const splitInner = (
     <div className={splitWrapCls}>
-      <SplitFaceHalf user={primary} tile={tile} clipPath={clip1} z="z-0" />
-      <SplitFaceHalf user={secondary} tile={tile} clipPath={clip2} z="z-[1]" />
+      <SplitFaceHalf user={primary} tile={tile} clipPath={clip1} z="z-0" side="first" cutAngle={cutAngle} tones={tones} />
+      <SplitFaceHalf user={secondary} tile={tile} clipPath={clip2} z="z-[1]" side="second" cutAngle={cutAngle} tones={tones} />
       <svg
         className="pointer-events-none absolute inset-0 z-[2] h-full w-full"
         viewBox="0 0 100 100"

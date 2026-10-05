@@ -38,13 +38,10 @@
     "cutAngleDial": "2人の写真の境界を調整",
     "addTeamPhotoTitle": "チーム写真を追加",
     "addTeamPhotoHint": "画像を選んで、枠に合わせて切り抜いてください",
-    "explainerTitle": "グループではなくペア",
     "explainerCreate": "あなたとパートナー1人 — グループではありません。",
     "explainerBulletCity": "同じ街の人が、あなたたち2人を試合に招待できます。",
     "explainerBulletAdd": "ペアのページか、試合の招待リストから追加できます。",
     "explainerBulletFixed": "固定ペアの試合では、一緒に並びます。",
-    "explainerPage": "ここか試合の招待リストから、このペアを試合に追加できます。同じ街の人も招待できます。",
-    "explainerPagePending": "パートナーを招待してペアを完成させてください。その後、試合に追加できます。",
     "createExplainerTitle": "ペアを作る",
     "createPair": "ペアを作成",
     "addToGame": "試合に追加",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "固定ペア",
     "partnerAlreadyIn": "パートナーはすでに参加中",
     "partnerInvited": "パートナーを招待済み",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "管理",
+    "statusAddPlaceholder": "チームのステータスを追加",
+    "recordTitle": "ふたりの戦績",
+    "recordEmpty": "まだ一緒にプレーしていません。ペアをゲームに追加すると、ここに戦績が表示されます。",
+    "invitedBy": "{{name}}さんがペアを組みたがっています",
+    "leaveConfirm": "このチームを抜けますか？チームはパートナーに残ります。",
+    "leftTeam": "チームを抜けました",
+    "wins": "勝利",
+    "invitePartnerHint": "パートナーを選んでください。招待が届きます。",
+    "cutAngleLabel": "分割",
+    "colorLabel": "カラー",
+    "colors": {
+      "default": "デフォルト",
+      "court": "コート",
+      "lime": "ライム",
+      "amber": "アンバー",
+      "coral": "コーラル",
+      "rose": "ローズ",
+      "violet": "バイオレット",
+      "graphite": "グラファイト"
+    }
   }
 }

@@ -38,13 +38,10 @@
     "cutAngleDial": "दो खिलाड़ी फ़ोटो कैसे मिलें, समायोजित करें",
     "addTeamPhotoTitle": "टीम फ़ोटो जोड़ें",
     "addTeamPhotoHint": "छवि चुनें, फिर फ़िट करने के लिए क्रॉप करें",
-    "explainerTitle": "जोड़ी, ग्रुप नहीं",
     "explainerCreate": "आप और एक पार्टनर — ग्रुप नहीं।",
     "explainerBulletCity": "आपके शहर के लोग आपको दोनों को गेम में निमंत्रित कर सकते हैं।",
     "explainerBulletAdd": "जोड़ी पेज या गेम की निमंत्रण सूची से खुद को जोड़ें।",
     "explainerBulletFixed": "फिक्स्ड-पेयर गेम में आप साथ बैठते हैं।",
-    "explainerPage": "इस जोड़ी को यहाँ या गेम की निमंत्रण सूची से जोड़ें। आपके शहर के अन्य लोग भी निमंत्रित कर सकते हैं।",
-    "explainerPagePending": "जोड़ी पूरी करने के लिए पार्टनर को निमंत्रित करें। फिर आप गेम में जोड़ सकते हैं।",
     "createExplainerTitle": "जोड़ी शुरू करें",
     "createPair": "जोड़ी बनाएँ",
     "addToGame": "गेम में जोड़ें",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "फिक्स्ड पेयर",
     "partnerAlreadyIn": "पार्टनर पहले से शामिल",
     "partnerInvited": "पार्टनर निमंत्रित",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "प्रबंधित करें",
+    "statusAddPlaceholder": "टीम स्टेटस जोड़ें",
+    "recordTitle": "साथ में आपका रिकॉर्ड",
+    "recordEmpty": "अभी तक साथ नहीं खेले। जोड़ी को किसी गेम में जोड़ें, आपका रिकॉर्ड यहीं से शुरू होगा।",
+    "invitedBy": "{{name}} आपके साथ जोड़ी बनाना चाहते हैं",
+    "leaveConfirm": "यह टीम छोड़ें? टीम आपके पार्टनर के पास रहेगी।",
+    "leftTeam": "आपने टीम छोड़ दी",
+    "wins": "जीत",
+    "invitePartnerHint": "अपना पार्टनर चुनें। उन्हें निमंत्रण मिलेगा।",
+    "cutAngleLabel": "विभाजन",
+    "colorLabel": "रंग",
+    "colors": {
+      "default": "डिफ़ॉल्ट",
+      "court": "कोर्ट",
+      "lime": "लाइम",
+      "amber": "अंबर",
+      "coral": "कोरल",
+      "rose": "गुलाबी",
+      "violet": "बैंगनी",
+      "graphite": "ग्रेफ़ाइट"
+    }
   }
 }

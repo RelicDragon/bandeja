@@ -2661,27 +2661,29 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| UT-01 | Team page loads | Open team | Roster + info |
+| UT-01 | Team page loads | Open team | Hero (team picture on a backdrop drawn from it, name, status, the two seats joined by "&"), one main action, explainer footnote, Manage list |
 | UT-02 | Team from home section | Tap team card | Team page |
-| UT-03 | Edit team (captain) | Edit name/avatar | Saved |
-| UT-04 | Invite member | Invite flow | Pending member |
-| UT-05 | Leave team | Leave confirm | Removed |
-| UT-06 | Full-height mobile layout | `@mobile` | Layout fills screen |
+| UT-03 | Edit team (captain) | Tap the name / status in the hero and type; edit avatar | Inline fields autosave (spinner → check); a name under 3 characters shows the error under the field and is not saved; Enter / Done closes the keyboard |
+| UT-04 | Invite member | Solo team: main action **Invite teammate** (or the dashed seat) | Pending member: dimmed face with an amber dot + "Invited · awaiting reply" (no ring); **Cancel invitation** appears under Manage |
+| UT-05 | Leave team | Non-owner member: Manage → **Leave team** → confirm | Toast "You left the team", back to Home; the owner keeps the team. Owner: Manage → **Remove player** / **Delete team**; faces carry no remove badges |
+| UT-06 | Page scrolls on mobile | `@mobile` and the native app, content taller than the screen (pair with games) | The page scrolls with the rest of the app (no inner scroll box); the Manage list clears the bottom tabs |
 | UT-07 | Dead custom avatar URL | Team whose `avatar` CDN URL 404/403s | Falls back to member composite / initials (no broken-image icon) |
 | UT-08 | Replace team avatar | Owner replaces existing team photo | New image shows; prior URL may 404 without breaking display |
 | UT-09 | Create-pair explainer | Tap Create team (home or create menu) | Sheet explains pair (not a group), city invites, add-from-page or invite list; confirm creates/opens pair |
-| UT-10 | Team page explainer | Open `/user-team/:id` | Explainer visible without hunting; pending vs ready copy |
+| UT-10 | No explainer card | Open `/user-team/:id` | No "A pair, not a group" hint: the seats joined by "&" and the main action (Add to a game / Invite teammate / waiting) carry the guidance. The create sheet (UT-09) still explains pairs |
 | UT-11 | Add pair to game | Ready pair → Add to a game → pick upcoming game user can invite to | Both accepted members tagged as that user team; partner invited if not already on the game |
 | UT-12 | Add blocked while pending | Incomplete pair (partner not accepted) | Add action unavailable with reason that partner must join first |
 | UT-13 | Invite permission filter | User cannot invite to a game | That game is absent from the picker |
 | UT-14 | Fixed-pairs seating | Add ready pair to a `hasFixedTeams` game; both become PLAYING | They occupy one pair slot, not two unlinked players |
 | UT-15 | Delete team leaves home list | Owner deletes team from team page or home section X → return to Home/My Teams | Deleted team gone immediately and stays gone after tab switch / soft refresh |
-| UT-16 | Pair stat band | `/user-team/:id` for a two-person team that has played together | Games · Win rate · Chemistry tiles at the top, showing the same numbers as the pair sheet (`LB-PR-61`) |
-| UT-17 | No zeros band | Team with only the owner, or a pair that has never played together | No stat band at all — not a row of zeros |
+| UT-16 | Pair record | `/user-team/:id` for a two-person team that has played together, as owner **and** as the member | "Your record together": wins, win-rate bar, games, chemistry chip, recent form (✓ / –), then the shared games; same numbers as the pair sheet (`LB-PR-61`) |
+| UT-17 | No zeros band | Team with only the owner, or a pair that has never played together | Solo: no record card. Never played: an empty-state card inviting them to add the pair to a game — never a row of zeros |
 | UT-18 | Teammate's open team page on delete | Teammate has `/user-team/:id` open; owner deletes the team on another device | Teammate's page toasts "Team deleted" and returns Home; the tile is gone |
 | UT-19 | Teammate offline during delete | Teammate backgrounds the app (socket drops); owner deletes; teammate resumes on Home (or on the team page) | Tile and Teams count drop after the My-tab refetch without pull-to-refresh; an open team page toasts "no longer available" and returns Home |
 | UT-20 | Stale team link | Open `/user-team/:id` for a deleted team, or one you were removed from (old push, pair row) | Toast "This team is no longer available" and return Home — no generic error page |
 | UT-21 | Pair rows after delete | Delete a pair's team, then open Profile → Your partners / pair leaderboard / pair sheet within 5 min | Tapping the pair opens the pair sheet with **Create a team**, not the deleted team |
+| UT-22 | Photo-less split avatar | Team without its own photo whose two players have no photos either; owner drags the cut dial | Two shades split along the seam, each player's initials centred in their own half (never stacked at the seam), following the angle |
+| UT-23 | Team colour | Owner of a team without a photo: pick each swatch in the hero panel, reload, check Home team tile | Avatar halves (or solo face) and the hero wash recolour instantly; choice survives reload and shows on the tile; **Default** follows the member's primary colour; teammate sees it read-only; panel hidden once the team has a photo |
 
 ---
 

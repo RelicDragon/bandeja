@@ -1,5 +1,6 @@
-import { useCallback, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { heroGlass } from '@/components/userTeam/heroGlass';
 
 interface TeamAvatarCutDialProps {
   children: ReactNode;
@@ -8,10 +9,25 @@ interface TeamAvatarCutDialProps {
   onAngleChange: (deg: number) => void;
   onCommit: (deg: number) => void;
   disabled?: boolean;
-  /** Rendered below the angle track (e.g. upload button) */
+  /** Rendered in the same panel, above the angle control (team colour). */
+  colorPicker?: ReactNode;
+  /** Rendered below the angle control (e.g. upload button) */
   footer?: ReactNode;
 }
 
+const SLIDER_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+
+const COMMIT_DELAY_MS = 400;
+
+const CONTROLS_WIDTH = 'min(12.5rem, calc(100vw - 2rem))';
+
+/**
+ * Team picture plus, for a photo-less pair, the "Split" control that rotates
+ * the seam between the two faces. A labelled card with a live degree readout
+ * (a bare track under the picture was too easy to miss) around a native range
+ * input, so touch, keyboard and screen readers all work. Drags preview through
+ * `onAngleChange`; release (pointer or key) commits once through `onCommit`.
+ */
 export function TeamAvatarCutDial({
   children,
   enabled,
@@ -19,102 +35,95 @@ export function TeamAvatarCutDial({
   onAngleChange,
   onCommit,
   disabled,
+  colorPicker,
   footer,
 }: TeamAvatarCutDialProps) {
   const { t } = useTranslation();
-  const trackRef = useRef<HTMLDivElement>(null);
-  const controlsW = 'min(18rem, calc(100vw - 2rem))';
-  const dragging = useRef(false);
-
-  const pointerXToAngle = useCallback((clientX: number) => {
-    const el = trackRef.current;
-    if (!el) return angleDeg;
-    const r = el.getBoundingClientRect();
-    if (r.width <= 0) return angleDeg;
-    let t = (clientX - r.left) / r.width;
-    t = Math.max(0, Math.min(1, t));
-    return t * 360;
-  }, [angleDeg]);
-
-  const onTrackPointerDown = (e: React.PointerEvent) => {
-    if (!enabled || disabled) return;
-    e.preventDefault();
-    dragging.current = true;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    onAngleChange(pointerXToAngle(e.clientX));
+  const rounded = Math.round(Number.isFinite(angleDeg) ? angleDeg : 0);
+  // One save per gesture: key repeats and quick re-drags collapse into a single
+  // request, so out-of-order responses cannot leave an older angle saved.
+  const commitTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (commitTimer.current !== null) window.clearTimeout(commitTimer.current);
+    },
+    [],
+  );
+  const commit = (value: string) => {
+    if (commitTimer.current !== null) window.clearTimeout(commitTimer.current);
+    commitTimer.current = window.setTimeout(() => {
+      commitTimer.current = null;
+      onCommit(Number(value));
+    }, COMMIT_DELAY_MS);
   };
-
-  const onTrackPointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current || !enabled || disabled) return;
-    e.preventDefault();
-    onAngleChange(pointerXToAngle(e.clientX));
-  };
-
-  const endDrag = (e: React.PointerEvent) => {
-    if (!dragging.current) return;
-    dragging.current = false;
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
-    onCommit(pointerXToAngle(e.clientX));
-  };
-
-  if (!enabled) {
-    return (
-      <div className="relative inline-flex flex-col items-center gap-2.5 p-3">
-        <div className="relative h-[7.5rem] w-[7.5rem] shrink-0 sm:h-32 sm:w-32">{children}</div>
-        {footer ? (
-          <div className="mx-auto shrink-0" style={{ width: controlsW }}>
-            {footer}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
-  const pct = (angleDeg / 360) * 100;
 
   return (
-    <div className="relative inline-flex flex-col items-center gap-2.5 p-3">
+    <div className="relative inline-flex flex-col items-center gap-3 p-3">
       <div className="relative h-[7.5rem] w-[7.5rem] shrink-0 sm:h-32 sm:w-32">{children}</div>
-      <div className="relative h-2 shrink-0" style={{ width: controlsW }}>
+      {enabled || colorPicker ? (
         <div
-          ref={trackRef}
-          className={`absolute inset-0 touch-none ${
-            disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-          }`}
-          onPointerDown={onTrackPointerDown}
-          onPointerMove={onTrackPointerMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          aria-label={t('teams.cutAngleDial')}
-          role="slider"
-          aria-valuemin={0}
-          aria-valuemax={360}
-          aria-valuenow={Math.round(angleDeg)}
-          tabIndex={disabled ? -1 : 0}
+          className={`rounded-2xl px-3.5 pt-2.5 ${enabled ? 'pb-2' : 'pb-3'} ${heroGlass} ${disabled ? 'opacity-50' : ''}`}
+          style={{ width: CONTROLS_WIDTH }}
+          data-testid="team-avatar-cut-dial"
         >
-          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-600">
-            <div
-              className="absolute left-0 top-0 h-full rounded-s-full bg-primary-500 dark:bg-primary-400"
-              style={{
-                width: `${Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0}%`,
-              }}
-            />
-          </div>
-          <div
-            className="pointer-events-none absolute top-1/2 z-[1] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary-600 shadow-md dark:border-zinc-900 dark:bg-primary-400"
-            style={{ left: `${Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0}%` }}
-          />
-        </div>
-      </div>
-      {footer ? (
-        <div className="mx-auto shrink-0" style={{ width: controlsW }}>
-          {footer}
+          {colorPicker}
+          {colorPicker && enabled ? (
+            <div className="-mx-3.5 my-2.5 border-t border-black/[0.06] dark:border-white/[0.08]" />
+          ) : null}
+          {enabled ? (
+            <>
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100">
+                  <svg viewBox="0 0 16 16" className="h-4 w-4 text-primary-600 dark:text-primary-400" aria-hidden>
+                    <rect
+                      x="1.5"
+                      y="1.5"
+                      width="13"
+                      height="13"
+                      rx="3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
+                    {/* The seam, at the same clockwise-from-horizontal angle `TeamAvatar` draws. */}
+                    <line
+                      x1="2.5"
+                      y1="8"
+                      x2="13.5"
+                      y2="8"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      transform={`rotate(${rounded} 8 8)`}
+                    />
+                  </svg>
+                  {t('teams.cutAngleLabel')}
+                </span>
+                <span className="font-semibold tabular-nums text-primary-600 dark:text-primary-300" aria-hidden>
+                  {rounded}°
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={360}
+                step={1}
+                value={rounded}
+                disabled={disabled}
+                aria-label={t('teams.cutAngleDial')}
+                aria-valuetext={`${rounded}°`}
+                onChange={(e) => onAngleChange(Number(e.target.value))}
+                onPointerUp={(e) => commit(e.currentTarget.value)}
+                onKeyUp={(e) => {
+                  if (SLIDER_KEYS.has(e.key)) commit(e.currentTarget.value);
+                }}
+                className="mt-1 h-7 w-full cursor-pointer touch-pan-y accent-primary-600 disabled:cursor-not-allowed dark:accent-primary-400"
+              />
+            </>
+          ) : null}
         </div>
       ) : null}
+      {footer ? <div className="mx-auto max-w-[calc(100vw-2rem)] shrink-0">{footer}</div> : null}
     </div>
   );
 }

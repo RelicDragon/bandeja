@@ -4,6 +4,7 @@ import {
   assertCanInteract,
 } from './social-graph/socialGraph.block';
 import { ApiError } from '../utils/ApiError';
+import { isUserTeamColor, type UserTeamColor } from '@bandeja/shared/userTeamColors';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { generateRandomAdjectiveAnimalLabel } from './user/userDisplayName.service';
 import { UserTeamMemberStatus, Prisma, Sport } from '@prisma/client';
@@ -198,6 +199,7 @@ export class UserTeamService {
       avatar?: string | null;
       originalAvatar?: string | null;
       cutAngle?: number;
+      color?: string | null;
     }
   ) {
     const team = await prisma.userTeam.findUnique({ where: { id: teamId } });
@@ -221,6 +223,12 @@ export class UserTeamService {
       cutAngle = Number.isFinite(raw) ? ((raw % 360) + 360) % 360 : 45;
     }
 
+    let color: UserTeamColor | null | undefined;
+    if (data.color !== undefined) {
+      if (data.color !== null && !isUserTeamColor(data.color)) throw new ApiError(400, 'errors.invalidInput');
+      color = data.color;
+    }
+
     const updated = await prisma.userTeam.update({
       where: { id: teamId },
       data: {
@@ -229,6 +237,7 @@ export class UserTeamService {
         ...(data.avatar !== undefined ? { avatar: data.avatar } : {}),
         ...(data.originalAvatar !== undefined ? { originalAvatar: data.originalAvatar } : {}),
         ...(cutAngle !== undefined ? { cutAngle } : {}),
+        ...(color !== undefined ? { color } : {}),
       },
       include: TEAM_INCLUDE,
     });

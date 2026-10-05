@@ -1,3 +1,4 @@
+import type { UserTeamColor } from '@shared/userTeamColors';
 import api from './axios';
 import type { ApiResponse, EntityType, Sport, UserTeam, UserTeamMembership } from '@/types';
 
@@ -68,6 +69,7 @@ export const userTeamsApi = {
       avatar?: string | null;
       originalAvatar?: string | null;
       cutAngle?: number;
+      color?: UserTeamColor | null;
     }
   ): Promise<UserTeam> => {
     const res = await api.put<ApiResponse<UserTeam>>(`/user-teams/${id}`, data);

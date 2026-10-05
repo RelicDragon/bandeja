@@ -38,13 +38,10 @@
     "cutAngleDial": "Upravit rozdělení fotek dvou hráčů",
     "addTeamPhotoTitle": "Přidat fotku týmu",
     "addTeamPhotoHint": "Vyberte obrázek a ořízněte ho",
-    "explainerTitle": "Dvojice, ne skupina",
     "explainerCreate": "Vy a jeden parťák — dvojice, ne skupina.",
     "explainerBulletCity": "Lidi ve vašem městě vás můžou pozvat do zápasu jako pár.",
     "explainerBulletAdd": "Přidejte se ze stránky dvojice nebo ze seznamu pozvánek.",
     "explainerBulletFixed": "V zápasech s pevnými páry sedíte spolu.",
-    "explainerPage": "Přidejte dvojici do zápasu tady, nebo ze seznamu pozvánek. Ostatní ve městě vás taky můžou pozvat.",
-    "explainerPagePending": "Pozvěte parťáka, ať je dvojice kompletní. Pak ji můžete dát do zápasu.",
     "createExplainerTitle": "Založit dvojici",
     "createPair": "Vytvořit dvojici",
     "addToGame": "Přidat do zápasu",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "Pevné páry",
     "partnerAlreadyIn": "Parťák už je v zápase",
     "partnerInvited": "Parťák pozván",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "Spravovat",
+    "statusAddPlaceholder": "Přidejte status týmu",
+    "recordTitle": "Vaše společná bilance",
+    "recordEmpty": "Zatím jste spolu nehráli. Přidejte pár do hry a bilance začne tady.",
+    "invitedBy": "{{name}} s vámi chce hrát v páru",
+    "leaveConfirm": "Opustit tento tým? Tým zůstane vašemu partnerovi.",
+    "leftTeam": "Opustili jste tým",
+    "wins": "Výhry",
+    "invitePartnerHint": "Vyberte partnera. Dostane pozvánku.",
+    "cutAngleLabel": "Rozdělení",
+    "colorLabel": "Barva",
+    "colors": {
+      "default": "Výchozí",
+      "court": "Kurt",
+      "lime": "Limetka",
+      "amber": "Jantar",
+      "coral": "Korál",
+      "rose": "Růže",
+      "violet": "Fialka",
+      "graphite": "Grafit"
+    }
   }
 }

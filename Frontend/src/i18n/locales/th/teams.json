@@ -38,13 +38,10 @@
     "cutAngleDial": "ปรับวิธีที่รูปถ่ายของผู้เล่นสองคนมาบรรจบกัน",
     "addTeamPhotoTitle": "เพิ่มรูปทีม.",
     "addTeamPhotoHint": "เลือกรูปภาพ จากนั้นครอบตัดให้พอดี",
-    "explainerTitle": "เป็นคู่ ไม่ใช่เป็นกลุ่ม",
     "explainerCreate": "คุณและหุ้นส่วนหนึ่งคน ไม่ใช่กลุ่ม",
     "explainerBulletCity": "ผู้คนในเมืองของคุณสามารถเชิญคุณสองคนเข้าสู่เกมได้",
     "explainerBulletAdd": "เพิ่มตัวเองจากหน้าคู่หรือรายการเชิญของเกม",
     "explainerBulletFixed": "ในเกมคู่คงที่ คุณนั่งด้วยกัน",
-    "explainerPage": "เพิ่มคู่นี้ในเกมที่นี่หรือจากรายการเชิญของเกม คนอื่นๆ ในเมืองของคุณสามารถเชิญคุณได้เช่นกัน",
-    "explainerPagePending": "เชิญคู่ของคุณทำคู่ให้เสร็จ จากนั้นคุณสามารถเพิ่มลงในเกมได้",
     "createExplainerTitle": "เริ่มคู่",
     "createPair": "สร้างคู่",
     "addToGame": "เพิ่มลงในเกม",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "คู่คงที่",
     "partnerAlreadyIn": "พันธมิตรเข้ามาแล้ว",
     "partnerInvited": "เชิญพันธมิตรแล้ว",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "จัดการ",
+    "statusAddPlaceholder": "เพิ่มสถานะทีม",
+    "recordTitle": "สถิติของคุณสองคน",
+    "recordEmpty": "ยังไม่เคยเล่นด้วยกัน เพิ่มคู่นี้ลงในเกมแล้วสถิติจะเริ่มที่นี่",
+    "invitedBy": "{{name}} อยากจับคู่กับคุณ",
+    "leaveConfirm": "ออกจากทีมนี้ไหม? ทีมจะยังอยู่กับคู่ของคุณ",
+    "leftTeam": "คุณออกจากทีมแล้ว",
+    "wins": "ชนะ",
+    "invitePartnerHint": "เลือกคู่ของคุณ แล้วเขาจะได้รับคำเชิญ",
+    "cutAngleLabel": "แบ่งภาพ",
+    "colorLabel": "สี",
+    "colors": {
+      "default": "ค่าเริ่มต้น",
+      "court": "คอร์ต",
+      "lime": "มะนาว",
+      "amber": "อำพัน",
+      "coral": "ปะการัง",
+      "rose": "กุหลาบ",
+      "violet": "ม่วง",
+      "graphite": "กราไฟต์"
+    }
   }
 }

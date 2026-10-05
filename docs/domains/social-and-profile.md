@@ -129,7 +129,11 @@ Guest-readable. Avatar, stats, levels, favorite/follow, share, DM, block, review
 - Follow/unfollow: API `/favorites/users` (UI “follow”). Also highlights trainers on Find.
 - Favorite clubs: separate API; Find filter shortcut.
 - Block/unblock: chat + follow.
-- User teams `/user-team/:id`: pair, invite, add pair to a game the member can invite to, delete.
+- User teams `/user-team/:id`: pair, invite, add pair to a game the member can invite to, leave, delete.
+  - Layout: hero (owner edits name/status inline, autosaved), one main action (Add to a game / Invite teammate / waiting-for-partner; no explainer card), the pair record (`pairs.detail` for owner + partner, same numbers as the pair sheet), then a Manage list holding every membership change (cancel invite, remove partner, leave, delete). No remove badges on faces.
+  - A non-owner member can leave (`removeMember` on themselves); the owner keeps the team.
+  - Team colour: `UserTeam.color` is a palette key from `@bandeja/shared/userTeamColors` (`null` = the member's primary colour). It only paints photo-less avatars (`TeamAvatar` solo face / split halves, tones in `Frontend/src/utils/userTeamColor.ts`) and, through the blurred avatar, the hero wash. The owner picks it in the hero's frosted panel next to Split; both show only while the team has no photo (Split also needs a partner).
+  - The page flows in the normal document scroll — no route-specific flex shell in `MainLayout` and no inner scroll box (an `overscroll-contain` box that never overflowed blocked scrolling in the native shell).
   - Delete (owner only) cascades memberships and emits `user-team:deleted` to every member. `removeTeamLocal` drops the team from `userTeamsStore`, the My-tab query/local cache and invalidates `queryKeys.pairs.*` (pair rows cache `teamId`).
   - `useUserTeamsBootstrap` re-syncs `userTeamsStore` from every server fetch of My tab (not manual `setQueryData` patches), so a member who missed the socket event while backgrounded loses the tile on the next refetch.
   - `UserTeamPage` leaves for Home on `user-team:deleted` for its id, and on socket reconnect or load treats 403/404 as gone (`teams.unavailable` toast).

@@ -38,13 +38,10 @@
     "cutAngleDial": "اضبط كيفية التقاء صورتي اللاعبين",
     "addTeamPhotoTitle": "إضافة صورة الفريق",
     "addTeamPhotoHint": "اختر صورة ثم قصّها لتناسب",
-    "explainerTitle": "زوج وليس مجموعة",
     "explainerCreate": "أنت وشريك واحد — وليست مجموعة.",
     "explainerBulletCity": "يمكن لأشخاص في مدينتك دعوتكما إلى مباراة.",
     "explainerBulletAdd": "أضيفا أنفسكما من صفحة الزوج أو قائمة دعوة المباراة.",
     "explainerBulletFixed": "في مباريات الأزواج الثابتة، تجلسان معاً.",
-    "explainerPage": "أضف هذا الزوج إلى مباراة من هنا، أو من قائمة دعوة المباراة. يمكن لآخرين في مدينتك دعوتكما أيضاً.",
-    "explainerPagePending": "ادعُ شريكك لإكمال الزوج. ثم يمكنك الإضافة إلى مباراة.",
     "createExplainerTitle": "ابدأ زوجاً",
     "createPair": "إنشاء زوج",
     "addToGame": "إضافة إلى مباراة",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "أزواج ثابتة",
     "partnerAlreadyIn": "الشريك داخل بالفعل",
     "partnerInvited": "دُعي الشريك",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "إدارة",
+    "statusAddPlaceholder": "أضف حالة للفريق",
+    "recordTitle": "سجلكما معًا",
+    "recordEmpty": "لم تلعبا معًا بعد. أضيفا الثنائي إلى مباراة ليبدأ سجلكما هنا.",
+    "invitedBy": "{{name}} يريد أن يشكّل ثنائيًا معك",
+    "leaveConfirm": "مغادرة هذا الفريق؟ سيبقى الفريق لشريكك.",
+    "leftTeam": "غادرت الفريق",
+    "wins": "الانتصارات",
+    "invitePartnerHint": "اختر شريكك. ستصله دعوة للانضمام.",
+    "cutAngleLabel": "التقسيم",
+    "colorLabel": "اللون",
+    "colors": {
+      "default": "افتراضي",
+      "court": "الملعب",
+      "lime": "ليموني",
+      "amber": "كهرماني",
+      "coral": "مرجاني",
+      "rose": "وردي",
+      "violet": "بنفسجي",
+      "graphite": "رمادي داكن"
+    }
   }
 }

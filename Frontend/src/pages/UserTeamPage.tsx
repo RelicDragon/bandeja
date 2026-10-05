@@ -2,18 +2,31 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Loader2, Check, Plus, ImagePlus, X, CalendarPlus } from 'lucide-react';
+import {
+  CalendarPlus,
+  ChevronRight,
+  Clock3,
+  ImagePlus,
+  LogOut,
+  Trash2,
+  UserMinus,
+  UserPlus,
+  UserX,
+  type LucideIcon,
+} from 'lucide-react';
 import {
   type AvatarUploadHandle,
   Button,
-  Input,
   AvatarUpload,
   ConfirmationModal,
   PlayerListModal,
-  PlayerAvatar,
   TeamAvatar,
   TeamAvatarCutDial,
 } from '@/components';
+import { motion } from 'framer-motion';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { pressScaleGuard } from '@/components/motion/pressScale';
+import { shimmerBlock } from '@/components/motion/shimmerBlock';
 import { useAuthStore } from '@/store/authStore';
 import { userTeamsApi, mediaApi } from '@/api';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -23,9 +36,36 @@ import { toastApiError } from '@/utils/toastApiError';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 import { isUserTeamReady } from '@/components/playerInvite/inviteEntries';
-import { UserTeamExplainer } from '@/components/userTeam/UserTeamExplainer';
 import { AddUserTeamToGameSheet } from '@/components/userTeam/AddUserTeamToGameSheet';
-import { UserTeamPairStats } from '@/components/pairs/UserTeamPairStats';
+import { UserTeamDuo } from '@/components/userTeam/UserTeamDuo';
+import { heroGlass } from '@/components/userTeam/heroGlass';
+import { UserTeamColorPicker } from '@/components/userTeam/UserTeamColorPicker';
+import type { UserTeamColor } from '@shared/userTeamColors';
+import { UserTeamHero, UserTeamHeroField, UserTeamStaticTitle } from '@/components/userTeam/UserTeamHero';
+import { UserTeamManageList, type UserTeamManageAction } from '@/components/userTeam/UserTeamManageList';
+import { UserTeamRecord } from '@/components/userTeam/UserTeamRecord';
+
+type MemberActionKind = 'removeAccepted' | 'cancelInvite' | 'leave';
+
+const MEMBER_ACTION_COPY: Record<MemberActionKind, { title: string; message: string; confirm: string; done: string }> = {
+  removeAccepted: {
+    title: 'teams.removeMember',
+    message: 'teams.removeMemberConfirm',
+    confirm: 'common.confirm',
+    done: 'teams.memberRemoved',
+  },
+  cancelInvite: {
+    title: 'teams.cancelInvitation',
+    message: 'teams.cancelInvitationConfirm',
+    confirm: 'teams.cancelInvitation',
+    done: 'teams.invitationCancelled',
+  },
+  leave: { title: 'teams.leave', message: 'teams.leaveConfirm', confirm: 'teams.leave', done: 'teams.leftTeam' },
+};
+
+function displayName(u: { firstName?: string | null; lastName?: string | null } | null | undefined): string {
+  return [u?.firstName, u?.lastName].filter(Boolean).join(' ').trim();
+}
 
 /** 404: deleted. 403: no longer a member. Either way the team is gone for this viewer. */
 function isTeamGoneError(e: unknown): boolean {
@@ -39,6 +79,7 @@ export function UserTeamPage() {
   const navigate = useNavigate();
   const leaveTeam = () => navigate('/', { replace: true });
   const user = useAuthStore((s) => s.user);
+  const reduceMotion = usePrefersReducedMotion();
   const teamInviteLevelSport = resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
   const refreshAll = useUserTeamsStore((s) => s.refreshAll);
   const setTeam = useUserTeamsStore((s) => s.setTeam);
@@ -53,7 +94,7 @@ export function UserTeamPage() {
   const [showDeleteTeam, setShowDeleteTeam] = useState(false);
   const [memberActionModal, setMemberActionModal] = useState<{
     userId: string;
-    kind: 'removeAccepted' | 'cancelInvite';
+    kind: MemberActionKind;
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [nameError, setNameError] = useState('');
@@ -64,6 +105,10 @@ export function UserTeamPage() {
     'idle' | 'saving' | 'saved' | 'error'
   >('idle');
   const [cutAngleLive, setCutAngleLive] = useState<number | null>(null);
+  /** Optimistic colour while a save is in flight; `undefined` = use the server value. */
+  const [colorLive, setColorLive] = useState<UserTeamColor | null | undefined>(undefined);
+  const colorSaveRequestId = useRef(0);
+  const cutAngleSaveRequestId = useRef(0);
   const teamAvatarUploadRef = useRef<AvatarUploadHandle>(null);
 
   const leaveGoneTeam = useCallback(
@@ -130,6 +175,7 @@ export function UserTeamPage() {
 
   useEffect(() => {
     setCutAngleLive(null);
+    setColorLive(undefined);
   }, [id]);
 
   useEffect(() => {
@@ -305,6 +351,14 @@ export function UserTeamPage() {
     setBusy(true);
     try {
       const updated = await userTeamsApi.removeMember(team.id, userId);
+      if (kind === 'leave') {
+        removeTeamLocal(team.id);
+        await refreshAll();
+        toast.success(t(MEMBER_ACTION_COPY.leave.done));
+        setMemberActionModal(null);
+        leaveTeam();
+        return;
+      }
       if (updated) {
         setTeamLocal(updated);
         setTeam(updated);
@@ -313,7 +367,7 @@ export function UserTeamPage() {
         leaveTeam();
       }
       await refreshAll();
-      toast.success(kind === 'cancelInvite' ? t('teams.invitationCancelled') : t('teams.memberRemoved'));
+      toast.success(t(MEMBER_ACTION_COPY[kind].done));
       setMemberActionModal(null);
     } catch (e: unknown) {
       toastApiError(t, e);
@@ -325,24 +379,33 @@ export function UserTeamPage() {
   let body: ReactNode;
   if (loading || !user) {
     body = (
-      <div className="mx-auto max-w-2xl">
-        <div className="flex flex-col gap-5 py-8 sm:flex-row sm:items-start sm:gap-8">
-          <div className="mx-auto shrink-0 sm:mx-0">
-            <div className="h-[7.5rem] w-[7.5rem] animate-pulse rounded-[1.2rem] bg-gradient-to-br from-zinc-200 to-zinc-300 sm:h-32 sm:w-32 dark:from-zinc-700 dark:to-zinc-600" />
+      <div className="mx-auto w-full max-w-2xl space-y-3 pb-4" aria-busy="true">
+        {/* Same frame as UserTeamHero (padding, picture box, title, seats) so the swap does not jump. */}
+        <div className="flex flex-col items-center rounded-[2rem] bg-[var(--ui-surface)] px-4 pb-6 pt-4 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+          <div className="p-3">
+            <div className={`${shimmerBlock} h-[7.5rem] w-[7.5rem] rounded-[1.2rem] sm:h-32 sm:w-32`} />
           </div>
-          <div className="flex flex-1 justify-center gap-2 sm:justify-start sm:pt-1">
-            <div className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-zinc-200/90 dark:bg-zinc-700/90" />
-            <div className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-zinc-200/90 dark:bg-zinc-700/90" />
+          <div className={`${shimmerBlock} mt-2 h-8 w-48 rounded-xl`} />
+          <div className={`${shimmerBlock} mt-2.5 h-4 w-28 rounded-lg`} />
+          <div className="mt-6 flex items-start gap-14">
+            <div className={`${shimmerBlock} h-12 w-12 rounded-full`} />
+            <div className={`${shimmerBlock} h-12 w-12 rounded-full`} />
           </div>
+          <div className="h-6" />
         </div>
+        <div className={`${shimmerBlock} h-[4.5rem] w-full rounded-[1.375rem]`} />
+        <div className={`${shimmerBlock} h-40 w-full rounded-[1.75rem]`} />
       </div>
     );
   } else if (!team) {
     body = (
-      <div className="mx-auto max-w-2xl">
-        <p className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 px-6 py-16 text-center">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           {t('errors.generic', { defaultValue: 'Something went wrong' })}
         </p>
+        <Button variant="outline" className="rounded-2xl px-6" onClick={() => void load()}>
+          {t('common.retry', { defaultValue: 'Retry' })}
+        </Button>
       </div>
     );
   } else {
@@ -357,287 +420,250 @@ export function UserTeamPage() {
     const secondUser = teammateAccepted?.user ?? teammatePending?.user ?? null;
     const showPlusSlot = isOwner && !secondUser && canInviteMore;
     const cutAngleDisplay = cutAngleLive ?? team.cutAngle ?? 45;
-    const teamForAvatar = { ...team, cutAngle: cutAngleDisplay };
+    const colorDisplay = colorLive !== undefined ? colorLive : (team.color ?? null);
+    const teamForAvatar = { ...team, cutAngle: cutAngleDisplay, color: colorDisplay };
+    const showColorPicker = isOwner && !team.avatar;
+    const handleColor = async (color: UserTeamColor | null) => {
+      setColorLive(color);
+      const rid = ++colorSaveRequestId.current;
+      try {
+        const updated = await userTeamsApi.update(team.id, { color });
+        if (rid !== colorSaveRequestId.current) return;
+        setTeamLocal(updated);
+        setTeam(updated);
+      } catch (e: unknown) {
+        if (rid === colorSaveRequestId.current) toastApiError(t, e);
+      } finally {
+        if (rid === colorSaveRequestId.current) setColorLive(undefined);
+      }
+    };
     const showCutDial = isOwner && !team.avatar && !!secondUser;
     const teamReady = isUserTeamReady(team);
     const canAddToGame = Boolean(myMembership && myMembership.status === 'ACCEPTED');
-    const partnerName = [teammateAccepted?.user?.firstName, teammateAccepted?.user?.lastName]
-      .filter(Boolean)
-      .join(' ')
-      .trim();
+    const partnerName = displayName(teammateAccepted?.user);
+    const openInvite = () => setShowInvite(true);
 
-    body = (
-      <div className="mx-auto max-w-2xl space-y-3 pb-2">
-        {/* PRD 352 — the pair's shared record, identical to the pair sheet. */}
-        <UserTeamPairStats userAId={user.id} userBId={secondUser?.id} />
-        <div className="py-2 sm:py-3">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
-            <div className="mx-auto shrink-0 sm:mx-0">
-              {isOwner ? (
-                <TeamAvatarCutDial
-                  enabled={showCutDial}
-                  angleDeg={cutAngleDisplay}
-                  onAngleChange={setCutAngleLive}
-                  onCommit={async (d) => {
-                    try {
-                      const updated = await userTeamsApi.update(team.id, { cutAngle: d });
-                      setTeamLocal(updated);
-                      setTeam(updated);
-                    } catch (e: unknown) {
-                      toastApiError(t, e);
-                    } finally {
-                      setCutAngleLive(null);
-                    }
-                  }}
-                  disabled={busy}
-                  footer={
-                    showCutDial ? (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void teamAvatarUploadRef.current?.openPicker()}
-                        className="group w-full rounded-2xl border border-zinc-200/90 bg-white/90 px-3.5 py-3 text-start shadow-sm outline-none ring-primary-500/0 transition-[border-color,box-shadow,transform,background-color] hover:border-primary-400/45 hover:bg-primary-50/40 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary-500/30 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45 dark:border-zinc-700/90 dark:bg-zinc-900/55 dark:hover:border-primary-500/35 dark:hover:bg-primary-950/25"
-                      >
-                        <span className="flex items-center gap-3">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-md shadow-primary-600/25 ring-1 ring-black/5 dark:shadow-primary-900/40 dark:ring-white/10">
-                            <ImagePlus size={20} strokeWidth={2} aria-hidden className="opacity-95" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                              {t('teams.addTeamPhotoTitle')}
-                            </span>
-                            <span className="mt-0.5 block text-xs leading-snug text-zinc-500 dark:text-zinc-400">
-                              {t('teams.addTeamPhotoHint')}
-                            </span>
-                          </span>
-                        </span>
-                      </button>
-                    ) : null
-                  }
-                >
-                  <AvatarUpload
-                    ref={teamAvatarUploadRef}
-                    variant="squircle"
-                    sizeClassName="h-full w-full"
-                    currentAvatar={team.avatar || undefined}
-                    onUpload={handleTeamAvatar}
-                    disabled={busy}
-                    surfaceInteractive={!showCutDial}
-                    emptyBackground={
-                      !team.avatar ? <TeamAvatar team={teamForAvatar} size="fill" /> : undefined
-                    }
-                  />
-                </TeamAvatarCutDial>
-              ) : (
-                <TeamAvatar team={team} size="hero" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1 text-center sm:pt-1 sm:text-start">
-              {!isOwner ? (
-                <div className="mb-4">
-                  <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl">
-                    {team.name}
-                  </h2>
-                  {team.verbalStatus?.trim() ? (
-                    <p className="verbal-status mt-1.5">{team.verbalStatus.trim()}</p>
-                  ) : null}
-                </div>
-              ) : null}
-              <div className="flex justify-center gap-2 sm:justify-start">
-                <div className="flex w-16 shrink-0 flex-col items-center">
-                  <PlayerAvatar
-                    player={team.owner}
-                    isCurrentUser={team.ownerId === user.id}
-                    role="OWNER"
-                    smallLayout
-                  />
-                </div>
-                <div className="relative flex min-w-[4.5rem] max-w-[5.5rem] shrink-0 flex-col items-center">
-                  {secondUser ? (
-                    <>
-                      <div
-                        className={
-                          isOwner && teammatePending
-                            ? 'relative z-0 rounded-full p-[3px] ring-2 ring-dashed ring-amber-500/80 dark:ring-amber-400/70'
-                            : 'relative z-0'
-                        }
-                      >
-                        <PlayerAvatar
-                          player={secondUser}
-                          isCurrentUser={secondUser.id === user.id}
-                          removable={!isOwner && !!teammateAccepted && teammateAccepted.userId === user.id}
-                          onRemoveClick={
-                            !isOwner && !!teammateAccepted && teammateAccepted.userId === user.id
-                              ? () => setMemberActionModal({ userId: user.id, kind: 'removeAccepted' })
-                              : undefined
-                          }
-                          role="PLAYER"
-                          smallLayout
-                        />
-                      </div>
-                      {isOwner && teammateAccepted && teammateAccepted.userId !== user.id ? (
-                        <button
-                          type="button"
-                          className="absolute -right-1 -top-1 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-white bg-red-500 text-white shadow-md dark:border-gray-900 dark:bg-red-600"
-                          onClick={() =>
-                            setMemberActionModal({ userId: teammateAccepted.userId, kind: 'removeAccepted' })
-                          }
-                          aria-label={t('teams.removeMember')}
-                        >
-                          <X size={12} strokeWidth={2.5} />
-                        </button>
-                      ) : null}
-                      {isOwner && teammatePending && teammatePending.userId !== user.id ? (
-                        <button
-                          type="button"
-                          className="absolute -right-1 -top-1 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-white bg-amber-600 text-white shadow-md dark:border-gray-900 dark:bg-amber-700"
-                          onClick={() =>
-                            setMemberActionModal({ userId: teammatePending.userId, kind: 'cancelInvite' })
-                          }
-                          aria-label={t('teams.cancelInvitation')}
-                        >
-                          <X size={12} strokeWidth={2.5} />
-                        </button>
-                      ) : null}
-                      {isOwner && teammatePending ? (
-                        <span className="mt-1 text-center text-[10px] font-semibold leading-tight text-amber-800 dark:text-amber-200">
-                          {t('teams.invitedAwaitingReply')}
-                        </span>
-                      ) : null}
-                    </>
-                  ) : showPlusSlot ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowInvite(true)}
-                      disabled={busy}
-                      className="flex w-full flex-col items-center"
-                      aria-label={t('teams.inviteTeammate')}
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-primary-400 bg-primary-50 transition-colors hover:bg-primary-100 dark:border-primary-600 dark:bg-primary-900/20 dark:hover:bg-primary-800/30">
-                        <Plus className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                      </div>
-                    </button>
-                  ) : (
-                    <PlayerAvatar player={null} smallLayout />
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <UserTeamExplainer pending={!teamReady} />
-
-        {canAddToGame ? (
-          teamReady ? (
+    const avatar = isOwner ? (
+      <TeamAvatarCutDial
+        enabled={showCutDial}
+        angleDeg={cutAngleDisplay}
+        onAngleChange={setCutAngleLive}
+        onCommit={async (d) => {
+          // Only the latest save may touch state, or a slow reply snaps the seam back mid-drag.
+          const rid = ++cutAngleSaveRequestId.current;
+          try {
+            const updated = await userTeamsApi.update(team.id, { cutAngle: d });
+            if (rid !== cutAngleSaveRequestId.current) return;
+            setTeamLocal(updated);
+            setTeam(updated);
+          } catch (e: unknown) {
+            if (rid === cutAngleSaveRequestId.current) toastApiError(t, e);
+          } finally {
+            if (rid === cutAngleSaveRequestId.current) setCutAngleLive(null);
+          }
+        }}
+        disabled={busy}
+        colorPicker={
+          showColorPicker ? (
+            <UserTeamColorPicker value={colorDisplay} onChange={(c) => void handleColor(c)} disabled={busy} />
+          ) : undefined
+        }
+        footer={
+          showColorPicker ? (
             <button
               type="button"
-              data-testid="user-team-add-to-game"
-              onClick={() => runWithProfileName(() => setShowAddToGame(true))}
               disabled={busy}
-              className="flex w-full items-center gap-3 rounded-2xl border border-primary-200/80 bg-primary-50/80 px-3.5 py-3 text-start shadow-sm transition-[transform,background-color,border-color] hover:border-primary-300 hover:bg-primary-50 active:scale-[0.99] disabled:opacity-50 dark:border-primary-800/50 dark:bg-primary-950/30 dark:hover:border-primary-700/60"
+              onClick={() => void teamAvatarUploadRef.current?.openPicker()}
+              className={`mx-auto flex items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold text-primary-700 outline-none transition-[background-color,scale] duration-200 hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-primary-500/40 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45 dark:text-primary-200 dark:hover:bg-white/[0.12] ${heroGlass} ${pressScaleGuard}`}
+              title={t('teams.addTeamPhotoHint')}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md shadow-primary-600/25">
-                <CalendarPlus size={20} strokeWidth={2} aria-hidden />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                  {t('teams.addToGame')}
-                </span>
-                <span className="mt-0.5 block text-xs leading-snug text-zinc-500 dark:text-zinc-400">
-                  {t('teams.addToGameCta')}
-                </span>
-              </span>
+              <ImagePlus size={15} strokeWidth={2} aria-hidden />
+              {t('teams.addTeamPhotoTitle')}
             </button>
-          ) : (
-            <div
-              data-testid="user-team-add-to-game-pending"
-              className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-zinc-300/90 bg-white/60 px-3.5 py-3 dark:border-zinc-600 dark:bg-zinc-900/30"
+          ) : null
+        }
+      >
+        <AvatarUpload
+          ref={teamAvatarUploadRef}
+          variant="squircle"
+          sizeClassName="h-full w-full"
+          currentAvatar={team.avatar || undefined}
+          onUpload={handleTeamAvatar}
+          disabled={busy}
+          surfaceInteractive={!showCutDial}
+          emptyBackground={!team.avatar ? <TeamAvatar team={teamForAvatar} size="fill" /> : undefined}
+        />
+      </TeamAvatarCutDial>
+    ) : (
+      <div className="p-3">
+        <TeamAvatar team={team} size="hero" />
+      </div>
+    );
+
+    const title = isOwner ? (
+      <>
+        <UserTeamHeroField
+          variant="title"
+          value={editName}
+          onChange={setEditName}
+          ariaLabel={t('teams.name')}
+          status={nameValidationStatus}
+          error={nameError || undefined}
+        />
+        <UserTeamHeroField
+          variant="status"
+          value={editVerbalStatus}
+          onChange={setEditVerbalStatus}
+          ariaLabel={t('teams.verbalStatus')}
+          placeholder={t('teams.statusAddPlaceholder')}
+          status={verbalStatusValidationStatus}
+          maxLength={32}
+        />
+      </>
+    ) : (
+      <UserTeamStaticTitle name={team.name} status={team.verbalStatus} />
+    );
+
+    let primary: ReactNode = null;
+    if (canAddToGame && teamReady) {
+      primary = (
+        <PrimaryAction
+          testId="user-team-add-to-game"
+          icon={CalendarPlus}
+          title={t('teams.addToGame')}
+          detail={t('teams.addToGameCta')}
+          onClick={() => runWithProfileName(() => setShowAddToGame(true))}
+          disabled={busy}
+        />
+      );
+    } else if (showPlusSlot) {
+      primary = (
+        <PrimaryAction
+          testId="user-team-invite-teammate"
+          icon={UserPlus}
+          title={t('teams.inviteTeammate')}
+          detail={t('teams.invitePartnerHint')}
+          onClick={openInvite}
+          disabled={busy}
+        />
+      );
+    } else if (canAddToGame) {
+      primary = (
+        <div
+          data-testid="user-team-add-to-game-pending"
+          className="flex w-full items-center gap-3.5 rounded-[1.375rem] border border-dashed border-zinc-300/90 px-4 py-3.5 dark:border-zinc-700"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <Clock3 size={20} strokeWidth={2} aria-hidden />
+          </span>
+          <p className="min-w-0 text-sm leading-snug text-zinc-600 [text-wrap:pretty] dark:text-zinc-400">
+            {t('teams.addToGamePending')}
+          </p>
+        </div>
+      );
+    }
+
+    const manageActions: UserTeamManageAction[] = [];
+    if (isOwner && teammatePending) {
+      manageActions.push({
+        key: 'cancel',
+        icon: UserX,
+        label: t('teams.cancelInvitation'),
+        detail: displayName(teammatePending.user),
+        onClick: () => setMemberActionModal({ userId: teammatePending.userId, kind: 'cancelInvite' }),
+      });
+    }
+    if (isOwner && teammateAccepted) {
+      manageActions.push({
+        key: 'remove',
+        icon: UserMinus,
+        label: t('teams.removeMember'),
+        detail: partnerName,
+        danger: true,
+        onClick: () => setMemberActionModal({ userId: teammateAccepted.userId, kind: 'removeAccepted' }),
+      });
+    }
+    if (!isOwner && myMembership?.status === 'ACCEPTED') {
+      manageActions.push({
+        key: 'leave',
+        icon: LogOut,
+        label: t('teams.leave'),
+        danger: true,
+        testId: 'user-team-leave',
+        onClick: () => setMemberActionModal({ userId: user.id, kind: 'leave' }),
+      });
+    }
+    if (isOwner) {
+      manageActions.push({
+        key: 'delete',
+        icon: Trash2,
+        label: t('teams.deleteTeam'),
+        danger: true,
+        testId: 'user-team-delete',
+        onClick: () => setShowDeleteTeam(true),
+      });
+    }
+
+    const modalCopy = memberActionModal ? MEMBER_ACTION_COPY[memberActionModal.kind] : null;
+
+    body = (
+      <div className="mx-auto w-full max-w-2xl pb-4">
+        {/* One short fade from half opacity: never blank between skeleton and content. */}
+        <motion.div
+          key={team.id}
+          className="space-y-3"
+          initial={reduceMotion ? false : { opacity: 0.5 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          <UserTeamHero team={teamForAvatar} avatar={avatar} title={title}>
+            <UserTeamDuo
+              owner={team.owner}
+              partner={secondUser}
+              viewerId={user.id}
+              partnerPending={Boolean(teammatePending && !teammateAccepted)}
+              onInvite={showPlusSlot ? openInvite : undefined}
+              disabled={busy}
+            />
+          </UserTeamHero>
+
+          {isPendingInvite ? (
+            <section
+              data-testid="user-team-invite-response"
+              className="rounded-[1.75rem] bg-amber-50 px-4 pb-4 pt-4 ring-1 ring-amber-200/70 dark:bg-amber-500/[0.08] dark:ring-amber-400/20"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                <CalendarPlus size={20} strokeWidth={2} aria-hidden />
-              </span>
-              <p className="min-w-0 text-sm leading-snug text-zinc-600 dark:text-zinc-400">{t('teams.addToGamePending')}</p>
-            </div>
-          )
-        ) : null}
-
-        {isOwner ? (
-          <>
-            <div className="relative">
-              <Input
-                label={t('teams.name')}
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                error={nameError}
-              />
-              {nameValidationStatus === 'saving' && (
-                <div className="absolute right-3 top-9">
-                  <Loader2 size={16} className="animate-spin text-primary-600 dark:text-primary-400" />
-                </div>
-              )}
-              {nameValidationStatus === 'saved' && (
-                <div className="absolute right-3 top-9">
-                  <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
-                </div>
-              )}
-            </div>
-            <div className="relative">
-              <Input
-                label={t('teams.verbalStatus')}
-                value={editVerbalStatus}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v.length <= 32) setEditVerbalStatus(v);
-                }}
-                placeholder={t('teams.verbalStatusPlaceholder')}
-                maxLength={32}
-              />
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                {editVerbalStatus.length}/32 {t('profile.characters')}
+              <p className="text-[15px] font-semibold tracking-tight text-amber-950 [text-wrap:balance] dark:text-amber-50">
+                {t('teams.invitedBy', { name: team.owner.firstName || displayName(team.owner) })}
               </p>
-              {verbalStatusValidationStatus === 'saving' && (
-                <div className="absolute right-3 top-9">
-                  <Loader2 size={16} className="animate-spin text-primary-600 dark:text-primary-400" />
-                </div>
-              )}
-              {verbalStatusValidationStatus === 'saved' && (
-                <div className="absolute right-3 top-9">
-                  <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
-                </div>
-              )}
-            </div>
-          </>
-        ) : null}
+              <p className="mt-0.5 text-sm leading-snug text-amber-900/75 dark:text-amber-100/70">
+                {t('teams.invitePrompt')}
+              </p>
+              <div className="mt-4 flex gap-2">
+                <Button className="flex-1 rounded-2xl py-3" onClick={handleAccept} disabled={busy}>
+                  {t('teams.accept')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-2xl border-amber-300/90 py-3 dark:border-amber-500/40"
+                  onClick={handleDecline}
+                  disabled={busy}
+                >
+                  {t('teams.decline')}
+                </Button>
+              </div>
+            </section>
+          ) : null}
 
-        {isPendingInvite && (
-          <div className="rounded-2xl border border-amber-200/70 p-4 dark:border-amber-500/35">
-            <p className="mb-4 text-sm leading-relaxed text-amber-950 dark:text-amber-100">{t('teams.invitePrompt')}</p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-              <Button className="flex-1 rounded-2xl py-3.5" onClick={handleAccept} disabled={busy}>
-                {t('teams.accept')}
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 rounded-2xl border-amber-300/90 py-3.5 dark:border-amber-600/50"
-                onClick={handleDecline}
-                disabled={busy}
-              >
-                {t('teams.decline')}
-              </Button>
-            </div>
-          </div>
-        )}
+          {primary}
 
-        {isOwner && (
-          <button
-            type="button"
-            className="w-full rounded-2xl border border-red-200/90 bg-transparent py-3.5 text-sm font-semibold text-red-600 transition-[background-color,transform] duration-200 hover:bg-red-50 active:scale-[0.99] dark:border-red-500/25 dark:text-red-400 dark:hover:bg-red-950/40"
-            onClick={() => setShowDeleteTeam(true)}
-          >
-            {t('teams.deleteTeam')}
-          </button>
-        )}
+          {secondUser ? (
+            <UserTeamRecord userAId={team.ownerId} userBId={secondUser.id} />
+          ) : null}
+
+          {manageActions.length > 0 ? (
+            <UserTeamManageList actions={manageActions} disabled={busy} />
+          ) : null}
+        </motion.div>
 
         {showInvite && (
           <PlayerListModal
@@ -693,21 +719,9 @@ export function UserTeamPage() {
           isOpen={!!memberActionModal}
           onClose={() => setMemberActionModal(null)}
           onConfirm={() => void handleConfirmMemberAction()}
-          title={
-            memberActionModal?.kind === 'cancelInvite'
-              ? t('teams.cancelInvitation')
-              : t('teams.removeMember')
-          }
-          message={
-            memberActionModal?.kind === 'cancelInvite'
-              ? t('teams.cancelInvitationConfirm')
-              : t('teams.removeMemberConfirm')
-          }
-          confirmText={
-            memberActionModal?.kind === 'cancelInvite'
-              ? t('teams.cancelInvitation')
-              : t('common.confirm')
-          }
+          title={modalCopy ? t(modalCopy.title) : ''}
+          message={modalCopy ? t(modalCopy.message) : ''}
+          confirmText={modalCopy ? t(modalCopy.confirm) : ''}
           confirmVariant={memberActionModal?.kind === 'cancelInvite' ? 'primary' : 'danger'}
           closeOnConfirm={false}
           isLoading={busy}
@@ -716,9 +730,44 @@ export function UserTeamPage() {
     );
   }
 
+  return body;
+}
+
+type PrimaryActionProps = {
+  testId: string;
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
+/** The one filled call to action on the page. */
+function PrimaryAction({ testId, icon: Icon, title, detail, onClick, disabled }: PrimaryActionProps) {
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
-      <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">{body}</div>
-    </div>
+    <button
+      type="button"
+      data-testid={testId}
+      onClick={onClick}
+      disabled={disabled}
+      className={`group relative flex w-full items-center gap-3.5 overflow-hidden rounded-[1.375rem] bg-primary-600 px-4 py-3.5 text-start text-white shadow-lg shadow-primary-600/30 outline-none transition-[background-color,scale,box-shadow] duration-200 hover:bg-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:ring-offset-2 active:scale-[0.985] disabled:opacity-60 dark:focus-visible:ring-offset-gray-900 ${pressScaleGuard}`}
+    >
+      <span
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(255,255,255,0.22),transparent_55%)]"
+        aria-hidden
+      />
+      <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-inset ring-white/25">
+        <Icon size={21} strokeWidth={2} aria-hidden />
+      </span>
+      <span className="relative min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold tracking-tight">{title}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-white/75">{detail}</span>
+      </span>
+      <ChevronRight
+        size={20}
+        className="relative shrink-0 text-white/70 transition-transform duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+        aria-hidden
+      />
+    </button>
   );
 }

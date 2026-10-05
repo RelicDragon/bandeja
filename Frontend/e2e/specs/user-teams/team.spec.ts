@@ -15,8 +15,8 @@ test.describe('user teams @auth', () => {
       await expect(page).toHaveURL(new RegExp(`/user-team/${teamId}`));
       await expect(teamPage.pageRoot()).toBeVisible({ timeout: 20_000 });
       await expect(teamPage.teamNameInput()).toBeVisible({ timeout: 15_000 });
-      await expect(teamPage.explainer()).toBeVisible();
-      await expect(teamPage.addToGamePending()).toBeVisible();
+      // A solo team's main action is inviting the partner; adding to a game waits for them.
+      await expect(teamPage.inviteTeammate()).toBeVisible();
     } finally {
       await deleteUserTeamViaApi(token, teamId);
     }

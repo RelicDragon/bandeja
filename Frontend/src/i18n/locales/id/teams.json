@@ -38,13 +38,10 @@
     "cutAngleDial": "Sesuaikan bagaimana dua foto pemain bertemu",
     "addTeamPhotoTitle": "Tambah foto tim",
     "addTeamPhotoHint": "Pilih gambar, lalu potong agar pas",
-    "explainerTitle": "Pasangan, bukan grup",
     "explainerCreate": "Anda dan satu partner — bukan grup.",
     "explainerBulletCity": "Orang di kota Anda dapat mengundang kalian berdua ke pertandingan.",
     "explainerBulletAdd": "Tambahkan diri Anda dari halaman pasangan atau daftar undangan pertandingan.",
     "explainerBulletFixed": "Pada pertandingan pasangan tetap, kalian duduk bersama.",
-    "explainerPage": "Tambahkan pasangan ini ke pertandingan di sini, atau dari daftar undangan pertandingan. Orang lain di kota Anda juga bisa mengundang Anda.",
-    "explainerPagePending": "Undang partner Anda untuk menyelesaikan pasangan. Kemudian Anda dapat menambahkannya ke pertandingan.",
     "createExplainerTitle": "Mulai pasangan",
     "createPair": "Buat pasangan",
     "addToGame": "Tambahkan ke pertandingan",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "Pasangan tetap",
     "partnerAlreadyIn": "Partner sudah masuk",
     "partnerInvited": "Partner diundang",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "Kelola",
+    "statusAddPlaceholder": "Tambahkan status tim",
+    "recordTitle": "Rekor kalian bersama",
+    "recordEmpty": "Belum pernah main bersama. Tambahkan pasangan ini ke permainan dan rekor kalian dimulai di sini.",
+    "invitedBy": "{{name}} ingin berpasangan denganmu",
+    "leaveConfirm": "Keluar dari tim ini? Tim tetap milik partnermu.",
+    "leftTeam": "Kamu keluar dari tim",
+    "wins": "Menang",
+    "invitePartnerHint": "Pilih partnermu. Mereka akan menerima undangan.",
+    "cutAngleLabel": "Pembagian",
+    "colorLabel": "Warna",
+    "colors": {
+      "default": "Bawaan",
+      "court": "Lapangan",
+      "lime": "Limau",
+      "amber": "Amber",
+      "coral": "Koral",
+      "rose": "Mawar",
+      "violet": "Ungu",
+      "graphite": "Grafit"
+    }
   }
 }

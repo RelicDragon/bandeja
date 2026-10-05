@@ -21,6 +21,8 @@ export interface UserTeam {
   avatar: string | null;
   originalAvatar: string | null;
   cutAngle?: number;
+  /** Palette key (`@shared/userTeamColors`); null / missing = app default colour. */
+  color?: string | null;
   ownerId: string;
   size: number;
   createdAt: string;

@@ -38,13 +38,10 @@
     "cutAngleDial": "调整两位球员照片的拼接角度",
     "addTeamPhotoTitle": "添加搭档照片",
     "addTeamPhotoHint": "选择图片后裁剪适配",
-    "explainerTitle": "两人搭档，不是群组",
     "explainerCreate": "你和一位搭档 — 不是群组。",
     "explainerBulletCity": "同城的人可以把你们俩一起邀进比赛。",
     "explainerBulletAdd": "可从搭档页或比赛邀请列表添加自己。",
     "explainerBulletFixed": "在固定搭档比赛中，你们坐在一起。",
-    "explainerPage": "可在此或从比赛邀请列表将这对搭档加入比赛。同城其他人也可邀请你们。",
-    "explainerPagePending": "邀请搭档完成配对后，即可加入比赛。",
     "createExplainerTitle": "开始配对",
     "createPair": "创建搭档",
     "addToGame": "加入比赛",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "固定搭档",
     "partnerAlreadyIn": "搭档已在场",
     "partnerInvited": "已邀请搭档",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "管理",
+    "statusAddPlaceholder": "添加队伍状态",
+    "recordTitle": "你们的共同战绩",
+    "recordEmpty": "你们还没一起打过球。把这对搭档加入比赛，战绩就从这里开始。",
+    "invitedBy": "{{name}} 想和你组队",
+    "leaveConfirm": "退出这个队伍？队伍会保留给你的搭档。",
+    "leftTeam": "你已退出队伍",
+    "wins": "胜场",
+    "invitePartnerHint": "选择你的搭档，对方会收到邀请。",
+    "cutAngleLabel": "分割",
+    "colorLabel": "颜色",
+    "colors": {
+      "default": "默认",
+      "court": "球场绿",
+      "lime": "青柠",
+      "amber": "琥珀",
+      "coral": "珊瑚",
+      "rose": "玫瑰",
+      "violet": "紫罗兰",
+      "graphite": "石墨"
+    }
   }
 }

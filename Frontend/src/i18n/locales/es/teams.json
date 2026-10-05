@@ -38,13 +38,10 @@
     "cutAngleDial": "Ajustar cómo se dividen las fotos de los jugadores",
     "addTeamPhotoTitle": "Añadir foto del equipo",
     "addTeamPhotoHint": "Elige una imagen y recórtala",
-    "explainerTitle": "Una pareja, no un grupo",
     "explainerCreate": "Tú y un compañero: una pareja, no un grupo.",
     "explainerBulletCity": "La gente de tu ciudad puede invitaros juntos a un partido.",
     "explainerBulletAdd": "Añadíos desde la página de la pareja o desde la lista de invitaciones.",
     "explainerBulletFixed": "En partidos con parejas fijas, jugáis juntos.",
-    "explainerPage": "Añade esta pareja a un partido aquí, o desde la lista de invitaciones. Otros en tu ciudad también pueden invitaros.",
-    "explainerPagePending": "Invita a tu compañero para completar la pareja. Luego podréis añadirla a un partido.",
     "createExplainerTitle": "Crear una pareja",
     "createPair": "Crear pareja",
     "addToGame": "Añadir a un partido",
@@ -58,6 +55,27 @@
     "fixedPairsBadge": "Parejas fijas",
     "partnerAlreadyIn": "Tu compañero ya está",
     "partnerInvited": "Compañero invitado",
-    "slots": "{{playing}}/{{max}}"
+    "slots": "{{playing}}/{{max}}",
+    "manage": "Gestionar",
+    "statusAddPlaceholder": "Añade un estado del equipo",
+    "recordTitle": "Vuestro historial juntos",
+    "recordEmpty": "Aún no habéis jugado juntos. Añadid la pareja a un partido y aquí empezará vuestro historial.",
+    "invitedBy": "{{name}} quiere formar pareja contigo",
+    "leaveConfirm": "¿Salir de este equipo? Tu compañero conserva el equipo.",
+    "leftTeam": "Has salido del equipo",
+    "wins": "Victorias",
+    "invitePartnerHint": "Elige a tu compañero. Recibirá una invitación.",
+    "cutAngleLabel": "División",
+    "colorLabel": "Color",
+    "colors": {
+      "default": "Predeterminado",
+      "court": "Pista",
+      "lime": "Lima",
+      "amber": "Ámbar",
+      "coral": "Coral",
+      "rose": "Rosa",
+      "violet": "Violeta",
+      "graphite": "Grafito"
+    }
   }
 }

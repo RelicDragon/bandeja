@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { Sport } from '@prisma/client';
 import { body } from 'express-validator';
+import { USER_TEAM_COLORS } from '@bandeja/shared/userTeamColors';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
@@ -22,6 +23,7 @@ export const updateTeamValidators = [
   body('avatar').optional({ nullable: true }).isString(),
   body('originalAvatar').optional({ nullable: true }).isString(),
   body('cutAngle').optional().isFloat({ min: 0, max: 360 }),
+  body('color').optional({ nullable: true }).isIn([...USER_TEAM_COLORS]),
 ];
 
 export const addToGameValidators = [body('gameId').notEmpty().withMessage('gameId required')];

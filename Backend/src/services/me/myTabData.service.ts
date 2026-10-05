@@ -164,6 +164,7 @@ export class MyTabDataService {
         createdAt: true,
         updatedAt: true,
         cutAngle: true,
+        color: true,
         verbalStatus: true,
         originalAvatar: true,
         owner: {

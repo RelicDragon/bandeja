@@ -94,8 +94,7 @@ export const MainLayout = ({ children, chrome = 'full' }: MainLayoutProps) => {
       ? 'calc(5rem + 3rem + env(safe-area-inset-bottom))'
       : 'calc(5rem + env(safe-area-inset-bottom))'
     : '1.5rem';
-  const isUserTeamRoute = /^\/user-team\/[^/]+$/.test(location.pathname);
-  const useFlexContentShell = isUserTeamRoute || isMobileChatInboxShell;
+  const useFlexContentShell = isMobileChatInboxShell;
 
   const isBare = chrome === 'bare';
   const fullBleedContent = anySplitView || gameDetailsWideBleedChrome;
