@@ -76,6 +76,21 @@
       "rose": "Mawar",
       "violet": "Ungu",
       "graphite": "Grafit"
+    },
+    "streak": {
+      "title": "Streak mingguan bersama",
+      "chip_other": "{{count}} minggu berturut-turut",
+      "best_other": "Terbaik {{count}} minggu",
+      "atRisk": "Main pertandingan berating bersama sebelum {{date}} untuk menjaganya",
+      "rules": "Mainkan setidaknya satu pertandingan berating bersama, di sisi yang sama, setiap 7 hari."
+    },
+    "rivalries": {
+      "title": "Rival",
+      "subtitle": "Pasangan yang paling sering kalian hadapi",
+      "meetings_other": "{{count}} pertandingan",
+      "recordAria": "Menang {{wins}}, kalah {{losses}}",
+      "rematch": "Tanding ulang",
+      "rematchAria": "Tanding ulang melawan {{names}}"
     }
   }
 }

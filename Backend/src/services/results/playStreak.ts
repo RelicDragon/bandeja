@@ -153,6 +153,26 @@ export function recomputePlayStreak(
   return state;
 }
 
+/**
+ * Replay + project in one step, for streaks computed on read (no stored
+ * counters) — e.g. the weekly pair streak on `GET /rankings/pairs/:pairId`.
+ * Same week rules as the individual play streak, by construction.
+ */
+export function playStreakViewFromPlayAts(
+  playAts: Date[],
+  timezone: string,
+  now: Date = new Date(),
+  options: { includeAtRisk: boolean } = { includeAtRisk: false },
+): PlayStreakView {
+  const state = recomputePlayStreak(playAts, timezone, now);
+  return projectPlayStreak(
+    { count: state.count, best: state.best, lastPlayAt: state.lastPlayAt },
+    timezone,
+    now,
+    options,
+  );
+}
+
 export function projectPlayStreak(
   fields: { count: number; best: number; lastPlayAt: Date | null },
   timezone: string,

@@ -76,6 +76,27 @@
       "rose": "Ruža",
       "violet": "Ljubičica",
       "graphite": "Grafit"
+    },
+    "streak": {
+      "title": "Zajednički nedeljni niz",
+      "chip_one": "{{count}} nedelja zaredom",
+      "chip_few": "{{count}} nedelje zaredom",
+      "chip_other": "{{count}} nedelja zaredom",
+      "best_one": "Najbolje {{count}} nedelja",
+      "best_few": "Najbolje {{count}} nedelje",
+      "best_other": "Najbolje {{count}} nedelja",
+      "atRisk": "Odigrajte zajedno ocenjenu utakmicu do {{date}} da zadržite niz",
+      "rules": "Odigrajte zajedno, na istoj strani, bar jednu ocenjenu utakmicu svakih 7 dana."
+    },
+    "rivalries": {
+      "title": "Rivali",
+      "subtitle": "Parovi protiv kojih ste najčešće igrali",
+      "meetings_one": "{{count}} meč",
+      "meetings_few": "{{count}} meča",
+      "meetings_other": "{{count}} mečeva",
+      "recordAria": "Pobede: {{wins}}, porazi: {{losses}}",
+      "rematch": "Revanš",
+      "rematchAria": "Revanš protiv: {{names}}"
     }
   }
 }

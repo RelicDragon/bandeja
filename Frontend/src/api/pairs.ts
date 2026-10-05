@@ -1,5 +1,6 @@
 import api from './axios';
 import type { ApiResponse, Sport } from '@/types';
+import type { PlayStreakView } from '@/types/playStreak';
 
 /** PRD 352 — the pair leaderboard, the pair sheet and Profile → Your partners. */
 
@@ -54,8 +55,26 @@ export interface PairRecentGame {
   won: boolean;
 }
 
+/** An opposing pair the two faced on the same side, with the match W–L against them. */
+export interface PairRivalry {
+  pairId: string;
+  userA: PairMember;
+  userB: PairMember;
+  /** Matches played against this pair (draws included). */
+  meetings: number;
+  wins: number;
+  losses: number;
+  lastMetAt: string;
+  /** Their two-person `UserTeam`, when they formalized one. */
+  team: { id: string; name: string; color: string | null } | null;
+}
+
 export type PairDetail = Omit<PairEntry, 'rank'> & {
   recentGames: PairRecentGame[];
+  /** Weekly pair streak (solo play-streak rules). Optional: older servers omit it. */
+  streak?: PlayStreakView;
+  /** Top opposing pairs. Optional: older servers omit it. */
+  rivalries?: PairRivalry[];
 };
 
 export interface PartnerEntry {

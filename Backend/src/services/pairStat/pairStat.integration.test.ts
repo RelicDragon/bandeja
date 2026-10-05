@@ -274,6 +274,21 @@ void (async () => {
     );
     assert.equal(detail.games, 6, 'the sheet agrees with the table');
     assert.ok(detail.recentGames.length > 0, 'recent games together are listed');
+    // Six games on six consecutive days: one streak week, alive.
+    assert.equal(detail.streak.current, 1, 'six days in a row is one streak week');
+    assert.equal(detail.streak.best, 1, 'best streak is one week');
+    // Fixed teams, no matches: rivalries fall back to the two teams + outcome.
+    assert.equal(detail.rivalries.length, 1, 'one opposing pair');
+    const [rivalry] = detail.rivalries;
+    assert.equal(
+      pairKey(rivalry!.userA.id, rivalry!.userB.id),
+      pairKey(luka.id, ivan.id),
+      'the rivalry is luka & ivan',
+    );
+    assert.equal(rivalry!.meetings, 6, 'met six times');
+    assert.equal(rivalry!.wins, 4, 'won four');
+    assert.equal(rivalry!.losses, 2, 'lost two');
+    assert.equal(rivalry!.team, null, 'luka & ivan have no UserTeam');
 
     // -------------------------------------------------------------------
     // 6. `combinedLevel` follows a level change with no game involved.

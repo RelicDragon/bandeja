@@ -76,6 +76,24 @@
       "rose": "Rose",
       "violet": "Violet",
       "graphite": "Graphite"
+    },
+    "streak": {
+      "title": "Weekly streak together",
+      "chip_one": "{{count}} week in a row",
+      "chip_other": "{{count}} weeks in a row",
+      "best_one": "Best {{count}} week",
+      "best_other": "Best {{count}} weeks",
+      "atRisk": "Play a rated game together by {{date}} to keep it",
+      "rules": "Play at least one rated game together, on the same side, every 7 days."
+    },
+    "rivalries": {
+      "title": "Rivalries",
+      "subtitle": "The pairs you've faced most",
+      "meetings_one": "{{count}} match",
+      "meetings_other": "{{count}} matches",
+      "recordAria": "Won {{wins}}, lost {{losses}}",
+      "rematch": "Rematch",
+      "rematchAria": "Rematch against {{names}}"
     }
   }
 }

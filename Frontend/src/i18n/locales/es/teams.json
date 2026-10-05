@@ -76,6 +76,27 @@
       "rose": "Rosa",
       "violet": "Violeta",
       "graphite": "Grafito"
+    },
+    "streak": {
+      "title": "Racha semanal juntos",
+      "chip_one": "{{count}} semana seguida",
+      "chip_many": "{{count}} de semanas seguidas",
+      "chip_other": "{{count}} semanas seguidas",
+      "best_one": "Mejor: {{count}} semana",
+      "best_many": "Mejor: {{count}} de semanas",
+      "best_other": "Mejor: {{count}} semanas",
+      "atRisk": "Jugad juntos un partido con rating antes del {{date}} para mantener la racha",
+      "rules": "Jugad juntos, en el mismo lado, al menos un partido con rating cada 7 días."
+    },
+    "rivalries": {
+      "title": "Rivales",
+      "subtitle": "Las parejas contra las que más habéis jugado",
+      "meetings_one": "{{count}} partido",
+      "meetings_many": "{{count}} de partidos",
+      "meetings_other": "{{count}} partidos",
+      "recordAria": "Ganados: {{wins}}, perdidos: {{losses}}",
+      "rematch": "Revancha",
+      "rematchAria": "Revancha contra {{names}}"
     }
   }
 }

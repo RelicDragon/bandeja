@@ -76,6 +76,21 @@
       "rose": "ローズ",
       "violet": "バイオレット",
       "graphite": "グラファイト"
+    },
+    "streak": {
+      "title": "ふたりの週間ストリーク",
+      "chip_other": "{{count}}週連続",
+      "best_other": "最高 {{count}}週",
+      "atRisk": "{{date}}までにふたりでレーティング対象の試合をして記録をつなごう",
+      "rules": "7日ごとに少なくとも1試合、同じチームでレーティング対象の試合を一緒にプレイします。"
+    },
+    "rivalries": {
+      "title": "ライバル",
+      "subtitle": "よく対戦したペア",
+      "meetings_other": "{{count}}試合",
+      "recordAria": "{{wins}}勝 {{losses}}敗",
+      "rematch": "再戦",
+      "rematchAria": "{{names}}と再戦"
     }
   }
 }

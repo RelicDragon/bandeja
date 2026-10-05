@@ -44,6 +44,7 @@ import type { UserTeamColor } from '@shared/userTeamColors';
 import { UserTeamHero, UserTeamHeroField, UserTeamStaticTitle } from '@/components/userTeam/UserTeamHero';
 import { UserTeamManageList, type UserTeamManageAction } from '@/components/userTeam/UserTeamManageList';
 import { UserTeamRecord } from '@/components/userTeam/UserTeamRecord';
+import { UserTeamRivalries } from '@/components/userTeam/UserTeamRivalries';
 
 type MemberActionKind = 'removeAccepted' | 'cancelInvite' | 'leave';
 
@@ -659,6 +660,16 @@ export function UserTeamPage() {
 
           {secondUser ? (
             <UserTeamRecord userAId={team.ownerId} userBId={secondUser.id} />
+          ) : null}
+
+          {teammateAccepted ? (
+            <UserTeamRivalries
+              userAId={team.ownerId}
+              userBId={teammateAccepted.userId}
+              viewerId={user.id}
+              teamMembers={[team.owner, teammateAccepted.user]}
+              canRematch={canAddToGame}
+            />
           ) : null}
 
           {manageActions.length > 0 ? (

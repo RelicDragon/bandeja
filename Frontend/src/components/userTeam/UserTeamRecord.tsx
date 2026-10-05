@@ -10,6 +10,7 @@ import { ChemistryChip } from '@/components/pairs/ChemistryChip';
 import { PairRecentGameCard } from '@/components/pairs/PairRecentGameCard';
 import { usePairFormatters } from '@/components/pairs/pairFormat';
 import type { Sport } from '@/types';
+import { UserTeamPairStreak } from './UserTeamPairStreak';
 
 export interface UserTeamRecordProps {
   userAId: string;
@@ -79,6 +80,8 @@ export const UserTeamRecord = ({ userAId, userBId, sport }: UserTeamRecordProps)
           <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t('teams.recordTitle')}</h2>
           <ChemistryChip userAId={detail.userA.id} userBId={detail.userB.id} chemistry={detail.chemistry} />
         </header>
+
+        <UserTeamPairStreak streak={detail.streak} className="mb-3" />
 
         <div className="mt-1 grid grid-cols-[auto_1fr_auto] items-end gap-4">
           <div>

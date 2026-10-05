@@ -101,6 +101,13 @@ Zero denominators decide whether the chip is honest, so they are specified exact
 
 `null` is the "nothing to show" state and renders **no chip**, never a `0`. The chip turns green at `chemistry >= 5` (`CHEMISTRY_POSITIVE_THRESHOLD`); colour is never the only signal — the accessible name always spells the number out. The same chip appears on the profile partners rail, the pair sheet, the user-team page and the recap's best-partner slide.
 
+### Pair streak and rivalries
+
+`GET /rankings/pairs/:pairId` also returns two fields computed on read (no stored counters, no migration; added fields only, so shipped clients ignore them). Both start from one scan of the pair's counted games (`resultsStatus FINAL`, GAME / TOURNAMENT / LEAGUE, not technical, both have outcomes, newest 500) re-run through `detectPairGameFacts`, so only games where the two were on the **same side** count (`loadPairStreakAndRivalries` in `pairRanking.service.ts`).
+
+- **`streak`** (`PlayStreakView`): the solo play-streak rules exactly — a **rated** game (`countsForPlayStreak`) together every 7 days, extra games in the same week add nothing, timestamp `finishedDate ?? endTime ?? startTime`. Replayed by `playStreakViewFromPlayAts` in `results/playStreak.ts` (`pairStat/pairStreak.ts`), in the viewer's timezone when the viewer is in the pair, else userA's. `atRisk` / `hoursLeft` only for a member (last 48 h before the deadline), like the solo chip. Private games count (a count names nothing).
+- **`rivalries`** (top 3): opposing pairs met **per match** — a match counts when the two are exactly one two-player team and the other team is exactly two players; W/L from `Match.winnerId` (no winner = a meeting only). Fixed-team games with no recorded matches fall back to the two fixed teams + `GameOutcome.isWinner`. Ordered by meetings, distinct games, recency, ids (`pairStat/pairRivalry.ts`). Rated games only, and only games the viewer could open (`pairVisibleGameWhere` semantics) because a rivalry names who played whom. `team` = the opposing pair's two-person `UserTeam` (`id`, `name`, `color`) when one exists.
+
 ## Code
 
 - Engine: `Backend/src/services/results/rating.service.ts`, `ratingUncertainty.ts`, `calculator.service.ts`

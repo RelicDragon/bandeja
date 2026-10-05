@@ -76,6 +76,21 @@
       "rose": "玫瑰",
       "violet": "紫罗兰",
       "graphite": "石墨"
+    },
+    "streak": {
+      "title": "双人每周连续",
+      "chip_other": "连续 {{count}} 周",
+      "best_other": "最佳 {{count}} 周",
+      "atRisk": "请在 {{date}} 前一起打一场计分比赛以保持连续",
+      "rules": "每 7 天至少一起在同一边打一场计分比赛。"
+    },
+    "rivalries": {
+      "title": "宿敌",
+      "subtitle": "你们交手最多的组合",
+      "meetings_other": "{{count}} 场",
+      "recordAria": "胜 {{wins}}，负 {{losses}}",
+      "rematch": "再战",
+      "rematchAria": "与 {{names}} 再战"
     }
   }
 }

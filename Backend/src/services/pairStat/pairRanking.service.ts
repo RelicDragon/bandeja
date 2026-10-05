@@ -34,6 +34,10 @@ import {
   type PairSort,
 } from './pairRankingOrder';
 import { aggregatePairFacts, type PairStatAggregate } from './pairStatAggregate';
+import { collectRivalryMeetings, rankRivalries, type RivalryMeeting } from './pairRivalry';
+import { computePairStreak, type PairStreakGame } from './pairStreak';
+import { getUserTimezone } from '../user-timezone.service';
+import type { PlayStreakView } from '../results/playStreak';
 import { detectPairGameFacts, isPairCountedGame, type PairGameFact } from './partnerDetection';
 import {
   PAIR_STAT_GAME_SELECT,
@@ -511,8 +515,37 @@ export interface PairRecentGameDto {
   won: boolean;
 }
 
+export interface PairRivalryTeamDto {
+  id: string;
+  name: string;
+  /** `UserTeam.color` palette key, or `null` for the app default. */
+  color: string | null;
+}
+
+export interface PairRivalryDto {
+  /** The opposing pair, `userAId < userBId` like every other pair id. */
+  pairId: string;
+  userA: PairMemberDto;
+  userB: PairMemberDto;
+  /** Matches the two pairs played against each other. */
+  meetings: number;
+  wins: number;
+  losses: number;
+  lastMetAt: string;
+  /** The opposing pair's two-person `UserTeam`, when they formalized one. */
+  team: PairRivalryTeamDto | null;
+}
+
 export interface PairDetailDto extends Omit<PairEntryDto, 'rank'> {
   recentGames: PairRecentGameDto[];
+  /**
+   * Weekly pair streak — the solo play-streak rules applied to rated games the
+   * two played on the same side. `atRisk` / `hoursLeft` only for a member.
+   * Added field: older clients ignore it.
+   */
+  streak: PlayStreakView;
+  /** Top opposing pairs by meetings. Added field: older clients ignore it. */
+  rivalries: PairRivalryDto[];
 }
 
 const PAIR_RECENT_GAME_LIMIT = 5;
@@ -549,7 +582,10 @@ export async function getPairDetail(
   const [entry] = await hydratePairs([{ ...ids, ...totals, rank: 0 }], sport, viewerId);
   if (!entry) throw new ApiError(404, 'errors.pairs.notFound');
 
-  const recentGames = await loadRecentPairGames(ids, sport, viewerId);
+  const [recentGames, extras] = await Promise.all([
+    loadRecentPairGames(ids, sport, viewerId),
+    loadPairStreakAndRivalries(ids, sport, viewerId),
+  ]);
   return {
     pairId: entry.pairId,
     userA: entry.userA,
@@ -563,7 +599,143 @@ export async function getPairDetail(
     isViewerPair: entry.isViewerPair,
     teamId: entry.teamId,
     recentGames,
+    streak: extras.streak,
+    rivalries: extras.rivalries,
   };
+}
+
+/** Upper bound on pair games replayed for the streak and rivalries (newest first). */
+const PAIR_EXTRAS_GAME_LIMIT = 500;
+
+/**
+ * Weekly streak + rivalries from one scan of the pair's games.
+ *
+ * Both start from the same set the leaderboard counts: games where the two have
+ * outcomes and `detectPairGameFacts` puts them on the same side.
+ *
+ * - The streak counts every such **rated** game (private ones too — a count
+ *   names nothing, same trade-off as the totals).
+ * - Rivalries **name** the opponents of a game, so only games the viewer could
+ *   open feed them (`pairVisibleGameWhere` semantics, applied in memory).
+ */
+async function loadPairStreakAndRivalries(
+  ids: PairIds,
+  sport: Sport,
+  viewerId: string,
+): Promise<{ streak: PlayStreakView; rivalries: PairRivalryDto[] }> {
+  const isMember = viewerId === ids.userAId || viewerId === ids.userBId;
+  const [timezone, rows] = await Promise.all([
+    getUserTimezone(isMember ? viewerId : ids.userAId),
+    prisma.game.findMany({
+      where: {
+        sport,
+        ...pairCountedGameWhere(),
+        outcomes: { some: { userId: ids.userAId } },
+        AND: [{ outcomes: { some: { userId: ids.userBId } } }],
+      },
+      select: {
+        ...PAIR_STAT_GAME_SELECT,
+        rounds: {
+          select: {
+            matches: {
+              select: {
+                winnerId: true,
+                teams: { select: { id: true, players: { select: { userId: true } } } },
+              },
+            },
+          },
+        },
+        affectsRating: true,
+        finishedDate: true,
+        endTime: true,
+        isPublic: true,
+        participants: { where: { userId: viewerId }, select: { userId: true } },
+      },
+      orderBy: { startTime: 'desc' },
+      take: PAIR_EXTRAS_GAME_LIMIT,
+    }),
+  ]);
+
+  const wanted = pairKey(ids.userAId, ids.userBId);
+  const streakGames: PairStreakGame[] = [];
+  const meetings: RivalryMeeting[] = [];
+
+  for (const row of rows) {
+    const together = detectPairGameFacts(toPairDetectionGame(row)).some(
+      (fact) => pairKey(fact.userAId, fact.userBId) === wanted,
+    );
+    if (!together) continue;
+
+    streakGames.push({
+      entityType: row.entityType,
+      affectsRating: row.affectsRating,
+      playedAt: row.finishedDate ?? row.endTime ?? row.startTime,
+    });
+
+    const visible = row.isPublic || row.participants.length > 0;
+    if (!visible || !row.affectsRating) continue;
+    meetings.push(
+      ...collectRivalryMeetings(
+        {
+          gameId: row.id,
+          playedAt: row.startTime,
+          hasFixedTeams: row.hasFixedTeams,
+          fixedTeams: row.fixedTeams.map((team) => ({
+            playerIds: team.players.map((player) => player.userId),
+          })),
+          matches: row.rounds.flatMap((round) =>
+            round.matches.map((match) => ({
+              winnerTeamId: match.winnerId,
+              teams: match.teams.map((team) => ({
+                id: team.id,
+                playerIds: team.players.map((player) => player.userId),
+              })),
+            })),
+          ),
+          winnerUserIds: row.outcomes.filter((o) => o.isWinner).map((o) => o.userId),
+        },
+        ids,
+      ),
+    );
+  }
+
+  const streak = computePairStreak(streakGames, timezone, new Date(), { includeAtRisk: isMember });
+  const top = rankRivalries(meetings);
+  if (top.length === 0) return { streak, rivalries: [] };
+
+  const opponentPairs = top.map((r) => orderPairIds(r.userAId, r.userBId));
+  const [members, teamIds] = await Promise.all([
+    loadMembers([...new Set(opponentPairs.flatMap((p) => [p.userAId, p.userBId]))], sport),
+    loadTeamIds(opponentPairs),
+  ]);
+  const teams = teamIds.size
+    ? await prisma.userTeam.findMany({
+        where: { id: { in: [...teamIds.values()] } },
+        select: { id: true, name: true, color: true },
+      })
+    : [];
+  const teamById = new Map(teams.map((team) => [team.id, team]));
+
+  const rivalries: PairRivalryDto[] = [];
+  for (const rivalry of top) {
+    const userA = members.get(rivalry.userAId);
+    const userB = members.get(rivalry.userBId);
+    if (!userA || !userB) continue;
+    const teamId = teamIds.get(pairKey(rivalry.userAId, rivalry.userBId));
+    const team = teamId ? teamById.get(teamId) : undefined;
+    rivalries.push({
+      pairId: formatPairParam(rivalry.userAId, rivalry.userBId),
+      userA,
+      userB,
+      meetings: rivalry.meetings,
+      wins: rivalry.wins,
+      losses: rivalry.losses,
+      lastMetAt: rivalry.lastMetAt.toISOString(),
+      team: team ? { id: team.id, name: team.name, color: team.color } : null,
+    });
+  }
+
+  return { streak, rivalries };
 }
 
 /**

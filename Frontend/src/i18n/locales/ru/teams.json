@@ -76,6 +76,30 @@
       "rose": "Роза",
       "violet": "Фиалка",
       "graphite": "Графит"
+    },
+    "streak": {
+      "title": "Серия вместе по неделям",
+      "chip_one": "{{count}} неделя подряд",
+      "chip_few": "{{count}} недели подряд",
+      "chip_many": "{{count}} недель подряд",
+      "chip_other": "{{count}} недели подряд",
+      "best_one": "Рекорд: {{count}} неделя",
+      "best_few": "Рекорд: {{count}} недели",
+      "best_many": "Рекорд: {{count}} недель",
+      "best_other": "Рекорд: {{count}} недели",
+      "atRisk": "Сыграйте вместе рейтинговую игру до {{date}}, чтобы сохранить серию",
+      "rules": "Играйте вместе, в одной команде, хотя бы одну рейтинговую игру каждые 7 дней."
+    },
+    "rivalries": {
+      "title": "Соперники",
+      "subtitle": "Пары, с которыми вы встречались чаще всего",
+      "meetings_one": "{{count}} матч",
+      "meetings_few": "{{count}} матча",
+      "meetings_many": "{{count}} матчей",
+      "meetings_other": "{{count}} матча",
+      "recordAria": "Побед: {{wins}}, поражений: {{losses}}",
+      "rematch": "Реванш",
+      "rematchAria": "Реванш против: {{names}}"
     }
   }
 }

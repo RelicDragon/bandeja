@@ -76,6 +76,30 @@
       "rose": "Růže",
       "violet": "Fialka",
       "graphite": "Grafit"
+    },
+    "streak": {
+      "title": "Společná týdenní série",
+      "chip_one": "{{count}} týden v řadě",
+      "chip_few": "{{count}} týdny v řadě",
+      "chip_many": "{{count}} týdne v řadě",
+      "chip_other": "{{count}} týdnů v řadě",
+      "best_one": "Nejlépe {{count}} týden",
+      "best_few": "Nejlépe {{count}} týdny",
+      "best_many": "Nejlépe {{count}} týdne",
+      "best_other": "Nejlépe {{count}} týdnů",
+      "atRisk": "Zahrajte si spolu hodnocenou hru do {{date}}, ať série vydrží",
+      "rules": "Alespoň jednou za 7 dní spolu odehrajte hodnocenou hru na stejné straně."
+    },
+    "rivalries": {
+      "title": "Rivalové",
+      "subtitle": "Páry, proti kterým jste hráli nejčastěji",
+      "meetings_one": "{{count}} zápas",
+      "meetings_few": "{{count}} zápasy",
+      "meetings_many": "{{count}} zápasu",
+      "meetings_other": "{{count}} zápasů",
+      "recordAria": "Výhry: {{wins}}, prohry: {{losses}}",
+      "rematch": "Odveta",
+      "rematchAria": "Odveta proti: {{names}}"
     }
   }
 }

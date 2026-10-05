@@ -76,6 +76,36 @@
       "rose": "وردي",
       "violet": "بنفسجي",
       "graphite": "رمادي داكن"
+    },
+    "streak": {
+      "title": "سلسلتكما الأسبوعية معًا",
+      "chip_zero": "{{count}} أسبوع متتالٍ",
+      "chip_one": "أسبوع واحد متتالٍ",
+      "chip_two": "أسبوعان متتاليان",
+      "chip_few": "{{count}} أسابيع متتالية",
+      "chip_many": "{{count}} أسبوعًا متتاليًا",
+      "chip_other": "{{count}} أسبوع متتالٍ",
+      "best_zero": "الأفضل: {{count}} أسبوع",
+      "best_one": "الأفضل: أسبوع واحد",
+      "best_two": "الأفضل: أسبوعان",
+      "best_few": "الأفضل: {{count}} أسابيع",
+      "best_many": "الأفضل: {{count}} أسبوعًا",
+      "best_other": "الأفضل: {{count}} أسبوع",
+      "atRisk": "العبا مباراة مُقيَّمة معًا قبل {{date}} للحفاظ على السلسلة",
+      "rules": "العبا معًا، في الفريق نفسه، مباراة مُقيَّمة واحدة على الأقل كل 7 أيام."
+    },
+    "rivalries": {
+      "title": "المنافسون",
+      "subtitle": "الثنائيات التي واجهتماها أكثر من غيرها",
+      "meetings_zero": "{{count}} مباراة",
+      "meetings_one": "مباراة واحدة",
+      "meetings_two": "مباراتان",
+      "meetings_few": "{{count}} مباريات",
+      "meetings_many": "{{count}} مباراة",
+      "meetings_other": "{{count}} مباراة",
+      "recordAria": "الفوز: {{wins}}، الخسارة: {{losses}}",
+      "rematch": "مباراة ثأرية",
+      "rematchAria": "مباراة ثأرية ضد {{names}}"
     }
   }
 }
