@@ -104,6 +104,7 @@
     "rivalries": {
       "title": "प्रतिद्वंद्वी",
       "subtitle": "वे जोड़ियाँ जिनसे आपका सबसे ज़्यादा सामना हुआ",
+      "subtitleTheirs": "वे जोड़ियाँ जिनसे उनका सबसे ज़्यादा सामना हुआ",
       "meetings_one": "{{count}} मैच",
       "meetings_other": "{{count}} मैच",
       "recordAria": "जीते {{wins}}, हारे {{losses}}",

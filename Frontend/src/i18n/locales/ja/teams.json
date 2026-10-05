@@ -102,6 +102,7 @@
     "rivalries": {
       "title": "ライバル",
       "subtitle": "よく対戦したペア",
+      "subtitleTheirs": "2人がよく対戦したペア",
       "meetings_other": "{{count}}試合",
       "recordAria": "{{wins}}勝 {{losses}}敗",
       "rematch": "再戦",

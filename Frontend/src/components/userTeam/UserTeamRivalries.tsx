@@ -23,6 +23,8 @@ export interface UserTeamRivalriesProps {
   teamMembers: readonly BasicUser[];
   /** Only an accepted member can start a rematch. */
   canRematch: boolean;
+  /** Visitors read "they", members read "you". */
+  viewerIsMember?: boolean;
   sport?: Sport;
 }
 
@@ -52,6 +54,7 @@ export function UserTeamRivalries({
   viewerId,
   teamMembers,
   canRematch,
+  viewerIsMember = true,
   sport,
 }: UserTeamRivalriesProps) {
   const { t } = useTranslation();
@@ -96,7 +99,7 @@ export function UserTeamRivalries({
         >
           {t('teams.rivalries.title')}
         </h2>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{t('teams.rivalries.subtitle')}</p>
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{t(viewerIsMember ? 'teams.rivalries.subtitle' : 'teams.rivalries.subtitleTheirs')}</p>
       </header>
 
       <ol>

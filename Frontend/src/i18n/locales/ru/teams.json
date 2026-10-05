@@ -108,6 +108,7 @@
     "rivalries": {
       "title": "Соперники",
       "subtitle": "Пары, с которыми вы встречались чаще всего",
+      "subtitleTheirs": "Пары, с которыми они встречались чаще всего",
       "meetings_one": "{{count}} матч",
       "meetings_few": "{{count}} матча",
       "meetings_many": "{{count}} матчей",

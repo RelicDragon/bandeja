@@ -106,6 +106,7 @@
     "rivalries": {
       "title": "Rivales",
       "subtitle": "Las parejas contra las que más habéis jugado",
+      "subtitleTheirs": "Las parejas contra las que más han jugado",
       "meetings_one": "{{count}} partido",
       "meetings_many": "{{count}} de partidos",
       "meetings_other": "{{count}} partidos",

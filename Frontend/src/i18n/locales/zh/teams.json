@@ -102,6 +102,7 @@
     "rivalries": {
       "title": "宿敌",
       "subtitle": "你们交手最多的组合",
+      "subtitleTheirs": "他们交手最多的组合",
       "meetings_other": "{{count}} 场",
       "recordAria": "胜 {{wins}}，负 {{losses}}",
       "rematch": "再战",

@@ -104,6 +104,7 @@
     "rivalries": {
       "title": "Rivalries",
       "subtitle": "The pairs you've faced most",
+      "subtitleTheirs": "The pairs they've faced most",
       "meetings_one": "{{count}} match",
       "meetings_other": "{{count}} matches",
       "recordAria": "Won {{wins}}, lost {{losses}}",

@@ -112,6 +112,7 @@
     "rivalries": {
       "title": "المنافسون",
       "subtitle": "الثنائيات التي واجهتماها أكثر من غيرها",
+      "subtitleTheirs": "الثنائيات التي واجهاها أكثر من غيرها",
       "meetings_zero": "{{count}} مباراة",
       "meetings_one": "مباراة واحدة",
       "meetings_two": "مباراتان",

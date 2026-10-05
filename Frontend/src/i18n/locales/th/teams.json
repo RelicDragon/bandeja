@@ -102,6 +102,7 @@
     "rivalries": {
       "title": "คู่ปรับ",
       "subtitle": "คู่ที่คุณเจอบ่อยที่สุด",
+      "subtitleTheirs": "คู่ที่พวกเขาเจอบ่อยที่สุด",
       "meetings_other": "{{count}} แมตช์",
       "recordAria": "ชนะ {{wins}} แพ้ {{losses}}",
       "rematch": "แข่งนัดล้างตา",

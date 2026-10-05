@@ -699,6 +699,7 @@ export function UserTeamPage() {
               viewerId={user.id}
               teamMembers={[team.owner, teammateAccepted.user]}
               canRematch={canAddToGame}
+              viewerIsMember={Boolean(myMembership)}
             />
           ) : null}
 

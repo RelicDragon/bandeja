@@ -108,6 +108,7 @@
     "rivalries": {
       "title": "Rivalové",
       "subtitle": "Páry, proti kterým jste hráli nejčastěji",
+      "subtitleTheirs": "Páry, proti kterým hráli nejčastěji",
       "meetings_one": "{{count}} zápas",
       "meetings_few": "{{count}} zápasy",
       "meetings_many": "{{count}} zápasu",

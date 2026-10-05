@@ -106,6 +106,7 @@
     "rivalries": {
       "title": "Rivali",
       "subtitle": "Parovi protiv kojih ste najčešće igrali",
+      "subtitleTheirs": "Parovi protiv kojih su najčešće igrali",
       "meetings_one": "{{count}} meč",
       "meetings_few": "{{count}} meča",
       "meetings_other": "{{count}} mečeva",

@@ -102,6 +102,7 @@
     "rivalries": {
       "title": "Rival",
       "subtitle": "Pasangan yang paling sering kalian hadapi",
+      "subtitleTheirs": "Pasangan yang paling sering mereka hadapi",
       "meetings_other": "{{count}} pertandingan",
       "recordAria": "Menang {{wins}}, kalah {{losses}}",
       "rematch": "Tanding ulang",
