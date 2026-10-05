@@ -557,6 +557,7 @@ export interface PairDetailDto extends Omit<PairEntryDto, 'rank'> {
   streak: PlayStreakView;
   /** Top opposing pairs by meetings. Added field: older clients ignore it. */
   rivalries: PairRivalryDto[];
+  /**
    * Padel matches the two won on the same side in rated FINAL events — the
    * exact Dynamic Duo rule (`countPairDuoMatchWins`), not the pair's `wins`
    * (which counts events). Added field; older clients ignore it.
