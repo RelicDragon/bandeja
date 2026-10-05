@@ -106,6 +106,26 @@
       "recordAria": "{{wins}}勝 {{losses}}敗",
       "rematch": "再戦",
       "rematchAria": "{{names}}と再戦"
+    },
+    "recordTitleTheirs": "2人の通算成績",
+    "recordEmptyTheirs": "まだ一緒に試合をしていません。",
+    "challenge": {
+      "action": "挑戦する",
+      "actionDetail": "{{name}}として対戦する",
+      "actionDetailPick": "出場するペアを選んでください",
+      "title": "{{name}}に挑戦",
+      "hint": "固定ペアの2対2。相手は通常の試合招待と同じように承諾または辞退します。",
+      "vs": "vs",
+      "asTeam": "挑戦するペア",
+      "newMatch": "新しい試合",
+      "newMatchHint": "クラブと時間を選ぶと、両ペアに招待が届きます",
+      "existingTitle": "または参加中の試合で",
+      "existingEmpty": "相手のために2席空いている2対2の試合がありません。",
+      "sent": "{{name}}に挑戦状を送りました",
+      "rowAria": "{{names}}に挑戦",
+      "draftTitle": "{{challenger}} vs {{challenged}}",
+      "draftHint": "クラブと時間を選んでください。試合作成後、両ペアに招待が届きます。",
+      "draftHintEdited": "メンバーを変更したため、通常の招待として送信されます。"
     }
   }
 }

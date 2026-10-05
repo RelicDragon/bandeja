@@ -18,7 +18,7 @@
  * leaderboard unpaginated; this endpoint deliberately does not copy that.
  */
 
-import { Prisma, type Sport } from '@prisma/client';
+import { Prisma, UserTeamMemberStatus, type Sport } from '@prisma/client';
 import { countPairDuoMatchWins } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
 import { partnerHabitGameWhere } from '../achievements/partnerGrant.service';
@@ -230,7 +230,8 @@ async function loadTeamIds(pairs: readonly PairIds[]): Promise<Map<string, strin
 
   const userIds = [...new Set(pairs.flatMap((pair) => [pair.userAId, pair.userBId]))];
   const rows = await prisma.userTeamMember.findMany({
-    where: { userId: { in: userIds }, team: { size: 2 } },
+    // ACCEPTED only: a pending invite is not a pair yet, and its team page is member-only.
+    where: { userId: { in: userIds }, status: UserTeamMemberStatus.ACCEPTED, team: { size: 2 } },
     select: { teamId: true, userId: true },
   });
 

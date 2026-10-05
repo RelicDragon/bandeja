@@ -106,6 +106,26 @@
       "recordAria": "Menang {{wins}}, kalah {{losses}}",
       "rematch": "Tanding ulang",
       "rematchAria": "Tanding ulang melawan {{names}}"
+    },
+    "recordTitleTheirs": "Rekor mereka bersama",
+    "recordEmptyTheirs": "Belum ada permainan bersama.",
+    "challenge": {
+      "action": "Tantang",
+      "actionDetail": "Lawan mereka sebagai {{name}}",
+      "actionDetailPick": "Pilih pasangan Anda yang bermain",
+      "title": "Tantang {{name}}",
+      "hint": "Laga 2 lawan 2 dengan pasangan tetap. Mereka menerima atau menolak seperti undangan biasa.",
+      "vs": "vs",
+      "asTeam": "Tantang sebagai",
+      "newMatch": "Laga baru",
+      "newMatchHint": "Pilih klub dan waktu — kedua pasangan diundang",
+      "existingTitle": "Atau di permainan yang Anda ikuti",
+      "existingEmpty": "Tidak ada permainan 2 lawan 2 Anda dengan dua kursi kosong untuk mereka.",
+      "sent": "Tantangan dikirim ke {{name}}",
+      "rowAria": "Tantang {{names}}",
+      "draftTitle": "{{challenger}} vs {{challenged}}",
+      "draftHint": "Pilih klub dan waktu. Kedua pasangan diundang setelah permainan dibuat.",
+      "draftHintEdited": "Anda mengubah pemain, jadi yang dikirim undangan biasa."
     }
   }
 }

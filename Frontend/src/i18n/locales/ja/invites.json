@@ -35,6 +35,7 @@
     },
     "fullForNow": "現在満員",
     "fullForNowHint": "空きが出たらお知らせします",
-    "joinWaitlist": "キャンセル待ち"
+    "joinWaitlist": "キャンセル待ち",
+    "teamChallenge": "ペア対戦の挑戦 — あなたのペアが招待されました"
   }
 }

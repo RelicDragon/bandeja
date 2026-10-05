@@ -11,6 +11,7 @@ import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { signPushInviteActionToken } from '../pushInviteActionToken.service';
 import { isInvitePlaySlotFull } from '../../../utils/gameInviteInbox';
+import { loadInviteChallengeTeams } from '../../userTeam/userTeamChallengeNotice';
 
 export type InvitePushOptions = {
   /** Re-send after a PLAYING seat freed up (`notifyPendingInvitesIfPlayingSlotOpened`). */
@@ -53,14 +54,26 @@ export async function createInvitePushNotification(
   // A full game keeps the invite: say so and offer the waitlist (accept queues while full).
   const full = !options.spotOpened && isInvitePlaySlotFull(invite);
 
+  // Pair challenge: same invite, challenge wording (`userTeamChallenge.service.ts`).
+  const challenge = options.spotOpened ? null : await loadInviteChallengeTeams(invite);
+
   const title = withOptionalSportPrefix(
-    t(options.spotOpened ? 'telegram.inviteSpotOpenedTitle' : 'telegram.inviteReceived', lang),
+    t(
+      options.spotOpened
+        ? 'telegram.inviteSpotOpenedTitle'
+        : challenge
+          ? 'telegram.teamChallengeTitle'
+          : 'telegram.inviteReceived',
+      lang,
+    ),
     invite.game.sport,
     receiver.primarySport,
     lang,
   );
   const schedule = `${gameInfo.place} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`;
-  const lead = `${senderDisplay} ${t('telegram.invitedYou', lang)}`;
+  const lead = challenge
+    ? `${senderDisplay} ${t('telegram.challengedYourTeam', lang)}\n${challenge.challengerTeamName} ${t('telegram.teamChallengeVs', lang)} ${challenge.challengedTeamName}`
+    : `${senderDisplay} ${t('telegram.invitedYou', lang)}`;
   const body = full
     ? `${lead}\n${schedule}\n${t('telegram.inviteFullForNow', lang)}`
     : `${lead}\n${schedule}`;

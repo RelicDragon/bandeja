@@ -109,6 +109,26 @@
       "recordAria": "Won {{wins}}, lost {{losses}}",
       "rematch": "Rematch",
       "rematchAria": "Rematch against {{names}}"
+    },
+    "recordTitleTheirs": "Their record together",
+    "recordEmptyTheirs": "No games together yet.",
+    "challenge": {
+      "action": "Challenge",
+      "actionDetail": "Play them as {{name}}",
+      "actionDetailPick": "Pick which of your pairs plays them",
+      "title": "Challenge {{name}}",
+      "hint": "A 2v2 with fixed pairs. They accept or decline like any game invite.",
+      "vs": "vs",
+      "asTeam": "Challenge as",
+      "newMatch": "New match",
+      "newMatchHint": "Pick a club and time — both pairs are invited",
+      "existingTitle": "Or in a game you’re in",
+      "existingEmpty": "No 2v2 game of yours has two free seats for them.",
+      "sent": "Challenge sent to {{name}}",
+      "rowAria": "Challenge {{names}}",
+      "draftTitle": "{{challenger}} vs {{challenged}}",
+      "draftHint": "Pick a club and time. Both pairs are invited once the game is created.",
+      "draftHintEdited": "You changed the players, so this goes out as ordinary invites."
     }
   }
 }

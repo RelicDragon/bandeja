@@ -56,6 +56,12 @@ Only `PLAYING` fills slots. _Avoid_: counting queue/invites as occupancy.
 
 **Trainer**: `Game.trainerId` FK to `User`. _Avoid_: a “trainer” participant flag.
 
+**User team** (`UserTeam`): a fixed pair of users with a name, photo and colour (`/user-team/:id`). **Complete** = every seat (`size`, always 2) has an ACCEPTED member. _Avoid_: “team” alone when a game's fixed team (`GameTeam`) or a league `TEAM` participant is meant.
+
+**Pair invite**: a game invite stamped with `GameParticipant.inviteUserTeamId`, so the two players arrive as their user team (and become one fixed team in a `hasFixedTeams` game).
+
+**Pair challenge**: one complete user team challenging another to a 2v2 `GAME` (`maxParticipants = 4`). Not a record of its own: the challenger pair is added through add-pair-to-game and the challenged pair gets ordinary pair invites. An invite *is* a challenge when the receiver's and the sender's rows carry **different** `inviteUserTeamId`s (`deriveInviteChallenge`, `Frontend/shared/userTeamChallenge.ts`). _Avoid_: “team invite” (that is the invite to *join* a user team), a challenge status/enum, Rematch (re-running a finished game).
+
 ## Play intent vs matching lobby game vs notify
 
 **Play intent**: a city + sport (or BAR) wish to play. Compose entity types are `GAME` or `BAR` only (`Backend/src/services/playIntent/playIntent.schemas.ts`). Status `PlayIntentStatus`: `OPEN` → `MATCHED` (in a proposal or reserved by invite) → `CONSUMED` \| `EXPIRED` \| `CANCELLED`. Only a join that lands `PLAYING` consumes a reachable looking intent. `IN_QUEUE` does not. _Avoid_: “lobby” as the intent row; “match” as the intent.

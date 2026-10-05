@@ -115,6 +115,26 @@
       "recordAria": "Výhry: {{wins}}, prohry: {{losses}}",
       "rematch": "Odveta",
       "rematchAria": "Odveta proti: {{names}}"
+    },
+    "recordTitleTheirs": "Jejich společná bilance",
+    "recordEmptyTheirs": "Zatím spolu nehráli.",
+    "challenge": {
+      "action": "Vyzvat",
+      "actionDetail": "Zahrajte si proti nim jako {{name}}",
+      "actionDetailPick": "Vyberte, který váš pár hraje",
+      "title": "Vyzvat {{name}}",
+      "hint": "Zápas 2 na 2 s pevnými páry. Přijmou nebo odmítnou jako každou pozvánku.",
+      "vs": "vs",
+      "asTeam": "Vyzvat jako",
+      "newMatch": "Nový zápas",
+      "newMatchHint": "Vyberte klub a čas — oba páry dostanou pozvánku",
+      "existingTitle": "Nebo v zápase, kde už jste",
+      "existingEmpty": "Žádný váš zápas 2 na 2 pro ně nemá dvě volná místa.",
+      "sent": "Výzva odeslána páru {{name}}",
+      "rowAria": "Vyzvat {{names}}",
+      "draftTitle": "{{challenger}} proti {{challenged}}",
+      "draftHint": "Vyberte klub a čas. Oba páry dostanou pozvánku po vytvoření zápasu.",
+      "draftHintEdited": "Změnili jste hráče, takže odejdou běžné pozvánky."
     }
   }
 }

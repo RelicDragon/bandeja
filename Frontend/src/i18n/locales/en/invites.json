@@ -35,6 +35,7 @@
     },
     "fullForNow": "Full right now",
     "fullForNowHint": "We'll tell you when a spot opens",
-    "joinWaitlist": "Join waitlist"
+    "joinWaitlist": "Join waitlist",
+    "teamChallenge": "Team challenge — your pair is invited"
   }
 }

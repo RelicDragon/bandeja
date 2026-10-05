@@ -78,6 +78,7 @@ When editing templates or booking helpers, change **canonical** `Frontend/shared
 | `eventApproval.ts` | `EVENT_APPROVAL_STATUS` |
 | `achievements/` | catalog, eligibility, pin slots |
 | `userTeamColors.ts` | `USER_TEAM_COLORS` palette keys + `isUserTeamColor` for `UserTeam.color` (BE validates via `@bandeja/shared/userTeamColors`, no BE copy; tones are FE-only) |
+| `userTeamChallenge.ts` | Pair challenge rules: `isChallengeableGame` (2v2 `GAME`), `challengeSeatsFit`, `deriveInviteChallenge` (an invite is a challenge when sender and receiver rows carry different `inviteUserTeamId`s). BE imports `@bandeja/shared/userTeamChallenge` (no BE copy) |
 | `novice/` | novice-mode ranks, feature unlock map, `isNoviceModeActive` / `hasNoviceFeature` (PRD 358; BE imports `@bandeja/shared/novice`, no BE copy) |
 | `playIntentRealtime.ts` | socket event names/payloads (BE re-exports via `@bandeja/shared/playIntentRealtime`) |
 | `playIntentCreateSource.ts` | create-source enum for looking-to-play → game |

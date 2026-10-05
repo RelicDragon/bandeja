@@ -106,6 +106,26 @@
       "recordAria": "胜 {{wins}}，负 {{losses}}",
       "rematch": "再战",
       "rematchAria": "与 {{names}} 再战"
+    },
+    "recordTitleTheirs": "他们的共同战绩",
+    "recordEmptyTheirs": "还没有一起打过比赛。",
+    "challenge": {
+      "action": "发起挑战",
+      "actionDetail": "以 {{name}} 的身份对战他们",
+      "actionDetailPick": "选择由你的哪个组合出战",
+      "title": "挑战 {{name}}",
+      "hint": "固定组合的 2 对 2 比赛。对方像处理普通比赛邀请一样接受或拒绝。",
+      "vs": "对阵",
+      "asTeam": "出战组合",
+      "newMatch": "新比赛",
+      "newMatchHint": "选择球馆和时间——两个组合都会收到邀请",
+      "existingTitle": "或在你已加入的比赛中",
+      "existingEmpty": "你没有可为他们空出两个位置的 2 对 2 比赛。",
+      "sent": "已向 {{name}} 发出挑战",
+      "rowAria": "挑战 {{names}}",
+      "draftTitle": "{{challenger}} 对阵 {{challenged}}",
+      "draftHint": "选择球馆和时间。比赛创建后两个组合都会收到邀请。",
+      "draftHintEdited": "你修改了球员，因此将发送普通邀请。"
     }
   }
 }

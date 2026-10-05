@@ -53,7 +53,10 @@
       "userIdRequired": "Укажите игрока",
       "nameTooShort": "Название команды — минимум 3 символа",
       "notReady": "Сначала пригласите напарника — пара ещё не собрана",
-      "notAcceptedMember": "Сначала вступите в пару, чтобы добавить её в игру"
+      "notAcceptedMember": "Сначала вступите в пару, чтобы добавить её в игру",
+      "challengeSameTeam": "У этих пар общий игрок",
+      "challengeOpponentNotReady": "Эта пара ещё не собрана",
+      "challengeGameNotEligible": "Для вызова нужна игра 2 на 2"
     },
     "games": {
       "cannotJoin": "Нельзя присоединиться к игре",

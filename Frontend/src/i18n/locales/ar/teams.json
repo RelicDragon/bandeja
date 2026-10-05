@@ -121,6 +121,26 @@
       "recordAria": "الفوز: {{wins}}، الخسارة: {{losses}}",
       "rematch": "مباراة ثأرية",
       "rematchAria": "مباراة ثأرية ضد {{names}}"
+    },
+    "recordTitleTheirs": "سجلهما معًا",
+    "recordEmptyTheirs": "لا توجد مباريات مشتركة بعد.",
+    "challenge": {
+      "action": "تحدٍّ",
+      "actionDetail": "العب ضدهما باسم {{name}}",
+      "actionDetailPick": "اختر أي فريق من فرقك سيلعب",
+      "title": "تحدَّ {{name}}",
+      "hint": "مباراة 2 ضد 2 بفرق ثابتة. يقبلان أو يرفضان مثل أي دعوة لعب.",
+      "vs": "ضد",
+      "asTeam": "التحدي باسم",
+      "newMatch": "مباراة جديدة",
+      "newMatchHint": "اختر ناديًا ووقتًا — تُرسل الدعوة إلى الفريقين",
+      "existingTitle": "أو في مباراة أنت فيها",
+      "existingEmpty": "لا توجد لديك مباراة 2 ضد 2 فيها مقعدان فارغان لهما.",
+      "sent": "تم إرسال التحدي إلى {{name}}",
+      "rowAria": "تحدَّ {{names}}",
+      "draftTitle": "{{challenger}} ضد {{challenged}}",
+      "draftHint": "اختر ناديًا ووقتًا. تُرسل الدعوة إلى الفريقين عند إنشاء المباراة.",
+      "draftHintEdited": "غيّرت اللاعبين، لذا ستُرسل دعوات عادية."
     }
   }
 }

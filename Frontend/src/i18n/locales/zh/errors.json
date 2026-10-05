@@ -53,7 +53,10 @@
       "userIdRequired": "需要选择球员",
       "nameTooShort": "队名至少 3 个字符",
       "notReady": "请先邀请搭档 — 此配对尚未完成",
-      "notAcceptedMember": "请先加入配对，再将其加入比赛"
+      "notAcceptedMember": "请先加入配对，再将其加入比赛",
+      "challengeSameTeam": "这两个组合有同一名球员",
+      "challengeOpponentNotReady": "该组合尚未组建完成",
+      "challengeGameNotEligible": "挑战需要一场 2 对 2 比赛"
     },
     "games": {
       "cannotJoin": "无法加入比赛",

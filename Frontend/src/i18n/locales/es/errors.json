@@ -53,7 +53,10 @@
       "userIdRequired": "Indica un jugador",
       "nameTooShort": "El nombre del equipo debe tener al menos 3 caracteres",
       "notReady": "Invita primero a tu compañero: la pareja aún no está completa",
-      "notAcceptedMember": "Únete a la pareja antes de añadirla a un partido"
+      "notAcceptedMember": "Únete a la pareja antes de añadirla a un partido",
+      "challengeSameTeam": "Estas parejas comparten un jugador",
+      "challengeOpponentNotReady": "Esa pareja aún no está completa",
+      "challengeGameNotEligible": "Un desafío necesita un partido 2 contra 2"
     },
     "games": {
       "cannotJoin": "No se puede unir al juego",

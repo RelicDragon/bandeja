@@ -2,7 +2,9 @@ import prisma from '../config/database';
 import {
   SOCIAL_GRAPH_INTERACT_CONTEXT,
   assertCanInteract,
+  isBlocked,
 } from './social-graph/socialGraph.block';
+import { acceptedMemberUserIds, isUserTeamReady } from './userTeam/userTeamReady';
 import { ApiError } from '../utils/ApiError';
 import { isUserTeamColor, type UserTeamColor } from '@bandeja/shared/userTeamColors';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
@@ -176,17 +178,24 @@ export class UserTeamService {
     );
   }
 
+  /**
+   * Members always see their team. Anyone else sees a **complete** pair (every
+   * seat accepted) read-only — that is what the pair leaderboard links to and
+   * what a challenge targets. Unfinished teams and a viewer blocked by / blocking
+   * a member stay 403.
+   */
   static async getTeamForUser(teamId: string, userId: string) {
-    const membership = await prisma.userTeamMember.findUnique({
-      where: { teamId_userId: { teamId, userId } },
-    });
-    if (!membership) throw new ApiError(403, 'errors.userTeams.accessDenied');
-
     const team = await prisma.userTeam.findUnique({
       where: { id: teamId },
       include: TEAM_INCLUDE,
     });
     if (!team) throw new ApiError(404, 'errors.userTeams.notFound');
+    if (team.members.some((m) => m.userId === userId)) return team;
+
+    if (!isUserTeamReady(team)) throw new ApiError(403, 'errors.userTeams.accessDenied');
+    for (const memberId of acceptedMemberUserIds(team)) {
+      if (await isBlocked(userId, memberId)) throw new ApiError(403, 'errors.userTeams.accessDenied');
+    }
     return team;
   }
 

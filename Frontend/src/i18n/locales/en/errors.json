@@ -53,7 +53,10 @@
       "userIdRequired": "Player is required",
       "nameTooShort": "Team name must be at least 3 characters",
       "notReady": "Invite your partner first — this pair is not complete yet",
-      "notAcceptedMember": "Join the pair before adding it to a game"
+      "notAcceptedMember": "Join the pair before adding it to a game",
+      "challengeSameTeam": "These pairs share a player",
+      "challengeOpponentNotReady": "That pair is not complete yet",
+      "challengeGameNotEligible": "A challenge needs a 2v2 game"
     },
     "games": {
       "cannotJoin": "Cannot join game",

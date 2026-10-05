@@ -53,7 +53,10 @@
       "userIdRequired": "اللاعب مطلوب",
       "nameTooShort": "يجب أن يكون اسم الفريق 3 أحرف على الأقل",
       "notReady": "ادعُ شريكك أولاً — هذا الزوج غير مكتمل بعد",
-      "notAcceptedMember": "انضم إلى الزوج قبل إضافته إلى مباراة"
+      "notAcceptedMember": "انضم إلى الزوج قبل إضافته إلى مباراة",
+      "challengeSameTeam": "هذان الفريقان يتشاركان لاعبًا",
+      "challengeOpponentNotReady": "هذا الفريق لم يكتمل بعد",
+      "challengeGameNotEligible": "التحدي يتطلب مباراة 2 ضد 2"
     },
     "games": {
       "cannotJoin": "لا يمكن الانضمام للمباراة",

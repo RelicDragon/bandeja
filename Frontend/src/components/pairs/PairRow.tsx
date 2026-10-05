@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Swords } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { PairEntry } from '@/api/pairs';
 import { ChemistryChip } from './ChemistryChip';
@@ -16,6 +17,8 @@ export interface PairRowProps {
   onOpen: (entry: PairEntry) => void;
   /** Set briefly after "scroll to my pair" so the row flashes. */
   flashing?: boolean;
+  /** Present only when the viewer can challenge this row's user team. */
+  onChallenge?: (entry: PairEntry) => void;
 }
 
 /**
@@ -28,7 +31,7 @@ export interface PairRowProps {
  * The viewer's own pairs get a soft sky **inline-start** border (`border-s`),
  * so `ar` puts it on the right edge where the row actually starts.
  */
-export const PairRow = memo(({ entry, onOpen, flashing = false }: PairRowProps) => {
+export const PairRow = memo(({ entry, onOpen, flashing = false, onChallenge }: PairRowProps) => {
   const { t } = useTranslation();
   const formatters = usePairFormatters();
   // "Find my pair" flashes the row. Reduced motion keeps the tint that says
@@ -93,6 +96,17 @@ export const PairRow = memo(({ entry, onOpen, flashing = false }: PairRowProps) 
           </span>
         </span>
       </button>
+      {onChallenge ? (
+        <button
+          type="button"
+          data-testid="pair-row-challenge"
+          onClick={() => onChallenge(entry)}
+          aria-label={t('teams.challenge.rowAria', { names: spokenNames })}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/12 text-amber-600 transition-[background-color,scale] hover:bg-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 active:scale-95 dark:bg-amber-400/12 dark:text-amber-300"
+        >
+          <Swords size={17} strokeWidth={2.1} aria-hidden />
+        </button>
+      ) : null}
       <ChemistryChip
         userAId={entry.userA.id}
         userBId={entry.userB.id}

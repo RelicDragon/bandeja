@@ -8,6 +8,7 @@ import { AuthRequest } from '../middleware/auth';
 import { UserTeamService } from '../services/userTeam.service';
 import { addUserTeamToGame, listInvitableGamesForUserTeam } from '../services/userTeam/userTeamAddToGame.service';
 import { getUserTeamNextGame } from '../services/userTeam/userTeamNextGame.service';
+import { challengeUserTeam } from '../services/userTeam/userTeamChallenge.service';
 import prisma from '../config/database';
 import { parseSportParam } from '../services/user/userSportProfile.service';
 
@@ -28,6 +29,11 @@ export const updateTeamValidators = [
 ];
 
 export const addToGameValidators = [body('gameId').notEmpty().withMessage('gameId required')];
+
+export const challengeValidators = [
+  body('gameId').isString().notEmpty().withMessage('gameId required'),
+  body('challengerTeamId').isString().notEmpty().withMessage('challengerTeamId required'),
+];
 
 export const inviteMemberValidators = [body('userId').notEmpty().withMessage('userId required')];
 
@@ -123,5 +129,19 @@ export const addToGame = asyncHandler(async (req: AuthRequest, res: Response) =>
   const { gameId } = req.body as { gameId?: string };
   if (!gameId) throw new ApiError(400, 'errors.invites.mustSpecifyGameId');
   const data = await addUserTeamToGame(id, req.userId!, req.user?.isAdmin === true, gameId);
+  res.json({ success: true, data });
+});
+
+/** `:id` is the challenged team; the body names the viewer's own (challenger) team. */
+export const challenge = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { gameId, challengerTeamId } = req.body as { gameId: string; challengerTeamId: string };
+  const data = await challengeUserTeam({
+    challengedTeamId: id,
+    challengerTeamId,
+    viewerId: req.userId!,
+    isAdmin: req.user?.isAdmin === true,
+    gameId,
+  });
   res.json({ success: true, data });
 });

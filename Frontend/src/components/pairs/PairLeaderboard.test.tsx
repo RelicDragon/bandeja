@@ -62,6 +62,13 @@ vi.mock('@/store/authStore', () => ({
   useAuthStore: (selector: (state: { user: unknown }) => unknown) =>
     selector({ user: { id: 'me', currentCity: { id: 'city-1' } } }),
 }));
+// The viewer's own user teams (pair challenge eligibility on rows).
+const teamsState = vi.hoisted(() => ({ teams: [] as unknown[], memberships: [] as unknown[] }));
+vi.mock('@/store/userTeamsStore', () => ({
+  useUserTeamsStore: (selector: (state: Record<string, unknown>) => unknown) =>
+    selector({ ...teamsState, refreshAll: async () => true }),
+}));
+vi.mock('@/components/userTeam/ChallengeUserTeamSheet', () => ({ ChallengeUserTeamSheet: () => null }));
 vi.mock('@/utils/profileSports', () => ({
   getViewerPrimarySport: () => 'PADEL',
   hasMultipleSportsEnabled: () => false,
@@ -146,6 +153,8 @@ beforeEach(() => {
   fetchNextPage.mockClear();
   observed.intersecting = false;
   observed.targets = [];
+  teamsState.teams = [];
+  teamsState.memberships = [];
 });
 
 afterEach(() => {
@@ -268,5 +277,27 @@ describe('PairLeaderboard (PRD 352)', () => {
     expect(container.textContent).toContain('pairs.empty.title');
     expect(container.textContent).toContain('pairs.floorHint:{"count":5}');
     expect(container.textContent).toContain('pairs.empty.action');
+  });
+
+  it('offers Challenge only on rows that are someone else\'s user team, to a viewer with a complete pair', () => {
+    const accepted = (userId: string) => ({ userId, status: 'ACCEPTED' });
+    const rows = [
+      ...FIVE.slice(0, 3),
+      { ...entry(4, 'a4', 'b4'), teamId: 'their-team' },
+      { ...entry(5, 'me', 'zz', true), teamId: 'my-team' },
+      { ...entry(6, 'zz', 'c6'), teamId: 'shares-my-partner' },
+      entry(7, 'a7', 'b7'),
+    ];
+    setQuery([page(rows)]);
+
+    render();
+    expect(container.querySelectorAll('[data-testid="pair-row-challenge"]')).toHaveLength(0);
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    teamsState.teams = [{ id: 'my-team', size: 2, members: [accepted('me'), accepted('zz')] }];
+    render();
+    const buttons = [...container.querySelectorAll<HTMLElement>('[data-testid="pair-row-challenge"]')];
+    expect(buttons.map((b) => b.closest<HTMLElement>('[data-pair-id]')!.dataset.pairId)).toEqual(['a4,b4']);
   });
 });

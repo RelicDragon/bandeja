@@ -15,6 +15,8 @@ export interface UserTeamRecordProps {
   userAId: string;
   userBId: string | null | undefined;
   sport?: Sport;
+  /** `false` on someone else's pair: "Their record", not "Your record". */
+  viewerIsMember?: boolean;
 }
 
 const SURFACE =
@@ -28,13 +30,14 @@ const SURFACE =
  * informal duo report identical numbers. Non-wins can include ties, so the card
  * never claims a "losses" count it cannot back.
  */
-export const UserTeamRecord = ({ userAId, userBId, sport }: UserTeamRecordProps) => {
+export const UserTeamRecord = ({ userAId, userBId, sport, viewerIsMember = true }: UserTeamRecordProps) => {
   const { t } = useTranslation();
   const formatters = usePairFormatters();
   const reduceMotion = usePrefersReducedMotion();
   const { pairId, query } = useUserTeamPairDetail(userAId, userBId, sport);
 
   if (!pairId) return null;
+  const titleKey = viewerIsMember ? 'teams.recordTitle' : 'teams.recordTitleTheirs';
 
   if (query.isLoading) {
     return (
@@ -60,9 +63,9 @@ export const UserTeamRecord = ({ userAId, userBId, sport }: UserTeamRecordProps)
             <Swords size={20} strokeWidth={1.75} aria-hidden />
           </span>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t('teams.recordTitle')}</h2>
+            <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t(titleKey)}</h2>
             <p className="mt-0.5 text-[13px] leading-snug text-zinc-500 dark:text-zinc-400 [text-wrap:pretty]">
-              {t('teams.recordEmpty')}
+              {t(viewerIsMember ? 'teams.recordEmpty' : 'teams.recordEmptyTheirs')}
             </p>
           </div>
         </div>
@@ -79,7 +82,7 @@ export const UserTeamRecord = ({ userAId, userBId, sport }: UserTeamRecordProps)
     <div className="space-y-3">
       <section className={`${SURFACE} px-5 pb-4 pt-4`} data-testid="user-team-record">
         <header className="flex min-h-[2.75rem] items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t('teams.recordTitle')}</h2>
+          <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t(titleKey)}</h2>
           <ChemistryChip userAId={detail.userA.id} userBId={detail.userB.id} chemistry={detail.chemistry} />
         </header>
 

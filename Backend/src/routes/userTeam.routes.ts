@@ -22,6 +22,12 @@ router.post(
   validate(userTeamController.addToGameValidators),
   userTeamController.addToGame
 );
+router.post(
+  '/:id/challenge',
+  authenticate,
+  validate(userTeamController.challengeValidators),
+  userTeamController.challenge
+);
 router.get('/:id', authenticate, userTeamController.getTeam);
 router.put(
   '/:id',

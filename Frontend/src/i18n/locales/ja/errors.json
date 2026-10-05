@@ -53,7 +53,10 @@
       "userIdRequired": "プレイヤーが必要です",
       "nameTooShort": "チーム名は3文字以上にしてください",
       "notReady": "先にパートナーを招待してください — このペアはまだ完成していません",
-      "notAcceptedMember": "試合に追加する前にペアに参加してください"
+      "notAcceptedMember": "試合に追加する前にペアに参加してください",
+      "challengeSameTeam": "同じ選手がいるペア同士です",
+      "challengeOpponentNotReady": "そのペアはまだ揃っていません",
+      "challengeGameNotEligible": "挑戦には2対2の試合が必要です"
     },
     "games": {
       "cannotJoin": "試合に参加できません",

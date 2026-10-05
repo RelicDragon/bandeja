@@ -112,6 +112,26 @@
       "recordAria": "Pobede: {{wins}}, porazi: {{losses}}",
       "rematch": "Revanš",
       "rematchAria": "Revanš protiv: {{names}}"
+    },
+    "recordTitleTheirs": "Njihov zajednički učinak",
+    "recordEmptyTheirs": "Još nema zajedničkih igara.",
+    "challenge": {
+      "action": "Izazovi",
+      "actionDetail": "Igrajte protiv njih kao {{name}}",
+      "actionDetailPick": "Izaberite koji vaš par igra",
+      "title": "Izazovi {{name}}",
+      "hint": "Meč 2 na 2 sa fiksnim parovima. Prihvataju ili odbijaju kao svaki poziv na igru.",
+      "vs": "vs",
+      "asTeam": "Izazovi kao",
+      "newMatch": "Novi meč",
+      "newMatchHint": "Izaberite klub i vreme — oba para dobijaju poziv",
+      "existingTitle": "Ili u igri u kojoj već jeste",
+      "existingEmpty": "Nemate igru 2 na 2 sa dva slobodna mesta za njih.",
+      "sent": "Izazov poslat paru {{name}}",
+      "rowAria": "Izazovi {{names}}",
+      "draftTitle": "{{challenger}} protiv {{challenged}}",
+      "draftHint": "Izaberite klub i vreme. Oba para dobijaju poziv kada se igra kreira.",
+      "draftHintEdited": "Promenili ste igrače, pa se šalju obični pozivi."
     }
   }
 }

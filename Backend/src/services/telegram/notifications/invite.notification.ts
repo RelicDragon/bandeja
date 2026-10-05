@@ -16,6 +16,7 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 import { isInvitePlaySlotFull } from '../../../utils/gameInviteInbox';
+import { loadInviteChallengeTeams } from '../../userTeam/userTeamChallengeNotice';
 
 export async function sendInviteNotification(
   api: Api,
@@ -52,14 +53,21 @@ export async function sendInviteNotification(
   );
   const gameInfo = await formatGameInfoForUser(invite.game, receiver.currentCityId, lang);
 
+  // Pair challenge: same invite, challenge wording (`userTeamChallenge.service.ts`).
+  const challenge = await loadInviteChallengeTeams(invite);
   const inviteTitle = withOptionalSportPrefix(
-    t('telegram.inviteReceived', lang),
+    t(challenge ? 'telegram.teamChallengeTitle' : 'telegram.inviteReceived', lang),
     invite.game.sport,
     receiver.primarySport,
     lang,
   );
   let message = `🎯 ${escapeMarkdown(inviteTitle)}\n\n`;
-  message += `👤 *${escapeMarkdown(senderDisplay)}* ${escapeMarkdown(t('telegram.invitedYou', lang))}\n\n`;
+  if (challenge) {
+    message += `👤 *${escapeMarkdown(senderDisplay)}* ${escapeMarkdown(t('telegram.challengedYourTeam', lang))}\n`;
+    message += `⚔️ ${escapeMarkdown(`${challenge.challengerTeamName} ${t('telegram.teamChallengeVs', lang)} ${challenge.challengedTeamName}`)}\n\n`;
+  } else {
+    message += `👤 *${escapeMarkdown(senderDisplay)}* ${escapeMarkdown(t('telegram.invitedYou', lang))}\n\n`;
+  }
   message += appendTelegramGameScheduleExtras(
     `📍 ${escapeMarkdown(gameInfo.place)} ${gameInfo.shortDayOfWeek} ${gameInfo.shortDate} ${gameInfo.startTime}, ${gameInfo.duration}`,
     invite.game,

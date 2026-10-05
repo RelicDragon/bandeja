@@ -48,6 +48,7 @@ import { UserTeamRivalries } from '@/components/userTeam/UserTeamRivalries';
 import { UserTeamRankChip } from '@/components/userTeam/UserTeamRankChip';
 import { UserTeamNextGame } from '@/components/userTeam/UserTeamNextGame';
 import { UserTeamMessagePartner } from '@/components/userTeam/UserTeamMessagePartner';
+import { UserTeamChallengeAction } from '@/components/userTeam/UserTeamChallengeAction';
 
 type MemberActionKind = 'removeAccepted' | 'cancelInvite' | 'leave';
 
@@ -682,8 +683,13 @@ export function UserTeamPage() {
 
           {viewerPartner ? <UserTeamNextGame teamId={team.id} teamColor={colorDisplay} /> : null}
 
+          {/* Someone else's complete pair: challenge it with one of yours. */}
+          {!myMembership ? (
+            <UserTeamChallengeAction team={team} sport={teamInviteLevelSport} disabled={busy} />
+          ) : null}
+
           {secondUser ? (
-            <UserTeamRecord userAId={team.ownerId} userBId={secondUser.id} />
+            <UserTeamRecord userAId={team.ownerId} userBId={secondUser.id} viewerIsMember={Boolean(myMembership)} />
           ) : null}
 
           {teammateAccepted ? (

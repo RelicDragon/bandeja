@@ -53,7 +53,10 @@
       "userIdRequired": "Vyberte hráče",
       "nameTooShort": "Název týmu musí mít alespoň 3 znaky",
       "notReady": "Nejdřív pozvěte parťáka — dvojice ještě není kompletní",
-      "notAcceptedMember": "Nejdřív se k dvojici přidejte, pak ji můžete dát do zápasu"
+      "notAcceptedMember": "Nejdřív se k dvojici přidejte, pak ji můžete dát do zápasu",
+      "challengeSameTeam": "Tyto páry mají společného hráče",
+      "challengeOpponentNotReady": "Ten pár ještě není kompletní",
+      "challengeGameNotEligible": "Výzva potřebuje zápas 2 na 2"
     },
     "games": {
       "cannotJoin": "Nelze se připojit k zápasu",

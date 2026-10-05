@@ -39,6 +39,14 @@ export type AddUserTeamToGameResult = {
   pairSeated: boolean;
 };
 
+export type ChallengeUserTeamResult = {
+  gameId: string;
+  challengerPairSeated: boolean;
+  challengerPartnerInvited: boolean;
+  invitedUserIds: string[];
+  alreadyInGameUserIds: string[];
+};
+
 export const userTeamsApi = {
   getMine: async (): Promise<UserTeam[]> => {
     const res = await api.get<ApiResponse<UserTeam[]>>('/user-teams');
@@ -124,6 +132,15 @@ export const userTeamsApi = {
 
   addToGame: async (teamId: string, gameId: string): Promise<AddUserTeamToGameResult> => {
     const res = await api.post<ApiResponse<AddUserTeamToGameResult>>(`/user-teams/${teamId}/add-to-game`, { gameId });
+    return res.data.data;
+  },
+
+  /** Pair challenge: `challengedTeamId` is the other pair, `challengerTeamId` the viewer's own. */
+  challenge: async (
+    challengedTeamId: string,
+    data: { gameId: string; challengerTeamId: string },
+  ): Promise<ChallengeUserTeamResult> => {
+    const res = await api.post<ApiResponse<ChallengeUserTeamResult>>(`/user-teams/${challengedTeamId}/challenge`, data);
     return res.data.data;
   },
 };

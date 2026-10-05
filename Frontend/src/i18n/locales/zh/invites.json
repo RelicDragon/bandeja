@@ -35,6 +35,7 @@
     },
     "fullForNow": "暂时已满",
     "fullForNowHint": "有空位时会通知你",
-    "joinWaitlist": "加入候补"
+    "joinWaitlist": "加入候补",
+    "teamChallenge": "组合挑战——你的组合受邀参赛"
   }
 }

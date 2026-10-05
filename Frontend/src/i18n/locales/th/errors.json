@@ -53,7 +53,10 @@
       "userIdRequired": "จำเป็นต้องมีผู้เล่น",
       "nameTooShort": "ชื่อทีมต้องมีอย่างน้อย 3 ตัวอักษร",
       "notReady": "เชิญคู่ของคุณก่อน - คู่นี้ยังไม่เสร็จสมบูรณ์",
-      "notAcceptedMember": "เข้าร่วมเป็นคู่ก่อนที่จะเพิ่มลงในเกม"
+      "notAcceptedMember": "เข้าร่วมเป็นคู่ก่อนที่จะเพิ่มลงในเกม",
+      "challengeSameTeam": "สองคู่นี้มีผู้เล่นคนเดียวกัน",
+      "challengeOpponentNotReady": "คู่นั้นยังไม่ครบ",
+      "challengeGameNotEligible": "การท้าแข่งต้องเป็นเกม 2 ต่อ 2"
     },
     "games": {
       "cannotJoin": "ไม่สามารถเข้าร่วมเกมได้",

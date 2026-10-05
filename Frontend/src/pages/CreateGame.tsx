@@ -106,6 +106,9 @@ import { roundLevelBand } from '@/utils/levelBand';
 import { CreateGameLookingNudge } from '@/components/createGame/CreateGameLookingNudge';
 import { demandMemberAsBasicUser } from '@/components/playIntent/demandSlots';
 import type { InviteLookingMember } from '@/components/playerInvite/lookingTypes';
+import { ChallengeDraftBanner } from '@/components/createGame/ChallengeDraftBanner';
+import { userTeamsApi } from '@/api/userTeams';
+import { challengeStillIntact, type ChallengeDraft } from '@/utils/userTeamChallenge';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -127,6 +130,10 @@ interface CreateGameProps {
   playIntentRosterLevels?: number[];
   /** Invitee → OPEN play intent; the post-create invite carries it so the intent is reserved. */
   initialInvitePlayIntentIds?: Record<string, string>;
+  /** Invitee → the user team they are invited as (pair challenge prefill). */
+  initialInviteUserTeamIds?: Record<string, string>;
+  /** Pair challenge draft: banner + `POST /user-teams/:id/challenge` after create. */
+  challenge?: ChallengeDraft;
   onMatchProposalConverted?: () => void;
 }
 
@@ -160,6 +167,8 @@ export const CreateGame = ({
   playIntentSource,
   playIntentRosterLevels,
   initialInvitePlayIntentIds,
+  initialInviteUserTeamIds,
+  challenge,
   onMatchProposalConverted,
 }: CreateGameProps) => {
   const { t } = useTranslation();
@@ -400,7 +409,12 @@ export const CreateGame = ({
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>(() => initialInvitedPlayerIds);
-  const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>({});
+  const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>(
+    () => initialInviteUserTeamIds ?? {},
+  );
+  /** The roster a challenge draft opened with; the challenge call needs all of it. */
+  const [challengeInviteeIds] = useState<string[]>(() => (challenge ? initialInvitedPlayerIds : []));
+  const challengeIntact = Boolean(challenge) && challengeStillIntact(challengeInviteeIds, invitedPlayerIds);
   const [invitePlayIntentByReceiverId, setInvitePlayIntentByReceiverId] = useState<Record<string, string>>(
     () => initialInvitePlayIntentIds ?? {},
   );
@@ -1436,12 +1450,29 @@ export const CreateGame = ({
         }
       }
 
+      // Pair challenge: seat the challenger pair and invite the other pair in one
+      // call, so their invites read as a challenge. If it fails, or the organizer
+      // edited the roster, the loop below still invites everyone as their pair.
+      const challengeHandledIds = new Set<string>();
+      if (challenge && challengeIntact && gameResponse.data.id) {
+        try {
+          await userTeamsApi.challenge(challenge.challengedTeamId, {
+            gameId: gameResponse.data.id,
+            challengerTeamId: challenge.challengerTeamId,
+          });
+          for (const id of challengeInviteeIds) challengeHandledIds.add(id);
+        } catch (challengeError) {
+          console.error('Failed to send pair challenge:', challengeError);
+        }
+      }
+
       if (invitedPlayerIds.length > 0 && gameResponse.data.id) {
         try {
           const gid = gameResponse.data.id;
           let unlinkedLooking = false;
           for (const receiverId of invitedPlayerIds) {
             if (linkedInviteeIds.has(receiverId)) continue;
+            if (challengeHandledIds.has(receiverId)) continue;
             const sent = await invitesApi.send({
               receiverId,
               gameId: gid,
@@ -1676,6 +1707,7 @@ export const CreateGame = ({
         {rematchOf ? (
           <RematchDraftBanner source={rematchOf} inviteeCount={invitedPlayerIds.length} />
         ) : null}
+        {challenge ? <ChallengeDraftBanner challenge={challenge} intact={challengeIntact} /> : null}
         <div ref={summarySectionRefs.name}>
           <CreateGameIdentityCard
             entityType={entityType}
@@ -2089,7 +2121,14 @@ export const CreateGame = ({
           lookingDraft={inviteLookingDraft}
           onConfirm={async (playerIds, meta) => {
             setInvitedPlayerIds(playerIds);
-            setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
+            // Same for pair links (challenge prefill): the modal only knows its own team rows.
+            setInviteUserTeamByReceiverId((prev) => {
+              const next: Record<string, string> = { ...(meta?.userTeamIdByReceiverId ?? {}) };
+              for (const id of playerIds) {
+                if (!next[id] && prev[id]) next[id] = prev[id];
+              }
+              return next;
+            });
             // Keep links made outside the modal (demand slot, inline nudge) for
             // players still selected; the modal only knows its own Looking rows.
             setInvitePlayIntentByReceiverId((prev) => {

@@ -9,6 +9,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { playIntentsApi } from '@/api/playIntents';
 import type { PlayIntentCreateSource } from '@shared/playIntentCreateSource';
+import type { ChallengeDraft } from '@/utils/userTeamChallenge';
 
 export const CreateGameWrapper = () => {
   const location = useLocation();
@@ -32,6 +33,10 @@ export const CreateGameWrapper = () => {
     playIntentRosterLevels?: number[];
     /** Demand-slot create: invitee → their OPEN intent, linked by the post-create invite. */
     invitePlayIntentIds?: Record<string, string>;
+    /** Pair challenge: invitee → the user team they are invited as. */
+    inviteUserTeamIds?: Record<string, string>;
+    /** Pair challenge draft (`buildChallengeNavigationState`). */
+    challenge?: ChallengeDraft;
   };
   const queryInitial = useMemo(
     () => createGameDataFromDeepLinkSearch(location.search),
@@ -86,6 +91,8 @@ export const CreateGameWrapper = () => {
       playIntentSource={state?.playIntentSource}
       playIntentRosterLevels={state?.playIntentRosterLevels}
       initialInvitePlayIntentIds={state?.invitePlayIntentIds}
+      initialInviteUserTeamIds={state?.inviteUserTeamIds}
+      challenge={state?.challenge}
       onMatchProposalConverted={() => {
         convertedRef.current = true;
       }}

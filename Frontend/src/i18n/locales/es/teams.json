@@ -112,6 +112,26 @@
       "recordAria": "Ganados: {{wins}}, perdidos: {{losses}}",
       "rematch": "Revancha",
       "rematchAria": "Revancha contra {{names}}"
+    },
+    "recordTitleTheirs": "Su historial juntos",
+    "recordEmptyTheirs": "Aún no han jugado juntos.",
+    "challenge": {
+      "action": "Desafiar",
+      "actionDetail": "Juega contra ellos como {{name}}",
+      "actionDetailPick": "Elige cuál de tus parejas juega",
+      "title": "Desafiar a {{name}}",
+      "hint": "Un 2 contra 2 con parejas fijas. Aceptan o rechazan como cualquier invitación.",
+      "vs": "vs",
+      "asTeam": "Desafiar como",
+      "newMatch": "Nuevo partido",
+      "newMatchHint": "Elige club y hora: ambas parejas reciben invitación",
+      "existingTitle": "O en un partido en el que ya estás",
+      "existingEmpty": "Ningún partido 2 contra 2 tuyo tiene dos plazas libres para ellos.",
+      "sent": "Desafío enviado a {{name}}",
+      "rowAria": "Desafiar a {{names}}",
+      "draftTitle": "{{challenger}} vs {{challenged}}",
+      "draftHint": "Elige club y hora. Ambas parejas reciben invitación al crear el partido.",
+      "draftHintEdited": "Cambiaste los jugadores, así que se enviarán invitaciones normales."
     }
   }
 }

@@ -5,6 +5,11 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { ChevronDown, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { pairsApi, type PairEntry, type PairPeriod, type PairSort } from '@/api/pairs';
+import { userTeamsApi } from '@/api/userTeams';
+import { useUserTeamsStore } from '@/store/userTeamsStore';
+import { ChallengeUserTeamSheet } from '@/components/userTeam/ChallengeUserTeamSheet';
+import { challengerTeamsFor } from '@/utils/userTeamChallenge';
+import { toastApiError } from '@/utils/toastApiError';
 import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -18,7 +23,7 @@ import {
   hasMultipleSportsEnabled,
   listEnabledSports,
 } from '@/utils/profileSports';
-import type { Sport } from '@/types';
+import type { Sport, UserTeam } from '@/types';
 import { PairPodium } from './PairPodium';
 import { PairRow } from './PairRow';
 import { PairSortChips, PairPeriodChips } from './PairSortChips';
@@ -52,6 +57,15 @@ export const PairLeaderboard = () => {
   const [sport, setSport] = useState<Sport>(() => getViewerPrimarySport(user));
   const [flashingPairId, setFlashingPairId] = useState<string | null>(null);
   const [myPairVisible, setMyPairVisible] = useState(true);
+  const [challengeTarget, setChallengeTarget] = useState<UserTeam | null>(null);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const teams = useUserTeamsStore((state) => state.teams);
+  const memberships = useUserTeamsStore((state) => state.memberships);
+  const refreshUserTeams = useUserTeamsStore((state) => state.refreshAll);
+
+  useEffect(() => {
+    void refreshUserTeams();
+  }, [refreshUserTeams]);
 
   /** Wraps podium *and* list — a top-3 pair is not inside the `<ul>`. */
   const boardRef = useRef<HTMLDivElement>(null);
@@ -105,6 +119,41 @@ export const PairLeaderboard = () => {
       navigate(addOverlay(location.pathname, location.search, 'pair', entry.pairId));
     },
     [location.pathname, location.search, navigate],
+  );
+
+  // Pair challenge from a row: only for a formal team that is not the viewer's
+  // and only when the viewer has a complete pair sharing no player with it.
+  const canChallenge = useCallback(
+    (entry: PairEntry) =>
+      Boolean(entry.teamId) &&
+      !entry.isViewerPair &&
+      challengerTeamsFor(user?.id, memberships, teams, [entry.userA.id, entry.userB.id]).length > 0,
+    [memberships, teams, user?.id],
+  );
+  const openChallenge = useCallback(
+    async (entry: PairEntry) => {
+      if (!entry.teamId) return;
+      try {
+        setChallengeTarget(await userTeamsApi.getById(entry.teamId));
+        setChallengeOpen(true);
+      } catch (error: unknown) {
+        toastApiError(t, error);
+      }
+    },
+    [t],
+  );
+  const handleChallenge = useCallback((entry: PairEntry) => void openChallenge(entry), [openChallenge]);
+  const challengeTeams = useMemo(
+    () =>
+      challengeTarget
+        ? challengerTeamsFor(
+            user?.id,
+            memberships,
+            teams,
+            challengeTarget.members.filter((m) => m.status === 'ACCEPTED').map((m) => m.userId),
+          )
+        : [],
+    [challengeTarget, memberships, teams, user?.id],
   );
 
   // The pill only matters when the viewer's own pair is off screen.
@@ -224,6 +273,7 @@ export const PairLeaderboard = () => {
             entry={entry}
             onOpen={openPair}
             flashing={flashingPairId === entry.pairId}
+            onChallenge={canChallenge(entry) ? handleChallenge : undefined}
           />
         ))}
       </ul>
@@ -239,6 +289,16 @@ export const PairLeaderboard = () => {
             {t('pairs.loadMore')}
           </Button>
         </div>
+      ) : null}
+
+      {challengeTarget && challengeTeams.length > 0 ? (
+        <ChallengeUserTeamSheet
+          open={challengeOpen}
+          onOpenChange={setChallengeOpen}
+          target={challengeTarget}
+          challengerTeams={challengeTeams}
+          sport={activeSport}
+        />
       ) : null}
 
       {me && !myPairVisible ? (

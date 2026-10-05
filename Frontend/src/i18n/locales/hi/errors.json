@@ -53,7 +53,10 @@
       "userIdRequired": "खिलाड़ी आवश्यक है",
       "nameTooShort": "टीम नाम कम से कम 3 अक्षर का होना चाहिए",
       "notReady": "पहले अपने पार्टनर को आमंत्रित करें — यह जोड़ी अभी पूरी नहीं है",
-      "notAcceptedMember": "गेम में जोड़ने से पहले जोड़ी में शामिल हों"
+      "notAcceptedMember": "गेम में जोड़ने से पहले जोड़ी में शामिल हों",
+      "challengeSameTeam": "इन जोड़ियों में एक ही खिलाड़ी है",
+      "challengeOpponentNotReady": "वह जोड़ी अभी पूरी नहीं है",
+      "challengeGameNotEligible": "चुनौती के लिए 2 बनाम 2 गेम चाहिए"
     },
     "games": {
       "cannotJoin": "गेम में शामिल नहीं हो सकते",

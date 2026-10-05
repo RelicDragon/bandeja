@@ -53,7 +53,10 @@
       "userIdRequired": "Pemain wajib diisi",
       "nameTooShort": "Nama tim harus minimal 3 karakter",
       "notReady": "Undang partner Anda terlebih dahulu — pasangan ini belum lengkap",
-      "notAcceptedMember": "Bergabunglah dengan pasangan sebelum menambahkannya ke pertandingan"
+      "notAcceptedMember": "Bergabunglah dengan pasangan sebelum menambahkannya ke pertandingan",
+      "challengeSameTeam": "Kedua pasangan ini punya pemain yang sama",
+      "challengeOpponentNotReady": "Pasangan itu belum lengkap",
+      "challengeGameNotEligible": "Tantangan memerlukan permainan 2 lawan 2"
     },
     "games": {
       "cannotJoin": "Tidak dapat bergabung ke pertandingan",

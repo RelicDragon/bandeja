@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { Button, Card, PlayerAvatar, GameCard } from '@/components';
 import { Invite } from '@/types';
-import { Check, X } from 'lucide-react';
+import { Check, Swords, X } from 'lucide-react';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useAuthStore } from '@/store/authStore';
 import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
@@ -13,6 +13,7 @@ import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { isInvitePlaySlotFull } from '@/utils/gameInviteInbox';
 import { InviteFullRow } from './InviteFullRow';
+import { deriveInviteChallenge } from '@shared/userTeamChallenge';
 
 interface InvitesSectionProps {
   invites: Invite[];
@@ -126,9 +127,24 @@ const InvitesSectionView = ({
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {t('invites.invitedYou')}
-                </p>
+                {invite.game &&
+                deriveInviteChallenge({
+                  receiverId: invite.receiverId,
+                  senderId: invite.sender?.id,
+                  game: invite.game,
+                }) ? (
+                  <p
+                    data-testid="invite-team-challenge"
+                    className="inline-flex items-center gap-1.5 self-start rounded-full bg-amber-500/12 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-400/12 dark:text-amber-300"
+                  >
+                    <Swords size={13} aria-hidden />
+                    {t('invites.teamChallenge')}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {t('invites.invitedYou')}
+                  </p>
+                )}
 
                 {invite.message && (
                   <p className="text-sm text-gray-600 dark:text-gray-400 italic">
