@@ -94,6 +94,7 @@ export {
 
 export {
   accumulatePartnerCountersForUser,
+  countPairDuoMatchWins,
   partnerCountersBeforeAfter,
   type PartnerHabitCounters,
   type PartnerPlayerSnap,

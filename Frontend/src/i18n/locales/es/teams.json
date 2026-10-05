@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "Añade un estado del equipo",
     "recordTitle": "Vuestro historial juntos",
     "recordEmpty": "Aún no habéis jugado juntos. Añadid la pareja a un partido y aquí empezará vuestro historial.",
+    "duoProgress": {
+      "label": "Progreso de Dynamic Duo",
+      "count": "{{wins}} / {{target}} victorias",
+      "earned": "Conseguido",
+      "hint": "Partidos de pádel puntuables ganados codo con codo",
+      "doneHint": "Todos los niveles de Dynamic Duo conseguidos juntos"
+    },
+    "rankChip": "Pareja n.º {{rank}} en {{city}}",
+    "rankChipNoCity": "Pareja n.º {{rank}} en tu ciudad",
+    "nextGame": {
+      "eyebrow": "Próximo partido juntos",
+      "untitled": "Partido"
+    },
+    "messagePartner": "Escribir a {{name}}",
+    "messagePartnerNoName": "Escribir a tu pareja",
     "invitedBy": "{{name}} quiere formar pareja contigo",
     "leaveConfirm": "¿Salir de este equipo? Tu compañero conserva el equipo.",
     "leftTeam": "Has salido del equipo",

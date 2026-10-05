@@ -19,6 +19,19 @@ export type UserTeamInvitableGame = {
   partnerOnGame: 'none' | 'invited' | 'playing' | 'queued' | 'other';
 };
 
+/** The soonest announced, timed game both accepted members are PLAYING in. */
+export type UserTeamNextGame = {
+  id: string;
+  name: string | null;
+  sport: Sport;
+  entityType: EntityType;
+  startTime: string;
+  endTime: string;
+  avatar: string | null;
+  club: { id: string; name: string; avatar: string | null } | null;
+  city: { id: string; name: string; timezone: string } | null;
+};
+
 export type AddUserTeamToGameResult = {
   gameId: string;
   invitedUserIds: string[];
@@ -102,6 +115,11 @@ export const userTeamsApi = {
   getInvitableGames: async (teamId: string): Promise<UserTeamInvitableGame[]> => {
     const res = await api.get<ApiResponse<UserTeamInvitableGame[]>>(`/user-teams/${teamId}/invitable-games`);
     return res.data.data;
+  },
+
+  getNextGame: async (teamId: string): Promise<UserTeamNextGame | null> => {
+    const res = await api.get<ApiResponse<{ game: UserTeamNextGame | null }>>(`/user-teams/${teamId}/next-game`);
+    return res.data.data.game;
   },
 
   addToGame: async (teamId: string, gameId: string): Promise<AddUserTeamToGameResult> => {

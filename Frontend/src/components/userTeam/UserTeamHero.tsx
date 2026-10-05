@@ -11,8 +11,12 @@ type HeroProps = {
   avatar: ReactNode;
   /** Name + status, static or editable. */
   title: ReactNode;
+  /** Under the name (the pair-rank chip). */
+  meta?: ReactNode;
   /** The duo row. */
   children: ReactNode;
+  /** Under the duo (Message partner). */
+  footer?: ReactNode;
 };
 
 /**
@@ -20,7 +24,7 @@ type HeroProps = {
  * (`UserTeam.color`, default = primary — a team photo does not change it),
  * the picture, the name and the two seats.
  */
-export function UserTeamHero({ team, avatar, title, children }: HeroProps) {
+export function UserTeamHero({ team, avatar, title, meta, children, footer }: HeroProps) {
   return (
     <section
       data-testid="user-team-hero"
@@ -35,7 +39,9 @@ export function UserTeamHero({ team, avatar, title, children }: HeroProps) {
       <div className="flex flex-col items-center px-4 pb-6 pt-4">
         <div className="drop-shadow-[0_18px_28px_rgba(15,23,42,0.22)]">{avatar}</div>
         <div className="mt-1 w-full">{title}</div>
+        {meta}
         <div className="mt-5 w-full">{children}</div>
+        {footer ? <div className="mt-4 flex w-full justify-center">{footer}</div> : null}
       </div>
     </section>
   );

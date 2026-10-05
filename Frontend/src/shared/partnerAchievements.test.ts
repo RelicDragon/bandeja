@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ACHIEVEMENT_CATALOG,
   accumulatePartnerCountersForUser,
+  countPairDuoMatchWins,
   filterThresholdDefinitionsDue,
   GIANT_KILLER_MIN_LEVEL_GAP,
   GIANT_KILLER_MIN_RELIABILITY,
@@ -146,5 +147,30 @@ describe('partner achievements', () => {
     expect(counters.openCourtPartners).toBe(1);
     expect(counters.dynamicDuoMaxWins).toBe(0);
     expect(counters.giantKillerWins).toBe(0);
+  });
+
+  it('counts only doubles matches the pair won on the same side', () => {
+    const team = (id: string, n: number, ids: string[]) => ({ id, teamNumber: n, playerIds: ids });
+    const matches = [
+      // won together
+      { winnerId: 't1', teams: [team('t1', 1, ['a', 'b']), team('t2', 2, ['c', 'd'])] },
+      // lost together
+      { winnerId: 't4', teams: [team('t3', 1, ['a', 'b']), team('t4', 2, ['c', 'd'])] },
+      // opponents
+      { winnerId: 't5', teams: [team('t5', 1, ['a', 'c']), team('t6', 2, ['b', 'd'])] },
+      // no winner (tie / unplayed)
+      { winnerId: null, played: true, teams: [team('t7', 1, ['a', 'b']), team('t8', 2, ['c', 'd'])] },
+      // not doubles
+      { winnerId: 't9', teams: [team('t9', 1, ['a', 'b']), team('t10', 2, ['c'])] },
+      // won together again, reversed id order
+      { winnerId: 't12', teams: [team('t11', 1, ['c', 'd']), team('t12', 2, ['b', 'a'])] },
+    ];
+    expect(countPairDuoMatchWins(matches, 'a', 'b')).toBe(2);
+    expect(countPairDuoMatchWins(matches, 'b', 'a')).toBe(2);
+    expect(countPairDuoMatchWins(matches, 'a', 'c')).toBe(1);
+    // Same per-partner count the grant uses.
+    expect(
+      accumulatePartnerCountersForUser([{ players: [], matches }], 'a').dynamicDuoMaxWins,
+    ).toBe(2);
   });
 });

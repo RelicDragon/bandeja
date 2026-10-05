@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "Dodajte status tima",
     "recordTitle": "Vaš zajednički učinak",
     "recordEmpty": "Još niste igrali zajedno. Dodajte par u igru i učinak počinje ovde.",
+    "duoProgress": {
+      "label": "Napredak ka Dynamic Duo",
+      "count": "{{wins}} / {{target}} pobeda",
+      "earned": "Osvojeno",
+      "hint": "Rangirani padel mečevi dobijeni rame uz rame",
+      "doneHint": "Svi nivoi Dynamic Duo osvojeni zajedno"
+    },
+    "rankChip": "#{{rank}} par u gradu {{city}}",
+    "rankChipNoCity": "#{{rank}} par u vašem gradu",
+    "nextGame": {
+      "eyebrow": "Sledeća zajednička igra",
+      "untitled": "Igra"
+    },
+    "messagePartner": "Piši: {{name}}",
+    "messagePartnerNoName": "Piši partneru",
     "invitedBy": "{{name}} želi da igra u paru sa vama",
     "leaveConfirm": "Napustiti ovaj tim? Tim ostaje vašem partneru.",
     "leftTeam": "Napustili ste tim",

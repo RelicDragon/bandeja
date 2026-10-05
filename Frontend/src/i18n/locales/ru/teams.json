@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "Добавьте статус команды",
     "recordTitle": "Ваша статистика вместе",
     "recordEmpty": "Вы ещё не играли вместе. Добавьте пару в игру — и статистика начнётся здесь.",
+    "duoProgress": {
+      "label": "Прогресс Dynamic Duo",
+      "count": "{{wins}} / {{target}} побед",
+      "earned": "Получено",
+      "hint": "Рейтинговые падел-матчи, выигранные в паре",
+      "doneHint": "Все уровни Dynamic Duo получены вместе"
+    },
+    "rankChip": "#{{rank}} пара в городе {{city}}",
+    "rankChipNoCity": "#{{rank}} пара в вашем городе",
+    "nextGame": {
+      "eyebrow": "Следующая игра вместе",
+      "untitled": "Игра"
+    },
+    "messagePartner": "Написать: {{name}}",
+    "messagePartnerNoName": "Написать партнёру",
     "invitedBy": "{{name}} зовёт вас в пару",
     "leaveConfirm": "Покинуть команду? Команда останется у партнёра.",
     "leftTeam": "Вы покинули команду",

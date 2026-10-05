@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "Add a team status",
     "recordTitle": "Your record together",
     "recordEmpty": "No games together yet. Add the pair to a game and your record starts here.",
+    "duoProgress": {
+      "label": "Dynamic Duo progress",
+      "count": "{{wins}} / {{target}} wins",
+      "earned": "Earned",
+      "hint": "Rated padel matches you win side by side",
+      "doneHint": "Every Dynamic Duo tier earned together"
+    },
+    "rankChip": "#{{rank}} pair in {{city}}",
+    "rankChipNoCity": "#{{rank}} pair in your city",
+    "nextGame": {
+      "eyebrow": "Next game together",
+      "untitled": "Game"
+    },
+    "messagePartner": "Message {{name}}",
+    "messagePartnerNoName": "Message partner",
     "invitedBy": "{{name}} wants to team up with you",
     "leaveConfirm": "Leave this team? Your partner keeps the team.",
     "leftTeam": "You left the team",

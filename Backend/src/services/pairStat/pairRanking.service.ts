@@ -19,12 +19,15 @@
  */
 
 import { Prisma, type Sport } from '@prisma/client';
+import { countPairDuoMatchWins } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
+import { partnerHabitGameWhere } from '../achievements/partnerGrant.service';
 import { ApiError } from '../../utils/ApiError';
 import { computeChemistry, winRatePercent } from './chemistry';
 import { decodePairCursor, encodePairCursor, pairCursorFingerprint } from './pairCursor';
 import { formatPairParam, orderPairIds, pairKey, type PairIds } from './pairKey';
 import {
+  DEFAULT_PAIR_SORT,
   PAIR_MIN_GAMES,
   PARTNER_MIN_GAMES,
   combinedLevelOf,
@@ -536,6 +539,14 @@ export interface PairRivalryDto {
   team: PairRivalryTeamDto | null;
 }
 
+/** Where the pair sits on its city's default board (all time, by win rate). */
+export interface PairCityRankDto {
+  cityId: string;
+  sport: Sport;
+  rank: number;
+  total: number;
+}
+
 export interface PairDetailDto extends Omit<PairEntryDto, 'rank'> {
   recentGames: PairRecentGameDto[];
   /**
@@ -546,6 +557,13 @@ export interface PairDetailDto extends Omit<PairEntryDto, 'rank'> {
   streak: PlayStreakView;
   /** Top opposing pairs by meetings. Added field: older clients ignore it. */
   rivalries: PairRivalryDto[];
+   * Padel matches the two won on the same side in rated FINAL events — the
+   * exact Dynamic Duo rule (`countPairDuoMatchWins`), not the pair's `wins`
+   * (which counts events). Added field; older clients ignore it.
+   */
+  duoMatchWins: number;
+  /** `null` when the pair is not ranked in the requested city (or no city). */
+  cityRank: PairCityRankDto | null;
 }
 
 const PAIR_RECENT_GAME_LIMIT = 5;
@@ -560,6 +578,7 @@ export async function getPairDetail(
   ids: PairIds,
   sport: Sport,
   viewerId: string,
+  options: { rankCityId?: string | null } = {},
 ): Promise<PairDetailDto> {
   const stats = await prisma.pairStat.findMany({
     where: { sport, userAId: ids.userAId, userBId: ids.userBId },
@@ -582,9 +601,11 @@ export async function getPairDetail(
   const [entry] = await hydratePairs([{ ...ids, ...totals, rank: 0 }], sport, viewerId);
   if (!entry) throw new ApiError(404, 'errors.pairs.notFound');
 
-  const [recentGames, extras] = await Promise.all([
+  const [recentGames, extras, duoMatchWins, cityRank] = await Promise.all([
     loadRecentPairGames(ids, sport, viewerId),
     loadPairStreakAndRivalries(ids, sport, viewerId),
+    countDuoMatchWins(ids),
+    options.rankCityId ? loadPairCityRank(ids, sport, options.rankCityId) : Promise.resolve(null),
   ]);
   return {
     pairId: entry.pairId,
@@ -601,7 +622,69 @@ export async function getPairDetail(
     recentGames,
     streak: extras.streak,
     rivalries: extras.rivalries,
+    duoMatchWins,
+    cityRank,
   };
+}
+
+/** Dynamic Duo progress for this pair (see `PairDetailDto.duoMatchWins`). */
+async function countDuoMatchWins(ids: PairIds): Promise<number> {
+  const matches = await prisma.match.findMany({
+    where: {
+      winner: {
+        AND: [
+          { players: { some: { userId: ids.userAId } } },
+          { players: { some: { userId: ids.userBId } } },
+        ],
+      },
+      round: { game: partnerHabitGameWhere() },
+    },
+    select: {
+      winnerId: true,
+      teams: { select: { id: true, teamNumber: true, players: { select: { userId: true } } } },
+    },
+  });
+  return countPairDuoMatchWins(
+    matches.map((match) => ({
+      winnerId: match.winnerId,
+      teams: match.teams.map((team) => ({
+        id: team.id,
+        teamNumber: team.teamNumber,
+        playerIds: team.players.map((p) => p.userId),
+      })),
+    })),
+    ids.userAId,
+    ids.userBId,
+  );
+}
+
+/**
+ * Rank on the board the Pairs tab opens with: the city, all time, default
+ * sort. Same `WHERE` and `ORDER BY` as {@link readMaterializedPage}, so the
+ * number matches the row the viewer lands on.
+ */
+async function loadPairCityRank(
+  ids: PairIds,
+  sport: Sport,
+  cityId: string,
+): Promise<PairCityRankDto | null> {
+  const where = Prisma.sql`"sport" = ${sport}::"Sport" AND "cityId" = ${cityId} AND "games" >= ${PAIR_MIN_GAMES}`;
+  const rows = await prisma.$queryRaw<{ rn: number; total: number }[]>(Prisma.sql`
+    WITH ranked AS (
+      SELECT
+        "userAId",
+        "userBId",
+        ROW_NUMBER() OVER (ORDER BY ${pairOrderBySql(DEFAULT_PAIR_SORT)})::integer AS rn,
+        COUNT(*) OVER ()::integer AS total
+      FROM "PairStat"
+      WHERE ${where}
+    )
+    SELECT rn, total FROM ranked
+    WHERE "userAId" = ${ids.userAId} AND "userBId" = ${ids.userBId}
+    LIMIT 1
+  `);
+  const row = rows[0];
+  return row ? { cityId, sport, rank: row.rn, total: row.total } : null;
 }
 
 /** Upper bound on pair games replayed for the streak and rivalries (newest first). */

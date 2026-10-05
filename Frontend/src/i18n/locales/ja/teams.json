@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "チームのステータスを追加",
     "recordTitle": "ふたりの戦績",
     "recordEmpty": "まだ一緒にプレーしていません。ペアをゲームに追加すると、ここに戦績が表示されます。",
+    "duoProgress": {
+      "label": "ダイナミックデュオの進捗",
+      "count": "{{wins}} / {{target}} 勝",
+      "earned": "獲得済み",
+      "hint": "ふたりで勝ったレーティング対象のパデル試合",
+      "doneHint": "ダイナミックデュオの全段階をふたりで獲得"
+    },
+    "rankChip": "{{city}}で{{rank}}位のペア",
+    "rankChipNoCity": "あなたの街で{{rank}}位のペア",
+    "nextGame": {
+      "eyebrow": "次のふたりの試合",
+      "untitled": "試合"
+    },
+    "messagePartner": "{{name}}にメッセージ",
+    "messagePartnerNoName": "パートナーにメッセージ",
     "invitedBy": "{{name}}さんがペアを組みたがっています",
     "leaveConfirm": "このチームを抜けますか？チームはパートナーに残ります。",
     "leftTeam": "チームを抜けました",

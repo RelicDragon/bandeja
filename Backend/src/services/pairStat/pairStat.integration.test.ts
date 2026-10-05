@@ -271,6 +271,7 @@ void (async () => {
       { userAId: lowId, userBId: highId },
       Sport.PADEL,
       anna.id,
+      { rankCityId: city.id },
     );
     assert.equal(detail.games, 6, 'the sheet agrees with the table');
     assert.ok(detail.recentGames.length > 0, 'recent games together are listed');
@@ -289,6 +290,8 @@ void (async () => {
     assert.equal(rivalry!.wins, 4, 'won four');
     assert.equal(rivalry!.losses, 2, 'lost two');
     assert.equal(rivalry!.team, null, 'luka & ivan have no UserTeam');
+    assert.ok(detail.cityRank && detail.cityRank.rank >= 1, 'a ranked pair reports its city rank');
+    assert.ok(detail.duoMatchWins >= 0, 'Dynamic Duo progress is always a count');
 
     // -------------------------------------------------------------------
     // 6. `combinedLevel` follows a level change with no game involved.

@@ -171,6 +171,10 @@ export const queryKeys = {
     partners: (userId: string, sport: Sport | undefined) =>
       ['pairs', 'partners', userId, sport ?? 'primary'] as const,
   },
+  /** `/user-team/:id` reads beyond the team row itself. */
+  userTeams: {
+    nextGame: (teamId: string) => ['userTeams', 'nextGame', teamId] as const,
+  },
   /**
    * PRD 355 — the cosmetics shop. The catalogue key carries the category chip
    * so switching chips does not blow away the previous list, and `equipped` is

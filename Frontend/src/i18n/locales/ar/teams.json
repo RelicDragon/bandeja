@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "أضف حالة للفريق",
     "recordTitle": "سجلكما معًا",
     "recordEmpty": "لم تلعبا معًا بعد. أضيفا الثنائي إلى مباراة ليبدأ سجلكما هنا.",
+    "duoProgress": {
+      "label": "التقدم نحو الثنائي الديناميكي",
+      "count": "{{wins}} / {{target}} فوز",
+      "earned": "تم الحصول عليه",
+      "hint": "مباريات بادل مصنّفة تفوزان بها جنبًا إلى جنب",
+      "doneHint": "حصلتما معًا على كل مستويات الثنائي الديناميكي"
+    },
+    "rankChip": "الثنائي رقم {{rank}} في {{city}}",
+    "rankChipNoCity": "الثنائي رقم {{rank}} في مدينتك",
+    "nextGame": {
+      "eyebrow": "المباراة القادمة معًا",
+      "untitled": "مباراة"
+    },
+    "messagePartner": "راسل {{name}}",
+    "messagePartnerNoName": "راسل شريكك",
     "invitedBy": "{{name}} يريد أن يشكّل ثنائيًا معك",
     "leaveConfirm": "مغادرة هذا الفريق؟ سيبقى الفريق لشريكك.",
     "leftTeam": "غادرت الفريق",

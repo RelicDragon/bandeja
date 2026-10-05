@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "Přidejte status týmu",
     "recordTitle": "Vaše společná bilance",
     "recordEmpty": "Zatím jste spolu nehráli. Přidejte pár do hry a bilance začne tady.",
+    "duoProgress": {
+      "label": "Postup k Dynamic Duo",
+      "count": "{{wins}} / {{target}} výher",
+      "earned": "Získáno",
+      "hint": "Hodnocené padelové zápasy vyhrané bok po boku",
+      "doneHint": "Všechny úrovně Dynamic Duo získány spolu"
+    },
+    "rankChip": "#{{rank}} dvojice ve městě {{city}}",
+    "rankChipNoCity": "#{{rank}} dvojice ve vašem městě",
+    "nextGame": {
+      "eyebrow": "Další společná hra",
+      "untitled": "Hra"
+    },
+    "messagePartner": "Napsat: {{name}}",
+    "messagePartnerNoName": "Napsat partnerovi",
     "invitedBy": "{{name}} s vámi chce hrát v páru",
     "leaveConfirm": "Opustit tento tým? Tým zůstane vašemu partnerovi.",
     "leftTeam": "Opustili jste tým",

@@ -1,9 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Check, Minus, Swords } from 'lucide-react';
-import { pairsApi } from '@/api/pairs';
-import { queryKeys } from '@/queries/queryKeys';
 import { shimmerBlock } from '@/components/motion/shimmerBlock';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { ChemistryChip } from '@/components/pairs/ChemistryChip';
@@ -11,6 +8,8 @@ import { PairRecentGameCard } from '@/components/pairs/PairRecentGameCard';
 import { usePairFormatters } from '@/components/pairs/pairFormat';
 import type { Sport } from '@/types';
 import { UserTeamPairStreak } from './UserTeamPairStreak';
+import { useUserTeamPairDetail } from './useUserTeamPairDetail';
+import { UserTeamDuoProgress } from './UserTeamDuoProgress';
 
 export interface UserTeamRecordProps {
   userAId: string;
@@ -33,14 +32,7 @@ export const UserTeamRecord = ({ userAId, userBId, sport }: UserTeamRecordProps)
   const { t } = useTranslation();
   const formatters = usePairFormatters();
   const reduceMotion = usePrefersReducedMotion();
-  const pairId = userBId && userAId !== userBId ? [userAId, userBId].sort().join(',') : null;
-
-  const query = useQuery({
-    queryKey: queryKeys.pairs.detail(pairId ?? '', sport),
-    queryFn: () => pairsApi.getPair(pairId!, sport),
-    enabled: Boolean(pairId),
-    staleTime: 60 * 1000,
-  });
+  const { pairId, query } = useUserTeamPairDetail(userAId, userBId, sport);
 
   if (!pairId) return null;
 
@@ -53,18 +45,28 @@ export const UserTeamRecord = ({ userAId, userBId, sport }: UserTeamRecordProps)
   const detail = query.data;
   if (!detail) return null;
 
+  const duoProgress =
+    typeof detail.duoMatchWins === 'number' ? (
+      <div className="mt-4 border-t border-zinc-100 pt-3.5 dark:border-zinc-800">
+        <UserTeamDuoProgress wins={detail.duoMatchWins} />
+      </div>
+    ) : null;
+
   if (detail.games === 0) {
     return (
-      <section className={`${SURFACE} flex items-center gap-3.5 px-4 py-4`} data-testid="user-team-record-empty">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
-          <Swords size={20} strokeWidth={1.75} aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t('teams.recordTitle')}</h2>
-          <p className="mt-0.5 text-[13px] leading-snug text-zinc-500 dark:text-zinc-400 [text-wrap:pretty]">
-            {t('teams.recordEmpty')}
-          </p>
+      <section className={`${SURFACE} px-4 py-4`} data-testid="user-team-record-empty">
+        <div className="flex items-center gap-3.5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
+            <Swords size={20} strokeWidth={1.75} aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{t('teams.recordTitle')}</h2>
+            <p className="mt-0.5 text-[13px] leading-snug text-zinc-500 dark:text-zinc-400 [text-wrap:pretty]">
+              {t('teams.recordEmpty')}
+            </p>
+          </div>
         </div>
+        {duoProgress}
       </section>
     );
   }
@@ -148,6 +150,8 @@ export const UserTeamRecord = ({ userAId, userBId, sport }: UserTeamRecordProps)
             </ol>
           </div>
         ) : null}
+
+        {duoProgress}
       </section>
 
       {detail.recentGames.length > 0 ? (

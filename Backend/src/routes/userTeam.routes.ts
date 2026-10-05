@@ -15,6 +15,7 @@ router.post(
   userTeamController.createTeam
 );
 router.get('/:id/invitable-games', authenticate, userTeamController.listInvitableGames);
+router.get('/:id/next-game', authenticate, userTeamController.getNextGame);
 router.post(
   '/:id/add-to-game',
   authenticate,

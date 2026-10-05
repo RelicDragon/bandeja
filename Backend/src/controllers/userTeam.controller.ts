@@ -7,6 +7,7 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { UserTeamService } from '../services/userTeam.service';
 import { addUserTeamToGame, listInvitableGamesForUserTeam } from '../services/userTeam/userTeamAddToGame.service';
+import { getUserTeamNextGame } from '../services/userTeam/userTeamNextGame.service';
 import prisma from '../config/database';
 import { parseSportParam } from '../services/user/userSportProfile.service';
 
@@ -109,6 +110,12 @@ export const listInvitableGames = asyncHandler(async (req: AuthRequest, res: Res
   const { id } = req.params;
   const data = await listInvitableGamesForUserTeam(id, req.userId!, req.user?.isAdmin === true);
   res.json({ success: true, data });
+});
+
+export const getNextGame = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const game = await getUserTeamNextGame(id, req.userId!);
+  res.json({ success: true, data: { game } });
 });
 
 export const addToGame = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -24,6 +24,7 @@ import { PairRow } from './PairRow';
 import { PairSortChips, PairPeriodChips } from './PairSortChips';
 import { PairLeaderboardSkeleton } from './PairLeaderboardSkeleton';
 import { usePairFormatters } from './pairFormat';
+import type { PairLeaderboardFocusState } from '@/components/userTeam/UserTeamRankChip';
 
 /** Pairs ranked below this need at least this many games together (PRD 352). */
 const PAIR_MIN_GAMES = 5;
@@ -131,15 +132,14 @@ export const PairLeaderboard = () => {
     flashTimerRef.current = window.setTimeout(() => setFlashingPairId(null), FLASH_MS);
   }, []);
 
-  const scrollToMyPair = useCallback(async () => {
-    if (!me) return;
-    // The viewer's pair may be several pages down; pull pages until it is in
+  const scrollToPair = useCallback(async (pairId: string) => {
+    // The pair may be several pages down; pull pages until it is in
     // the DOM, then scroll. Android gets `auto` — smooth scrolling there
     // fights the WebView, exactly as the player leaderboard already handles it.
     for (let attempt = 0; attempt <= MAX_SCROLL_FETCHES; attempt += 1) {
-      const node = document.querySelector<HTMLElement>(`[data-pair-id="${me.pairId}"]`);
+      const node = document.querySelector<HTMLElement>(`[data-pair-id="${pairId}"]`);
       if (node) {
-        flashPair(me.pairId);
+        flashPair(pairId);
         requestAnimationFrame(() => {
           node.scrollIntoView({
             behavior: isAndroid() || prefersReducedMotion ? 'auto' : 'smooth',
@@ -154,11 +154,25 @@ export const PairLeaderboard = () => {
       // result instead: without this the loop would burn its whole budget once
       // the list has run out of pages.
       if (!result.hasNextPage) {
-        const last = document.querySelector<HTMLElement>(`[data-pair-id="${me.pairId}"]`);
+        const last = document.querySelector<HTMLElement>(`[data-pair-id="${pairId}"]`);
         if (!last) return;
       }
     }
-  }, [flashPair, me, prefersReducedMotion, query]);
+  }, [flashPair, prefersReducedMotion, query]);
+
+  const scrollToMyPair = useCallback(() => {
+    if (me) void scrollToPair(me.pairId);
+  }, [me, scrollToPair]);
+
+  // Arrived from a team page's rank chip: bring that pair into view once.
+  const focusPairId = (location.state as PairLeaderboardFocusState | null)?.focusPairId;
+  const focusHandledRef = useRef<string | null>(null);
+  const boardReady = !query.isLoading && pairs.length > 0;
+  useEffect(() => {
+    if (!focusPairId || !boardReady || focusHandledRef.current === focusPairId) return;
+    focusHandledRef.current = focusPairId;
+    void scrollToPair(focusPairId);
+  }, [boardReady, focusPairId, scrollToPair]);
 
   if (query.isLoading) return <PairLeaderboardSkeleton />;
 
@@ -231,7 +245,7 @@ export const PairLeaderboard = () => {
         <motion.button
           type="button"
           data-testid="scroll-to-my-pair"
-          onClick={() => void scrollToMyPair()}
+          onClick={scrollToMyPair}
           initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}

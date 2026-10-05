@@ -69,12 +69,24 @@ export interface PairRivalry {
   team: { id: string; name: string; color: string | null } | null;
 }
 
+/** The pair's place on its city board as the Pairs tab opens it (all time, win rate). */
+export interface PairCityRank {
+  cityId: string;
+  sport: Sport;
+  rank: number;
+  total: number;
+}
+
 export type PairDetail = Omit<PairEntry, 'rank'> & {
   recentGames: PairRecentGame[];
   /** Weekly pair streak (solo play-streak rules). Optional: older servers omit it. */
   streak?: PlayStreakView;
   /** Top opposing pairs. Optional: older servers omit it. */
   rivalries?: PairRivalry[];
+  /** Padel matches won on the same side — the Dynamic Duo count. Absent on older servers. */
+  duoMatchWins?: number;
+  /** `null`/absent when unranked in the viewer's city. */
+  cityRank?: PairCityRank | null;
 };
 
 export interface PartnerEntry {

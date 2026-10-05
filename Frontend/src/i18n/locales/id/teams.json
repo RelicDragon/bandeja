@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "Tambahkan status tim",
     "recordTitle": "Rekor kalian bersama",
     "recordEmpty": "Belum pernah main bersama. Tambahkan pasangan ini ke permainan dan rekor kalian dimulai di sini.",
+    "duoProgress": {
+      "label": "Progres Duo Dinamis",
+      "count": "{{wins}} / {{target}} kemenangan",
+      "earned": "Diraih",
+      "hint": "Pertandingan padel berperingkat yang kalian menangkan bersama",
+      "doneHint": "Semua tingkat Duo Dinamis diraih bersama"
+    },
+    "rankChip": "Pasangan #{{rank}} di {{city}}",
+    "rankChipNoCity": "Pasangan #{{rank}} di kotamu",
+    "nextGame": {
+      "eyebrow": "Main bareng berikutnya",
+      "untitled": "Permainan"
+    },
+    "messagePartner": "Kirim pesan ke {{name}}",
+    "messagePartnerNoName": "Kirim pesan ke partner",
     "invitedBy": "{{name}} ingin berpasangan denganmu",
     "leaveConfirm": "Keluar dari tim ini? Tim tetap milik partnermu.",
     "leftTeam": "Kamu keluar dari tim",

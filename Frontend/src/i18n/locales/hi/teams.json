@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "टीम स्टेटस जोड़ें",
     "recordTitle": "साथ में आपका रिकॉर्ड",
     "recordEmpty": "अभी तक साथ नहीं खेले। जोड़ी को किसी गेम में जोड़ें, आपका रिकॉर्ड यहीं से शुरू होगा।",
+    "duoProgress": {
+      "label": "डायनामिक डुओ की प्रगति",
+      "count": "{{wins}} / {{target}} जीत",
+      "earned": "हासिल",
+      "hint": "साथ खेलकर जीते गए रेटेड पैडल मैच",
+      "doneHint": "डायनामिक डुओ के सभी स्तर साथ में हासिल"
+    },
+    "rankChip": "{{city}} में #{{rank}} जोड़ी",
+    "rankChipNoCity": "आपके शहर में #{{rank}} जोड़ी",
+    "nextGame": {
+      "eyebrow": "साथ में अगला गेम",
+      "untitled": "गेम"
+    },
+    "messagePartner": "{{name}} को संदेश भेजें",
+    "messagePartnerNoName": "पार्टनर को संदेश भेजें",
     "invitedBy": "{{name}} आपके साथ जोड़ी बनाना चाहते हैं",
     "leaveConfirm": "यह टीम छोड़ें? टीम आपके पार्टनर के पास रहेगी।",
     "leftTeam": "आपने टीम छोड़ दी",

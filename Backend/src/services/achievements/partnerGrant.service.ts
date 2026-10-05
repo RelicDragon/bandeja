@@ -71,6 +71,20 @@ function toScanInput(games: ScannedGame[]) {
   }));
 }
 
+/**
+ * Games the partner habits (Giant Killer / Dynamic Duo / Open Court) scan:
+ * rated padel GAME / TOURNAMENT / LEAGUE with FINAL results. Shared with the
+ * pair detail's Dynamic Duo progress so the two can never disagree.
+ */
+export function partnerHabitGameWhere(): Prisma.GameWhereInput {
+  return {
+    sport: 'PADEL',
+    affectsRating: true,
+    resultsStatus: 'FINAL',
+    entityType: { in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.LEAGUE] },
+  };
+}
+
 async function loadScannedGamesForUser(params: {
   userId: string;
   tx?: DbClient;
@@ -78,10 +92,7 @@ async function loadScannedGamesForUser(params: {
   const db = params.tx ?? prisma;
   const games = await db.game.findMany({
     where: {
-      sport: 'PADEL',
-      affectsRating: true,
-      resultsStatus: 'FINAL',
-      entityType: { in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.LEAGUE] },
+      ...partnerHabitGameWhere(),
       rounds: {
         some: {
           matches: {

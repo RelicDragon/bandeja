@@ -45,6 +45,9 @@ import { UserTeamHero, UserTeamHeroField, UserTeamStaticTitle } from '@/componen
 import { UserTeamManageList, type UserTeamManageAction } from '@/components/userTeam/UserTeamManageList';
 import { UserTeamRecord } from '@/components/userTeam/UserTeamRecord';
 import { UserTeamRivalries } from '@/components/userTeam/UserTeamRivalries';
+import { UserTeamRankChip } from '@/components/userTeam/UserTeamRankChip';
+import { UserTeamNextGame } from '@/components/userTeam/UserTeamNextGame';
+import { UserTeamMessagePartner } from '@/components/userTeam/UserTeamMessagePartner';
 
 type MemberActionKind = 'removeAccepted' | 'cancelInvite' | 'leave';
 
@@ -444,6 +447,13 @@ export function UserTeamPage() {
     const canAddToGame = Boolean(myMembership && myMembership.status === 'ACCEPTED');
     const partnerName = displayName(teammateAccepted?.user);
     const openInvite = () => setShowInvite(true);
+    // A complete team, seen by one of its two accepted members: the other one.
+    const viewerPartner =
+      myMembership?.status === 'ACCEPTED' && teammateAccepted
+        ? isOwner
+          ? teammateAccepted.user
+          : team.owner
+        : null;
 
     const avatar = isOwner ? (
       <TeamAvatarCutDial
@@ -618,7 +628,19 @@ export function UserTeamPage() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
-          <UserTeamHero team={teamForAvatar} avatar={avatar} title={title}>
+          <UserTeamHero
+            team={teamForAvatar}
+            avatar={avatar}
+            title={title}
+            meta={
+              teammateAccepted ? <UserTeamRankChip userAId={team.ownerId} userBId={teammateAccepted.userId} /> : null
+            }
+            footer={
+              viewerPartner && viewerPartner.id !== user.id ? (
+                <UserTeamMessagePartner partner={viewerPartner} />
+              ) : null
+            }
+          >
             <UserTeamDuo
               owner={team.owner}
               partner={secondUser}
@@ -657,6 +679,8 @@ export function UserTeamPage() {
           ) : null}
 
           {primary}
+
+          {viewerPartner ? <UserTeamNextGame teamId={team.id} teamColor={colorDisplay} /> : null}
 
           {secondUser ? (
             <UserTeamRecord userAId={team.ownerId} userBId={secondUser.id} />

@@ -60,6 +60,21 @@
     "statusAddPlaceholder": "添加队伍状态",
     "recordTitle": "你们的共同战绩",
     "recordEmpty": "你们还没一起打过球。把这对搭档加入比赛，战绩就从这里开始。",
+    "duoProgress": {
+      "label": "黄金搭档进度",
+      "count": "{{wins}} / {{target}} 胜",
+      "earned": "已获得",
+      "hint": "并肩赢下的计入评分的板式网球比赛",
+      "doneHint": "你们已一起拿下黄金搭档全部等级"
+    },
+    "rankChip": "{{city}}第 {{rank}} 名搭档",
+    "rankChipNoCity": "你所在城市第 {{rank}} 名搭档",
+    "nextGame": {
+      "eyebrow": "下一场一起打的比赛",
+      "untitled": "比赛"
+    },
+    "messagePartner": "给{{name}}发消息",
+    "messagePartnerNoName": "给搭档发消息",
     "invitedBy": "{{name}} 想和你组队",
     "leaveConfirm": "退出这个队伍？队伍会保留给你的搭档。",
     "leftTeam": "你已退出队伍",

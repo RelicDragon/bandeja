@@ -87,6 +87,8 @@ export const getPairDetailHandler = asyncHandler(async (req: AuthRequest, res: R
     ids,
     parseSport(req.query.sport, defaults.primarySport),
     viewerId,
+    // `cityRank` is read against the board the Pairs tab opens with: the viewer's city.
+    { rankCityId: defaults.currentCityId },
   );
 
   res.json({ success: true, data: detail });

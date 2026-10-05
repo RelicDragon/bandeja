@@ -125,6 +125,29 @@ export function accumulatePartnerCountersForUser(
   };
 }
 
+/**
+ * Dynamic Duo progress for one specific pair: completed 2v2 matches the two won
+ * **together** (same team, that team is the winner). Same match rule as
+ * {@link accumulatePartnerCountersForUser}, so a pair's count is exactly what
+ * the achievement grant sees for that partner. The caller supplies matches from
+ * qualifying games only (rated, FINAL, padel GAME / TOURNAMENT / LEAGUE).
+ */
+export function countPairDuoMatchWins(
+  matches: Iterable<PartnerScannedMatch>,
+  userAId: string,
+  userBId: string,
+): number {
+  let wins = 0;
+  for (const match of matches) {
+    if (!match.winnerId || !isCompletedDoublesMatch(match)) continue;
+    const winner = match.teams.find((t) => t.id === match.winnerId);
+    if (winner && winner.playerIds.includes(userAId) && winner.playerIds.includes(userBId)) {
+      wins += 1;
+    }
+  }
+  return wins;
+}
+
 /** Counters for games excluding a game id (in-memory; one DB load). */
 export function partnerCountersBeforeAfter(params: {
   games: ReadonlyArray<{
