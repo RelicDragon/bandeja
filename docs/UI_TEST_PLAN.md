@@ -2683,7 +2683,7 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 | UT-20 | Stale team link | Open `/user-team/:id` for a deleted team, or one you were removed from (old push, pair row) | Toast "This team is no longer available" and return Home — no generic error page |
 | UT-21 | Pair rows after delete | Delete a pair's team, then open Profile → Your partners / pair leaderboard / pair sheet within 5 min | Tapping the pair opens the pair sheet with **Create a team**, not the deleted team |
 | UT-22 | Photo-less split avatar | Team without its own photo whose two players have no photos either; owner drags the cut dial | Two shades split along the seam, each player's initials centred in their own half (never stacked at the seam), following the angle |
-| UT-23 | Team colour | Owner of a team without a photo: pick each swatch in the hero panel, reload, check Home team tile | Avatar halves (or solo face) and the hero wash recolour instantly; choice survives reload and shows on the tile; **Default** follows the member's primary colour; teammate sees it read-only; panel hidden once the team has a photo |
+| UT-23 | Team colour | Owner of a team without a photo: tap the collapsed **Color · ◩ name ›** row, pick a swatch, reload, check Home team tile | Row unfolds into the swatch grid (chevron turns down), picking folds it back to one row showing the new swatch + name; avatar halves (or solo face) and the hero wash recolour instantly; choice survives reload and shows on the tile; **Default** follows the member's primary colour; teammate sees it read-only; panel hidden once the team has a photo |
 
 ---
 
