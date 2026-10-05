@@ -63,6 +63,17 @@ describe('buildDuplicateGameInitialData', () => {
     expect(buildDuplicateGameInitialData(legacy).suitableForNovices).toBeUndefined();
   });
 
+  it('keeps the courts and the organizer-chosen court count', () => {
+    const data = buildDuplicateGameInitialData(
+      makeGame({
+        courtSlotCount: 2,
+        gameCourts: [{ id: 'gc1', courtId: 'court-7', order: 0 }] as Game['gameCourts'],
+      }),
+    );
+    expect(data.courtSlotCount).toBe(2);
+    expect(data.gameCourts?.map((gc) => gc.courtId)).toEqual(['court-7']);
+  });
+
   it('never copies the played-out state of the source game', () => {
     const data = buildDuplicateGameInitialData(makeGame()) as Record<string, unknown>;
     for (const key of ['resultsStatus', 'status', 'participants', 'outcomes', 'id']) {

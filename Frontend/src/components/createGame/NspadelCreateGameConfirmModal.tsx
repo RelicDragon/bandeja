@@ -137,12 +137,16 @@ export function NspadelCreateGameConfirmModal({
       });
       onSuccess();
     } catch (err) {
-      const detail = createGameOrBookingErrorMessage(
-        err,
-        t,
-        'createGame.booktime.bookFailed',
-        bookingErrorMessage,
-      );
+      // NS Padel cannot cancel through the app: courts already reserved in
+      // this attempt stay booked (a retry reuses them) and the player is told.
+      const detail = [
+        createGameOrBookingErrorMessage(err, t, 'createGame.booktime.bookFailed', bookingErrorMessage),
+        bookedIds.length > 0
+          ? t('createGame.courtPlan.partialKept', { count: bookedIds.length, total: bookings.length })
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' ');
       setErrorDetail(detail);
       if (isProviderBookingError(err) && err.code === 'SlotTaken') {
         onSlotTaken();

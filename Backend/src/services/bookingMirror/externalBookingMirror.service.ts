@@ -12,6 +12,7 @@ import { ClubIntegrationType, ExternalBookingMirrorState, type Prisma } from '@p
 import { z } from 'zod';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { detectUpstreamDriftFromMirror } from '../game/bookingUpstreamDrift.service';
 
 export const MIRROR_PROVIDERS = [
   ClubIntegrationType.BOOKTIME,
@@ -138,6 +139,25 @@ export async function syncExternalBookingMirror(
     });
     return { upserted: bookings.length, removed: removed.count };
   });
+
+  // Club-side drift of this user's linked bookings (docs/domains/booking.md "Club-side drift").
+  // Best effort: the mirror itself is already stored.
+  try {
+    await detectUpstreamDriftFromMirror(
+      userId,
+      {
+        provider: body.provider,
+        clubId: club.id,
+        rangeFrom: body.rangeFrom,
+        rangeTo: body.rangeTo,
+        complete: body.complete,
+        bookings,
+      },
+      now,
+    );
+  } catch (error) {
+    console.error('[BookingMirror] upstream drift detection failed', error);
+  }
   return { ...result, syncedAt: now.toISOString() };
 }
 

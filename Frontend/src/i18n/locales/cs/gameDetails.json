@@ -37,21 +37,10 @@
     },
     "locationTime": {
       "tabLabel": "Místo a čas",
-      "partialSaveFailed": "Některé změny byly uloženy, ale {{step}} se nepodařilo aktualizovat. Zkontrolujte a zkuste to znovu.",
-      "saveStep": {
-        "gameFields": "místo nebo čas",
-        "bookings": "propojení rezervací",
-        "snapshots": "podrobnosti rezervací",
-        "courts": "kurtů"
-      },
-      "unlinkNoCancelHint": "Rezervace kurtu u klubu zůstane aktivní — odebíráme jen propojení s touto hrou.",
       "unlinkSaveConfirmTitle": "Odebrat propojení rezervací?",
       "unlinkSaveConfirmMessage": "Odebíráte {{count}} propojení rezervací s touto hrou. Skutečné rezervace kurtů se automaticky nezruší.",
       "reservationActionTitle": "Co se má stát s kurtem?",
       "reservationActionSubtitle": "Vyberte, co se změní při uložení.",
-      "changeGateTitle": "Propojeno kurtů: {{count}}",
-      "changeGateBody": "Nejdřív odpojte rezervaci, abyste mohli rezervovat jiný klub nebo kurty.",
-      "changeGateBodyClub": "Nejdřív odpojte rezervaci, abyste mohli opustit {{club}} a rezervovat jinde.",
       "clubLockedBadge": "Propojeno",
       "clubLockedAria": "Klub je uzamčený. Odpojte rezervaci, abyste mohli změnit klub.",
       "reservationAction": {
@@ -85,22 +74,9 @@
           "chipTitle": "Bez rez.",
           "description": "Ponechat hru v kalendáři bez propojení se skutečnou rezervací."
         }
-      },
-      "consequenceTitle": "Co se stane",
-      "consequence": {
-        "keepCurrent": "Stávající propojení rezervací zůstanou.",
-        "changeGameTimeOnly": "Čas hry se změní; propojení rezervací zůstanou.",
-        "useExisting": "K této hře bude propojeno {{selected}} rezervací.",
-        "reserveNew": "Při uložení bude vytvořena nová skutečná rezervace kurtu.",
-        "unlink": "Propojení rezervací bude z této hry odebráno. Po uložení můžete rezervovat jiný klub nebo kurty.",
-        "gameOnly": "Hra zůstane v kalendáři bez propojení se skutečnou rezervací.",
-        "reserveNewConfirm": "Před uložením si rezervaci zkontrolujete.",
-        "unlinkNoCancel": "{{count}} skutečná rezervace klubu zůstane aktivní, dokud ji nezrušíte u klubu/poskytovatele."
       }
     },
     "linkedBookings": {
-      "fullyCovered": "Plně rezervováno",
-      "notFullyCovered": "Není plně rezervováno",
       "timeMismatch": "Nepokrývá nový čas zápasu. Uprav ji v klubu — aplikace ji nemění.",
       "refreshAriaLabel": "Zkontrolovat stav rezervace",
       "refreshStillActive": "Rezervace je stále aktivní ve vašem klubovém účtu",
@@ -879,6 +855,42 @@
     "substitutePlayerOutLosesResults": "{{name}} si z tohoto zápasu neponechá rating ani umístění",
     "substitutePlayerKeepsTeamSlot": "Místo v týmu, kurt i velikost soupisky zůstávají stejné",
     "substitutePlayerConfirm": "Vystřídat hráče",
-    "substitutePlayerSuccess": "Hráč byl vystřídán"
+    "substitutePlayerSuccess": "Hráč byl vystřídán",
+    "courts": {
+      "otherGame": "Jiná hra",
+      "clash": "{{court}} je obsazený {{from}}–{{to}}. Vyberte jiný čas nebo kurt.",
+      "clashGeneric": "V tu dobu je kurt obsazený. Vyberte jiný čas nebo kurt.",
+      "updateFailed": "Kurty se nepodařilo aktualizovat. Zkuste to znovu.",
+      "slotTaken": "Tento kurt byl právě obsazen. Vyberte jiný čas nebo kurt.",
+      "connectTitle": "Připojte účet klubu",
+      "linkTitle": "Propojit rezervaci",
+      "linkHint": "Vaše rezervace v {{club}} v den hry",
+      "linkEmpty": "Ve vašem účtu nejsou na tento den žádné rezervace v {{club}}.",
+      "needTime": "Nejprve nastavte čas hry.",
+      "pickCourtFirst": "Nejprve vyberte kurt.",
+      "verifyPresent": "Rezervace v klubu stále platí.",
+      "verifyMissing": "Klub už tuto rezervaci nemá.",
+      "cancelMessage": "Rezervace se v klubu zruší a odebere z této hry.",
+      "pickerTitle": "Kurty",
+      "pickerHint": "Vyberte kurty v pořadí. Rezervujte je ze stránky hry.",
+      "linkedCourtLocked": "Tento kurt má propojenou rezervaci. Nejprve ji odpojte na stránce hry.",
+      "count": "Počet kurtů",
+      "anyCourts": "Libovolný kurt × {{count}}",
+      "fewer": "O jeden kurt méně",
+      "more": "O jeden kurt více",
+      "clubLocked": "Tato hra má propojené rezervace. Pro změnu klubu je odpojte na stránce hry.",
+      "timeByPlanner": "Přesunutím hry se přesunou i rezervace kurtů.",
+      "changeTime": "Změnit čas",
+      "saveFirst": "Nejprve uložte nebo zahoďte ostatní změny.",
+      "overlapReserved": "Jiná hra má tento kurt v tu dobu rezervovaný. Klub to může odmítnout. Přesto uložit?",
+      "gapTitle": "Vyplnit mezeru",
+      "gapAdds": "Přidá {{range}}.",
+      "gapExtra": "To je o {{minutes}} min víc než mezera — klub prodává jen pevné délky.",
+      "gapContinue": "Pokračovat",
+      "gapClash": "{{court}} je obsazený {{time}}, takže mezeru tady nelze vyplnit. Zeptejte se klubu nebo vyberte jiný kurt.",
+      "gapAskClub": "Klub neprodává rezervaci, která by mezeru pokryla. Zeptejte se klubu.",
+      "gapUnavailable": "Tuto mezeru nelze vyplnit z aplikace. Zeptejte se klubu.",
+      "connectSkip": "Teď ne"
+    }
   }
 }

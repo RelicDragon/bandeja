@@ -50,21 +50,10 @@
     },
     "locationTime": {
       "tabLabel": "場所と時間",
-      "partialSaveFailed": "一部は保存されましたが、{{step}} を更新できませんでした。確認してもう一度お試しください。",
-      "saveStep": {
-        "gameFields": "場所または時間",
-        "bookings": "予約リンク",
-        "snapshots": "予約の詳細",
-        "courts": "コート"
-      },
-      "unlinkNoCancelHint": "クラブのコート予約はそのまま残ります — この試合からのリンクのみ削除します。",
       "unlinkSaveConfirmTitle": "予約リンクを削除しますか？",
       "unlinkSaveConfirmMessage": "この試合から {{count}} 件の予約のリンクを解除します。実際のコート予約は自動ではキャンセルされません。",
       "reservationActionTitle": "コートはどうしますか？",
       "reservationActionSubtitle": "保存時の変更内容を選んでください。",
-      "changeGateTitle": "{{count}} コートにリンク済み",
-      "changeGateBody": "別のクラブやコートを予約するには、先にリンクを解除してください。",
-      "changeGateBodyClub": "{{club}} を離れて別の場所を予約するには、先にリンクを解除してください。",
       "clubLockedBadge": "リンク済み",
       "clubLockedAria": "クラブはロックされています。クラブを変更するには予約のリンクを解除してください。",
       "reservationAction": {
@@ -98,22 +87,9 @@
           "chipTitle": "予約なし",
           "description": "実際の予約リンクなしで試合スケジュールを維持します。"
         }
-      },
-      "consequenceTitle": "こうなります",
-      "consequence": {
-        "keepCurrent": "現在の予約リンクはそのまま残ります。",
-        "changeGameTimeOnly": "試合時間が変わります。既存の予約リンクはそのままです。",
-        "useExisting": "{{selected}} 件の予約がこの試合にリンクされます。",
-        "reserveNew": "保存時に実際のコート予約が新規作成されます。",
-        "unlink": "この試合から予約リンクが削除されます。保存後、別のクラブやコートを予約できます。",
-        "gameOnly": "実際の予約リンクなしで試合は予定されたままです。",
-        "reserveNewConfirm": "保存前に実際の予約を確認します。",
-        "unlinkNoCancel": "{{count}} 件の実際のクラブ予約は、クラブ/プロバイダー側でキャンセルしない限り有効のままです。"
       }
     },
     "linkedBookings": {
-      "fullyCovered": "予約完了",
-      "notFullyCovered": "一部未予約",
       "timeMismatch": "試合の新しい時間をカバーしていません。クラブで変更してください（アプリでは変更されません）。",
       "refreshAriaLabel": "予約ステータスを確認",
       "refreshStillActive": "クラブアカウントで予約はまだ有効です",
@@ -887,6 +863,42 @@
     "substitutePlayerOutLosesResults": "{{name}} はこの試合のレートも順位も保持しません",
     "substitutePlayerKeepsTeamSlot": "チームの枠、コート、メンバー数は変わりません",
     "substitutePlayerConfirm": "選手を交代する",
-    "substitutePlayerSuccess": "選手を交代しました"
+    "substitutePlayerSuccess": "選手を交代しました",
+    "courts": {
+      "otherGame": "別のゲーム",
+      "clash": "{{court}} は {{from}}–{{to}} に埋まっています。別の時間かコートを選んでください。",
+      "clashGeneric": "その時間に埋まっているコートがあります。別の時間かコートを選んでください。",
+      "updateFailed": "コートを更新できませんでした。もう一度お試しください。",
+      "slotTaken": "そのコートはたった今予約されました。別の時間かコートを選んでください。",
+      "connectTitle": "クラブのアカウントを連携",
+      "linkTitle": "予約を紐づける",
+      "linkHint": "ゲーム当日の {{club}} でのあなたの予約",
+      "linkEmpty": "この日の {{club}} の予約はあなたのアカウントにありません。",
+      "needTime": "先にゲームの時間を設定してください。",
+      "pickCourtFirst": "先にコートを選んでください。",
+      "verifyPresent": "クラブの予約はまだ有効です。",
+      "verifyMissing": "この予約はクラブにもうありません。",
+      "cancelMessage": "予約はクラブでキャンセルされ、このゲームから外されます。",
+      "pickerTitle": "コート",
+      "pickerHint": "コートを順番に選びます。予約はゲームページから行います。",
+      "linkedCourtLocked": "このコートには紐づいた予約があります。先にゲームページで紐づけを解除してください。",
+      "count": "コート数",
+      "anyCourts": "任意のコート × {{count}}",
+      "fewer": "コートを1面減らす",
+      "more": "コートを1面増やす",
+      "clubLocked": "このゲームには紐づいた予約があります。クラブを変えるにはゲームページで紐づけを解除してください。",
+      "timeByPlanner": "ゲームの時間を動かすとコートの予約も一緒に動きます。",
+      "changeTime": "時間を変更",
+      "saveFirst": "先にほかの変更を保存するか破棄してください。",
+      "overlapReserved": "その時間、このコートは別のゲームが予約しています。クラブに断られる可能性があります。それでも保存しますか？",
+      "gapTitle": "空き時間を埋める",
+      "gapAdds": "{{range}} を追加します。",
+      "gapExtra": "空き時間より {{minutes}} 分長くなります（クラブは決まった長さでしか販売していません）。",
+      "gapContinue": "続ける",
+      "gapClash": "{{court}} は {{time}} に埋まっているため、ここでは空き時間を埋められません。クラブに確認するか別のコートを選んでください。",
+      "gapAskClub": "この空き時間に合う予約はクラブで販売されていません。クラブに確認してください。",
+      "gapUnavailable": "この空き時間はアプリから埋められません。クラブに確認してください。",
+      "connectSkip": "今はしない"
+    }
   }
 }

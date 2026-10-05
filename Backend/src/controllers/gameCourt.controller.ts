@@ -22,7 +22,7 @@ export const setGameCourts = asyncHandler(async (req: AuthRequest, res: Response
     throw new ApiError(400, 'courtIds must be an array');
   }
 
-  const gameCourts = await GameCourtService.setGameCourts(gameId, courtIds);
+  const gameCourts = await GameCourtService.setGameCourts(gameId, courtIds, { actorUserId: req.userId ?? null });
 
   res.json({
     success: true,

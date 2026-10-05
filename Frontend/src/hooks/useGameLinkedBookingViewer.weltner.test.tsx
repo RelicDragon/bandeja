@@ -31,7 +31,6 @@ it('shows owned confirmed receipts without saved phone or Booktime authenticatio
   mocks.bookings.mockResolvedValue([{ externalBookingId: 'weltner:owned', state: 'CONFIRMED' }]);
   await act(async () => root.render(<Harness />));
   expect(viewer.showOwnerSection).toBe(true);
-  expect(viewer.showPublicCoverageBadge).toBe(false);
   expect(mocks.bookings).toHaveBeenCalledWith('club');
   expect(mocks.hydrate).not.toHaveBeenCalled();
 });
@@ -39,7 +38,6 @@ it('does not grant ownership for another player or uncertain reservations', asyn
   mocks.bookings.mockResolvedValue([{ externalBookingId: 'weltner:someone-else', state: 'CONFIRMED' }, { externalBookingId: 'weltner:owned', state: 'UNKNOWN' }]);
   await act(async () => root.render(<Harness />));
   expect(viewer.showOwnerSection).toBe(false);
-  expect(viewer.showPublicCoverageBadge).toBe(true);
 });
 it('keeps Booktime ownership hydration unchanged', async () => {
   mocks.hydrate.mockResolvedValue(undefined);

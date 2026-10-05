@@ -4,6 +4,8 @@ import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
 import { GameService } from '../services/game/game.service';
 import { serializeLinkedBooking } from '../services/game/gameExternalBooking.service';
+import { parseTimePolicy } from '../services/gameCourt/courtSlots.tx';
+import { GameCourtService } from '../services/gameCourt/gameCourt.service';
 import { ParticipantService } from '../services/game/participant.service';
 import { AdminService } from '../services/game/admin.service';
 import { OwnershipService } from '../services/game/ownership.service';
@@ -430,7 +432,9 @@ export const enrichAvailableGames = asyncHandler(async (req: AuthRequest, res: R
 
 export const updateGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const game = await GameService.updateGame(id, req.body, req.userId!, req.user?.isAdmin);
+  const game = await GameService.updateGame(id, req.body, req.userId!, req.user?.isAdmin ?? false, {
+    timePolicy: parseTimePolicy(req.query.timePolicy),
+  });
 
   res.json({
     success: true,
@@ -440,19 +444,34 @@ export const updateGame = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const patchGameBookings = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const rows = await GameService.patchGameBookings(id, req.userId!, req.user?.isAdmin || false, req.body);
+  const rows = await GameService.patchGameBookings(id, req.userId!, req.user?.isAdmin || false, req.body, {
+    timePolicy: parseTimePolicy(req.query.timePolicy),
+  });
   res.json({ success: true, data: rows.map(serializeLinkedBooking) });
 });
 
 export const putGameBookingSnapshots = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const rows = await GameService.putGameBookingSnapshots(id, req.userId!, req.user?.isAdmin || false, req.body);
+  const rows = await GameService.putGameBookingSnapshots(id, req.userId!, req.user?.isAdmin || false, req.body, {
+    timePolicy: parseTimePolicy(req.query.timePolicy),
+  });
   res.json({ success: true, data: rows.map(serializeLinkedBooking) });
+});
+
+/** Court slots editor: `{ slots: [{ courtId, reservation }], reportedAnyCourtCount, courtSlotCount? }` → slot view. */
+export const putGameCourtSlots = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const view = await GameCourtService.setCourtSlots(id, req.userId!, req.body, {
+    timePolicy: parseTimePolicy(req.query.timePolicy),
+  });
+  res.json({ success: true, data: view });
 });
 
 export const linkBookingToGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const rows = await GameService.linkBookingToGame(id, req.userId!, req.user?.isAdmin || false, req.body);
+  const rows = await GameService.linkBookingToGame(id, req.userId!, req.user?.isAdmin || false, req.body, {
+    timePolicy: parseTimePolicy(req.query.timePolicy),
+  });
   res.json({ success: true, data: rows.map(serializeLinkedBooking) });
 });
 

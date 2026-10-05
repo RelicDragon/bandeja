@@ -40,21 +40,10 @@
     },
     "locationTime": {
       "tabLabel": "Lokacija i vreme",
-      "partialSaveFailed": "Neke izmene su sačuvane, ali {{step}} nije ažurirano. Proverite i pokušajte ponovo.",
-      "saveStep": {
-        "gameFields": "lokaciju ili vreme",
-        "bookings": "veze rezervacija",
-        "snapshots": "detalje rezervacija",
-        "courts": "terene"
-      },
-      "unlinkNoCancelHint": "Rezervacija terena u klubu ostaje aktivna — uklanjamo samo vezu sa ovom igrom.",
       "unlinkSaveConfirmTitle": "Ukloniti veze rezervacija?",
       "unlinkSaveConfirmMessage": "Uklanjate {{count}} vezu(e) rezervacija sa ovom igrom. Stvarne rezervacije terena se automatski ne otkazuju.",
       "reservationActionTitle": "Šta treba da se desi sa terenom?",
       "reservationActionSubtitle": "Izaberi šta se menja pri čuvanju.",
-      "changeGateTitle": "Povezano terena: {{count}}",
-      "changeGateBody": "Prvo ukloni vezu da bi rezervisao drugi klub ili terene.",
-      "changeGateBodyClub": "Prvo ukloni vezu da bi napustio {{club}} i rezervisao na drugom mestu.",
       "clubLockedBadge": "Povezano",
       "clubLockedAria": "Klub je zaključan. Ukloni rezervaciju da bi promenio klub.",
       "reservationAction": {
@@ -88,22 +77,9 @@
           "chipTitle": "Bez rez.",
           "description": "Zadrži igru u rasporedu bez veze sa stvarnom rezervacijom."
         }
-      },
-      "consequenceTitle": "Šta će se desiti",
-      "consequence": {
-        "keepCurrent": "Trenutne veze rezervacija ostaju.",
-        "changeGameTimeOnly": "Vreme igre se menja; veze rezervacija ostaju.",
-        "useExisting": "{{selected}} rezervacija će biti povezano sa ovom igrom.",
-        "reserveNew": "Nova stvarna rezervacija terena biće kreirana pri čuvanju.",
-        "unlink": "Veze rezervacija biće uklonjene sa ove igre. Posle čuvanja možeš rezervisati drugi klub ili terene.",
-        "gameOnly": "Igra ostaje u rasporedu bez veza sa stvarnom rezervacijom.",
-        "reserveNewConfirm": "Pregledaćeš stvarnu rezervaciju pre čuvanja.",
-        "unlinkNoCancel": "{{count}} stvarna rezervacija kluba ostaje aktivna dok je ne otkažeš u klubu/kod provajdera."
       }
     },
     "linkedBookings": {
-      "fullyCovered": "Potpuno rezervisano",
-      "notFullyCovered": "Nije potpuno rezervisano",
       "timeMismatch": "Ne pokriva novo vreme igre. Izmeni je u klubu — aplikacija je ne menja.",
       "refreshAriaLabel": "Proveri status rezervacije",
       "refreshStillActive": "Rezervacija je i dalje aktivna na tvom klubskom nalogu",
@@ -885,6 +861,42 @@
     "substitutePlayerOutLosesResults": "{{name}} ne zadržava rejting ni poziciju u ovoj igri",
     "substitutePlayerKeepsTeamSlot": "Mesto u timu, teren i veličina sastava ostaju isti",
     "substitutePlayerConfirm": "Zameni igrača",
-    "substitutePlayerSuccess": "Igrač je zamenjen"
+    "substitutePlayerSuccess": "Igrač je zamenjen",
+    "courts": {
+      "otherGame": "Druga igra",
+      "clash": "{{court}} je zauzet {{from}}–{{to}}. Izaberite drugo vreme ili teren.",
+      "clashGeneric": "Teren je zauzet u to vreme. Izaberite drugo vreme ili teren.",
+      "updateFailed": "Ažuriranje terena nije uspelo. Pokušajte ponovo.",
+      "slotTaken": "Taj teren je upravo zauzet. Izaberite drugo vreme ili teren.",
+      "connectTitle": "Povežite nalog kluba",
+      "linkTitle": "Poveži rezervaciju",
+      "linkHint": "Vaše rezervacije u {{club}} na dan igre",
+      "linkEmpty": "Na vašem nalogu nema rezervacija u {{club}} za ovaj dan.",
+      "needTime": "Prvo podesite vreme igre.",
+      "pickCourtFirst": "Prvo izaberite teren.",
+      "verifyPresent": "Rezervacija u klubu i dalje važi.",
+      "verifyMissing": "Klub više nema ovu rezervaciju.",
+      "cancelMessage": "Rezervacija se otkazuje u klubu i uklanja sa ove igre.",
+      "pickerTitle": "Tereni",
+      "pickerHint": "Izaberite terene redom. Rezervišite ih sa stranice igre.",
+      "linkedCourtLocked": "Ovaj teren ima povezanu rezervaciju. Prvo je odvežite na stranici igre.",
+      "count": "Broj terena",
+      "anyCourts": "Bilo koji teren × {{count}}",
+      "fewer": "Jedan teren manje",
+      "more": "Jedan teren više",
+      "clubLocked": "Ova igra ima povezane rezervacije. Odvežite ih na stranici igre da biste promenili klub.",
+      "timeByPlanner": "Pomeranje igre pomera i rezervacije terena.",
+      "changeTime": "Promeni vreme",
+      "saveFirst": "Prvo sačuvajte ili odbacite ostale izmene.",
+      "overlapReserved": "Druga igra ima ovaj teren rezervisan u to vreme. Klub može da odbije. Ipak sačuvati?",
+      "gapTitle": "Popuni prazninu",
+      "gapAdds": "Dodaje {{range}}.",
+      "gapExtra": "To je {{minutes}} min više od praznine — klub prodaje samo fiksna trajanja.",
+      "gapContinue": "Nastavi",
+      "gapClash": "{{court}} je zauzet {{time}}, pa se praznina ovde ne može popuniti. Pitajte klub ili izaberite drugi teren.",
+      "gapAskClub": "Klub ne prodaje rezervaciju koja odgovara ovoj praznini. Pitajte klub.",
+      "gapUnavailable": "Ova praznina se ne može popuniti iz aplikacije. Pitajte klub.",
+      "connectSkip": "Ne sada"
+    }
   }
 }

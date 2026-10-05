@@ -12,8 +12,10 @@
       "invite": "Pozovi"
     },
     "booking": {
-      "notBooked": "Teren još nije rezervisan",
-      "partlyBooked": "Teren je delimično rezervisan",
+      "notReservedOne": "Teren još nije rezervisan",
+      "notReservedMany": "Tereni još nisu rezervisani",
+      "partlyReserved": "Rezervisano {{reserved}} od {{total}} terena",
+      "gapAt": "Praznina u rezervaciji u {{time}}",
       "seeBookings": "Vidi rezervacije",
       "editCourt": "Izmeni teren"
     },

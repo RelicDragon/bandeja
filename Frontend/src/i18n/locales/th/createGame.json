@@ -37,20 +37,16 @@
     "selectClub": "เลือกคลับ",
     "court": "ศาล",
     "hall": "ห้องโถง",
-    "notBookedYet": "เกมเท่านั้น",
     "dontSelectCourt": "ยังไม่มีศาล",
     "dontSelectHall": "ยังไม่มีห้องโถง",
     "courtNotSelected": "ศาลไม่ได้เลือก",
     "hallNotSelected": "ฮอลล์ไม่ได้ถูกเลือก",
     "multiCourtHint": "เลือกสนามได้สูงสุด {{count}} สำหรับผู้เล่น {{participants}} (เลือก{{selected}})",
-    "multiCourtNeedSharedSlots": "เลือกสนาม {{count}} ที่ว่างในเวลาเดียวกัน",
-    "multiCourtNoSharedSlots": "ไม่มีช่วงเวลาว่างในสนามที่เลือกทั้งหมด {{count}} ลองสนามอื่น วันอื่น หรือระยะเวลาอื่น",
     "webCameraHint": "ศาลนี้มีกล้องเว็บที่เชื่อมโยง",
     "webCameraHintsTitle": "กล้องเว็บที่เชื่อมโยง",
     "webCameraHintNamed": "{{court}} มีกล้องเว็บที่เชื่อมโยง",
     "webCameraHintAction": "แตะเพื่อดูถ่ายทอดสด",
     "hasBookedCourt": "ฉันจองศาลนี้แล้ว",
-    "hasBookedHall": "ฉันจองโต๊ะแล้ว",
     "selectCourt": "เลือกศาล",
     "selectHall": "เลือก ฮอลล์",
     "selectClubFirst": "เลือกสโมสรก่อน",
@@ -243,10 +239,7 @@
     "timeSlot": "ช่องที่เลือก",
     "loadingExternalSlots": "กำลังโหลดช่องภายนอก",
     "bookedWithoutCourt": "โดยไม่ต้องมีศาล",
-    "notConfirmed": "ไม่ได้รับการยืนยัน",
-    "multipleCourts": "หลายศาล",
-    "noCourtsSelected": "ไม่มีศาลเลือก",
-    "addCourt": "เพิ่มศาล",
+    "notConfirmed": "วางแผนไว้",
     "createButton": "สร้างเกม",
     "createButtonTournament": "สร้างทัวร์นาเมนต์",
     "createButtonLeague": "สร้างลีก",
@@ -269,40 +262,19 @@
     "invitesWillBeSent_one": "ผู้เล่นจะได้รับเชิญหลังจากสร้างเกม",
     "invitesWillBeSent_other": "ผู้เล่น {{count}} จะได้รับเชิญหลังจากสร้างเกม",
     "overlapHardSave": "คราวนี้ทับซ้อนกับคอร์ทที่ไม่สามารถใช้งานได้ (ระบบคลับ หรือถูกบล็อค) เลือกช่องอื่น",
+    "overlapHardTitle": "คอร์ตไม่ว่างในเวลานี้",
     "overlapSoftTitle": "มีการวางแผนเกมอื่นที่นี่",
-    "overlapSoftMessage": "ผู้เล่นอีกคนมีเกมในสนามนี้ในเวลานี้แต่ยังไม่ได้ยืนยันการจอง คุณยังสามารถดำเนินการต่อได้",
+    "overlapSoftMessage": "ผู้เล่นอีกคนวางแผนเกมในคอร์ตนี้ในเวลานี้ แต่ยังไม่ได้จองคอร์ต คุณยังดำเนินการต่อได้",
     "overlapSoftProceed": "ดำเนินการต่อต่อไป",
-    "markCourtBookedTitle": "ทำเครื่องหมายศาลว่าจองแล้วใช่ไหม?",
-    "markCourtBookedMessage": "คุณเลือกศาลแต่ไม่ได้ทำเครื่องหมายว่าจองแล้ว ยืนยันเมื่อได้จองกับสโมสรแล้ว",
-    "markCourtBookedYes": "ใช่ ฉันจองไว้แล้ว",
-    "markCourtBookedSkip": "ยัง",
     "locationTime": {
-      "skipRealCourtToggle": "เกมเท่านั้น",
-      "realCourtBookingHint": "{{courts}} ที่ {{club}} จะถูกสงวนไว้เมื่อคุณสร้างเกม",
-      "realCourtBookingHintEdit": "{{courts}} ที่ {{club}} จะถูกสงวนไว้เมื่อคุณบันทึก",
-      "skipRealCourtHint": "เกมจะมีกำหนดใน Bandeja เท่านั้น",
-      "skipRealCourtHintEdit": "เกมดังกล่าวจะได้รับการอัพเดตใน Bandeja เท่านั้น",
       "summaryFromBookings": "จากการจอง {{count}} ของคุณ",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "เลือกการจอง {{min}}–{{max}} ({{players}})",
-      "selectionProgress": "เลือกสนามได้สูงสุด {{max}} ({{players}})",
-      "selectionCompleteOne": "เชื่อมโยง 1 ศาลแล้ว",
-      "selectionCompleteMany": "{{count}} เชื่อมโยงศาลแล้ว",
-      "selectionAtMax": "จำนวนสูงสุดที่เลือกสำหรับรูปแบบนี้ ({{players}}) — การจองอื่นๆ ไม่พร้อมใช้งาน",
-      "emptyBookingsOnDate": "ไม่มีการจองในวันที่นี้",
-      "emptyBookingsHint": "ลองวันอื่น จองสนามใหม่ หรือสร้างเกมโดยไม่ต้องเชื่อมโยงการจอง",
-      "emptyBookingsReserveNow": "จองศาลได้เลย",
-      "emptyBookingsGameOnly": "สร้างเกมเท่านั้น",
       "gridLegend": "สีเขียว = การจองของคุณ · แดง/เหลือง = ถ่ายแล้ว · หลัก = เวลาที่เลือก",
       "alsoUsedIn": "ใช้ใน: {{games}} ด้วย",
       "pickAdjacentHour": "เลือกหนึ่งชั่วโมง",
       "linkHintTitle": "เกมจะเชื่อมโยงไปยังการจองของคุณ",
       "linkHintBody": "การจองศาลเหล่านี้จะเชื่อมโยงเมื่อคุณสร้างเกม",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "ปรับเวลาเล่นเกม",
-      "overrideHint": "เวลาเล่นเกมอาจสั้นกว่าที่คุณจองไว้",
-      "overrideResetToast": "รีเซ็ตเวลาเป็นการจอง",
       "preselectedBanner": "การจองที่เลือกไว้ล่วงหน้า",
       "linkedOnlyLabel": "จากการจองของคุณ",
       "unlinkConfirm": "ลบลิงก์การจองนี้ใช่ไหม",
@@ -310,67 +282,6 @@
       "unlinkNoCancelNote": "การจองสนามที่สโมสรยังคงมีผลอยู่ — มีเพียงลิงก์ไปยังเกมนี้เท่านั้นที่ถูกลบออก",
       "syncInactiveCreate": "การซิงค์ใช้งานไม่ได้ในขณะนี้ เราไม่สามารถเรียกดูช่องหรือจองที่นี่ได้ คุณยังสามารถสร้างเกมได้ในขณะนี้",
       "syncInactiveEdit": "การซิงค์ใช้งานไม่ได้ในขณะนี้ เราไม่สามารถเรียกดูช่องหรือจองที่นี่ได้ คุณยังคงสามารถแก้ไขเกมได้ในขณะนี้"
-    },
-    "reservationIntent": {
-      "title": "ขึ้นศาลยังไงล่ะ?",
-      "otherOptions": "ตัวเลือกอื่นๆ",
-      "recommended": "ที่แนะนำ",
-      "recommendedShort": "รับ",
-      "validation": {
-        "selectCourt": "เลือก {{count}} ศาล ก่อน",
-        "selectBookableCourt": "เลือก {{count}} ศาลที่จองออนไลน์ได้ก่อน",
-        "selectTime": "เลือกเวลาที่ว่างก่อน",
-        "selectDuration": "เลือกระยะเวลาก่อน",
-        "selectReservations": "เลือกการจอง {{count}} จากบัญชีของคุณ",
-        "bookingRecordsLoading": "กำลังโหลดรายละเอียดการจองของคุณอยู่ โปรดลองอีกครั้งในอีกสักครู่"
-      },
-      "reserveNow": {
-        "title": "จองศาล",
-        "chipTitle": "ศาลหนังสือ",
-        "description": "เลือกเวลา — เราจะจองให้คุณ"
-      },
-      "useExisting": {
-        "title": "ฉันมีการจองแล้ว",
-        "chipTitle": "การจองของฉัน",
-        "description": "เชื่อมต่อการจองจากบัญชีสโมสรของคุณ",
-        "contextAvailable": "{{count}} วางจำหน่ายในวันที่นี้"
-      },
-      "gameOnly": {
-        "title": "ข้ามการจองศาล",
-        "chipTitle": "เกมเท่านั้น",
-        "description": "เพียงแค่สร้างเกม — ไม่สงวนศาล"
-      },
-      "manualBooked": {
-        "title": "จองด้วยตนเองแล้ว",
-        "chipTitle": "จองแล้ว",
-        "description": "ทำเครื่องหมายว่าจองแล้วโดยไม่ต้องจองออนไลน์"
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "จะทำการจองศาลจริง",
-          "body": "เลือก {{count}} ศาล ระยะเวลา และเวลา กำหนดการที่แน่นอนนั้นจะถูกจองไว้"
-        },
-        "useExisting": {
-          "title": "เกมจะเชื่อมโยงกับการจองของคุณ",
-          "body": "เลือก {{selected}} จาก {{count}} ที่ต้องจอง"
-        },
-        "gameOnly": {
-          "title": "จะไม่มีการจองศาลจริง",
-          "body": "เกมจะมีกำหนดใน Bandeja เท่านั้น"
-        },
-        "manualBooked": {
-          "title": "เกมจะถูกทำเครื่องหมายว่าจองแล้ว",
-          "body": "จะไม่มีการสร้างการจองออนไลน์"
-        }
-      },
-      "cta": {
-        "reserveOne": "สำรองสนามและสร้างเกม",
-        "reserveMany": "สำรองสนาม {{count}} และสร้างเกม",
-        "linkOne": "เชื่อมโยงการจองและสร้างเกม",
-        "linkMany": "ลิงก์ {{count}} การจองและสร้างเกม",
-        "gameOnly": "สร้างเกมเท่านั้น",
-        "manualBooked": "สร้างเกม"
-      }
     },
     "booktime": {
       "switchLabel": "ศาลสำรองเมื่อฉันสร้างเกม",
@@ -381,7 +292,6 @@
       "authorizeInClub": "อนุญาตใน {{club}}",
       "dateHint": "คุณสามารถจองล่วงหน้าได้สูงสุด {{days}} ที่คลับนี้",
       "connectedChip": "ลงชื่อเข้าใช้แล้ว · {{phone}}",
-      "createCta": "สร้างเกมและสนามสำรอง",
       "signInToContinue": "ลงชื่อเข้าใช้เพื่อดำเนินการต่อ",
       "confirmTitle": "พร้อมที่จะสร้างหรือยัง?",
       "confirmPrimary": "จองและสร้าง",
@@ -406,8 +316,7 @@
       "cancelPolicy": "ยกเลิกฟรีสูงสุด {{hours}} ชั่วโมงก่อนเริ่ม",
       "yourGame": "เกมของคุณ",
       "snapshotBlocked": "ความพร้อมใช้งานสดยังไม่ถูกซิงค์ รอการซิงค์หรือเลือกวันอื่น",
-      "alreadyReserved": "คอร์ตสงวนไว้สำหรับเกมนี้แล้ว",
-      "liveApiUnavailable": "ไม่สามารถจองศาลได้ในขณะนี้ — โดยใช้การกำหนดเวลาปกติ"
+      "alreadyReserved": "คอร์ตสงวนไว้สำหรับเกมนี้แล้ว"
     },
     "padeloo": {
       "authTitle": "เชื่อมต่อบัญชี Padeloo ของคุณ",
@@ -611,6 +520,81 @@
     "lookingNudgeTitle_other": "มี {{count}} คนกำลังหาเกมช่วงเวลานี้",
     "lookingNudgeHint": "พวกเขาอยากเล่นช่วงนี้ คำเชิญจะถึงทันที",
     "lookingNudgeInvite_one": "เชิญ",
-    "lookingNudgeInvite_other": "เชิญ {{count}} คน"
+    "lookingNudgeInvite_other": "เชิญ {{count}} คน",
+    "courtPlan": {
+      "courts": "คอร์ท",
+      "fewerCourts": "ลดคอร์ท",
+      "moreCourts": "เพิ่มคอร์ท",
+      "anyCourt": "คอร์ทใดก็ได้",
+      "slotLabel": "คอร์ท {{n}}",
+      "sheet": {
+        "hint": "สถานะว่างในเวลาที่คุณเลือก",
+        "noTime": "เลือกเวลาเพื่อดูว่าคอร์ทไหนว่าง",
+        "linkedHint": "คอร์ทนี้มาจากการจองของคุณ",
+        "free": "ว่าง",
+        "plannedGame": "มีเกมที่วางแผนไว้ใช้อยู่ — ยังเลือกได้",
+        "club": "จองแล้วที่คลับ",
+        "hold": "คลับกันไว้",
+        "reservedGame": "เกมที่จองแล้วใช้อยู่",
+        "notBookable": "จองออนไลน์ไม่ได้",
+        "onSlot": "เลือกไว้สำหรับคอร์ท {{n}} — แตะเพื่อสลับ",
+        "linkedElsewhere": "ใช้โดยการจองของคุณ",
+        "anyHint": "ตัดสินใจทีหลัง หรือให้คลับจัดให้",
+        "anyReserveHint": "เราจะเลือกคอร์ทที่ว่างตอนจอง",
+        "reservedToggle": "ฉันจองคอร์ทนี้แล้ว",
+        "removeReservation": "นำการจองนี้ออก"
+      },
+      "atClub": {
+        "title": "จองที่คลับ?",
+        "reserveNow": "จองตอนนี้",
+        "alreadyReserved": "จองแล้ว",
+        "notYet": "ยังไม่จอง",
+        "reserveNowHint_other": "เราจะจอง {{count}} คอร์ทที่ {{club}} เมื่อคุณสร้างเกม",
+        "alreadyReservedHint": "เลือกการจองของคุณด้านล่าง คอร์ทที่ไม่มีการจองจะถูกทำเครื่องหมายว่าจองแล้ว",
+        "alreadyReservedMarkHint": "เราจะทำเครื่องหมายคอร์ทว่าจองแล้ว",
+        "notYetHint": "เกมถูกวางแผนโดยยังไม่ได้จองคอร์ท คุณจองทีหลังได้",
+        "reservationsNudge": "คุณมีการจองที่คลับนี้ในวันนั้น",
+        "useThem": "ใช้เลย",
+        "authSkip": "ยังไม่ — จะจองทีหลัง",
+        "markSkip": "ข้าม — แค่ทำเครื่องหมายว่าจองคอร์ตแล้ว"
+      },
+      "reservations": {
+        "title": "การจองของคุณในวันนั้น",
+        "empty": "ไม่มีการจองในบัญชี {{club}} ของคุณในวันนั้น คอร์ทจะถูกทำเครื่องหมายว่าจองแล้ว",
+        "markRest": "คอร์ทที่ไม่ได้เชื่อมกับการจองจะถูกทำเครื่องหมายว่าจองแล้ว"
+      },
+      "timePrompt": {
+        "question": "ใช้เวลาของการจอง {{range}} ไหม?",
+        "yes": "ใช่",
+        "keep": "คงไว้ {{range}}"
+      },
+      "time": {
+        "club": "{{court}} ถูกจองที่คลับแล้ว",
+        "hold": "{{court}} ถูกคลับกันไว้",
+        "reservedGame": "{{court}} มีเกมที่จองแล้วใช้อยู่",
+        "notEnoughCourts": "คอร์ทว่างไม่พอ ({{free}} จาก {{needed}})",
+        "softNote": "ช่วงเวลานั้นมีเกมที่วางแผนไว้ใช้คอร์ทด้วย — คุณยังเลือกเวลานี้ได้",
+        "unavailableAt": "{{time}} ไม่ว่าง: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "จองเมื่อสร้าง",
+        "courts_other": "{{count}} คอร์ท"
+      },
+      "issue": {
+        "timeRequired": "เลือกเวลาก่อน",
+        "durationRequired": "เลือกระยะเวลาก่อน",
+        "timeBlocked": "เวลานั้นไม่ว่างบนคอร์ทที่คุณต้องการ เลือกเวลาหรือคอร์ทอื่น",
+        "courtNotBookable": "คอร์ทที่เลือกจองออนไลน์ไม่ได้ เลือกคอร์ทอื่นหรือเลือก “จองแล้ว”",
+        "notEnoughBookableCourts": "เวลานั้นมีคอร์ทว่างไม่พอให้จอง",
+        "reservationsLoading": "กำลังโหลดการจองของคุณ — ลองอีกครั้งในอีกสักครู่"
+      },
+      "cta": {
+        "reserve_other": "จอง {{count}} คอร์ทและสร้าง",
+        "withReserved_other": "สร้างพร้อม {{count}} คอร์ทที่จองแล้ว"
+      },
+      "rollbackReleased": "คอร์ทที่จองในครั้งนี้ถูกยกเลิกแล้ว",
+      "partialKept": "จองแล้ว {{count}} จาก {{total}} คอร์ท และยังคงจองไว้ หากต้องการยกเลิก โปรดติดต่อคลับ",
+      "courtsSaveFailed": "สร้างเกมแล้ว แต่บันทึกคอร์ทไม่สำเร็จ โปรดตรวจสอบที่หน้าเกม"
+    }
   }
 }

@@ -44,6 +44,9 @@ const OnboardingPage = lazy(() =>
   import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage }))
 );
 const ClubManagementApp = lazy(() => import('./clubAdmin/ClubManagementApp'));
+const CourtReservationsPreview = import.meta.env.DEV
+  ? lazy(() => import('./features/court-reservations/CourtReservationsPreview').then((m) => ({ default: m.CourtReservationsPreview })))
+  : null;
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { usersApi } from './api';
@@ -1038,6 +1041,16 @@ function AppContent() {
             <Navigate to={`${isAuthenticated ? '/' : '/login'}${location.search}`} replace />
           }
         />
+        {CourtReservationsPreview && (
+          <Route
+            path="/dev/court-reservations"
+            element={
+              <Suspense fallback={routeLoadingFallback}>
+                <CourtReservationsPreview />
+              </Suspense>
+            }
+          />
+        )}
         <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
             </PairSheetManager>

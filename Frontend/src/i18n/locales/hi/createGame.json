@@ -37,20 +37,16 @@
     "selectClub": "क्लब चुनें",
     "court": "कोर्ट",
     "hall": "हॉल",
-    "notBookedYet": "केवल गेम",
     "dontSelectCourt": "अभी कोई कोर्ट नहीं",
     "dontSelectHall": "अभी कोई हॉल नहीं",
     "courtNotSelected": "कोर्ट चुना नहीं गया",
     "hallNotSelected": "हॉल चुना नहीं गया",
     "multiCourtHint": "{{participants}} खिलाड़ियों के लिए अधिकतम {{count}} कोर्ट चुनें ({{selected}} चुने)",
-    "multiCourtNeedSharedSlots": "{{count}} कोर्ट चुनें जो एक ही समय पर खाली हों।",
-    "multiCourtNoSharedSlots": "सभी {{count}} चुने गए कोर्ट पर कोई समय स्लॉट खाली नहीं। दूसरे कोर्ट, तारीख या अवधि आज़माएँ।",
     "webCameraHint": "इस कोर्ट पर लिंक की गई वेब कैमरा है",
     "webCameraHintsTitle": "लिंक की गई वेब कैमरा",
     "webCameraHintNamed": "{{court}} पर लिंक की गई वेब कैमरा है",
     "webCameraHintAction": "लाइव देखने के लिए टैप करें",
     "hasBookedCourt": "मैंने यह कोर्ट बुक कर लिया है",
-    "hasBookedHall": "मैंने टेबल बुक कर ली है",
     "selectCourt": "कोर्ट चुनें",
     "selectHall": "हॉल चुनें",
     "selectClubFirst": "पहले क्लब चुनें",
@@ -243,10 +239,7 @@
     "timeSlot": "चुना स्लॉट",
     "loadingExternalSlots": "बाहरी स्लॉट लोड हो रहे हैं",
     "bookedWithoutCourt": "कोर्ट के बिना",
-    "notConfirmed": "पुष्टि नहीं",
-    "multipleCourts": "कई कोर्ट",
-    "noCourtsSelected": "कोई कोर्ट नहीं चुना",
-    "addCourt": "कोर्ट जोड़ें",
+    "notConfirmed": "नियोजित",
     "createButton": "गेम बनाएँ",
     "createButtonTournament": "टूर्नामेंट बनाएँ",
     "createButtonLeague": "लीग बनाएँ",
@@ -269,40 +262,19 @@
     "invitesWillBeSent_one": "गेम बनने के बाद खिलाड़ी को आमंत्रित किया जाएगा",
     "invitesWillBeSent_other": "गेम बनने के बाद {{count}} खिलाड़ियों को आमंत्रित किया जाएगा",
     "overlapHardSave": "यह समय अनुपलब्ध कोर्ट से ओवरलैप होता है (क्लब सिस्टम या ब्लॉक)। दूसरा स्लॉट चुनें।",
+    "overlapHardTitle": "इस समय कोर्ट उपलब्ध नहीं है",
     "overlapSoftTitle": "यहाँ एक और गेम निर्धारित है",
-    "overlapSoftMessage": "दूसरे खिलाड़ी का इस कोर्ट पर इस समय गेम है लेकिन बुकिंग अभी पुष्टि नहीं हुई। आप फिर भी जारी रख सकते हैं।",
+    "overlapSoftMessage": "इस समय इस कोर्ट पर किसी दूसरे खिलाड़ी का गेम नियोजित है, लेकिन कोर्ट आरक्षित नहीं है। आप फिर भी जारी रख सकते हैं।",
     "overlapSoftProceed": "फिर भी जारी रखें",
-    "markCourtBookedTitle": "कोर्ट को बुक के रूप में चिह्नित करें?",
-    "markCourtBookedMessage": "आपने कोर्ट चुना लेकिन बुक के रूप में चिह्नित नहीं किया। क्लब के साथ आरक्षित होने पर पुष्टि करें।",
-    "markCourtBookedYes": "हाँ, मैंने बुक कर लिया",
-    "markCourtBookedSkip": "अभी नहीं",
     "locationTime": {
-      "skipRealCourtToggle": "केवल गेम",
-      "realCourtBookingHint": "गेम बनाते समय {{club}} पर {{courts}} आरक्षित होंगे।",
-      "realCourtBookingHintEdit": "सेव करते समय {{club}} पर {{courts}} आरक्षित होंगे।",
-      "skipRealCourtHint": "गेम केवल Bandeja में शेड्यूल होगा।",
-      "skipRealCourtHintEdit": "गेम केवल Bandeja में अपडेट होगा।",
       "summaryFromBookings": "आपकी {{count}} आरक्षणों से",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "{{min}}–{{max}} आरक्षण चुनें ({{players}})",
-      "selectionProgress": "अधिकतम {{max}} कोर्ट चुनें ({{players}})",
-      "selectionCompleteOne": "1 कोर्ट लिंक",
-      "selectionCompleteMany": "{{count}} कोर्ट लिंक",
-      "selectionAtMax": "इस प्रारूप के लिए अधिकतम चुने ({{players}}) — अन्य आरक्षण अनुपलब्ध",
-      "emptyBookingsOnDate": "इस तारीख पर कोई आरक्षण नहीं",
-      "emptyBookingsHint": "दूसरी तारीख आज़माएँ, नया कोर्ट आरक्षित करें, या आरक्षण लिंक किए बिना गेम बनाएँ।",
-      "emptyBookingsReserveNow": "अभी कोर्ट आरक्षित करें",
-      "emptyBookingsGameOnly": "केवल गेम बनाएँ",
       "gridLegend": "हरा = आपका आरक्षण · लाल/पीला = लिया गया · प्राथमिक = चुना समय",
       "alsoUsedIn": "इनमें भी उपयोग: {{games}}",
       "pickAdjacentHour": "एक घंटा चुनें",
       "linkHintTitle": "गेम आपके आरक्षणों से लिंक होगा",
       "linkHintBody": "गेम बनाते समय ये कोर्ट बुकिंग लिंक होंगी।",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "गेम समय समायोजित करें",
-      "overrideHint": "गेम समय आपके आरक्षण से छोटा हो सकता है",
-      "overrideResetToast": "समय आरक्षण पर रीसेट",
       "preselectedBanner": "आरक्षण पहले से चुना",
       "linkedOnlyLabel": "आपके आरक्षणों से",
       "unlinkConfirm": "यह आरक्षण लिंक हटाएँ?",
@@ -310,67 +282,6 @@
       "unlinkNoCancelNote": "क्लब पर कोर्ट आरक्षण सक्रिय रहता है — केवल इस गेम का लिंक हटता है।",
       "syncInactiveCreate": "सिंक अभी सक्रिय नहीं — हम यहाँ स्लॉट या बुकिंग नहीं ला सके। आप फिर भी इस समय गेम बना सकते हैं।",
       "syncInactiveEdit": "सिंक अभी सक्रिय नहीं — हम यहाँ स्लॉट या बुकिंग नहीं ला सके। आप फिर भी इस समय गेम संपादित कर सकते हैं।"
-    },
-    "reservationIntent": {
-      "title": "आप कोर्ट कैसे ले रहे हैं?",
-      "otherOptions": "अन्य विकल्प",
-      "recommended": "अनुशंसित",
-      "recommendedShort": "अनु.",
-      "validation": {
-        "selectCourt": "पहले {{count}} कोर्ट चुनें।",
-        "selectBookableCourt": "पहले {{count}} ऑनलाइन-बुक करने योग्य कोर्ट चुनें।",
-        "selectTime": "पहले उपलब्ध समय चुनें।",
-        "selectDuration": "पहले अवधि चुनें।",
-        "selectReservations": "अपने खाते से {{count}} आरक्षण चुनें।",
-        "bookingRecordsLoading": "आपके आरक्षण विवरण अभी लोड हो रहे हैं — थोड़ी देर बाद फिर कोशिश करें।"
-      },
-      "reserveNow": {
-        "title": "कोर्ट बुक करें",
-        "chipTitle": "कोर्ट बुक",
-        "description": "समय चुनें — हम आपके लिए बुक करेंगे।"
-      },
-      "useExisting": {
-        "title": "मेरे पास पहले से बुकिंग है",
-        "chipTitle": "मेरी बुकिंग",
-        "description": "अपने क्लब खाते से आरक्षण जोड़ें।",
-        "contextAvailable": "इस तारीख पर {{count}} उपलब्ध"
-      },
-      "gameOnly": {
-        "title": "कोर्ट बुकिंग छोड़ें",
-        "chipTitle": "केवल गेम",
-        "description": "केवल गेम बनाएँ — कोई कोर्ट आरक्षित नहीं।"
-      },
-      "manualBooked": {
-        "title": "मैन्युअल रूप से पहले से बुक",
-        "chipTitle": "बुक",
-        "description": "ऑनलाइन आरक्षण के बिना बुक चिह्नित करें।"
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "वास्तविक कोर्ट आरक्षण बनाया जाएगा",
-          "body": "{{count}} कोर्ट, अवधि और समय चुनें। वही शेड्यूल आरक्षित होगा।"
-        },
-        "useExisting": {
-          "title": "गेम आपके आरक्षण से लिंक होगा",
-          "body": "आवश्यक {{count}} में से {{selected}} आरक्षण चुने।"
-        },
-        "gameOnly": {
-          "title": "कोई वास्तविक कोर्ट आरक्षण नहीं होगा",
-          "body": "गेम केवल Bandeja में शेड्यूल होगा।"
-        },
-        "manualBooked": {
-          "title": "गेम बुक के रूप में चिह्नित होगा",
-          "body": "कोई ऑनलाइन आरक्षण नहीं बनेगा।"
-        }
-      },
-      "cta": {
-        "reserveOne": "कोर्ट आरक्षित करें और गेम बनाएँ",
-        "reserveMany": "{{count}} कोर्ट आरक्षित करें और गेम बनाएँ",
-        "linkOne": "आरक्षण लिंक करें और गेम बनाएँ",
-        "linkMany": "{{count}} आरक्षण लिंक करें और गेम बनाएँ",
-        "gameOnly": "केवल गेम बनाएँ",
-        "manualBooked": "गेम बनाएँ"
-      }
     },
     "booktime": {
       "switchLabel": "गेम बनाते समय कोर्ट आरक्षित करें",
@@ -381,7 +292,6 @@
       "authorizeInClub": "{{club}} में अधिकृत करें",
       "dateHint": "इस क्लब पर आप {{days}} दिन आगे तक बुक कर सकते हैं।",
       "connectedChip": "साइन इन · {{phone}}",
-      "createCta": "गेम बनाएँ और कोर्ट आरक्षित करें",
       "signInToContinue": "जारी रखने के लिए साइन इन करें",
       "confirmTitle": "बनाने के लिए तैयार?",
       "confirmPrimary": "आरक्षित करें और बनाएँ",
@@ -406,8 +316,7 @@
       "cancelPolicy": "शुरुआत से {{hours}} घंटे पहले तक मुफ़्त रद्दीकरण।",
       "yourGame": "आपका गेम",
       "snapshotBlocked": "लाइव उपलब्धता अभी सिंक नहीं। सिंक का इंतज़ार करें या दूसरा दिन चुनें।",
-      "alreadyReserved": "इस गेम के लिए कोर्ट पहले से आरक्षित।",
-      "liveApiUnavailable": "कोर्ट आरक्षण अभी उपलब्ध नहीं — सामान्य शेड्यूलिंग उपयोग हो रही है।"
+      "alreadyReserved": "इस गेम के लिए कोर्ट पहले से आरक्षित।"
     },
     "padeloo": {
       "authTitle": "अपना Padeloo खाता जोड़ें",
@@ -611,6 +520,85 @@
     "lookingNudgeTitle_other": "{{count}} खिलाड़ी इस समय गेम ढूंढ रहे हैं",
     "lookingNudgeHint": "वे इसी समय खेलना चाहते हैं — आपका निमंत्रण तुरंत पहुंचेगा",
     "lookingNudgeInvite_one": "बुलाएं",
-    "lookingNudgeInvite_other": "{{count}} को बुलाएं"
+    "lookingNudgeInvite_other": "{{count}} को बुलाएं",
+    "courtPlan": {
+      "courts": "कोर्ट",
+      "fewerCourts": "कम कोर्ट",
+      "moreCourts": "ज़्यादा कोर्ट",
+      "anyCourt": "कोई भी कोर्ट",
+      "slotLabel": "कोर्ट {{n}}",
+      "sheet": {
+        "hint": "चुने गए समय की उपलब्धता।",
+        "noTime": "कौन-से कोर्ट खाली हैं, देखने के लिए समय चुनें।",
+        "linkedHint": "यह कोर्ट आपके आरक्षण से है।",
+        "free": "खाली",
+        "plannedGame": "एक योजनाबद्ध गेम इसका उपयोग करता है — फिर भी संभव",
+        "club": "क्लब में बुक है",
+        "hold": "क्लब ने रोका है",
+        "reservedGame": "आरक्षित गेम के पास है",
+        "notBookable": "ऑनलाइन बुक नहीं हो सकता",
+        "onSlot": "कोर्ट {{n}} के लिए चुना गया — बदलने के लिए टैप करें",
+        "linkedElsewhere": "आपके आरक्षण में उपयोग",
+        "anyHint": "बाद में तय करें, या क्लब को चुनने दें",
+        "anyReserveHint": "आरक्षण करते समय हम खाली कोर्ट चुनेंगे",
+        "reservedToggle": "मैंने यह कोर्ट आरक्षित किया है",
+        "removeReservation": "यह आरक्षण हटाएँ"
+      },
+      "atClub": {
+        "title": "क्लब में आरक्षण?",
+        "reserveNow": "अभी आरक्षित करें",
+        "alreadyReserved": "पहले से आरक्षित",
+        "notYet": "अभी नहीं",
+        "reserveNowHint_one": "गेम बनाते समय हम {{club}} में {{count}} कोर्ट आरक्षित करेंगे।",
+        "reserveNowHint_other": "गेम बनाते समय हम {{club}} में {{count}} कोर्ट आरक्षित करेंगे।",
+        "alreadyReservedHint": "नीचे अपने आरक्षण चुनें। बिना आरक्षण वाले कोर्ट आरक्षित के रूप में चिह्नित होंगे।",
+        "alreadyReservedMarkHint": "हम कोर्ट को आरक्षित के रूप में चिह्नित करेंगे।",
+        "notYetHint": "गेम बिना कोर्ट आरक्षण के तय है। आप बाद में आरक्षित कर सकते हैं।",
+        "reservationsNudge": "उस दिन इस क्लब में आपका एक आरक्षण है।",
+        "useThem": "इस्तेमाल करें",
+        "authSkip": "अभी नहीं — बाद में बुक करूँगा",
+        "markSkip": "छोड़ें — बस कोर्ट को बुक किया हुआ चिह्नित करें"
+      },
+      "reservations": {
+        "title": "उस दिन के आपके आरक्षण",
+        "empty": "उस दिन आपके {{club}} खाते में कोई आरक्षण नहीं है। कोर्ट आरक्षित के रूप में चिह्नित होंगे।",
+        "markRest": "जिन कोर्ट से कोई आरक्षण जुड़ा नहीं है, वे आरक्षित के रूप में चिह्नित हैं।"
+      },
+      "timePrompt": {
+        "question": "आरक्षण का समय {{range}} इस्तेमाल करें?",
+        "yes": "हाँ",
+        "keep": "{{range}} रखें"
+      },
+      "time": {
+        "club": "{{court}} क्लब में बुक है",
+        "hold": "{{court}} क्लब ने रोका है",
+        "reservedGame": "{{court}} एक आरक्षित गेम के पास है",
+        "notEnoughCourts": "पर्याप्त खाली कोर्ट नहीं ({{needed}} में से {{free}})",
+        "softNote": "उस समय एक कोर्ट पर दूसरा योजनाबद्ध गेम भी है — आप फिर भी यह समय चुन सकते हैं।",
+        "unavailableAt": "{{time}} उपलब्ध नहीं: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "बनाते समय आरक्षित",
+        "courts_one": "{{count}} कोर्ट",
+        "courts_other": "{{count}} कोर्ट"
+      },
+      "issue": {
+        "timeRequired": "पहले समय चुनें।",
+        "durationRequired": "पहले अवधि चुनें।",
+        "timeBlocked": "आपको चाहिए उस कोर्ट पर यह समय भरा है। दूसरा समय या कोर्ट चुनें।",
+        "courtNotBookable": "चुना गया कोर्ट ऑनलाइन बुक नहीं हो सकता। दूसरा कोर्ट चुनें या “पहले से आरक्षित” चुनें।",
+        "notEnoughBookableCourts": "उस समय आरक्षण के लिए पर्याप्त खाली कोर्ट नहीं हैं।",
+        "reservationsLoading": "आपके आरक्षण अभी लोड हो रहे हैं — थोड़ी देर में फिर कोशिश करें।"
+      },
+      "cta": {
+        "reserve_one": "{{count}} कोर्ट आरक्षित करें और बनाएँ",
+        "reserve_other": "{{count}} कोर्ट आरक्षित करें और बनाएँ",
+        "withReserved_one": "{{count}} आरक्षित कोर्ट के साथ बनाएँ",
+        "withReserved_other": "{{count}} आरक्षित कोर्ट के साथ बनाएँ"
+      },
+      "rollbackReleased": "इस प्रयास में आरक्षित किए गए कोर्ट रद्द कर दिए गए।",
+      "partialKept": "{{total}} में से {{count}} कोर्ट आरक्षित हुए और आरक्षित ही रहेंगे। रद्द करने के लिए क्लब से संपर्क करें।",
+      "courtsSaveFailed": "गेम बन गया, लेकिन उसके कोर्ट सहेजे नहीं जा सके। गेम पेज पर जाँच करें।"
+    }
   }
 }

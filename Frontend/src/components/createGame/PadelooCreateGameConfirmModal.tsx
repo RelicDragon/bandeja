@@ -12,7 +12,8 @@ import type { SummaryChipItem } from './summaryHeader/CreateGameSummaryBar';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { buildPadelooEndTime } from '@/integrations/padeloo/bookFlow';
 import { createHydratedClubBookingProvider } from '@/integrations/booking/createClubBookingProvider';
-import type { BookSlotContext } from '@/integrations/booking/ClubBookingProvider';
+import type { BookSlotContext, ClubBookingProvider } from '@/integrations/booking/ClubBookingProvider';
+import { hasRollbackFailures, rollbackBooktimeBookings } from '@shared/gameBooking/rollbackBooktimeBookings';
 import { bookingErrorMessage } from '@/utils/bookingErrorMessage.util';
 import { createGameOrBookingErrorMessage } from '@/utils/createGameFailureToast';
 import { formatClubDateKey } from '@/integrations/padeloo/slots';
@@ -101,9 +102,10 @@ export function PadelooCreateGameConfirmModal({
     setBusy(true);
     setErrorDetail(null);
     const bookedIds: string[] = [];
+    let provider: ClubBookingProvider | null = null;
 
     try {
-      const provider = await createHydratedClubBookingProvider(club, {
+      provider = await createHydratedClubBookingProvider(club, {
         durationMinutes: bookings[0]?.durationMinutes,
       });
       if (!provider) throw new Error(t('club.padeloo.errors.generic'));
@@ -149,12 +151,24 @@ export function PadelooCreateGameConfirmModal({
       });
       onSuccess();
     } catch (err) {
-      const detail = createGameOrBookingErrorMessage(
-        err,
-        t,
-        'createGame.booktime.bookFailed',
-        bookingErrorMessage,
-      );
+      // All-or-nothing: a partial multi-court booking, or a booking whose game
+      // could not be saved, is cancelled again (the provider supports it).
+      const booked: ClubBookingProvider | null = provider;
+      const rollback =
+        booked && bookedIds.length > 0
+          ? await rollbackBooktimeBookings(
+              (externalBookingId) => booked.cancelBooking(externalBookingId, bookFlowContext.refreshSnapshot),
+              bookedIds,
+            )
+          : [];
+      const detail = hasRollbackFailures(rollback)
+        ? t('createGame.booktime.createFailedRollback')
+        : [
+            createGameOrBookingErrorMessage(err, t, 'createGame.booktime.bookFailed', bookingErrorMessage),
+            rollback.length > 0 ? t('createGame.courtPlan.rollbackReleased') : null,
+          ]
+            .filter(Boolean)
+            .join(' ');
       setErrorDetail(detail);
       if (isProviderBookingError(err) && err.code === 'SlotTaken') {
         onSlotTaken();

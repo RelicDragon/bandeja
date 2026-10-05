@@ -50,9 +50,11 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import {
-  isExternallyFullyBookedGame,
-  resolveGameBookingBadgeKind,
-} from '@/utils/gameHasConfirmedClubBooking';
+  gameShowsCourtReservation,
+  reservationTimeFormatter,
+  selectCourtReservationView,
+} from '@/utils/courtReservationView';
+import { ReservationSummaryPill } from '@/components/GameDetails/ReservationSummaryPill';
 import { eventVenueLabel } from '@/utils/eventListingDisplay';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
@@ -74,7 +76,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
-import { Bookmark, CalendarCheck, CheckCircle2, ChevronDown, MapPin, MessageCircle, Plane, Users } from 'lucide-react';
+import { Bookmark, CheckCircle2, ChevronDown, MapPin, MessageCircle, Plane, Users } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
@@ -268,9 +270,10 @@ const GameCardMatch = memo(function GameCardMatch({
     ? getRelativeDayLabel(game.startTime, clubTz ?? getUserTimezone(), t)
     : null;
 
-  const bookingBadgeKind = resolveGameBookingBadgeKind(game);
-  const showConfirmedCourtBadge = bookingBadgeKind !== 'none';
-  const linkedExternalBooking = isExternallyFullyBookedGame(game);
+  // Card shows reservation only when something is reserved; "Planned" is the
+  // default state of every game and would be noise on a list of cards.
+  const courtReservation = gameShowsCourtReservation(game) ? selectCourtReservationView(game) : null;
+  const showCourtReservation = courtReservation != null && courtReservation.summary.kind !== 'planned';
 
   const trainerParticipant =
     game.entityType === 'TRAINING' && game.trainerId
@@ -359,7 +362,7 @@ const GameCardMatch = memo(function GameCardMatch({
   const titleIsVenue = !hasVisibleTitle && Boolean(venueLabel);
   const venueLine = titleIsVenue ? game.court?.name ?? null : venueLabel;
   const showLevel = !isBar && gameShowsLevelBand(game);
-  const hasMetaLine = showLevel || Boolean(game.perHeadPrice) || showConfirmedCourtBadge;
+  const hasMetaLine = showLevel || Boolean(game.perHeadPrice) || showCourtReservation;
 
   const hasTagRow =
     // PRD 345 — the `↻ Weekly` pill is on its own enough to need the row.
@@ -724,17 +727,12 @@ const GameCardMatch = memo(function GameCardMatch({
                   ) : null}
                   {/* PRD 348 — per-head share; hidden when the price is unknown or zero. */}
                   {game.perHeadPrice ? <GameCardPerHeadPrice perHeadPrice={game.perHeadPrice} /> : null}
-                  {showConfirmedCourtBadge ? (
-                    <span
-                      className={`inline-flex items-center gap-1 font-medium ${
-                        linkedExternalBooking
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : 'text-primary-600 dark:text-primary-400'
-                      }`}
-                    >
-                      <CalendarCheck size={12} className="shrink-0" aria-hidden />
-                      {t('games.courtBookedBadge', { defaultValue: 'Booked' })}
-                    </span>
+                  {showCourtReservation && courtReservation ? (
+                    <ReservationSummaryPill
+                      view={courtReservation}
+                      variant="inline"
+                      formatTime={reservationTimeFormatter(clubTz, displaySettings)}
+                    />
                   ) : null}
                 </div>
               ) : null}

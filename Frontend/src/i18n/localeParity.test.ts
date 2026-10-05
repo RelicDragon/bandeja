@@ -21,6 +21,11 @@ export const PARITY_IDENTICAL_ALLOWLIST: string[] = [
   'cost.payment.method.iban',
   'cost.payment.method.clabe',
   'cost.payment.handle.IBAN.label',
+  // Unit symbols: "h" / "min" are written the same in several locales
+  // (es, cs, sr, id); only the placeholders surround them.
+  'courtReservation.duration.h',
+  'courtReservation.duration.m',
+  'courtReservation.duration.hm',
 ];
 
 /** `Frontend/src/i18n/config.ts` builds exactly these 11 bundles. */
@@ -79,10 +84,14 @@ const ENGAGEMENT_NAMESPACES = ['organizerNextActions'] as const;
 /** AI agent chats. */
 const AGENT_NAMESPACES = ['agent'] as const;
 
+/** Court reservations (booking redesign; owned namespace). */
+const COURT_RESERVATION_NAMESPACES = ['courtReservation'] as const;
+
 const NAMESPACES = [
   ...PROGRAM_NAMESPACES,
   ...ENGAGEMENT_NAMESPACES,
   ...AGENT_NAMESPACES,
+  ...COURT_RESERVATION_NAMESPACES,
   ...LEGACY_CLEAN_NAMESPACES,
 ];
 

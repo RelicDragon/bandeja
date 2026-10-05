@@ -38,20 +38,16 @@
     "selectClub": "Vybrat klub",
     "court": "Kurt",
     "hall": "Hala",
-    "notBookedYet": "Game only",
     "dontSelectCourt": "No court yet",
     "dontSelectHall": "No hall yet",
     "courtNotSelected": "Kurt není vybrán",
     "hallNotSelected": "Hala není vybrána",
     "multiCourtHint": "Vyberte až {{count}} kurtů pro {{participants}} hráčů (vybráno {{selected}})",
-    "multiCourtNeedSharedSlots": "Vyberte {{count}} kurtů, které jsou volné ve stejný čas.",
-    "multiCourtNoSharedSlots": "Ve stejný čas nejsou volné všechny {{count}} vybrané kurty. Zkuste jiné kurty, datum nebo délku.",
     "webCameraHint": "Tento kurt má propojenou webovou kameru",
     "webCameraHintsTitle": "Propojené webové kamery",
     "webCameraHintNamed": "{{court}} má propojenou webovou kameru",
     "webCameraHintAction": "Klepněte pro živý přenos",
     "hasBookedCourt": "Mám rezervovaný tento kurt",
-    "hasBookedHall": "Mám rezervovaný stůl",
     "selectCourt": "Vybrat kurt",
     "selectHall": "Vybrat halu",
     "selectClubFirst": "Nejprve vyberte klub",
@@ -243,10 +239,7 @@
     "timeSlot": "Vybraný termín",
     "loadingExternalSlots": "Načítání externích termínů",
     "bookedWithoutCourt": "Bez kurtu",
-    "notConfirmed": "nepotvrzeno",
-    "multipleCourts": "Více kurtů",
-    "noCourtsSelected": "Nevybrány žádné kurty",
-    "addCourt": "Přidat kurt",
+    "notConfirmed": "naplánováno",
     "createButton": "Vytvořit zápas",
     "createButtonTournament": "Vytvořit turnaj",
     "createButtonLeague": "Vytvořit ligu",
@@ -428,32 +421,14 @@
       "match": "Zápas"
     },
     "locationTime": {
-      "skipRealCourtToggle": "Game only",
-      "realCourtBookingHint": "{{courts}} v {{club}} — rezervace při vytvoření hry.",
-      "realCourtBookingHintEdit": "{{courts}} v {{club}} — rezervace při uložení.",
-      "skipRealCourtHint": "The game will be scheduled in Bandeja only.",
-      "skipRealCourtHintEdit": "The game will be updated in Bandeja only.",
       "summaryFromBookings": "Z vašich {{count}} rezervací",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Vyberte {{min}}–{{max}} rezervací ({{players}} hráčů)",
-      "selectionProgress": "Vyberte až {{max}} kurtů ({{players}})",
-      "selectionCompleteOne": "1 kurt propojen",
-      "selectionCompleteMany": "{{count}} kurtů propojeno",
-      "selectionAtMax": "Maximum pro tento formát ({{players}}) — ostatní rezervace nejsou k dispozici",
-      "emptyBookingsOnDate": "Na tento den nemáte žádné rezervace",
-      "emptyBookingsHint": "Zkuste jiné datum, rezervujte kurt, nebo vytvořte hru bez propojení rezervace.",
-      "emptyBookingsReserveNow": "Rezervovat kurt",
-      "emptyBookingsGameOnly": "Vytvořit jen hru",
       "gridLegend": "Zelená = vaše rezervace · Červená/žlutá = obsazeno · Primární = vybraný čas",
       "alsoUsedIn": "Také použito v: {{games}}",
       "pickAdjacentHour": "Vyberte jednu hodinu",
       "linkHintTitle": "Hra bude propojena s vašimi rezervacemi",
       "linkHintBody": "Tyto rezervace kurtů budou propojeny při vytvoření hry.",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "Upravit čas hry",
-      "overrideHint": "Čas hry může být kratší než vaše rezervace",
-      "overrideResetToast": "Čas obnoven podle rezervací",
       "preselectedBanner": "Rezervace předvybrána",
       "linkedOnlyLabel": "Z vašich rezervací",
       "unlinkConfirm": "Odebrat propojení s touto rezervací?",
@@ -461,67 +436,6 @@
       "unlinkNoCancelNote": "Rezervace kurtu u klubu zůstane aktivní — odebíráme jen propojení s touto hrou.",
       "syncInactiveCreate": "Synchronizace teď neběží — nemůžeme načíst sloty ani rezervovat kurt. Hru na tento čas stejně můžete vytvořit.",
       "syncInactiveEdit": "Synchronizace teď neběží — nemůžeme načíst sloty ani rezervovat kurt. Hru na tento čas stejně můžete upravit."
-    },
-    "reservationIntent": {
-      "title": "Jak zajistíte kurt?",
-      "otherOptions": "Další možnosti",
-      "recommended": "Doporučeno",
-      "recommendedShort": "Dop",
-      "validation": {
-        "selectCourt": "Nejprve vyberte {{count}} kurt(ů).",
-        "selectBookableCourt": "Nejprve vyberte {{count}} kurt(ů) s online rezervací.",
-        "selectTime": "Nejprve vyberte dostupný čas.",
-        "selectDuration": "Nejprve vyberte délku.",
-        "selectReservations": "Vyberte {{count}} rezervaci/rezervace z vašeho účtu.",
-        "bookingRecordsLoading": "Načítáme detaily rezervací — chvíli počkejte a zkuste znovu."
-      },
-      "reserveNow": {
-        "title": "Rezervovat kurt",
-        "chipTitle": "Rezerv.|kurt",
-        "description": "Vyberte čas — rezervujeme za vás."
-      },
-      "useExisting": {
-        "title": "Už mám rezervaci",
-        "chipTitle": "Moje|rezerv.",
-        "description": "Propojte rezervaci z účtu klubu.",
-        "contextAvailable": "{{count}} k dispozici v tento den"
-      },
-      "gameOnly": {
-        "title": "Bez rezervace kurtu",
-        "chipTitle": "Jen|hra",
-        "description": "Jen vytvořit hru — kurt se nerezervuje."
-      },
-      "manualBooked": {
-        "title": "Již rezervováno ručně",
-        "chipTitle": "Rezervováno",
-        "description": "Označit jako rezervované bez online rezervace."
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "Bude vytvořena skutečná rezervace kurtu",
-          "body": "Vyberte {{count}} kurt(ů), délku a čas. Rezervován bude přesně tento termín."
-        },
-        "useExisting": {
-          "title": "Hra bude propojena s vaší rezervací",
-          "body": "Vybráno {{selected}} z {{count}} požadovaných rezervací."
-        },
-        "gameOnly": {
-          "title": "Skutečná rezervace kurtu nevznikne",
-          "body": "Hra bude naplánována pouze v Bandeje."
-        },
-        "manualBooked": {
-          "title": "Hra bude označena jako rezervovaná",
-          "body": "Online rezervace se nevytvoří."
-        }
-      },
-      "cta": {
-        "reserveOne": "Rezervovat kurt a vytvořit hru",
-        "reserveMany": "Rezervovat {{count}} kurtů a vytvořit hru",
-        "linkOne": "Propojit rezervaci a vytvořit hru",
-        "linkMany": "Propojit {{count}} rezervací a vytvořit hru",
-        "gameOnly": "Vytvořit pouze hru",
-        "manualBooked": "Vytvořit hru"
-      }
     },
     "booktime": {
       "switchLabel": "Rezervovat kurt při vytvoření hry",
@@ -532,7 +446,6 @@
       "authorizeInClub": "Autorizovat v {{club}}",
       "dateHint": "Můžete rezervovat až {{days}} dní dopředu v tomto klubu.",
       "connectedChip": "Přihlášen · {{phone}}",
-      "createCta": "Vytvořit hru a rezervovat kurt",
       "signInToContinue": "Pro pokračování se přihlaste",
       "confirmTitle": "Připraveno vytvořit?",
       "confirmPrimary": "Rezervovat a vytvořit",
@@ -554,7 +467,6 @@
       "createFailedRollback": "Hru se nepodařilo vytvořit. Nepodařilo se potvrdit zrušení rezervace kurtu — ověřte to u klubu.",
       "sessionExpired": "Přihlášení vypršelo. Přihlaste se znovu.",
       "alreadyReserved": "Kurt je již rezervován",
-      "liveApiUnavailable": "Rezervace kurtu teď není k dispozici — pokračujte běžným plánováním.",
       "reservedAs": "Rezervováno jako: {{identity}}",
       "cancelPolicy": "Bezplatné zrušení až {{hours}} hodin před termínem.",
       "yourGame": "Vaše hra",
@@ -584,13 +496,10 @@
     },
     "pickSport": "Choose sport",
     "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
-    "overlapSoftTitle": "Another game is planned here",
-    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapHardTitle": "Kurt je v tuto dobu nedostupný",
+    "overlapSoftTitle": "Zde je naplánován jiný zápas",
+    "overlapSoftMessage": "Jiný hráč má na tomto kurtu v tuto dobu naplánovaný zápas, ale kurt není rezervován. Můžete pokračovat.",
     "overlapSoftProceed": "Continue anyway",
-    "markCourtBookedTitle": "Označit kurt jako rezervovaný?",
-    "markCourtBookedMessage": "Vybrali jste kurt, ale neoznačili jste ho jako rezervovaný. Potvrďte, až si ho rezervujete u klubu.",
-    "markCourtBookedYes": "Ano, mám ho rezervovaný",
-    "markCourtBookedSkip": "Ještě ne",
     "suitableForNovices": {
       "title": "Nováčci vítáni",
       "hint": "Pomůžete novým hráčům se zorientovat. Rozsah úrovně platí i nadále."
@@ -603,6 +512,93 @@
     "lookingNudgeInvite_one": "Pozvat",
     "lookingNudgeInvite_few": "Pozvat {{count}}",
     "lookingNudgeInvite_many": "Pozvat {{count}}",
-    "lookingNudgeInvite_other": "Pozvat {{count}}"
+    "lookingNudgeInvite_other": "Pozvat {{count}}",
+    "courtPlan": {
+      "courts": "Kurty",
+      "fewerCourts": "Méně kurtů",
+      "moreCourts": "Více kurtů",
+      "anyCourt": "Libovolný kurt",
+      "slotLabel": "Kurt {{n}}",
+      "sheet": {
+        "hint": "Dostupnost pro zvolený čas.",
+        "noTime": "Vyberte čas a uvidíte, které kurty jsou volné.",
+        "linkedHint": "Tento kurt pochází z vaší rezervace.",
+        "free": "Volný",
+        "plannedGame": "Používá ho plánovaná hra — stále možné",
+        "club": "Rezervován v klubu",
+        "hold": "Blokován klubem",
+        "reservedGame": "Obsazen rezervovanou hrou",
+        "notBookable": "Nelze rezervovat online",
+        "onSlot": "Vybrán pro kurt {{n}} — klepnutím prohodíte",
+        "linkedElsewhere": "Používá ho vaše rezervace",
+        "anyHint": "Rozhodněte později, nebo ať ho přidělí klub",
+        "anyReserveHint": "Při rezervaci vybereme volný kurt",
+        "reservedToggle": "Tento kurt mám rezervovaný",
+        "removeReservation": "Odebrat tuto rezervaci"
+      },
+      "atClub": {
+        "title": "Rezervace v klubu?",
+        "reserveNow": "Rezervovat",
+        "alreadyReserved": "Už mám",
+        "notYet": "Zatím ne",
+        "reserveNowHint_one": "Při vytvoření hry zarezervujeme {{count}} kurt v {{club}}.",
+        "reserveNowHint_few": "Při vytvoření hry zarezervujeme {{count}} kurty v {{club}}.",
+        "reserveNowHint_many": "Při vytvoření hry zarezervujeme {{count}} kurtu v {{club}}.",
+        "reserveNowHint_other": "Při vytvoření hry zarezervujeme {{count}} kurtů v {{club}}.",
+        "alreadyReservedHint": "Vyberte své rezervace níže. Kurty bez rezervace se označí jako rezervované.",
+        "alreadyReservedMarkHint": "Kurty označíme jako rezervované.",
+        "notYetHint": "Hra je naplánovaná bez rezervace kurtu. Rezervovat můžete později.",
+        "reservationsNudge": "V tomto klubu máte ten den rezervaci.",
+        "useThem": "Použít",
+        "authSkip": "Zatím ne — zarezervuji později",
+        "markSkip": "Přeskočit — jen označit kurty jako rezervované"
+      },
+      "reservations": {
+        "title": "Vaše rezervace v ten den",
+        "empty": "Ve vašem účtu {{club}} nejsou na ten den žádné rezervace. Kurty se označí jako rezervované.",
+        "markRest": "Kurty bez propojené rezervace jsou označené jako rezervované."
+      },
+      "timePrompt": {
+        "question": "Použít čas rezervace {{range}}?",
+        "yes": "Ano",
+        "keep": "Ponechat {{range}}"
+      },
+      "time": {
+        "club": "{{court}} je rezervován v klubu",
+        "hold": "{{court}} je blokován klubem",
+        "reservedGame": "{{court}} obsadila rezervovaná hra",
+        "notEnoughCourts": "Nedostatek volných kurtů ({{free}} z {{needed}})",
+        "softNote": "V tu dobu je na kurtu naplánovaná i jiná hra — čas přesto můžete zvolit.",
+        "unavailableAt": "{{time}} není k dispozici: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "Rezervace při vytvoření",
+        "courts_one": "{{count}} kurt",
+        "courts_few": "{{count}} kurty",
+        "courts_many": "{{count}} kurtu",
+        "courts_other": "{{count}} kurtů"
+      },
+      "issue": {
+        "timeRequired": "Nejdřív vyberte čas.",
+        "durationRequired": "Nejdřív vyberte délku.",
+        "timeBlocked": "Tento čas je obsazený na kurtu, který potřebujete. Vyberte jiný čas nebo kurt.",
+        "courtNotBookable": "Vybraný kurt nelze rezervovat online. Vyberte jiný kurt nebo „Už mám“.",
+        "notEnoughBookableCourts": "V tu dobu není volných dost kurtů k rezervaci.",
+        "reservationsLoading": "Vaše rezervace se ještě načítají — zkuste to za chvíli."
+      },
+      "cta": {
+        "reserve_one": "Rezervovat {{count}} kurt a vytvořit",
+        "reserve_few": "Rezervovat {{count}} kurty a vytvořit",
+        "reserve_many": "Rezervovat {{count}} kurtu a vytvořit",
+        "reserve_other": "Rezervovat {{count}} kurtů a vytvořit",
+        "withReserved_one": "Vytvořit s {{count}} rezervovaným kurtem",
+        "withReserved_few": "Vytvořit se {{count}} rezervovanými kurty",
+        "withReserved_many": "Vytvořit s {{count}} rezervovaného kurtu",
+        "withReserved_other": "Vytvořit s {{count}} rezervovanými kurty"
+      },
+      "rollbackReleased": "Kurty rezervované při tomto pokusu byly zrušeny.",
+      "partialKept": "Rezervováno {{count}} z {{total}} kurtů a rezervace zůstávají. Zrušit je můžete přes klub.",
+      "courtsSaveFailed": "Hra je vytvořená, ale její kurty se nepodařilo uložit. Zkontrolujte je na stránce hry."
+    }
   }
 }

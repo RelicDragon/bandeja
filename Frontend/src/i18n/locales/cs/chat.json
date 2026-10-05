@@ -236,12 +236,12 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem baru",
         "GAME_CLUB_CHANGED": "Místo baru změněno na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/čas baru změněn na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Stav rezervace sálu změněn na {{bookingStatus}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervace sálu: {{bookingStatus}}",
         "bookingStatuses": {
-          "EXTERNAL_FULL": "Plně rezervováno",
-          "EXTERNAL_PARTIAL": "Není plně rezervováno",
-          "MANUAL": "Sál objednán",
-          "NONE": "Ještě neobjednáno"
+          "EXTERNAL_FULL": "Rezervováno",
+          "EXTERNAL_PARTIAL": "Částečně rezervováno",
+          "MANUAL": "Rezervováno",
+          "NONE": "Naplánováno"
         }
       },
       "TRAINING": {
@@ -254,7 +254,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem tréninku",
         "GAME_CLUB_CHANGED": "Místo tréninku změněno na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/čas tréninku změněn na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Stav rezervace kurtu změněn na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervace kurtu: {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} se připojil k turnaji",
@@ -266,7 +266,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem turnaje",
         "GAME_CLUB_CHANGED": "Místo turnaje změněno na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/čas turnaje změněn na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Stav rezervace kurtu změněn na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervace kurtu: {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} se připojil k lize",
@@ -278,7 +278,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem ligy",
         "GAME_CLUB_CHANGED": "Místo ligy změněno na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/čas ligy změněn na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Stav rezervace kurtu změněn na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervace kurtu: {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} se připojil k sezóně ligy",
@@ -290,18 +290,18 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem sezóny ligy",
         "GAME_CLUB_CHANGED": "Místo sezóny ligy změněno na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/čas sezóny ligy změněn na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Stav rezervace kurtu změněn na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervace kurtu: {{bookingStatus}}"
       },
       "actions": {
         "joined": "se připojil k zápasu",
         "left": "opustil zápas"
       },
-      "GAME_BOOKING_STATUS_CHANGED": "Stav rezervace kurtu změněn na {{bookingStatus}}",
+      "GAME_BOOKING_STATUS_CHANGED": "Rezervace kurtu: {{bookingStatus}}",
       "bookingStatuses": {
-        "EXTERNAL_FULL": "Plně rezervováno",
-        "EXTERNAL_PARTIAL": "Není plně rezervováno",
-        "MANUAL": "Kurt objednán",
-        "NONE": "Ještě neobjednáno"
+        "EXTERNAL_FULL": "Všechny kurty rezervovány",
+        "EXTERNAL_PARTIAL": "Částečně rezervováno",
+        "MANUAL": "Rezervováno",
+        "NONE": "Naplánováno"
       },
       "ATTENDANCE_NUDGED": "{{userName}} požádal všechny o potvrzení účasti",
       "USER_NOTED_NO_SHOW": "{{userName}} byl označen jako nedostavivší se",

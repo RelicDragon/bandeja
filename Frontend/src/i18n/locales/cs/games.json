@@ -311,6 +311,7 @@
       "lookingTodayAndTomorrow_few": "{{count}} lidé hledají hru dnes a zítra ve městě {{city}}",
       "lookingTodayAndTomorrow_many": "{{count}} člověka hledá hru dnes a zítra ve městě {{city}}",
       "lookingTodayAndTomorrow_other": "{{count}} lidí hledá hru dnes a zítra ve městě {{city}}"
-    }
+    },
+    "reservationPartly": "Částečně rezervováno"
   }
 }

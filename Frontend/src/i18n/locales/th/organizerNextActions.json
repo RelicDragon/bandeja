@@ -8,8 +8,10 @@
       "invite": "เชิญ"
     },
     "booking": {
-      "notBooked": "ยังไม่ได้จองคอร์ต",
-      "partlyBooked": "จองคอร์ตได้เพียงบางส่วน",
+      "notReservedOne": "ยังไม่ได้จองคอร์ต",
+      "notReservedMany": "ยังไม่ได้จองคอร์ตใดเลย",
+      "partlyReserved": "จองแล้ว {{reserved}} จาก {{total}} คอร์ต",
+      "gapAt": "การจองมีช่วงว่างเวลา {{time}}",
       "seeBookings": "ดูการจอง",
       "editCourt": "แก้ไขคอร์ต"
     },

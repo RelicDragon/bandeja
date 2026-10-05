@@ -14,8 +14,10 @@
       "invite": "Пригласить"
     },
     "booking": {
-      "notBooked": "Корт ещё не забронирован",
-      "partlyBooked": "Корт забронирован частично",
+      "notReservedOne": "Корт ещё не забронирован",
+      "notReservedMany": "Корты ещё не забронированы",
+      "partlyReserved": "Забронировано кортов: {{reserved}} из {{total}}",
+      "gapAt": "Пробел в брони в {{time}}",
       "seeBookings": "К бронированиям",
       "editCourt": "Изменить корт"
     },

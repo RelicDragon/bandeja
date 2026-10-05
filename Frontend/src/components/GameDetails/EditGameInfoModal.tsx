@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { addHours, format } from 'date-fns';
+import { addHours } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings, Users } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
-import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { gamesApi, courtsApi, clubsApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
@@ -20,16 +19,11 @@ import { GeneralTab, type GeneralTabState } from './editGameInfo/GeneralTab';
 import { LocationTimeTab } from './editGameInfo/LocationTimeTab';
 import type { WhereTabState } from './editGameInfo/locationTimeTypes';
 import {
-  isLocationTimePartialSaveError,
-} from '@/components/gameLocationTime/locationTimeSaveErrors';
-import {
-  saveLocationTime,
-  buildEditLocationTimeSaveDraft,
-} from '@/components/gameLocationTime/useSaveGameLocationTime';
-import {
-  areEditLocationTimeDraftsEqual,
-  type EditLocationTimeDraft,
-} from '@/components/gameLocationTime/locationTimeDraft';
+  buildEditLocationTimeRequests,
+  currentCourtSlotCount,
+  initialCourtIds,
+  saveEditLocationTime,
+} from './editGameInfo/saveEditLocationTime';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { resolvePaymentMethods } from '@shared/payments/paymentMethodSelection';
 import {
@@ -40,39 +34,23 @@ import {
 import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import { GameSettings } from './GameSettings';
 import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
-import { useClubTimeOptions } from '@/hooks/useClubTimeOptions';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
-import {
-  clubHasBookingIntegration,
-  getKlikterenVenueId,
-  getPadelooClubId,
-  isWeltnerClub, isKlikterenClub,
-  isNspadelClub,
-  isPadelooClub,
-  parseBooktimeIntegrationConfig,
-} from '@shared/clubIntegration';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
 import { SeriesScopeSheet } from '@/features/game-series/SeriesScopeSheet';
-import { useClubBookingAuth } from '@/hooks/useClubBookingAuth';
-import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
-import { useClubSnapshotRefresh } from '@/hooks/useClubSnapshotRefresh';
-import { ClubCreateGameConfirmModal } from '@/components/createGame/ClubCreateGameConfirmModal';
-import { ClubBookingConnectInline } from '@/components/booktime/ClubBookingConnectInline';
-import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
-import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
-import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
 import { courtMatchesSportFilter } from '@/utils/courtSport';
-import { computeMaxSelectableCourts, computeRequiredCourtCount } from '@/utils/requiredCourtCount';
-import { computeEditBookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
 import {
-  resolveEditReservationValidation,
-  resolveReservationValidationMessage,
-} from '@shared/gameBooking/reservationIntent';
+  courtClashDetails,
+  describeCourtClash,
+  linkedCourtIds,
+  rescheduleNeeded,
+} from '@/components/GameDetails/courts/gameCourtsModel';
+import { getClubTimezone } from '@/utils/gameTimeDisplay';
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
 import { ClubPoliciesBlock } from '@/components/createGame/ClubPoliciesBlock';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { createClubTimeFormatter } from '@/features/court-reservations/clubTime';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
@@ -91,6 +69,11 @@ interface EditGameInfoModalProps {
   onGameUpdate?: (game: Game) => void;
   onCourtsChange?: (courts: Court[]) => void;
   onClubsChange?: (clubs: Club[]) => void;
+  /**
+   * Games whose time can affect reservations move through the reschedule
+   * planner on the game page; the Location & time tab hands off to it.
+   */
+  onRequestReschedule?: () => void;
 }
 
 const TABS = [
@@ -115,7 +98,6 @@ function getInitialWhereState(game: Game): WhereTabState {
   return {
     clubId: game.clubId || '',
     courtId: game.courtId || '',
-    hasBookedCourt: game.hasBookedCourt ?? false,
   };
 }
 
@@ -142,6 +124,7 @@ export const EditGameInfoModal = ({
   onGameUpdate,
   onCourtsChange,
   onClubsChange,
+  onRequestReschedule,
 }: EditGameInfoModalProps) => {
   const { t } = useTranslation();
   // The shell refetches clubs/courts while the drawer is open and hands back
@@ -212,48 +195,14 @@ export const EditGameInfoModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
   const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
-  const [pendingRemoveBookingIds, setPendingRemoveBookingIds] = useState<string[]>([]);
-  const [locationTimeDraft, setLocationTimeDraft] = useState<EditLocationTimeDraft | null>(null);
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [showConfirmUnlinkSave, setShowConfirmUnlinkSave] = useState(false);
-  const initialLinkedBookingIds = useMemo(
-    () => game.linkedBookings?.map((b) => b.externalBookingId) ?? [],
-    [game.linkedBookings],
-  );
-  const initialLinkedCourtIdsKey = useMemo(
-    () =>
-      (game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : [])).join(','),
-    [game.gameCourts, game.courtId],
-  );
+  /** Soft overlap gate: a planned game (`soft`) or another game's reserved court (`reserved`). */
+  const [overlapKind, setOverlapKind] = useState<'soft' | 'reserved'>('soft');
+  const [courtCount, setCourtCount] = useState<number>(() => currentCourtSlotCount(game));
+  const initialCourtIdsKey = useMemo(() => initialCourtIds(game).join(','), [game]);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [participantsDirty, setParticipantsDirty] = useState(false);
   const [participantsSaving, setParticipantsSaving] = useState(false);
-  const firstLocationDraftRef = useRef<EditLocationTimeDraft | null>(null);
-  const hasLocationTimeDraft = locationTimeDraft != null;
-  const pendingUnlinkIds = useMemo(
-    () =>
-      computePendingBookingUnlinks(
-        initialLinkedBookingIds,
-        pendingRemoveBookingIds,
-        locationTimeDraft?.selectedBookingIds ?? initialLinkedBookingIds,
-        hasLocationTimeDraft &&
-          (locationTimeDraft?.locationTimeMode === 'bookings' || initialLinkedBookingIds.length > 0),
-      ),
-    [
-      initialLinkedBookingIds,
-      pendingRemoveBookingIds,
-      hasLocationTimeDraft,
-      locationTimeDraft?.selectedBookingIds,
-      locationTimeDraft?.locationTimeMode,
-    ],
-  );
-  const handleLocationTimeDraftChange = useCallback((draft: EditLocationTimeDraft) => {
-    if (firstLocationDraftRef.current == null) firstLocationDraftRef.current = draft;
-    setLocationTimeDraft((prev) => (areEditLocationTimeDraftsEqual(prev, draft) ? prev : draft));
-  }, []);
-  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() =>
-    game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []),
-  );
+  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => initialCourtIds(game));
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const prevIsOpenRef = useRef(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
@@ -356,15 +305,9 @@ export const EditGameInfoModal = ({
           ? courtsList
           : [],
       );
-      setSelectedCourtIds(
-        openGame.gameCourts?.map((gc) => gc.courtId) ?? (openGame.courtId ? [openGame.courtId] : []),
-      );
-      setPendingRemoveBookingIds([]);
-      setLocationTimeDraft(null);
-      firstLocationDraftRef.current = null;
+      setSelectedCourtIds(initialCourtIds(openGame));
+      setCourtCount(currentCourtSlotCount(openGame));
       setShowDiscardConfirm(false);
-      setConfirmModalOpen(false);
-      setShowConfirmUnlinkSave(false);
       setParticipantsDirty(false);
       setParticipantsSaving(false);
       setTimeout(() => setDisableWhenAutoAdjust(false), 200);
@@ -455,177 +398,47 @@ export const EditGameInfoModal = ({
       endTime: end.toISOString(),
     };
   }, [selectedClubData, whenDuration, whenSelectedDate, whenSelectedTime]);
-  const clubBookingFlowActive =
-    supportsClubBookingFlow(game.entityType, 'edit') && clubHasBookingIntegration(selectedClubData);
-  const willBookOnEdit =
-    locationTimeDraft?.willBookOnCreate === true &&
-    (locationTimeDraft.integratedCourtIds.length ?? 0) > 0;
-  const bookingsModeActive = locationTimeDraft?.locationTimeMode === 'bookings';
-  const booktimeIntegrationConfig = useMemo((): BooktimeIntegrationConfig | null => {
-    if (!selectedClubData || !clubHasBookingIntegration(selectedClubData)) return null;
-    return parseBooktimeIntegrationConfig(selectedClubData.integrationConfig);
-  }, [selectedClubData]);
-  const { status: clubBookingAuth, refresh: refreshClubBookingAuth } = useClubBookingAuth(
-    selectedClubData,
-    clubBookingFlowActive,
-  );
-  const needsBooktimeAuth = Boolean(
-    clubBookingFlowActive &&
-      !clubBookingAuth?.connected &&
-      (willBookOnEdit ||
-        locationTimeDraft?.editReservationAction === 'reserveNew' ||
-        locationTimeDraft?.editReservationAction === 'useExisting'),
-  );
   const showClubPoliciesFooter =
     game.entityType !== 'BAR' &&
     Boolean(selectedClubData) &&
-    !needsBooktimeAuth &&
-    Boolean(
-      selectedClubData?.policyText?.trim() || selectedClubData?.cancellationNoticeHours,
-    );
-  const reserveNewEditActive = locationTimeDraft?.editReservationAction === 'reserveNew';
-  const booktimeScheduleConstrained =
-    (reserveNewEditActive || willBookOnEdit) && !needsBooktimeAuth;
-  const booktimeCompanyMeta = useBooktimeCompanyMeta(
-    selectedClubData,
-    (reserveNewEditActive || willBookOnEdit || bookingsModeActive) &&
-      clubBookingFlowActive &&
-      !needsBooktimeAuth,
-  );
-  const snapshotRefreshEnabled =
-    isOpen &&
-    (willBookOnEdit || bookingsModeActive || confirmModalOpen) &&
-    clubBookingFlowActive &&
-    !needsBooktimeAuth;
-  const {
-    refreshSnapshot,
-    lastFetchedAt: snapshotLastFetchedAt,
-    snapshotBanner,
-    isRefreshingSnapshot,
-  } = useClubSnapshotRefresh(
-      selectedClubData,
-      whenSelectedDate,
-      snapshotRefreshEnabled,
-    );
-  const snapshotBlocked =
-    snapshotBanner === 'noSyncToday' ||
-    (snapshotBanner === 'scoutPoolEmpty' && !snapshotLastFetchedAt);
-  const booktimeTimeOptions = useClubTimeOptions({
-    club: selectedClubData,
-    courts: modalCourts,
-    selectedDate: whenSelectedDate,
-    durationHours: whenDuration,
-    selectedCourtId: where.courtId || selectedCourtIds[0] || null,
-    selectedCourtIds: reserveNewEditActive ? selectedCourtIds : undefined,
-    enabled: shouldUseBooktimeTimeOptions({
-      entityType: game.entityType,
-      clubHasBookingIntegration: clubHasBookingIntegration(selectedClubData),
-      needsBooktimeAuth,
-      locationTimeMode: locationTimeDraft?.locationTimeMode,
-      willBookOnCreate: willBookOnEdit || reserveNewEditActive,
-      booktimeConnected: Boolean(clubBookingAuth?.connected),
-      isPadelooClub: isPadelooClub(selectedClubData),
-      isKlikterenClub: isKlikterenClub(selectedClubData),
-      isNspadelClub: isNspadelClub(selectedClubData),
-    }) && isOpen,
-  });
-  const resolvedGenerateTimeOptions = booktimeTimeOptions.active
-    ? booktimeTimeOptions.generateTimeOptions
-    : generateTimeOptions;
-  const resolvedGenerateTimeOptionsForDate = booktimeTimeOptions.active
-    ? booktimeTimeOptions.generateTimeOptionsForDate
-    : generateTimeOptionsForDate;
-  const resolvedCanAccommodateDuration = booktimeTimeOptions.active
-    ? booktimeTimeOptions.canAccommodateDuration
-    : canAccommodateDuration;
-  const resolvedGetAdjustedStartTime = booktimeTimeOptions.active
-    ? booktimeTimeOptions.getAdjustedStartTime
-    : getAdjustedStartTime;
-  const resolvedGetTimeSlotsForDuration = booktimeTimeOptions.active
-    ? booktimeTimeOptions.getTimeSlotsForDuration
-    : getTimeSlotsForDuration;
-  const resolvedIsSlotHighlighted = booktimeTimeOptions.active
-    ? (time: string) => booktimeTimeOptions.isSlotHighlighted(time, whenSelectedTime, whenDuration)
-    : isSlotHighlighted;
-  const { clampDate: clampBooktimeDate, fixedDates: booktimeFixedDates } = booktimeCompanyMeta;
-  const rosterRequiredReservationCount = computeRequiredCourtCount(
-    game.maxParticipants,
-    game.playersPerMatch ?? 4,
-  );
-  const editBookingSelectionLimits = computeEditBookingSelectionLimits(
-    game.maxParticipants,
-    game.playersPerMatch ?? 4,
-    selectedCourtIds.length,
-  );
-  const requiredReservationCount = editBookingSelectionLimits.min;
+    Boolean(selectedClubData?.policyText?.trim() || selectedClubData?.cancellationNoticeHours);
+  const slotModel = supportsClubBookingFlow(game.entityType, 'edit') && Boolean(where.clubId);
+  const clubChanged = where.clubId !== (game.clubId || '');
+  const lockedCourtIds = useMemo(() => (clubChanged ? new Set<string>() : linkedCourtIds(game)), [clubChanged, game]);
+  const clubLocked = (game.linkedBookings ?? []).length > 0;
+  const timeManagedByPlanner = !clubChanged && rescheduleNeeded(game);
 
-  useEffect(() => {
-    if (!booktimeScheduleConstrained || !booktimeFixedDates?.length) return;
-    const clamped = clampBooktimeDate(whenSelectedDate);
-    if (format(clamped, 'yyyy-MM-dd') !== format(whenSelectedDate, 'yyyy-MM-dd')) {
-      setWhenSelectedDate(clamped);
-      setHookDate(clamped);
-      setWhenSelectedTime('');
-      setHookTime('');
-    }
-  }, [
-    booktimeScheduleConstrained,
-    booktimeFixedDates,
-    clampBooktimeDate,
-    whenSelectedDate,
-    setHookDate,
-    setHookTime,
-  ]);
-  const multiCourtMode = rosterRequiredReservationCount > 1;
-
-  const handleEditCourtSelect = useCallback(
+  const handleEditCourtToggle = useCallback(
     (id: string) => {
-      setWhenSelectedTime('');
-      setHookTime('');
-
-      if (id === 'notBooked') {
-        setSelectedCourtIds([]);
-        setWhere((s) => ({ ...s, courtId: '' }));
+      if (!slotModel) {
+        const next = id === 'notBooked' ? [] : [id];
+        setSelectedCourtIds(next);
+        setWhere((s) => ({ ...s, courtId: next[0] ?? '' }));
         return;
       }
-      if (!multiCourtMode) {
-        setSelectedCourtIds([id]);
-        setWhere((s) => ({ ...s, courtId: id }));
-        return;
-      }
+      if (lockedCourtIds.has(id)) return;
       setSelectedCourtIds((prev) => {
-        const existing = prev.indexOf(id);
-        const next = existing >= 0 ? prev.filter((courtId) => courtId !== id) : [...prev, id];
-        const max = computeMaxSelectableCourts(
-          game.maxParticipants,
-          modalCourts.length,
-          game.playersPerMatch ?? 4,
-        );
-        const capped = next.length > max ? next.slice(0, max) : next;
-        setWhere((s) => ({ ...s, courtId: capped[0] ?? '' }));
-        return capped;
+        const next = prev.includes(id) ? prev.filter((courtId) => courtId !== id) : [...prev, id];
+        setWhere((s) => ({ ...s, courtId: next[0] ?? '' }));
+        setCourtCount((count) => Math.max(count, next.length, 1));
+        return next;
       });
     },
-    [multiCourtMode, game.maxParticipants, game.playersPerMatch, modalCourts.length, setHookTime],
+    [slotModel, lockedCourtIds],
   );
 
   const handleEditCourtIdsSync = useCallback((ids: string[]) => {
     setSelectedCourtIds(ids);
     setWhere((s) => ({ ...s, courtId: ids[0] ?? '' }));
+    setCourtCount((count) => Math.max(count, ids.length, 1));
   }, []);
 
-  const integratedCourtsForConfirm = useMemo(
-    () =>
-      (locationTimeDraft?.integratedCourtIds ?? [])
-        .map((id) => modalCourts.find((c) => c.id === id))
-        .filter((court): court is Court => court != null),
-    [locationTimeDraft?.integratedCourtIds, modalCourts],
-  );
-
-  const editSnapshotOverlayEnabled =
-    (willBookOnEdit || bookingsModeActive) &&
-    !needsBooktimeAuth &&
-    clubHasBookingIntegration(selectedClubData);
+  /** The new window from the plain time editor (never for planner-managed games). */
+  const editedWindow = useMemo(() => {
+    if (timeManagedByPlanner || !whenSelectedTime || !whenDuration) return null;
+    const start = createDateFromClubTime(whenSelectedDate, whenSelectedTime, selectedClubData);
+    return { startTime: start.toISOString(), endTime: addHours(start, whenDuration).toISOString() };
+  }, [timeManagedByPlanner, whenSelectedDate, whenSelectedTime, whenDuration, selectedClubData]);
 
   const initialGeneral = useMemo(() => getInitialGeneralState(game), [game]);
   const initialPrice = useMemo(() => getInitialPriceState(game, userCurrency), [game, userCurrency]);
@@ -643,24 +456,14 @@ export const EditGameInfoModal = ({
         JSON.stringify(cleanPaymentMethods(price.paymentMethods)) !==
           JSON.stringify(cleanPaymentMethods(initialPrice.paymentMethods))));
   const scheduleDirty =
-    where.clubId !== (game.clubId || '') ||
-    where.hasBookedCourt !== (game.hasBookedCourt ?? false) ||
-    selectedCourtIds.join(',') !== initialLinkedCourtIdsKey ||
-    whenSelectedTime !== whenInitialValues.initialTime ||
-    whenDuration !== whenInitialValues.initialDuration ||
-    whenSelectedDate.toDateString() !== whenInitialValues.initialDate.toDateString() ||
-    pendingRemoveBookingIds.length > 0;
-  const firstDraft = firstLocationDraftRef.current;
-  const locationDraftDirty =
-    locationTimeDraft != null &&
-    firstDraft != null &&
-    (locationTimeDraft.editReservationAction !== firstDraft.editReservationAction ||
-      locationTimeDraft.timeOverride !== firstDraft.timeOverride ||
-      locationTimeDraft.overrideStartTime !== firstDraft.overrideStartTime ||
-      locationTimeDraft.overrideEndTime !== firstDraft.overrideEndTime ||
-      locationTimeDraft.selectedBookingIds.join(',') !== firstDraft.selectedBookingIds.join(','));
-  const isDirty =
-    generalDirty || priceDirty || scheduleDirty || locationDraftDirty || participantsDirty;
+    clubChanged ||
+    selectedCourtIds.join(',') !== initialCourtIdsKey ||
+    (slotModel && courtCount !== currentCourtSlotCount(game)) ||
+    (!timeManagedByPlanner &&
+      (whenSelectedTime !== whenInitialValues.initialTime ||
+        whenDuration !== whenInitialValues.initialDuration ||
+        whenSelectedDate.toDateString() !== whenInitialValues.initialDate.toDateString()));
+  const isDirty = generalDirty || priceDirty || scheduleDirty || participantsDirty;
 
   const handleRequestClose = useCallback(() => {
     if (isSaving || participantsSaving) return;
@@ -699,12 +502,10 @@ export const EditGameInfoModal = ({
   };
 
   const runBookingOverlapGate = async (): Promise<boolean> => {
-    if (willBookOnEdit || locationTimeDraft?.locationTimeMode === 'bookings') return true;
-    if (!where.clubId || !whenSelectedTime || !whenDuration) return true;
-
+    if (!where.clubId || !editedWindow || selectedCourtIds.length === 0) return true;
     const scheduleUnchanged =
-      where.clubId === (game.clubId || '') &&
-      (where.courtId || '') === (game.courtId || '') &&
+      !clubChanged &&
+      selectedCourtIds.join(',') === initialCourtIdsKey &&
       whenSelectedTime === whenInitialValues.initialTime &&
       whenDuration === whenInitialValues.initialDuration &&
       whenSelectedDate.toDateString() === whenInitialValues.initialDate.toDateString();
@@ -712,35 +513,21 @@ export const EditGameInfoModal = ({
 
     const club = clubs.find((c) => c.id === where.clubId);
     try {
-      const bookings = await fetchBookedCourtsForDay({
-        clubId: where.clubId,
-        selectedDate: whenSelectedDate,
-        courtId: where.courtId || undefined,
-        club,
-      });
-      const overlap = checkBookingOverlap(bookings, whenSelectedTime, whenDuration, club);
-      if (overlap.hasSoftOverlap) {
+      const courtIds = new Set(selectedCourtIds);
+      const bookings = (
+        await fetchBookedCourtsForDay({ clubId: where.clubId, selectedDate: whenSelectedDate, club })
+      ).filter((b) => b.courtId != null && courtIds.has(b.courtId));
+      const overlap = checkBookingOverlap(bookings, whenSelectedTime, whenDuration, club, { excludeGameId: game.id });
+      if (overlap.reservedGameCount > 0 || overlap.hasSoftOverlap) {
+        setOverlapKind(overlap.reservedGameCount > 0 ? 'reserved' : 'soft');
         setSoftOverlapOpen(true);
         return false;
       }
     } catch {
-      /* proceed */
+      /* proceed: the server's clash guard still answers */
     }
     return true;
   };
-
-  const scrollToLocationTimeValidationTarget = useCallback(() => {
-    setActiveTab('locationTime');
-    requestAnimationFrame(() => {
-      const panel = locationTimePanelRef.current;
-      if (!panel) return;
-      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      panel.classList.add('error-bounce');
-      window.setTimeout(() => {
-        panel.classList.remove('error-bounce');
-      }, 2000);
-    });
-  }, []);
 
   const handleSave = async () => {
     if (!game.id) return;
@@ -754,35 +541,6 @@ export const EditGameInfoModal = ({
       return;
     }
 
-    const editAction = locationTimeDraft?.editReservationAction;
-    const requiresSchedule =
-      editAction === 'changeGameTimeOnly' ||
-      editAction === 'reserveNew' ||
-      editAction === 'unlink' ||
-      editAction === 'gameOnly';
-
-    if (editAction) {
-      const validation = resolveEditReservationValidation({
-        action: editAction,
-        needsBooktimeAuth,
-        selectedBookingCount: locationTimeDraft?.selectedBookingIds.length ?? 0,
-        selectedBookingRecordsCount: locationTimeDraft?.selectedBookingRecords.length ?? 0,
-        selectedCourtCount: selectedCourtIds.length,
-        integratedCourtCount: locationTimeDraft?.integratedCourtIds.length ?? 0,
-        bookingSelectionMin: requiredReservationCount,
-        selectedTime: whenSelectedTime || undefined,
-        duration: whenDuration || undefined,
-        requiresSchedule,
-        clubChanged: where.clubId !== (game.clubId || ''),
-      });
-      if (!validation.ok) {
-        const message = resolveReservationValidationMessage(validation, requiredReservationCount);
-        toast.error(t(message.key, message.values));
-        scrollToLocationTimeValidationTarget();
-        return;
-      }
-    }
-
     setIsSaving(true);
     try {
       const overlapOk = await runBookingOverlapGate();
@@ -791,53 +549,13 @@ export const EditGameInfoModal = ({
         return;
       }
 
-      if (pendingUnlinkIds.length > 0) {
-        setIsSaving(false);
-        setShowConfirmUnlinkSave(true);
-        return;
-      }
-
-      if (willBookOnEdit) {
-        if (needsBooktimeAuth) {
-          await executeSave();
-          return;
-        }
-        await refreshSnapshot({ force: true });
-        setIsSaving(false);
-        setConfirmModalOpen(true);
-        return;
-      }
-
       await executeSave();
     } catch {
       setIsSaving(false);
     }
   };
 
-  const proceedAfterUnlinkConfirm = async () => {
-    setShowConfirmUnlinkSave(false);
-    setIsSaving(true);
-    try {
-      if (willBookOnEdit) {
-        if (needsBooktimeAuth) {
-          await executeSave();
-          return;
-        }
-        await refreshSnapshot({ force: true });
-        setIsSaving(false);
-        setConfirmModalOpen(true);
-        return;
-      }
-      await executeSave();
-    } catch {
-      setIsSaving(false);
-    }
-  };
-
-  const executeSave = async (bookingOverrides?: {
-    externalBookingIds: string[];
-    bookingSnapshots: BookingSnapshotInput[];
-  }) => {
+  const executeSave = async () => {
     if (!game.id) return;
 
     setIsSaving(true);
@@ -862,48 +580,18 @@ export const EditGameInfoModal = ({
 
       await gamesApi.update(game.id, updateData);
 
-      const club = clubs.find((c) => c.id === where.clubId);
-      if (snapshotRefreshEnabled && bookingOverrides) {
-        await refreshSnapshot({ force: true });
-      }
-
-      const locationDraft = buildEditLocationTimeSaveDraft({
-        game,
-        clubId: where.clubId,
-        courtId: where.courtId,
-        selectedCourtIds,
-        whenSelectedDate,
-        whenSelectedTime,
-        whenDuration,
-        hasBookedCourt: where.hasBookedCourt,
-        club,
-        courts: modalCourts,
-        pendingRemoveBookingIds,
-        locationTimeDraft,
-        bookingOverrides,
-      });
-
-      const hasLocationChanges =
-        locationDraft.addBookingIds.length > 0 ||
-        locationDraft.removeBookingIds.length > 0 ||
-        Boolean(locationDraft.linkBookingContext?.adds.length) ||
-        locationDraft.clubId !== (game.clubId || undefined) ||
-        locationDraft.courtId !== (game.courtId || undefined) ||
-        locationDraft.startTime !== game.startTime ||
-        locationDraft.endTime !== game.endTime ||
-        locationDraft.timeOverride !== (game.timeOverride ?? false) ||
-        locationDraft.hasBookedCourt !== (game.hasBookedCourt ?? false) ||
-        Boolean(locationDraft.snapshots?.length) ||
-        Boolean(locationDraft.courtIds?.length);
-
-      if (hasLocationChanges) {
-        await saveLocationTime(game.id, locationDraft);
-      } else if (selectedCourtIds.length > 0) {
-        const initialCourtIds =
-          game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []);
-        if (selectedCourtIds.join(',') !== initialCourtIds.join(',')) {
-          await saveLocationTime(game.id, { ...locationDraft, addBookingIds: [], removeBookingIds: [] });
-        }
+      if (scheduleDirty) {
+        await saveEditLocationTime(
+          game.id,
+          buildEditLocationTimeRequests({
+            game,
+            clubId: where.clubId,
+            courtIds: selectedCourtIds,
+            slotModel,
+            courtSlotCount: slotModel ? courtCount : null,
+            time: editedWindow,
+          }),
+        );
       }
 
       if (where.clubId && where.clubId !== game.clubId) {
@@ -914,7 +602,6 @@ export const EditGameInfoModal = ({
       const response = await gamesApi.getById(game.id);
       onGameUpdate?.(response.data);
       toast.success(t('gameDetails.settingsUpdated'));
-      setConfirmModalOpen(false);
       // PRD 345 — an occurrence of a series asks where the edit applies before
       // it closes. The edit itself is already saved on THIS game; the sheet only
       // offers to push the same fields onto future occurrences.
@@ -924,20 +611,16 @@ export const EditGameInfoModal = ({
       }
       onClose();
     } catch (err: unknown) {
-      if (isLocationTimePartialSaveError(err)) {
-        if (err.completedSteps.length > 0) {
-          try {
-            const response = await gamesApi.getById(game.id);
-            onGameUpdate?.(response.data);
-          } catch {
-            /* best effort refresh */
-          }
-        }
-        toast.error(
-          t('gameDetails.locationTime.partialSaveFailed', {
-            step: t(`gameDetails.locationTime.saveStep.${err.failedStep}`),
-          }),
-        );
+      const clash = courtClashDetails(err);
+      if (clash) {
+        const clock = createClubTimeFormatter({
+          timeZone: getClubTimezone(game) ?? selectedClubData?.city?.timezone ?? 'UTC',
+          locale: displaySettings.locale,
+          hour12: displaySettings.hour12,
+        });
+        const message = describeCourtClash(clash, (id) => modalCourts.find((c) => c.id === id)?.name, clock.time);
+        toast.error(t(message.key, message.params));
+        setActiveTab('locationTime');
         return;
       }
       const axiosErr = err as {
@@ -1015,8 +698,6 @@ export const EditGameInfoModal = ({
                 courts={modalCourts}
                 selectedClub={where.clubId}
                 selectedCourtIds={selectedCourtIds}
-                selectedCourt={where.courtId || selectedCourtIds[0] || 'notBooked'}
-                hasBookedCourt={where.hasBookedCourt}
                 onSelectClub={(id, club) => {
                   if (club) {
                     onClubsChange?.(clubs.some((c) => c.id === club.id)
@@ -1034,9 +715,25 @@ export const EditGameInfoModal = ({
                   setSelectedCourtIds([]);
                 }}
                 venueCityId={venueCityId}
-                onSelectCourt={handleEditCourtSelect}
-                onSelectCourtIds={handleEditCourtIdsSync}
-                onToggleHasBookedCourt={(checked) => setWhere((s) => ({ ...s, hasBookedCourt: checked }))}
+                slotModel={slotModel}
+                onToggleCourt={handleEditCourtToggle}
+                onSetCourtIds={handleEditCourtIdsSync}
+                lockedCourtIds={lockedCourtIds}
+                courtCount={Math.max(courtCount, selectedCourtIds.length, 1)}
+                onCourtCountChange={(count) => setCourtCount(Math.max(count, selectedCourtIds.length, 1))}
+                clubLocked={clubLocked}
+                timeManagedByPlanner={timeManagedByPlanner}
+                onRequestReschedule={
+                  onRequestReschedule
+                    ? () => {
+                        if (isDirty) {
+                          toast(t('gameDetails.courts.saveFirst'));
+                          return;
+                        }
+                        onRequestReschedule();
+                      }
+                    : undefined
+                }
                 selectedDate={whenSelectedDate}
                 selectedTime={whenSelectedTime}
                 duration={whenDuration}
@@ -1054,40 +751,13 @@ export const EditGameInfoModal = ({
                   setHookDuration(d);
                 }}
                 onShowDatePickerChange={setWhenShowDatePicker}
-                generateTimeOptions={resolvedGenerateTimeOptions}
-                generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-                canAccommodateDuration={resolvedCanAccommodateDuration}
-                getAdjustedStartTime={resolvedGetAdjustedStartTime}
-                getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
-                isSlotHighlighted={resolvedIsSlotHighlighted}
+                generateTimeOptions={generateTimeOptions}
+                generateTimeOptionsForDate={generateTimeOptionsForDate}
+                canAccommodateDuration={canAccommodateDuration}
+                getAdjustedStartTime={getAdjustedStartTime}
+                getTimeSlotsForDuration={getTimeSlotsForDuration}
+                isSlotHighlighted={isSlotHighlighted}
                 dateInputRef={{ current: null }}
-                pendingRemoveBookingIds={pendingRemoveBookingIds}
-                onDraftChange={handleLocationTimeDraftChange}
-                clubBookingFlowActive={clubBookingFlowActive}
-                booktimeCompanyId={booktimeIntegrationConfig?.companyId ?? null}
-                booktimeConnected={Boolean(clubBookingAuth?.connected)}
-                snapshotOverlayEnabled={editSnapshotOverlayEnabled}
-                snapshotLoading={isRefreshingSnapshot}
-                snapshotBannerState={snapshotBanner}
-                willBookOnCreate={booktimeScheduleConstrained}
-                needsBooktimeAuth={needsBooktimeAuth}
-                booktimeFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
-                slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
-                booktimeSlotsActive={booktimeTimeOptions.active}
-                connectedPhone={clubBookingAuth?.phoneNumber ?? clubBookingAuth?.email ?? null}
-                bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
-                renderAuthGateSection={({ collapsed, onSkip, onCollapsedClick }) =>
-                  selectedClubData ? (
-                    <ClubBookingConnectInline
-                      club={selectedClubData}
-                      integrationConfig={booktimeIntegrationConfig ?? undefined}
-                      onConnected={() => void refreshClubBookingAuth()}
-                      onSkip={onSkip}
-                      collapsed={collapsed}
-                      onCollapsedClick={onCollapsedClick}
-                    />
-                  ) : null
-                }
                 panelRef={locationTimePanelRef}
               />
               {showClubPoliciesFooter || weatherPreviewTiming ? (
@@ -1219,15 +889,11 @@ export const EditGameInfoModal = ({
       isOpen={softOverlapOpen}
       tone="warning"
       title={t('createGame.overlapSoftTitle')}
-      message={t('createGame.overlapSoftMessage')}
+      message={t(overlapKind === 'reserved' ? 'gameDetails.courts.overlapReserved' : 'createGame.overlapSoftMessage')}
       confirmText={t('createGame.overlapSoftProceed')}
       cancelText={t('common.cancel')}
       onConfirm={() => {
         setSoftOverlapOpen(false);
-        if (pendingUnlinkIds.length > 0) {
-          setShowConfirmUnlinkSave(true);
-          return;
-        }
         void executeSave();
       }}
       onClose={() => setSoftOverlapOpen(false)}
@@ -1244,154 +910,6 @@ export const EditGameInfoModal = ({
       confirmVariant="danger"
     />
 
-    <ConfirmationModal
-      isOpen={showConfirmUnlinkSave}
-      onClose={() => setShowConfirmUnlinkSave(false)}
-      onConfirm={() => void proceedAfterUnlinkConfirm()}
-      title={t('gameDetails.locationTime.unlinkSaveConfirmTitle')}
-      message={t('gameDetails.locationTime.unlinkSaveConfirmMessage', { count: pendingUnlinkIds.length })}
-      confirmText={isSaving ? t('common.saving') : t('common.save')}
-      cancelText={t('common.cancel')}
-      confirmVariant="danger"
-    />
-
-    {selectedClubData && confirmModalOpen && booktimeIntegrationConfig ? (
-      <ClubCreateGameConfirmModal
-        provider="BOOKTIME"
-        open={confirmModalOpen}
-        onOpenChange={setConfirmModalOpen}
-        club={selectedClubData}
-        companyId={booktimeIntegrationConfig.companyId}
-        bookings={integratedCourtsForConfirm.map((court) => ({
-          court,
-          date: whenSelectedDate,
-          startTime: whenSelectedTime,
-          durationMinutes: Math.round(whenDuration * 60),
-        }))}
-        phoneNumber={clubBookingAuth?.phoneNumber ?? null}
-        firstName={clubBookingAuth?.firstName ?? null}
-        lastName={clubBookingAuth?.lastName ?? null}
-        allowedHoursToCancel={booktimeCompanyMeta.allowedHoursToCancel}
-        currency={booktimeCompanyMeta.currency}
-        sport={game.sport}
-        summaryChips={[]}
-        bookFlowContext={{
-          refreshSnapshot,
-          lastFetchedAt: snapshotLastFetchedAt,
-        }}
-        snapshotBlocked={snapshotBlocked}
-        onExecuteCreateGame={async (overrides) => {
-          await executeSave({
-            externalBookingIds: overrides.externalBookingIds,
-            bookingSnapshots: overrides.bookingSnapshots,
-          });
-        }}
-        onSlotTaken={() => {
-          setWhenSelectedTime('');
-          setHookTime('');
-          booktimeTimeOptions.reload();
-        }}
-        onSuccess={() => {
-          setConfirmModalOpen(false);
-        }}
-        flowMode="edit"
-      />
-    ) : null}
-    {selectedClubData &&
-    confirmModalOpen &&
-    isPadelooClub(selectedClubData) &&
-    getPadelooClubId(selectedClubData) != null ? (
-      <ClubCreateGameConfirmModal
-        provider="PADELOO"
-        padelooClubId={getPadelooClubId(selectedClubData)!}
-        email={clubBookingAuth?.email ?? null}
-        open={confirmModalOpen}
-        onOpenChange={setConfirmModalOpen}
-        club={selectedClubData}
-        bookings={integratedCourtsForConfirm.map((court) => ({
-          court,
-          date: whenSelectedDate,
-          startTime: whenSelectedTime,
-          durationMinutes: Math.round(whenDuration * 60),
-        }))}
-        firstName={clubBookingAuth?.firstName ?? null}
-        lastName={clubBookingAuth?.lastName ?? null}
-        sport={game.sport}
-        summaryChips={[]}
-        bookFlowContext={{
-          refreshSnapshot,
-          lastFetchedAt: snapshotLastFetchedAt,
-        }}
-        snapshotBlocked={snapshotBlocked}
-        onExecuteCreateGame={async (overrides) => {
-          await executeSave({
-            externalBookingIds: overrides.externalBookingIds,
-            bookingSnapshots: overrides.bookingSnapshots,
-          });
-        }}
-        onSlotTaken={() => {
-          setWhenSelectedTime('');
-          setHookTime('');
-          booktimeTimeOptions.reload();
-        }}
-        onSuccess={() => {
-          setConfirmModalOpen(false);
-        }}
-        flowMode="edit"
-      />
-    ) : null}
-    {selectedClubData &&
-    confirmModalOpen &&
-    isKlikterenClub(selectedClubData) &&
-    getKlikterenVenueId(selectedClubData) != null ? (
-      <ClubCreateGameConfirmModal
-        provider="KLIKTEREN"
-        klikterenVenueId={getKlikterenVenueId(selectedClubData)!}
-        email={clubBookingAuth?.email ?? null}
-        open={confirmModalOpen}
-        onOpenChange={setConfirmModalOpen}
-        club={selectedClubData}
-        bookings={integratedCourtsForConfirm.map((court) => ({
-          court,
-          date: whenSelectedDate,
-          startTime: whenSelectedTime,
-          durationMinutes: Math.round(whenDuration * 60),
-        }))}
-        firstName={clubBookingAuth?.firstName ?? null}
-        lastName={clubBookingAuth?.lastName ?? null}
-        sport={game.sport}
-        summaryChips={[]}
-        bookFlowContext={{
-          refreshSnapshot,
-          lastFetchedAt: snapshotLastFetchedAt,
-        }}
-        snapshotBlocked={snapshotBlocked}
-        onExecuteCreateGame={async (overrides) => {
-          await executeSave({
-            externalBookingIds: overrides.externalBookingIds,
-            bookingSnapshots: overrides.bookingSnapshots,
-          });
-        }}
-        onSlotTaken={() => {
-          setWhenSelectedTime('');
-          setHookTime('');
-          booktimeTimeOptions.reload();
-        }}
-        onSuccess={() => {
-          setConfirmModalOpen(false);
-        }}
-        flowMode="edit"
-      />
-    ) : null}
-
-    {selectedClubData && confirmModalOpen && isWeltnerClub(selectedClubData) ? (
-      <ClubCreateGameConfirmModal provider="WELTNER" open={confirmModalOpen} onOpenChange={setConfirmModalOpen}
-        club={selectedClubData} bookings={integratedCourtsForConfirm.map(court => ({ court, date: whenSelectedDate, startTime: whenSelectedTime, durationMinutes: Math.round(whenDuration * 60) }))}
-        summaryChips={[]} bookFlowContext={{ refreshSnapshot, lastFetchedAt: snapshotLastFetchedAt }} snapshotBlocked={snapshotBlocked}
-        onExecuteCreateGame={async overrides => { await executeSave({ externalBookingIds: overrides.externalBookingIds, bookingSnapshots: overrides.bookingSnapshots }); }}
-        onSlotTaken={() => { setWhenSelectedTime(''); setHookTime(''); void booktimeTimeOptions.reload(); }}
-        onSuccess={() => setConfirmModalOpen(false)} flowMode="edit" />
-    ) : null}
     {seriesScopePatch && game.seriesId ? (
       <SeriesScopeSheet
         open

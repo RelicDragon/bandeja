@@ -21,20 +21,39 @@ function isHardSlot(booking: BookedCourtSlot): boolean {
   return Boolean(booking.clubBooked || booking.holdBlocked || booking.slotKind === 'external' || booking.slotKind === 'hold');
 }
 
+/**
+ * Another app game holds this court for real: its slot is reserved (newer
+ * payloads say so per slot), else the game-level legacy flag.
+ */
+function isReservedGameSlot(booking: BookedCourtSlot): boolean {
+  if (booking.reservation != null) return booking.reservation === 'reserved';
+  return booking.hasBookedCourt;
+}
+
 export interface BookingOverlapResult {
+  /** A club booking / hold, or another app game with that court reserved. */
   hasHardOverlap: boolean;
+  /** Another app game only planned on that court (a warning, never a block). */
   hasSoftOverlap: boolean;
   softCount: number;
+  /** Other app games that reserved that court over the window (the server answers 409 `court.clash`). */
+  reservedGameCount: number;
 }
+
+export type BookingOverlapOptions = {
+  /** The game being edited: its own blocks are never a conflict. */
+  excludeGameId?: string | null;
+};
 
 export function checkBookingOverlap(
   bookings: BookedCourtSlot[],
   startTime: string,
   durationHours: number,
-  club?: Club
+  club?: Club,
+  options: BookingOverlapOptions = {},
 ): BookingOverlapResult {
   if (!startTime || !durationHours) {
-    return { hasHardOverlap: false, hasSoftOverlap: false, softCount: 0 };
+    return { hasHardOverlap: false, hasSoftOverlap: false, softCount: 0, reservedGameCount: 0 };
   }
 
   const startMinutes = parseMinutes(startTime);
@@ -42,8 +61,10 @@ export function checkBookingOverlap(
 
   let hasHardOverlap = false;
   let softCount = 0;
+  let reservedGameCount = 0;
 
   for (const booking of bookings) {
+    if (options.excludeGameId && booking.gameId === options.excludeGameId) continue;
     const bookingStart = formatTimeInClubTimezone(new Date(booking.startTime), club);
     const bookingEnd = formatTimeInClubTimezone(new Date(booking.endTime), club);
     const bookingStartMinutes = parseMinutes(bookingStart);
@@ -53,7 +74,10 @@ export function checkBookingOverlap(
 
     if (isHardSlot(booking)) {
       hasHardOverlap = true;
-    } else if (!booking.hasBookedCourt) {
+    } else if (isReservedGameSlot(booking)) {
+      hasHardOverlap = true;
+      reservedGameCount += 1;
+    } else {
       softCount += 1;
     }
   }
@@ -62,6 +86,7 @@ export function checkBookingOverlap(
     hasHardOverlap,
     hasSoftOverlap: softCount > 0,
     softCount,
+    reservedGameCount,
   };
 }
 

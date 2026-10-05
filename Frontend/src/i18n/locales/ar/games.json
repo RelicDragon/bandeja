@@ -344,6 +344,7 @@
       "lookingTodayAndTomorrow_few": "{{count}} أشخاص يبحثون عن لعب اليوم وغدًا في {{city}}",
       "lookingTodayAndTomorrow_many": "{{count}} شخصًا يبحثون عن لعب اليوم وغدًا في {{city}}",
       "lookingTodayAndTomorrow_other": "{{count}} شخص يبحثون عن لعب اليوم وغدًا في {{city}}"
-    }
+    },
+    "reservationPartly": "محجوز جزئيًا"
   }
 }

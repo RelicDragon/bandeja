@@ -12,8 +12,9 @@ import type { OrganizerHint, OrganizerNextActionsInput } from './organizerNextAc
  * - only `PLAYING` fills a seat (`docs/product/constraints.md`);
  * - an unanswered attendance is not a no-show, so the attendance row is a
  *   count with a Nudge, never a warning;
- * - booking coverage is separate from the roster and is read from the game
- *   payload only; nothing here talks to a booking provider.
+ * - court reservation is separate from the roster and is read from the game
+ *   payload only (`utils/courtReservationView`); nothing here talks to a
+ *   booking provider.
  */
 
 /** Entity types whose organizer shapes seats, court and attendance. */
@@ -65,15 +66,17 @@ export function buildOrganizerNextActions(input: OrganizerNextActionsInput): Org
     if (viewerRole === 'inviter') return hints;
 
     const hasBooking = caps?.hasBooking ?? false;
-    if (hasBooking && game.timeIsSet === true && game.hasClub && input.bookingCoverage) {
-      if (input.bookingCoverage === 'none') {
-        hints.push({
-          key: 'booking',
-          state: 'none',
-          action: game.linkedBookingCount > 0 ? 'seeBookings' : 'editCourt',
-        });
-      } else if (input.bookingCoverage === 'external_partial') {
-        hints.push({ key: 'booking', state: 'partial', action: 'seeBookings' });
+    const reservation = input.reservation;
+    if (hasBooking && game.timeIsSet === true && game.hasClub && reservation) {
+      const hasLinks = game.linkedBookingCount > 0;
+      const base = { key: 'booking' as const, reserved: reservation.reserved, total: reservation.total };
+      if (reservation.kind === 'planned') {
+        hints.push({ ...base, state: 'none', gapTime: null, action: hasLinks ? 'seeBookings' : 'editCourt' });
+      } else if (reservation.kind === 'partial') {
+        hints.push({ ...base, state: 'partial', gapTime: null, action: hasLinks ? 'seeBookings' : 'editCourt' });
+      } else if (reservation.kind === 'reserved_with_gap') {
+        // Only linked bookings can leave a gap, so the fix is in the bookings section.
+        hints.push({ ...base, state: 'gap', gapTime: reservation.gapTime, action: 'seeBookings' });
       }
     }
 

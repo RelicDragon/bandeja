@@ -307,6 +307,7 @@
       "lookingTodayAndTomorrow_one": "{{count}} osoba traži igru danas i sutra u gradu {{city}}",
       "lookingTodayAndTomorrow_few": "{{count}} osobe traže igru danas i sutra u gradu {{city}}",
       "lookingTodayAndTomorrow_other": "{{count}} osoba traži igru danas i sutra u gradu {{city}}"
-    }
+    },
+    "reservationPartly": "Delimično rezervisano"
   }
 }

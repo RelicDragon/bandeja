@@ -38,20 +38,16 @@
     "selectClub": "Выберите клуб",
     "court": "Корт",
     "hall": "Зал",
-    "notBookedYet": "Game only",
     "dontSelectCourt": "No court yet",
     "dontSelectHall": "No hall yet",
     "courtNotSelected": "Корт не выбран",
     "hallNotSelected": "Зал не выбран",
     "multiCourtHint": "Выберите до {{count}} кортов для {{participants}} игроков (выбрано {{selected}})",
-    "multiCourtNeedSharedSlots": "Выберите {{count}} кортов, свободных в одно и то же время.",
-    "multiCourtNoSharedSlots": "Нет общего свободного времени для всех {{count}} выбранных кортов. Попробуйте другие корты, дату или длительность.",
     "webCameraHint": "На этом корте есть подключённая веб-камера",
     "webCameraHintsTitle": "Подключённые веб-камеры",
     "webCameraHintNamed": "На корте {{court}} есть подключённая веб-камера",
     "webCameraHintAction": "Нажмите, чтобы смотреть онлайн",
     "hasBookedCourt": "Я забронировал этот корт",
-    "hasBookedHall": "Я забронировал стол",
     "selectCourt": "Выбрать корт",
     "selectHall": "Выбрать зал",
     "selectClubFirst": "Сначала выберите клуб",
@@ -243,10 +239,7 @@
     "timeSlot": "Выбранный слот",
     "loadingExternalSlots": "Загрузка внешних слотов",
     "bookedWithoutCourt": "Без корта",
-    "notConfirmed": "не подтверждено",
-    "multipleCourts": "Несколько кортов",
-    "noCourtsSelected": "Корты не выбраны",
-    "addCourt": "Добавить корт",
+    "notConfirmed": "запланировано",
     "createButton": "Создать игру",
     "createButtonTournament": "Создать Турнир",
     "createButtonLeague": "Создать Лигу",
@@ -430,32 +423,14 @@
       "match": "Матч"
     },
     "locationTime": {
-      "skipRealCourtToggle": "Game only",
-      "realCourtBookingHint": "{{courts}} в {{club}} — бронирование при создании игры.",
-      "realCourtBookingHintEdit": "{{courts}} в {{club}} — бронирование при сохранении.",
-      "skipRealCourtHint": "The game will be scheduled in Bandeja only.",
-      "skipRealCourtHintEdit": "The game will be updated in Bandeja only.",
       "summaryFromBookings": "Из ваших {{count}} броней",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Выберите {{min}}–{{max}} броней ({{players}} игроков)",
-      "selectionProgress": "Выберите до {{max}} кортов ({{players}})",
-      "selectionCompleteOne": "1 корт привязан",
-      "selectionCompleteMany": "{{count}} кортов привязано",
-      "selectionAtMax": "Максимум для этого формата ({{players}}) — другие брони недоступны",
-      "emptyBookingsOnDate": "Нет броней на эту дату",
-      "emptyBookingsHint": "Выберите другую дату, забронируйте корт или создайте игру без привязки брони.",
-      "emptyBookingsReserveNow": "Забронировать корт",
-      "emptyBookingsGameOnly": "Создать только игру",
       "gridLegend": "Зелёный = ваша бронь · Красный/жёлтый = занято · Основной = выбранное время",
       "alsoUsedIn": "Также используется в: {{games}}",
       "pickAdjacentHour": "Выберите один час",
       "linkHintTitle": "Игра будет связана с вашими бронированиями",
       "linkHintBody": "Эти бронирования кортов будут связаны при создании игры.",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "Настроить время игры",
-      "overrideHint": "Время игры может быть короче вашей брони",
-      "overrideResetToast": "Время восстановлено по броням",
       "preselectedBanner": "Бронь предвыбрана",
       "linkedOnlyLabel": "По вашим броням",
       "unlinkConfirm": "Удалить связь с этой бронью?",
@@ -463,67 +438,6 @@
       "unlinkNoCancelNote": "Бронь корта в клубе останется активной — мы только убираем связь с этой игрой.",
       "syncInactiveCreate": "Синхронизация сейчас не активна — мы не можем получить слоты и забронировать корт. Вы всё равно можете создать игру на это время.",
       "syncInactiveEdit": "Синхронизация сейчас не активна — мы не можем получить слоты и забронировать корт. Вы всё равно можете изменить игру на это время."
-    },
-    "reservationIntent": {
-      "title": "Как вы берёте корт?",
-      "otherOptions": "Другие варианты",
-      "recommended": "Рекомендуется",
-      "recommendedShort": "Рек",
-      "validation": {
-        "selectCourt": "Сначала выберите {{count}} корт(а).",
-        "selectBookableCourt": "Сначала выберите {{count}} корт(а) с онлайн-бронированием.",
-        "selectTime": "Сначала выберите доступное время.",
-        "selectDuration": "Сначала выберите длительность.",
-        "selectReservations": "Выберите {{count}} бронирование(й) из вашего аккаунта.",
-        "bookingRecordsLoading": "Загружаем детали бронирований — подождите и попробуйте снова."
-      },
-      "reserveNow": {
-        "title": "Резерв корта",
-        "chipTitle": "Резерв|корта",
-        "description": "Выберите время — мы забронируем за вас."
-      },
-      "useExisting": {
-        "title": "У меня уже есть бронь",
-        "chipTitle": "Моя|бронь",
-        "description": "Привязать бронь из аккаунта клуба.",
-        "contextAvailable": "{{count}} доступно на эту дату"
-      },
-      "gameOnly": {
-        "title": "Без бронирования корта",
-        "chipTitle": "Только|игра",
-        "description": "Только создать игру — корт не бронируется."
-      },
-      "manualBooked": {
-        "title": "Уже забронировано вручную",
-        "chipTitle": "Забронировано",
-        "description": "Отметить как забронированное без онлайн-брони."
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "Будет создана реальная бронь корта",
-          "body": "Выберите {{count}} корт(ов), длительность и время. Будет забронировано именно это расписание."
-        },
-        "useExisting": {
-          "title": "Игра будет привязана к вашей брони",
-          "body": "Выбрано {{selected}} из {{count}} необходимых бронирований."
-        },
-        "gameOnly": {
-          "title": "Реальная бронь корта не создаётся",
-          "body": "Игра будет запланирована только в Bandeja."
-        },
-        "manualBooked": {
-          "title": "Игра будет отмечена как забронированная",
-          "body": "Онлайн-бронь не создаётся."
-        }
-      },
-      "cta": {
-        "reserveOne": "Забронировать корт и создать игру",
-        "reserveMany": "Забронировать {{count}} кортов и создать игру",
-        "linkOne": "Привязать бронь и создать игру",
-        "linkMany": "Привязать {{count}} броней и создать игру",
-        "gameOnly": "Создать только игру",
-        "manualBooked": "Создать игру"
-      }
     },
     "booktime": {
       "switchLabel": "Забронировать корт при создании игры",
@@ -534,7 +448,6 @@
       "authorizeInClub": "Авторизоваться в {{club}}",
       "dateHint": "Можно бронировать до {{days}} дней вперёд в этом клубе.",
       "connectedChip": "Вход выполнен · {{phone}}",
-      "createCta": "Создать игру и забронировать корт",
       "signInToContinue": "Войдите, чтобы продолжить",
       "confirmTitle": "Готовы создать?",
       "confirmPrimary": "Забронировать и создать",
@@ -556,7 +469,6 @@
       "createFailedRollback": "Не удалось создать игру. Не удалось подтвердить отмену брони корта — уточните в клубе.",
       "sessionExpired": "Сессия истекла. Войдите снова.",
       "alreadyReserved": "Корт уже забронирован",
-      "liveApiUnavailable": "Бронирование корта сейчас недоступно — используйте обычное планирование.",
       "reservedAs": "Бронь на: {{identity}}",
       "cancelPolicy": "Бесплатная отмена за {{hours}} ч. до начала.",
       "yourGame": "Ваша игра",
@@ -586,13 +498,10 @@
     },
     "pickSport": "Choose sport",
     "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
-    "overlapSoftTitle": "Another game is planned here",
-    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapHardTitle": "Корт занят в это время",
+    "overlapSoftTitle": "Здесь запланирована другая игра",
+    "overlapSoftMessage": "У другого игрока на этом корте в это время запланирована игра, но корт не забронирован. Вы можете продолжить.",
     "overlapSoftProceed": "Continue anyway",
-    "markCourtBookedTitle": "Отметить корт как забронированный?",
-    "markCourtBookedMessage": "Вы выбрали корт, но не отметили его как забронированный. Подтвердите, когда забронируете его в клубе.",
-    "markCourtBookedYes": "Да, я забронировал",
-    "markCourtBookedSkip": "Пока нет",
     "suitableForNovices": {
       "title": "Новичкам рады",
       "hint": "Вы поможете новым игрокам освоиться. Диапазон уровня при этом сохраняется."
@@ -605,6 +514,93 @@
     "lookingNudgeInvite_one": "Пригласить",
     "lookingNudgeInvite_few": "Пригласить {{count}}",
     "lookingNudgeInvite_many": "Пригласить {{count}}",
-    "lookingNudgeInvite_other": "Пригласить {{count}}"
+    "lookingNudgeInvite_other": "Пригласить {{count}}",
+    "courtPlan": {
+      "courts": "Корты",
+      "fewerCourts": "Меньше кортов",
+      "moreCourts": "Больше кортов",
+      "anyCourt": "Любой корт",
+      "slotLabel": "Корт {{n}}",
+      "sheet": {
+        "hint": "Занятость на выбранное время.",
+        "noTime": "Выберите время, чтобы увидеть свободные корты.",
+        "linkedHint": "Этот корт взят из вашей брони.",
+        "free": "Свободен",
+        "plannedGame": "Есть запланированная игра — можно выбрать",
+        "club": "Забронирован в клубе",
+        "hold": "Заблокирован клубом",
+        "reservedGame": "Занят игрой с бронью",
+        "notBookable": "Нельзя забронировать онлайн",
+        "onSlot": "Выбран для корта {{n}} — нажмите, чтобы поменять",
+        "linkedElsewhere": "Занят вашей бронью",
+        "anyHint": "Решите позже или пусть клуб назначит",
+        "anyReserveHint": "При бронировании выберем свободный корт",
+        "reservedToggle": "Я забронировал этот корт",
+        "removeReservation": "Убрать эту бронь"
+      },
+      "atClub": {
+        "title": "Бронь в клубе?",
+        "reserveNow": "Забронировать",
+        "alreadyReserved": "Уже есть",
+        "notYet": "Пока нет",
+        "reserveNowHint_one": "При создании игры забронируем {{count}} корт в {{club}}.",
+        "reserveNowHint_few": "При создании игры забронируем {{count}} корта в {{club}}.",
+        "reserveNowHint_many": "При создании игры забронируем {{count}} кортов в {{club}}.",
+        "reserveNowHint_other": "При создании игры забронируем {{count}} корта в {{club}}.",
+        "alreadyReservedHint": "Выберите свои брони ниже. Корты без брони будут отмечены как забронированные.",
+        "alreadyReservedMarkHint": "Отметим корты как забронированные.",
+        "notYetHint": "Игра запланирована без брони корта. Забронировать можно позже.",
+        "reservationsNudge": "У вас есть бронь в этом клубе на этот день.",
+        "useThem": "Использовать",
+        "authSkip": "Пока нет — забронирую позже",
+        "markSkip": "Пропустить — просто отметить корты забронированными"
+      },
+      "reservations": {
+        "title": "Ваши брони на этот день",
+        "empty": "В вашем аккаунте {{club}} нет броней на этот день. Корты будут отмечены как забронированные.",
+        "markRest": "Корты без привязанной брони отмечены как забронированные."
+      },
+      "timePrompt": {
+        "question": "Использовать время брони {{range}}?",
+        "yes": "Да",
+        "keep": "Оставить {{range}}"
+      },
+      "time": {
+        "club": "{{court}} забронирован в клубе",
+        "hold": "{{court}} заблокирован клубом",
+        "reservedGame": "{{court}} занят игрой с бронью",
+        "notEnoughCourts": "Недостаточно свободных кортов ({{free}} из {{needed}})",
+        "softNote": "В это время на корте запланирована другая игра — время всё равно можно выбрать.",
+        "unavailableAt": "{{time}} недоступно: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "Бронь при создании",
+        "courts_one": "{{count}} корт",
+        "courts_few": "{{count}} корта",
+        "courts_many": "{{count}} кортов",
+        "courts_other": "{{count}} корта"
+      },
+      "issue": {
+        "timeRequired": "Сначала выберите время.",
+        "durationRequired": "Сначала выберите длительность.",
+        "timeBlocked": "Это время занято на нужном корте. Выберите другое время или корт.",
+        "courtNotBookable": "Выбранный корт нельзя забронировать онлайн. Выберите другой корт или «Уже есть».",
+        "notEnoughBookableCourts": "На это время недостаточно свободных кортов для брони.",
+        "reservationsLoading": "Ваши брони ещё загружаются — попробуйте через минуту."
+      },
+      "cta": {
+        "reserve_one": "Забронировать {{count}} корт и создать",
+        "reserve_few": "Забронировать {{count}} корта и создать",
+        "reserve_many": "Забронировать {{count}} кортов и создать",
+        "reserve_other": "Забронировать {{count}} корта и создать",
+        "withReserved_one": "Создать с {{count}} забронированным кортом",
+        "withReserved_few": "Создать с {{count}} забронированными кортами",
+        "withReserved_many": "Создать с {{count}} забронированными кортами",
+        "withReserved_other": "Создать с {{count}} забронированного корта"
+      },
+      "rollbackReleased": "Корты, забронированные в этой попытке, отменены.",
+      "partialKept": "Забронировано кортов: {{count}} из {{total}}, брони остаются. Чтобы отменить, свяжитесь с клубом.",
+      "courtsSaveFailed": "Игра создана, но корты не сохранились. Проверьте их на странице игры."
+    }
   }
 }

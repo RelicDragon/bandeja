@@ -37,20 +37,16 @@
     "selectClub": "Select Club",
     "court": "Court",
     "hall": "Hall",
-    "notBookedYet": "Game only",
     "dontSelectCourt": "No court yet",
     "dontSelectHall": "No hall yet",
     "courtNotSelected": "Court is not selected",
     "hallNotSelected": "Hall is not selected",
     "multiCourtHint": "Select up to {{count}} courts for {{participants}} players ({{selected}} selected)",
-    "multiCourtNeedSharedSlots": "Select {{count}} courts that are free at the same time.",
-    "multiCourtNoSharedSlots": "No time slot is free on all {{count}} selected courts. Try different courts, another date, or duration.",
     "webCameraHint": "This court has a linked web camera",
     "webCameraHintsTitle": "Linked web cameras",
     "webCameraHintNamed": "{{court}} has a linked web camera",
     "webCameraHintAction": "Tap to watch live",
     "hasBookedCourt": "I've booked this court",
-    "hasBookedHall": "I've booked a table",
     "selectCourt": "Select Court",
     "selectHall": "Select Hall",
     "selectClubFirst": "Select club first",
@@ -243,10 +239,7 @@
     "timeSlot": "Selected slot",
     "loadingExternalSlots": "Loading external slots",
     "bookedWithoutCourt": "Without court",
-    "notConfirmed": "not confirmed",
-    "multipleCourts": "Multiple Courts",
-    "noCourtsSelected": "No courts selected",
-    "addCourt": "Add Court",
+    "notConfirmed": "planned",
     "createButton": "Create Game",
     "createButtonTournament": "Create Tournament",
     "createButtonLeague": "Create League",
@@ -269,40 +262,19 @@
     "invitesWillBeSent_one": "Player will be invited after game creation",
     "invitesWillBeSent_other": "{{count}} players will be invited after game creation",
     "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
+    "overlapHardTitle": "Court unavailable at this time",
     "overlapSoftTitle": "Another game is planned here",
-    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapSoftMessage": "Another player has a game planned on this court at this time, but the court isn't reserved. You can still continue.",
     "overlapSoftProceed": "Continue anyway",
-    "markCourtBookedTitle": "Mark court as booked?",
-    "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
-    "markCourtBookedYes": "Yes, I've booked it",
-    "markCourtBookedSkip": "Not yet",
     "locationTime": {
-      "skipRealCourtToggle": "Game only",
-      "realCourtBookingHint": "{{courts}} at {{club}} will be reserved when you create the game.",
-      "realCourtBookingHintEdit": "{{courts}} at {{club}} will be reserved when you save.",
-      "skipRealCourtHint": "The game will be scheduled in Bandeja only.",
-      "skipRealCourtHintEdit": "The game will be updated in Bandeja only.",
       "summaryFromBookings": "From your {{count}} reservations",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Select {{min}}–{{max}} reservations ({{players}})",
-      "selectionProgress": "Select up to {{max}} courts ({{players}})",
-      "selectionCompleteOne": "1 court linked",
-      "selectionCompleteMany": "{{count}} courts linked",
-      "selectionAtMax": "Maximum selected for this format ({{players}}) — other reservations are unavailable",
-      "emptyBookingsOnDate": "No reservations on this date",
-      "emptyBookingsHint": "Try another date, reserve a new court, or create the game without linking a reservation.",
-      "emptyBookingsReserveNow": "Reserve court now",
-      "emptyBookingsGameOnly": "Create game only",
       "gridLegend": "Green = your reservation · Red/yellow = taken · Primary = selected time",
       "alsoUsedIn": "Also used in: {{games}}",
       "pickAdjacentHour": "Pick one hour",
       "linkHintTitle": "Game will link to your reservations",
       "linkHintBody": "These court bookings will be linked when you create the game.",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "Adjust game time",
-      "overrideHint": "Game time can be shorter than your reservation",
-      "overrideResetToast": "Time reset to reservations",
       "preselectedBanner": "Reservation pre-selected",
       "linkedOnlyLabel": "From your reservations",
       "unlinkConfirm": "Remove this reservation link?",
@@ -310,67 +282,6 @@
       "unlinkNoCancelNote": "The court reservation at the club stays active — only the link to this game is removed.",
       "syncInactiveCreate": "Sync isn't active right now — we couldn't retrieve slots or make bookings here. You can still create the game at this time.",
       "syncInactiveEdit": "Sync isn't active right now — we couldn't retrieve slots or make bookings here. You can still edit the game at this time."
-    },
-    "reservationIntent": {
-      "title": "How are you getting the court?",
-      "otherOptions": "Other options",
-      "recommended": "Recommended",
-      "recommendedShort": "Rec",
-      "validation": {
-        "selectCourt": "Select {{count}} court(s) first.",
-        "selectBookableCourt": "Select {{count}} online-bookable court(s) first.",
-        "selectTime": "Select an available time first.",
-        "selectDuration": "Select a duration first.",
-        "selectReservations": "Select {{count}} reservation(s) from your account.",
-        "bookingRecordsLoading": "Still loading your reservation details — try again in a moment."
-      },
-      "reserveNow": {
-        "title": "Book a court",
-        "chipTitle": "Book court",
-        "description": "Choose a time — we'll book it for you."
-      },
-      "useExisting": {
-        "title": "I already have a booking",
-        "chipTitle": "My booking",
-        "description": "Connect a reservation from your club account.",
-        "contextAvailable": "{{count}} available on this date"
-      },
-      "gameOnly": {
-        "title": "Skip court booking",
-        "chipTitle": "Game only",
-        "description": "Just create the game — no court reserved."
-      },
-      "manualBooked": {
-        "title": "Already booked manually",
-        "chipTitle": "Booked",
-        "description": "Mark as booked without online reservation."
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "A real court reservation will be made",
-          "body": "Select {{count}} court(s), duration, and time. That exact schedule will be reserved."
-        },
-        "useExisting": {
-          "title": "Game will link to your reservation(s)",
-          "body": "{{selected}} of {{count}} required reservation(s) selected."
-        },
-        "gameOnly": {
-          "title": "No real court reservation will be made",
-          "body": "The game will be scheduled in Bandeja only."
-        },
-        "manualBooked": {
-          "title": "Game will be marked as booked",
-          "body": "No online reservation will be created."
-        }
-      },
-      "cta": {
-        "reserveOne": "Reserve court and create game",
-        "reserveMany": "Reserve {{count}} courts and create game",
-        "linkOne": "Link reservation and create game",
-        "linkMany": "Link {{count}} reservations and create game",
-        "gameOnly": "Create game only",
-        "manualBooked": "Create game"
-      }
     },
     "booktime": {
       "switchLabel": "Reserve court when I create the game",
@@ -381,7 +292,6 @@
       "authorizeInClub": "Authorize in {{club}}",
       "dateHint": "You can book up to {{days}} days ahead at this club.",
       "connectedChip": "Signed in · {{phone}}",
-      "createCta": "Create game & reserve court",
       "signInToContinue": "Sign in to continue",
       "confirmTitle": "Ready to create?",
       "confirmPrimary": "Reserve & create",
@@ -406,8 +316,7 @@
       "cancelPolicy": "Free cancellation up to {{hours}} hours before start.",
       "yourGame": "Your game",
       "snapshotBlocked": "Live availability isn't synced yet. Wait for sync or pick another day.",
-      "alreadyReserved": "Court already reserved for this game.",
-      "liveApiUnavailable": "Court reservation isn't available right now — using normal scheduling."
+      "alreadyReserved": "Court already reserved for this game."
     },
     "padeloo": {
       "authTitle": "Connect your Padeloo account",
@@ -611,6 +520,85 @@
     "lookingNudgeTitle_other": "{{count}} players are looking for this time",
     "lookingNudgeHint": "They asked to play then — your invite reaches them right away",
     "lookingNudgeInvite_one": "Invite",
-    "lookingNudgeInvite_other": "Invite {{count}}"
+    "lookingNudgeInvite_other": "Invite {{count}}",
+    "courtPlan": {
+      "courts": "Courts",
+      "fewerCourts": "Fewer courts",
+      "moreCourts": "More courts",
+      "anyCourt": "Any court",
+      "slotLabel": "Court {{n}}",
+      "sheet": {
+        "hint": "Availability for the time you picked.",
+        "noTime": "Pick a time to see which courts are free.",
+        "linkedHint": "This court comes from your reservation.",
+        "free": "Free",
+        "plannedGame": "A planned game uses it — still possible",
+        "club": "Booked at the club",
+        "hold": "Held by the club",
+        "reservedGame": "Taken by a reserved game",
+        "notBookable": "Can't be booked online",
+        "onSlot": "Picked for court {{n}} — tap to swap",
+        "linkedElsewhere": "Used by your reservation",
+        "anyHint": "Decide later, or let the club assign one",
+        "anyReserveHint": "We'll pick a free court when reserving",
+        "reservedToggle": "I've reserved this court",
+        "removeReservation": "Remove this reservation"
+      },
+      "atClub": {
+        "title": "At the club?",
+        "reserveNow": "Reserve now",
+        "alreadyReserved": "Already reserved",
+        "notYet": "Not yet",
+        "reserveNowHint_one": "We'll reserve {{count}} court at {{club}} when you create the game.",
+        "reserveNowHint_other": "We'll reserve {{count}} courts at {{club}} when you create the game.",
+        "alreadyReservedHint": "Pick your reservations below. Courts without one are marked as reserved.",
+        "alreadyReservedMarkHint": "We'll mark the courts as reserved.",
+        "notYetHint": "The game is planned without a court reservation. You can reserve later.",
+        "reservationsNudge": "You have a reservation at this club that day.",
+        "useThem": "Use it",
+        "authSkip": "Not yet — I'll reserve later",
+        "markSkip": "Skip — just mark the courts as reserved"
+      },
+      "reservations": {
+        "title": "Your reservations that day",
+        "empty": "No reservations in your {{club}} account that day. The courts will be marked as reserved.",
+        "markRest": "Courts without a linked reservation are marked as reserved."
+      },
+      "timePrompt": {
+        "question": "Use the reservation's time {{range}}?",
+        "yes": "Yes",
+        "keep": "Keep {{range}}"
+      },
+      "time": {
+        "club": "{{court}} is booked at the club",
+        "hold": "{{court}} is held by the club",
+        "reservedGame": "{{court}} is taken by a reserved game",
+        "notEnoughCourts": "Not enough free courts ({{free}} of {{needed}})",
+        "softNote": "A planned game also uses a court then — you can still pick this time.",
+        "unavailableAt": "{{time}} isn't available: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "Reserved on create",
+        "courts_one": "{{count}} court",
+        "courts_other": "{{count}} courts"
+      },
+      "issue": {
+        "timeRequired": "Pick a time first.",
+        "durationRequired": "Pick a duration first.",
+        "timeBlocked": "That time is taken on a court you need. Pick another time or court.",
+        "courtNotBookable": "A picked court can't be booked online. Pick another court or choose “Already reserved”.",
+        "notEnoughBookableCourts": "Not enough courts are free to reserve at that time.",
+        "reservationsLoading": "Still loading your reservations — try again in a moment."
+      },
+      "cta": {
+        "reserve_one": "Reserve {{count}} court and create",
+        "reserve_other": "Reserve {{count}} courts and create",
+        "withReserved_one": "Create with {{count}} reserved court",
+        "withReserved_other": "Create with {{count}} reserved courts"
+      },
+      "rollbackReleased": "The courts reserved in this attempt were cancelled.",
+      "partialKept": "{{count}} of {{total}} courts were reserved and stay booked. To cancel them, contact the club.",
+      "courtsSaveFailed": "Game created, but its courts couldn't be saved. Check them on the game page."
+    }
   }
 }

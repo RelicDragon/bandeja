@@ -1,9 +1,7 @@
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LayoutGrid } from 'lucide-react';
-import { ToggleSwitch } from '../ToggleSwitch';
 import { CourtSelectionGrid } from './CourtSelectionGrid';
-import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { computeRequiredCourtCount } from '@/utils/requiredCourtCount';
 import { resolveCourtNameParts } from '@/utils/courtDisplayName';
 import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
@@ -20,12 +18,15 @@ interface CreateGameCourtSectionProps {
   multiSelectCourts?: boolean;
   requiredCourtCount?: number;
   selectedDate: Date;
-  hasBookedCourt: boolean;
+  /** @deprecated Ignored: reservations are set by "At the club?" (create) or the Courts card. */
+  hasBookedCourt?: boolean;
   entityType: EntityType;
   onSelectCourt: (id: string) => void;
-  onToggleHasBookedCourt: (checked: boolean) => void;
+  /** @deprecated Ignored, see `hasBookedCourt`. */
+  onToggleHasBookedCourt?: (checked: boolean) => void;
   preferredSport?: Sport | null;
   onSportTabChange?: (sport: Sport) => void;
+  /** @deprecated Ignored: the "I booked this court" switch is gone. */
   showHasBookedSwitch?: boolean;
   showNotBookedOption?: boolean;
 }
@@ -41,13 +42,10 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
   multiSelectCourts = false,
   requiredCourtCount: requiredCourtCountProp,
   selectedDate,
-  hasBookedCourt,
   entityType,
   onSelectCourt,
-  onToggleHasBookedCourt,
   preferredSport,
   onSportTabChange,
-  showHasBookedSwitch: showHasBookedSwitchProp = true,
   showNotBookedOption = true,
 }: CreateGameCourtSectionProps) {
   const { t } = useTranslation();
@@ -65,12 +63,6 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
       : entityType === 'BAR' && courts.length === 1
         ? courts[0]
         : undefined;
-  const showHasBookedSwitch =
-    showHasBookedSwitchProp &&
-    (selectedCourt !== 'notBooked' || (entityType === 'BAR' && courts.length === 1)) &&
-    !courtHasActiveBookingIntegration(club, court) &&
-    !multiSelectCourts;
-
   const requiredCourtCount =
     requiredCourtCountProp ?? computeRequiredCourtCount(maxParticipants, playersPerMatch);
   const courtDone = multiSelectCourts
@@ -110,16 +102,6 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
             onSportTabChange={onSportTabChange}
             showNotBookedOption={showNotBookedOption}
           />
-        </div>
-      )}
-      {showHasBookedSwitch && (
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-            {entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt')}
-          </span>
-          <div className="flex-shrink-0">
-            <ToggleSwitch checked={hasBookedCourt} onChange={onToggleHasBookedCourt} />
-          </div>
         </div>
       )}
     </div>

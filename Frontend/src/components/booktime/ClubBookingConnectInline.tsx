@@ -15,6 +15,8 @@ type ClubBookingConnectInlineProps = {
   integrationConfig?: BooktimeIntegrationConfig;
   onConnected: () => void;
   onSkip: () => void;
+  /** What skipping means in the caller's flow (e.g. "Not yet — I'll reserve later"). */
+  skipLabel: string;
   collapsed?: boolean;
   onCollapsedClick?: () => void;
 };
@@ -24,6 +26,7 @@ export function ClubBookingConnectInline({
   integrationConfig,
   onConnected,
   onSkip,
+  skipLabel,
   collapsed = false,
   onCollapsedClick,
 }: ClubBookingConnectInlineProps) {
@@ -111,7 +114,7 @@ export function ClubBookingConnectInline({
             onClick={onSkip}
             className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline-offset-2 hover:underline"
           >
-            {t('createGame.booktime.authOptOut')}
+            {skipLabel}
           </button>
         </motion.div>
       )}

@@ -415,10 +415,10 @@ function runGameDetail() {
 function runBroadcastProjection() {
   assert.deepEqual(
     [...GAME_BROADCAST_STRIPPED_KEYS],
-    ['paymentHint', 'paymentMethods', 'userNote', 'isClubFavorite'],
-    'the broadcast strips both entitled columns and both viewer-scoped fields',
+    ['paymentHint', 'paymentMethods', 'userNote', 'isClubFavorite', 'pendingClubFollowUps'],
+    'the broadcast strips both entitled columns and every viewer-scoped field',
   );
-  assert.deepEqual([...GAME_DETAIL_VIEWER_SCOPED_KEYS], ['userNote', 'isClubFavorite']);
+  assert.deepEqual([...GAME_DETAIL_VIEWER_SCOPED_KEYS], ['userNote', 'isClubFavorite', 'pendingClubFollowUps']);
 
   const entitledPayload = {
     id: 'g1',

@@ -1,0 +1,231 @@
+{
+  "courtReservation": {
+    "slot": {
+      "planned": "Direncanakan",
+      "reported": "Dipesan",
+      "linked": "Dipesan · {{provider}}",
+      "unknownTime": "Dipesan · {{provider}} · waktu tidak diketahui",
+      "gap": "Celah {{from}}–{{to}}"
+    },
+    "summary": {
+      "planned": "Direncanakan",
+      "partial": "{{reserved}} dari {{total}} dipesan",
+      "reserved": "Semua lapangan dipesan",
+      "reservedWithGap": "Dipesan, ada celah pukul {{time}}"
+    },
+    "reschedule": {
+      "unchanged": "Tidak berubah",
+      "keep": "Pertahankan pesanan",
+      "move": "Pindahkan pesanan",
+      "extend": "Perpanjang pesanan",
+      "switch_court": "Ganti lapangan",
+      "blocked": "Lapangan tidak tersedia",
+      "manual": "Tanya klub"
+    },
+    "duration": {
+      "hm": "{{h}} jam {{m}} mnt",
+      "h": "{{h}} jam",
+      "m": "{{m}} mnt",
+      "shortHm": "{{h}} j {{m}} mnt",
+      "shortH": "{{h}} j",
+      "shortM": "{{m}} mnt"
+    },
+    "card": {
+      "title": "Lapangan",
+      "players_other": "{{count}} pemain",
+      "courts_other": "{{count}} lapangan",
+      "anyCourt": "Lapangan mana saja",
+      "noTime": "Atur waktu untuk melihat seberapa banyak permainan yang tercakup",
+      "count": "Jumlah lapangan",
+      "fewer": "Kurangi satu lapangan",
+      "more": "Tambah satu lapangan"
+    },
+    "action": {
+      "reserveCourt": "Pesan lapangan",
+      "reserveCourts_other": "Pesan {{count}} lapangan",
+      "reserveLast": "Pesan lapangan terakhir",
+      "reserveRemaining_other": "Pesan {{count}} lapangan tersisa",
+      "fillGap": "Isi celah {{duration}}",
+      "fillGaps": "Isi semua celah"
+    },
+    "sheet": {
+      "game": "Permainan",
+      "reservationAt": "Pesanan · {{provider}}",
+      "timeUnknown": "Waktu tidak diketahui",
+      "reportedHint": "Kamu bilang lapangan ini sudah dipesan di klub.",
+      "plannedHint": "Belum ada pesanan untuk lapangan ini.",
+      "alsoUsedBy": "Juga dipakai {{name}} {{from}}–{{to}}",
+      "pickCourt": "Lapangan yang mana?",
+      "action": {
+        "reserve": "Pesan sekarang",
+        "link": "Tautkan pesananku",
+        "linkReported": "Tautkan pesanan",
+        "markReserved": "Tandai sudah dipesan",
+        "markNotReserved": "Tandai belum dipesan",
+        "verify": "Periksa",
+        "unlink": "Lepas tautan",
+        "cancelAtClub": "Batalkan di klub",
+        "changeCourt": "Ganti lapangan",
+        "useCourtOnly": "Pakai {{court}}, pesan nanti",
+        "useCourtInstead": "Pakai {{court}} sebagai gantinya",
+        "keepCourt": "Tetap {{court}}"
+      }
+    },
+    "move": {
+      "title": "Ubah waktu",
+      "dragLabel": "Waktu permainan",
+      "dragHint": "Seret permainan, atau pakai tombol di bawah",
+      "start": "Mulai",
+      "length": "Durasi",
+      "earlier": "15 menit lebih awal",
+      "later": "15 menit lebih lambat",
+      "shorter": "15 menit lebih singkat",
+      "longer": "15 menit lebih lama",
+      "courtsLabel": "Yang terjadi pada tiap lapangan",
+      "notice_other": "{{count}} pemain menerima satu pemberitahuan waktu baru",
+      "option": {
+        "none": "Tidak berubah",
+        "keep": "Pertahankan pesanan",
+        "move": "Pindahkan pesanan",
+        "extend": "Perpanjang pesanan",
+        "switchCourt": "Ganti lapangan",
+        "switchTo": "Ganti ke {{court}}",
+        "unlink": "Lepaskan dari permainan ini",
+        "moveTogether": "Pindahkan {{names}} juga",
+        "manual": "Tanya klub"
+      },
+      "fix": {
+        "use": "Pakai: {{option}}",
+        "moveTo": "Pindah ke {{time}}"
+      },
+      "footer": {
+        "move_other": "Pindahkan permainan · {{count}} langkah",
+        "blocked": "Selesaikan bentrok dulu",
+        "noChanges": "Tidak ada perubahan"
+      },
+      "change": "Ubah",
+      "changeFor": "Ubah apa yang terjadi pada {{court}}",
+      "unchanged": "{{courts}} · tidak berubah",
+      "sliderValue": "Mulai {{start}}, selesai {{end}}",
+      "why": {
+        "notAvailable": "Lapangan ini tidak kosong pada waktu baru.",
+        "keep": "Reservasinya masih mencakup waktu baru.",
+        "keepUnused": "Reservasinya masih mencakup; {{duration}} tidak terpakai.",
+        "move": "Memesan {{range}} dan membatalkan yang lama.",
+        "moveCancelWithClub": "Memesan {{range}}. Yang lama Anda batalkan lewat klub.",
+        "extend": "Menambah {{range}}.",
+        "roundedRange": "{{range}} ({{provider}} menjual {{lengths}})",
+        "sharerKeeps": "{{names}} tetap memakai reservasi pukul {{time}}.",
+        "sharerKeepsNoTime": "{{names}} tetap memakai reservasinya.",
+        "unused": "{{duration}} dari reservasi lama tidak terpakai.",
+        "switchBook": "Sebagai gantinya memesan {{court}} {{range}}.",
+        "switchPlanned": "Sebagai gantinya memakai {{court}}.",
+        "unlink": "Melepas reservasi bersama; {{names}} tetap memakainya.",
+        "unlinkNoNames": "Melepas reservasi bersama; permainan lain tetap memakainya.",
+        "moveTogether": "{{names}} juga pindah ke {{time}}, jadi reservasinya ikut.",
+        "moveTogetherNoTime": "{{names}} juga pindah, jadi reservasinya ikut.",
+        "manualReported": "Dipesan lewat klub — beri tahu mereka waktu barunya.",
+        "manualCannotBook": "{{provider}} tidak bisa dipesan dari aplikasi — tanyakan ke klub.",
+        "manualNoCourt": "Belum ada lapangan yang dipilih — tanyakan ke klub.",
+        "manualUnknownTime": "Waktu reservasinya tidak diketahui — cek dengan klub.",
+        "manualChoice": "Anda atur sendiri dengan klub."
+      }
+    },
+    "run": {
+      "title": "Memindahkan permainan",
+      "working": "Sedang diproses…",
+      "done": "Permainan dipindahkan",
+      "doneWithFollowUps": "Permainan dipindahkan — ada beberapa hal untukmu",
+      "rolledBack": "Tidak ada yang berubah — waktu permainan tetap",
+      "paused": "Permainan sudah pindah, tapi beberapa langkah belum selesai",
+      "clashFromServer": "Ada lapangan yang terisi saat kami bekerja. Pilih opsi lain.",
+      "retry": "Coba lagi",
+      "later": "Nanti",
+      "close": "Selesai",
+      "backToPlan": "Kembali ke rencana",
+      "step": {
+        "reassign": "Ganti ke {{court}}",
+        "unlink": "Lepas pesanan bersama",
+        "moveShared": "Pindahkan {{name}} ke {{from}}–{{to}}",
+        "cancel": "Batalkan pesanan lama di {{provider}}",
+        "manualCancel": "Batalkan pesanan lama lewat klub",
+        "manualClub": "Beri tahu klub: {{court}} {{from}}–{{to}}",
+        "bookInstead": "Pesan {{court}} sebagai ganti {{fromCourt}} · {{range}}",
+        "bookRange": "Pesan {{court}} · {{range}}",
+        "reassignInstead": "Pakai {{court}} sebagai ganti {{fromCourt}}",
+        "saveRange": "Simpan waktu baru {{range}}",
+        "cancelRange": "Batalkan reservasi lama {{range}} di {{provider}}",
+        "manualCancelRange": "Batalkan reservasi lama {{range}} lewat klub",
+        "saveAndTell_other": "Simpan waktu baru {{range}} dan beri tahu {{count}} pemain"
+      },
+      "status": {
+        "pending": "Menunggu",
+        "running": "Diproses",
+        "done": "Selesai",
+        "failed": "Gagal",
+        "skipped": "Dilewati",
+        "followUp": "Untukmu",
+        "rolledBack": "Dibatalkan",
+        "leftAtClub": "Masih di klub"
+      },
+      "failedHint": {
+        "book": "Klub tidak menerima pemesanan ini.",
+        "save": "Waktu baru tidak bisa disimpan.",
+        "other": "Langkah ini tidak berhasil."
+      },
+      "progress": "{{done}} dari {{total}}",
+      "otherRun": {
+        "title": "Ada perubahan lain yang sedang berjalan",
+        "ours": "Anda memulai perubahan lain untuk permainan ini yang belum selesai. Selesaikan dulu, lalu coba yang ini.",
+        "someoneElse": "Orang lain sedang mengubah lapangan permainan ini. Coba lagi beberapa menit lagi.",
+        "finishIt": "Selesaikan"
+      }
+    },
+    "banner": {
+      "unfinishedTitle": "Perubahan lapangan belum selesai",
+      "pausedTitle": "Permainan sudah pindah — tersisa beberapa langkah lapangan",
+      "detail_other": "Tersisa {{count}} langkah · {{time}}",
+      "detailNoTime_other": "Tersisa {{count}} langkah",
+      "finish": "Selesaikan perubahan",
+      "undo": "Urungkan"
+    },
+    "drift": {
+      "moved": "{{court}} sekarang mulai {{time}} di {{provider}}",
+      "movedNoTime": "{{court}} berubah di {{provider}}",
+      "missing": "Pesanan {{court}} hilang di {{provider}}",
+      "moveGame": "Pindahkan permainan",
+      "keepGame": "Pertahankan waktu",
+      "reserveAgain": "Pesan lagi",
+      "unlink": "Lepas tautan"
+    },
+    "followUp": {
+      "title": "Urusan di klub",
+      "theClub": "klub",
+      "cancelOld": "Batalkan pesanan lama lewat klub",
+      "cancelOldAt": "Batalkan pesanan lama pukul {{time}} lewat klub",
+      "askClub": "Beri tahu klub: {{court}} {{from}}–{{to}}",
+      "askClubNoTime": "Beri tahu klub soal {{court}}",
+      "leftAtClub": "{{court}} {{from}}–{{to}} masih dipesan di {{provider}}",
+      "leftAtClubNoTime": "{{court}} masih dipesan di {{provider}}",
+      "done": "Selesai"
+    },
+    "blocker": {
+      "club": "Klub sudah memesan {{court}} pukul {{time}}.",
+      "hold": "Klub menahan {{court}} pukul {{time}}.",
+      "game": "{{name}} memakai {{court}} pukul {{time}}.",
+      "gameUnnamed": "Permainan lain memakai {{court}} pukul {{time}}.",
+      "plannedGame": "{{name}} direncanakan di {{court}} pukul {{time}}.",
+      "plannedGameUnnamed": "Ada permainan lain yang direncanakan di {{court}} pukul {{time}}."
+    },
+    "timeline": {
+      "free": "kosong",
+      "movesTo": "pindah ke {{court}}",
+      "legend": {
+        "reserved": "Reservasi Anda",
+        "reported": "Dipesan lewat klub",
+        "club": "Dipakai klub",
+        "game": "Permainan lain"
+      }
+    }
+  }
+}

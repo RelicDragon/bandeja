@@ -66,10 +66,18 @@ export function useBooktimeTimeOptions({
   const courtMappingKey = booktimeCourtMappingKey(courts, club);
   const mappedCourtsRef = useRef<Court[]>([]);
   mappedCourtsRef.current = club ? mappedBooktimeCourts(club, courts) : [];
-  const normalizedSelectedCourtIds = useMemo(() => {
-    const source = selectedCourtIds ?? (selectedCourtId ? [selectedCourtId] : []);
-    return [...new Set(source.filter((id) => id && id !== 'notBooked'))].sort();
-  }, [selectedCourtId, selectedCourtIds]);
+  // Keyed by content: callers may pass a fresh array every render.
+  const selectedCourtIdsKey = [
+    ...new Set(
+      (selectedCourtIds ?? (selectedCourtId ? [selectedCourtId] : [])).filter((id) => id && id !== 'notBooked'),
+    ),
+  ]
+    .sort()
+    .join(',');
+  const normalizedSelectedCourtIds = useMemo(
+    () => (selectedCourtIdsKey ? selectedCourtIdsKey.split(',') : []),
+    [selectedCourtIdsKey],
+  );
   const explicitCourtSelection = selectedCourtIds !== undefined;
   const courtSelectionCacheId = explicitCourtSelection
     ? normalizedSelectedCourtIds.length > 0

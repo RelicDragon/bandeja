@@ -18,8 +18,10 @@
       "invite": "دعوة"
     },
     "booking": {
-      "notBooked": "الملعب غير محجوز بعد",
-      "partlyBooked": "الملعب محجوز جزئيًا",
+      "notReservedOne": "الملعب غير محجوز بعد",
+      "notReservedMany": "الملاعب غير محجوزة بعد",
+      "partlyReserved": "تم حجز {{reserved}} من {{total}} ملاعب",
+      "gapAt": "فجوة في الحجز عند {{time}}",
       "seeBookings": "عرض الحجوزات",
       "editCourt": "تعديل الملعب"
     },

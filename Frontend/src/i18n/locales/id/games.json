@@ -299,6 +299,7 @@
       "lookingToday_other": "{{count}} orang ingin bermain hari ini di {{city}}",
       "lookingTodayAndTomorrow_one": "{{count}} orang ingin bermain hari ini dan besok di {{city}}",
       "lookingTodayAndTomorrow_other": "{{count}} orang ingin bermain hari ini dan besok di {{city}}"
-    }
+    },
+    "reservationPartly": "Dipesan sebagian"
   }
 }

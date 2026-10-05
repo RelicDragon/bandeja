@@ -8,8 +8,10 @@
       "invite": "招待"
     },
     "booking": {
-      "notBooked": "コートはまだ予約されていません",
-      "partlyBooked": "コートは一部のみ予約済み",
+      "notReservedOne": "コートはまだ予約されていません",
+      "notReservedMany": "コートはまだ1面も予約されていません",
+      "partlyReserved": "{{total}}面中{{reserved}}面を予約済み",
+      "gapAt": "{{time}}に予約の空きがあります",
       "seeBookings": "予約を見る",
       "editCourt": "コートを編集"
     },

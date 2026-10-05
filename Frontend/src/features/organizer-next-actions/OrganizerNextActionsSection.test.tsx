@@ -21,6 +21,9 @@ vi.mock('react-i18next', () => ({
     i18n: { language: 'en-GB', resolvedLanguage: 'en-GB' },
   }),
 }));
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: (selector: (state: { user: null }) => unknown) => selector({ user: null }),
+}));
 vi.mock('@/hooks/usePrefersReducedMotion', () => ({ usePrefersReducedMotion: () => true }));
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
@@ -129,7 +132,7 @@ describe('OrganizerNextActionsSection', () => {
     expect(seats).toBeGreaterThan(-1);
     expect(booking).toBeGreaterThan(seats);
     expect(html).toContain('organizerNextActions.seats.needed:count=1');
-    expect(html).toContain('organizerNextActions.booking.notBooked');
+    expect(html).toContain('organizerNextActions.booking.notReservedOne');
     expect(html).toContain('organizerNextActions.booking.editCourt');
     expect(html.indexOf('organizer-hint-attendance')).toBeGreaterThan(booking);
   });
@@ -148,15 +151,38 @@ describe('OrganizerNextActionsSection', () => {
     expect(render({ game: makeGame({ resultsStatus: 'FINAL' }) })).toBe('');
   });
 
-  it('reads partial external coverage from the game payload', () => {
+  it('reads "k of N courts reserved" from the game payload', () => {
     costSummary = undefined;
     const html = render({
       game: makeGame({
+        maxParticipants: 8,
         bookingStatus: 'EXTERNAL_PARTIAL',
         linkedBookings: [{ id: 'l1', externalBookingId: 'b1', externalBookingProvider: 'BOOKTIME' }],
       }),
     });
-    expect(html).toContain('organizerNextActions.booking.partlyBooked');
+    expect(html).toContain('organizerNextActions.booking.partlyReserved:reserved=1,total=2');
+    expect(html).toContain('organizerNextActions.booking.seeBookings');
+  });
+
+  it('reads a linked-booking gap as "Gap at …"', () => {
+    costSummary = undefined;
+    const html = render({
+      game: makeGame({
+        startTime: '2026-06-12T10:00:00.000Z',
+        endTime: '2026-06-12T12:00:00.000Z',
+        city: { id: 'city1', name: 'City', timezone: 'UTC' },
+        linkedBookings: [
+          {
+            id: 'l1',
+            externalBookingId: 'b1',
+            externalBookingProvider: 'BOOKTIME',
+            bookingStart: '2026-06-12T10:00:00.000Z',
+            bookingEnd: '2026-06-12T11:00:00.000Z',
+          },
+        ],
+      } as Partial<Game>),
+    });
+    expect(html).toMatch(/organizerNextActions\.booking\.gapAt:time=11:00/);
     expect(html).toContain('organizerNextActions.booking.seeBookings');
   });
 

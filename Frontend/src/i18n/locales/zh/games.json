@@ -299,6 +299,7 @@
       "lookingToday_other": "{{city}} 今天有 {{count}} 人想打球",
       "lookingTodayAndTomorrow_one": "{{city}} 今天和明天有 {{count}} 人想打球",
       "lookingTodayAndTomorrow_other": "{{city}} 今天和明天有 {{count}} 人想打球"
-    }
+    },
+    "reservationPartly": "部分预订"
   }
 }

@@ -8,8 +8,10 @@
       "invite": "Undang"
     },
     "booking": {
-      "notBooked": "Lapangan belum dipesan",
-      "partlyBooked": "Lapangan baru dipesan sebagian",
+      "notReservedOne": "Lapangan belum dipesan",
+      "notReservedMany": "Semua lapangan belum dipesan",
+      "partlyReserved": "{{reserved}} dari {{total}} lapangan dipesan",
+      "gapAt": "Ada celah pemesanan pukul {{time}}",
       "seeBookings": "Lihat pemesanan",
       "editCourt": "Ubah lapangan"
     },

@@ -1,6 +1,14 @@
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { LocationTimeMode } from './LocationTimeMode';
-import type { EditReservationAction } from '@shared/gameBooking/reservationIntent';
+
+/** What an edit draft did with the game's reservations (legacy edit/league save paths). */
+export type EditReservationAction =
+  | 'keepCurrent'
+  | 'changeGameTimeOnly'
+  | 'useExisting'
+  | 'reserveNew'
+  | 'unlink'
+  | 'gameOnly';
 
 export type EditLocationTimeDraft = {
   locationTimeMode: LocationTimeMode;

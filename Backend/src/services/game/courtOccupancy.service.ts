@@ -1,4 +1,4 @@
-import { ClubIntegrationType, CourtSlotHoldLabel, Prisma } from '@prisma/client';
+import { ClubIntegrationType, CourtSlotHoldLabel, GameCourtReservation, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { loadMergedBusySlots } from '../../shared/booktimeBusySnapshot';
 import { UNASSIGNED_COURT_KEY } from '../../shared/clubScheduleConstants';
@@ -15,9 +15,20 @@ export interface BookedCourtSlot {
   isFree: boolean;
   slotKind?: 'game' | 'external' | 'hold';
   holdBlocked?: boolean;
+  /** Additive (court slots): the app game this block belongs to. */
+  gameId?: string;
+  /** Additive (court slots): per-slot reservation of an app game block. */
+  reservation?: OccupancyReservation;
 }
 
 export type OccupancyBlockKind = 'game' | 'hold' | 'external';
+
+/**
+ * Per court slot of an app game: `reserved` when the slot is REPORTED or carries a linked
+ * booking, `planned` otherwise. `hasBookedCourt` on the same block keeps its old, game-level
+ * meaning for shipped apps.
+ */
+export type OccupancyReservation = 'planned' | 'reserved';
 
 export interface OccupancyBlock {
   kind: OccupancyBlockKind;
@@ -34,6 +45,10 @@ export interface OccupancyBlock {
   holdId?: string;
   holdLabel?: CourtSlotHoldLabel;
   holdNote?: string | null;
+  /** Game blocks only: this slot's reservation (see {@link OccupancyReservation}). */
+  reservation?: OccupancyReservation;
+  /** Game blocks only: the `GameCourt` row this block stands for (absent for slot-less games). */
+  gameCourtId?: string;
 }
 
 export interface CourtOccupancyResult {
@@ -53,6 +68,7 @@ export type CourtOccupancyOptions = {
   rangeEnd: Date;
   courtId?: string;
   includeUnmapped?: boolean;
+  /** Kept for callers; both views now include every `GameCourt` of a game. */
   gameCourtFilter?: 'player' | 'admin';
   sources?: CourtOccupancySources;
   applyDateRange?: boolean;
@@ -65,7 +81,6 @@ function buildGameWhere(
   rangeStart: Date,
   rangeEnd: Date,
   courtId: string | undefined,
-  gameCourtFilter: 'player' | 'admin',
   applyDateRange: boolean
 ): Prisma.GameWhereInput {
   const andConditions: Prisma.GameWhereInput[] = [
@@ -84,22 +99,85 @@ function buildGameWhere(
   }
 
   if (courtId) {
-    if (gameCourtFilter === 'admin') {
-      andConditions.push({
-        OR: [
-          { courtId },
-          { courtId: null },
-          { gameCourts: { some: { courtId } } },
-        ],
-      });
-    } else {
-      andConditions.push({
-        OR: [{ courtId }, { courtId: null }],
-      });
-    }
+    // Player and admin views both include every court slot of a game (`GameCourt`).
+    andConditions.push({
+      OR: [
+        { courtId },
+        { courtId: null },
+        { gameCourts: { some: { courtId } } },
+      ],
+    });
   }
 
   return { AND: andConditions };
+}
+
+type GameBlockRow = {
+  id: string;
+  startTime: Date;
+  endTime: Date;
+  hasBookedCourt: boolean;
+  reportedAnyCourtCount: number;
+  court: { id: string; name: string; integrationCourtName: string | null } | null;
+  gameCourts: Array<{
+    id: string;
+    courtId: string;
+    order: number;
+    reservation: GameCourtReservation;
+    court: { id: string; name: string; integrationCourtName: string | null };
+  }>;
+  externalBookings: Array<{ gameCourtId: string | null; courtId: string | null }>;
+};
+
+/**
+ * One block per court slot of the game (every `GameCourt`), so a two-court game occupies both
+ * courts. A slot is `reserved` when it is REPORTED or a linked booking sits on it (by
+ * `gameCourtId`, or by court for a not-yet-placed link). A game without slots keeps its one
+ * `Game.court` block (or a court-less one), reserved when anything is reserved.
+ */
+export function gameRowToOccupancyBlocks(game: GameBlockRow, courtId?: string): OccupancyBlock[] {
+  const base = {
+    kind: 'game' as const,
+    gameId: game.id,
+    startTime: game.startTime.toISOString(),
+    endTime: game.endTime.toISOString(),
+    hasBookedCourt: game.hasBookedCourt,
+    clubBooked: false,
+    isFree: false,
+  };
+  if (game.gameCourts.length === 0) {
+    if (courtId && game.court && game.court.id !== courtId) return [];
+    const reserved = game.externalBookings.length > 0 || game.reportedAnyCourtCount > 0 || game.hasBookedCourt;
+    return [
+      {
+        ...base,
+        courtId: game.court?.id ?? null,
+        courtName: game.court?.name ?? null,
+        integrationCourtName: game.court?.integrationCourtName ?? null,
+        reservation: reserved ? 'reserved' : 'planned',
+      },
+    ];
+  }
+  const slotIds = new Set(game.gameCourts.map((slot) => slot.id));
+  return [...game.gameCourts]
+    .sort((a, b) => a.order - b.order)
+    .filter((slot) => !courtId || slot.courtId === courtId)
+    .map((slot) => {
+      const linked = game.externalBookings.some(
+        (link) =>
+          link.gameCourtId === slot.id ||
+          ((!link.gameCourtId || !slotIds.has(link.gameCourtId)) && link.courtId === slot.courtId),
+      );
+      const reserved = linked || slot.reservation === GameCourtReservation.REPORTED;
+      return {
+        ...base,
+        courtId: slot.court.id,
+        courtName: slot.court.name,
+        integrationCourtName: slot.court.integrationCourtName,
+        reservation: reserved ? ('reserved' as const) : ('planned' as const),
+        gameCourtId: slot.id,
+      };
+    });
 }
 
 async function queryGameBlocks(
@@ -107,35 +185,27 @@ async function queryGameBlocks(
   rangeStart: Date,
   rangeEnd: Date,
   courtId: string | undefined,
-  gameCourtFilter: 'player' | 'admin',
   applyDateRange: boolean
 ): Promise<OccupancyBlock[]> {
+  const courtSelect = { id: true, name: true, integrationCourtName: true } as const;
   const games = await prisma.game.findMany({
-    where: buildGameWhere(clubId, rangeStart, rangeEnd, courtId, gameCourtFilter, applyDateRange),
-    include: {
-      court: {
-        select: {
-          id: true,
-          name: true,
-          integrationCourtName: true,
-        },
+    where: buildGameWhere(clubId, rangeStart, rangeEnd, courtId, applyDateRange),
+    select: {
+      id: true,
+      startTime: true,
+      endTime: true,
+      hasBookedCourt: true,
+      reportedAnyCourtCount: true,
+      court: { select: courtSelect },
+      gameCourts: {
+        select: { id: true, courtId: true, order: true, reservation: true, court: { select: courtSelect } },
       },
+      externalBookings: { select: { gameCourtId: true, courtId: true } },
     },
     orderBy: { startTime: 'asc' },
   });
 
-  return games.map((game) => ({
-    kind: 'game' as const,
-    gameId: game.id,
-    courtId: game.court?.id ?? null,
-    courtName: game.court?.name ?? null,
-    integrationCourtName: game.court?.integrationCourtName ?? null,
-    startTime: game.startTime.toISOString(),
-    endTime: game.endTime.toISOString(),
-    hasBookedCourt: game.hasBookedCourt,
-    clubBooked: false,
-    isFree: false,
-  }));
+  return games.flatMap((game) => gameRowToOccupancyBlocks(game, courtId));
 }
 
 async function queryHoldBlocks(
@@ -241,6 +311,8 @@ export function mapOccupancyBlockToBookedCourtSlot(block: OccupancyBlock): Booke
     isFree: block.isFree,
     slotKind: block.kind,
     holdBlocked: block.holdBlocked,
+    ...(block.gameId ? { gameId: block.gameId } : {}),
+    ...(block.reservation ? { reservation: block.reservation } : {}),
   };
 }
 
@@ -272,8 +344,16 @@ export function isOccupancyHardBlock(block: OccupancyBlock): boolean {
   return block.clubBooked || block.holdBlocked === true;
 }
 
+/** An app game whose slot on this court is not reserved (per slot; falls back to `hasBookedCourt`). */
 export function isOccupancySoftBlock(block: OccupancyBlock): boolean {
-  return block.kind === 'game' && !block.hasBookedCourt;
+  if (block.kind !== 'game') return false;
+  return block.reservation ? block.reservation === 'planned' : !block.hasBookedCourt;
+}
+
+/** An app game whose slot on this court is reserved (REPORTED or linked). */
+export function isOccupancyReservedGameBlock(block: OccupancyBlock): boolean {
+  if (block.kind !== 'game') return false;
+  return block.reservation ? block.reservation === 'reserved' : block.hasBookedCourt;
 }
 
 export class CourtOccupancyService {
@@ -284,7 +364,6 @@ export class CourtOccupancyService {
       rangeEnd,
       courtId,
       includeUnmapped = false,
-      gameCourtFilter = 'player',
       sources = {},
       applyDateRange = true,
     } = options;
@@ -300,7 +379,6 @@ export class CourtOccupancyService {
             rangeStart,
             rangeEnd,
             courtId,
-            gameCourtFilter,
             applyDateRange
           )
         : Promise.resolve([]),

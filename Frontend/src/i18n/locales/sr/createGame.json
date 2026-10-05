@@ -37,20 +37,16 @@
     "selectClub": "Izaberite klub",
     "court": "Teren",
     "hall": "Sala",
-    "notBookedYet": "Game only",
     "dontSelectCourt": "No court yet",
     "dontSelectHall": "No hall yet",
     "courtNotSelected": "Teren nije izabran",
     "hallNotSelected": "Sala nije izabrana",
     "multiCourtHint": "Izaberite do {{count}} terena za {{participants}} igrača (izabrano {{selected}})",
-    "multiCourtNeedSharedSlots": "Izaberite {{count}} terena slobodna u isto vreme.",
-    "multiCourtNoSharedSlots": "Nema zajedničkog slobodnog termina za svih {{count}} izabranih terena. Probajte druge terene, datum ili trajanje.",
     "webCameraHint": "Ovaj teren ima povezanu veb kameru",
     "webCameraHintsTitle": "Povezane veb kamere",
     "webCameraHintNamed": "{{court}} ima povezanu veb kameru",
     "webCameraHintAction": "Dodirnite za uživo prenos",
     "hasBookedCourt": "Rezervisao sam ovaj teren",
-    "hasBookedHall": "Rezervisao sam sto",
     "selectCourt": "Izaberite teren",
     "selectHall": "Izaberite salu",
     "selectClubFirst": "Prvo izaberite klub",
@@ -239,10 +235,7 @@
     "timeSlot": "Izabrani slot",
     "loadingExternalSlots": "Učitavanje spoljnih slotova",
     "bookedWithoutCourt": "Bez terena",
-    "notConfirmed": "nije potvrđeno",
-    "multipleCourts": "Više terena",
-    "noCourtsSelected": "Nema izabranih terena",
-    "addCourt": "Dodaj teren",
+    "notConfirmed": "planirano",
     "createButton": "Kreiraj igru",
     "createButtonTournament": "Kreiraj Turnir",
     "createButtonLeague": "Kreiraj Ligu",
@@ -427,32 +420,14 @@
       "match": "Meč"
     },
     "locationTime": {
-      "skipRealCourtToggle": "Game only",
-      "realCourtBookingHint": "{{courts}} u {{club}} biće rezervisan pri kreiranju meča.",
-      "realCourtBookingHintEdit": "{{courts}} u {{club}} biće rezervisan pri čuvanju.",
-      "skipRealCourtHint": "The game will be scheduled in Bandeja only.",
-      "skipRealCourtHintEdit": "The game will be updated in Bandeja only.",
       "summaryFromBookings": "Iz tvojih {{count}} rezervacija",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Izaberi {{min}}–{{max}} rezervacija ({{players}} igrača)",
-      "selectionProgress": "Izaberi do {{max}} terena ({{players}})",
-      "selectionCompleteOne": "1 teren povezan",
-      "selectionCompleteMany": "{{count}} terena povezano",
-      "selectionAtMax": "Maksimum za ovaj format ({{players}}) — druge rezervacije nisu dostupne",
-      "emptyBookingsOnDate": "Nema rezervacija za ovaj datum",
-      "emptyBookingsHint": "Probajte drugi datum, rezervišite teren ili napravite igru bez povezivanja rezervacije.",
-      "emptyBookingsReserveNow": "Rezerviši teren sada",
-      "emptyBookingsGameOnly": "Napravi samo igru",
       "gridLegend": "Zeleno = vaša rezervacija · Crveno/žuto = zauzeto · Primarno = izabrano vreme",
       "alsoUsedIn": "Takođe korišćeno u: {{games}}",
       "pickAdjacentHour": "Izaberi jedan sat",
       "linkHintTitle": "Igra će biti povezana sa vašim rezervacijama",
       "linkHintBody": "Ove rezervacije terena biće povezane kada kreirate igru.",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "Podesi vreme meča",
-      "overrideHint": "Vreme meča može biti kraće od rezervacije",
-      "overrideResetToast": "Vreme vraćeno prema rezervacijama",
       "preselectedBanner": "Rezervacija unapred izabrana",
       "linkedOnlyLabel": "Iz tvojih rezervacija",
       "unlinkConfirm": "Ukloniti vezu sa ovom rezervacijom?",
@@ -460,67 +435,6 @@
       "unlinkNoCancelNote": "Rezervacija terena u klubu ostaje aktivna — uklanjamo samo vezu sa ovom igrom.",
       "syncInactiveCreate": "Sinhronizacija trenutno nije aktivna — ne možemo učitati termine niti rezervisati teren. Igru i dalje možete kreirati u ovo vreme.",
       "syncInactiveEdit": "Sinhronizacija trenutno nije aktivna — ne možemo učitati termine niti rezervisati teren. Igru i dalje možete izmeniti u ovo vreme."
-    },
-    "reservationIntent": {
-      "title": "Kako obezbeđuješ teren?",
-      "otherOptions": "Druge opcije",
-      "recommended": "Preporučeno",
-      "recommendedShort": "Pre",
-      "validation": {
-        "selectCourt": "Prvo izaberite {{count}} teren(a).",
-        "selectBookableCourt": "Prvo izaberite {{count}} teren(a) sa online rezervacijom.",
-        "selectTime": "Prvo izaberite dostupan termin.",
-        "selectDuration": "Prvo izaberite trajanje.",
-        "selectReservations": "Izaberite {{count}} rezervaciju/e sa svog naloga.",
-        "bookingRecordsLoading": "Učitavamo detalje rezervacija — sačekajte trenutak i pokušajte ponovo."
-      },
-      "reserveNow": {
-        "title": "Rezerviši teren",
-        "chipTitle": "Rezerv.|sada",
-        "description": "Izaberi termin — mi rezervišemo za tebe."
-      },
-      "useExisting": {
-        "title": "Već imam rezervaciju",
-        "chipTitle": "Moja|rezerv.",
-        "description": "Poveži rezervaciju sa naloga kluba.",
-        "contextAvailable": "{{count}} dostupno na ovaj datum"
-      },
-      "gameOnly": {
-        "title": "Bez rezervacije terena",
-        "chipTitle": "Samo|igra",
-        "description": "Samo kreiraj igru — teren se ne rezerviše."
-      },
-      "manualBooked": {
-        "title": "Već ručno rezervisano",
-        "chipTitle": "Rezervisano",
-        "description": "Označi kao rezervisano bez online rezervacije."
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "Biće napravljena stvarna rezervacija terena",
-          "body": "Izaberi {{count}} teren(a), trajanje i termin. Tačno to vreme će biti rezervisano."
-        },
-        "useExisting": {
-          "title": "Igra će biti povezana sa tvojom rezervacijom",
-          "body": "Izabrano {{selected}} od {{count}} potrebnih rezervacija."
-        },
-        "gameOnly": {
-          "title": "Neće biti stvarne rezervacije terena",
-          "body": "Igra će biti zakazana samo u Bandeji."
-        },
-        "manualBooked": {
-          "title": "Igra će biti označena kao rezervisana",
-          "body": "Online rezervacija se ne kreira."
-        }
-      },
-      "cta": {
-        "reserveOne": "Rezerviši teren i kreiraj igru",
-        "reserveMany": "Rezerviši {{count}} terena i kreiraj igru",
-        "linkOne": "Poveži rezervaciju i kreiraj igru",
-        "linkMany": "Poveži {{count}} rezervacija i kreiraj igru",
-        "gameOnly": "Kreiraj samo igru",
-        "manualBooked": "Kreiraj igru"
-      }
     },
     "booktime": {
       "switchLabel": "Rezerviši teren kada kreiram meč",
@@ -531,7 +445,6 @@
       "authorizeInClub": "Autorizuj u {{club}}",
       "dateHint": "Možeš rezervisati do {{days}} dana unapred u ovom klubu.",
       "connectedChip": "Prijavljen · {{phone}}",
-      "createCta": "Kreiraj meč i rezerviši teren",
       "signInToContinue": "Prijavi se da nastaviš",
       "confirmTitle": "Spreman da kreiraš?",
       "confirmPrimary": "Rezerviši i kreiraj",
@@ -553,7 +466,6 @@
       "createFailedRollback": "Meč nije kreiran. Nismo mogli da potvrdimo otkazivanje rezervacije — proveri u klubu.",
       "sessionExpired": "Prijava je istekla. Prijavi se ponovo.",
       "alreadyReserved": "Teren je već rezervisan",
-      "liveApiUnavailable": "Rezervacija terena trenutno nije dostupna — nastavite sa običnim zakazivanjem.",
       "reservedAs": "Rezervisano kao: {{identity}}",
       "cancelPolicy": "Besplatno otkazivanje do {{hours}} sati pre termina.",
       "yourGame": "Tvoj meč",
@@ -584,13 +496,10 @@
     "pickSport": "Choose sport",
     "settingsTraining": "Training Settings",
     "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
-    "overlapSoftTitle": "Another game is planned here",
-    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapHardTitle": "Teren je zauzet u ovo vreme",
+    "overlapSoftTitle": "Ovde je planirana druga utakmica",
+    "overlapSoftMessage": "Drugi igrač ima planiranu utakmicu na ovom terenu u ovo vreme, ali teren nije rezervisan. Možete nastaviti.",
     "overlapSoftProceed": "Continue anyway",
-    "markCourtBookedTitle": "Označiti teren kao rezervisan?",
-    "markCourtBookedMessage": "Izabrali ste teren, ali niste ga označili kao rezervisan. Potvrdite kada ga rezervišete u klubu.",
-    "markCourtBookedYes": "Da, rezervisao sam ga",
-    "markCourtBookedSkip": "Još ne",
     "suitableForNovices": {
       "title": "Novajlije dobrodošle",
       "hint": "Pomoći ćete novim igračima da se snađu. Raspon nivoa i dalje važi."
@@ -601,6 +510,89 @@
     "lookingNudgeHint": "Žele da igraju tada — poziv stiže odmah",
     "lookingNudgeInvite_one": "Pozovi",
     "lookingNudgeInvite_few": "Pozovi {{count}}",
-    "lookingNudgeInvite_other": "Pozovi {{count}}"
+    "lookingNudgeInvite_other": "Pozovi {{count}}",
+    "courtPlan": {
+      "courts": "Tereni",
+      "fewerCourts": "Manje terena",
+      "moreCourts": "Više terena",
+      "anyCourt": "Bilo koji teren",
+      "slotLabel": "Teren {{n}}",
+      "sheet": {
+        "hint": "Dostupnost za izabrano vreme.",
+        "noTime": "Izaberi vreme da vidiš koji su tereni slobodni.",
+        "linkedHint": "Ovaj teren je iz tvoje rezervacije.",
+        "free": "Slobodan",
+        "plannedGame": "Planiran meč ga koristi — i dalje moguće",
+        "club": "Rezervisan u klubu",
+        "hold": "Klub ga je zadržao",
+        "reservedGame": "Zauzet rezervisanim mečom",
+        "notBookable": "Ne može se rezervisati onlajn",
+        "onSlot": "Izabran za teren {{n}} — dodirni za zamenu",
+        "linkedElsewhere": "Koristi ga tvoja rezervacija",
+        "anyHint": "Odluči kasnije ili neka klub dodeli teren",
+        "anyReserveHint": "Pri rezervaciji biramo slobodan teren",
+        "reservedToggle": "Rezervisao/la sam ovaj teren",
+        "removeReservation": "Ukloni ovu rezervaciju"
+      },
+      "atClub": {
+        "title": "Rezervacija u klubu?",
+        "reserveNow": "Rezerviši sada",
+        "alreadyReserved": "Već rezervisano",
+        "notYet": "Još ne",
+        "reserveNowHint_one": "Rezervisaćemo {{count}} teren u klubu {{club}} kada kreiraš meč.",
+        "reserveNowHint_few": "Rezervisaćemo {{count}} terena u klubu {{club}} kada kreiraš meč.",
+        "reserveNowHint_other": "Rezervisaćemo {{count}} terena u klubu {{club}} kada kreiraš meč.",
+        "alreadyReservedHint": "Izaberi svoje rezervacije ispod. Tereni bez rezervacije biće označeni kao rezervisani.",
+        "alreadyReservedMarkHint": "Označićemo terene kao rezervisane.",
+        "notYetHint": "Meč je planiran bez rezervacije terena. Možeš rezervisati kasnije.",
+        "reservationsNudge": "Imaš rezervaciju u ovom klubu tog dana.",
+        "useThem": "Iskoristi",
+        "authSkip": "Još ne — rezervisaću kasnije",
+        "markSkip": "Preskoči — samo označi terene kao rezervisane"
+      },
+      "reservations": {
+        "title": "Tvoje rezervacije tog dana",
+        "empty": "Nema rezervacija na tvom {{club}} nalogu tog dana. Tereni će biti označeni kao rezervisani.",
+        "markRest": "Tereni bez povezane rezervacije označeni su kao rezervisani."
+      },
+      "timePrompt": {
+        "question": "Koristiti vreme rezervacije {{range}}?",
+        "yes": "Da",
+        "keep": "Zadrži {{range}}"
+      },
+      "time": {
+        "club": "{{court}} je rezervisan u klubu",
+        "hold": "{{court}} je klub zadržao",
+        "reservedGame": "{{court}} je zauzet rezervisanim mečom",
+        "notEnoughCourts": "Nema dovoljno slobodnih terena ({{free}} od {{needed}})",
+        "softNote": "U to vreme je na terenu planiran i drugi meč — i dalje možeš izabrati ovo vreme.",
+        "unavailableAt": "{{time}} nije dostupno: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "Rezervacija pri kreiranju",
+        "courts_one": "{{count}} teren",
+        "courts_few": "{{count}} terena",
+        "courts_other": "{{count}} terena"
+      },
+      "issue": {
+        "timeRequired": "Prvo izaberi vreme.",
+        "durationRequired": "Prvo izaberi trajanje.",
+        "timeBlocked": "To vreme je zauzeto na terenu koji ti treba. Izaberi drugo vreme ili teren.",
+        "courtNotBookable": "Izabrani teren se ne može rezervisati onlajn. Izaberi drugi teren ili „Već rezervisano”.",
+        "notEnoughBookableCourts": "U to vreme nema dovoljno slobodnih terena za rezervaciju.",
+        "reservationsLoading": "Tvoje rezervacije se još učitavaju — pokušaj ponovo za trenutak."
+      },
+      "cta": {
+        "reserve_one": "Rezerviši {{count}} teren i kreiraj",
+        "reserve_few": "Rezerviši {{count}} terena i kreiraj",
+        "reserve_other": "Rezerviši {{count}} terena i kreiraj",
+        "withReserved_one": "Kreiraj sa {{count}} rezervisanim terenom",
+        "withReserved_few": "Kreiraj sa {{count}} rezervisana terena",
+        "withReserved_other": "Kreiraj sa {{count}} rezervisanih terena"
+      },
+      "rollbackReleased": "Tereni rezervisani u ovom pokušaju su otkazani.",
+      "partialKept": "Rezervisano je {{count}} od {{total}} terena i rezervacije ostaju. Za otkazivanje se javi klubu.",
+      "courtsSaveFailed": "Meč je kreiran, ali tereni nisu sačuvani. Proveri ih na stranici meča."
+    }
   }
 }

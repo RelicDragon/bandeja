@@ -1,4 +1,5 @@
-import { memo, useMemo, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { EntityType, Club } from '@/types';
@@ -25,7 +26,16 @@ interface BookedSlotInfo {
   endTime: string;
   hasBookedCourt: boolean;
   clubBooked: boolean;
+  /** Admin hold — a hard block like a club booking. */
+  holdBlocked?: boolean;
 }
+
+/**
+ * Occupancy verdict for a start time, computed by the caller for the whole
+ * game window and every court it needs. `hard`: cannot be picked (tapping
+ * shows `reason`); `soft`: can be picked, `reason` is shown as a quiet note.
+ */
+export type TimeSlotBlock = { kind: 'hard' | 'soft'; reason: string };
 
 interface CreateGameTimeSlotsProps {
   times: string[];
@@ -53,6 +63,8 @@ interface CreateGameTimeSlotsProps {
   weatherMode?: boolean;
   weatherToggleDisabled?: boolean;
   onWeatherModeToggle?: () => void;
+  /** When set, replaces the built-in occupancy overlay (`isSlotBooked` & co. are ignored). */
+  slotBlock?: (time: string) => TimeSlotBlock | null;
 }
 
 function parseTime(timeStr: string): number {
@@ -132,9 +144,19 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
   weatherMode = false,
   weatherToggleDisabled = false,
   onWeatherModeToggle,
+  slotBlock,
 }: CreateGameTimeSlotsProps) {
   const { t } = useTranslation();
   const reservationGrid = useReservationGridSync();
+  const [blockedTap, setBlockedTap] = useState<{ time: string; reason: string } | null>(null);
+  const blockedTapKey = blockedTap ? `${blockedTap.time}|${blockedTap.reason}` : null;
+  useEffect(() => {
+    if (!blockedTapKey) return;
+    const timer = window.setTimeout(() => setBlockedTap(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [blockedTapKey]);
+  const selectedSoftNote =
+    slotBlock && selectedTime ? slotBlock(selectedTime) : null;
 
   const reservationCellMap = useMemo(() => {
     if (!reservationGrid?.enabled) return null;
@@ -208,7 +230,9 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                 const isSelected = selectedTime === time;
                 const isHighlighted = entityType !== 'BAR' ? isSlotHighlighted(time) : false;
                 const canAccommodate = entityType !== 'BAR' ? canAccommodateDuration(time, duration) : true;
-                const isBooked = !hideOccupancyOverlay && isSlotBooked(time);
+                const block = slotBlock ? slotBlock(time) : null;
+                const isPlanBlocked = block?.kind === 'hard';
+                const isBooked = !slotBlock && !hideOccupancyOverlay && isSlotBooked(time);
                 const allUnconfirmed = isBooked && areAllSlotsUnconfirmed(time);
                 const isExternallyBooked = isBooked && hasExternallyBookedSlot(time);
                 const isHardBlocked = isBooked && isSlotHardBlocked(time);
@@ -226,6 +250,11 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
 
                 const handleTimeClick = () => {
                   if (entityType !== 'BAR' && blockHardBookedSlot) return;
+                  if (block?.kind === 'hard') {
+                    setBlockedTap({ time, reason: block.reason });
+                    return;
+                  }
+                  setBlockedTap(null);
                   if (reservationCell?.hasReservation && reservationGrid) {
                     if (reservationGrid.handleGridCellTap(reservationCell)) return;
                   }
@@ -242,7 +271,10 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                     onTimeSelect(time);
                   } else {
                     const adjustedStartTime = getAdjustedStartTime(time, duration);
-                    if (adjustedStartTime) {
+                    const adjustedBlock = adjustedStartTime && slotBlock ? slotBlock(adjustedStartTime) : null;
+                    if (adjustedBlock?.kind === 'hard') {
+                      setBlockedTap({ time, reason: adjustedBlock.reason });
+                    } else if (adjustedStartTime) {
                       onTimeSelect(adjustedStartTime);
                     }
                   }
@@ -253,16 +285,26 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                     key={time}
                     type="button"
                     disabled={entityType !== 'BAR' && blockHardBookedSlot}
+                    aria-disabled={isPlanBlocked || undefined}
+                    title={block?.reason}
                     onClick={handleTimeClick}
-                    className={`relative overflow-visible w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${resolveOccupancyCellClasses(
-                      {
-                        isBooked,
-                        allUnconfirmed,
-                        isExternallyBooked,
-                        reservationCell,
-                      },
-                    )} ${resolveSelectionCellClasses(showGameTimeSelection)}`}
+                    className={`relative overflow-visible w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${
+                      isPlanBlocked && !showGameTimeSelection
+                        ? 'bg-gray-50 dark:bg-gray-900 text-gray-300 dark:text-gray-600 border border-dashed border-gray-200 dark:border-gray-700 line-through'
+                        : resolveOccupancyCellClasses({
+                            isBooked,
+                            allUnconfirmed,
+                            isExternallyBooked,
+                            reservationCell,
+                          })
+                    } ${resolveSelectionCellClasses(showGameTimeSelection)}`}
                   >
+                    {block?.kind === 'soft' ? (
+                      <span
+                        className="absolute top-1 left-1 z-[1] h-1.5 w-1.5 rounded-full bg-amber-400 dark:bg-amber-500"
+                        aria-hidden
+                      />
+                    ) : null}
                     {showGameTimeSelection ? (
                       <span className={SELECTION_TINT_OVERLAY_CLASS} aria-hidden />
                     ) : null}
@@ -319,11 +361,40 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
           entityType={entityType}
         />
       ) : null}
-      {!hideOccupancyOverlay && groupedBookedSlots.length > 0 ? (
+      {slotBlock ? (
+        <AnimatePresence initial={false} mode="popLayout">
+          {blockedTap ? (
+            <motion.p
+              key={`blocked-${blockedTap.time}`}
+              role="status"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              className="mt-2 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+            >
+              {t('createGame.courtPlan.time.unavailableAt', { time: blockedTap.time, reason: blockedTap.reason })}
+            </motion.p>
+          ) : selectedSoftNote?.kind === 'soft' ? (
+            <motion.p
+              key="soft-note"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
+              className="mt-2 flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300"
+            >
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400 dark:bg-amber-500" aria-hidden />
+              {selectedSoftNote.reason}
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
+      ) : null}
+      {!slotBlock && !hideOccupancyOverlay && groupedBookedSlots.length > 0 ? (
         (() => {
           const hasExternalBooking = selectedTime
             ? hasExternallyBookedSlot(selectedTime)
-            : groupedBookedSlots.some((info) => info.clubBooked);
+            : groupedBookedSlots.some((info) => info.clubBooked || info.holdBlocked);
           const bgColor = hasExternalBooking
             ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
             : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
@@ -337,7 +408,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
           return (
             <div className={`mt-2 px-3 py-2 ${bgColor} border rounded-lg`}>
               <p className={`text-xs font-medium ${textColor} mb-1`}>
-                {t('createGame.overlapSoftTitle')}
+                {t(hasExternalBooking ? 'createGame.overlapHardTitle' : 'createGame.overlapSoftTitle')}
               </p>
               <div className="space-y-1">
                 {groupedBookedSlots.map((info, idx) => (
@@ -351,7 +422,11 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                       className="inline"
                     />
                     <span>
-                      {`• ${info.startTime} - ${info.endTime}${!info.hasBookedCourt ? ` (${t('createGame.notConfirmed')})` : ''}`}
+                      {`• ${info.startTime} - ${info.endTime}${
+                        !info.hasBookedCourt && !info.clubBooked && !info.holdBlocked
+                          ? ` (${t('createGame.notConfirmed')})`
+                          : ''
+                      }`}
                     </span>
                   </div>
                 ))}

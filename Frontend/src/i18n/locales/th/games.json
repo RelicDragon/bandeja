@@ -299,6 +299,7 @@
       "lookingToday_other": "มี {{count}} คนอยากเล่นวันนี้ใน{{city}}",
       "lookingTodayAndTomorrow_one": "มี {{count}} คนอยากเล่นวันนี้และพรุ่งนี้ใน{{city}}",
       "lookingTodayAndTomorrow_other": "มี {{count}} คนอยากเล่นวันนี้และพรุ่งนี้ใน{{city}}"
-    }
+    },
+    "reservationPartly": "จองบางส่วน"
   }
 }

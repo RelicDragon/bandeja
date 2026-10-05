@@ -1,6 +1,8 @@
 import { UNASSIGNED_COURT_KEY } from '../../shared/clubScheduleConstants';
 import {
+  gameRowToOccupancyBlocks,
   isOccupancyHardBlock,
+  isOccupancyReservedGameBlock,
   isOccupancySoftBlock,
   mapExternalBlockToScheduleSlot,
   mapHoldBlockToScheduleSlot,
@@ -113,7 +115,44 @@ function testUnmappedExternalAdminLane(): void {
   assert(playerSlot.courtId === UNASSIGNED_COURT_KEY, 'player grid omits unmapped at query layer');
 }
 
+function testGameBlocksPerSlot(): void {
+  const court = (id: string) => ({ id, name: id, integrationCourtName: null });
+  const row = {
+    id: 'g1',
+    startTime: new Date('2026-06-13T18:00:00.000Z'),
+    endTime: new Date('2026-06-13T20:00:00.000Z'),
+    hasBookedCourt: true,
+    reportedAnyCourtCount: 0,
+    court: court('c1'),
+    gameCourts: [
+      { id: 's2', courtId: 'c2', order: 2, reservation: 'NONE' as const, court: court('c2') },
+      { id: 's1', courtId: 'c1', order: 1, reservation: 'NONE' as const, court: court('c1') },
+      { id: 's3', courtId: 'c3', order: 3, reservation: 'REPORTED' as const, court: court('c3') },
+    ],
+    // One placed link on s1, one legacy unplaced link on c2's court.
+    externalBookings: [
+      { gameCourtId: 's1', courtId: 'c1' },
+      { gameCourtId: null, courtId: 'c2' },
+    ],
+  };
+  const blocks = gameRowToOccupancyBlocks(row);
+  assert(blocks.map((b) => b.courtId).join() === 'c1,c2,c3', 'one block per slot, in slot order');
+  assert(blocks.every((b) => b.reservation === 'reserved' && b.gameId === 'g1'), 'linked/unplaced/reported → reserved');
+  assert(blocks.every((b) => b.hasBookedCourt === true), 'hasBookedCourt stays game-level');
+  assert(gameRowToOccupancyBlocks(row, 'c3').length === 1, 'court filter');
+
+  const planned = gameRowToOccupancyBlocks({ ...row, externalBookings: [], gameCourts: [row.gameCourts[0]] })[0];
+  assert(planned.reservation === 'planned', 'unreserved slot is planned');
+  assert(isOccupancySoftBlock(planned), 'planned slot is soft even when the game has hasBookedCourt');
+  assert(!isOccupancyReservedGameBlock(planned), 'planned slot is not reserved');
+
+  const slotless = gameRowToOccupancyBlocks({ ...row, gameCourts: [], externalBookings: [], hasBookedCourt: false });
+  assert(slotless.length === 1 && slotless[0].courtId === 'c1' && slotless[0].reservation === 'planned', 'slot-less game keeps its court block');
+  assert(isOccupancySoftBlock(unconfirmedGameBlock), 'legacy block without reservation falls back to hasBookedCourt');
+}
+
 function run(): void {
+  testGameBlocksPerSlot();
   testHoldHardBlock();
   testUnconfirmedSoftBlock();
   testSnapshotClubBooked();

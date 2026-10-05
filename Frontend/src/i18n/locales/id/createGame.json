@@ -37,20 +37,16 @@
     "selectClub": "Pilih Klub",
     "court": "Lapangan",
     "hall": "Aula",
-    "notBookedYet": "Hanya permainan",
     "dontSelectCourt": "Belum ada lapangan",
     "dontSelectHall": "Belum ada aula",
     "courtNotSelected": "Lapangan belum dipilih",
     "hallNotSelected": "Hall tidak dipilih",
     "multiCourtHint": "Pilih hingga {{count}} lapangan untuk {{participants}} pemain ({{selected}} dipilih)",
-    "multiCourtNeedSharedSlots": "Pilih {{count}} lapangan yang gratis secara bersamaan.",
-    "multiCourtNoSharedSlots": "Tidak ada slot waktu gratis di semua {{count}} lapangan yang dipilih. Cobalah lapangan lain, tanggal lain, atau durasi.",
     "webCameraHint": "Lapangan ini memiliki kamera web yang terhubung",
     "webCameraHintsTitle": "Kamera web tertaut",
     "webCameraHintNamed": "{{court}} memiliki kamera web yang tertaut",
     "webCameraHintAction": "Ketuk untuk menonton langsung",
     "hasBookedCourt": "Saya sudah memesan lapangan ini",
-    "hasBookedHall": "Saya sudah memesan meja",
     "selectCourt": "Pilih lapangan",
     "selectHall": "Pilih Aula",
     "selectClubFirst": "Pilih klub terlebih dahulu",
@@ -243,10 +239,7 @@
     "timeSlot": "Slot yang dipilih",
     "loadingExternalSlots": "Memuat slot eksternal",
     "bookedWithoutCourt": "Tanpa lapangan",
-    "notConfirmed": "tidak dikonfirmasi",
-    "multipleCourts": "Beberapa Lapangan",
-    "noCourtsSelected": "Tidak ada lapangan yang dipilih",
-    "addCourt": "Tambah lapangan",
+    "notConfirmed": "direncanakan",
     "createButton": "Buat Permainan",
     "createButtonTournament": "Buat Turnamen",
     "createButtonLeague": "Buat Liga",
@@ -269,40 +262,19 @@
     "invitesWillBeSent_one": "Pemain akan diundang setelah pembuatan game",
     "invitesWillBeSent_other": "{{count}} pemain akan diundang setelah pembuatan game",
     "overlapHardSave": "Kali ini tumpang tindih dengan lapangan yang tidak tersedia (sistem klub atau diblokir). Pilih slot lain.",
+    "overlapHardTitle": "Lapangan tidak tersedia pada waktu ini",
     "overlapSoftTitle": "Pertandingan lain direncanakan di sini",
-    "overlapSoftMessage": "Pemain lain sedang bermain di lapangan ini saat ini tetapi belum mengonfirmasi pemesanannya. Anda masih bisa melanjutkan.",
+    "overlapSoftMessage": "Pemain lain punya permainan yang direncanakan di lapangan ini pada waktu ini, tetapi lapangan belum dipesan. Anda tetap bisa melanjutkan.",
     "overlapSoftProceed": "Lanjutkan saja",
-    "markCourtBookedTitle": "Tandai lapangan sudah dipesan?",
-    "markCourtBookedMessage": "Anda memilih lapangan tetapi belum menandainya sebagai dipesan. Konfirmasikan ketika Anda telah memesannya dengan klub.",
-    "markCourtBookedYes": "Ya, saya sudah memesannya",
-    "markCourtBookedSkip": "Belum",
     "locationTime": {
-      "skipRealCourtToggle": "Hanya permainan",
-      "realCourtBookingHint": "{{courts}} di {{club}} akan dicadangkan saat Anda membuat game.",
-      "realCourtBookingHintEdit": "{{courts}} di {{club}} akan dipesan saat Anda menyimpan.",
-      "skipRealCourtHint": "Pertandingan hanya akan dijadwalkan di Bandeja.",
-      "skipRealCourtHintEdit": "Game ini hanya akan diperbarui di Bandeja.",
       "summaryFromBookings": "Dari reservasi {{count}} Anda",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Pilih reservasi {{min}}–{{max}} ({{players}})",
-      "selectionProgress": "Pilih hingga {{max}} lapangan ({{players}})",
-      "selectionCompleteOne": "1 lapangan terhubung",
-      "selectionCompleteMany": "{{count}} lapangan terhubung",
-      "selectionAtMax": "Maksimum yang dipilih untuk format ini ({{players}}) — reservasi lainnya tidak tersedia",
-      "emptyBookingsOnDate": "Tidak ada reservasi pada tanggal ini",
-      "emptyBookingsHint": "Coba tanggal lain, pesan lapangan baru, atau buat permainan tanpa menghubungkan reservasi.",
-      "emptyBookingsReserveNow": "Pesan lapangan sekarang",
-      "emptyBookingsGameOnly": "Buat game saja",
       "gridLegend": "Hijau = reservasi Anda · Merah/kuning = sudah diambil · Utama = waktu yang dipilih",
       "alsoUsedIn": "Juga digunakan di: {{games}}",
       "pickAdjacentHour": "Pilih satu jam",
       "linkHintTitle": "Game akan ditautkan ke reservasi Anda",
       "linkHintBody": "Pemesanan lapangan ini akan ditautkan saat Anda membuat game.",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "Sesuaikan waktu permainan",
-      "overrideHint": "Waktu permainan bisa lebih singkat dari reservasi Anda",
-      "overrideResetToast": "Waktu disetel ulang ke reservasi",
       "preselectedBanner": "Reservasi telah dipilih sebelumnya",
       "linkedOnlyLabel": "Dari reservasi Anda",
       "unlinkConfirm": "Hapus link reservasi ini?",
@@ -310,67 +282,6 @@
       "unlinkNoCancelNote": "Reservasi lapangan di klub tetap aktif — hanya tautan ke permainan ini yang dihapus.",
       "syncInactiveCreate": "Sinkronisasi tidak aktif saat ini — kami tidak dapat mengambil slot atau melakukan pemesanan di sini. Anda masih dapat membuat game saat ini.",
       "syncInactiveEdit": "Sinkronisasi tidak aktif saat ini — kami tidak dapat mengambil slot atau melakukan pemesanan di sini. Anda masih dapat mengedit game saat ini."
-    },
-    "reservationIntent": {
-      "title": "Bagaimana cara mendapatkan lapangannya?",
-      "otherOptions": "Pilihan lain",
-      "recommended": "Direkomendasikan",
-      "recommendedShort": "Rek",
-      "validation": {
-        "selectCourt": "Pilih lapangan {{count}} terlebih dahulu.",
-        "selectBookableCourt": "Pilih {{count}} lapangan yang dapat dipesan secara online terlebih dahulu.",
-        "selectTime": "Pilih waktu yang tersedia terlebih dahulu.",
-        "selectDuration": "Pilih durasi terlebih dahulu.",
-        "selectReservations": "Pilih {{count}} reservasi dari akun Anda.",
-        "bookingRecordsLoading": "Masih memuat detail reservasi Anda — coba lagi sebentar lagi."
-      },
-      "reserveNow": {
-        "title": "Pesan lapangan",
-        "chipTitle": "Pesan lapangan",
-        "description": "Pilih waktu — kami akan memesankannya untuk Anda."
-      },
-      "useExisting": {
-        "title": "Saya sudah melakukan pemesanan",
-        "chipTitle": "Pemesanan saya",
-        "description": "Hubungkan reservasi dari akun klub Anda.",
-        "contextAvailable": "{{count}} tersedia pada tanggal ini"
-      },
-      "gameOnly": {
-        "title": "Lewati pemesanan lapangan",
-        "chipTitle": "Hanya permainan",
-        "description": "Cukup buat gamenya — tidak ada lapangan yang dicadangkan."
-      },
-      "manualBooked": {
-        "title": "Sudah dipesan secara manual",
-        "chipTitle": "Dipesan",
-        "description": "Tandai sebagai dipesan tanpa reservasi online."
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "Reservasi lapangan nyata akan dilakukan",
-          "body": "Pilih {{count}} lapangan, durasi, dan waktu. Jadwal persisnya akan dicadangkan."
-        },
-        "useExisting": {
-          "title": "Game akan ditautkan ke reservasi Anda",
-          "body": "{{selected}} dari {{count}} reservasi wajib dipilih."
-        },
-        "gameOnly": {
-          "title": "Tidak ada reservasi lapangan nyata yang akan dilakukan",
-          "body": "Pertandingan hanya akan dijadwalkan di Bandeja."
-        },
-        "manualBooked": {
-          "title": "Permainan akan ditandai sebagai dipesan",
-          "body": "Tidak ada reservasi online yang akan dibuat."
-        }
-      },
-      "cta": {
-        "reserveOne": "Cadangan lapangan dan buat permainan",
-        "reserveMany": "Cadangan lapangan {{count}} dan buat permainan",
-        "linkOne": "Tautkan reservasi dan buat game",
-        "linkMany": "Tautkan reservasi {{count}} dan buat game",
-        "gameOnly": "Buat game saja",
-        "manualBooked": "Buat permainan"
-      }
     },
     "booktime": {
       "switchLabel": "Cadangan lapangan saat saya membuat permainan",
@@ -381,7 +292,6 @@
       "authorizeInClub": "Otorisasi di {{club}}",
       "dateHint": "Anda dapat memesan hingga {{days}} hari ke depan di klub ini.",
       "connectedChip": "Masuk · {{phone}}",
-      "createCta": "Buat lapangan permainan & cadangan",
       "signInToContinue": "Masuk untuk melanjutkan",
       "confirmTitle": "Siap untuk berkreasi?",
       "confirmPrimary": "Pesan & buat",
@@ -406,8 +316,7 @@
       "cancelPolicy": "Pembatalan gratis hingga {{hours}} jam sebelum dimulai.",
       "yourGame": "permainanmu",
       "snapshotBlocked": "Ketersediaan langsung belum disinkronkan. Tunggu sinkronisasi atau pilih hari lain.",
-      "alreadyReserved": "Lapangan sudah disediakan untuk pertandingan ini.",
-      "liveApiUnavailable": "Reservasi sidang tidak tersedia saat ini — menggunakan penjadwalan normal."
+      "alreadyReserved": "Lapangan sudah disediakan untuk pertandingan ini."
     },
     "padeloo": {
       "authTitle": "Hubungkan akun Padeloo Anda",
@@ -611,6 +520,81 @@
     "lookingNudgeTitle_other": "{{count}} pemain mencari main di waktu ini",
     "lookingNudgeHint": "Mereka ingin main di waktu itu — undanganmu langsung sampai",
     "lookingNudgeInvite_one": "Undang",
-    "lookingNudgeInvite_other": "Undang {{count}}"
+    "lookingNudgeInvite_other": "Undang {{count}}",
+    "courtPlan": {
+      "courts": "Lapangan",
+      "fewerCourts": "Kurangi lapangan",
+      "moreCourts": "Tambah lapangan",
+      "anyCourt": "Lapangan mana saja",
+      "slotLabel": "Lapangan {{n}}",
+      "sheet": {
+        "hint": "Ketersediaan untuk waktu yang kamu pilih.",
+        "noTime": "Pilih waktu untuk melihat lapangan yang kosong.",
+        "linkedHint": "Lapangan ini berasal dari reservasimu.",
+        "free": "Kosong",
+        "plannedGame": "Dipakai game terencana — masih bisa dipilih",
+        "club": "Dipesan di klub",
+        "hold": "Ditahan oleh klub",
+        "reservedGame": "Dipakai game yang sudah dipesan",
+        "notBookable": "Tidak bisa dipesan online",
+        "onSlot": "Dipilih untuk lapangan {{n}} — ketuk untuk tukar",
+        "linkedElsewhere": "Dipakai reservasimu",
+        "anyHint": "Putuskan nanti, atau biarkan klub menentukan",
+        "anyReserveHint": "Kami pilih lapangan kosong saat memesan",
+        "reservedToggle": "Saya sudah memesan lapangan ini",
+        "removeReservation": "Hapus reservasi ini"
+      },
+      "atClub": {
+        "title": "Reservasi di klub?",
+        "reserveNow": "Pesan sekarang",
+        "alreadyReserved": "Sudah dipesan",
+        "notYet": "Belum",
+        "reserveNowHint_other": "Kami akan memesan {{count}} lapangan di {{club}} saat kamu membuat game.",
+        "alreadyReservedHint": "Pilih reservasimu di bawah. Lapangan tanpa reservasi ditandai sudah dipesan.",
+        "alreadyReservedMarkHint": "Kami akan menandai lapangan sebagai sudah dipesan.",
+        "notYetHint": "Game direncanakan tanpa reservasi lapangan. Kamu bisa memesan nanti.",
+        "reservationsNudge": "Kamu punya reservasi di klub ini pada hari itu.",
+        "useThem": "Gunakan",
+        "authSkip": "Belum — saya pesan nanti",
+        "markSkip": "Lewati — tandai saja lapangan sudah dipesan"
+      },
+      "reservations": {
+        "title": "Reservasimu hari itu",
+        "empty": "Tidak ada reservasi di akun {{club}} kamu hari itu. Lapangan akan ditandai sudah dipesan.",
+        "markRest": "Lapangan tanpa reservasi tertaut ditandai sudah dipesan."
+      },
+      "timePrompt": {
+        "question": "Pakai waktu reservasi {{range}}?",
+        "yes": "Ya",
+        "keep": "Tetap {{range}}"
+      },
+      "time": {
+        "club": "{{court}} sudah dipesan di klub",
+        "hold": "{{court}} ditahan oleh klub",
+        "reservedGame": "{{court}} dipakai game yang sudah dipesan",
+        "notEnoughCourts": "Lapangan kosong tidak cukup ({{free}} dari {{needed}})",
+        "softNote": "Ada game terencana lain di lapangan pada waktu itu — kamu tetap bisa memilihnya.",
+        "unavailableAt": "{{time}} tidak tersedia: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "Dipesan saat dibuat",
+        "courts_other": "{{count}} lapangan"
+      },
+      "issue": {
+        "timeRequired": "Pilih waktu dulu.",
+        "durationRequired": "Pilih durasi dulu.",
+        "timeBlocked": "Waktu itu terisi di lapangan yang kamu butuhkan. Pilih waktu atau lapangan lain.",
+        "courtNotBookable": "Lapangan yang dipilih tidak bisa dipesan online. Pilih lapangan lain atau “Sudah dipesan”.",
+        "notEnoughBookableCourts": "Lapangan kosong tidak cukup untuk dipesan pada waktu itu.",
+        "reservationsLoading": "Reservasimu masih dimuat — coba lagi sebentar."
+      },
+      "cta": {
+        "reserve_other": "Pesan {{count}} lapangan dan buat",
+        "withReserved_other": "Buat dengan {{count}} lapangan dipesan"
+      },
+      "rollbackReleased": "Lapangan yang dipesan pada percobaan ini telah dibatalkan.",
+      "partialKept": "{{count}} dari {{total}} lapangan sudah dipesan dan tetap dipesan. Untuk membatalkan, hubungi klub.",
+      "courtsSaveFailed": "Game dibuat, tetapi lapangannya tidak tersimpan. Periksa di halaman game."
+    }
   }
 }

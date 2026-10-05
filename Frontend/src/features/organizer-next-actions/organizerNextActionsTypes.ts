@@ -20,8 +20,16 @@ export type SeatsHint = {
 
 export type BookingHint = {
   key: 'booking';
-  /** `none` — no booking at all; `partial` — linked bookings do not cover the game. */
-  state: 'none' | 'partial';
+  /**
+   * Court reservation summary (`utils/courtReservationView`):
+   * `none` — no court reserved; `partial` — `reserved` of `total` courts;
+   * `gap` — every court reserved but a linked booking leaves a gap at `gapTime`.
+   */
+  state: 'none' | 'partial' | 'gap';
+  reserved: number;
+  total: number;
+  /** Earliest gap start, already formatted in the club's timezone; only for `gap`. */
+  gapTime: string | null;
   /** `seeBookings` scrolls to the linked-bookings section; `editCourt` opens the existing court/time editor. */
   action: 'seeBookings' | 'editCourt';
 };
@@ -63,8 +71,17 @@ export interface OrganizerAttendanceInput {
   nudgeRemainingHours: number;
 }
 
-/** Court booking facts, derived from the game payload — never from a provider call. */
-export type OrganizerBookingCoverage = 'none' | 'manual' | 'external_partial' | 'external_full';
+/**
+ * Court reservation facts — the summary from `utils/courtReservationView`,
+ * derived from the game payload, never from a provider call.
+ */
+export interface OrganizerReservationInput {
+  kind: 'planned' | 'partial' | 'reserved' | 'reserved_with_gap';
+  reserved: number;
+  total: number;
+  /** Earliest gap start, formatted in the club's timezone; `null` unless `reserved_with_gap`. */
+  gapTime: string | null;
+}
 
 /** Cost facts from the PRD 348 ledger the Cost card already loads. */
 export interface OrganizerCostInput {
@@ -82,7 +99,7 @@ export interface OrganizerNextActionsGame {
   maxParticipants: number;
   participants: readonly { status: string }[];
   joinQueues?: readonly unknown[];
-  /** The game belongs to a club, so "not booked" is a real gap rather than a public court. */
+  /** The game belongs to a club, so "not reserved" is a real gap rather than a public court. */
   hasClub: boolean;
   linkedBookingCount: number;
 }
@@ -95,6 +112,6 @@ export interface OrganizerNextActionsInput {
   /** The shell's `canManageJoinQueue`: the viewer may accept or decline queued players. */
   canManageQueue: boolean;
   attendance: OrganizerAttendanceInput | null;
-  bookingCoverage: OrganizerBookingCoverage | null;
+  reservation: OrganizerReservationInput | null;
   cost: OrganizerCostInput | null;
 }

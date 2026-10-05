@@ -238,12 +238,12 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} がバーのオーナーになりました",
         "GAME_CLUB_CHANGED": "バーの場所が {{clubName}} に変更されました",
         "GAME_DATE_TIME_CHANGED": "バーの日時が {{dateTime}} に変更されました",
-        "GAME_BOOKING_STATUS_CHANGED": "ホール予約のステータスが {{bookingStatus}} に変更されました",
+        "GAME_BOOKING_STATUS_CHANGED": "ホール予約: {{bookingStatus}}",
         "bookingStatuses": {
-          "EXTERNAL_FULL": "予約完了",
-          "EXTERNAL_PARTIAL": "一部未予約",
-          "MANUAL": "ホール予約済み",
-          "NONE": "まだ未予約"
+          "EXTERNAL_FULL": "予約済み",
+          "EXTERNAL_PARTIAL": "一部予約済み",
+          "MANUAL": "予約済み",
+          "NONE": "予定"
         }
       },
       "TRAINING": {
@@ -256,7 +256,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} がトレーニングのオーナーになりました",
         "GAME_CLUB_CHANGED": "トレーニングの場所が {{clubName}} に変更されました",
         "GAME_DATE_TIME_CHANGED": "トレーニングの日時が {{dateTime}} に変更されました",
-        "GAME_BOOKING_STATUS_CHANGED": "コート予約のステータスが {{bookingStatus}} に変更されました"
+        "GAME_BOOKING_STATUS_CHANGED": "コート予約: {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} がトーナメントに参加しました",
@@ -268,7 +268,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} がトーナメントのオーナーになりました",
         "GAME_CLUB_CHANGED": "トーナメントの場所が {{clubName}} に変更されました",
         "GAME_DATE_TIME_CHANGED": "トーナメントの日時が {{dateTime}} に変更されました",
-        "GAME_BOOKING_STATUS_CHANGED": "コート予約のステータスが {{bookingStatus}} に変更されました"
+        "GAME_BOOKING_STATUS_CHANGED": "コート予約: {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} がリーグに参加しました",
@@ -280,7 +280,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} がリーグのオーナーになりました",
         "GAME_CLUB_CHANGED": "リーグの場所が {{clubName}} に変更されました",
         "GAME_DATE_TIME_CHANGED": "リーグの日時が {{dateTime}} に変更されました",
-        "GAME_BOOKING_STATUS_CHANGED": "コート予約のステータスが {{bookingStatus}} に変更されました"
+        "GAME_BOOKING_STATUS_CHANGED": "コート予約: {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} がリーグシーズンに参加しました",
@@ -292,18 +292,18 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} がリーグシーズンのオーナーになりました",
         "GAME_CLUB_CHANGED": "リーグシーズンの場所が {{clubName}} に変更されました",
         "GAME_DATE_TIME_CHANGED": "リーグシーズンの日時が {{dateTime}} に変更されました",
-        "GAME_BOOKING_STATUS_CHANGED": "コート予約のステータスが {{bookingStatus}} に変更されました"
+        "GAME_BOOKING_STATUS_CHANGED": "コート予約: {{bookingStatus}}"
       },
       "actions": {
         "joined": "試合に参加しました",
         "left": "試合を退出しました"
       },
-      "GAME_BOOKING_STATUS_CHANGED": "コート予約のステータスが {{bookingStatus}} に変更されました",
+      "GAME_BOOKING_STATUS_CHANGED": "コート予約: {{bookingStatus}}",
       "bookingStatuses": {
-        "EXTERNAL_FULL": "予約完了",
-        "EXTERNAL_PARTIAL": "一部未予約",
-        "MANUAL": "コート予約済み",
-        "NONE": "まだ未予約"
+        "EXTERNAL_FULL": "全コート予約済み",
+        "EXTERNAL_PARTIAL": "一部予約済み",
+        "MANUAL": "予約済み",
+        "NONE": "予定"
       },
       "ATTENDANCE_NUDGED": "{{userName}}が参加確認をお願いしました",
       "USER_NOTED_NO_SHOW": "{{userName}}が不参加として記録されました",

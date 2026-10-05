@@ -37,20 +37,16 @@
     "selectClub": "选择俱乐部",
     "court": "场地",
     "hall": "球馆",
-    "notBookedYet": "仅比赛",
     "dontSelectCourt": "暂不选场地",
     "dontSelectHall": "暂不选球馆",
     "courtNotSelected": "未选择场地",
     "hallNotSelected": "未选择球馆",
     "multiCourtHint": "为 {{participants}} 名球员最多可选 {{count}} 片场地（已选 {{selected}}）",
-    "multiCourtNeedSharedSlots": "请选择 {{count}} 片在同一时间空闲的场地。",
-    "multiCourtNoSharedSlots": "所选 {{count}} 片场地没有共同空闲时段。请换场地、日期或时长。",
     "webCameraHint": "此场地已关联网络摄像头",
     "webCameraHintsTitle": "已关联的网络摄像头",
     "webCameraHintNamed": "{{court}} 已关联网络摄像头",
     "webCameraHintAction": "点击观看直播",
     "hasBookedCourt": "我已预订此场地",
-    "hasBookedHall": "我已预订球台",
     "selectCourt": "选择场地",
     "selectHall": "选择球馆",
     "selectClubFirst": "请先选择俱乐部",
@@ -243,10 +239,7 @@
     "timeSlot": "已选时段",
     "loadingExternalSlots": "正在加载外部时段",
     "bookedWithoutCourt": "无场地",
-    "notConfirmed": "未确认",
-    "multipleCourts": "多片场地",
-    "noCourtsSelected": "未选择场地",
-    "addCourt": "添加场地",
+    "notConfirmed": "已计划",
     "createButton": "创建比赛",
     "createButtonTournament": "创建锦标赛",
     "createButtonLeague": "创建联赛",
@@ -269,40 +262,19 @@
     "invitesWillBeSent_one": "创建比赛后将邀请该球员",
     "invitesWillBeSent_other": "创建比赛后将邀请 {{count}} 名球员",
     "overlapHardSave": "此时段与不可用场地冲突（俱乐部系统或已封锁）。请另选时段。",
+    "overlapHardTitle": "该时段场地不可用",
     "overlapSoftTitle": "此处已有其他比赛安排",
-    "overlapSoftMessage": "另一名球员在此时段预订了此场地，但尚未确认预订。你仍可继续。",
+    "overlapSoftMessage": "另一名球员在此时段于此场地安排了比赛，但场地尚未预订。你仍可继续。",
     "overlapSoftProceed": "仍要继续",
-    "markCourtBookedTitle": "标记场地为已预订？",
-    "markCourtBookedMessage": "你已选择场地但尚未标记为已预订。与俱乐部确认预订后请确认。",
-    "markCourtBookedYes": "是的，我已预订",
-    "markCourtBookedSkip": "还没有",
     "locationTime": {
-      "skipRealCourtToggle": "仅比赛",
-      "realCourtBookingHint": "创建比赛时将预订 {{club}} 的 {{courts}}。",
-      "realCourtBookingHintEdit": "保存时将预订 {{club}} 的 {{courts}}。",
-      "skipRealCourtHint": "比赛仅在 Bandeja 中安排。",
-      "skipRealCourtHintEdit": "比赛仅在 Bandeja 中更新。",
       "summaryFromBookings": "来自你的 {{count}} 个预订",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "选择 {{min}}–{{max}} 个预订（{{players}}）",
-      "selectionProgress": "最多选择 {{max}} 片场地（{{players}}）",
-      "selectionCompleteOne": "已关联 1 片场地",
-      "selectionCompleteMany": "已关联 {{count}} 片场地",
-      "selectionAtMax": "此赛制已达上限（{{players}}）— 其他预订不可用",
-      "emptyBookingsOnDate": "此日期无预订",
-      "emptyBookingsHint": "换日期、新订场地，或不关联预订直接创建比赛。",
-      "emptyBookingsReserveNow": "立即预订场地",
-      "emptyBookingsGameOnly": "仅创建比赛",
       "gridLegend": "绿色 = 你的预订 · 红/黄 = 已被占用 · 主色 = 已选时间",
       "alsoUsedIn": "也用于：{{games}}",
       "pickAdjacentHour": "选择一小时",
       "linkHintTitle": "比赛将关联你的预订",
       "linkHintBody": "创建比赛时将关联这些场地预订。",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "调整比赛时间",
-      "overrideHint": "比赛时间可以短于你的预订",
-      "overrideResetToast": "时间已重置为预订时段",
       "preselectedBanner": "已预选预订",
       "linkedOnlyLabel": "来自你的预订",
       "unlinkConfirm": "移除此外预订关联？",
@@ -310,67 +282,6 @@
       "unlinkNoCancelNote": "俱乐部的场地预订仍然有效 — 仅移除与本场比赛的关联。",
       "syncInactiveCreate": "同步暂不可用 — 无法在此获取时段或下单。你仍可按此时段创建比赛。",
       "syncInactiveEdit": "同步暂不可用 — 无法在此获取时段或下单。你仍可按此时段编辑比赛。"
-    },
-    "reservationIntent": {
-      "title": "你如何获得场地？",
-      "otherOptions": "其他选项",
-      "recommended": "推荐",
-      "recommendedShort": "荐",
-      "validation": {
-        "selectCourt": "请先选择 {{count}} 片场地。",
-        "selectBookableCourt": "请先选择 {{count}} 片可在线预订的场地。",
-        "selectTime": "请先选择可用时间。",
-        "selectDuration": "请先选择时长。",
-        "selectReservations": "请从账户中选择 {{count}} 个预订。",
-        "bookingRecordsLoading": "仍在加载你的预订详情 — 请稍后再试。"
-      },
-      "reserveNow": {
-        "title": "预订场地",
-        "chipTitle": "订场地",
-        "description": "选择时间 — 我们帮你预订。"
-      },
-      "useExisting": {
-        "title": "我已有预订",
-        "chipTitle": "我的预订",
-        "description": "关联俱乐部账户中的预订。",
-        "contextAvailable": "此日期有 {{count}} 个可用"
-      },
-      "gameOnly": {
-        "title": "跳过场地预订",
-        "chipTitle": "仅比赛",
-        "description": "只创建比赛 — 不预订场地。"
-      },
-      "manualBooked": {
-        "title": "已手动预订",
-        "chipTitle": "已预订",
-        "description": "标记为已预订，不通过在线预订。"
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "将实际预订场地",
-          "body": "选择 {{count}} 片场地、时长与时间。将按该时段预订。"
-        },
-        "useExisting": {
-          "title": "比赛将关联你的预订",
-          "body": "已选 {{selected}} / {{count}} 个所需预订。"
-        },
-        "gameOnly": {
-          "title": "不会实际预订场地",
-          "body": "比赛仅在 Bandeja 中安排。"
-        },
-        "manualBooked": {
-          "title": "比赛将标记为已预订",
-          "body": "不会创建在线预订。"
-        }
-      },
-      "cta": {
-        "reserveOne": "预订场地并创建比赛",
-        "reserveMany": "预订 {{count}} 片场地并创建比赛",
-        "linkOne": "关联预订并创建比赛",
-        "linkMany": "关联 {{count}} 个预订并创建比赛",
-        "gameOnly": "仅创建比赛",
-        "manualBooked": "创建比赛"
-      }
     },
     "booktime": {
       "switchLabel": "创建比赛时预订场地",
@@ -381,7 +292,6 @@
       "authorizeInClub": "在 {{club}} 授权",
       "dateHint": "此俱乐部最多可提前 {{days}} 天预订。",
       "connectedChip": "已登录 · {{phone}}",
-      "createCta": "创建比赛并预订场地",
       "signInToContinue": "登录以继续",
       "confirmTitle": "准备创建？",
       "confirmPrimary": "预订并创建",
@@ -406,8 +316,7 @@
       "cancelPolicy": "开始前 {{hours}} 小时内可免费取消。",
       "yourGame": "你的比赛",
       "snapshotBlocked": "实时空档尚未同步。请等待同步或换一天。",
-      "alreadyReserved": "本场比赛场地已预订。",
-      "liveApiUnavailable": "场地预订暂不可用 — 使用普通排程。"
+      "alreadyReserved": "本场比赛场地已预订。"
     },
     "padeloo": {
       "authTitle": "连接你的 Padeloo 账户",
@@ -611,6 +520,81 @@
     "lookingNudgeTitle_other": "{{count}} 人正在找这个时段的比赛",
     "lookingNudgeHint": "他们想在这个时间打球，邀请会立即送达",
     "lookingNudgeInvite_one": "邀请",
-    "lookingNudgeInvite_other": "邀请 {{count}} 人"
+    "lookingNudgeInvite_other": "邀请 {{count}} 人",
+    "courtPlan": {
+      "courts": "场地",
+      "fewerCourts": "减少场地",
+      "moreCourts": "增加场地",
+      "anyCourt": "任意场地",
+      "slotLabel": "场地 {{n}}",
+      "sheet": {
+        "hint": "所选时间的空闲情况。",
+        "noTime": "选择时间后可查看哪些场地空闲。",
+        "linkedHint": "此场地来自你的预订。",
+        "free": "空闲",
+        "plannedGame": "有计划中的比赛使用 — 仍可选择",
+        "club": "已在俱乐部预订",
+        "hold": "俱乐部保留",
+        "reservedGame": "已被已预订的比赛占用",
+        "notBookable": "无法在线预订",
+        "onSlot": "已用于场地 {{n}} — 点按交换",
+        "linkedElsewhere": "由你的预订使用",
+        "anyHint": "稍后决定，或由俱乐部分配",
+        "anyReserveHint": "预订时我们会选择空闲场地",
+        "reservedToggle": "我已预订此场地",
+        "removeReservation": "移除此预订"
+      },
+      "atClub": {
+        "title": "在俱乐部预订？",
+        "reserveNow": "立即预订",
+        "alreadyReserved": "已预订",
+        "notYet": "暂不",
+        "reserveNowHint_other": "创建比赛时，我们将在 {{club}} 预订 {{count}} 片场地。",
+        "alreadyReservedHint": "在下方选择你的预订。没有预订的场地将标记为已预订。",
+        "alreadyReservedMarkHint": "我们会将场地标记为已预订。",
+        "notYetHint": "比赛已计划，但未预订场地。你可以稍后预订。",
+        "reservationsNudge": "你当天在这家俱乐部有预订。",
+        "useThem": "使用",
+        "authSkip": "还没有 — 稍后再预订",
+        "markSkip": "跳过 — 仅将场地标记为已预订"
+      },
+      "reservations": {
+        "title": "你当天的预订",
+        "empty": "你的 {{club}} 账户当天没有预订。场地将标记为已预订。",
+        "markRest": "未关联预订的场地已标记为已预订。"
+      },
+      "timePrompt": {
+        "question": "使用预订时间 {{range}}？",
+        "yes": "是",
+        "keep": "保留 {{range}}"
+      },
+      "time": {
+        "club": "{{court}} 已在俱乐部预订",
+        "hold": "{{court}} 被俱乐部保留",
+        "reservedGame": "{{court}} 已被已预订的比赛占用",
+        "notEnoughCourts": "空闲场地不足（{{free}}/{{needed}}）",
+        "softNote": "该时段还有一场计划中的比赛使用场地 — 你仍可选择此时间。",
+        "unavailableAt": "{{time}} 不可用：{{reason}}"
+      },
+      "summary": {
+        "willReserve": "创建时预订",
+        "courts_other": "{{count}} 片场地"
+      },
+      "issue": {
+        "timeRequired": "请先选择时间。",
+        "durationRequired": "请先选择时长。",
+        "timeBlocked": "你需要的场地在该时间已被占用。请选择其他时间或场地。",
+        "courtNotBookable": "所选场地无法在线预订。请选择其他场地或“已预订”。",
+        "notEnoughBookableCourts": "该时间没有足够的空闲场地可预订。",
+        "reservationsLoading": "仍在加载你的预订 — 请稍后再试。"
+      },
+      "cta": {
+        "reserve_other": "预订 {{count}} 片场地并创建",
+        "withReserved_other": "以 {{count}} 片已预订场地创建"
+      },
+      "rollbackReleased": "本次尝试中预订的场地已取消。",
+      "partialKept": "已预订 {{total}} 片中的 {{count}} 片场地，预订保留。如需取消，请联系俱乐部。",
+      "courtsSaveFailed": "比赛已创建，但场地未能保存。请在比赛页面检查。"
+    }
   }
 }

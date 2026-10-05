@@ -44,6 +44,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { enrichAvailableGamesSafe } from './availableGamesEnrichment';
 import { appendEventDiscoveryVisibility } from './eventApprovalVisibility';
 import { attachUserTeamsToFixedTeams } from './fixedTeamUserTeam';
+import { pendingClubFollowUpsForViewer } from '../gameReservationChange/reservationChange.service';
 
 export { MAIN_PHOTO_RELATION_SELECT };
 export { getAvailableGamesCardInclude, getAvailableGamesCardSelect } from './availableGamesCard.projection';
@@ -436,10 +437,15 @@ export class GameReadService {
       userId && projectedGame.hasFixedTeams
         ? await attachUserTeamsToFixedTeams(projectedGame)
         : projectedGame;
+    // Reschedule journal: "tell the club" follow-ups, organizers only (viewer-scoped key).
+    const pendingClubFollowUps = await pendingClubFollowUpsForViewer(id, userId, viewerIsAdmin).catch(
+      () => undefined,
+    );
     const base = {
       ...gameWithSportLevels,
       ...(paymentHint !== undefined ? { paymentHint } : {}),
       ...(paymentMethods !== undefined ? { paymentMethods } : {}),
+      ...(pendingClubFollowUps !== undefined ? { pendingClubFollowUps } : {}),
       isClubFavorite,
       userNote,
       joinQueues: computeJoinQueuesFromParticipants(gameWithSportLevels),

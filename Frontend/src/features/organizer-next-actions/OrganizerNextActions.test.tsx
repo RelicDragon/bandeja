@@ -47,7 +47,14 @@ const SEATS: OrganizerHint = {
   waiting: 2,
   action: 'reviewQueue',
 };
-const BOOKING: OrganizerHint = { key: 'booking', state: 'partial', action: 'seeBookings' };
+const BOOKING: OrganizerHint = {
+  key: 'booking',
+  state: 'partial',
+  reserved: 2,
+  total: 4,
+  gapTime: null,
+  action: 'seeBookings',
+};
 const ATTENDANCE: OrganizerHint = {
   key: 'attendance',
   confirmed: 2,
@@ -90,7 +97,7 @@ describe('OrganizerNextActions', () => {
 
   it('renders the booking gap with See bookings', () => {
     const html = render([BOOKING]);
-    expect(html).toContain('organizerNextActions.booking.partlyBooked');
+    expect(html).toContain('organizerNextActions.booking.partlyReserved');
     expect(html).toContain('organizerNextActions.booking.seeBookings');
   });
 
@@ -142,9 +149,14 @@ describe('organizerHintProgress', () => {
     expect(organizerHintProgress(ATTENDANCE)).toBe(0.5);
   });
 
-  it('reads booking as empty or half, and cost has no ring', () => {
-    expect(organizerHintProgress({ key: 'booking', state: 'none', action: 'editCourt' })).toBe(0);
+  it('reads booking as reserved out of total, and cost has no ring', () => {
+    expect(
+      organizerHintProgress({ key: 'booking', state: 'none', reserved: 0, total: 1, gapTime: null, action: 'editCourt' }),
+    ).toBe(0);
     expect(organizerHintProgress(BOOKING)).toBe(0.5);
+    expect(
+      organizerHintProgress({ key: 'booking', state: 'gap', reserved: 1, total: 1, gapTime: '19:00', action: 'seeBookings' }),
+    ).toBe(0.5);
     expect(organizerHintProgress(COST)).toBeNull();
   });
 });

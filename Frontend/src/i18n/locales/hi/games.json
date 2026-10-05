@@ -304,6 +304,7 @@
       "lookingToday_other": "{{city}} में आज {{count}} लोग खेलना चाहते हैं",
       "lookingTodayAndTomorrow_one": "{{city}} में आज और कल {{count}} व्यक्ति खेलना चाहता है",
       "lookingTodayAndTomorrow_other": "{{city}} में आज और कल {{count}} लोग खेलना चाहते हैं"
-    }
+    },
+    "reservationPartly": "आंशिक रूप से आरक्षित"
   }
 }

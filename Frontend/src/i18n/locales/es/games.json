@@ -300,6 +300,7 @@
       "lookingToday_other": "{{count}} personas buscan jugar hoy en {{city}}",
       "lookingTodayAndTomorrow_one": "{{count}} persona busca jugar hoy y mañana en {{city}}",
       "lookingTodayAndTomorrow_other": "{{count}} personas buscan jugar hoy y mañana en {{city}}"
-    }
+    },
+    "reservationPartly": "Reservado parcialmente"
   }
 }

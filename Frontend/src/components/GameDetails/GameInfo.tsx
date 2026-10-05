@@ -23,8 +23,13 @@ import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
 import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
-import { LinkedBookingCoverageBadge } from '@/components/GameDetails/LinkedBookingCoverageBadge';
-import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
+import { ReservationSummaryPill } from '@/components/GameDetails/ReservationSummaryPill';
+import {
+  gameShowsCourtReservation,
+  reservationTimeFormatter,
+  selectBarReservationView,
+  useCourtReservationView,
+} from '@/utils/courtReservationView';
 import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { InfoIconChip } from './InfoIconChip';
 import { GameInfoUserNote } from './GameInfoUserNote';
@@ -77,6 +82,11 @@ interface GameInfoProps {
   onToggleFavorite: () => void;
   onEditCourt: () => void;
   onOpenEditGameInfo?: (initialTab?: EditGameInfoInitialTabId) => void;
+  /**
+   * Date/time taps. The page routes games with reservations or several courts
+   * to the reschedule planner; without it the edit drawer opens on Location & time.
+   */
+  onChangeTime?: () => void;
   collapsedByDefault?: boolean;
   onInviteTrainer?: () => void;
   canInviteTrainer?: boolean;
@@ -93,6 +103,7 @@ export const GameInfo = ({
   onToggleFavorite,
   onEditCourt,
   onOpenEditGameInfo,
+  onChangeTime,
   collapsedByDefault = false,
   onInviteTrainer,
   canInviteTrainer = false,
@@ -109,13 +120,22 @@ export const GameInfo = ({
   const displayDescription = localized.description;
   const hasAuthoredDescription = Boolean(game.description?.trim() || displayDescription?.trim());
   const clubTz = getClubTimezone(game);
+  const handleChangeTime = () => {
+    if (onChangeTime) onChangeTime();
+    else onOpenEditGameInfo?.('locationTime');
+  };
   // PRD 354 — the club name links out to the public club page.
   const clubPageId = game.court?.club?.id ?? game.club?.id ?? null;
-  const {
-    hasLinkedBookings,
-    showPublicCoverageBadge,
-    coverage: linkedBookingCoverage,
-  } = useGameLinkedBookingViewer(game);
+  // Court reservation summary — the same line for every viewer.
+  const courtReservationView = useCourtReservationView(game);
+  const reservationView =
+    game.entityType === 'BAR'
+      ? game.court
+        ? selectBarReservationView(game)
+        : null
+      : gameShowsCourtReservation(game)
+        ? courtReservationView
+        : null;
   const showTags = game.entityType !== 'LEAGUE';
   const getDateLabelResolved = (date: Date | string, includeComma = true) =>
     clubTz
@@ -871,7 +891,7 @@ export const GameInfo = ({
               </InfoIconChip>
               {canEdit && canShowEdit ? (
                 <button
-                  onClick={() => onOpenEditGameInfo?.('locationTime')}
+                  onClick={handleChangeTime}
                   className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 italic"
                 >
                   {t('gameDetails.datetimeNotSet')}
@@ -890,7 +910,7 @@ export const GameInfo = ({
                   <div className="whitespace-nowrap">
                     {canEdit && canShowEdit ? (
                       <button
-                        onClick={() => onOpenEditGameInfo?.('locationTime')}
+                        onClick={handleChangeTime}
                         className="flex flex-col text-start font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                       >
                         <span>{weekdayLabel}</span>
@@ -917,7 +937,7 @@ export const GameInfo = ({
                   <div>
                     {canEdit && canShowEdit ? (
                       <button
-                        onClick={() => onOpenEditGameInfo?.('locationTime')}
+                        onClick={handleChangeTime}
                         className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
@@ -947,7 +967,7 @@ export const GameInfo = ({
               <div className="flex-1">
                 {canEdit && canShowEdit ? (
                   <button
-                    onClick={() => onOpenEditGameInfo?.('locationTime')}
+                    onClick={handleChangeTime}
                     className="flex flex-col text-start font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
                     <span>{weekdayLabel}</span>
@@ -1026,18 +1046,13 @@ export const GameInfo = ({
                     {t(game.entityType === 'BAR' ? 'createGame.hallNotSelected' : 'createGame.courtNotSelected')}
                   </p>
                 )}
-                {/* Show booking status */}
-                {showPublicCoverageBadge ? (
+                {reservationView ? (
                   <div className="mt-1">
-                    <LinkedBookingCoverageBadge fullyCovered={linkedBookingCoverage.fullyCovered} />
+                    <ReservationSummaryPill
+                      view={reservationView}
+                      formatTime={reservationTimeFormatter(clubTz, displaySettings)}
+                    />
                   </div>
-                ) : hasLinkedBookings ? null : game.court ? (
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    {game.hasBookedCourt 
-                      ? (game.entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt'))
-                      : t('createGame.notBookedYet')
-                    }
-                  </p>
                 ) : null}
                 <CourtLocationLinks
                   club={game.court?.club || game.club}

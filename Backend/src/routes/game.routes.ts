@@ -17,6 +17,7 @@ import {
 } from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
+import * as reservationChangeController from '../controllers/reservationChange.controller';
 import * as gameTextTranslationController from '../controllers/gameTextTranslation.controller';
 import { getGameWeather } from '../controllers/weather.controller';
 import gamePhotoRoutes from './gamePhoto.routes';
@@ -169,6 +170,19 @@ router.patch('/:id/bookings', authenticate, canEditGame, gameController.patchGam
 router.post('/:id/link-booking', authenticate, canEditGame, gameController.linkBookingToGame);
 
 router.put('/:id/booking-snapshots', authenticate, canEditGame, gameController.putGameBookingSnapshots);
+
+router.put('/:id/court-slots', authenticate, canEditGame, gameController.putGameCourtSlots);
+
+// Court-booking redesign (docs/domains/booking.md "Club-side drift", "Reschedule journal").
+router.post('/:id/bookings/:linkId/upstream-check', authenticate, canEditGame, reservationChangeController.postUpstreamCheck);
+router.post('/:id/bookings/:linkId/accept-upstream', authenticate, canEditGame, reservationChangeController.postAcceptUpstream);
+router.post('/:id/reservation-changes', authenticate, canEditGame, reservationChangeController.postReservationChange);
+router.get(
+  '/:id/reservation-changes/active',
+  authenticate,
+  canEditGame,
+  reservationChangeController.getActiveReservationChangeHandler,
+);
 
 router.patch('/:id/my-session', authenticate, canAccessGame, gameController.patchMyWatchSessionHandler);
 

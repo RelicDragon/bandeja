@@ -50,21 +50,10 @@
     },
     "locationTime": {
       "tabLabel": "Lokasi & waktu",
-      "partialSaveFailed": "Beberapa perubahan telah disimpan, namun {{step}} tidak dapat diperbarui. Tinjau dan coba lagi.",
-      "saveStep": {
-        "gameFields": "lokasi atau waktu",
-        "bookings": "tautan reservasi",
-        "snapshots": "rincian reservasi",
-        "courts": "lapangan"
-      },
-      "unlinkNoCancelHint": "Reservasi lapangan di klub tetap aktif — kami hanya menghapus tautan dari game ini.",
       "unlinkSaveConfirmTitle": "Hapus link reservasi?",
       "unlinkSaveConfirmMessage": "Anda membatalkan tautan {{count}} reservasi dari game ini. Pemesanan lapangan yang sebenarnya tidak akan dibatalkan secara otomatis.",
       "reservationActionTitle": "Apa yang harus terjadi pada lapangan?",
       "reservationActionSubtitle": "Pilih apa yang berubah saat Anda menyimpan.",
-      "changeGateTitle": "Terhubung ke {{count}} lapangan",
-      "changeGateBody": "Putuskan tautan terlebih dahulu untuk memesan klub atau lapangan lain.",
-      "changeGateBodyClub": "Putuskan tautan terlebih dahulu untuk meninggalkan {{club}} dan pesan di tempat lain.",
       "clubLockedBadge": "Tertaut",
       "clubLockedAria": "Klub terkunci. Putuskan tautan reservasi untuk mengubah klub.",
       "reservationAction": {
@@ -98,22 +87,9 @@
           "chipTitle": "Tidak ada pemesanan",
           "description": "Jaga agar permainan tetap terjadwal tanpa tautan reservasi nyata."
         }
-      },
-      "consequenceTitle": "apa yang akan terjadi",
-      "consequence": {
-        "keepCurrent": "Tautan reservasi saat ini tetap terlampir.",
-        "changeGameTimeOnly": "Perubahan waktu permainan; tautan reservasi yang ada tetap terlampir.",
-        "useExisting": "{{selected}} reservasi akan ditautkan ke game ini.",
-        "reserveNew": "Reservasi lapangan nyata yang baru akan dibuat di simpan.",
-        "unlink": "Tautan reservasi akan dihapus dari game ini. Setelah menyimpan, Anda dapat memesan klub atau lapangan lain.",
-        "gameOnly": "Pertandingan tetap terjadwal tanpa tautan reservasi nyata.",
-        "reserveNewConfirm": "Anda akan meninjau reservasi sebenarnya sebelum menyimpan.",
-        "unlinkNoCancel": "{{count}} reservasi klub sebenarnya akan tetap aktif kecuali Anda membatalkannya dengan klub/penyedia."
       }
     },
     "linkedBookings": {
-      "fullyCovered": "Sudah penuh dipesan",
-      "notFullyCovered": "Belum sepenuhnya dipesan",
       "timeMismatch": "Tidak mencakup waktu baru permainan. Ubah dengan klub; aplikasi tidak mengubahnya.",
       "refreshAriaLabel": "Periksa status reservasi",
       "refreshStillActive": "Reservasi masih aktif di akun klub Anda",
@@ -887,6 +863,42 @@
     "substitutePlayerOutLosesResults": "{{name}} tidak menyimpan rating atau peringkat dari pertandingan ini",
     "substitutePlayerKeepsTeamSlot": "Posisi tim, lapangan, dan jumlah pemain tetap sama",
     "substitutePlayerConfirm": "Ganti pemain",
-    "substitutePlayerSuccess": "Pemain telah diganti"
+    "substitutePlayerSuccess": "Pemain telah diganti",
+    "courts": {
+      "otherGame": "Permainan lain",
+      "clash": "{{court}} terpakai {{from}}–{{to}}. Pilih waktu atau lapangan lain.",
+      "clashGeneric": "Ada lapangan yang terpakai pada waktu itu. Pilih waktu atau lapangan lain.",
+      "updateFailed": "Gagal memperbarui lapangan. Coba lagi.",
+      "slotTaken": "Lapangan itu baru saja dipesan. Pilih waktu atau lapangan lain.",
+      "connectTitle": "Hubungkan akun klub Anda",
+      "linkTitle": "Tautkan reservasi",
+      "linkHint": "Reservasi Anda di {{club}} pada hari permainan",
+      "linkEmpty": "Tidak ada reservasi di {{club}} pada hari ini di akun Anda.",
+      "needTime": "Atur waktu permainan terlebih dahulu.",
+      "pickCourtFirst": "Pilih lapangan terlebih dahulu.",
+      "verifyPresent": "Reservasi di klub masih berlaku.",
+      "verifyMissing": "Klub tidak lagi memiliki reservasi ini.",
+      "cancelMessage": "Reservasi dibatalkan di klub dan dilepas dari permainan ini.",
+      "pickerTitle": "Lapangan",
+      "pickerHint": "Pilih lapangan secara berurutan. Pesan dari halaman permainan.",
+      "linkedCourtLocked": "Lapangan ini punya reservasi tertaut. Lepaskan dulu di halaman permainan.",
+      "count": "Jumlah lapangan",
+      "anyCourts": "Lapangan mana saja × {{count}}",
+      "fewer": "Kurangi satu lapangan",
+      "more": "Tambah satu lapangan",
+      "clubLocked": "Permainan ini punya reservasi tertaut. Lepaskan di halaman permainan untuk mengganti klub.",
+      "timeByPlanner": "Memindahkan permainan juga memindahkan reservasi lapangannya.",
+      "changeTime": "Ubah waktu",
+      "saveFirst": "Simpan atau buang perubahan lain terlebih dahulu.",
+      "overlapReserved": "Permainan lain sudah memesan lapangan ini pada waktu itu. Klub mungkin menolaknya. Tetap simpan?",
+      "gapTitle": "Isi celah",
+      "gapAdds": "Menambah {{range}}.",
+      "gapExtra": "Itu {{minutes}} menit lebih dari celahnya — klub hanya menjual durasi tetap.",
+      "gapContinue": "Lanjutkan",
+      "gapClash": "{{court}} terpakai {{time}}, jadi celah tidak bisa diisi di sini. Tanyakan ke klub atau pilih lapangan lain.",
+      "gapAskClub": "Klub tidak menjual reservasi yang pas untuk celah ini. Tanyakan ke klub.",
+      "gapUnavailable": "Celah ini tidak bisa diisi dari aplikasi. Tanyakan ke klub.",
+      "connectSkip": "Nanti saja"
+    }
   }
 }

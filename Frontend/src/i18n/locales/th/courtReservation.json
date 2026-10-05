@@ -1,0 +1,231 @@
+{
+  "courtReservation": {
+    "slot": {
+      "planned": "วางแผนไว้",
+      "reported": "จองแล้ว",
+      "linked": "จองแล้ว · {{provider}}",
+      "unknownTime": "จองแล้ว · {{provider}} · ไม่ทราบเวลา",
+      "gap": "ช่วงว่าง {{from}}–{{to}}"
+    },
+    "summary": {
+      "planned": "วางแผนไว้",
+      "partial": "จองแล้ว {{reserved}} จาก {{total}}",
+      "reserved": "จองครบทุกคอร์ตแล้ว",
+      "reservedWithGap": "จองแล้ว มีช่วงว่างเวลา {{time}}"
+    },
+    "reschedule": {
+      "unchanged": "ไม่เปลี่ยน",
+      "keep": "คงการจองไว้",
+      "move": "ย้ายการจอง",
+      "extend": "ขยายการจอง",
+      "switch_court": "เปลี่ยนคอร์ต",
+      "blocked": "คอร์ตไม่ว่าง",
+      "manual": "สอบถามสโมสร"
+    },
+    "duration": {
+      "hm": "{{h}} ชม. {{m}} นาที",
+      "h": "{{h}} ชม.",
+      "m": "{{m}} นาที",
+      "shortHm": "{{h}} ชม. {{m}} น.",
+      "shortH": "{{h}} ชม.",
+      "shortM": "{{m}} น."
+    },
+    "card": {
+      "title": "คอร์ต",
+      "players_other": "ผู้เล่น {{count}} คน",
+      "courts_other": "{{count}} คอร์ต",
+      "anyCourt": "คอร์ตใดก็ได้",
+      "noTime": "ตั้งเวลาเพื่อดูว่าเกมถูกครอบคลุมแค่ไหน",
+      "count": "จำนวนคอร์ต",
+      "fewer": "ลดหนึ่งคอร์ต",
+      "more": "เพิ่มหนึ่งคอร์ต"
+    },
+    "action": {
+      "reserveCourt": "จองคอร์ต",
+      "reserveCourts_other": "จอง {{count}} คอร์ต",
+      "reserveLast": "จองคอร์ตสุดท้าย",
+      "reserveRemaining_other": "จองอีก {{count}} คอร์ตที่เหลือ",
+      "fillGap": "เติมช่วงว่าง {{duration}}",
+      "fillGaps": "เติมช่วงว่างทั้งหมด"
+    },
+    "sheet": {
+      "game": "เกม",
+      "reservationAt": "การจอง · {{provider}}",
+      "timeUnknown": "ไม่ทราบเวลา",
+      "reportedHint": "คุณแจ้งว่าคอร์ตนี้จองกับสโมสรแล้ว",
+      "plannedHint": "คอร์ตนี้ยังไม่มีการจอง",
+      "alsoUsedBy": "{{name}} ใช้ด้วย {{from}}–{{to}}",
+      "pickCourt": "คอร์ตไหน?",
+      "action": {
+        "reserve": "จองเลย",
+        "link": "เชื่อมการจองของฉัน",
+        "linkReported": "เชื่อมการจอง",
+        "markReserved": "ทำเครื่องหมายว่าจองแล้ว",
+        "markNotReserved": "ทำเครื่องหมายว่ายังไม่จอง",
+        "verify": "ตรวจสอบ",
+        "unlink": "ยกเลิกการเชื่อม",
+        "cancelAtClub": "ยกเลิกที่สโมสร",
+        "changeCourt": "เปลี่ยนคอร์ต",
+        "useCourtOnly": "ใช้ {{court}} ไว้ก่อน จองทีหลัง",
+        "useCourtInstead": "ใช้ {{court}} แทน",
+        "keepCourt": "ใช้ {{court}} เหมือนเดิม"
+      }
+    },
+    "move": {
+      "title": "เปลี่ยนเวลา",
+      "dragLabel": "เวลาเกม",
+      "dragHint": "ลากเกม หรือใช้ปุ่มด้านล่าง",
+      "start": "เริ่ม",
+      "length": "ความยาว",
+      "earlier": "เร็วขึ้น 15 นาที",
+      "later": "ช้าลง 15 นาที",
+      "shorter": "สั้นลง 15 นาที",
+      "longer": "ยาวขึ้น 15 นาที",
+      "courtsLabel": "สิ่งที่เกิดกับแต่ละคอร์ต",
+      "notice_other": "ผู้เล่น {{count}} คนจะได้รับการแจ้งเตือนเวลาใหม่หนึ่งครั้ง",
+      "option": {
+        "none": "ไม่เปลี่ยน",
+        "keep": "คงการจองไว้",
+        "move": "ย้ายการจอง",
+        "extend": "ขยายการจอง",
+        "switchCourt": "เปลี่ยนคอร์ต",
+        "switchTo": "เปลี่ยนเป็น {{court}}",
+        "unlink": "ปลดออกจากเกมนี้",
+        "moveTogether": "ย้าย {{names}} ด้วย",
+        "manual": "สอบถามสโมสร"
+      },
+      "fix": {
+        "use": "ใช้: {{option}}",
+        "moveTo": "ย้ายไป {{time}}"
+      },
+      "footer": {
+        "move_other": "ย้ายเกม · {{count}} ขั้นตอน",
+        "blocked": "แก้การชนกันก่อน",
+        "noChanges": "ไม่มีการเปลี่ยนแปลง"
+      },
+      "change": "เปลี่ยน",
+      "changeFor": "เปลี่ยนสิ่งที่จะเกิดกับ {{court}}",
+      "unchanged": "{{courts}} · ไม่เปลี่ยน",
+      "sliderValue": "เริ่ม {{start}} จบ {{end}}",
+      "why": {
+        "notAvailable": "คอร์ตนี้ไม่ว่างในเวลาใหม่",
+        "keep": "การจองเดิมยังครอบคลุมเวลาใหม่",
+        "keepUnused": "การจองเดิมยังครอบคลุมอยู่ แต่ {{duration}} จะไม่ได้ใช้",
+        "move": "จอง {{range}} และยกเลิกการจองเดิม",
+        "moveCancelWithClub": "จอง {{range}} ส่วนการจองเดิมให้ยกเลิกกับคลับ",
+        "extend": "เพิ่ม {{range}}",
+        "roundedRange": "{{range}} ({{provider}} ขายแบบ {{lengths}})",
+        "sharerKeeps": "{{names}} ยังใช้การจองตอน {{time}} ต่อ",
+        "sharerKeepsNoTime": "{{names}} ยังใช้การจองต่อ",
+        "unused": "{{duration}} ของการจองเดิมจะไม่ได้ใช้",
+        "switchBook": "จอง {{court}} {{range}} แทน",
+        "switchPlanned": "ใช้ {{court}} แทน",
+        "unlink": "ปล่อยการจองร่วม ให้ {{names}} ใช้ต่อ",
+        "unlinkNoNames": "ปล่อยการจองร่วม ให้เกมอื่นใช้ต่อ",
+        "moveTogether": "{{names}} ย้ายไป {{time}} ด้วย การจองจึงย้ายตาม",
+        "moveTogetherNoTime": "{{names}} ย้ายด้วย การจองจึงย้ายตาม",
+        "manualReported": "จองผ่านคลับไว้ — แจ้งเวลาใหม่กับคลับ",
+        "manualCannotBook": "{{provider}} จองผ่านแอปไม่ได้ — สอบถามคลับ",
+        "manualNoCourt": "ยังไม่ได้เลือกคอร์ต — สอบถามคลับ",
+        "manualUnknownTime": "ไม่ทราบเวลาของการจอง — ตรวจสอบกับคลับ",
+        "manualChoice": "คุณจัดการกับคลับเอง"
+      }
+    },
+    "run": {
+      "title": "กำลังย้ายเกม",
+      "working": "กำลังดำเนินการ…",
+      "done": "ย้ายเกมแล้ว",
+      "doneWithFollowUps": "ย้ายเกมแล้ว — มีบางอย่างให้คุณทำต่อ",
+      "rolledBack": "ไม่มีอะไรเปลี่ยน — เกมยังอยู่เวลาเดิม",
+      "paused": "ย้ายเกมแล้ว แต่บางขั้นตอนยังไม่เสร็จ",
+      "clashFromServer": "มีคนจองคอร์ตระหว่างที่เราทำงาน เลือกตัวเลือกอื่น",
+      "retry": "ลองอีกครั้ง",
+      "later": "ภายหลัง",
+      "close": "เสร็จ",
+      "backToPlan": "กลับไปที่แผน",
+      "step": {
+        "reassign": "เปลี่ยนเป็น {{court}}",
+        "unlink": "ปลดการจองที่ใช้ร่วมกัน",
+        "moveShared": "ย้าย {{name}} ไป {{from}}–{{to}}",
+        "cancel": "ยกเลิกการจองเดิมที่ {{provider}}",
+        "manualCancel": "ยกเลิกการจองเดิมผ่านสโมสร",
+        "manualClub": "แจ้งสโมสร: {{court}} {{from}}–{{to}}",
+        "bookInstead": "จอง {{court}} แทน {{fromCourt}} · {{range}}",
+        "bookRange": "จอง {{court}} · {{range}}",
+        "reassignInstead": "ใช้ {{court}} แทน {{fromCourt}}",
+        "saveRange": "บันทึกเวลาใหม่ {{range}}",
+        "cancelRange": "ยกเลิกการจองเดิม {{range}} ที่ {{provider}}",
+        "manualCancelRange": "ยกเลิกการจองเดิม {{range}} กับคลับ",
+        "saveAndTell_other": "บันทึกเวลาใหม่ {{range}} และแจ้งผู้เล่น {{count}} คน"
+      },
+      "status": {
+        "pending": "รอ",
+        "running": "กำลังทำ",
+        "done": "เสร็จ",
+        "failed": "ไม่สำเร็จ",
+        "skipped": "ข้าม",
+        "followUp": "รอคุณทำ",
+        "rolledBack": "ย้อนกลับแล้ว",
+        "leftAtClub": "ยังอยู่ที่สโมสร"
+      },
+      "failedHint": {
+        "book": "คลับไม่รับการจองนี้",
+        "save": "บันทึกเวลาใหม่ไม่ได้",
+        "other": "ขั้นตอนนี้ไม่สำเร็จ"
+      },
+      "progress": "{{done}} จาก {{total}}",
+      "otherRun": {
+        "title": "มีการเปลี่ยนแปลงอื่นกำลังดำเนินอยู่",
+        "ours": "คุณเริ่มการเปลี่ยนแปลงอื่นของเกมนี้ไว้และยังไม่เสร็จ ทำให้เสร็จก่อน แล้วค่อยลองอันนี้",
+        "someoneElse": "มีคนอื่นกำลังเปลี่ยนคอร์ตของเกมนี้อยู่ ลองใหม่อีกครั้งในอีกไม่กี่นาที",
+        "finishIt": "ทำให้เสร็จ"
+      }
+    },
+    "banner": {
+      "unfinishedTitle": "การเปลี่ยนคอร์ตยังไม่เสร็จ",
+      "pausedTitle": "ย้ายเกมแล้ว — เหลือขั้นตอนคอร์ตอีกเล็กน้อย",
+      "detail_other": "เหลือ {{count}} ขั้นตอน · {{time}}",
+      "detailNoTime_other": "เหลือ {{count}} ขั้นตอน",
+      "finish": "ทำการเปลี่ยนให้เสร็จ",
+      "undo": "เลิกทำ"
+    },
+    "drift": {
+      "moved": "{{court}} เริ่ม {{time}} ที่ {{provider}} แล้ว",
+      "movedNoTime": "{{court}} เปลี่ยนที่ {{provider}}",
+      "missing": "การจอง {{court}} ที่ {{provider}} หายไป",
+      "moveGame": "ย้ายเกม",
+      "keepGame": "คงเวลาเกม",
+      "reserveAgain": "จองอีกครั้ง",
+      "unlink": "ยกเลิกการเชื่อม"
+    },
+    "followUp": {
+      "title": "สิ่งที่ต้องทำที่สโมสร",
+      "theClub": "สโมสร",
+      "cancelOld": "ยกเลิกการจองเดิมผ่านสโมสร",
+      "cancelOldAt": "ยกเลิกการจองเดิมเวลา {{time}} ผ่านสโมสร",
+      "askClub": "แจ้งสโมสร: {{court}} {{from}}–{{to}}",
+      "askClubNoTime": "แจ้งสโมสรเรื่อง {{court}}",
+      "leftAtClub": "{{court}} {{from}}–{{to}} ยังจองอยู่ที่ {{provider}}",
+      "leftAtClubNoTime": "{{court}} ยังจองอยู่ที่ {{provider}}",
+      "done": "เสร็จ"
+    },
+    "blocker": {
+      "club": "คลับจอง {{court}} ไว้ตอน {{time}}",
+      "hold": "คลับกัน {{court}} ไว้ตอน {{time}}",
+      "game": "{{name}} ใช้ {{court}} ตอน {{time}}",
+      "gameUnnamed": "เกมอื่นใช้ {{court}} ตอน {{time}}",
+      "plannedGame": "{{name}} วางแผนไว้ที่ {{court}} ตอน {{time}}",
+      "plannedGameUnnamed": "มีเกมอื่นวางแผนไว้ที่ {{court}} ตอน {{time}}"
+    },
+    "timeline": {
+      "free": "ว่าง",
+      "movesTo": "ย้ายไป {{court}}",
+      "legend": {
+        "reserved": "การจองของคุณ",
+        "reported": "จองผ่านคลับ",
+        "club": "คลับจองไว้",
+        "game": "เกมอื่น"
+      }
+    }
+  }
+}

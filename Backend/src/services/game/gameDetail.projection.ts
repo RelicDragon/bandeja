@@ -56,9 +56,9 @@ export const GAME_DETAIL_ENTITLED_GAME_KEYS = ['paymentHint', 'paymentMethods'] 
  * They are correct on `GET /api/games/:id`, where the caller is the viewer, and
  * meaningless-to-wrong on a broadcast, where one payload reaches a whole room:
  * `userNote` is the asking user's private note, `isClubFavorite` their own
- * favourite flag.
+ * favourite flag, `pendingClubFollowUps` the reschedule follow-ups shown to organizers only.
  */
-export const GAME_DETAIL_VIEWER_SCOPED_KEYS = ['userNote', 'isClubFavorite'] as const;
+export const GAME_DETAIL_VIEWER_SCOPED_KEYS = ['userNote', 'isClubFavorite', 'pendingClubFollowUps'] as const;
 
 /** `Club` fields that must never reach an unauthenticated caller. */
 export const GAME_DETAIL_GUEST_FORBIDDEN_CLUB_KEYS = [
@@ -115,6 +115,8 @@ export const GAME_DETAIL_GAME_SCALAR_SELECT = {
   allowDirectJoin: true,
   hasBookedCourt: true,
   bookingStatus: true,
+  reportedAnyCourtCount: true,
+  courtSlotCount: true,
   afterGameGoToBar: true,
   hasFixedTeams: true,
   allowUserInMultipleTeams: true,
@@ -449,6 +451,11 @@ function detailRelationSelect(viewerIsAuthenticated: boolean): Prisma.GameSelect
         courtId: true,
         bookingStart: true,
         bookingEnd: true,
+        gameCourtId: true,
+        upstreamState: true,
+        upstreamStart: true,
+        upstreamEnd: true,
+        upstreamCheckedAt: true,
       },
     },
     outcomes: {

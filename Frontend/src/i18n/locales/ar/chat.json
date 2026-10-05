@@ -246,12 +246,12 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} أصبح مالك البار الآن",
         "GAME_CLUB_CHANGED": "تغيّر موقع البار إلى {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "تغيّر تاريخ/وقت البار إلى {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "تغيّرت حالة حجز القاعة إلى {{bookingStatus}}",
+        "GAME_BOOKING_STATUS_CHANGED": "حجز القاعة: {{bookingStatus}}",
         "bookingStatuses": {
-          "EXTERNAL_FULL": "محجوز بالكامل",
-          "EXTERNAL_PARTIAL": "غير محجوز بالكامل",
-          "MANUAL": "القاعة محجوزة",
-          "NONE": "لم يُحجز بعد"
+          "EXTERNAL_FULL": "محجوز",
+          "EXTERNAL_PARTIAL": "محجوز جزئيًا",
+          "MANUAL": "محجوز",
+          "NONE": "مخطط"
         }
       },
       "TRAINING": {
@@ -264,7 +264,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} أصبح مالك التدريب الآن",
         "GAME_CLUB_CHANGED": "تغيّر موقع التدريب إلى {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "تغيّر تاريخ/وقت التدريب إلى {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "تغيّرت حالة حجز الملعب إلى {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "حجز الملعب: {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "انضم {{userName}} إلى البطولة",
@@ -276,7 +276,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} أصبح مالك البطولة الآن",
         "GAME_CLUB_CHANGED": "تغيّر موقع البطولة إلى {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "تغيّر تاريخ/وقت البطولة إلى {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "تغيّرت حالة حجز الملعب إلى {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "حجز الملعب: {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "انضم {{userName}} إلى الدوري",
@@ -288,7 +288,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} أصبح مالك الدوري الآن",
         "GAME_CLUB_CHANGED": "تغيّر موقع الدوري إلى {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "تغيّر تاريخ/وقت الدوري إلى {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "تغيّرت حالة حجز الملعب إلى {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "حجز الملعب: {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "انضم {{userName}} إلى موسم الدوري",
@@ -300,18 +300,18 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} أصبح مالك موسم الدوري الآن",
         "GAME_CLUB_CHANGED": "تغيّر موقع موسم الدوري إلى {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "تغيّر تاريخ/وقت موسم الدوري إلى {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "تغيّرت حالة حجز الملعب إلى {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "حجز الملعب: {{bookingStatus}}"
       },
       "actions": {
         "joined": "انضم إلى المباراة",
         "left": "غادر المباراة"
       },
-      "GAME_BOOKING_STATUS_CHANGED": "تغيّرت حالة حجز الملعب إلى {{bookingStatus}}",
+      "GAME_BOOKING_STATUS_CHANGED": "حجز الملعب: {{bookingStatus}}",
       "bookingStatuses": {
-        "EXTERNAL_FULL": "محجوز بالكامل",
-        "EXTERNAL_PARTIAL": "غير محجوز بالكامل",
-        "MANUAL": "الملعب محجوز",
-        "NONE": "لم يُحجز بعد"
+        "EXTERNAL_FULL": "كل الملاعب محجوزة",
+        "EXTERNAL_PARTIAL": "محجوز جزئيًا",
+        "MANUAL": "محجوز",
+        "NONE": "مخطط"
       },
       "ATTENDANCE_NUDGED": "طلب {{userName}} من الجميع تأكيد الحضور",
       "USER_NOTED_NO_SHOW": "تم تسجيل {{userName}} كغائب",

@@ -14,9 +14,18 @@ export function organizerHintSentence(hint: OrganizerHint, t: TFunction): string
       return `${needed} · ${t('organizerNextActions.seats.waiting', { count: hint.waiting })}`;
     }
     case 'booking':
-      return hint.state === 'none'
-        ? t('organizerNextActions.booking.notBooked')
-        : t('organizerNextActions.booking.partlyBooked');
+      if (hint.state === 'none') {
+        return hint.total > 1
+          ? t('organizerNextActions.booking.notReservedMany')
+          : t('organizerNextActions.booking.notReservedOne');
+      }
+      if (hint.state === 'gap' && hint.gapTime) {
+        return t('organizerNextActions.booking.gapAt', { time: hint.gapTime });
+      }
+      return t('organizerNextActions.booking.partlyReserved', {
+        reserved: hint.reserved,
+        total: hint.total,
+      });
     case 'attendance':
       return t('attendance.organizer.progress', {
         confirmed: hint.confirmed,
@@ -64,7 +73,9 @@ export function organizerHintProgress(hint: OrganizerHint): number | null {
     case 'attendance':
       return hint.total > 0 ? hint.confirmed / hint.total : null;
     case 'booking':
-      return hint.state === 'partial' ? 0.5 : 0;
+      if (hint.state === 'none') return 0;
+      if (hint.state === 'gap') return 0.5;
+      return hint.total > 0 ? hint.reserved / hint.total : 0;
     case 'cost':
       return null;
   }

@@ -1,0 +1,258 @@
+{
+  "courtReservation": {
+    "slot": {
+      "planned": "Запланировано",
+      "reported": "Забронировано",
+      "linked": "Забронировано · {{provider}}",
+      "unknownTime": "Забронировано · {{provider}} · время неизвестно",
+      "gap": "Разрыв {{from}}–{{to}}"
+    },
+    "summary": {
+      "planned": "Запланировано",
+      "partial": "Забронировано {{reserved}} из {{total}}",
+      "reserved": "Все корты забронированы",
+      "reservedWithGap": "Забронировано, разрыв в {{time}}"
+    },
+    "reschedule": {
+      "unchanged": "Без изменений",
+      "keep": "Оставить бронь",
+      "move": "Перенести бронь",
+      "extend": "Продлить бронь",
+      "switch_court": "Сменить корт",
+      "blocked": "Корт недоступен",
+      "manual": "Уточнить в клубе"
+    },
+    "duration": {
+      "hm": "{{h}} ч {{m}} мин",
+      "h": "{{h}} ч",
+      "m": "{{m}} мин",
+      "shortHm": "{{h}} ч {{m}} мин",
+      "shortH": "{{h}} ч",
+      "shortM": "{{m}} мин"
+    },
+    "card": {
+      "title": "Корты",
+      "players_one": "{{count}} игрок",
+      "players_few": "{{count}} игрока",
+      "players_many": "{{count}} игроков",
+      "players_other": "{{count}} игрока",
+      "courts_one": "{{count}} корт",
+      "courts_few": "{{count}} корта",
+      "courts_many": "{{count}} кортов",
+      "courts_other": "{{count}} корта",
+      "anyCourt": "Любой корт",
+      "noTime": "Укажите время, чтобы увидеть, какая часть игры покрыта бронью",
+      "count": "Количество кортов",
+      "fewer": "На один корт меньше",
+      "more": "На один корт больше"
+    },
+    "action": {
+      "reserveCourt": "Забронировать корт",
+      "reserveCourts_one": "Забронировать {{count}} корт",
+      "reserveCourts_few": "Забронировать {{count}} корта",
+      "reserveCourts_many": "Забронировать {{count}} кортов",
+      "reserveCourts_other": "Забронировать {{count}} корта",
+      "reserveLast": "Забронировать последний корт",
+      "reserveRemaining_one": "Забронировать оставшийся {{count}} корт",
+      "reserveRemaining_few": "Забронировать оставшиеся {{count}} корта",
+      "reserveRemaining_many": "Забронировать оставшиеся {{count}} кортов",
+      "reserveRemaining_other": "Забронировать оставшиеся {{count}} корта",
+      "fillGap": "Закрыть разрыв {{duration}}",
+      "fillGaps": "Закрыть разрывы"
+    },
+    "sheet": {
+      "game": "Игра",
+      "reservationAt": "Бронь · {{provider}}",
+      "timeUnknown": "Время неизвестно",
+      "reportedHint": "Вы отметили, что этот корт забронирован в клубе.",
+      "plannedHint": "Для этого корта пока ничего не забронировано.",
+      "alsoUsedBy": "Также использует {{name}} {{from}}–{{to}}",
+      "pickCourt": "Какой корт?",
+      "action": {
+        "reserve": "Забронировать",
+        "link": "Привязать мою бронь",
+        "linkReported": "Привязать бронь",
+        "markReserved": "Отметить как забронированный",
+        "markNotReserved": "Снять отметку брони",
+        "verify": "Проверить",
+        "unlink": "Отвязать",
+        "cancelAtClub": "Отменить в клубе",
+        "changeCourt": "Сменить корт",
+        "useCourtOnly": "Взять {{court}}, бронь позже",
+        "useCourtInstead": "Взять {{court}} вместо этого",
+        "keepCourt": "Оставить {{court}}"
+      }
+    },
+    "move": {
+      "title": "Изменить время",
+      "dragLabel": "Время игры",
+      "dragHint": "Перетащите игру или используйте кнопки ниже",
+      "start": "Начало",
+      "length": "Длительность",
+      "earlier": "На 15 минут раньше",
+      "later": "На 15 минут позже",
+      "shorter": "На 15 минут короче",
+      "longer": "На 15 минут дольше",
+      "courtsLabel": "Что будет с каждым кортом",
+      "notice_one": "{{count}} игрок получит одно уведомление о новом времени",
+      "notice_few": "{{count}} игрока получат одно уведомление о новом времени",
+      "notice_many": "{{count}} игроков получат одно уведомление о новом времени",
+      "notice_other": "{{count}} игрока получат одно уведомление о новом времени",
+      "option": {
+        "none": "Без изменений",
+        "keep": "Оставить бронь",
+        "move": "Перенести бронь",
+        "extend": "Продлить бронь",
+        "switchCourt": "Сменить корт",
+        "switchTo": "Перейти на {{court}}",
+        "unlink": "Отвязать от этой игры",
+        "moveTogether": "Перенести и {{names}}",
+        "manual": "Уточнить в клубе"
+      },
+      "fix": {
+        "use": "Выбрать: {{option}}",
+        "moveTo": "Перенести на {{time}}"
+      },
+      "footer": {
+        "move_one": "Перенести игру · {{count}} шаг",
+        "move_few": "Перенести игру · {{count}} шага",
+        "move_many": "Перенести игру · {{count}} шагов",
+        "move_other": "Перенести игру · {{count}} шага",
+        "blocked": "Сначала решите конфликт",
+        "noChanges": "Нет изменений"
+      },
+      "change": "Изменить",
+      "changeFor": "Изменить, что будет с кортом {{court}}",
+      "unchanged": "{{courts}} · без изменений",
+      "sliderValue": "Начало {{start}}, конец {{end}}",
+      "why": {
+        "notAvailable": "В новое время этот корт занят.",
+        "keep": "Бронь по-прежнему покрывает новое время.",
+        "keepUnused": "Бронь по-прежнему покрывает время; {{duration}} останется неиспользованным.",
+        "move": "Бронирует {{range}} и отменяет старую бронь.",
+        "moveCancelWithClub": "Бронирует {{range}}. Старую бронь отмените через клуб.",
+        "extend": "Добавляет {{range}}.",
+        "roundedRange": "{{range}} ({{provider}} продаёт {{lengths}})",
+        "sharerKeeps": "У «{{names}}» остаётся бронь на {{time}}.",
+        "sharerKeepsNoTime": "У «{{names}}» остаётся своя бронь.",
+        "unused": "{{duration}} старой брони останется неиспользованным.",
+        "switchBook": "Вместо этого бронирует {{court}} {{range}}.",
+        "switchPlanned": "Вместо этого — {{court}}.",
+        "unlink": "Отказывается от общей брони; она остаётся у «{{names}}».",
+        "unlinkNoNames": "Отказывается от общей брони; она остаётся у другой игры.",
+        "moveTogether": "«{{names}}» тоже переносится на {{time}}, и бронь переезжает следом.",
+        "moveTogetherNoTime": "«{{names}}» тоже переносится, и бронь переезжает следом.",
+        "manualReported": "Забронировано через клуб — сообщите им новое время.",
+        "manualCannotBook": "{{provider}} нельзя забронировать из приложения — спросите клуб.",
+        "manualNoCourt": "Корт ещё не выбран — спросите клуб.",
+        "manualUnknownTime": "Время брони неизвестно — уточните в клубе.",
+        "manualChoice": "Договоритесь с клубом сами."
+      }
+    },
+    "run": {
+      "title": "Переносим игру",
+      "working": "Выполняем…",
+      "done": "Игра перенесена",
+      "doneWithFollowUps": "Игра перенесена — осталось кое-что для вас",
+      "rolledBack": "Ничего не изменилось — время игры прежнее",
+      "paused": "Игра перенесена, но несколько шагов не завершились",
+      "clashFromServer": "Пока мы работали, корт заняли. Выберите другой вариант.",
+      "retry": "Повторить",
+      "later": "Позже",
+      "close": "Готово",
+      "backToPlan": "Вернуться к плану",
+      "step": {
+        "reassign": "Перейти на {{court}}",
+        "unlink": "Отвязать общую бронь",
+        "moveShared": "Перенести «{{name}}» на {{from}}–{{to}}",
+        "cancel": "Отменить старую бронь в {{provider}}",
+        "manualCancel": "Отменить старую бронь через клуб",
+        "manualClub": "Сообщить клубу: {{court}} {{from}}–{{to}}",
+        "bookInstead": "Забронировать {{court}} вместо {{fromCourt}} · {{range}}",
+        "bookRange": "Забронировать {{court}} · {{range}}",
+        "reassignInstead": "Играть на {{court}} вместо {{fromCourt}}",
+        "saveRange": "Сохранить новое время {{range}}",
+        "cancelRange": "Отменить старую бронь {{range}} в {{provider}}",
+        "manualCancelRange": "Отменить старую бронь {{range}} через клуб",
+        "saveAndTell_one": "Сохранить новое время {{range}} и сообщить {{count}} игроку",
+        "saveAndTell_few": "Сохранить новое время {{range}} и сообщить {{count}} игрокам",
+        "saveAndTell_many": "Сохранить новое время {{range}} и сообщить {{count}} игрокам",
+        "saveAndTell_other": "Сохранить новое время {{range}} и сообщить {{count}} игрокам"
+      },
+      "status": {
+        "pending": "Ожидание",
+        "running": "Выполняется",
+        "done": "Готово",
+        "failed": "Не получилось",
+        "skipped": "Пропущено",
+        "followUp": "Для вас",
+        "rolledBack": "Отменено",
+        "leftAtClub": "Осталось в клубе"
+      },
+      "failedHint": {
+        "book": "Клуб не принял эту бронь.",
+        "save": "Не удалось сохранить новое время.",
+        "other": "Этот шаг не выполнился."
+      },
+      "progress": "{{done}} из {{total}}",
+      "otherRun": {
+        "title": "Уже идёт другое изменение",
+        "ours": "Вы начали другое изменение этой игры, и оно не завершено. Сначала завершите его, потом попробуйте снова.",
+        "someoneElse": "Кто-то другой сейчас меняет корты этой игры. Попробуйте через несколько минут.",
+        "finishIt": "Завершить"
+      }
+    },
+    "banner": {
+      "unfinishedTitle": "Изменения кортов не завершены",
+      "pausedTitle": "Игра перенесена — осталось несколько шагов по кортам",
+      "detail_one": "Остался {{count}} шаг · {{time}}",
+      "detail_few": "Осталось {{count}} шага · {{time}}",
+      "detail_many": "Осталось {{count}} шагов · {{time}}",
+      "detail_other": "Осталось {{count}} шага · {{time}}",
+      "detailNoTime_one": "Остался {{count}} шаг",
+      "detailNoTime_few": "Осталось {{count}} шага",
+      "detailNoTime_many": "Осталось {{count}} шагов",
+      "detailNoTime_other": "Осталось {{count}} шага",
+      "finish": "Завершить изменения",
+      "undo": "Отменить"
+    },
+    "drift": {
+      "moved": "{{court}} теперь начинается в {{time}} в {{provider}}",
+      "movedNoTime": "{{court}}: бронь изменилась в {{provider}}",
+      "missing": "Бронь на {{court}} исчезла в {{provider}}",
+      "moveGame": "Перенести игру",
+      "keepGame": "Оставить время игры",
+      "reserveAgain": "Забронировать снова",
+      "unlink": "Отвязать"
+    },
+    "followUp": {
+      "title": "Сделать в клубе",
+      "theClub": "клубе",
+      "cancelOld": "Отмените старую бронь через клуб",
+      "cancelOldAt": "Отмените старую бронь на {{time}} через клуб",
+      "askClub": "Сообщите клубу: {{court}} {{from}}–{{to}}",
+      "askClubNoTime": "Сообщите клубу про {{court}}",
+      "leftAtClub": "{{court}} {{from}}–{{to}} всё ещё забронирован в {{provider}}",
+      "leftAtClubNoTime": "{{court}} всё ещё забронирован в {{provider}}",
+      "done": "Готово"
+    },
+    "blocker": {
+      "club": "У клуба {{court}} занят в {{time}}.",
+      "hold": "Клуб держит {{court}} в {{time}}.",
+      "game": "{{court}} в {{time}} занят: {{name}}.",
+      "gameUnnamed": "{{court}} в {{time}} занят другой игрой.",
+      "plannedGame": "На {{court}} в {{time}} запланирована игра «{{name}}».",
+      "plannedGameUnnamed": "На {{court}} в {{time}} запланирована другая игра."
+    },
+    "timeline": {
+      "free": "свободен",
+      "movesTo": "переезд на {{court}}",
+      "legend": {
+        "reserved": "Ваша бронь",
+        "reported": "Бронь через клуб",
+        "club": "Занято клубом",
+        "game": "Другая игра"
+      }
+    }
+  }
+}

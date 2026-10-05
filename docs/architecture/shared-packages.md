@@ -69,7 +69,7 @@ When editing templates or booking helpers, change **canonical** `Frontend/shared
 | `booking/types.ts` | `BusySnapshotCourt`, `ExternalBookingResult`, `BookingErrorCode`, `bookingProviderError` |
 | `booking/errorKeys.ts` | `BOOKING_ERROR_KEYS` |
 | `booking/index.ts` | re-exports types + error keys |
-| `gameBooking/*` | Snapshots on `Game`: `buildBookingSnapshots`, `computeGameBookingStatus`, `deriveGameTimeFromBookings`, `linkBookingToGame`, `rollbackBooktimeBookings`, `reservationIntent`, selection limits, coverage, court id apply, deep-link parse |
+| `gameBooking/*` | Snapshots on `Game`: `buildBookingSnapshots`, `computeGameBookingStatus`, `deriveGameTimeFromBookings`, `linkBookingToGame`, `rollbackBooktimeBookings` (any provider that can cancel), selection limits, coverage, court id apply, deep-link parse |
 | `booktime/` | local time / timezone helpers |
 | `nextGame/policy.ts` | **Policy string + lookback constants only** |
 | `gameFormat/` | normalize patch, golden point, balls-in-games, match generation, legacy timed |

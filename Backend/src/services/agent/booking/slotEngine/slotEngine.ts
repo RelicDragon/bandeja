@@ -16,7 +16,12 @@
  * Pure except for the injected `SlotEngineSources`, so tests mock every provider.
  */
 import type { AgentSlotConfidence } from '@bandeja/shared/agentContract';
-import { isOccupancyHardBlock, isOccupancySoftBlock, type OccupancyBlock } from '../../../game/courtOccupancy.service';
+import {
+  isOccupancyHardBlock,
+  isOccupancyReservedGameBlock,
+  isOccupancySoftBlock,
+  type OccupancyBlock,
+} from '../../../game/courtOccupancy.service';
 import {
   MINUTES_PER_DAY,
   addDays,
@@ -133,7 +138,7 @@ function overlaps(block: OccupancyBlock, start: Date, end: Date): boolean {
 
 /** booking.md: club bookings and holds are hard; an app game that holds a booked court is too. */
 export function isSlotHardBlock(block: OccupancyBlock): boolean {
-  return isOccupancyHardBlock(block) || (block.kind === 'game' && block.hasBookedCourt && block.courtId != null);
+  return isOccupancyHardBlock(block) || (isOccupancyReservedGameBlock(block) && block.courtId != null);
 }
 
 function daysBetween(from: string, to: string): number {

@@ -197,6 +197,11 @@ export const gameDetailExternalBookingsInclude = {
       courtId: true,
       bookingStart: true,
       bookingEnd: true,
+      gameCourtId: true,
+      upstreamState: true,
+      upstreamStart: true,
+      upstreamEnd: true,
+      upstreamCheckedAt: true,
     },
   },
 } satisfies Prisma.GameInclude;

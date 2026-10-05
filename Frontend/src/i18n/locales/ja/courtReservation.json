@@ -1,0 +1,231 @@
+{
+  "courtReservation": {
+    "slot": {
+      "planned": "予定",
+      "reported": "予約済み",
+      "linked": "予約済み · {{provider}}",
+      "unknownTime": "予約済み · {{provider}} · 時間不明",
+      "gap": "空き {{from}}–{{to}}"
+    },
+    "summary": {
+      "planned": "予定",
+      "partial": "{{total}}面中{{reserved}}面予約済み",
+      "reserved": "全コート予約済み",
+      "reservedWithGap": "予約済み、{{time}}に空き"
+    },
+    "reschedule": {
+      "unchanged": "変更なし",
+      "keep": "予約を維持",
+      "move": "予約を移動",
+      "extend": "予約を延長",
+      "switch_court": "コートを変更",
+      "blocked": "コートが空いていません",
+      "manual": "クラブに確認"
+    },
+    "duration": {
+      "hm": "{{h}}時間{{m}}分",
+      "h": "{{h}}時間",
+      "m": "{{m}}分",
+      "shortHm": "{{h}}時間{{m}}分",
+      "shortH": "{{h}}時間",
+      "shortM": "{{m}}分"
+    },
+    "card": {
+      "title": "コート",
+      "players_other": "{{count}}人",
+      "courts_other": "{{count}}面",
+      "anyCourt": "どのコートでも",
+      "noTime": "時間を設定すると、試合のどれだけがカバーされているか分かります",
+      "count": "コート数",
+      "fewer": "コートを1面減らす",
+      "more": "コートを1面増やす"
+    },
+    "action": {
+      "reserveCourt": "コートを予約",
+      "reserveCourts_other": "{{count}}面を予約",
+      "reserveLast": "最後のコートを予約",
+      "reserveRemaining_other": "残り{{count}}面を予約",
+      "fillGap": "{{duration}}の空きを埋める",
+      "fillGaps": "空きを埋める"
+    },
+    "sheet": {
+      "game": "試合",
+      "reservationAt": "予約 · {{provider}}",
+      "timeUnknown": "時間不明",
+      "reportedHint": "このコートはクラブで予約済みと報告されています。",
+      "plannedHint": "このコートはまだ予約されていません。",
+      "alsoUsedBy": "{{name}}も使用 {{from}}–{{to}}",
+      "pickCourt": "どのコート？",
+      "action": {
+        "reserve": "今すぐ予約",
+        "link": "自分の予約を紐づける",
+        "linkReported": "予約を紐づける",
+        "markReserved": "予約済みにする",
+        "markNotReserved": "未予約にする",
+        "verify": "確認する",
+        "unlink": "紐づけを解除",
+        "cancelAtClub": "クラブでキャンセル",
+        "changeCourt": "コートを変更",
+        "useCourtOnly": "{{court}} を使う（予約は後で）",
+        "useCourtInstead": "代わりに {{court}} を使う",
+        "keepCourt": "{{court}} のままにする"
+      }
+    },
+    "move": {
+      "title": "時間を変更",
+      "dragLabel": "試合の時間",
+      "dragHint": "試合をドラッグするか、下のボタンを使ってください",
+      "start": "開始",
+      "length": "長さ",
+      "earlier": "15分早く",
+      "later": "15分遅く",
+      "shorter": "15分短く",
+      "longer": "15分長く",
+      "courtsLabel": "各コートの扱い",
+      "notice_other": "{{count}}人に新しい時間の通知が1件届きます",
+      "option": {
+        "none": "変更なし",
+        "keep": "予約を維持",
+        "move": "予約を移動",
+        "extend": "予約を延長",
+        "switchCourt": "コートを変更",
+        "switchTo": "{{court}}に変更",
+        "unlink": "この試合から外す",
+        "moveTogether": "{{names}}も移動",
+        "manual": "クラブに確認"
+      },
+      "fix": {
+        "use": "使う：{{option}}",
+        "moveTo": "{{time}}に移動"
+      },
+      "footer": {
+        "move_other": "試合を移動 · {{count}}ステップ",
+        "blocked": "先に重複を解消してください",
+        "noChanges": "変更なし"
+      },
+      "change": "変更",
+      "changeFor": "{{court}} の扱いを変更",
+      "unchanged": "{{courts}} · 変更なし",
+      "sliderValue": "{{start}} 開始、{{end}} 終了",
+      "why": {
+        "notAvailable": "新しい時間はこのコートが空いていません。",
+        "keep": "今の予約で新しい時間もカバーできます。",
+        "keepUnused": "今の予約でカバーできます。{{duration}} は使われません。",
+        "move": "{{range}} を予約し、古い予約をキャンセルします。",
+        "moveCancelWithClub": "{{range}} を予約します。古い予約はクラブでキャンセルしてください。",
+        "extend": "{{range}} を追加します。",
+        "roundedRange": "{{range}}（{{provider}} の販売単位は {{lengths}}）",
+        "sharerKeeps": "{{names}} は {{time}} の予約をそのまま使います。",
+        "sharerKeepsNoTime": "{{names}} は予約をそのまま使います。",
+        "unused": "古い予約のうち {{duration}} は使われません。",
+        "switchBook": "代わりに {{court}} を {{range}} で予約します。",
+        "switchPlanned": "代わりに {{court}} を使います。",
+        "unlink": "共有の予約から外れます。{{names}} はそのまま使います。",
+        "unlinkNoNames": "共有の予約から外れます。もう一方のゲームはそのまま使います。",
+        "moveTogether": "{{names}} も {{time}} に移り、予約も一緒に動きます。",
+        "moveTogetherNoTime": "{{names}} も移り、予約も一緒に動きます。",
+        "manualReported": "クラブで予約済みです。新しい時間を伝えてください。",
+        "manualCannotBook": "{{provider}} はアプリから予約できません。クラブに確認してください。",
+        "manualNoCourt": "まだコートが決まっていません。クラブに確認してください。",
+        "manualUnknownTime": "予約時間が不明です。クラブに確認してください。",
+        "manualChoice": "クラブと直接調整してください。"
+      }
+    },
+    "run": {
+      "title": "試合を移動中",
+      "working": "処理中…",
+      "done": "試合を移動しました",
+      "doneWithFollowUps": "試合を移動しました — いくつか対応が必要です",
+      "rolledBack": "何も変わっていません — 試合の時間はそのままです",
+      "paused": "試合は移動しましたが、いくつかのステップが終わっていません",
+      "clashFromServer": "処理中にコートが埋まりました。別の方法を選んでください。",
+      "retry": "もう一度",
+      "later": "あとで",
+      "close": "完了",
+      "backToPlan": "プランに戻る",
+      "step": {
+        "reassign": "{{court}}に変更",
+        "unlink": "共有予約を外す",
+        "moveShared": "{{name}}を{{from}}–{{to}}に移動",
+        "cancel": "{{provider}}で古い予約をキャンセル",
+        "manualCancel": "クラブ経由で古い予約をキャンセル",
+        "manualClub": "クラブに連絡：{{court}} {{from}}–{{to}}",
+        "bookInstead": "{{fromCourt}} の代わりに {{court}} を予約 · {{range}}",
+        "bookRange": "{{court}} を予約 · {{range}}",
+        "reassignInstead": "{{fromCourt}} の代わりに {{court}} を使う",
+        "saveRange": "新しい時間 {{range}} を保存",
+        "cancelRange": "{{provider}} の古い {{range}} の予約をキャンセル",
+        "manualCancelRange": "クラブで古い {{range}} の予約をキャンセル",
+        "saveAndTell_other": "新しい時間 {{range}} を保存し、{{count}}人に知らせる"
+      },
+      "status": {
+        "pending": "待機中",
+        "running": "処理中",
+        "done": "完了",
+        "failed": "失敗",
+        "skipped": "スキップ",
+        "followUp": "要対応",
+        "rolledBack": "取り消し済み",
+        "leftAtClub": "クラブに残っています"
+      },
+      "failedHint": {
+        "book": "クラブがこの予約を受け付けませんでした。",
+        "save": "新しい時間を保存できませんでした。",
+        "other": "このステップは完了しませんでした。"
+      },
+      "progress": "{{done}} / {{total}}",
+      "otherRun": {
+        "title": "別の変更が進行中です",
+        "ours": "このゲームで始めた別の変更がまだ終わっていません。先にそれを完了してから、もう一度お試しください。",
+        "someoneElse": "他の人がこのゲームのコートを変更中です。数分後にもう一度お試しください。",
+        "finishIt": "完了させる"
+      }
+    },
+    "banner": {
+      "unfinishedTitle": "コートの変更が完了していません",
+      "pausedTitle": "試合は移動しました — コートの手順が少し残っています",
+      "detail_other": "残り{{count}}ステップ · {{time}}",
+      "detailNoTime_other": "残り{{count}}ステップ",
+      "finish": "変更を完了",
+      "undo": "元に戻す"
+    },
+    "drift": {
+      "moved": "{{court}}は{{provider}}で{{time}}開始に変わりました",
+      "movedNoTime": "{{provider}}で{{court}}が変更されました",
+      "missing": "{{provider}}で{{court}}の予約がなくなりました",
+      "moveGame": "試合を移動",
+      "keepGame": "試合の時間を維持",
+      "reserveAgain": "もう一度予約",
+      "unlink": "紐づけを解除"
+    },
+    "followUp": {
+      "title": "クラブでの対応",
+      "theClub": "クラブ",
+      "cancelOld": "クラブ経由で古い予約をキャンセルしてください",
+      "cancelOldAt": "クラブ経由で{{time}}の古い予約をキャンセルしてください",
+      "askClub": "クラブに連絡：{{court}} {{from}}–{{to}}",
+      "askClubNoTime": "{{court}}についてクラブに連絡",
+      "leftAtClub": "{{court}} {{from}}–{{to}}は{{provider}}でまだ予約されています",
+      "leftAtClubNoTime": "{{court}}は{{provider}}でまだ予約されています",
+      "done": "完了"
+    },
+    "blocker": {
+      "club": "クラブが {{time}} に {{court}} を予約しています。",
+      "hold": "クラブが {{time}} に {{court}} を押さえています。",
+      "game": "{{name}} が {{time}} に {{court}} を使います。",
+      "gameUnnamed": "別のゲームが {{time}} に {{court}} を使います。",
+      "plannedGame": "{{name}} が {{time}} に {{court}} で予定されています。",
+      "plannedGameUnnamed": "別のゲームが {{time}} に {{court}} で予定されています。"
+    },
+    "timeline": {
+      "free": "空き",
+      "movesTo": "{{court}} へ移動",
+      "legend": {
+        "reserved": "あなたの予約",
+        "reported": "クラブで予約済み",
+        "club": "クラブの予約",
+        "game": "別のゲーム"
+      }
+    }
+  }
+}

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState, RefObject, type ReactNode } 
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { CreateGameDurationSelector } from '@/components/createGame/CreateGameDurationSelector';
-import { CreateGameTimeSlots } from '@/components/createGame/CreateGameTimeSlots';
+import { CreateGameTimeSlots, type TimeSlotBlock } from '@/components/createGame/CreateGameTimeSlots';
 import { AnimatePresence, motion } from 'framer-motion';
 import { EntityType, Club, Court, Sport } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
@@ -82,6 +82,11 @@ interface GameStartSectionProps {
   onCloseClubModal?: () => void;
   venueCityId?: string;
   onVenueCityChange?: (cityId: string, snapshot?: { name: string; country: string }) => void;
+  /**
+   * Caller-computed occupancy per start time (create court plan). When set,
+   * the built-in per-court occupancy fetch is off and these verdicts are shown.
+   */
+  slotBlock?: (time: string) => TimeSlotBlock | null;
 }
 
 export const GameStartSection = ({
@@ -136,6 +141,7 @@ export const GameStartSection = ({
   onCloseClubModal,
   venueCityId,
   onVenueCityChange,
+  slotBlock,
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
@@ -151,7 +157,7 @@ export const GameStartSection = ({
     if (next !== duration) onDurationChange(next);
   }, [duration, durationOptions, entityType, onDurationChange]);
 
-  const bookedCourtsEnabled = !hideOccupancyOverlay && !needsBooktimeAuth;
+  const bookedCourtsEnabled = !hideOccupancyOverlay && !needsBooktimeAuth && !slotBlock;
 
   const occupancyCourts = useMemo(() => {
     if (!courts?.length) return undefined;
@@ -380,6 +386,7 @@ export const GameStartSection = ({
           weatherMode={weatherMode}
           weatherToggleDisabled={weatherToggleDisabled}
           onWeatherModeToggle={handleWeatherModeToggle}
+          slotBlock={slotBlock}
         />
       ) : null}
     </>

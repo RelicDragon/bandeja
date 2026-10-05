@@ -1,0 +1,249 @@
+{
+  "courtReservation": {
+    "slot": {
+      "planned": "Prevista",
+      "reported": "Reservada",
+      "linked": "Reservada · {{provider}}",
+      "unknownTime": "Reservada · {{provider}} · hora desconocida",
+      "gap": "Hueco {{from}}–{{to}}"
+    },
+    "summary": {
+      "planned": "Prevista",
+      "partial": "{{reserved}} de {{total}} reservadas",
+      "reserved": "Todas las pistas reservadas",
+      "reservedWithGap": "Reservada, hueco a las {{time}}"
+    },
+    "reschedule": {
+      "unchanged": "Sin cambios",
+      "keep": "Mantener reserva",
+      "move": "Mover reserva",
+      "extend": "Ampliar reserva",
+      "switch_court": "Cambiar de pista",
+      "blocked": "Pista no disponible",
+      "manual": "Consultar al club"
+    },
+    "duration": {
+      "hm": "{{h}} h {{m}} min",
+      "h": "{{h}} h",
+      "m": "{{m}} min",
+      "shortHm": "{{h}} h {{m}} min",
+      "shortH": "{{h}} h",
+      "shortM": "{{m}} min"
+    },
+    "card": {
+      "title": "Pistas",
+      "players_one": "{{count}} jugador",
+      "players_many": "{{count}} de jugadores",
+      "players_other": "{{count}} jugadores",
+      "courts_one": "{{count}} pista",
+      "courts_many": "{{count}} de pistas",
+      "courts_other": "{{count}} pistas",
+      "anyCourt": "Cualquier pista",
+      "noTime": "Pon una hora para ver cuánto del partido está cubierto",
+      "count": "Número de pistas",
+      "fewer": "Una pista menos",
+      "more": "Una pista más"
+    },
+    "action": {
+      "reserveCourt": "Reservar la pista",
+      "reserveCourts_one": "Reservar {{count}} pista",
+      "reserveCourts_many": "Reservar {{count}} de pistas",
+      "reserveCourts_other": "Reservar {{count}} pistas",
+      "reserveLast": "Reservar la última pista",
+      "reserveRemaining_one": "Reservar {{count}} pista restante",
+      "reserveRemaining_many": "Reservar {{count}} de pistas restantes",
+      "reserveRemaining_other": "Reservar {{count}} pistas restantes",
+      "fillGap": "Cubrir el hueco de {{duration}}",
+      "fillGaps": "Cubrir los huecos"
+    },
+    "sheet": {
+      "game": "Partido",
+      "reservationAt": "Reserva · {{provider}}",
+      "timeUnknown": "Hora desconocida",
+      "reportedHint": "Nos dijiste que esta pista está reservada con el club.",
+      "plannedHint": "Aún no hay nada reservado para esta pista.",
+      "alsoUsedBy": "También la usa {{name}} {{from}}–{{to}}",
+      "pickCourt": "¿Qué pista?",
+      "action": {
+        "reserve": "Reservar ahora",
+        "link": "Vincular mi reserva",
+        "linkReported": "Vincular reserva",
+        "markReserved": "Marcar como reservada",
+        "markNotReserved": "Marcar como no reservada",
+        "verify": "Comprobar",
+        "unlink": "Desvincular",
+        "cancelAtClub": "Cancelar en el club",
+        "changeCourt": "Cambiar pista",
+        "useCourtOnly": "Usar {{court}}, reservar después",
+        "useCourtInstead": "Usar {{court}} en su lugar",
+        "keepCourt": "Mantener {{court}}"
+      }
+    },
+    "move": {
+      "title": "Cambiar hora",
+      "dragLabel": "Hora del partido",
+      "dragHint": "Arrastra el partido o usa los botones de abajo",
+      "start": "Inicio",
+      "length": "Duración",
+      "earlier": "15 minutos antes",
+      "later": "15 minutos después",
+      "shorter": "15 minutos menos",
+      "longer": "15 minutos más",
+      "courtsLabel": "Qué pasa con cada pista",
+      "notice_one": "{{count}} jugador recibe un aviso con la nueva hora",
+      "notice_many": "{{count}} de jugadores reciben un aviso con la nueva hora",
+      "notice_other": "{{count}} jugadores reciben un aviso con la nueva hora",
+      "option": {
+        "none": "Sin cambios",
+        "keep": "Mantener reserva",
+        "move": "Mover reserva",
+        "extend": "Ampliar reserva",
+        "switchCourt": "Cambiar de pista",
+        "switchTo": "Cambiar a {{court}}",
+        "unlink": "Quitarla de este partido",
+        "moveTogether": "Mover también {{names}}",
+        "manual": "Consultar al club"
+      },
+      "fix": {
+        "use": "Usar: {{option}}",
+        "moveTo": "Mover a {{time}}"
+      },
+      "footer": {
+        "move_one": "Mover partido · {{count}} paso",
+        "move_many": "Mover partido · {{count}} de pasos",
+        "move_other": "Mover partido · {{count}} pasos",
+        "blocked": "Resuelve el conflicto primero",
+        "noChanges": "Sin cambios"
+      },
+      "change": "Cambiar",
+      "changeFor": "Cambiar qué pasa con {{court}}",
+      "unchanged": "{{courts}} · sin cambios",
+      "sliderValue": "Empieza a las {{start}}, termina a las {{end}}",
+      "why": {
+        "notAvailable": "Esta pista no está libre a la nueva hora.",
+        "keep": "Su reserva sigue cubriendo la nueva hora.",
+        "keepUnused": "Su reserva sigue cubriéndola; quedan {{duration}} sin usar.",
+        "move": "Reserva {{range}} y cancela la anterior.",
+        "moveCancelWithClub": "Reserva {{range}}. La anterior la cancelas con el club.",
+        "extend": "Añade {{range}}.",
+        "roundedRange": "{{range}} ({{provider}} vende {{lengths}})",
+        "sharerKeeps": "{{names}} mantiene su reserva de las {{time}}.",
+        "sharerKeepsNoTime": "{{names}} mantiene su reserva.",
+        "unused": "Quedan {{duration}} de la reserva anterior sin usar.",
+        "switchBook": "En su lugar reserva {{court}} {{range}}.",
+        "switchPlanned": "En su lugar usa {{court}}.",
+        "unlink": "Deja la reserva compartida; {{names}} la conserva.",
+        "unlinkNoNames": "Deja la reserva compartida; el otro partido la conserva.",
+        "moveTogether": "{{names}} también pasa a las {{time}}, y la reserva lo sigue.",
+        "moveTogetherNoTime": "{{names}} también se mueve, y la reserva lo sigue.",
+        "manualReported": "Reservada con el club: avísales de la nueva hora.",
+        "manualCannotBook": "{{provider}} no se puede reservar desde la app: pregunta al club.",
+        "manualNoCourt": "Aún no hay pista elegida: pregunta al club.",
+        "manualUnknownTime": "No sabemos la hora de la reserva: confírmala con el club.",
+        "manualChoice": "Lo arreglas tú con el club."
+      }
+    },
+    "run": {
+      "title": "Moviendo el partido",
+      "working": "Trabajando…",
+      "done": "Partido movido",
+      "doneWithFollowUps": "Partido movido — te quedan algunas cosas",
+      "rolledBack": "No cambió nada — el partido mantiene su hora",
+      "paused": "El partido se movió, pero algunos pasos no terminaron",
+      "clashFromServer": "Alguien ocupó una pista mientras trabajábamos. Elige otra opción.",
+      "retry": "Reintentar",
+      "later": "Más tarde",
+      "close": "Listo",
+      "backToPlan": "Volver al plan",
+      "step": {
+        "reassign": "Cambiar a {{court}}",
+        "unlink": "Quitar la reserva compartida",
+        "moveShared": "Mover {{name}} a {{from}}–{{to}}",
+        "cancel": "Cancelar la reserva anterior en {{provider}}",
+        "manualCancel": "Cancelar la reserva anterior con el club",
+        "manualClub": "Avisar al club: {{court}} {{from}}–{{to}}",
+        "bookInstead": "Reservar {{court}} en lugar de {{fromCourt}} · {{range}}",
+        "bookRange": "Reservar {{court}} · {{range}}",
+        "reassignInstead": "Usar {{court}} en lugar de {{fromCourt}}",
+        "saveRange": "Guardar la nueva hora {{range}}",
+        "cancelRange": "Cancelar la reserva anterior de {{range}} en {{provider}}",
+        "manualCancelRange": "Cancelar la reserva anterior de {{range}} con el club",
+        "saveAndTell_one": "Guardar la nueva hora {{range}} y avisar a {{count}} jugador",
+        "saveAndTell_many": "Guardar la nueva hora {{range}} y avisar a {{count}} jugadores",
+        "saveAndTell_other": "Guardar la nueva hora {{range}} y avisar a {{count}} jugadores"
+      },
+      "status": {
+        "pending": "En espera",
+        "running": "En curso",
+        "done": "Hecho",
+        "failed": "No funcionó",
+        "skipped": "Omitido",
+        "followUp": "Te toca a ti",
+        "rolledBack": "Deshecho",
+        "leftAtClub": "Sigue en el club"
+      },
+      "failedHint": {
+        "book": "El club no aceptó esta reserva.",
+        "save": "No se pudo guardar la nueva hora.",
+        "other": "Este paso no salió."
+      },
+      "progress": "{{done}} de {{total}}",
+      "otherRun": {
+        "title": "Hay otro cambio en curso",
+        "ours": "Empezaste otro cambio de este partido que no terminó. Termínalo primero y luego prueba este.",
+        "someoneElse": "Otra persona está cambiando las pistas de este partido. Vuelve a intentarlo en unos minutos.",
+        "finishIt": "Terminarlo"
+      }
+    },
+    "banner": {
+      "unfinishedTitle": "Tus cambios de pista no terminaron",
+      "pausedTitle": "El partido se movió — faltan algunos pasos de pistas",
+      "detail_one": "Falta {{count}} paso · {{time}}",
+      "detail_many": "Faltan {{count}} de pasos · {{time}}",
+      "detail_other": "Faltan {{count}} pasos · {{time}}",
+      "detailNoTime_one": "Falta {{count}} paso",
+      "detailNoTime_many": "Faltan {{count}} de pasos",
+      "detailNoTime_other": "Faltan {{count}} pasos",
+      "finish": "Terminar cambios",
+      "undo": "Deshacer"
+    },
+    "drift": {
+      "moved": "{{court}} ahora empieza a las {{time}} en {{provider}}",
+      "movedNoTime": "{{court}} cambió en {{provider}}",
+      "missing": "La reserva de {{court}} ya no está en {{provider}}",
+      "moveGame": "Mover partido",
+      "keepGame": "Mantener la hora",
+      "reserveAgain": "Reservar de nuevo",
+      "unlink": "Desvincular"
+    },
+    "followUp": {
+      "title": "Pendiente en el club",
+      "theClub": "el club",
+      "cancelOld": "Cancela la reserva anterior con el club",
+      "cancelOldAt": "Cancela la reserva anterior de las {{time}} con el club",
+      "askClub": "Avisa al club: {{court}} {{from}}–{{to}}",
+      "askClubNoTime": "Avisa al club sobre {{court}}",
+      "leftAtClub": "{{court}} {{from}}–{{to}} sigue reservada en {{provider}}",
+      "leftAtClubNoTime": "{{court}} sigue reservada en {{provider}}",
+      "done": "Hecho"
+    },
+    "blocker": {
+      "club": "El club tiene {{court}} reservada a las {{time}}.",
+      "hold": "El club tiene {{court}} bloqueada a las {{time}}.",
+      "game": "{{name}} tiene {{court}} a las {{time}}.",
+      "gameUnnamed": "Otro partido tiene {{court}} a las {{time}}.",
+      "plannedGame": "{{name}} está previsto en {{court}} a las {{time}}.",
+      "plannedGameUnnamed": "Hay otro partido previsto en {{court}} a las {{time}}."
+    },
+    "timeline": {
+      "free": "libre",
+      "movesTo": "pasa a {{court}}",
+      "legend": {
+        "reserved": "Tu reserva",
+        "reported": "Reservada con el club",
+        "club": "Ocupada por el club",
+        "game": "Otro partido"
+      }
+    }
+  }
+}

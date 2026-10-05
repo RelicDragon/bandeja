@@ -315,6 +315,7 @@
       "lookingTodayAndTomorrow_few": "{{count}} человека ищут игру сегодня и завтра в городе {{city}}",
       "lookingTodayAndTomorrow_many": "{{count}} человек ищут игру сегодня и завтра в городе {{city}}",
       "lookingTodayAndTomorrow_other": "{{count}} человека ищут игру сегодня и завтра в городе {{city}}"
-    }
+    },
+    "reservationPartly": "Забронировано частично"
   }
 }

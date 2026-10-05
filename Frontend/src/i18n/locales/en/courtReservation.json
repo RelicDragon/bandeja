@@ -1,0 +1,240 @@
+{
+  "courtReservation": {
+    "slot": {
+      "planned": "Planned",
+      "reported": "Reserved",
+      "linked": "Reserved · {{provider}}",
+      "unknownTime": "Reserved · {{provider}} · time unknown",
+      "gap": "Gap {{from}}–{{to}}"
+    },
+    "summary": {
+      "planned": "Planned",
+      "partial": "{{reserved}} of {{total}} reserved",
+      "reserved": "All courts reserved",
+      "reservedWithGap": "Reserved, gap at {{time}}"
+    },
+    "reschedule": {
+      "unchanged": "No change",
+      "keep": "Keep reservation",
+      "move": "Move reservation",
+      "extend": "Extend reservation",
+      "switch_court": "Switch court",
+      "blocked": "Court not available",
+      "manual": "Ask the club"
+    },
+    "duration": {
+      "hm": "{{h}} h {{m}} min",
+      "h": "{{h}} h",
+      "m": "{{m}} min",
+      "shortHm": "{{h}}h {{m}}m",
+      "shortH": "{{h}}h",
+      "shortM": "{{m}}m"
+    },
+    "card": {
+      "title": "Courts",
+      "players_one": "{{count}} player",
+      "players_other": "{{count}} players",
+      "courts_one": "{{count}} court",
+      "courts_other": "{{count}} courts",
+      "anyCourt": "Any court",
+      "noTime": "Set a time to see how much of the game is covered",
+      "count": "Number of courts",
+      "fewer": "One court fewer",
+      "more": "One more court"
+    },
+    "action": {
+      "reserveCourt": "Reserve the court",
+      "reserveCourts_one": "Reserve {{count}} court",
+      "reserveCourts_other": "Reserve {{count}} courts",
+      "reserveLast": "Reserve the last court",
+      "reserveRemaining_one": "Reserve {{count}} remaining court",
+      "reserveRemaining_other": "Reserve {{count}} remaining courts",
+      "fillGap": "Fill the {{duration}} gap",
+      "fillGaps": "Fill the gaps"
+    },
+    "sheet": {
+      "game": "Game",
+      "reservationAt": "Reservation · {{provider}}",
+      "timeUnknown": "Time unknown",
+      "reportedHint": "You told us this court is reserved with the club.",
+      "plannedHint": "Nothing is reserved for this court yet.",
+      "alsoUsedBy": "Also used by {{name}} {{from}}–{{to}}",
+      "pickCourt": "Which court?",
+      "action": {
+        "reserve": "Reserve now",
+        "link": "Link my reservation",
+        "linkReported": "Link reservation",
+        "markReserved": "Mark as reserved",
+        "markNotReserved": "Mark not reserved",
+        "verify": "Verify",
+        "unlink": "Unlink",
+        "cancelAtClub": "Cancel at the club",
+        "changeCourt": "Change court",
+        "useCourtOnly": "Use {{court}}, reserve later",
+        "useCourtInstead": "Use {{court}} instead",
+        "keepCourt": "Keep {{court}}"
+      }
+    },
+    "move": {
+      "title": "Change time",
+      "dragLabel": "Game time",
+      "dragHint": "Drag the game, or use the buttons below",
+      "start": "Start",
+      "length": "Length",
+      "earlier": "15 minutes earlier",
+      "later": "15 minutes later",
+      "shorter": "15 minutes shorter",
+      "longer": "15 minutes longer",
+      "courtsLabel": "What happens to each court",
+      "notice_one": "{{count}} player gets one notice about the new time",
+      "notice_other": "{{count}} players get one notice about the new time",
+      "option": {
+        "none": "No change",
+        "keep": "Keep reservation",
+        "move": "Move reservation",
+        "extend": "Extend reservation",
+        "switchCourt": "Switch court",
+        "switchTo": "Switch to {{court}}",
+        "unlink": "Release it from this game",
+        "moveTogether": "Move {{names}} too",
+        "manual": "Ask the club"
+      },
+      "fix": {
+        "use": "Use: {{option}}",
+        "moveTo": "Move to {{time}}"
+      },
+      "footer": {
+        "move_one": "Move game · {{count}} step",
+        "move_other": "Move game · {{count}} steps",
+        "blocked": "Resolve the clash first",
+        "noChanges": "No changes"
+      },
+      "change": "Change",
+      "changeFor": "Change what happens to {{court}}",
+      "unchanged": "{{courts}} · no change",
+      "sliderValue": "Starts {{start}}, ends {{end}}",
+      "why": {
+        "notAvailable": "This court isn't free at the new time.",
+        "keep": "Its reservation still covers the new time.",
+        "keepUnused": "Its reservation still covers it; {{duration}} goes unused.",
+        "move": "Reserves {{range}} and cancels the old one.",
+        "moveCancelWithClub": "Reserves {{range}}. You cancel the old one with the club.",
+        "extend": "Adds {{range}}.",
+        "roundedRange": "{{range}} ({{provider}} sells {{lengths}})",
+        "sharerKeeps": "{{names}} keeps its {{time}} reservation.",
+        "sharerKeepsNoTime": "{{names}} keeps its reservation.",
+        "unused": "{{duration}} of the old reservation goes unused.",
+        "switchBook": "Reserves {{court}} {{range}} instead.",
+        "switchPlanned": "Uses {{court}} instead.",
+        "unlink": "Lets go of the shared reservation; {{names}} keeps it.",
+        "unlinkNoNames": "Lets go of the shared reservation; the other game keeps it.",
+        "moveTogether": "{{names}} moves to {{time}} too, so the reservation follows.",
+        "moveTogetherNoTime": "{{names}} moves too, so the reservation follows.",
+        "manualReported": "Reserved with the club — tell them the new time.",
+        "manualCannotBook": "{{provider}} can't take reservations from the app — ask the club.",
+        "manualNoCourt": "No court picked yet — ask the club.",
+        "manualUnknownTime": "The reservation's time is unknown — check with the club.",
+        "manualChoice": "You'll sort it out with the club."
+      }
+    },
+    "run": {
+      "title": "Moving the game",
+      "working": "Working…",
+      "done": "Game moved",
+      "doneWithFollowUps": "Game moved — a few things for you",
+      "rolledBack": "Nothing changed — the game keeps its time",
+      "paused": "The game moved, but a few steps didn't finish",
+      "clashFromServer": "A court got taken while we worked. Pick another option.",
+      "retry": "Try again",
+      "later": "Later",
+      "close": "Done",
+      "backToPlan": "Back to the plan",
+      "step": {
+        "reassign": "Switch to {{court}}",
+        "unlink": "Release the shared reservation",
+        "moveShared": "Move {{name}} to {{from}}–{{to}}",
+        "cancel": "Cancel the old reservation at {{provider}}",
+        "manualCancel": "Cancel the old reservation with the club",
+        "manualClub": "Tell the club: {{court}} {{from}}–{{to}}",
+        "bookInstead": "Reserve {{court}} instead of {{fromCourt}} · {{range}}",
+        "bookRange": "Reserve {{court}} · {{range}}",
+        "reassignInstead": "Use {{court}} instead of {{fromCourt}}",
+        "saveRange": "Save the new time {{range}}",
+        "cancelRange": "Cancel the old {{range}} reservation at {{provider}}",
+        "manualCancelRange": "Cancel the old {{range}} reservation with the club",
+        "saveAndTell_one": "Save the new time {{range}} and tell {{count}} player",
+        "saveAndTell_other": "Save the new time {{range}} and tell {{count}} players"
+      },
+      "status": {
+        "pending": "Waiting",
+        "running": "Working",
+        "done": "Done",
+        "failed": "Didn't work",
+        "skipped": "Skipped",
+        "followUp": "For you to do",
+        "rolledBack": "Undone",
+        "leftAtClub": "Still at the club"
+      },
+      "failedHint": {
+        "book": "The club didn't accept this booking.",
+        "save": "Couldn't save the new time.",
+        "other": "This step didn't go through."
+      },
+      "progress": "{{done}} of {{total}}",
+      "otherRun": {
+        "title": "Another change is in progress",
+        "ours": "You started another change for this game that hasn't finished. Finish it first, then try this one.",
+        "someoneElse": "Someone else is changing this game's courts right now. Try again in a few minutes.",
+        "finishIt": "Finish it"
+      }
+    },
+    "banner": {
+      "unfinishedTitle": "Your court changes didn't finish",
+      "pausedTitle": "The game moved — a few court steps are left",
+      "detail_one": "{{count}} step left · {{time}}",
+      "detail_other": "{{count}} steps left · {{time}}",
+      "detailNoTime_one": "{{count}} step left",
+      "detailNoTime_other": "{{count}} steps left",
+      "finish": "Finish changes",
+      "undo": "Undo"
+    },
+    "drift": {
+      "moved": "{{court}} now starts {{time}} at {{provider}}",
+      "movedNoTime": "{{court}} changed at {{provider}}",
+      "missing": "{{court}}'s reservation is gone at {{provider}}",
+      "moveGame": "Move game",
+      "keepGame": "Keep game time",
+      "reserveAgain": "Reserve again",
+      "unlink": "Unlink"
+    },
+    "followUp": {
+      "title": "To do at the club",
+      "theClub": "the club",
+      "cancelOld": "Cancel the old reservation with the club",
+      "cancelOldAt": "Cancel the old {{time}} reservation with the club",
+      "askClub": "Tell the club: {{court}} {{from}}–{{to}}",
+      "askClubNoTime": "Tell the club about {{court}}",
+      "leftAtClub": "{{court}} {{from}}–{{to}} is still reserved at {{provider}}",
+      "leftAtClubNoTime": "{{court}} is still reserved at {{provider}}",
+      "done": "Done"
+    },
+    "blocker": {
+      "club": "The club has {{court}} reserved at {{time}}.",
+      "hold": "The club is holding {{court}} at {{time}}.",
+      "game": "{{name}} has {{court}} at {{time}}.",
+      "gameUnnamed": "Another game has {{court}} at {{time}}.",
+      "plannedGame": "{{name}} is planned on {{court}} at {{time}}.",
+      "plannedGameUnnamed": "Another game is planned on {{court}} at {{time}}."
+    },
+    "timeline": {
+      "free": "free",
+      "movesTo": "→ {{court}}",
+      "legend": {
+        "reserved": "Your reservation",
+        "reported": "Reserved with the club",
+        "club": "Club reservation",
+        "game": "Other game"
+      }
+    }
+  }
+}

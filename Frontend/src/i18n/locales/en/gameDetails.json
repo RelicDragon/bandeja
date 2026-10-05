@@ -50,21 +50,10 @@
     },
     "locationTime": {
       "tabLabel": "Location & time",
-      "partialSaveFailed": "Some changes were saved, but {{step}} could not be updated. Review and try again.",
-      "saveStep": {
-        "gameFields": "location or time",
-        "bookings": "reservation links",
-        "snapshots": "reservation details",
-        "courts": "courts"
-      },
-      "unlinkNoCancelHint": "The court reservation at the club stays active — we only remove the link from this game.",
       "unlinkSaveConfirmTitle": "Remove reservation links?",
       "unlinkSaveConfirmMessage": "You are unlinking {{count}} reservation(s) from this game. The real court bookings will not be cancelled automatically.",
       "reservationActionTitle": "What should happen to the court?",
       "reservationActionSubtitle": "Choose what changes when you save.",
-      "changeGateTitle": "Linked to {{count}} court(s)",
-      "changeGateBody": "Unlink first to book a different club or courts.",
-      "changeGateBodyClub": "Unlink first to leave {{club}} and book somewhere else.",
       "clubLockedBadge": "Linked",
       "clubLockedAria": "Club is locked. Unlink the reservation to change club.",
       "reservationAction": {
@@ -98,22 +87,9 @@
           "chipTitle": "No booking",
           "description": "Keep the game scheduled without a real reservation link."
         }
-      },
-      "consequenceTitle": "What will happen",
-      "consequence": {
-        "keepCurrent": "Current reservation links stay attached.",
-        "changeGameTimeOnly": "Game time changes; existing reservation links stay attached.",
-        "useExisting": "{{selected}} reservation(s) will be linked to this game.",
-        "reserveNew": "A new real court reservation will be created on save.",
-        "unlink": "Reservation links will be removed from this game. After save you can book a different club or courts.",
-        "gameOnly": "The game remains scheduled without real reservation links.",
-        "reserveNewConfirm": "You will review the real reservation before saving.",
-        "unlinkNoCancel": "{{count}} real club reservation(s) will remain active unless you cancel them with the club/provider."
       }
     },
     "linkedBookings": {
-      "fullyCovered": "Fully booked",
-      "notFullyCovered": "Not fully booked",
       "timeMismatch": "Doesn't cover the game's new time. Update it with the club; the app won't change it.",
       "refreshAriaLabel": "Check reservation status",
       "refreshStillActive": "Reservation is still active in your club account",
@@ -887,6 +863,42 @@
     "substitutePlayerOutLosesResults": "{{name}} keeps no rating or standing for this game",
     "substitutePlayerKeepsTeamSlot": "The team slot, court and roster size stay the same",
     "substitutePlayerConfirm": "Substitute player",
-    "substitutePlayerSuccess": "Player substituted"
+    "substitutePlayerSuccess": "Player substituted",
+    "courts": {
+      "otherGame": "Another game",
+      "clash": "{{court}} is taken {{from}}–{{to}}. Pick another time or court.",
+      "clashGeneric": "A court is taken at that time. Pick another time or court.",
+      "updateFailed": "Couldn't update the courts. Try again.",
+      "slotTaken": "That court was just taken. Pick another time or court.",
+      "connectTitle": "Connect your club account",
+      "linkTitle": "Link a reservation",
+      "linkHint": "Your reservations at {{club}} on the game's day",
+      "linkEmpty": "No reservations at {{club}} on this day in your account.",
+      "needTime": "Set the game's time first.",
+      "pickCourtFirst": "Pick a court first.",
+      "verifyPresent": "Still reserved at the club.",
+      "verifyMissing": "The club no longer has this reservation.",
+      "cancelMessage": "The reservation is cancelled with the club and removed from this game.",
+      "pickerTitle": "Courts",
+      "pickerHint": "Pick the courts in order. Reserve them from the game page.",
+      "linkedCourtLocked": "This court has a linked reservation. Unlink it on the game page first.",
+      "count": "Number of courts",
+      "anyCourts": "Any court × {{count}}",
+      "fewer": "One court fewer",
+      "more": "One more court",
+      "clubLocked": "This game has linked reservations. Unlink them on the game page to change the club.",
+      "timeByPlanner": "Moving this game also moves its court reservations.",
+      "changeTime": "Change time",
+      "saveFirst": "Save or discard your other changes first.",
+      "overlapReserved": "Another game has this court reserved at that time. The club may refuse it. Save anyway?",
+      "gapTitle": "Fill the gap",
+      "gapAdds": "Adds {{range}}.",
+      "gapExtra": "That's {{minutes}} min more than the gap — the club only sells fixed lengths.",
+      "gapContinue": "Continue",
+      "gapClash": "{{court}} is taken {{time}}, so the gap can't be closed here. Ask the club or pick another court.",
+      "gapAskClub": "The club doesn't sell a booking that fits this gap. Ask the club.",
+      "gapUnavailable": "This gap can't be filled from the app. Ask the club.",
+      "connectSkip": "Not now"
+    }
   }
 }

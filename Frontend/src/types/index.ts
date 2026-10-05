@@ -404,6 +404,11 @@ export interface BookedCourtSlot {
   isFree?: boolean;
   slotKind?: 'game' | 'external' | 'hold';
   holdBlocked?: boolean;
+  /** App-game blocks (newer payloads): the game this court slot belongs to. */
+  gameId?: string | null;
+  gameCourtId?: string | null;
+  /** App-game blocks (newer payloads): whether that game's slot on this court is reserved. */
+  reservation?: 'planned' | 'reserved' | null;
 }
 
 export interface GameParticipant {
@@ -643,16 +648,45 @@ export interface Game extends GameCardEnrichment {
   anyoneCanInvite?: boolean;
   resultsByAnyone?: boolean;
   allowDirectJoin: boolean;
+  /** Legacy summary flag; display reads `utils/courtReservationView` instead. */
   hasBookedCourt?: boolean;
+  /** Legacy summary enum; display reads `utils/courtReservationView` instead. */
   bookingStatus?: 'NONE' | 'MANUAL' | 'EXTERNAL_PARTIAL' | 'EXTERNAL_FULL';
+  /** Court slots: "any court" slots an organizer reported as reserved (newer payloads only). */
+  reportedAnyCourtCount?: number;
+  /**
+   * Organizer-chosen number of court slots; null/absent = default (assigned courts,
+   * else the roster need). See `@shared/gameBooking/courtReservations`.
+   */
+  courtSlotCount?: number | null;
   timeOverride?: boolean;
   linkedBookings?: Array<{
     id: string;
     externalBookingId: string;
     externalBookingProvider: 'BOOKTIME';
     courtId?: string;
+    /** The court slot this booking reserves (newer payloads only). */
+    gameCourtId?: string;
     bookingStart?: string;
     bookingEnd?: string;
+    /** Last club-side check of this reservation (drift; newer payloads only). */
+    upstreamState?: 'OK' | 'MOVED' | 'MISSING' | 'UNKNOWN' | null;
+    upstreamStart?: string | null;
+    upstreamEnd?: string | null;
+    upstreamCheckedAt?: string | null;
+  }>;
+  /**
+   * Organizers only: club-side steps a reservation change left to do by hand
+   * (`NEEDS_CLUB` journal steps). See `@/api/courtSlots` `PendingClubFollowUp`.
+   */
+  pendingClubFollowUps?: Array<{
+    changeId: string;
+    changeState: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'ROLLED_BACK' | 'ABANDONED';
+    idempotencyKey: string;
+    kind: string;
+    error?: unknown;
+    updatedAt?: string;
+    step?: Record<string, unknown> | null;
   }>;
   afterGameGoToBar?: boolean;
   /** PRD 360 — organizer promise: newer players are welcome. Never a gate. */
@@ -708,6 +742,10 @@ export interface Game extends GameCardEnrichment {
     gameId: string;
     courtId: string;
     order: number;
+    /** Court slot reservation (newer payloads only); absent → derive from `hasBookedCourt`. */
+    reservation?: 'NONE' | 'REPORTED';
+    reportedById?: string | null;
+    reportedAt?: string | null;
     court: Court;
     createdAt: string;
     updatedAt: string;

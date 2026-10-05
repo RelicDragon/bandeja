@@ -8,8 +8,10 @@
       "invite": "邀请"
     },
     "booking": {
-      "notBooked": "球场尚未预订",
-      "partlyBooked": "球场仅部分预订",
+      "notReservedOne": "场地尚未预订",
+      "notReservedMany": "场地均未预订",
+      "partlyReserved": "已预订 {{reserved}}/{{total}} 块场地",
+      "gapAt": "预订在 {{time}} 有空档",
       "seeBookings": "查看预订",
       "editCourt": "修改球场"
     },

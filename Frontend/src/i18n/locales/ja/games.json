@@ -299,6 +299,7 @@
       "lookingToday_other": "{{city}}で今日 {{count}} 人がプレー相手を探しています",
       "lookingTodayAndTomorrow_one": "{{city}}で今日と明日 {{count}} 人がプレー相手を探しています",
       "lookingTodayAndTomorrow_other": "{{city}}で今日と明日 {{count}} 人がプレー相手を探しています"
-    }
+    },
+    "reservationPartly": "一部予約済み"
   }
 }

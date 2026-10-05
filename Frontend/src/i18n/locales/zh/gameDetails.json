@@ -50,21 +50,10 @@
     },
     "locationTime": {
       "tabLabel": "地点与时间",
-      "partialSaveFailed": "部分更改已保存，但 {{step}} 未能更新。请检查后重试。",
-      "saveStep": {
-        "gameFields": "地点或时间",
-        "bookings": "预订链接",
-        "snapshots": "预订详情",
-        "courts": "场地"
-      },
-      "unlinkNoCancelHint": "俱乐部的场地预订仍然有效 — 我们只从此比赛移除链接。",
       "unlinkSaveConfirmTitle": "移除预订链接？",
       "unlinkSaveConfirmMessage": "你将从此比赛取消关联 {{count}} 个预订。实际场地预订不会自动取消。",
       "reservationActionTitle": "场地应如何处理？",
       "reservationActionSubtitle": "选择保存时要做的更改。",
-      "changeGateTitle": "已关联 {{count}} 个场地",
-      "changeGateBody": "请先取消关联，再预订其他俱乐部或场地。",
-      "changeGateBodyClub": "请先取消关联，才能离开 {{club}} 并预订其他地点。",
       "clubLockedBadge": "已关联",
       "clubLockedAria": "俱乐部已锁定。取消关联预订后才能更换俱乐部。",
       "reservationAction": {
@@ -98,22 +87,9 @@
           "chipTitle": "无预订",
           "description": "保持比赛已排期，但不关联真实预订。"
         }
-      },
-      "consequenceTitle": "将会发生",
-      "consequence": {
-        "keepCurrent": "当前预订链接保持关联。",
-        "changeGameTimeOnly": "比赛时间会更改；现有预订链接保持关联。",
-        "useExisting": "将有 {{selected}} 个预订关联到此比赛。",
-        "reserveNew": "保存时将创建新的真实场地预订。",
-        "unlink": "将从此比赛移除预订链接。保存后可预订其他俱乐部或场地。",
-        "gameOnly": "比赛保持已排期，但不关联真实预订。",
-        "reserveNewConfirm": "保存前你将确认真实预订。",
-        "unlinkNoCancel": "{{count}} 个真实俱乐部预订将保持有效，除非你在俱乐部/服务商处取消。"
       }
     },
     "linkedBookings": {
-      "fullyCovered": "已全部预订",
-      "notFullyCovered": "未全部预订",
       "timeMismatch": "未覆盖比赛的新时间。请联系球馆修改；应用不会自动更改。",
       "refreshAriaLabel": "检查预订状态",
       "refreshStillActive": "预订在你的俱乐部账户中仍然有效",
@@ -887,6 +863,42 @@
     "substitutePlayerOutLosesResults": "{{name}} 在本场比赛中不保留评分和排名",
     "substitutePlayerKeepsTeamSlot": "队内位置、球场和名单人数保持不变",
     "substitutePlayerConfirm": "替换球员",
-    "substitutePlayerSuccess": "已替换球员"
+    "substitutePlayerSuccess": "已替换球员",
+    "courts": {
+      "otherGame": "另一场比赛",
+      "clash": "{{court}} 在 {{from}}–{{to}} 已被占用。请选择其他时间或场地。",
+      "clashGeneric": "该时间有场地已被占用。请选择其他时间或场地。",
+      "updateFailed": "无法更新场地，请重试。",
+      "slotTaken": "该场地刚刚被订走。请选择其他时间或场地。",
+      "connectTitle": "连接你的俱乐部账户",
+      "linkTitle": "关联预订",
+      "linkHint": "你在比赛当天于 {{club}} 的预订",
+      "linkEmpty": "你的账户在当天没有 {{club}} 的预订。",
+      "needTime": "请先设置比赛时间。",
+      "pickCourtFirst": "请先选择场地。",
+      "verifyPresent": "俱乐部的预订仍然有效。",
+      "verifyMissing": "俱乐部已没有这条预订。",
+      "cancelMessage": "将在俱乐部取消该预订，并从本场比赛中移除。",
+      "pickerTitle": "场地",
+      "pickerHint": "按顺序选择场地。请在比赛页面预订。",
+      "linkedCourtLocked": "该场地有关联的预订。请先在比赛页面取消关联。",
+      "count": "场地数量",
+      "anyCourts": "任意场地 × {{count}}",
+      "fewer": "减少一个场地",
+      "more": "增加一个场地",
+      "clubLocked": "本场比赛有关联的预订。请在比赛页面取消关联后再更换俱乐部。",
+      "timeByPlanner": "移动比赛时间也会一并移动场地预订。",
+      "changeTime": "更改时间",
+      "saveFirst": "请先保存或放弃其他更改。",
+      "overlapReserved": "另一场比赛在该时间预订了此场地。俱乐部可能会拒绝。仍要保存吗？",
+      "gapTitle": "补上空档",
+      "gapAdds": "新增 {{range}}。",
+      "gapExtra": "比空档多出 {{minutes}} 分钟——俱乐部只出售固定时长。",
+      "gapContinue": "继续",
+      "gapClash": "{{court}} 在 {{time}} 已被占用，无法在此补上空档。请联系俱乐部或选择其他场地。",
+      "gapAskClub": "俱乐部没有适合此空档的预订时长。请联系俱乐部。",
+      "gapUnavailable": "无法在应用中补上此空档。请联系俱乐部。",
+      "connectSkip": "暂不"
+    }
   }
 }

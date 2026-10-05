@@ -43,6 +43,7 @@ import offline from './offline.json';
 import pairs from './pairs.json';
 import permissions from './permissions.json';
 import playerCard from './playerCard.json';
+import courtReservation from './courtReservation.json';
 import playStreak from './playStreak.json';
 import trophies from './trophies.json';
 import playerInvite from './playerInvite.json';
@@ -79,6 +80,7 @@ import sportQuestionnaireSquash from './sportQuestionnaire/squash.json';
 // Owned namespaces (`../../namespaces.ts`): registered on their own, not spread below.
 export const featureNamespaces: FeatureNamespaceBundles = {
     playerCard: playerCard.playerCard,
+    courtReservation: courtReservation.courtReservation,
 };
 
 export default {

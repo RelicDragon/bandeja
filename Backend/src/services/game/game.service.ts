@@ -14,6 +14,7 @@ import { GameReadService } from './read.service';
 import { GameUpdateService } from './update.service';
 import { GameDeleteService } from './delete.service';
 import { patchGameBookings, putGameBookingSnapshots, linkBookingToGame } from './gameExternalBooking.service';
+import type { TimePolicy } from '../gameCourt/courtSlots.tx';
 
 export class GameService {
   static async calculateGameReadiness(gameId: string) {
@@ -115,8 +116,14 @@ export class GameService {
     );
   }
 
-  static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
-    return GameUpdateService.updateGame(id, data, userId, isAdmin);
+  static async updateGame(
+    id: string,
+    data: any,
+    userId: string,
+    isAdmin: boolean,
+    options: { timePolicy?: TimePolicy } = {},
+  ) {
+    return GameUpdateService.updateGame(id, data, userId, isAdmin, options);
   }
 
   static async deleteGame(id: string, cancelledByUserId: string) {
@@ -128,8 +135,9 @@ export class GameService {
     userId: string,
     isAdmin: boolean,
     body: { add?: unknown; remove?: unknown },
+    options: { timePolicy?: TimePolicy } = {},
   ) {
-    return patchGameBookings(gameId, userId, isAdmin, body);
+    return patchGameBookings(gameId, userId, isAdmin, body, options);
   }
 
   static putGameBookingSnapshots(
@@ -137,8 +145,9 @@ export class GameService {
     userId: string,
     isAdmin: boolean,
     body: { snapshots?: unknown },
+    options: { timePolicy?: TimePolicy } = {},
   ) {
-    return putGameBookingSnapshots(gameId, userId, isAdmin, body);
+    return putGameBookingSnapshots(gameId, userId, isAdmin, body, options);
   }
 
   static linkBookingToGame(
@@ -146,8 +155,9 @@ export class GameService {
     userId: string,
     isAdmin: boolean,
     body: unknown,
+    options: { timePolicy?: TimePolicy } = {},
   ) {
-    return linkBookingToGame(gameId, userId, isAdmin, body);
+    return linkBookingToGame(gameId, userId, isAdmin, body, options);
   }
 }
 

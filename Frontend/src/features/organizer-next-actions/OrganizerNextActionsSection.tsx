@@ -2,7 +2,8 @@
  * PRD 364 — wires the "Next steps" block to data the game page already has.
  *
  * Nothing here fetches anything new: attendance comes from the shell's
- * `useGameAttendance`, booking coverage is derived from the game payload,
+ * `useGameAttendance`, the court reservation summary is derived from the game
+ * payload (`utils/courtReservationView`),
  * and the cost ledger is the same TanStack query the Cost card owns (same key,
  * so one request). Each action lands on the existing workflow — the invite
  * picker, the queue list, the bookings section, the court editor, the Nudge
@@ -19,7 +20,10 @@ import { useGameCostQuery } from '@/queries/useGameCostQuery';
 import { isCostLedgerHidden } from '@/features/cost/costViewModel';
 import { attendanceErrorKey } from '@/features/attendance/attendanceVisuals';
 import type { UseGameAttendanceResult } from '@/features/attendance/useGameAttendance';
-import { resolveGameBookingBadgeKind } from '@/utils/gameHasConfirmedClubBooking';
+import { reservationTimeFormatter, useCourtReservationView } from '@/utils/courtReservationView';
+import { getClubTimezone } from '@/utils/gameTimeDisplay';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { useAuthStore } from '@/store/authStore';
 import type { CostShare } from '@/api/gameCost';
 import type { Game } from '@/types';
 import { buildOrganizerNextActions } from './buildOrganizerNextActions';
@@ -28,6 +32,7 @@ import { scrollToSection } from './scrollToSection';
 import type {
   OrganizerCostInput,
   OrganizerHint,
+  OrganizerReservationInput,
   OrganizerViewerRole,
 } from './organizerNextActionsTypes';
 
@@ -86,6 +91,17 @@ export function OrganizerNextActionsSection({
     };
   }, [costSummary, costVisible]);
 
+  const user = useAuthStore((state) => state.user);
+  const reservationView = useCourtReservationView(game);
+  const reservation = useMemo<OrganizerReservationInput>(() => {
+    const summary = reservationView.summary;
+    const gapTime =
+      summary.kind === 'reserved_with_gap'
+        ? reservationTimeFormatter(getClubTimezone(game), resolveDisplaySettings(user))(summary.earliestGap.start)
+        : null;
+    return { kind: summary.kind, reserved: summary.reserved, total: summary.total, gapTime };
+  }, [reservationView, game, user]);
+
   const details = attendance.details;
   const hints = useMemo(
     () =>
@@ -115,10 +131,10 @@ export function OrganizerNextActionsSection({
                 nudgeRemainingHours: details.nudge.remainingHours,
               }
             : null,
-        bookingCoverage: resolveGameBookingBadgeKind(game),
+        reservation,
         cost,
       }),
-    [game, viewerRole, canInvite, canManageQueue, attendanceEnabled, details, cost],
+    [game, viewerRole, canInvite, canManageQueue, attendanceEnabled, details, reservation, cost],
   );
 
   const handleNudge = useCallback(async () => {
@@ -141,9 +157,9 @@ export function OrganizerNextActionsSection({
           }
           return;
         case 'booking':
-          if (hint.action === 'seeBookings' && scrollToSection('bookings', reduceMotion)) return;
-          // The section only renders for bookings the viewer owns; the court
-          // editor is the workflow that covers every other case.
+          // Both actions land on the Courts card: it owns reserve / link /
+          // gap fixes. The court editor is the fallback when it is not shown.
+          if (scrollToSection('courts', reduceMotion)) return;
           onEditCourt();
           return;
         case 'attendance':

@@ -240,12 +240,12 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik bara",
         "GAME_CLUB_CHANGED": "Lokacija bara promenjena na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/vreme bara promenjeno na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije sale promenjen na {{bookingStatus}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervacija sale: {{bookingStatus}}",
         "bookingStatuses": {
-          "EXTERNAL_FULL": "Potpuno rezervisano",
-          "EXTERNAL_PARTIAL": "Nije potpuno rezervisano",
-          "MANUAL": "Sala rezervisana",
-          "NONE": "Još nije rezervisano"
+          "EXTERNAL_FULL": "Rezervisano",
+          "EXTERNAL_PARTIAL": "Delimično rezervisano",
+          "MANUAL": "Rezervisano",
+          "NONE": "Planirano"
         }
       },
       "TRAINING": {
@@ -258,7 +258,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik treninga",
         "GAME_CLUB_CHANGED": "Lokacija treninga promenjena na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/vreme treninga promenjeno na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervacija terena: {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} se pridružio turniru",
@@ -270,7 +270,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik turnira",
         "GAME_CLUB_CHANGED": "Lokacija turnira promenjena na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/vreme turnira promenjeno na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervacija terena: {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} se pridružio ligi",
@@ -282,7 +282,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik lige",
         "GAME_CLUB_CHANGED": "Lokacija lige promenjena na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/vreme lige promenjeno na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervacija terena: {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} se pridružio sezoni lige",
@@ -294,18 +294,18 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik sezone lige",
         "GAME_CLUB_CHANGED": "Lokacija sezone lige promenjena na {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Datum/vreme sezone lige promenjeno na {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Rezervacija terena: {{bookingStatus}}"
       },
       "actions": {
         "joined": "se pridružio igri",
         "left": "napustio igru"
       },
-      "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}",
+      "GAME_BOOKING_STATUS_CHANGED": "Rezervacija terena: {{bookingStatus}}",
       "bookingStatuses": {
-        "EXTERNAL_FULL": "Potpuno rezervisano",
-        "EXTERNAL_PARTIAL": "Nije potpuno rezervisano",
-        "MANUAL": "Teren rezervisan",
-        "NONE": "Još nije rezervisano"
+        "EXTERNAL_FULL": "Svi tereni rezervisani",
+        "EXTERNAL_PARTIAL": "Delimično rezervisano",
+        "MANUAL": "Rezervisano",
+        "NONE": "Planirano"
       },
       "ATTENDANCE_NUDGED": "{{userName}} je zamolio sve da potvrde dolazak",
       "USER_NOTED_NO_SHOW": "{{userName}} je označen kao nedolazak",

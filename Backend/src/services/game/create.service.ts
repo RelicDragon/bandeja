@@ -782,7 +782,7 @@ export class GameCreateService {
         );
       }
 
-      await syncGameBookingState(tx, game.id);
+      await syncGameBookingState(tx, game.id, { actorUserId: userId });
 
       if (
         game.isPublic &&
@@ -844,7 +844,10 @@ export class GameCreateService {
     }
 
     if (!isEventEntity && gameCourtIds?.length) {
-      await GameCourtService.setGameCourts(createdGame.id, gameCourtIds);
+      await GameCourtService.setGameCourts(createdGame.id, gameCourtIds, {
+        notify: false,
+        actorUserId: userId,
+      });
     }
 
     const finalGame = await prisma.game.findUnique({

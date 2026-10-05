@@ -1,8 +1,13 @@
 import { weltnerBookingLinkData } from '../weltner/weltnerBookingLinks';
-import { ClubIntegrationType, GameBookingStatus, Prisma } from '@prisma/client';
+import {
+  ClubIntegrationType,
+  EntityType,
+  GameBookingStatus,
+  GameExternalBookingUpstreamState,
+  Prisma,
+} from '@prisma/client';
 import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
-import { computeGameBookingStatus } from '@bandeja/shared/gameBooking/computeGameBookingStatus';
 import { ApiError } from '../../utils/ApiError';
 import { ingestBookingSnapshotTimes } from '../../shared/booktime/ingest';
 import { parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
@@ -16,6 +21,13 @@ import {
 } from '../../shared/gameBooking/contracts';
 import { canMutateGameBookings } from '../../shared/gameBooking/bookingLinkAuthorization';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
+import { computeLegacyBookingFieldsFromSlots } from '../../shared/gameBooking/computeLegacyBookingFieldsFromSlots';
+import {
+  applyLegacyHasBookedCourt,
+  ensurePrimaryCourtSlot,
+  placeLinksOnSlots,
+  type TimePolicy,
+} from '../gameCourt/courtSlots.tx';
 import {
   publishTrackedScheduleChange,
   trackScheduleChangeInTx,
@@ -83,7 +95,7 @@ export function gamePatchAffectsBookingStatus(patch: Record<string, unknown>): b
  * change itself.)
  */
 
-async function runBookingLinkTransaction<T>(
+export async function runBookingLinkTransaction<T>(
   gameId: string,
   editorUserId: string | null,
   write: (tx: Tx) => Promise<T>,
@@ -206,10 +218,13 @@ export function parseLinkBookingToGameBody(body: unknown): LinkBookingToGameBody
   if (snapshot.externalBookingId !== externalBookingId) {
     throw new ApiError(400, BOOKING_ERROR_KEYS.snapshotsRequired);
   }
+  const gameCourtId =
+    typeof src.gameCourtId === 'string' && src.gameCourtId.trim() ? src.gameCourtId.trim() : undefined;
   return {
     externalBookingId,
     snapshot,
     gamePatch: parseLinkGamePatch(src.gamePatch),
+    ...(gameCourtId ? { gameCourtId } : {}),
   };
 }
 
@@ -237,6 +252,13 @@ function snapshotToRowData(
   };
 }
 
+/** Link fields for "the provider agrees with this link" (drift cleared). */
+export const UPSTREAM_IN_SYNC = {
+  upstreamState: GameExternalBookingUpstreamState.OK,
+  upstreamStart: null,
+  upstreamEnd: null,
+} as const;
+
 export function serializeLinkedBooking(row: {
   id: string;
   externalBookingId: string;
@@ -244,14 +266,25 @@ export function serializeLinkedBooking(row: {
   courtId: string | null;
   bookingStart: Date | null;
   bookingEnd: Date | null;
+  gameCourtId?: string | null;
+  upstreamState?: GameExternalBookingUpstreamState;
+  upstreamStart?: Date | null;
+  upstreamEnd?: Date | null;
+  upstreamCheckedAt?: Date | null;
 }) {
   return {
     id: row.id,
     externalBookingId: row.externalBookingId,
     externalBookingProvider: row.externalBookingProvider,
     ...(row.courtId ? { courtId: row.courtId } : {}),
+    ...(row.gameCourtId ? { gameCourtId: row.gameCourtId } : {}),
     ...(row.bookingStart ? { bookingStart: row.bookingStart.toISOString() } : {}),
     ...(row.bookingEnd ? { bookingEnd: row.bookingEnd.toISOString() } : {}),
+    // Club-side drift (additive): what the provider says now; OK when it matches.
+    ...(row.upstreamState ? { upstreamState: row.upstreamState } : {}),
+    ...(row.upstreamStart ? { upstreamStart: row.upstreamStart.toISOString() } : {}),
+    ...(row.upstreamEnd ? { upstreamEnd: row.upstreamEnd.toISOString() } : {}),
+    ...(row.upstreamCheckedAt ? { upstreamCheckedAt: row.upstreamCheckedAt.toISOString() } : {}),
   };
 }
 
@@ -262,6 +295,11 @@ export const gameExternalBookingSelect = {
   courtId: true,
   bookingStart: true,
   bookingEnd: true,
+  gameCourtId: true,
+  upstreamState: true,
+  upstreamStart: true,
+  upstreamEnd: true,
+  upstreamCheckedAt: true,
 } as const;
 
 export const gameExternalBookingInclude = {
@@ -344,10 +382,23 @@ export async function deriveGameTimesFromJoinRows(
   return { startTime: new Date(derived.startTime), endTime: new Date(derived.endTime) };
 }
 
+export type SyncGameBookingStateOptions = {
+  /** PATCH /bookings: all links gone means "not booked" unless a slot is still REPORTED. */
+  clearBookedCourtWhenUnlinked?: boolean;
+  /** Old-app `hasBookedCourt` written in this request (PATCH / create / link gamePatch). */
+  legacyHasBookedCourt?: boolean;
+  /** Court slots were written explicitly (PUT court-slots): never infer reports from `hasBookedCourt`. */
+  slotsAuthoritative?: boolean;
+  /** `?timePolicy=explicit`: never derive/move the game's time from bookings. */
+  timePolicy?: TimePolicy;
+  /** Who caused this sync (stamped as `reportedById` when a legacy report is converted). */
+  actorUserId?: string | null;
+};
+
 async function syncGameBookingState(
   tx: Tx,
   gameId: string,
-  options?: { clearBookedCourtWhenUnlinked?: boolean },
+  options?: SyncGameBookingStateOptions,
 ): Promise<{ previousBookingStatus: GameBookingStatus; bookingStatus: GameBookingStatus }> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
@@ -362,73 +413,25 @@ async function syncGameBookingState(
       maxParticipants: true,
       playersPerMatch: true,
       bookingStatus: true,
+      entityType: true,
     },
   });
   if (!game) throw new ApiError(404, 'Game not found');
 
   const previousBookingStatus = game.bookingStatus;
+  const patch: Prisma.GameUncheckedUpdateInput = {};
 
-  const bookingRows = await tx.gameExternalBooking.findMany({
-    where: { gameId },
-    orderBy: { createdAt: 'asc' },
-    select: {
-      bookingStart: true,
-      bookingEnd: true,
-    },
-  });
-  const gameCourtCount = await tx.gameCourt.count({ where: { gameId } });
+  const linkCount = await tx.gameExternalBooking.count({ where: { gameId } });
 
-  const timeZone = await resolveBooktimeTimezoneForGame(gameId);
-  const effectiveHasBookedCourt =
-    bookingRows.length > 0
-      ? true
-      : options?.clearBookedCourtWhenUnlinked
-        ? false
-        : game.hasBookedCourt;
-
-  const bookingStatus = computeGameBookingStatus({
-    linkedBookings: bookingRows.map((row) => ({
-      bookingStart: row.bookingStart?.toISOString() ?? null,
-      bookingEnd: row.bookingEnd?.toISOString() ?? null,
-    })),
-    hasBookedCourt: effectiveHasBookedCourt,
-    timeIsSet: game.timeIsSet,
-    startTime: game.startTime.toISOString(),
-    endTime: game.endTime.toISOString(),
-    maxParticipants: game.maxParticipants,
-    playersPerMatch: game.playersPerMatch,
-    courtId: game.courtId,
-    clubId: game.clubId,
-    timeZone,
-    courtCount: gameCourtCount,
-  }) as GameBookingStatus;
-
-  const patch: Prisma.GameUncheckedUpdateInput = {
-    bookingStatus,
-  };
-
-  if (bookingRows.length > 0) {
-    patch.hasBookedCourt = true;
-  } else if (options?.clearBookedCourtWhenUnlinked) {
-    patch.hasBookedCourt = false;
-  }
-
-  if (!game.timeOverride && bookingRows.length > 0) {
-    const derived = await deriveGameTimesFromJoinRows(gameId, tx);
-    if (derived) {
-      patch.startTime = derived.startTime;
-      patch.endTime = derived.endTime;
-      patch.timeIsSet = true;
-    }
-  }
-
-  if (!game.courtId && bookingRows.length > 0) {
+  let courtId = game.courtId;
+  if (!courtId && linkCount > 0) {
     const bookingWithCourt = await tx.gameExternalBooking.findFirst({
       where: { gameId, courtId: { not: null } },
       orderBy: { createdAt: 'asc' },
       select: { courtId: true },
     });
     if (bookingWithCourt?.courtId) {
+      courtId = bookingWithCourt.courtId;
       patch.courtId = bookingWithCourt.courtId;
       if (!game.clubId) {
         const court = await tx.court.findUnique({
@@ -442,6 +445,69 @@ async function syncGameBookingState(
     }
   }
 
+  if (game.entityType !== EntityType.EVENT) {
+    await ensurePrimaryCourtSlot(tx, gameId, courtId);
+    await placeLinksOnSlots(tx, gameId, { appendMissing: false });
+
+    if (options?.legacyHasBookedCourt === false) {
+      if (linkCount === 0) {
+        await applyLegacyHasBookedCourt(tx, gameId, false, options.actorUserId ?? null);
+      }
+    } else if (
+      options?.legacyHasBookedCourt === true ||
+      (game.hasBookedCourt && !options?.slotsAuthoritative && !options?.clearBookedCourtWhenUnlinked)
+    ) {
+      await applyLegacyHasBookedCourt(tx, gameId, true, options?.actorUserId ?? null);
+    }
+  }
+
+  const slots = await tx.gameCourt.findMany({
+    where: { gameId },
+    orderBy: { order: 'asc' },
+    select: { id: true, courtId: true, reservation: true, order: true },
+  });
+  const links = await tx.gameExternalBooking.findMany({
+    where: { gameId },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      externalBookingId: true,
+      externalBookingProvider: true,
+      gameCourtId: true,
+      courtId: true,
+      bookingStart: true,
+      bookingEnd: true,
+    },
+  });
+  const counts = await tx.game.findUnique({ where: { id: gameId }, select: { reportedAnyCourtCount: true, courtSlotCount: true } });
+
+  const timePolicyExplicit = options?.timePolicy === 'explicit';
+  let window = { startTime: game.startTime, endTime: game.endTime, timeIsSet: game.timeIsSet };
+  if (!game.timeOverride && !timePolicyExplicit && links.length > 0) {
+    const derived = await deriveGameTimesFromJoinRows(gameId, tx);
+    if (derived) {
+      patch.startTime = derived.startTime;
+      patch.endTime = derived.endTime;
+      patch.timeIsSet = true;
+      window = { ...derived, timeIsSet: true };
+    }
+  }
+
+  const computed = computeLegacyBookingFieldsFromSlots({
+    slots,
+    links,
+    reportedAnyCourtCount: counts?.reportedAnyCourtCount ?? 0,
+    courtSlotCount: counts?.courtSlotCount ?? null,
+    startTime: window.startTime,
+    endTime: window.endTime,
+    timeIsSet: window.timeIsSet,
+    maxParticipants: game.maxParticipants,
+    playersPerMatch: game.playersPerMatch,
+  });
+  const bookingStatus = computed.bookingStatus as GameBookingStatus;
+  patch.bookingStatus = bookingStatus;
+  patch.hasBookedCourt = computed.hasBookedCourt;
+
   await tx.game.update({ where: { id: gameId }, data: patch });
 
   return { previousBookingStatus, bookingStatus };
@@ -449,14 +515,24 @@ async function syncGameBookingState(
 
 export { syncGameBookingState };
 
-/** System recompute (court set changed, backfills): no editor, so a real move resets every answer. */
+/**
+ * System recompute (court set changed, backfills): no editor, so a real move resets every answer.
+ * Posts the booking-status chat notice when the status changed (pass `notify: false` to skip,
+ * e.g. right after create).
+ */
 export async function recomputeGameBookingStatusForGame(
   gameId: string,
   editorUserId: string | null = null,
+  options: { notify?: boolean } = {},
 ): Promise<void> {
+  let previousBookingStatus: GameBookingStatus | null = null;
   await runBookingLinkTransaction(gameId, editorUserId, async (tx) => {
-    await syncGameBookingState(tx, gameId);
+    const synced = await syncGameBookingState(tx, gameId);
+    previousBookingStatus = synced.previousBookingStatus;
   });
+  if (options.notify !== false) {
+    await notifyGameBookingStatusChangeIfNeeded(gameId, previousBookingStatus);
+  }
 }
 
 export async function patchGameBookings(
@@ -464,6 +540,7 @@ export async function patchGameBookings(
   userId: string,
   isAdmin: boolean,
   body: { add?: unknown; remove?: unknown },
+  options: { timePolicy?: TimePolicy } = {},
 ) {
   const allowed = await canMutateGameBookings(gameId, userId, isAdmin);
   if (!allowed) {
@@ -516,7 +593,11 @@ export async function patchGameBookings(
       await insertJoinRows(tx, gameId, add, provider, [], await resolveBooktimeTimezoneForGame(gameId), userId);
     }
 
-    const synced = await syncGameBookingState(tx, gameId, { clearBookedCourtWhenUnlinked: true });
+    const synced = await syncGameBookingState(tx, gameId, {
+      clearBookedCourtWhenUnlinked: true,
+      timePolicy: options.timePolicy,
+      actorUserId: userId,
+    });
     previousBookingStatus = synced.previousBookingStatus;
   });
 
@@ -534,6 +615,7 @@ export async function putGameBookingSnapshots(
   userId: string,
   isAdmin: boolean,
   body: { snapshots?: unknown },
+  options: { timePolicy?: TimePolicy } = {},
 ) {
   const allowed = await canMutateGameBookings(gameId, userId, isAdmin);
   if (!allowed) {
@@ -555,12 +637,21 @@ export async function putGameBookingSnapshots(
     });
     if (!game) throw new ApiError(404, 'Game not found');
 
+    const updatedLinks = await tx.gameExternalBooking.findMany({
+      where: { gameId, externalBookingId: { in: snapshots.map((snap) => snap.externalBookingId) } },
+      select: { id: true },
+    });
     for (const snap of snapshots) {
       const updated = await tx.gameExternalBooking.updateMany({
         where: { gameId, externalBookingId: snap.externalBookingId },
-        data: snap.externalBookingId.startsWith('weltner:')
-          ? await weltnerBookingLinkData(tx, { gameId, externalBookingId: snap.externalBookingId })
-          : snapshotToRowData(snap, timeZone),
+        data: {
+          ...(snap.externalBookingId.startsWith('weltner:')
+            ? await weltnerBookingLinkData(tx, { gameId, externalBookingId: snap.externalBookingId })
+            : snapshotToRowData(snap, timeZone)),
+          // The app just read the provider: any club-side drift is resolved.
+          ...UPSTREAM_IN_SYNC,
+          upstreamCheckedAt: new Date(),
+        },
       });
       if (updated.count === 0) {
         throw new ApiError(404, BOOKING_ERROR_KEYS.bookingNotLinked, true, {
@@ -569,7 +660,7 @@ export async function putGameBookingSnapshots(
       }
     }
 
-    if (!game.timeOverride) {
+    if (!game.timeOverride && options.timePolicy !== 'explicit') {
       const derived = await deriveGameTimesFromJoinRows(gameId, tx);
       if (derived) {
         await tx.game.update({
@@ -583,7 +674,16 @@ export async function putGameBookingSnapshots(
       }
     }
 
-    const synced = await syncGameBookingState(tx, gameId);
+    // A refreshed snapshot may name another court: re-place, adding a slot for a new court.
+    await placeLinksOnSlots(tx, gameId, {
+      appendMissing: true,
+      onlyLinkIds: updatedLinks.map((row) => row.id),
+    });
+
+    const synced = await syncGameBookingState(tx, gameId, {
+      timePolicy: options.timePolicy,
+      actorUserId: userId,
+    });
     previousBookingStatus = synced.previousBookingStatus;
   });
 
@@ -616,18 +716,77 @@ function linkGamePatchToUpdateData(
   return data;
 }
 
+/**
+ * Court slots: put a freshly linked booking on a slot. An explicit `gameCourtId`
+ * must belong to the game and match the booking's court (when known); otherwise
+ * the slot of the booking's court is used, appending one if the game lacks it.
+ */
+export async function placeNewLink(
+  tx: Tx,
+  gameId: string,
+  link: { id: string; courtId: string | null },
+  gameCourtId: string | undefined,
+): Promise<void> {
+  const game = await tx.game.findUnique({ where: { id: gameId }, select: { courtId: true } });
+  await ensurePrimaryCourtSlot(tx, gameId, game?.courtId ?? null);
+  if (gameCourtId) {
+    const slot = await tx.gameCourt.findFirst({
+      where: { id: gameCourtId, gameId },
+      select: { id: true, courtId: true },
+    });
+    if (!slot) throw new ApiError(400, 'gameCourtId does not belong to this game');
+    if (link.courtId && link.courtId !== slot.courtId) {
+      throw new ApiError(400, "gameCourtId court does not match the booking's court");
+    }
+    await tx.gameExternalBooking.update({ where: { id: link.id }, data: { gameCourtId: slot.id } });
+    return;
+  }
+  await placeLinksOnSlots(tx, gameId, { appendMissing: true, onlyLinkIds: [link.id] });
+}
+
+/**
+ * Inserts one link (provider resolved from the club, Weltner receipts validated, booker
+ * stamped) and places it on a slot. No status sync — the caller syncs once afterwards.
+ */
+export async function createLinkInTx(
+  tx: Tx,
+  gameId: string,
+  userId: string,
+  input: { externalBookingId: string; snapshot: BookingSnapshotInput; gameCourtId?: string },
+  timeZone: string,
+): Promise<{ id: string; courtId: string | null }> {
+  const { externalBookingId } = input;
+  const provider = await resolveGameClubBookingProvider(gameId, tx);
+  const bookedBy = await resolveBookedByUserIds(tx, [externalBookingId], userId);
+  const link = await tx.gameExternalBooking.create({
+    select: { id: true, courtId: true },
+    data: {
+      gameId,
+      externalBookingId,
+      bookedByUserId: bookedBy.get(externalBookingId) ?? null,
+      externalBookingProvider: externalBookingId.startsWith('weltner:') ? ClubIntegrationType.WELTNER : provider,
+      ...(provider === 'WELTNER' || externalBookingId.startsWith('weltner:')
+        ? await weltnerBookingLinkData(tx, { gameId, userId, externalBookingId })
+        : snapshotToRowData(input.snapshot, timeZone)),
+    },
+  });
+  await placeNewLink(tx, gameId, link, input.gameCourtId);
+  return link;
+}
+
 export async function linkBookingToGame(
   gameId: string,
   userId: string,
   isAdmin: boolean,
   body: unknown,
+  options: { timePolicy?: TimePolicy } = {},
 ) {
   const allowed = await canMutateGameBookings(gameId, userId, isAdmin);
   if (!allowed) {
     throw new ApiError(403, BOOKING_ERROR_KEYS.updateLinksForbidden);
   }
 
-  const { externalBookingId, snapshot, gamePatch } = parseLinkBookingToGameBody(body);
+  const { externalBookingId, snapshot, gamePatch, gameCourtId } = parseLinkBookingToGameBody(body);
   const timeZone = await resolveBooktimeTimezoneForGame(gameId);
   let previousBookingStatus: GameBookingStatus | null = null;
   const resolvedSnapshot = { ...snapshot };
@@ -657,21 +816,12 @@ export async function linkBookingToGame(
       }
     }
 
-    const provider = await resolveGameClubBookingProvider(gameId, tx);
-    const bookedBy = await resolveBookedByUserIds(tx, [externalBookingId], userId);
-    await tx.gameExternalBooking.create({
-      data: {
-        gameId,
-        externalBookingId,
-        bookedByUserId: bookedBy.get(externalBookingId) ?? null,
-        externalBookingProvider: externalBookingId.startsWith('weltner:') ? ClubIntegrationType.WELTNER : provider,
-        ...(provider === 'WELTNER' || externalBookingId.startsWith('weltner:')
-          ? await weltnerBookingLinkData(tx, { gameId, userId, externalBookingId })
-          : snapshotToRowData(resolvedSnapshot, timeZone)),
-      },
-    });
+    await createLinkInTx(tx, gameId, userId, { externalBookingId, snapshot: resolvedSnapshot, gameCourtId }, timeZone);
 
-    const synced = await syncGameBookingState(tx, gameId);
+    const synced = await syncGameBookingState(tx, gameId, {
+      timePolicy: options.timePolicy,
+      actorUserId: userId,
+    });
     previousBookingStatus = synced.previousBookingStatus;
   });
 

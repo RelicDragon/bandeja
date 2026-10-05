@@ -37,20 +37,16 @@
     "selectClub": "クラブを選択してください",
     "court": "裁判所",
     "hall": "ホール",
-    "notBookedYet": "ゲームのみ",
     "dontSelectCourt": "まだ裁判所はありません",
     "dontSelectHall": "まだホールはありません",
     "courtNotSelected": "裁判所が選択されていません",
     "hallNotSelected": "ホールが選択されていません",
     "multiCourtHint": "{{participants}} プレーヤー用に最大 {{count}} のコートを選択 ({{selected}} を選択)",
-    "multiCourtNeedSharedSlots": "同時に空いている{{count}} コートを選択してください。",
-    "multiCourtNoSharedSlots": "{{count}} 選択されたすべてのコートで空いているタイムスロットはありません。別のコート、別の日付、または期間を試してください。",
     "webCameraHint": "この法廷には Web カメラがリンクされています",
     "webCameraHintsTitle": "リンクされたWebカメラ",
     "webCameraHintNamed": "{{court}} には Web カメラがリンクされています",
     "webCameraHintAction": "タップしてライブを視聴する",
     "hasBookedCourt": "この法廷を予約しました",
-    "hasBookedHall": "テーブルを予約しました",
     "selectCourt": "セレクトコート",
     "selectHall": "セレクトホール",
     "selectClubFirst": "最初にクラブを選択してください",
@@ -243,10 +239,7 @@
     "timeSlot": "選択したスロット",
     "loadingExternalSlots": "外部スロットのロード",
     "bookedWithoutCourt": "法廷なしで",
-    "notConfirmed": "未確認",
-    "multipleCourts": "複数の法廷",
-    "noCourtsSelected": "裁判所が選択されていません",
-    "addCourt": "コートを追加する",
+    "notConfirmed": "予定",
     "createButton": "ゲームの作成",
     "createButtonTournament": "トーナメントの作成",
     "createButtonLeague": "リーグの作成",
@@ -269,40 +262,19 @@
     "invitesWillBeSent_one": "ゲーム作成後にプレイヤーが招待されます",
     "invitesWillBeSent_other": "{{count}} プレイヤーはゲーム作成後に招待されます",
     "overlapHardSave": "この時間は、使用できないコート (クラブ システムまたはブロックされている) と重なっています。別のスロットを選択してください。",
+    "overlapHardTitle": "この時間はコートを利用できません",
     "overlapSoftTitle": "ここで別のゲームが計画されています",
-    "overlapSoftMessage": "現時点では別のプレーヤーがこのコートで試合を行っていますが、まだ予約を確認していません。まだ続けることができます。",
+    "overlapSoftMessage": "この時間、このコートには別のプレーヤーの試合が予定されていますが、コートは予約されていません。このまま続行できます。",
     "overlapSoftProceed": "とにかく続けてください",
-    "markCourtBookedTitle": "法廷を予約済みとしてマークしますか?",
-    "markCourtBookedMessage": "裁判所を選択しましたが、予約済みとしてマークされていません。クラブにご予約いただいた時点でご確認ください。",
-    "markCourtBookedYes": "はい、予約しました",
-    "markCourtBookedSkip": "まだ",
     "locationTime": {
-      "skipRealCourtToggle": "ゲームのみ",
-      "realCourtBookingHint": "{{club}}の{{courts}}はゲーム作成時に予約されます。",
-      "realCourtBookingHintEdit": "{{club}}の{{courts}}は保存時に予約されます。",
-      "skipRealCourtHint": "試合はBandejaのみに予定されています。",
-      "skipRealCourtHintEdit": "ゲームはBandejaでのみ更新されます。",
       "summaryFromBookings": "{{count}} のご予約から",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "{{min}}–{{max}} 予約 ({{players}}) を選択します",
-      "selectionProgress": "最大 {{max}} コート ({{players}}) を選択します",
-      "selectionCompleteOne": "1つのコートがリンクされています",
-      "selectionCompleteMany": "{{count}} 裁判所がリンクされています",
-      "selectionAtMax": "この形式で選択された最大値 ({{players}}) — 他の予約は使用できません",
-      "emptyBookingsOnDate": "この日は予約がありません",
-      "emptyBookingsHint": "別の日付を試すか、新しいコートを予約するか、予約をリンクせずにゲームを作成してください。",
-      "emptyBookingsReserveNow": "今すぐコートを予約する",
-      "emptyBookingsGameOnly": "ゲームのみを作成する",
       "gridLegend": "緑 = 予約 · 赤/黄 = 予約済み · プライマリ = 選択した時間",
       "alsoUsedIn": "以下でも使用されます: {{games}}",
       "pickAdjacentHour": "1 時間を選択してください",
       "linkHintTitle": "ゲームが予約にリンクします",
       "linkHintBody": "これらのコート予約は、ゲームの作成時にリンクされます。",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "ゲーム時間を調整する",
-      "overrideHint": "試合時間は予約時間より短くなる場合があります",
-      "overrideResetToast": "時間が予約にリセットされました",
       "preselectedBanner": "予約は事前に選択されています",
       "linkedOnlyLabel": "ご予約から",
       "unlinkConfirm": "この予約リンクを削除しますか?",
@@ -310,67 +282,6 @@
       "unlinkNoCancelNote": "クラブのコート予約はアクティブのままで、このゲームへのリンクのみが削除されます。",
       "syncInactiveCreate": "現在、同期はアクティブではありません。ここではスロットを取得したり、予約をしたりできません。現時点ではまだゲームを作成できます。",
       "syncInactiveEdit": "現在、同期はアクティブではありません。ここではスロットを取得したり、予約をしたりできません。現時点ではまだゲームを編集できます。"
-    },
-    "reservationIntent": {
-      "title": "どうやって裁判受けてるの？",
-      "otherOptions": "その他のオプション",
-      "recommended": "推奨",
-      "recommendedShort": "録音",
-      "validation": {
-        "selectCourt": "最初に{{count}} コートを選択します。",
-        "selectBookableCourt": "まず、{{count}} オンライン予約可能なコートを選択してください。",
-        "selectTime": "最初に利用可能な時間を選択します。",
-        "selectDuration": "最初に期間を選択します。",
-        "selectReservations": "アカウントから {{count}} 予約を選択します。",
-        "bookingRecordsLoading": "予約の詳細を読み込み中です。しばらくしてからもう一度お試しください。"
-      },
-      "reserveNow": {
-        "title": "裁判所を予約する",
-        "chipTitle": "ブックコート",
-        "description": "時間を選択してください - 予約いたします。"
-      },
-      "useExisting": {
-        "title": "すでに予約があります",
-        "chipTitle": "私の予約",
-        "description": "クラブアカウントから予約を接続します。",
-        "contextAvailable": "{{count}} この日付で利用可能"
-      },
-      "gameOnly": {
-        "title": "コートの予約をスキップする",
-        "chipTitle": "ゲームのみ",
-        "description": "ゲームを作成するだけです。コートは用意されていません。"
-      },
-      "manualBooked": {
-        "title": "すでに手動で予約されています",
-        "chipTitle": "予約済み",
-        "description": "オンライン予約なしで予約済みとしてマークします。"
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "実際の法廷予約が行われます",
-          "body": "{{count}} コート、期間、時間を選択します。その正確なスケジュールは予約されます。"
-        },
-        "useExisting": {
-          "title": "ゲームは予約にリンクされます",
-          "body": "{{count}}中{{selected}}の必須予約が選択されました。"
-        },
-        "gameOnly": {
-          "title": "実際の法廷予約は行われません",
-          "body": "試合はBandejaのみに予定されています。"
-        },
-        "manualBooked": {
-          "title": "ゲームは予約済みとしてマークされます",
-          "body": "オンライン予約は作成されません。"
-        }
-      },
-      "cta": {
-        "reserveOne": "コートを予約してゲームを作成する",
-        "reserveMany": "{{count}} コートを予約してゲームを作成",
-        "linkOne": "予約をリンクしてゲームを作成する",
-        "linkMany": "{{count}} 予約をリンクし、ゲームを作成します",
-        "gameOnly": "ゲームのみを作成する",
-        "manualBooked": "ゲームを作成する"
-      }
     },
     "booktime": {
       "switchLabel": "ゲームを作成するときにコートを予約します",
@@ -381,7 +292,6 @@
       "authorizeInClub": "{{club}} で承認",
       "dateHint": "このクラブでは、{{days}} 日前までにご予約いただけます。",
       "connectedChip": "サインイン · {{phone}}",
-      "createCta": "ゲームとリザーブコートの作成",
       "signInToContinue": "続行するにはサインインしてください",
       "confirmTitle": "作成する準備はできましたか?",
       "confirmPrimary": "予約＆作成",
@@ -406,8 +316,7 @@
       "cancelPolicy": "開始{{hours}}時間前まではキャンセル無料。",
       "yourGame": "あなたのゲーム",
       "snapshotBlocked": "ライブの空き状況はまだ同期されていません。同期を待つか、別の日を選択してください。",
-      "alreadyReserved": "この試合のためにコートはすでに予約されています。",
-      "liveApiUnavailable": "現在、コートの予約は利用できません。通常のスケジュールを使用しています。"
+      "alreadyReserved": "この試合のためにコートはすでに予約されています。"
     },
     "padeloo": {
       "authTitle": "パデルoo アカウントを接続する",
@@ -611,6 +520,81 @@
     "lookingNudgeTitle_other": "この時間に{{count}}人がプレー相手を探しています",
     "lookingNudgeHint": "この時間にプレーしたい人たちです。招待はすぐ届きます",
     "lookingNudgeInvite_one": "招待",
-    "lookingNudgeInvite_other": "{{count}}人を招待"
+    "lookingNudgeInvite_other": "{{count}}人を招待",
+    "courtPlan": {
+      "courts": "コート",
+      "fewerCourts": "コートを減らす",
+      "moreCourts": "コートを増やす",
+      "anyCourt": "どのコートでも",
+      "slotLabel": "コート {{n}}",
+      "sheet": {
+        "hint": "選んだ時間の空き状況です。",
+        "noTime": "時間を選ぶと空いているコートが表示されます。",
+        "linkedHint": "このコートはあなたの予約から来ています。",
+        "free": "空き",
+        "plannedGame": "予定中の試合が使用 — 選択は可能",
+        "club": "クラブで予約済み",
+        "hold": "クラブが確保中",
+        "reservedGame": "予約済みの試合が使用中",
+        "notBookable": "オンライン予約不可",
+        "onSlot": "コート {{n}} に選択中 — タップで入れ替え",
+        "linkedElsewhere": "あなたの予約で使用中",
+        "anyHint": "後で決めるか、クラブに割り当ててもらいます",
+        "anyReserveHint": "予約時に空いているコートを選びます",
+        "reservedToggle": "このコートは予約済みです",
+        "removeReservation": "この予約を外す"
+      },
+      "atClub": {
+        "title": "クラブで予約？",
+        "reserveNow": "今すぐ予約",
+        "alreadyReserved": "予約済み",
+        "notYet": "まだ",
+        "reserveNowHint_other": "ゲーム作成時に {{club}} でコートを {{count}} 面予約します。",
+        "alreadyReservedHint": "下から予約を選んでください。予約のないコートは予約済みとして記録されます。",
+        "alreadyReservedMarkHint": "コートを予約済みとして記録します。",
+        "notYetHint": "コート予約なしでゲームを予定します。予約は後からできます。",
+        "reservationsNudge": "この日、このクラブに予約があります。",
+        "useThem": "使う",
+        "authSkip": "まだ — 後で予約する",
+        "markSkip": "スキップ — コートを予約済みにするだけ"
+      },
+      "reservations": {
+        "title": "この日のあなたの予約",
+        "empty": "この日の {{club}} アカウントに予約はありません。コートは予約済みとして記録されます。",
+        "markRest": "予約がリンクされていないコートは予約済みとして記録されます。"
+      },
+      "timePrompt": {
+        "question": "予約の時間 {{range}} を使いますか？",
+        "yes": "はい",
+        "keep": "{{range}} のままにする"
+      },
+      "time": {
+        "club": "{{court}} はクラブで予約済みです",
+        "hold": "{{court}} はクラブが確保中です",
+        "reservedGame": "{{court}} は予約済みの試合が使用中です",
+        "notEnoughCourts": "空きコートが足りません（{{needed}} 面中 {{free}} 面）",
+        "softNote": "この時間は別の予定中の試合もコートを使います — 選択はできます。",
+        "unavailableAt": "{{time}} は利用できません：{{reason}}"
+      },
+      "summary": {
+        "willReserve": "作成時に予約",
+        "courts_other": "{{count}} 面"
+      },
+      "issue": {
+        "timeRequired": "先に時間を選んでください。",
+        "durationRequired": "先に時間の長さを選んでください。",
+        "timeBlocked": "必要なコートがその時間は埋まっています。別の時間かコートを選んでください。",
+        "courtNotBookable": "選んだコートはオンライン予約できません。別のコートを選ぶか「予約済み」を選んでください。",
+        "notEnoughBookableCourts": "その時間に予約できる空きコートが足りません。",
+        "reservationsLoading": "予約を読み込み中です — 少ししてからもう一度お試しください。"
+      },
+      "cta": {
+        "reserve_other": "コートを {{count}} 面予約して作成",
+        "withReserved_other": "予約済みコート {{count}} 面で作成"
+      },
+      "rollbackReleased": "今回予約したコートはキャンセルされました。",
+      "partialKept": "{{total}} 面中 {{count}} 面を予約し、予約は残っています。キャンセルはクラブに連絡してください。",
+      "courtsSaveFailed": "ゲームは作成されましたが、コートを保存できませんでした。ゲームページで確認してください。"
+    }
   }
 }

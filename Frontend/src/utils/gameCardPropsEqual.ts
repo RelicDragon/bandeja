@@ -221,7 +221,12 @@ function buildGameRenderSignature(game: Game): string {
     game.weatherSummary?.stale ? '1' : '0',
     game.bookingStatus ?? '',
     game.hasBookedCourt ? '1' : '0',
-    game.linkedBookings?.[0]?.externalBookingId ?? '',
+    // Court reservation summary (`utils/courtReservationView`) reads these too.
+    game.reportedAnyCourtCount ?? '',
+    (game.gameCourts ?? []).map((gc) => `${gc.id}:${gc.reservation ?? ''}`).join(','),
+    (game.linkedBookings ?? [])
+      .map((l) => `${l.id}:${l.externalBookingId}:${l.gameCourtId ?? ''}:${l.bookingStart ?? ''}:${l.bookingEnd ?? ''}`)
+      .join(','),
     game.city?.id ?? '',
     game.city?.name ?? '',
     game.court?.id ?? '',

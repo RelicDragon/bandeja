@@ -10,8 +10,10 @@
       "invite": "Invite"
     },
     "booking": {
-      "notBooked": "Court not booked yet",
-      "partlyBooked": "Court partly booked",
+      "notReservedOne": "Court not reserved yet",
+      "notReservedMany": "Courts not reserved yet",
+      "partlyReserved": "{{reserved}} of {{total}} courts reserved",
+      "gapAt": "Reservation gap at {{time}}",
       "seeBookings": "See bookings",
       "editCourt": "Edit court"
     },

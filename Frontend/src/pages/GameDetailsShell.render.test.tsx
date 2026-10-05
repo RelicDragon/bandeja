@@ -45,7 +45,7 @@ vi.mock('@/components', () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   GameInfo: ({ game }: { game: Game }) => { probes.info(game); return <div data-testid="game-info">{game.name}</div>; },
   GameSettings: () => null, PlayerListModal: () => null,
-  ManageUsersModal: () => null, CourtModal: () => null, MultipleCourtsSelector: () => null,
+  ManageUsersModal: () => null, CourtModal: () => null,
   LeagueScheduleTab: () => null, LeaguePlannerTab: () => null, LeagueStandingsTab: () => null,
   ConfirmationModal: () => null, SegmentedSwitch: () => null,
 }));
@@ -76,7 +76,8 @@ vi.mock('@/components/GameDetails/TrainingResultsSection', () => ({ TrainingResu
 vi.mock('@/components/GameDetails/PublicGamePrompt', () => ({ PublicGamePrompt: () => null }));
 vi.mock('@/components/GameDetails/BetSection', () => ({ BetSection: () => null }));
 vi.mock('@/components/GameDetails/ParticipantsOnlyChatSection', () => ({ ParticipantsOnlyChatSection: () => null }));
-vi.mock('@/components/GameDetails/GameLinkedBookingsSection', () => ({ GameLinkedBookingsSection: () => null }));
+vi.mock('@/components/GameDetails/courts/GameCourtsSection', () => ({ GameCourtsSection: () => null }));
+vi.mock('@/components/GameDetails/courts/gameCourtsModel', () => ({ rescheduleNeeded: () => false }));
 vi.mock('@/components/GameDetails/roster/GameRoster', () => ({ GameRoster: () => null }));
 vi.mock('@/features/game-series/SeriesGameSection', () => ({ SeriesGameSection: () => null }));
 vi.mock('@/features/game-series/SeriesTitleLine', () => ({ SeriesTitleLine: () => null }));

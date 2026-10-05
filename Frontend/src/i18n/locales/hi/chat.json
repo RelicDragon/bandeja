@@ -238,12 +238,12 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} अब बार के मालिक हैं",
         "GAME_CLUB_CHANGED": "बार स्थान बदलकर {{clubName}} हो गया",
         "GAME_DATE_TIME_CHANGED": "बार तारीख/समय बदलकर {{dateTime}} हो गया",
-        "GAME_BOOKING_STATUS_CHANGED": "हॉल बुकिंग स्थिति बदलकर {{bookingStatus}} हो गई",
+        "GAME_BOOKING_STATUS_CHANGED": "हॉल आरक्षण: {{bookingStatus}}",
         "bookingStatuses": {
-          "EXTERNAL_FULL": "पूरी तरह बुक",
-          "EXTERNAL_PARTIAL": "पूरी तरह बुक नहीं",
-          "MANUAL": "हॉल बुक",
-          "NONE": "अभी बुक नहीं"
+          "EXTERNAL_FULL": "आरक्षित",
+          "EXTERNAL_PARTIAL": "आंशिक रूप से आरक्षित",
+          "MANUAL": "आरक्षित",
+          "NONE": "नियोजित"
         }
       },
       "TRAINING": {
@@ -256,7 +256,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} अब ट्रेनिंग के मालिक हैं",
         "GAME_CLUB_CHANGED": "ट्रेनिंग स्थान बदलकर {{clubName}} हो गया",
         "GAME_DATE_TIME_CHANGED": "ट्रेनिंग तारीख/समय बदलकर {{dateTime}} हो गया",
-        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट बुकिंग स्थिति बदलकर {{bookingStatus}} हो गई"
+        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट आरक्षण: {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} टूर्नामेंट में शामिल हुए",
@@ -268,7 +268,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} अब टूर्नामेंट के मालिक हैं",
         "GAME_CLUB_CHANGED": "टूर्नामेंट स्थान बदलकर {{clubName}} हो गया",
         "GAME_DATE_TIME_CHANGED": "टूर्नामेंट तारीख/समय बदलकर {{dateTime}} हो गया",
-        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट बुकिंग स्थिति बदलकर {{bookingStatus}} हो गई"
+        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट आरक्षण: {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} लीग में शामिल हुए",
@@ -280,7 +280,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} अब लीग के मालिक हैं",
         "GAME_CLUB_CHANGED": "लीग स्थान बदलकर {{clubName}} हो गया",
         "GAME_DATE_TIME_CHANGED": "लीग तारीख/समय बदलकर {{dateTime}} हो गया",
-        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट बुकिंग स्थिति बदलकर {{bookingStatus}} हो गई"
+        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट आरक्षण: {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} लीग सीज़न में शामिल हुए",
@@ -292,18 +292,18 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} अब लीग सीज़न के मालिक हैं",
         "GAME_CLUB_CHANGED": "लीग सीज़न स्थान बदलकर {{clubName}} हो गया",
         "GAME_DATE_TIME_CHANGED": "लीग सीज़न तारीख/समय बदलकर {{dateTime}} हो गया",
-        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट बुकिंग स्थिति बदलकर {{bookingStatus}} हो गई"
+        "GAME_BOOKING_STATUS_CHANGED": "कोर्ट आरक्षण: {{bookingStatus}}"
       },
       "actions": {
         "joined": "गेम में शामिल हुए",
         "left": "गेम छोड़ दिया"
       },
-      "GAME_BOOKING_STATUS_CHANGED": "कोर्ट बुकिंग स्थिति बदलकर {{bookingStatus}} हो गई",
+      "GAME_BOOKING_STATUS_CHANGED": "कोर्ट आरक्षण: {{bookingStatus}}",
       "bookingStatuses": {
-        "EXTERNAL_FULL": "पूरी तरह बुक",
-        "EXTERNAL_PARTIAL": "पूरी तरह बुक नहीं",
-        "MANUAL": "कोर्ट बुक",
-        "NONE": "अभी बुक नहीं"
+        "EXTERNAL_FULL": "सभी कोर्ट आरक्षित",
+        "EXTERNAL_PARTIAL": "आंशिक रूप से आरक्षित",
+        "MANUAL": "आरक्षित",
+        "NONE": "नियोजित"
       },
       "ATTENDANCE_NUDGED": "{{userName}} ने सभी से उपस्थिति की पुष्टि करने को कहा",
       "USER_NOTED_NO_SHOW": "{{userName}} को अनुपस्थित के रूप में चिह्नित किया गया",

@@ -10,8 +10,10 @@
       "invite": "आमंत्रित करें"
     },
     "booking": {
-      "notBooked": "कोर्ट अभी बुक नहीं हुआ",
-      "partlyBooked": "कोर्ट आंशिक रूप से बुक है",
+      "notReservedOne": "कोर्ट अभी आरक्षित नहीं है",
+      "notReservedMany": "कोर्ट अभी आरक्षित नहीं हैं",
+      "partlyReserved": "{{total}} में से {{reserved}} कोर्ट आरक्षित",
+      "gapAt": "{{time}} पर आरक्षण में अंतराल",
       "seeBookings": "बुकिंग देखें",
       "editCourt": "कोर्ट बदलें"
     },

@@ -27,11 +27,13 @@ import { resolveUserCurrency } from '@/utils/currency';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
-import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
-import { ReservationIntentPicker } from '@/components/gameLocationTime/ReservationIntentPicker';
-import type { CreateGameBookingOverrides } from '@/hooks/createGameBookingFlow';
-import { useCreateGameBookingFlow } from '@/hooks/createGameBookingFlow';
-import { ClubBookingConnectInline } from '@/components/booktime/ClubBookingConnectInline';
+import {
+  useCreateGameCourtPlan,
+  type CourtPlanBookingOverrides,
+  type CourtPlanInitial,
+} from '@/components/createGame/courtPlan/useCreateGameCourtPlan';
+import { CreateGameCourtPlanSection } from '@/components/createGame/courtPlan/CreateGameCourtPlanSection';
+import type { CourtPlanIssue } from '@/components/createGame/courtPlan/courtPlanModel';
 import { ClubCreateGameConfirmModal } from '@/components/createGame/ClubCreateGameConfirmModal';
 import {
   CreateGameProgressOverlay,
@@ -47,8 +49,6 @@ import {
   maxSlotsForUserGameOrLeague,
   maxSlotsForUserTournament,
 } from '@/utils/userMaxParticipantsInGame';
-import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { MarkCourtBookedModal } from '@/components/createGame/MarkCourtBookedModal';
 import { CreateFlowSportSelector } from '@/components/createGame/CreateFlowSportSelector';
 import toast from 'react-hot-toast';
 import { getSportConfig } from '@/sport/sportRegistry';
@@ -61,13 +61,7 @@ import {
 } from '@/utils/profileSports';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
-import { computeMaxSelectableCourts, computeRequiredCourtCount } from '@/utils/requiredCourtCount';
-import {
-  resolveReservationValidation,
-  resolveReservationValidationMessage,
-  type ReservationValidationResult,
-} from '@shared/gameBooking/reservationIntent';
-import { isWeltnerClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import {
   parsePaymentMethods,
   resolvePaymentMethods,
@@ -75,8 +69,6 @@ import {
 } from '@shared/payments/paymentMethodSelection';
 import { cleanPaymentMethods } from '@/features/cost/gameEditPricePayload';
 import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
-import type { CreateGameAbortReason } from '@/hooks/createGameBookingFlow/types';
-import { MultiCourtTimeHint } from '@/components/gameLocationTime/MultiCourtTimeHint';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
@@ -188,13 +180,19 @@ export const CreateGame = ({
   const [courts, setCourts] = useState<Court[]>([]);
   const [allClubCourts, setAllClubCourts] = useState<Court[]>([]);
   const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
-  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => {
+  /** What the draft opened with (duplicate, deep link, play intent) — read once. */
+  const [initialCourtPlan] = useState<CourtPlanInitial>(() => {
     const fromGameCourts = initialGameData?.gameCourts?.map((gc) => gc.courtId) || [];
-    if (fromGameCourts.length > 0) return fromGameCourts;
-    if (initialGameData?.courtId) return [initialGameData.courtId];
-    return [];
+    return {
+      clubId: initialGameData?.clubId || '',
+      courtIds: fromGameCourts.length > 0 ? fromGameCourts : initialGameData?.courtId ? [initialGameData.courtId] : [],
+      courtSlotCount: initialGameData?.courtSlotCount ?? null,
+      hasBookedCourt: initialGameData?.hasBookedCourt ?? false,
+      bookingIds: initialBookingIds,
+      fromPlayIntent: Boolean(playIntentSource),
+      hasStartTime: Boolean(initialGameData?.startTime),
+    };
   });
-  const selectedCourt = selectedCourtIds[0] ?? 'notBooked';
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => {
     const sport: Sport =
       initialGameData?.sport ?? (resolveCreateGameDefaultSport(user));
@@ -500,163 +498,70 @@ export const CreateGame = ({
     return { startTime: start.toISOString(), endTime: end.toISOString() };
   }, [clubs, selectedClub, selectedDate, selectedTime, duration]);
 
-  const requiredCourtCount = computeRequiredCourtCount(maxParticipants, playersPerMatch);
-  const multiCourtMode = entityType !== 'BAR' && requiredCourtCount > 1;
-
-  const handleCourtSelect = useCallback(
-    (id: string) => {
-      setSelectedTime('');
-
-      if (id === 'notBooked') {
-        setSelectedCourtIds([]);
-        return;
-      }
-
-      if (!multiCourtMode) {
-        setSelectedCourtIds([id]);
-        return;
-      }
-
-      setSelectedCourtIds((prev) => {
-        const existing = prev.indexOf(id);
-        if (existing >= 0) return prev.filter((courtId) => courtId !== id);
-        const max = computeMaxSelectableCourts(maxParticipants, courts.length, playersPerMatch);
-        if (prev.length >= max) return prev;
-        return [...prev, id];
-      });
-    },
-    [multiCourtMode, maxParticipants, playersPerMatch, courts.length, setSelectedTime],
-  );
-
-  const bookingFlow = useCreateGameBookingFlow({
-    entityType,
-    sport: selectedSport,
-    selectedClub,
-    selectedClubData,
-    selectedCourt,
-    selectedCourtIds,
-    selectedDate,
-    setSelectedDate,
-    selectedTime,
-    setSelectedTime,
-    duration,
-    setDuration,
-    setSelectedCourtIds,
-    courts,
-    bookingMatchCourts: allClubCourts.length > 0 ? allClubCourts : courts,
-    clubs,
-    multiCourtMode,
-    maxParticipants,
-    playersPerMatch,
-    initialHasBookedCourt: initialGameData?.hasBookedCourt ?? false,
-    initialBookingIds,
-    storedInitialDate,
-    hasInitialStartTime: Boolean(initialGameData?.startTime),
-    fromPlayIntent: Boolean(playIntentSource),
-    createDateFromSelection,
-    baseTimeOptions: {
+  const baseTimeOptions = useMemo(
+    () => ({
       generateTimeOptions,
       generateTimeOptionsForDate,
       canAccommodateDuration,
       getAdjustedStartTime,
       getTimeSlotsForDuration,
       isSlotHighlighted,
-    },
-    onNavigateAfterCreate: navigateAfterCreate,
-    t,
-  });
-
-  const {
-    clubBookingFlowActive,
-    hasBookedCourt,
-    setHasBookedCourt,
-    locationTimeMode,
-    willBookOnCreate,
-    skipRealCourtBooking,
-    setSkipRealCourtBooking,
-    selectedBookingIds,
-    selectedBookingRecords,
-    bookingSelectionLimits,
-    integratedCourtIds,
-    onSelectedBookingIdsChange,
-    onDerivedTimeChange,
-    derivedBookingWindowLabel,
-    effectiveDerivedSummary,
-    needsBooktimeAuth,
-    clubBookingAuth,
-    booktimeIntegrationConfig,
-    timeOverride,
-    setTimeOverride,
-    overrideStartTime,
-    overrideEndTime,
-    setOverrideTimes,
-    booktimeCompanyMeta,
-    booktimeFixedDates,
-    createGameSnapshotBanner,
-    isRefreshingSnapshot,
-    booktimeTimeOptions,
-    resolvedGenerateTimeOptions,
-    resolvedGenerateTimeOptionsForDate,
-    resolvedCanAccommodateDuration,
-    resolvedGetAdjustedStartTime,
-    resolvedGetTimeSlotsForDuration,
-    resolvedIsSlotHighlighted,
-    createButtonLabel,
-    preselectedBookings,
-    resetOnClubChange,
-    handleCreateAttempt,
-    prepareBookingFields,
-    evaluatePostCreate,
-    softOverlapOpen,
-    setSoftOverlapOpen,
-    markCourtOpen,
-    handleMarkCourtBooked,
-    handleSkipMarkCourt,
-    getConfirmModalProps,
-    handleAuthConnected,
-    reservationIntent,
-    setReservationIntent,
-    reservationIntentOptions,
-    availableReservationCount,
-  } = bookingFlow;
-
-  const booktimeScheduleConstrained = reservationIntent === 'reserveNow' && !needsBooktimeAuth;
-  const showReserveNowScheduling = reservationIntent === 'reserveNow' && !needsBooktimeAuth;
-  const showBooktimeAuthPrompt =
-    entityType !== 'BAR' &&
-    Boolean(selectedClub) &&
-    clubBookingFlowActive &&
-    Boolean(booktimeIntegrationConfig || isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData) || isWeltnerClub(selectedClubData)) &&
-    !clubBookingAuth?.connected &&
-    (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting');
-  const booktimeAuthPromptCollapsed = showBooktimeAuthPrompt && !needsBooktimeAuth;
-
-  const reserveNowTimeOptions = useMemo(() => {
-    if (reservationIntent !== 'reserveNow' || needsBooktimeAuth) return [];
-    return resolvedGenerateTimeOptions();
-  }, [reservationIntent, needsBooktimeAuth, resolvedGenerateTimeOptions]);
-
-  const multiCourtTimeHint = (
-    <MultiCourtTimeHint
-      requiredCourtCount={requiredCourtCount}
-      integratedCourtCount={integratedCourtIds.length}
-      hasTimeSlots={reserveNowTimeOptions.length > 0}
-      booktimeSlotsActive={booktimeScheduleConstrained}
-    />
+    }),
+    [
+      generateTimeOptions,
+      generateTimeOptionsForDate,
+      canAccommodateDuration,
+      getAdjustedStartTime,
+      getTimeSlotsForDuration,
+      isSlotHighlighted,
+    ],
   );
 
+  const plan = useCreateGameCourtPlan({
+    entityType,
+    sport: selectedSport,
+    clubId: selectedClub,
+    club: selectedClubData,
+    courts,
+    matchCourts: allClubCourts.length > 0 ? allClubCourts : courts,
+    maxParticipants,
+    playersPerMatch,
+    selectedDate,
+    setSelectedDate,
+    selectedTime,
+    setSelectedTime,
+    duration,
+    setDuration,
+    storedInitialDate,
+    baseTimeOptions,
+    createDateFromSelection,
+    initial: initialCourtPlan,
+    t,
+  });
+  const { seedCourts, setSlotCourt, timeOptions: planTimeOptions } = plan;
+  const selectedCourtIds = plan.assignedCourtIds;
+  const selectedCourt = selectedCourtIds[0] ?? 'notBooked';
+  const scheduleConstrained = plan.reserveNowActive && Boolean(plan.companyMeta.fixedDates?.length);
+
+  /** Halls (BAR) keep the single-court picker. */
+  const handleCourtSelect = useCallback(
+    (id: string) => {
+      setSelectedTime('');
+      setSlotCourt(0, id === 'notBooked' ? null : id);
+    },
+    [setSelectedTime, setSlotCourt],
+  );
+
+  const formatClubRange = useCallback((time: string, durationHours: number) => {
+    if (!time) return '';
+    const [h, m] = time.split(':').map(Number);
+    const endMinutes = h * 60 + m + Math.round(durationHours * 60);
+    const end = `${String(Math.floor(endMinutes / 60) % 24).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`;
+    return `${time}–${end}`;
+  }, []);
+
   const weatherPreviewTiming = useMemo(() => {
-    if (!selectedClubData?.cityId || needsBooktimeAuth) return null;
-    if (reservationIntent === 'useExisting') {
-      if (!effectiveDerivedSummary.startTime || !effectiveDerivedSummary.endTime) return null;
-      return {
-        cityId: selectedClubData.cityId,
-        startTime: effectiveDerivedSummary.startTime,
-        endTime: effectiveDerivedSummary.endTime,
-      };
-    }
-    if (reservationIntent === 'reserveNow' && !showReserveNowScheduling) return null;
-    if (!selectedTime) return null;
+    if (!selectedClubData?.cityId || plan.needsAuth || !selectedTime) return null;
     const manual = createDateFromSelection();
     if (!manual.startTime || !manual.endTime) return null;
     return {
@@ -664,21 +569,12 @@ export const CreateGame = ({
       startTime: manual.startTime,
       endTime: manual.endTime,
     };
-  }, [
-    createDateFromSelection,
-    effectiveDerivedSummary.endTime,
-    effectiveDerivedSummary.startTime,
-    needsBooktimeAuth,
-    reservationIntent,
-    selectedClubData?.cityId,
-    selectedTime,
-    showReserveNowScheduling,
-  ]);
+  }, [createDateFromSelection, plan.needsAuth, selectedClubData?.cityId, selectedTime]);
 
   const showClubPoliciesFooter =
     entityType !== 'BAR' &&
     Boolean(selectedClubData) &&
-    !needsBooktimeAuth &&
+    !plan.needsAuth &&
     Boolean(
       selectedClubData?.policyText?.trim() || selectedClubData?.cancellationNoticeHours,
     );
@@ -716,11 +612,8 @@ export const CreateGame = ({
     const club = clubs.find((c) => c.id === selectedClub);
     if (club && !clubSupportsSport(club, selectedSport)) {
       setSelectedClub('');
-      setSelectedCourtIds([]);
-      resetOnClubChange();
-      setHasBookedCourt(false);
     }
-  }, [selectedSport, selectedClub, clubs, resetOnClubChange, setHasBookedCourt]);
+  }, [selectedSport, selectedClub, clubs]);
 
   const openFormatWizard = useCallback(() => {
     notifyFormatWizardOpen();
@@ -740,7 +633,7 @@ export const CreateGame = ({
       sport,
       maxParticipants,
       playersPerMatch: playersPerMatch === 4 ? 4 : 2,
-      selectedCourtCount: selectedCourtIds.length,
+      selectedCourtCount: plan.count,
       creatorLevel: user ? getDisplayLevelForSport(user, sport) : 2,
       playerLevelRange,
       invitedLevels,
@@ -754,7 +647,7 @@ export const CreateGame = ({
     selectedSport,
     maxParticipants,
     playersPerMatch,
-    selectedCourtIds,
+    plan.count,
     user,
     playerLevelRange,
     invitedPlayers,
@@ -832,8 +725,7 @@ export const CreateGame = ({
     if (!id || id === locationCityId) return;
     setLocationCityId(id);
     setSelectedClub('');
-    setSelectedCourtIds([]);
-  }, [locationCityId, setSelectedCourtIds]);
+  }, [locationCityId]);
 
   const handleSelectClub = useCallback((id: string, club?: Club) => {
     const picked = club ?? clubs.find((c) => c.id === id);
@@ -844,9 +736,7 @@ export const CreateGame = ({
     }
     if (picked?.cityId) setLocationCityId(picked.cityId);
     setSelectedClub(id);
-    setSelectedCourtIds([]);
-    resetOnClubChange();
-  }, [clubs, resetOnClubChange, setSelectedCourtIds]);
+  }, [clubs]);
 
   useEffect(() => {
     if (!locationCityId) return;
@@ -870,9 +760,8 @@ export const CreateGame = ({
     };
   }, [entityType, locationCityId, selectedClub]);
 
-  const initialCourtId = initialGameData?.courtId;
-  const initialHasBookedCourt = initialGameData?.hasBookedCourt ?? false;
   const courtsClubRef = useRef<string | null>(null);
+  const initialCourtsSeededRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -881,12 +770,6 @@ export const CreateGame = ({
         setCourts([]);
         setAllClubCourts([]);
         courtsClubRef.current = null;
-        if (!initialCourtId) {
-          setSelectedCourtIds([]);
-          setHasBookedCourt(false);
-        } else {
-          setHasBookedCourt(initialHasBookedCourt);
-        }
         return;
       }
       try {
@@ -897,33 +780,28 @@ export const CreateGame = ({
         ]);
         if (cancelled) return;
         const sportCourts = sportFilteredRes.data;
-        const clubCourts = allCourtsRes.data;
         setCourts(sportCourts);
-        setAllClubCourts(clubCourts);
+        setAllClubCourts(allCourtsRes.data);
 
         const clubChanged = courtsClubRef.current !== selectedClub;
         courtsClubRef.current = selectedClub;
         if (!clubChanged) return;
 
-        if (initialCourtId && clubCourts.some((c) => c.id === initialCourtId)) {
-          setSelectedCourtIds([initialCourtId]);
-          setHasBookedCourt(initialHasBookedCourt);
-        } else if (sportCourts.length === 1) {
-          setSelectedCourtIds([sportCourts[0].id]);
-          setHasBookedCourt(false);
-        } else {
-          setSelectedCourtIds([]);
-          setHasBookedCourt(false);
+        // The draft's own courts were seeded already; otherwise a one-court club picks it.
+        if (!initialCourtsSeededRef.current && selectedClub === initialCourtPlan.clubId) {
+          initialCourtsSeededRef.current = true;
+          if (initialCourtPlan.courtIds.length > 0) return;
         }
+        if (sportCourts.length === 1) seedCourts([sportCourts[0].id]);
       } catch (error) {
         console.error('Failed to fetch courts:', error);
       }
     };
     void fetchCourts();
     return () => { cancelled = true; };
-  }, [selectedClub, selectedSport, entityType, initialCourtId, initialHasBookedCourt, setHasBookedCourt]);
+  }, [selectedClub, selectedSport, entityType, initialCourtPlan, seedCourts]);
 
-  const { applyClubScheduleSelection } = bookingFlow;
+  const { applyClubScheduleSelection } = plan;
   useEffect(() => {
     if (!pendingClubSchedule || selectedClub !== pendingClubSchedule.club.id) return;
     if (courtsClubRef.current !== selectedClub || !courts.some((court) => court.id === pendingClubSchedule.courtId)) return;
@@ -951,17 +829,6 @@ export const CreateGame = ({
     }
   }, [selectedCourt, courts, selectedSport, handleSportChange]);
 
-  useEffect(() => {
-    setSelectedCourtIds((prev) => {
-      if (prev.length === 0) return prev;
-      const filtered = prev.filter((id) => {
-        const court = courts.find((c) => c.id === id);
-        return !court?.sport || court.sport === selectedSport;
-      });
-      return filtered.length === prev.length ? prev : filtered;
-    });
-  }, [selectedSport, courts]);
-
   const handleCourtSportTab = useCallback(
     (sport: typeof selectedSport) => {
       const config = getSportConfig(sport);
@@ -971,11 +838,6 @@ export const CreateGame = ({
     },
     [handleSportChange],
   );
-
-  useEffect(() => {
-    if (multiCourtMode) return;
-    setSelectedCourtIds((prev) => (prev.length <= 1 ? prev : [prev[0]]));
-  }, [multiCourtMode]);
 
 
   useEffect(() => {
@@ -1239,10 +1101,7 @@ export const CreateGame = ({
     priceTotal,
     priceCurrency,
     defaultCurrency: user?.defaultCurrency as PriceCurrency | undefined,
-    locationTimeMode,
-    willBookOnCreate,
-    selectedBookingCount: selectedBookingIds.length,
-    derivedBookingWindow: derivedBookingWindowLabel,
+    willBookOnCreate: plan.choice === 'reserveNow',
     repeatCadence: repeatCadence === 'ONCE' ? null : repeatCadence,
   });
   const confirmSummaryChips = useCreateGameSummaryChips({
@@ -1275,10 +1134,7 @@ export const CreateGame = ({
     priceCurrency,
     defaultCurrency: user?.defaultCurrency as PriceCurrency | undefined,
     excludeKeys: ['location', 'time'],
-    locationTimeMode,
-    willBookOnCreate,
-    selectedBookingCount: selectedBookingIds.length,
-    derivedBookingWindow: derivedBookingWindowLabel,
+    willBookOnCreate: plan.choice === 'reserveNow',
   });
   const handleSummaryChipClick = useCallback(
     (key: string) => {
@@ -1291,27 +1147,23 @@ export const CreateGame = ({
   );
 
   const courtSection = useMemo(
-    () => (
-      <CreateGameCourtSection
-        clubs={clubs}
-        courts={courts}
-        selectedClub={selectedClub}
-        selectedCourt={selectedCourt}
-        selectedCourtIds={selectedCourtIds}
-        maxParticipants={maxParticipants}
-        playersPerMatch={playersPerMatch}
-        multiSelectCourts={multiCourtMode}
-        selectedDate={selectedDate}
-        hasBookedCourt={hasBookedCourt}
-        entityType={entityType}
-        onSelectCourt={handleCourtSelect}
-        onToggleHasBookedCourt={setHasBookedCourt}
-        preferredSport={selectedSport}
-        onSportTabChange={handleCourtSportTab}
-        showHasBookedSwitch={false}
-        showNotBookedOption={reservationIntent !== 'reserveNow'}
-      />
-    ),
+    () =>
+      entityType === 'BAR' ? (
+        <CreateGameCourtSection
+          clubs={clubs}
+          courts={courts}
+          selectedClub={selectedClub}
+          selectedCourt={selectedCourt}
+          selectedCourtIds={selectedCourtIds}
+          maxParticipants={maxParticipants}
+          playersPerMatch={playersPerMatch}
+          selectedDate={selectedDate}
+          entityType={entityType}
+          onSelectCourt={handleCourtSelect}
+          preferredSport={selectedSport}
+          onSportTabChange={handleCourtSportTab}
+        />
+      ) : null,
     [
       clubs,
       courts,
@@ -1320,15 +1172,11 @@ export const CreateGame = ({
       selectedCourtIds,
       maxParticipants,
       playersPerMatch,
-      multiCourtMode,
       selectedDate,
-      hasBookedCourt,
       entityType,
       handleCourtSelect,
       selectedSport,
       handleCourtSportTab,
-      setHasBookedCourt,
-      reservationIntent,
     ],
   );
 
@@ -1345,10 +1193,10 @@ export const CreateGame = ({
           onDateSelect={setSelectedDate}
           onCalendarClick={() => setShowDatePicker(true)}
           onCloseDatePicker={() => setShowDatePicker(false)}
-          generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-          dateFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
-          hideCalendar={booktimeScheduleConstrained}
-          bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
+          generateTimeOptionsForDate={planTimeOptions.generateTimeOptionsForDate}
+          dateFixedDates={scheduleConstrained ? plan.companyMeta.fixedDates : undefined}
+          hideCalendar={scheduleConstrained}
+          bookableDaysHint={scheduleConstrained ? plan.companyMeta.bookableDays : null}
         />
         {seriesEligibleEntityType && selectedTime ? (
           <SeriesRepeatRow
@@ -1370,33 +1218,16 @@ export const CreateGame = ({
       selectedTime,
       showDatePicker,
       setSelectedDate,
-      resolvedGenerateTimeOptionsForDate,
-      booktimeScheduleConstrained,
-      booktimeFixedDates,
-      booktimeCompanyMeta.bookableDays,
+      planTimeOptions.generateTimeOptionsForDate,
+      scheduleConstrained,
+      plan.companyMeta.fixedDates,
+      plan.companyMeta.bookableDays,
       seriesEligibleEntityType,
       entityType,
       repeatCadence,
       repeatEndsOn,
       navigate,
     ],
-  );
-
-  const showReservationSummary =
-    reservationIntent === 'reserveNow'
-      ? !needsBooktimeAuth && Boolean(selectedTime)
-      : reservationIntent === 'gameOnly' || reservationIntent === 'manualBooked';
-
-  const intentSection = (
-    <ReservationIntentPicker
-      value={reservationIntent}
-      options={reservationIntentOptions}
-      onChange={setReservationIntent}
-      requiredCount={bookingSelectionLimits.min}
-      selectedBookingCount={selectedBookingIds.length}
-      availableReservationCount={availableReservationCount}
-      showSummary={showReservationSummary}
-    />
   );
 
   const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -1409,53 +1240,19 @@ export const CreateGame = ({
     }
   };
 
-  const scrollToReservationValidationIssue = useCallback(
-    (reason: Exclude<ReservationValidationResult, { ok: true }>['reason'] | CreateGameAbortReason) => {
-      if (reason === 'durationRequired') {
-        scrollToAndHighlightError(durationSectionRef);
-        return;
-      }
-      scrollToAndHighlightError(locationTimeSectionRef);
-    },
-    [],
-  );
-
-  const footerValidation = useMemo(
-    () =>
-      resolveReservationValidation({
-        intent: reservationIntent,
-        needsBooktimeAuth,
-        selectedBookingCount: selectedBookingIds.length,
-        selectedBookingRecordsCount: selectedBookingRecords.length,
-        selectedCourtCount: integratedCourtIds.length,
-        bookingSelectionMin: bookingSelectionLimits.min,
-        selectedTime: selectedTime || undefined,
-        duration: duration || undefined,
-      }),
-    [
-      reservationIntent,
-      needsBooktimeAuth,
-      selectedBookingIds.length,
-      selectedBookingRecords.length,
-      integratedCourtIds.length,
-      bookingSelectionLimits.min,
-      selectedTime,
-      duration,
-    ],
-  );
+  const scrollToCourtPlanIssue = useCallback((reason: CourtPlanIssue) => {
+    scrollToAndHighlightError(reason === 'durationRequired' ? durationSectionRef : locationTimeSectionRef);
+  }, []);
 
   const footerHint = useMemo(() => {
     if (!selectedClub) return t('createGame.footer.selectClubHint');
-    if (!footerValidation.ok) {
-      const message = resolveReservationValidationMessage(footerValidation, bookingSelectionLimits.min);
-      return t(message.key, message.values);
-    }
+    if (!plan.validation.ok) return plan.issueMessage(plan.validation.reason);
     return null;
-  }, [selectedClub, footerValidation, bookingSelectionLimits.min, t]);
+  }, [selectedClub, plan, t]);
 
   const handleFooterHintClick = () => {
-    if (selectedClub && !footerValidation.ok) {
-      scrollToReservationValidationIssue(footerValidation.reason);
+    if (selectedClub && !plan.validation.ok) {
+      scrollToCourtPlanIssue(plan.validation.reason);
       return;
     }
     scrollToAndHighlightError(locationTimeSectionRef);
@@ -1486,37 +1283,25 @@ export const CreateGame = ({
       return;
     }
 
-    const validation = resolveReservationValidation({
-      intent: reservationIntent,
-      needsBooktimeAuth,
-      selectedBookingCount: selectedBookingIds.length,
-      selectedBookingRecordsCount: selectedBookingRecords.length,
-      selectedCourtCount: integratedCourtIds.length,
-      bookingSelectionMin: bookingSelectionLimits.min,
-      selectedTime: selectedTime || undefined,
-      duration: duration || undefined,
-    });
-
-    if (!validation.ok) {
-      const message = resolveReservationValidationMessage(validation, bookingSelectionLimits.min);
-      toast.error(t(message.key, message.values));
-      scrollToReservationValidationIssue(validation.reason);
+    if (!plan.validation.ok) {
+      toast.error(plan.issueMessage(plan.validation.reason));
+      scrollToCourtPlanIssue(plan.validation.reason);
       return;
     }
 
     const creatorJoining = Boolean(user.id && participants.includes(user.id));
     if (creatorJoining && !runWithGenderForEvent({ genderTeams, entityType }, () => void handleCreateGame())) return;
 
-    await handleCreateAttempt(
-      async (overrides) => {
-        await executeCreateGame(overrides);
+    await plan.handleCreateAttempt(
+      async () => {
+        await executeCreateGame();
       },
-      (reason) => scrollToReservationValidationIssue(reason),
+      (reason) => scrollToCourtPlanIssue(reason),
     );
   };
 
   const executeCreateGame = async (
-    overrides?: CreateGameBookingOverrides,
+    overrides?: CourtPlanBookingOverrides,
     options?: { skipNavigate?: boolean },
   ) => {
     if (!user) return;
@@ -1526,7 +1311,7 @@ export const CreateGame = ({
 
     setLoading(true);
     try {
-      const bookingFields = await prepareBookingFields(overrides);
+      const bookingFields = await plan.buildCreateFields(overrides);
       const ratingFields = resolveCreateGameRatingFields(
         entityType,
         playerLevelRange,
@@ -1639,6 +1424,10 @@ export const CreateGame = ({
         invalidateBooktimeAllUpcomingCache();
       }
 
+      if (gameResponse.data.id) {
+        await plan.saveCourtSlotsAfterCreate(gameResponse.data.id, bookingFields);
+      }
+
       if (pendingAvatarFiles && gameResponse.data.id) {
         try {
           await mediaApi.uploadGameAvatar(gameResponse.data.id, pendingAvatarFiles.avatar, pendingAvatarFiles.original);
@@ -1702,10 +1491,6 @@ export const CreateGame = ({
       }
 
       const created = gameResponse.data;
-      if (evaluatePostCreate(created, overrides) === 'markCourtPrompt') {
-        if (showCreateOverlay) setCreateOverlayPhase(null);
-        return;
-      }
 
       if (showCreateOverlay) {
         setCreateOverlayPhase('success');
@@ -1798,17 +1583,13 @@ export const CreateGame = ({
     setPendingAvatarFiles(null);
   };
 
-  const confirmModalProps = getConfirmModalProps({
+  const confirmModalProps = plan.getConfirmModalProps({
     summaryChips: confirmSummaryChips,
     onExecuteCreateGame: async (overrides) => {
       await executeCreateGame(
         {
           externalBookingIds: overrides.externalBookingIds,
           bookingSnapshots: overrides.bookingSnapshots,
-          hasBookedCourt: overrides.hasBookedCourt,
-          courtIds: overrides.bookingSnapshots
-            .map((s) => s.courtId)
-            .filter((id): id is string => Boolean(id)),
         },
         { skipNavigate: true },
       );
@@ -2058,54 +1839,16 @@ export const CreateGame = ({
         <div ref={locationTimeSectionRef}>
           <div ref={durationSectionRef}>
             {entityType !== 'BAR' && selectedClub && selectedClubData ? (
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
-                <GameLocationTimePanel
-                  mode="create"
-                  entityType={entityType}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                <CreateGameCourtPlanSection
                   club={selectedClubData}
-                  locationTimeMode={locationTimeMode}
-                  skipRealCourtBooking={skipRealCourtBooking}
-                  onSkipRealCourtBookingChange={setSkipRealCourtBooking}
-                  selectedCourtIds={selectedCourtIds}
                   courts={courts}
-                  bookingMatchCourts={allClubCourts.length > 0 ? allClubCourts : courts}
+                  plan={plan}
                   selectedDate={selectedDate}
-                  selectedBookingIds={selectedBookingIds}
-                  fallbackSelectedBookings={selectedBookingRecords}
-                  onSelectedBookingIdsChange={onSelectedBookingIdsChange}
-                  bookingSelectionLimits={bookingSelectionLimits}
-                  companyId={booktimeIntegrationConfig?.companyId}
-                  booktimeConnected={Boolean(clubBookingAuth?.connected)}
-                  onDerivedTimeChange={onDerivedTimeChange}
-                  preselectedBanner={preselectedBookings}
-                  derivedSummary={{
-                    startTime: effectiveDerivedSummary.startTime,
-                    endTime: effectiveDerivedSummary.endTime,
-                    count: effectiveDerivedSummary.count,
-                  }}
-                  timeOverride={timeOverride}
-                  onTimeOverrideChange={setTimeOverride}
-                  overrideStartTime={overrideStartTime}
-                  overrideEndTime={overrideEndTime}
-                  onOverrideTimesChange={setOverrideTimes}
-                  needsBooktimeAuth={needsBooktimeAuth}
-                  intentSection={intentSection}
-                  showDateSection={showReserveNowScheduling || reservationIntent !== 'reserveNow'}
-                  showCourtSection={
-                    reservationIntent === 'gameOnly' ||
-                    reservationIntent === 'manualBooked' ||
-                    showReserveNowScheduling
-                  }
-                  showTimeSlots={
-                    reservationIntent === 'gameOnly' ||
-                    reservationIntent === 'manualBooked' ||
-                    showReserveNowScheduling
-                  }
-                  showReservations={reservationIntent === 'useExisting'}
-                  showRealBookingHint={false}
-                  onEmptyReserveNow={() => setReservationIntent('reserveNow')}
-                  onEmptyGameOnly={() => setReservationIntent('gameOnly')}
-                  dateSection={dateSection}
+                  selectedTime={selectedTime}
+                  duration={duration}
+                  locale={displaySettings.locale}
+                  formatRange={formatClubRange}
                   clubSection={
                     <CreateGameClubSection
                       clubs={clubsForSport}
@@ -2123,19 +1866,8 @@ export const CreateGame = ({
                       preferredSport={selectedSport}
                     />
                   }
-                  courtSection={courtSection}
-                  authGateSection={
-                    showBooktimeAuthPrompt && selectedClubData ? (
-                      <ClubBookingConnectInline
-                        club={selectedClubData}
-                        integrationConfig={booktimeIntegrationConfig ?? undefined}
-                        onConnected={handleAuthConnected}
-                        onSkip={() => setReservationIntent('gameOnly')}
-                        collapsed={booktimeAuthPromptCollapsed}
-                      />
-                    ) : null
-                  }
-                  timeSlotsChildren={
+                  dateSection={dateSection}
+                  timeSection={
                     <GameStartSection
                       selectedDate={selectedDate}
                       selectedTime={selectedTime}
@@ -2146,12 +1878,12 @@ export const CreateGame = ({
                       club={selectedClubData}
                       courts={courts}
                       preferredSport={selectedSport}
-                      generateTimeOptions={resolvedGenerateTimeOptions}
-                      generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-                      canAccommodateDuration={resolvedCanAccommodateDuration}
-                      getAdjustedStartTime={resolvedGetAdjustedStartTime}
-                      getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
-                      isSlotHighlighted={resolvedIsSlotHighlighted}
+                      generateTimeOptions={planTimeOptions.generateTimeOptions}
+                      generateTimeOptionsForDate={planTimeOptions.generateTimeOptionsForDate}
+                      canAccommodateDuration={planTimeOptions.canAccommodateDuration}
+                      getAdjustedStartTime={planTimeOptions.getAdjustedStartTime}
+                      getTimeSlotsForDuration={planTimeOptions.getTimeSlotsForDuration}
+                      isSlotHighlighted={planTimeOptions.isSlotHighlighted}
                       getDurationLabel={getDurationLabel}
                       onDateSelect={setSelectedDate}
                       onCalendarClick={() => setShowDatePicker(true)}
@@ -2160,25 +1892,23 @@ export const CreateGame = ({
                       onDurationChange={setDuration}
                       entityType={entityType}
                       dateInputRef={dateInputRef}
-                      needsBooktimeAuth={needsBooktimeAuth}
-                      bookCourtEnabled={booktimeScheduleConstrained}
-                      hideOccupancyOverlay={booktimeScheduleConstrained}
-                      dateFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
-                      hideCalendar={booktimeScheduleConstrained}
-                      bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
-                      connectedPhone={clubBookingAuth?.phoneNumber ?? null}
-                      slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
-                      booktimeSlotsActive={booktimeTimeOptions.active}
-                      snapshotOverlayEnabled={booktimeScheduleConstrained}
-                      snapshotLoading={isRefreshingSnapshot}
-                      snapshotBannerState={createGameSnapshotBanner}
+                      hideOccupancyOverlay
+                      slotBlock={plan.slotBlock}
+                      dateFixedDates={scheduleConstrained ? plan.companyMeta.fixedDates : undefined}
+                      hideCalendar={scheduleConstrained}
+                      bookableDaysHint={scheduleConstrained ? plan.companyMeta.bookableDays : null}
+                      connectedPhone={plan.reserveNowActive ? (plan.auth?.phoneNumber ?? null) : null}
+                      slotsLoading={plan.providerActive && plan.providerTimeOptions.loading}
+                      booktimeSlotsActive={plan.providerActive}
+                      snapshotOverlayEnabled={clubHasBookingIntegration(selectedClubData)}
+                      snapshotLoading={plan.isRefreshingSnapshot}
+                      snapshotBannerState={plan.snapshotBanner}
                       compact
                       hideDateSection
-                      timeSchedulingExtra={multiCourtTimeHint}
                     />
                   }
+                  footer={locationTimeFooter}
                 />
-                {locationTimeFooter}
               </div>
             ) : (
               <>
@@ -2200,12 +1930,12 @@ export const CreateGame = ({
                   selectedClub={selectedClub}
                   selectedCourt={selectedCourt}
                   club={selectedClubData}
-                  generateTimeOptions={resolvedGenerateTimeOptions}
-                  generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-                  canAccommodateDuration={resolvedCanAccommodateDuration}
-                  getAdjustedStartTime={resolvedGetAdjustedStartTime}
-                  getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
-                  isSlotHighlighted={resolvedIsSlotHighlighted}
+                  generateTimeOptions={planTimeOptions.generateTimeOptions}
+                  generateTimeOptionsForDate={planTimeOptions.generateTimeOptionsForDate}
+                  canAccommodateDuration={planTimeOptions.canAccommodateDuration}
+                  getAdjustedStartTime={planTimeOptions.getAdjustedStartTime}
+                  getTimeSlotsForDuration={planTimeOptions.getTimeSlotsForDuration}
+                  isSlotHighlighted={planTimeOptions.isSlotHighlighted}
                   getDurationLabel={getDurationLabel}
                   onDateSelect={setSelectedDate}
                   onCalendarClick={() => setShowDatePicker(true)}
@@ -2215,8 +1945,8 @@ export const CreateGame = ({
                   entityType={entityType}
                   dateInputRef={dateInputRef}
                   courtSection={courtSection}
-                  slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
-                  booktimeSlotsActive={booktimeTimeOptions.active}
+                  slotsLoading={plan.providerActive && plan.providerTimeOptions.loading}
+                  booktimeSlotsActive={plan.providerActive}
                 />
                 {locationTimeFooter ? <div className="mt-3">{locationTimeFooter}</div> : null}
               </>
@@ -2333,7 +2063,7 @@ export const CreateGame = ({
       </div>
 
       <CreateGameFooterBar
-        label={createButtonLabel}
+        label={plan.createButtonLabel}
         loading={loading}
         hint={footerHint}
         onHintClick={handleFooterHintClick}
@@ -2399,30 +2129,6 @@ export const CreateGame = ({
           onClose={closeFormatWizard}
         />
       )}
-
-      <ConfirmationModal
-        isOpen={softOverlapOpen}
-        tone="warning"
-        title={t('createGame.overlapSoftTitle')}
-        message={t('createGame.overlapSoftMessage')}
-        confirmText={t('createGame.overlapSoftProceed')}
-        cancelText={t('common.cancel')}
-        onConfirm={() => {
-          setSoftOverlapOpen(false);
-          void executeCreateGame();
-        }}
-        onClose={() => setSoftOverlapOpen(false)}
-      />
-
-      <MarkCourtBookedModal
-        isOpen={markCourtOpen}
-        onMarkBooked={() =>
-          void handleMarkCourtBooked(async (gameId) => {
-            await gamesApi.update(gameId, { hasBookedCourt: true });
-          })
-        }
-        onSkip={handleSkipMarkCourt}
-      />
 
       {confirmModalProps ? <ClubCreateGameConfirmModal {...confirmModalProps} /> : null}
     </div>

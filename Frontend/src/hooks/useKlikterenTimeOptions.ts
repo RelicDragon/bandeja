@@ -21,6 +21,8 @@ type UseKlikterenTimeOptionsParams = {
   enabled: boolean;
 };
 
+const EMPTY_OPTIONS: string[] = [];
+
 export function useKlikterenTimeOptions({
   club,
   courts,
@@ -35,14 +37,23 @@ export function useKlikterenTimeOptions({
   const durationMinutes = Math.round(durationHours * 60);
   const klikterenVenueId = getKlikterenVenueId(club);
 
-  const normalizedSelectedCourtIds = useMemo(() => {
-    const source = selectedCourtIds ?? (selectedCourtId ? [selectedCourtId] : []);
-    return [...new Set(source.filter((id) => id && id !== 'notBooked'))].sort();
-  }, [selectedCourtId, selectedCourtIds]);
+  // Keyed by content: callers may pass a fresh array every render, and an
+  // identity-keyed memo would re-run `load` (and its setState) on each one.
+  const selectedCourtIdsKey = [
+    ...new Set(
+      (selectedCourtIds ?? (selectedCourtId ? [selectedCourtId] : [])).filter((id) => id && id !== 'notBooked'),
+    ),
+  ]
+    .sort()
+    .join(',');
+  const normalizedSelectedCourtIds = useMemo(
+    () => (selectedCourtIdsKey ? selectedCourtIdsKey.split(',') : []),
+    [selectedCourtIdsKey],
+  );
 
   const load = useCallback(async () => {
     if (!enabled || !club || !isKlikterenClub(club) || klikterenVenueId == null) {
-      setOptions([]);
+      setOptions(EMPTY_OPTIONS);
       return;
     }
     setLoading(true);
@@ -77,7 +88,7 @@ export function useKlikterenTimeOptions({
             : intersectFreeSlotStarts(filteredRows);
       setOptions(merged);
     } catch {
-      setOptions([]);
+      setOptions(EMPTY_OPTIONS);
     } finally {
       setLoading(false);
     }

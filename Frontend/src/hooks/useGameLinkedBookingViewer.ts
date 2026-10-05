@@ -2,14 +2,19 @@ import { useMemo } from 'react';
 import type { Club, Game } from '@/types';
 import { clubToBooktimeRow } from '@/components/booktime/booktimeBookingUtils';
 import { clubHasBookingIntegration } from '@shared/clubIntegration';
-import { evaluateGameLinkedBookingCoverage } from '@/utils/gameHasConfirmedClubBooking';
 import { useBooktimeUserBookingIds } from '@/hooks/useBooktimeUserBookingIds';
 
 function resolveGameClub(game: Game): Club | undefined {
   return game.court?.club ?? game.club;
 }
 
-export function useGameLinkedBookingViewer(game: Game) {
+/**
+ * Which of the game's linked reservations sit in the VIEWER's club account.
+ * Club-side actions (verify, cancel at the club) only make sense for those:
+ * a co-organizer checking someone else's booking would always see it "missing".
+ * `enabled = false` skips the provider lookup (e.g. players without edit rights).
+ */
+export function useGameLinkedBookingViewer(game: Game, enabled = true) {
   const club = resolveGameClub(game);
   const links = useMemo(() => game.linkedBookings ?? [], [game.linkedBookings]);
   const hasLinkedBookings =
@@ -22,10 +27,13 @@ export function useGameLinkedBookingViewer(game: Game) {
     [club, hasIntegration],
   );
 
-  const { isOwner, loading } = useBooktimeUserBookingIds(
+  const { isOwner, loading, reload } = useBooktimeUserBookingIds(
     booktimeClub?.clubId,
     booktimeClub?.companyId,
-    hasLinkedBookings && hasIntegration && (Boolean(booktimeClub?.companyId) || booktimeClub?.integrationType === 'WELTNER'),
+    enabled &&
+      hasLinkedBookings &&
+      hasIntegration &&
+      (Boolean(booktimeClub?.companyId) || booktimeClub?.integrationType === 'WELTNER'),
     booktimeClub?.integrationType,
   );
 
@@ -34,41 +42,16 @@ export function useGameLinkedBookingViewer(game: Game) {
     [links, isOwner],
   );
 
-  const coverage = useMemo(() => {
-    if (game.bookingStatus === 'EXTERNAL_FULL') {
-      return {
-        courtCountMet: true,
-        timeCoverageMet: true,
-        fullyCovered: true,
-        requiredBookingCount: 0,
-      };
-    }
-    if (game.bookingStatus === 'EXTERNAL_PARTIAL') {
-      return {
-        courtCountMet: false,
-        timeCoverageMet: false,
-        fullyCovered: false,
-        requiredBookingCount: 0,
-      };
-    }
-
-    return (
-      evaluateGameLinkedBookingCoverage(game) ?? {
-        courtCountMet: false,
-        timeCoverageMet: false,
-        fullyCovered: false,
-        requiredBookingCount: 0,
-      }
-    );
-  }, [game]);
-
   const ownershipResolved = !loading || !hasLinkedBookings;
 
+  // Coverage is not reported here: the reservation summary
+  // (`utils/courtReservationView`) is the one read-side for that.
   return {
     hasLinkedBookings,
-    coverage,
     showOwnerSection: hasLinkedBookings && hasIntegration && ownershipResolved && ownsAnyLinkedBooking,
-    showPublicCoverageBadge:
-      hasLinkedBookings && ownershipResolved && !ownsAnyLinkedBooking,
+    /** The reservation is in the viewer's club account (false while unknown). */
+    ownsBooking: isOwner,
+    ownershipResolved,
+    reloadOwnership: reload,
   };
 }

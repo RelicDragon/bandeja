@@ -41,8 +41,8 @@ Shared ids (examples): Padel Americano 10/20/24, Mexicano 24, Challenger Pool, K
 ### Scheduling
 
 - Venue city chip independent of Find browse. Club search can pick other cities; pick sets `cityId` from `club.cityId` and clears courts/bookings
-- Court grid + occupancy rings (`CourtOccupancyRing`); multi-court from participant count
-- Date, duration, time grid
+- Location step order: Club → Date → **Courts** → **At the club?** → Time → summary (see *Courts and reservations on create*)
+- Date, duration, time grid (start times respect court occupancy)
 - Level range, max participants, gender
 - Name, description, avatar
 - Price (`priceType`, currency, total), plus a live **per-head preview** and an optional 120-char payment hint when the price type yields a game total ([economy.md](./economy.md))
@@ -58,18 +58,20 @@ The flow deliberately **creates the game first and converts it afterwards** (`PO
 
 Only `GAME`, `TRAINING` and `TOURNAMENT` may recur. Events, leagues and league seasons never show the row. Gated on `VITE_GAME_SERIES_ENABLED` / `GAME_SERIES_ENABLED`; off means the row is absent and no `/series` request is made. The series model, generation and edit scope: [games.md](./games.md).
 
-### Booking on create
+### Courts and reservations on create
 
-When club integration is BOOKTIME / PADELOO / KLIKTEREN: `GameLocationTimePanel` + `useCreateGameBookingFlow`.
+One flow for GAME / TRAINING / TOURNAMENT at a club (`CreateGameCourtPlanSection` + `useCreateGameCourtPlan`, pure core `courtPlanModel.ts`, all in `Frontend/src/components/createGame/courtPlan/`). BAR keeps the single hall picker.
 
-- Club → date → court → reservation card → auth/duration → time
-- Phone OTP inline (`ClubBookingConnectInline`)
-- Reservation strip; green overlay; adjacent slot grouping
-- **Book on create:** reserve via provider API; multi-court confirm modals (`BooktimeCreateGameConfirmModal`, `PadelooCreateGameConfirmModal`, `KlikterenCreateGameConfirmModal`, `NspadelCreateGameConfirmModal`)
-- Opt-out: “Don't book real court” — full grid, red external cells selectable
-- Prefill `?bookingIds=`
-- Rollback reservation if game create fails (`BOOKING_ERROR_KEYS.rollbackFailed`)
-- `GameCreateService` links `externalBookingIds` / `bookingSnapshots`; `hasBookedCourt` / `bookingStatus`
+- **Courts − N +.** N court slots, prefilled with the shared `defaultCourtSlotCount` (the roster need, capped by the club's courts) until the organizer touches the stepper; at least 1 and every linked reservation, at most the club's courts (≤ 16). Each slot is a chip: **Any court** or a picked court. Tapping a chip opens a bottom sheet (`CourtPickerSheet`) with every court's availability for the chosen time (free / planned game / booked at the club / held / reserved game / not bookable online). Picking a court another chip has swaps them.
+- **At the club?** — three answers, the same labels at every club:
+  - **Reserve now** (only when the club has an integration and `supportsClubBookingFlow`): needs the provider account (inline `ClubBookingConnectInline`); times come from the provider (`useClubTimeOptions`) for the picked courts, any court when none is picked; on create every Any court slot gets a free bookable court (`fillAnyCourtSlots`) and the provider confirm modal (`ClubCreateGameConfirmModal`) books all N. A partial failure or a failed game create cancels what was booked for every provider that can cancel (Booktime, Padeloo, Klikteren — `rollbackBooktimeBookings` over the provider's `cancelBooking`; rollback-failed copy if a cancel fails). NS Padel / Weltner cannot cancel through the app: booked courts stay booked and the dialog says how many.
+  - **Already reserved**: at a club that can list the player's reservations (connected Booktime / Padeloo / Klikteren / Weltner) the reservations of that date are selectable cards; each fills a court slot (the slot takes the reservation's court; N grows when every slot is taken). Every slot without one is marked reserved (`REPORTED`); a slot can be switched back in its sheet. Without integration (or not connected) it is just "mark the courts reserved". When a linked reservation's time differs from the picked time the game switches to it and asks once, inline, "Use the reservation's time …?" (Yes / Keep my time).
+  - **Not yet**: planned, nothing reserved.
+  Default: Reserve now at integrated clubs, else Not yet; `?bookingIds=` or a duplicated booked game → Already reserved; play-intent drafts → Not yet. A connected player with a reservation that day sees a "Use it" nudge.
+- **Time** (`GameStartSection` with `slotBlock`): a start time is **hard-blocked** for the whole game window when a picked court has a club booking, a hold or a reserved app game, or when too few courts are free for the Any court slots — it cannot be picked and tapping it says why. A planned app game is **soft**: selectable with a quiet note. The player's own linked reservations and marked-reserved courts never block themselves (their bookings are what shows as club-busy).
+- **Primary button** says what will happen, for every game type: "Reserve N courts and create", "Create with N reserved courts", or the plain create label (Not yet).
+- **Payload.** `POST /games` with `courtIds` (slot order, primary first), the linked `externalBookingIds` + `bookingSnapshots` and legacy `hasBookedCourt`; the game keeps the time the organizer picked (`timeOverride` when links disagree). Then `PUT /games/:id/court-slots?timePolicy=explicit` with the slots (`REPORTED` for marked ones), `reportedAnyCourtCount` and `courtSlotCount = N`. A failure there is a toast; the game is kept.
+- Deep links still work: `?bookingIds=` (links once the player's reservations load; falls back to marking when they cannot), `?clubId&courtId&date`, the club page schedule picker. Duplicate copies `gameCourts` and `courtSlotCount`.
 
 ### Submit
 
@@ -91,6 +93,6 @@ Not the game wizard. No courts, rating, results, or templates. Required: `eventK
 
 ## Code
 
-- FE: `Frontend/src/pages/CreateGame.tsx`, `CreateLeague.tsx`, `CreateEvent.tsx`; `Frontend/src/components/createGame/`; `Frontend/src/components/createEvent/`; `Frontend/src/components/gameFormat/`; `Frontend/src/hooks/createGameBookingFlow/`
+- FE: `Frontend/src/pages/CreateGame.tsx`, `CreateLeague.tsx`, `CreateEvent.tsx`; `Frontend/src/components/createGame/` (court plan: `createGame/courtPlan/`); `Frontend/src/components/createEvent/`; `Frontend/src/components/gameFormat/`
 - Shared: `Frontend/shared/createTemplates.ts`, `isPresetLegal.ts`, `entityCapabilities.ts`, `@shared/booking/`
 - BE: `Backend/src/services/game/create.service.ts`, `eventCreateDefaults.ts`; `Backend/src/services/league/create.service.ts`; `validateGameForSport`

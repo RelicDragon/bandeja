@@ -57,6 +57,8 @@ export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
     matchTimerEnabled: game.matchTimerEnabled,
     matchTimedCapMinutes: game.matchTimedCapMinutes,
     gameCourts: game.gameCourts,
+    // How many courts the organizer chose (the create stepper starts there).
+    courtSlotCount: game.courtSlotCount,
   };
 
   if (game.entityType === 'LEAGUE_SEASON') {

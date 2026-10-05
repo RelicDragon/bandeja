@@ -255,6 +255,8 @@ model User {
   /// Last weekly memory consolidation pass for this user (Phase 11.4).
   agentMemoryConsolidatedAt      DateTime?
   bookedExternalBookings         GameExternalBooking[]            @relation("GameExternalBookingBookedBy")
+  reportedGameCourts             GameCourt[]                      @relation("GameCourtReportedBy")
+  reservationChangesCreated      GameReservationChange[]          @relation("GameReservationChangeCreatedBy")
 
   @@index([phone])
   @@index([telegramId])
@@ -398,62 +400,62 @@ model WeatherDayArchive {
 }
 
 model Club {
-  id                      String                      @id @default(cuid())
-  name                    String
-  normalizedName          String
-  description             String?
-  avatar                  String?
-  originalAvatar          String?
-  photos                  Json                        @default("[]")
-  address                 String
-  cityId                  String
-  phone                   String?
-  email                   String?
-  website                 String?
-  latitude                Float?
-  longitude               Float?
-  openingTime             String?
-  closingTime             String?
-  amenities               Json?
-  isActive                Boolean                     @default(true)
-  isBar                   Boolean                     @default(false)
-  isForPlaying            Boolean                     @default(true)
-  integrationType         ClubIntegrationType?
-  integrationConfig       Json?
-  ptMeta                  Json?                       @map("pt_meta")
-  courtsNumber            Int                         @default(0)
-  sports                  Sport[]                     @default([PADEL])
-  clubRating              Float?
-  clubReviewCount         Int                         @default(0)
-  defaultSlotMinutes      Int?
-  cancellationNoticeHours Int?
-  policyText              String?
-  createdAt               DateTime                    @default(now())
-  updatedAt               DateTime                    @updatedAt
-  city                    City                        @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  courts                  Court[]
-  games                   Game[]
-  favoritedBy             UserFavoriteClub[]
-  leagues                 League[]
-  clubReviews             ClubReview[]
-  scheduledBracketSlots   LeagueBracketSlot[]         @relation("BracketScheduledClub")
-  clubAdmins              ClubAdmin[]
-  courtSlotHolds          CourtSlotHold[]
-  adSponsors              AdSponsor[]
-  booktimeAuths           UserClubBooktimeAuth[]
-  booktimeBusySnapshots   ClubBooktimeBusySnapshot[]
-  padelooAuths            UserClubPadelooAuth[]
-  padelooBusySnapshots    ClubPadelooBusySnapshot[]
-  klikterenAuths          UserClubKlikterenAuth[]
-  klikterenBusySnapshots  ClubKlikterenBusySnapshot[]
-  nspadelAuths            UserClubNspadelAuth[]
-  weltnerAuths            UserClubWeltnerAuth[]
-  weltnerBookings         WeltnerBooking[]
-  nspadelBookings         NspadelBooking[]
-  externalBookingMirrors  ExternalBookingMirror[]
+  id                         String                      @id @default(cuid())
+  name                       String
+  normalizedName             String
+  description                String?
+  avatar                     String?
+  originalAvatar             String?
+  photos                     Json                        @default("[]")
+  address                    String
+  cityId                     String
+  phone                      String?
+  email                      String?
+  website                    String?
+  latitude                   Float?
+  longitude                  Float?
+  openingTime                String?
+  closingTime                String?
+  amenities                  Json?
+  isActive                   Boolean                     @default(true)
+  isBar                      Boolean                     @default(false)
+  isForPlaying               Boolean                     @default(true)
+  integrationType            ClubIntegrationType?
+  integrationConfig          Json?
+  ptMeta                     Json?                       @map("pt_meta")
+  courtsNumber               Int                         @default(0)
+  sports                     Sport[]                     @default([PADEL])
+  clubRating                 Float?
+  clubReviewCount            Int                         @default(0)
+  defaultSlotMinutes         Int?
+  cancellationNoticeHours    Int?
+  policyText                 String?
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  city                       City                        @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  courts                     Court[]
+  games                      Game[]
+  favoritedBy                UserFavoriteClub[]
+  leagues                    League[]
+  clubReviews                ClubReview[]
+  scheduledBracketSlots      LeagueBracketSlot[]         @relation("BracketScheduledClub")
+  clubAdmins                 ClubAdmin[]
+  courtSlotHolds             CourtSlotHold[]
+  adSponsors                 AdSponsor[]
+  booktimeAuths              UserClubBooktimeAuth[]
+  booktimeBusySnapshots      ClubBooktimeBusySnapshot[]
+  padelooAuths               UserClubPadelooAuth[]
+  padelooBusySnapshots       ClubPadelooBusySnapshot[]
+  klikterenAuths             UserClubKlikterenAuth[]
+  klikterenBusySnapshots     ClubKlikterenBusySnapshot[]
+  nspadelAuths               UserClubNspadelAuth[]
+  weltnerAuths               UserClubWeltnerAuth[]
+  weltnerBookings            WeltnerBooking[]
+  nspadelBookings            NspadelBooking[]
+  externalBookingMirrors     ExternalBookingMirror[]
   externalBookingMirrorSyncs ExternalBookingMirrorSync[]
-  nspadelBusySnapshots    ClubNspadelBusySnapshot[]
-  gameSeries              GameSeries[]
+  nspadelBusySnapshots       ClubNspadelBusySnapshot[]
+  gameSeries                 GameSeries[]
 
   @@index([cityId])
   @@index([isActive])
@@ -871,6 +873,12 @@ model Game {
   /// rules are unchanged by it. Never inferred from the level range, never auto-set, and
   /// only ever true for entity types with `entityCapabilities.hasNoviceTag`.
   suitableForNovices         Boolean                         @default(false)
+  /// Court slots: "N courts reserved, which ones unknown" — used when the organizer reports a
+  /// reservation without picking courts. Per-court reservations live on `GameCourt.reservation`.
+  reportedAnyCourtCount      Int                             @default(0)
+  /// Court slots: organizer-chosen number of courts the game uses (1..16). Null = default
+  /// (assigned courts when any, else the roster need). Slots = max(this, assigned courts).
+  courtSlotCount             Int?
   createdAt                  DateTime                        @default(now())
   updatedAt                  DateTime                        @updatedAt
   club                       Club?                           @relation(fields: [clubId], references: [id])
@@ -915,6 +923,7 @@ model Game {
   spotOpenedDeliveries       SpotOpenedDelivery[]
   liveGameNotifyDeliveries   LiveGameNotifyDelivery[]
   timeChange                 GameTimeChange?
+  reservationChanges         GameReservationChange[]
 
   @@unique([seriesId, seriesOccurrenceDate])
   @@index([clubId])
@@ -944,26 +953,37 @@ model Game {
 }
 
 model GameExternalBooking {
-  id                      String              @id @default(cuid())
+  id                      String                           @id @default(cuid())
   gameId                  String
   externalBookingId       String
-  externalBookingProvider ClubIntegrationType @default(BOOKTIME)
+  externalBookingProvider ClubIntegrationType              @default(BOOKTIME)
   courtId                 String?
   bookingStart            DateTime?
   bookingEnd              DateTime?
   /// Who attached this booking to the app (create/link). Null for legacy rows. Never overwritten.
   bookedByUserId          String?
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
+  /// Court slot this booking reserves (same game). Null for legacy/unplaced rows.
+  gameCourtId             String?
+  /// Club-side drift (docs/domains/booking.md "Club-side drift"): what the provider says now.
+  /// Detected from the app-fed mirror sync or a client verify; never changes the game or link.
+  upstreamState           GameExternalBookingUpstreamState @default(OK)
+  /// Provider times when `upstreamState = MOVED`.
+  upstreamStart           DateTime?
+  upstreamEnd             DateTime?
+  upstreamCheckedAt       DateTime?
+  createdAt               DateTime                         @default(now())
+  updatedAt               DateTime                         @updatedAt
 
-  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  court    Court? @relation(fields: [courtId], references: [id], onDelete: SetNull)
-  bookedBy User?  @relation("GameExternalBookingBookedBy", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  game      Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  court     Court?     @relation(fields: [courtId], references: [id], onDelete: SetNull)
+  bookedBy  User?      @relation("GameExternalBookingBookedBy", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  gameCourt GameCourt? @relation(fields: [gameCourtId], references: [id], onDelete: SetNull)
 
   @@unique([gameId, externalBookingId])
   @@index([externalBookingId])
   @@index([gameId])
   @@index([bookedByUserId])
+  @@index([gameCourtId])
 }
 
 model GamePhoto {
@@ -2902,6 +2922,35 @@ enum GameBookingStatus {
   EXTERNAL_FULL
 }
 
+enum GameCourtReservation {
+  NONE
+  REPORTED
+}
+
+enum GameExternalBookingUpstreamState {
+  OK
+  MOVED
+  MISSING
+  UNKNOWN
+}
+
+enum GameReservationChangeState {
+  RUNNING
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+  ABANDONED
+}
+
+enum GameReservationChangeStepStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+  SKIPPED
+  NEEDS_CLUB
+}
+
 enum ResultsStatus {
   NONE
   IN_PROGRESS
@@ -2985,17 +3034,25 @@ enum BetStatus {
 }
 
 model GameCourt {
-  id        String   @id @default(cuid())
-  gameId    String
-  courtId   String
-  order     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  id               String                @id @default(cuid())
+  gameId           String
+  courtId          String
+  order            Int
+  /// Organizer-reported reservation of this court ("booked it myself"). A linked
+  /// `GameExternalBooking` (gameCourtId) also counts as reserved, independently of this.
+  reservation      GameCourtReservation  @default(NONE)
+  reportedById     String?
+  reportedAt       DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  game             Game                  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  court            Court                 @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  reportedBy       User?                 @relation("GameCourtReportedBy", fields: [reportedById], references: [id], onDelete: SetNull)
+  externalBookings GameExternalBooking[]
 
   @@unique([gameId, courtId])
   @@unique([gameId, order])
+  @@index([reportedById])
   @@index([gameId])
   @@index([courtId])
 }
@@ -3669,7 +3726,8 @@ model PlayIntentNotificationDelivery {
   @@unique([eventKey, userId, channelType])
   @@index([status, runAfter])
   @@index([userId, createdAt])
-  @@index([userId, notificationType, createdAt])
+  /// Name as Postgres stored it (63-char truncation of the hand-written name in 20260730120000).
+  @@index([userId, notificationType, createdAt], map: "PlayIntentNotificationDelivery_userId_notificationType_createdA")
   @@index([notificationType, sourceId])
 }
 
@@ -3818,18 +3876,18 @@ model ExchangeRate {
 }
 
 model LlmUsageLog {
-  id           String   @id @default(cuid())
-  provider     String   @db.VarChar(32)
-  model        String   @db.VarChar(128)
-  reason       String?  @db.VarChar(64)
-  userId       String?
-  input        String   @db.Text
-  output       String   @db.Text
-  inputTokens  Int?
-  outputTokens Int?
+  id                String   @id @default(cuid())
+  provider          String   @db.VarChar(32)
+  model             String   @db.VarChar(128)
+  reason            String?  @db.VarChar(64)
+  userId            String?
+  input             String   @db.Text
+  output            String   @db.Text
+  inputTokens       Int?
+  outputTokens      Int?
   /// Part of `inputTokens` served from the provider's prompt cache (DeepSeek `prompt_cache_hit_tokens`), when reported.
   cachedInputTokens Int?
-  createdAt    DateTime @default(now())
+  createdAt         DateTime @default(now())
 
   @@index([provider])
   @@index([model])
@@ -4437,6 +4495,48 @@ model LiveGameNotifyDelivery {
 /// single notice that carries the final time; `previous*` is the schedule
 /// players were last told about, so an edit reverted inside the window sends
 /// nothing. Durable and claimed by `version`, never an in-process set.
+/// Server-side journal of a client-run reschedule (docs/domains/booking.md "Reschedule journal").
+/// At most one RUNNING row per game (enforced under the Game row lock); a RUNNING row untouched
+/// for 15 min is stale and is ABANDONED when another run starts.
+model GameReservationChange {
+  id          String                      @id @default(cuid())
+  gameId      String
+  createdById String?
+  state       GameReservationChangeState  @default(RUNNING)
+  /// The client's `ReschedulePlan` (@bandeja/shared planReschedule), stored as sent.
+  plan        Json
+  fromStart   DateTime
+  fromEnd     DateTime
+  toStart     DateTime
+  toEnd       DateTime
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+  game        Game                        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdBy   User?                       @relation("GameReservationChangeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  steps       GameReservationChangeStep[]
+
+  @@index([gameId, state])
+  @@index([createdById])
+}
+
+model GameReservationChangeStep {
+  id             String                          @id @default(cuid())
+  changeId       String
+  /// The plan step's `idempotencyKey`.
+  idempotencyKey String
+  kind           String
+  /// Monotonic: never back to PENDING; DONE / SKIPPED are final.
+  status         GameReservationChangeStepStatus @default(PENDING)
+  result         Json?
+  error          String?
+  createdAt      DateTime                        @default(now())
+  updatedAt      DateTime                        @updatedAt
+  change         GameReservationChange           @relation(fields: [changeId], references: [id], onDelete: Cascade)
+
+  @@unique([changeId, idempotencyKey])
+  @@index([status])
+}
+
 model GameTimeChange {
   gameId            String    @id
   attendanceResetAt DateTime?
@@ -4620,18 +4720,18 @@ enum AgentActionStatus {
 }
 
 model AgentChat {
-  id         String               @id @default(cuid())
-  userId     String
-  title      String?              @db.VarChar(120)
-  createdAt  DateTime             @default(now())
-  updatedAt  DateTime             @updatedAt
+  id                String               @id @default(cuid())
+  userId            String
+  title             String?              @db.VarChar(120)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
   /// Archived by the user: listed under "Archived" in the app, still readable and writable
   /// (sending a message moves it back). Hidden from the Telegram assistant's list.
-  archivedAt DateTime?
+  archivedAt        DateTime?
   /// Deleted by the user (soft delete): hidden from every list and lookup; rows stay on the server.
-  deletedAt  DateTime?
+  deletedAt         DateTime?
   /// Pinned to the top of the chat list (most recently pinned first); null = not pinned.
-  pinnedAt   DateTime?
+  pinnedAt          DateTime?
   /// Rolling summary of the turns folded out of the replay window (Phase 11.4; chat-scoped,
   /// not memory). Covers messages with `seq <= summaryThroughSeq`.
   summary           String?              @db.Text
@@ -4639,34 +4739,34 @@ model AgentChat {
   /// The summarized turns included text written by other people (an `untrustedContent` read).
   summaryTainted    Boolean              @default(false)
   summaryUpdatedAt  DateTime?
-  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages   AgentMessage[]
-  runs       AgentRun[]
-  actions    AgentPendingAction[]
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages          AgentMessage[]
+  runs              AgentRun[]
+  actions           AgentPendingAction[]
 
   @@index([userId, archivedAt, updatedAt])
   @@index([userId, deletedAt, archivedAt])
 }
 
 model AgentMessage {
-  id          String           @id @default(cuid())
-  chatId      String
+  id              String                @id @default(cuid())
+  chatId          String
   /// Monotonic per chat, starting at 1.
-  seq         Int
-  role        AgentMessageRole
+  seq             Int
+  role            AgentMessageRole
   /// Client-visible blocks (`AgentContentBlock[]` in Frontend/shared/agentContract.ts).
-  content     Json
+  content         Json
   /// Private: raw OpenAI-format messages (assistant tool_calls / tool results) replayed to the model. Never sent to clients.
-  llmMessages Json?
-  runId       String?
-  createdAt   DateTime         @default(now())
+  llmMessages     Json?
+  runId           String?
+  createdAt       DateTime              @default(now())
   /// The owner's rating of an ASSISTANT message (null = none / cleared). Admin: `GET /api/admin/agent/feedback`.
   feedback        AgentMessageFeedback?
   /// Optional note with the rating (≤500 chars).
   feedbackComment String?               @db.VarChar(500)
   feedbackAt      DateTime?
-  chat        AgentChat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  run         AgentRun?        @relation(fields: [runId], references: [id], onDelete: SetNull)
+  chat            AgentChat             @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  run             AgentRun?             @relation(fields: [runId], references: [id], onDelete: SetNull)
 
   @@unique([chatId, seq])
   @@index([runId])
@@ -4674,41 +4774,41 @@ model AgentMessage {
 }
 
 model AgentRun {
-  id           String               @id @default(cuid())
-  chatId       String
+  id                String               @id @default(cuid())
+  chatId            String
   /// Denormalised owner for per-user caps and budgets.
-  userId       String
-  status       AgentRunStatus       @default(QUEUED)
-  error        String?              @db.Text
-  errorCode    String?              @db.VarChar(32)
-  model        String?              @db.VarChar(128)
+  userId            String
+  status            AgentRunStatus       @default(QUEUED)
+  error             String?              @db.Text
+  errorCode         String?              @db.VarChar(32)
+  model             String?              @db.VarChar(128)
   /// Reply locale captured from `X-App-Locale` at enqueue (the worker has no request).
-  locale       String?              @db.VarChar(16)
-  inputTokens  Int                  @default(0)
-  outputTokens Int                  @default(0)
-  steps        Int                  @default(0)
+  locale            String?              @db.VarChar(16)
+  inputTokens       Int                  @default(0)
+  outputTokens      Int                  @default(0)
+  steps             Int                  @default(0)
   /// Prompt + reply tokens of the run's latest model call: the chat's current context size.
-  contextTokens Int                 @default(0)
+  contextTokens     Int                  @default(0)
   /// Prompt tokens served from the provider's prefix cache, summed over steps (DeepSeek `prompt_cache_hit_tokens`). Null = provider never reported it.
   cachedInputTokens Int?
   /// Why the loop stopped: answered | max_steps | awaiting_confirmation | cancelled | timeout | queue_timeout | interrupted | error. Null = older runs / still open.
-  endReason    String?              @db.VarChar(32)
+  endReason         String?              @db.VarChar(32)
   /// Queued at. Queue order and the daily budget window use this.
-  createdAt    DateTime             @default(now())
+  createdAt         DateTime             @default(now())
   /// Claimed by a worker (QUEUED -> RUNNING).
-  startedAt    DateTime?
-  endedAt      DateTime?
+  startedAt         DateTime?
+  endedAt           DateTime?
   /// Executor liveness; RUNNING rows with a stale heartbeat are failed by the sweep.
-  heartbeatAt  DateTime?
+  heartbeatAt       DateTime?
   /// Process that claimed the run (host:pid:random), for ops/debugging.
-  workerId     String?              @db.VarChar(96)
+  workerId          String?              @db.VarChar(96)
   /// Client capabilities from `X-Agent-Client-Caps` at enqueue (e.g. `booking-v1`); empty for Telegram / old builds.
-  clientCaps   String[]             @default([])
+  clientCaps        String[]             @default([])
   /// Voice conversation turn (`voice: true` at enqueue, inherited by confirm follow-ups): the prompt asks for short spoken replies.
-  voice        Boolean              @default(false)
-  chat         AgentChat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  messages     AgentMessage[]
-  actions      AgentPendingAction[]
+  voice             Boolean              @default(false)
+  chat              AgentChat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  messages          AgentMessage[]
+  actions           AgentPendingAction[]
 
   @@index([chatId, status])
   @@index([status, createdAt])

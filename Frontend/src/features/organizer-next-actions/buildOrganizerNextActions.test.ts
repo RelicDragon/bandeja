@@ -11,12 +11,15 @@ import { buildOrganizerNextActions } from './buildOrganizerNextActions';
 import type {
   OrganizerAttendanceInput,
   OrganizerNextActionsInput,
+  OrganizerReservationInput,
   OrganizerViewerRole,
 } from './organizerNextActionsTypes';
 
 function playing(n: number) {
   return Array.from({ length: n }, () => ({ status: 'PLAYING' }));
 }
+
+const PLANNED: OrganizerReservationInput = { kind: 'planned', reserved: 0, total: 1, gapTime: null };
 
 const OPEN_ATTENDANCE: OrganizerAttendanceInput = {
   enabled: true,
@@ -44,7 +47,7 @@ function input(overrides: Partial<OrganizerNextActionsInput> = {}): OrganizerNex
     canInvite: true,
     canManageQueue: true,
     attendance: OPEN_ATTENDANCE,
-    bookingCoverage: 'none',
+    reservation: PLANNED,
     cost: { unpaidCount: 2, viewerOwesUnpaid: false },
     ...overrides,
   };
@@ -110,12 +113,12 @@ describe('buildOrganizerNextActions — seats', () => {
 });
 
 describe('buildOrganizerNextActions — booking', () => {
-  it('reads "not booked" as a gap that opens the court editor when nothing is linked', () => {
+  it('reads "planned" as a gap that opens the court editor when nothing is linked', () => {
     const booking = buildOrganizerNextActions(input()).find((h) => h.key === 'booking');
-    expect(booking).toMatchObject({ key: 'booking', state: 'none', action: 'editCourt' });
+    expect(booking).toMatchObject({ key: 'booking', state: 'none', reserved: 0, total: 1, action: 'editCourt' });
   });
 
-  it('sends the organizer to the bookings section when links exist but cover nothing', () => {
+  it('sends the organizer to the bookings section when links exist but reserve nothing', () => {
     const i = input({ game: { ...input().game, linkedBookingCount: 1 } });
     expect(buildOrganizerNextActions(i).find((h) => h.key === 'booking')).toMatchObject({
       state: 'none',
@@ -123,23 +126,49 @@ describe('buildOrganizerNextActions — booking', () => {
     });
   });
 
-  it('reads partial coverage as "partly booked"', () => {
-    const i = input({ bookingCoverage: 'external_partial', game: { ...input().game, linkedBookingCount: 1 } });
+  it('reads a partial summary as "k of N reserved"', () => {
+    const i = input({
+      reservation: { kind: 'partial', reserved: 2, total: 4, gapTime: null },
+      game: { ...input().game, linkedBookingCount: 1 },
+    });
     expect(buildOrganizerNextActions(i).find((h) => h.key === 'booking')).toMatchObject({
       state: 'partial',
+      reserved: 2,
+      total: 4,
       action: 'seeBookings',
     });
   });
 
-  it.each(['manual', 'external_full'] as const)('is silent when coverage is %s', (coverage) => {
-    expect(keys(input({ bookingCoverage: coverage }))).not.toContain('booking');
+  it('opens the court editor for a partial summary without links (reported courts only)', () => {
+    const i = input({ reservation: { kind: 'partial', reserved: 1, total: 2, gapTime: null } });
+    expect(buildOrganizerNextActions(i).find((h) => h.key === 'booking')).toMatchObject({
+      state: 'partial',
+      action: 'editCourt',
+    });
+  });
+
+  it('reads a reserved-with-gap summary as "Gap at" and points at the bookings', () => {
+    const i = input({
+      reservation: { kind: 'reserved_with_gap', reserved: 1, total: 1, gapTime: '19:00' },
+      game: { ...input().game, linkedBookingCount: 1 },
+    });
+    expect(buildOrganizerNextActions(i).find((h) => h.key === 'booking')).toMatchObject({
+      state: 'gap',
+      gapTime: '19:00',
+      action: 'seeBookings',
+    });
+  });
+
+  it('is silent when every court is reserved', () => {
+    const reserved: OrganizerReservationInput = { kind: 'reserved', reserved: 2, total: 2, gapTime: null };
+    expect(keys(input({ reservation: reserved }))).not.toContain('booking');
   });
 
   it('is silent without a time, without a club, or without the booking capability', () => {
     expect(keys(input({ game: { ...input().game, timeIsSet: false } }))).not.toContain('booking');
     expect(keys(input({ game: { ...input().game, hasClub: false } }))).not.toContain('booking');
     expect(keys(input({ game: { ...input().game, entityType: 'BAR' } }))).not.toContain('booking');
-    expect(keys(input({ bookingCoverage: null }))).not.toContain('booking');
+    expect(keys(input({ reservation: null }))).not.toContain('booking');
   });
 });
 

@@ -236,12 +236,12 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño del bar",
         "GAME_CLUB_CHANGED": "Ubicación del bar cambiada a {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Fecha/hora del bar cambiada a {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva del salón cambiado a {{bookingStatus}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Reserva del salón: {{bookingStatus}}",
         "bookingStatuses": {
-          "EXTERNAL_FULL": "Completamente reservado",
-          "EXTERNAL_PARTIAL": "No completamente reservado",
-          "MANUAL": "Salón reservado",
-          "NONE": "Aún no reservado"
+          "EXTERNAL_FULL": "Reservado",
+          "EXTERNAL_PARTIAL": "Reservado parcialmente",
+          "MANUAL": "Reservado",
+          "NONE": "Planificado"
         }
       },
       "TRAINING": {
@@ -254,7 +254,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño del entrenamiento",
         "GAME_CLUB_CHANGED": "Ubicación del entrenamiento cambiada a {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Fecha/hora del entrenamiento cambiada a {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Reserva de pista: {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} se unió al torneo",
@@ -266,7 +266,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño del torneo",
         "GAME_CLUB_CHANGED": "Ubicación del torneo cambiada a {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Fecha/hora del torneo cambiada a {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Reserva de pista: {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} se unió a la liga",
@@ -278,7 +278,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño de la liga",
         "GAME_CLUB_CHANGED": "Ubicación de la liga cambiada a {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Fecha/hora de la liga cambiada a {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Reserva de pista: {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} se unió a la temporada de liga",
@@ -290,18 +290,18 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño de la temporada de liga",
         "GAME_CLUB_CHANGED": "Ubicación de la temporada de liga cambiada a {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Fecha/hora de la temporada de liga cambiada a {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Reserva de pista: {{bookingStatus}}"
       },
       "actions": {
         "joined": "se unió al juego",
         "left": "abandonó el juego"
       },
-      "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}",
+      "GAME_BOOKING_STATUS_CHANGED": "Reserva de pista: {{bookingStatus}}",
       "bookingStatuses": {
-        "EXTERNAL_FULL": "Completamente reservado",
-        "EXTERNAL_PARTIAL": "No completamente reservado",
-        "MANUAL": "Pista reservada",
-        "NONE": "Aún no reservado"
+        "EXTERNAL_FULL": "Todas las pistas reservadas",
+        "EXTERNAL_PARTIAL": "Reservado parcialmente",
+        "MANUAL": "Reservado",
+        "NONE": "Planificado"
       },
       "ATTENDANCE_NUDGED": "{{userName}} pidió a todos que confirmen su asistencia",
       "USER_NOTED_NO_SHOW": "{{userName}} fue marcado como ausente",

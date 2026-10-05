@@ -40,21 +40,10 @@
     },
     "locationTime": {
       "tabLabel": "Ubicación y horario",
-      "partialSaveFailed": "Algunos cambios se guardaron, pero no se pudo actualizar {{step}}. Revise e inténtelo de nuevo.",
-      "saveStep": {
-        "gameFields": "ubicación u horario",
-        "bookings": "enlaces de reserva",
-        "snapshots": "detalles de reserva",
-        "courts": "pistas"
-      },
-      "unlinkNoCancelHint": "La reserva de pista en el club sigue activa — solo quitamos el vínculo con este partido.",
       "unlinkSaveConfirmTitle": "¿Quitar enlaces de reserva?",
       "unlinkSaveConfirmMessage": "Vas a desvincular {{count}} reserva(s) de este partido. Las reservas reales de pista no se cancelarán automáticamente.",
       "reservationActionTitle": "¿Qué debe pasar con la pista?",
       "reservationActionSubtitle": "Elige qué cambia al guardar.",
-      "changeGateTitle": "Vinculado a {{count}} pista(s)",
-      "changeGateBody": "Desvincula primero para reservar en otro club o pistas.",
-      "changeGateBodyClub": "Desvincula primero para dejar {{club}} y reservar en otro sitio.",
       "clubLockedBadge": "Vinculado",
       "clubLockedAria": "El club está bloqueado. Desvincula la reserva para cambiar de club.",
       "reservationAction": {
@@ -88,22 +77,9 @@
           "chipTitle": "Sin reserva",
           "description": "Mantén el partido programado sin vínculo de reserva real."
         }
-      },
-      "consequenceTitle": "Qué ocurrirá",
-      "consequence": {
-        "keepCurrent": "Los vínculos de reserva actuales se mantienen.",
-        "changeGameTimeOnly": "Cambia el horario del partido; los vínculos de reserva se mantienen.",
-        "useExisting": "Se vincularán {{selected}} reserva(s) a este partido.",
-        "reserveNew": "Se creará una nueva reserva real de pista al guardar.",
-        "unlink": "Se quitarán los vínculos de reserva de este partido. Tras guardar podrás reservar otro club o pistas.",
-        "gameOnly": "El partido queda programado sin vínculos de reserva real.",
-        "reserveNewConfirm": "Revisarás la reserva real antes de guardar.",
-        "unlinkNoCancel": "{{count}} reserva(s) real(es) del club seguirán activas salvo que las canceles con el club/proveedor."
       }
     },
     "linkedBookings": {
-      "fullyCovered": "Completamente reservado",
-      "notFullyCovered": "No completamente reservado",
       "timeMismatch": "No cubre la nueva hora del partido. Cámbiala con el club; la app no la modifica.",
       "refreshAriaLabel": "Comprobar estado de la reserva",
       "refreshStillActive": "La reserva sigue activa en tu cuenta del club",
@@ -877,6 +853,42 @@
     "substitutePlayerOutLosesResults": "{{name}} no conserva puntuación ni clasificación en este partido",
     "substitutePlayerKeepsTeamSlot": "La plaza del equipo, la pista y el tamaño de la alineación no cambian",
     "substitutePlayerConfirm": "Sustituir jugador",
-    "substitutePlayerSuccess": "Jugador sustituido"
+    "substitutePlayerSuccess": "Jugador sustituido",
+    "courts": {
+      "otherGame": "Otro partido",
+      "clash": "{{court}} está ocupada {{from}}–{{to}}. Elige otra hora u otra pista.",
+      "clashGeneric": "Hay una pista ocupada a esa hora. Elige otra hora u otra pista.",
+      "updateFailed": "No se pudieron actualizar las pistas. Inténtalo de nuevo.",
+      "slotTaken": "Esa pista se acaba de ocupar. Elige otra hora u otra pista.",
+      "connectTitle": "Conecta tu cuenta del club",
+      "linkTitle": "Vincular una reserva",
+      "linkHint": "Tus reservas en {{club}} el día del partido",
+      "linkEmpty": "No tienes reservas en {{club}} ese día en tu cuenta.",
+      "needTime": "Primero fija la hora del partido.",
+      "pickCourtFirst": "Primero elige una pista.",
+      "verifyPresent": "La reserva sigue activa en el club.",
+      "verifyMissing": "El club ya no tiene esta reserva.",
+      "cancelMessage": "La reserva se cancela en el club y se quita de este partido.",
+      "pickerTitle": "Pistas",
+      "pickerHint": "Elige las pistas en orden. Resérvalas desde la página del partido.",
+      "linkedCourtLocked": "Esta pista tiene una reserva vinculada. Desvincúlala primero en la página del partido.",
+      "count": "Número de pistas",
+      "anyCourts": "Cualquier pista × {{count}}",
+      "fewer": "Una pista menos",
+      "more": "Una pista más",
+      "clubLocked": "Este partido tiene reservas vinculadas. Desvincúlalas en la página del partido para cambiar de club.",
+      "timeByPlanner": "Al mover el partido también se mueven sus reservas de pista.",
+      "changeTime": "Cambiar hora",
+      "saveFirst": "Guarda o descarta primero tus otros cambios.",
+      "overlapReserved": "Otro partido tiene esta pista reservada a esa hora. El club podría rechazarlo. ¿Guardar de todos modos?",
+      "gapTitle": "Cubrir el hueco",
+      "gapAdds": "Añade {{range}}.",
+      "gapExtra": "Son {{minutes}} min más que el hueco: el club solo vende duraciones fijas.",
+      "gapContinue": "Continuar",
+      "gapClash": "{{court}} está ocupada {{time}}, así que el hueco no se puede cubrir aquí. Pregunta al club o elige otra pista.",
+      "gapAskClub": "El club no vende una reserva que encaje en este hueco. Pregunta al club.",
+      "gapUnavailable": "Este hueco no se puede cubrir desde la app. Pregunta al club.",
+      "connectSkip": "Ahora no"
+    }
   }
 }

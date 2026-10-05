@@ -12,8 +12,10 @@
       "invite": "Invitar"
     },
     "booking": {
-      "notBooked": "Pista aún sin reservar",
-      "partlyBooked": "Pista reservada solo en parte",
+      "notReservedOne": "Pista aún sin reservar",
+      "notReservedMany": "Pistas aún sin reservar",
+      "partlyReserved": "{{reserved}} de {{total}} pistas reservadas",
+      "gapAt": "Hueco en la reserva a las {{time}}",
       "seeBookings": "Ver reservas",
       "editCourt": "Editar pista"
     },

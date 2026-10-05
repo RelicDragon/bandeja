@@ -19,7 +19,6 @@ import {
   CourtModal,
   GameInfo,
   GameSettings,
-  MultipleCourtsSelector,
   LeagueScheduleTab,
   LeaguePlannerTab,
   LeagueStandingsTab,
@@ -60,7 +59,8 @@ import { TrainingResultsSection } from '@/components/GameDetails/TrainingResults
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
 import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
-import { GameLinkedBookingsSection } from '@/components/GameDetails/GameLinkedBookingsSection';
+import { GameCourtsSection } from '@/components/GameDetails/courts/GameCourtsSection';
+import { rescheduleNeeded } from '@/components/GameDetails/courts/gameCourtsModel';
 import { GameRoster } from '@/components/GameDetails/roster/GameRoster';
 import { canViewGameCost } from '@/features/cost/costViewModel';
 import { SeriesGameSection } from '@/features/game-series/SeriesGameSection';
@@ -207,6 +207,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [isLeaving, setIsLeaving] = useState(false);
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoInitialTabId>('general');
+  /** The court-aware reschedule planner (games with reservations or several courts). */
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
   // The switch reacts to `activeTab` at once; the tab body follows as an
   // interruptible render, so a heavy General tab never holds the tap hostage.
@@ -833,6 +835,21 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const canEditGameFormat = game ? canUserEditGameFormat(game, user) : false;
   const canMutateRoster = game ? canMutateGameRoster(game) : false;
   const canViewSettings = canMutateRoster && canEdit;
+
+  /**
+   * Every "change time" entry: a game whose reservations could be affected
+   * (linked reservations, or several court slots) goes through the reschedule
+   * planner so its courts move with it; anything else keeps the plain editor.
+   */
+  const openChangeTime = () => {
+    if (game && canViewSettings && rescheduleNeeded(game)) {
+      setIsEditGameInfoModalOpen(false);
+      setRescheduleOpen(true);
+      return;
+    }
+    setEditGameInfoInitialTab('locationTime');
+    setIsEditGameInfoModalOpen(true);
+  };
 
   // PRD 346 — attendance. Only fetched once the game actually has a time and is
   // still upcoming, or while an organizer can still note a no-show afterwards.
@@ -1671,10 +1688,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               autoOpenMoveIndoor={weatherDeepLink.autoOpenMoveIndoor}
               autoScrollIntoView={weatherDeepLink.section}
               onAutoOpenConsumed={weatherDeepLink.consume}
-              onChangeTime={() => {
-                setEditGameInfoInitialTab('locationTime');
-                setIsEditGameInfoModalOpen(true);
-              }}
+              onChangeTime={openChangeTime}
             />
           </div>
 
@@ -1691,6 +1705,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 setEditGameInfoInitialTab(tab ?? 'general');
                 setIsEditGameInfoModalOpen(true);
               }}
+              onChangeTime={openChangeTime}
               collapsedByDefault={game.resultsStatus !== 'NONE'}
               onInviteTrainer={() => {
                 setPlayerListMode('trainer');
@@ -1756,8 +1771,17 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             />
           </div>
 
-          <div key="linked-bookings" className="contents">
-            <GameLinkedBookingsSection game={game} courts={courts} clubs={clubs} onGameUpdate={setGame} />
+          {/* Courts: slots + reservations (everyone reads; organizers act). */}
+          <div key="courts" className="contents">
+            <GameCourtsSection
+              game={game}
+              courts={courts}
+              clubs={clubs}
+              canEdit={Boolean(user) && canViewSettings}
+              onGameUpdate={setGame}
+              rescheduleOpen={rescheduleOpen}
+              onRescheduleOpenChange={setRescheduleOpen}
+            />
           </div>
 
           {canViewGamePhotos(game, user ? { id: user.id, isAdmin: user.isAdmin } : null) ? (
@@ -1916,26 +1940,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </div>
           ) : null}
 
-          {user && game.maxParticipants > 4 && game.resultsStatus === 'NONE' && game.entityType !== 'BAR' ? (
-            <div key="multiple-courts" className="contents">
-              <MultipleCourtsSelector
-              gameId={game.id}
-              courts={courts}
-              selectedClub={game.clubId || ''}
-              entityType={game.entityType}
-              preferredSport={game.sport}
-              clubSports={clubs.find((c) => c.id === game.clubId)?.sports}
-              isEditing={canEdit}
-              initialGameCourts={game.gameCourts || []}
-              onSave={async () => {
-                if (id) {
-                  const response = await gamesApi.getById(id);
-                  setGame(response.data);
-                }
-              }}
-            />
-            </div>
-          ) : null}
 
           {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && game.entityType !== 'BAR' && !isLeagueSeason ? (
             <div key="start-results" className="contents">
@@ -2253,6 +2257,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           onGameUpdate={setGame}
           onCourtsChange={handleCourtsChange}
           onClubsChange={setClubs}
+          onRequestReschedule={() => {
+            setIsEditGameInfoModalOpen(false);
+            setRescheduleOpen(true);
+          }}
         />
       )}
 

@@ -17,6 +17,8 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
 import notificationService from '../notification.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import type { TimePolicy } from '../gameCourt/courtSlots.tx';
+import { assertNoCourtClashInTx } from '../gameCourt/courtClash.service';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
 import { publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 import { resolvePaymentMethodWrite } from '../gameCost/paymentMethodsWrite';
@@ -156,6 +158,25 @@ function pickUncheckedGameScalars(src: Record<string, unknown>): Prisma.GameUnch
   return out as Prisma.GameUncheckedUpdateInput;
 }
 
+export type GameUpdateOptions = {
+  timeChangeBatchKey?: string;
+  /** `?timePolicy=explicit`: never derive the time from bookings; hard-clash guard on. */
+  timePolicy?: TimePolicy;
+  /** Explicit policy only: set false when the caller runs its own clash check (`inTx.afterSync`). */
+  clashGuard?: boolean;
+  /** Court slots were written explicitly in `inTx.beforeSync`: never infer reports from `hasBookedCourt`. */
+  slotsAuthoritative?: boolean;
+  /**
+   * Internal callers (reschedule `save-game`, accept-upstream): extra writes inside the update
+   * transaction. `beforeSync` runs after the game row is written and forces the booking sync;
+   * `afterSync` runs after it, before the schedule change is recorded. Throwing rolls back.
+   */
+  inTx?: {
+    beforeSync?: (tx: Prisma.TransactionClient) => Promise<void>;
+    afterSync?: (tx: Prisma.TransactionClient) => Promise<void>;
+  };
+};
+
 export class GameUpdateService {
   static async updateGame(
     id: string,
@@ -167,7 +188,7 @@ export class GameUpdateService {
      * changed" notice with the other games of one batch (series "this and
      * following" edit) into one combined notice per player.
      */
-    options: { timeChangeBatchKey?: string } = {},
+    options: GameUpdateOptions = {},
   ) {
     assertNoLegacyExternalBookingFieldsOnUpdate(data);
 
@@ -754,7 +775,8 @@ export class GameUpdateService {
 
     if (data.timeOverride === false) {
       updateData.timeOverride = false;
-      const derived = await deriveGameTimesFromJoinRows(id);
+      // `?timePolicy=explicit`: the client owns the time; never derive it from bookings.
+      const derived = options.timePolicy === 'explicit' ? null : await deriveGameTimesFromJoinRows(id);
       if (derived) {
         updateData.startTime = derived.startTime;
         updateData.endTime = derived.endTime;
@@ -922,12 +944,51 @@ export class GameUpdateService {
         });
       }
 
+      // The hook's own writes may sync booking state; the notice compares with the status before it.
+      let bookingStatusBeforeHook: string | undefined;
+      if (options.inTx?.beforeSync) {
+        bookingStatusBeforeHook = (await tx.game.findUnique({ where: { id }, select: { bookingStatus: true } }))
+          ?.bookingStatus;
+        await options.inTx.beforeSync(tx);
+      }
+
       if (
+        options.inTx?.beforeSync ||
         gamePatchAffectsBookingStatus(data) ||
         gamePatchAffectsBookingStatus(updateData as Record<string, unknown>)
       ) {
-        const synced = await syncGameBookingState(tx, id);
-        bookingStatusBeforeSync = synced.previousBookingStatus;
+        const synced = await syncGameBookingState(tx, id, {
+          ...(typeof updateData.hasBookedCourt === 'boolean'
+            ? { legacyHasBookedCourt: updateData.hasBookedCourt as boolean }
+            : {}),
+          ...(options.slotsAuthoritative ? { slotsAuthoritative: true } : {}),
+          timePolicy: options.timePolicy,
+          actorUserId: userId,
+        });
+        bookingStatusBeforeSync = bookingStatusBeforeHook ?? synced.previousBookingStatus;
+      }
+
+      // Hard-clash guard (new clients only): a moved window checks every slot, a moved
+      // primary court only that court. 409 `court.clash` rolls the whole update back.
+      if (options.timePolicy === 'explicit' && options.clashGuard !== false) {
+        const after = await tx.game.findUnique({
+          where: { id },
+          select: { startTime: true, endTime: true, courtId: true },
+        });
+        if (after) {
+          const windowMoved =
+            after.startTime.getTime() !== locked.startTime.getTime() ||
+            after.endTime.getTime() !== locked.endTime.getTime();
+          if (windowMoved) {
+            await assertNoCourtClashInTx(tx, id);
+          } else if (after.courtId && after.courtId !== (currentGame?.courtId ?? null)) {
+            await assertNoCourtClashInTx(tx, id, { onlyCourtIds: new Set([after.courtId]) });
+          }
+        }
+      }
+
+      if (options.inTx?.afterSync) {
+        await options.inTx.afterSync(tx);
       }
 
       // Time change: read the schedule as persisted — the

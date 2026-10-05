@@ -36,20 +36,16 @@
     "selectClub": "Selecciona club",
     "court": "Cancha",
     "hall": "Salón",
-    "notBookedYet": "Game only",
     "dontSelectCourt": "No court yet",
     "dontSelectHall": "No hall yet",
     "courtNotSelected": "Cancha no seleccionada",
     "hallNotSelected": "Salón no seleccionado",
     "multiCourtHint": "Selecciona hasta {{count}} canchas para {{participants}} jugadores ({{selected}} seleccionadas)",
-    "multiCourtNeedSharedSlots": "Selecciona {{count}} canchas libres a la misma hora.",
-    "multiCourtNoSharedSlots": "Ningún horario está libre en las {{count}} canchas seleccionadas. Prueba otras canchas, fecha o duración.",
     "webCameraHint": "Esta pista tiene una cámara web vinculada",
     "webCameraHintsTitle": "Cámaras web vinculadas",
     "webCameraHintNamed": "{{court}} tiene una cámara web vinculada",
     "webCameraHintAction": "Toca para ver en vivo",
     "hasBookedCourt": "He reservado esta cancha",
-    "hasBookedHall": "He reservado una mesa",
     "selectCourt": "Seleccionar cancha",
     "selectHall": "Seleccionar salón",
     "selectClubFirst": "Selecciona el club primero",
@@ -238,10 +234,7 @@
     "timeSlot": "Slot seleccionado",
     "loadingExternalSlots": "Cargando slots externos",
     "bookedWithoutCourt": "Sin pista",
-    "notConfirmed": "no confirmado",
-    "multipleCourts": "Múltiples Canchas",
-    "noCourtsSelected": "No hay canchas seleccionadas",
-    "addCourt": "Agregar Cancha",
+    "notConfirmed": "planificado",
     "createButton": "Crear juego",
     "createButtonTournament": "Crear Torneo",
     "createButtonLeague": "Crear Liga",
@@ -423,32 +416,14 @@
       "match": "Partido"
     },
     "locationTime": {
-      "skipRealCourtToggle": "Game only",
-      "realCourtBookingHint": "{{courts}} en {{club}} se reservará al crear el partido.",
-      "realCourtBookingHintEdit": "{{courts}} en {{club}} se reservará al guardar.",
-      "skipRealCourtHint": "The game will be scheduled in Bandeja only.",
-      "skipRealCourtHintEdit": "The game will be updated in Bandeja only.",
       "summaryFromBookings": "De tus {{count}} reservas",
-      "summaryWindow": "{{start}} – {{end}}",
-      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Selecciona {{min}}–{{max}} reservas ({{players}} jugadores)",
-      "selectionProgress": "Selecciona hasta {{max}} pistas ({{players}})",
-      "selectionCompleteOne": "1 pista vinculada",
-      "selectionCompleteMany": "{{count}} pistas vinculadas",
-      "selectionAtMax": "Máximo seleccionado para este formato ({{players}}) — otras reservas no están disponibles",
-      "emptyBookingsOnDate": "No hay reservas en esta fecha",
-      "emptyBookingsHint": "Prueba otra fecha, reserva una cancha o crea el partido sin vincular una reserva.",
-      "emptyBookingsReserveNow": "Reservar cancha ahora",
-      "emptyBookingsGameOnly": "Crear solo el partido",
       "gridLegend": "Verde = tu reserva · Rojo/amarillo = ocupado · Primario = hora seleccionada",
       "alsoUsedIn": "También usado en: {{games}}",
       "pickAdjacentHour": "Elige una hora",
       "linkHintTitle": "El juego se vinculará a tus reservas",
       "linkHintBody": "Estas reservas de pista se vincularán al crear el juego.",
       "linkHintLine": "{{court}} · {{window}}",
-      "overrideToggle": "Ajustar horario del partido",
-      "overrideHint": "El horario del partido puede ser más corto que tu reserva",
-      "overrideResetToast": "Horario restablecido según reservas",
       "preselectedBanner": "Reserva preseleccionada",
       "linkedOnlyLabel": "De tus reservas",
       "unlinkConfirm": "¿Quitar el vínculo con esta reserva?",
@@ -456,67 +431,6 @@
       "unlinkNoCancelNote": "La reserva de pista en el club sigue activa — solo quitamos el vínculo con este partido.",
       "syncInactiveCreate": "La sincronización no está activa — no podemos obtener horarios ni reservar pista. Aún puedes crear el partido a esta hora.",
       "syncInactiveEdit": "La sincronización no está activa — no podemos obtener horarios ni reservar pista. Aún puedes editar el partido a esta hora."
-    },
-    "reservationIntent": {
-      "title": "¿Cómo tienes la pista?",
-      "otherOptions": "Otras opciones",
-      "recommended": "Recomendado",
-      "recommendedShort": "Rec",
-      "validation": {
-        "selectCourt": "Selecciona {{count}} cancha(s) primero.",
-        "selectBookableCourt": "Selecciona {{count}} cancha(s) reservable(s) online primero.",
-        "selectTime": "Selecciona un horario disponible primero.",
-        "selectDuration": "Selecciona una duración primero.",
-        "selectReservations": "Selecciona {{count}} reserva(s) de tu cuenta.",
-        "bookingRecordsLoading": "Cargando los detalles de tus reservas — inténtalo de nuevo en un momento."
-      },
-      "reserveNow": {
-        "title": "Reservar pista",
-        "chipTitle": "Reserv.|pista",
-        "description": "Elige un horario — reservamos por ti."
-      },
-      "useExisting": {
-        "title": "Ya tengo una reserva",
-        "chipTitle": "Mi|reserva",
-        "description": "Vincula una reserva de tu cuenta del club.",
-        "contextAvailable": "{{count}} disponibles en esta fecha"
-      },
-      "gameOnly": {
-        "title": "Sin reserva de pista",
-        "chipTitle": "Solo|partido",
-        "description": "Solo crear el partido — sin pista reservada."
-      },
-      "manualBooked": {
-        "title": "Ya reservado manualmente",
-        "chipTitle": "Reservado",
-        "description": "Marcar como reservado sin reserva online."
-      },
-      "summary": {
-        "reserveNow": {
-          "title": "Se hará una reserva real de pista",
-          "body": "Selecciona {{count}} cancha(s), duración y horario. Ese horario exacto se reservará."
-        },
-        "useExisting": {
-          "title": "El partido se vinculará a tu(s) reserva(s)",
-          "body": "{{selected}} de {{count}} reserva(s) requerida(s) seleccionada(s)."
-        },
-        "gameOnly": {
-          "title": "No se hará reserva real de pista",
-          "body": "El partido se programará solo en Bandeja."
-        },
-        "manualBooked": {
-          "title": "El partido se marcará como reservado",
-          "body": "No se creará reserva online."
-        }
-      },
-      "cta": {
-        "reserveOne": "Reservar pista y crear partido",
-        "reserveMany": "Reservar {{count}} pistas y crear partido",
-        "linkOne": "Vincular reserva y crear partido",
-        "linkMany": "Vincular {{count}} reservas y crear partido",
-        "gameOnly": "Crear solo el partido",
-        "manualBooked": "Crear partido"
-      }
     },
     "booktime": {
       "switchLabel": "Reservar pista al crear el partido",
@@ -527,7 +441,6 @@
       "authorizeInClub": "Autorizar en {{club}}",
       "dateHint": "Puedes reservar hasta {{days}} días por adelantado en este club.",
       "connectedChip": "Conectado · {{phone}}",
-      "createCta": "Crear partido y reservar pista",
       "signInToContinue": "Inicia sesión para continuar",
       "confirmTitle": "¿Listo para crear?",
       "confirmPrimary": "Reservar y crear",
@@ -549,7 +462,6 @@
       "createFailedRollback": "No se pudo crear el partido. No pudimos confirmar que la reserva se canceló — consulta con el club.",
       "sessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
       "alreadyReserved": "Pista ya reservada",
-      "liveApiUnavailable": "La reserva de pista no está disponible ahora — usa la programación normal.",
       "reservedAs": "Reservado como: {{identity}}",
       "cancelPolicy": "Cancelación gratuita hasta {{hours}} horas antes.",
       "yourGame": "Tu partido",
@@ -580,13 +492,10 @@
     "pickSport": "Choose sport",
     "settingsTraining": "Training Settings",
     "overlapHardSave": "This time overlaps a court that is unavailable (club system or blocked). Choose another slot.",
-    "overlapSoftTitle": "Another game is planned here",
-    "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
+    "overlapHardTitle": "Pista no disponible a esta hora",
+    "overlapSoftTitle": "Aquí hay otro partido planificado",
+    "overlapSoftMessage": "Otro jugador tiene un partido planificado en esta pista a esta hora, pero la pista no está reservada. Puedes continuar.",
     "overlapSoftProceed": "Continue anyway",
-    "markCourtBookedTitle": "¿Marcar la cancha como reservada?",
-    "markCourtBookedMessage": "Seleccionaste una cancha pero no la marcaste como reservada. Confirma cuando la hayas reservado en el club.",
-    "markCourtBookedYes": "Sí, la he reservado",
-    "markCourtBookedSkip": "Todavía no",
     "suitableForNovices": {
       "title": "Novatos bienvenidos",
       "hint": "Ayudarás a los jugadores nuevos a integrarse. El rango de nivel sigue aplicándose."
@@ -595,6 +504,89 @@
     "lookingNudgeTitle_other": "{{count}} jugadores buscan partido a esta hora",
     "lookingNudgeHint": "Pidieron jugar a esa hora: tu invitación les llega al instante",
     "lookingNudgeInvite_one": "Invitar",
-    "lookingNudgeInvite_other": "Invitar a {{count}}"
+    "lookingNudgeInvite_other": "Invitar a {{count}}",
+    "courtPlan": {
+      "courts": "Pistas",
+      "fewerCourts": "Menos pistas",
+      "moreCourts": "Más pistas",
+      "anyCourt": "Cualquier pista",
+      "slotLabel": "Pista {{n}}",
+      "sheet": {
+        "hint": "Disponibilidad para la hora elegida.",
+        "noTime": "Elige una hora para ver qué pistas están libres.",
+        "linkedHint": "Esta pista viene de tu reserva.",
+        "free": "Libre",
+        "plannedGame": "La usa un partido planificado — aún es posible",
+        "club": "Reservada en el club",
+        "hold": "Bloqueada por el club",
+        "reservedGame": "Ocupada por un partido reservado",
+        "notBookable": "No se puede reservar online",
+        "onSlot": "Elegida para la pista {{n}} — toca para intercambiar",
+        "linkedElsewhere": "La usa tu reserva",
+        "anyHint": "Decide más tarde o deja que el club asigne una",
+        "anyReserveHint": "Elegiremos una pista libre al reservar",
+        "reservedToggle": "He reservado esta pista",
+        "removeReservation": "Quitar esta reserva"
+      },
+      "atClub": {
+        "title": "¿Reserva en el club?",
+        "reserveNow": "Reservar ahora",
+        "alreadyReserved": "Ya reservada",
+        "notYet": "Todavía no",
+        "reserveNowHint_one": "Reservaremos {{count}} pista en {{club}} al crear el partido.",
+        "reserveNowHint_many": "Reservaremos {{count}} pistas en {{club}} al crear el partido.",
+        "reserveNowHint_other": "Reservaremos {{count}} pistas en {{club}} al crear el partido.",
+        "alreadyReservedHint": "Elige tus reservas abajo. Las pistas sin reserva se marcan como reservadas.",
+        "alreadyReservedMarkHint": "Marcaremos las pistas como reservadas.",
+        "notYetHint": "El partido queda planificado sin reserva de pista. Puedes reservar más tarde.",
+        "reservationsNudge": "Tienes una reserva en este club ese día.",
+        "useThem": "Usarla",
+        "authSkip": "Todavía no — reservaré más tarde",
+        "markSkip": "Omitir — solo marcar las pistas como reservadas"
+      },
+      "reservations": {
+        "title": "Tus reservas ese día",
+        "empty": "No hay reservas en tu cuenta de {{club}} ese día. Las pistas se marcarán como reservadas.",
+        "markRest": "Las pistas sin una reserva vinculada se marcan como reservadas."
+      },
+      "timePrompt": {
+        "question": "¿Usar la hora de la reserva {{range}}?",
+        "yes": "Sí",
+        "keep": "Mantener {{range}}"
+      },
+      "time": {
+        "club": "{{court}} está reservada en el club",
+        "hold": "{{court}} está bloqueada por el club",
+        "reservedGame": "{{court}} está ocupada por un partido reservado",
+        "notEnoughCourts": "No hay suficientes pistas libres ({{free}} de {{needed}})",
+        "softNote": "A esa hora también hay un partido planificado en una pista — aún puedes elegirla.",
+        "unavailableAt": "{{time}} no está disponible: {{reason}}"
+      },
+      "summary": {
+        "willReserve": "Se reserva al crear",
+        "courts_one": "{{count}} pista",
+        "courts_many": "{{count}} pistas",
+        "courts_other": "{{count}} pistas"
+      },
+      "issue": {
+        "timeRequired": "Primero elige una hora.",
+        "durationRequired": "Primero elige una duración.",
+        "timeBlocked": "Esa hora está ocupada en una pista que necesitas. Elige otra hora u otra pista.",
+        "courtNotBookable": "Una pista elegida no se puede reservar online. Elige otra pista o «Ya reservada».",
+        "notEnoughBookableCourts": "No hay suficientes pistas libres para reservar a esa hora.",
+        "reservationsLoading": "Aún se están cargando tus reservas — inténtalo de nuevo en un momento."
+      },
+      "cta": {
+        "reserve_one": "Reservar {{count}} pista y crear",
+        "reserve_many": "Reservar {{count}} pistas y crear",
+        "reserve_other": "Reservar {{count}} pistas y crear",
+        "withReserved_one": "Crear con {{count}} pista reservada",
+        "withReserved_many": "Crear con {{count}} pistas reservadas",
+        "withReserved_other": "Crear con {{count}} pistas reservadas"
+      },
+      "rollbackReleased": "Las pistas reservadas en este intento se han cancelado.",
+      "partialKept": "Se reservaron {{count}} de {{total}} pistas y siguen reservadas. Para cancelarlas, contacta con el club.",
+      "courtsSaveFailed": "Partido creado, pero no se pudieron guardar sus pistas. Revísalas en la página del partido."
+    }
   }
 }

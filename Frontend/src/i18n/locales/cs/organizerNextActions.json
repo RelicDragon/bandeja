@@ -14,8 +14,10 @@
       "invite": "Pozvat"
     },
     "booking": {
-      "notBooked": "Kurt ještě není rezervovaný",
-      "partlyBooked": "Kurt je rezervovaný jen částečně",
+      "notReservedOne": "Kurt zatím není rezervován",
+      "notReservedMany": "Kurty zatím nejsou rezervovány",
+      "partlyReserved": "Rezervováno {{reserved}} z {{total}} kurtů",
+      "gapAt": "Mezera v rezervaci v {{time}}",
       "seeBookings": "Zobrazit rezervace",
       "editCourt": "Upravit kurt"
     },

@@ -1,0 +1,240 @@
+{
+  "courtReservation": {
+    "slot": {
+      "planned": "योजना में",
+      "reported": "आरक्षित",
+      "linked": "आरक्षित · {{provider}}",
+      "unknownTime": "आरक्षित · {{provider}} · समय अज्ञात",
+      "gap": "खाली समय {{from}}–{{to}}"
+    },
+    "summary": {
+      "planned": "योजना में",
+      "partial": "{{total}} में से {{reserved}} आरक्षित",
+      "reserved": "सभी कोर्ट आरक्षित",
+      "reservedWithGap": "आरक्षित, {{time}} पर खाली समय"
+    },
+    "reschedule": {
+      "unchanged": "कोई बदलाव नहीं",
+      "keep": "आरक्षण रखें",
+      "move": "आरक्षण खिसकाएँ",
+      "extend": "आरक्षण बढ़ाएँ",
+      "switch_court": "कोर्ट बदलें",
+      "blocked": "कोर्ट उपलब्ध नहीं",
+      "manual": "क्लब से पूछें"
+    },
+    "duration": {
+      "hm": "{{h}} घं {{m}} मि",
+      "h": "{{h}} घं",
+      "m": "{{m}} मि",
+      "shortHm": "{{h}} घं {{m}} मि",
+      "shortH": "{{h}} घं",
+      "shortM": "{{m}} मि"
+    },
+    "card": {
+      "title": "कोर्ट",
+      "players_one": "{{count}} खिलाड़ी",
+      "players_other": "{{count}} खिलाड़ी",
+      "courts_one": "{{count}} कोर्ट",
+      "courts_other": "{{count}} कोर्ट",
+      "anyCourt": "कोई भी कोर्ट",
+      "noTime": "समय सेट करें ताकि दिखे कि खेल का कितना हिस्सा कवर है",
+      "count": "कोर्ट की संख्या",
+      "fewer": "एक कोर्ट कम",
+      "more": "एक कोर्ट ज़्यादा"
+    },
+    "action": {
+      "reserveCourt": "कोर्ट आरक्षित करें",
+      "reserveCourts_one": "{{count}} कोर्ट आरक्षित करें",
+      "reserveCourts_other": "{{count}} कोर्ट आरक्षित करें",
+      "reserveLast": "आख़िरी कोर्ट आरक्षित करें",
+      "reserveRemaining_one": "बचा हुआ {{count}} कोर्ट आरक्षित करें",
+      "reserveRemaining_other": "बचे हुए {{count}} कोर्ट आरक्षित करें",
+      "fillGap": "{{duration}} का खाली समय भरें",
+      "fillGaps": "खाली समय भरें"
+    },
+    "sheet": {
+      "game": "खेल",
+      "reservationAt": "आरक्षण · {{provider}}",
+      "timeUnknown": "समय अज्ञात",
+      "reportedHint": "आपने बताया कि यह कोर्ट क्लब में आरक्षित है।",
+      "plannedHint": "इस कोर्ट के लिए अभी कुछ आरक्षित नहीं है।",
+      "alsoUsedBy": "{{name}} भी इस्तेमाल करता है {{from}}–{{to}}",
+      "pickCourt": "कौन सा कोर्ट?",
+      "action": {
+        "reserve": "अभी आरक्षित करें",
+        "link": "मेरा आरक्षण जोड़ें",
+        "linkReported": "आरक्षण जोड़ें",
+        "markReserved": "आरक्षित चिह्नित करें",
+        "markNotReserved": "आरक्षित नहीं चिह्नित करें",
+        "verify": "जाँचें",
+        "unlink": "अलग करें",
+        "cancelAtClub": "क्लब में रद्द करें",
+        "changeCourt": "कोर्ट बदलें",
+        "useCourtOnly": "{{court}} चुनें, बुकिंग बाद में",
+        "useCourtInstead": "इसकी जगह {{court}} लें",
+        "keepCourt": "{{court}} ही रखें"
+      }
+    },
+    "move": {
+      "title": "समय बदलें",
+      "dragLabel": "खेल का समय",
+      "dragHint": "खेल को खींचें या नीचे के बटन इस्तेमाल करें",
+      "start": "शुरुआत",
+      "length": "अवधि",
+      "earlier": "15 मिनट पहले",
+      "later": "15 मिनट बाद",
+      "shorter": "15 मिनट कम",
+      "longer": "15 मिनट ज़्यादा",
+      "courtsLabel": "हर कोर्ट का क्या होगा",
+      "notice_one": "{{count}} खिलाड़ी को नए समय की एक सूचना मिलेगी",
+      "notice_other": "{{count}} खिलाड़ियों को नए समय की एक सूचना मिलेगी",
+      "option": {
+        "none": "कोई बदलाव नहीं",
+        "keep": "आरक्षण रखें",
+        "move": "आरक्षण खिसकाएँ",
+        "extend": "आरक्षण बढ़ाएँ",
+        "switchCourt": "कोर्ट बदलें",
+        "switchTo": "{{court}} पर जाएँ",
+        "unlink": "इस खेल से अलग करें",
+        "moveTogether": "{{names}} को भी खिसकाएँ",
+        "manual": "क्लब से पूछें"
+      },
+      "fix": {
+        "use": "चुनें: {{option}}",
+        "moveTo": "{{time}} पर खिसकाएँ"
+      },
+      "footer": {
+        "move_one": "खेल खिसकाएँ · {{count}} चरण",
+        "move_other": "खेल खिसकाएँ · {{count}} चरण",
+        "blocked": "पहले टकराव सुलझाएँ",
+        "noChanges": "कोई बदलाव नहीं"
+      },
+      "change": "बदलें",
+      "changeFor": "{{court}} के साथ क्या हो, यह बदलें",
+      "unchanged": "{{courts}} · कोई बदलाव नहीं",
+      "sliderValue": "{{start}} पर शुरू, {{end}} पर खत्म",
+      "why": {
+        "notAvailable": "नए समय पर यह कोर्ट खाली नहीं है।",
+        "keep": "मौजूदा बुकिंग नया समय भी कवर करती है।",
+        "keepUnused": "मौजूदा बुकिंग अब भी कवर करती है; {{duration}} बिना इस्तेमाल रहेगा।",
+        "move": "{{range}} बुक करता है और पुरानी बुकिंग रद्द करता है।",
+        "moveCancelWithClub": "{{range}} बुक करता है। पुरानी बुकिंग आप क्लब से रद्द करें।",
+        "extend": "{{range}} जोड़ता है।",
+        "roundedRange": "{{range}} ({{provider}} {{lengths}} में बेचता है)",
+        "sharerKeeps": "{{names}} अपनी {{time}} वाली बुकिंग रखता है।",
+        "sharerKeepsNoTime": "{{names}} अपनी बुकिंग रखता है।",
+        "unused": "पुरानी बुकिंग का {{duration}} बिना इस्तेमाल रहेगा।",
+        "switchBook": "इसके बजाय {{court}} {{range}} बुक करता है।",
+        "switchPlanned": "इसके बजाय {{court}} इस्तेमाल करता है।",
+        "unlink": "साझा बुकिंग छोड़ता है; {{names}} उसे रखता है।",
+        "unlinkNoNames": "साझा बुकिंग छोड़ता है; दूसरा गेम उसे रखता है।",
+        "moveTogether": "{{names}} भी {{time}} पर जाता है, इसलिए बुकिंग साथ जाती है।",
+        "moveTogetherNoTime": "{{names}} भी खिसकता है, इसलिए बुकिंग साथ जाती है।",
+        "manualReported": "क्लब के ज़रिए बुक है — उन्हें नया समय बताएं।",
+        "manualCannotBook": "{{provider}} ऐप से बुक नहीं हो सकता — क्लब से पूछें।",
+        "manualNoCourt": "अभी कोई कोर्ट चुना नहीं गया — क्लब से पूछें।",
+        "manualUnknownTime": "बुकिंग का समय पता नहीं — क्लब से पुष्टि करें।",
+        "manualChoice": "आप क्लब से खुद तय करेंगे।"
+      }
+    },
+    "run": {
+      "title": "खेल खिसकाया जा रहा है",
+      "working": "काम चल रहा है…",
+      "done": "खेल खिसका दिया गया",
+      "doneWithFollowUps": "खेल खिसका दिया गया — आपके लिए कुछ काम बाकी हैं",
+      "rolledBack": "कुछ नहीं बदला — खेल का समय वही है",
+      "paused": "खेल खिसक गया, पर कुछ चरण पूरे नहीं हुए",
+      "clashFromServer": "काम के दौरान एक कोर्ट भर गया। कोई और विकल्प चुनें।",
+      "retry": "फिर कोशिश करें",
+      "later": "बाद में",
+      "close": "हो गया",
+      "backToPlan": "योजना पर वापस",
+      "step": {
+        "reassign": "{{court}} पर जाएँ",
+        "unlink": "साझा आरक्षण अलग करें",
+        "moveShared": "{{name}} को {{from}}–{{to}} पर खिसकाएँ",
+        "cancel": "{{provider}} पर पुराना आरक्षण रद्द करें",
+        "manualCancel": "क्लब के ज़रिए पुराना आरक्षण रद्द करें",
+        "manualClub": "क्लब को बताएँ: {{court}} {{from}}–{{to}}",
+        "bookInstead": "{{fromCourt}} की जगह {{court}} बुक करें · {{range}}",
+        "bookRange": "{{court}} बुक करें · {{range}}",
+        "reassignInstead": "{{fromCourt}} की जगह {{court}} इस्तेमाल करें",
+        "saveRange": "नया समय {{range}} सेव करें",
+        "cancelRange": "{{provider}} पर पुरानी {{range}} बुकिंग रद्द करें",
+        "manualCancelRange": "क्लब से पुरानी {{range}} बुकिंग रद्द करें",
+        "saveAndTell_one": "नया समय {{range}} सेव करें और {{count}} खिलाड़ी को बताएं",
+        "saveAndTell_other": "नया समय {{range}} सेव करें और {{count}} खिलाड़ियों को बताएं"
+      },
+      "status": {
+        "pending": "प्रतीक्षा में",
+        "running": "चल रहा है",
+        "done": "हो गया",
+        "failed": "नहीं हुआ",
+        "skipped": "छोड़ा गया",
+        "followUp": "आपके लिए",
+        "rolledBack": "वापस लिया गया",
+        "leftAtClub": "क्लब में बाकी"
+      },
+      "failedHint": {
+        "book": "क्लब ने यह बुकिंग स्वीकार नहीं की।",
+        "save": "नया समय सेव नहीं हो सका।",
+        "other": "यह चरण पूरा नहीं हुआ।"
+      },
+      "progress": "{{total}} में से {{done}}",
+      "otherRun": {
+        "title": "एक और बदलाव चल रहा है",
+        "ours": "आपने इस गेम के लिए एक और बदलाव शुरू किया था जो अभी पूरा नहीं हुआ। पहले उसे पूरा करें, फिर यह आज़माएं।",
+        "someoneElse": "कोई और अभी इस गेम के कोर्ट बदल रहा है। कुछ मिनट बाद फिर कोशिश करें।",
+        "finishIt": "उसे पूरा करें"
+      }
+    },
+    "banner": {
+      "unfinishedTitle": "आपके कोर्ट बदलाव पूरे नहीं हुए",
+      "pausedTitle": "खेल खिसक गया — कोर्ट के कुछ चरण बाकी हैं",
+      "detail_one": "{{count}} चरण बाकी · {{time}}",
+      "detail_other": "{{count}} चरण बाकी · {{time}}",
+      "detailNoTime_one": "{{count}} चरण बाकी",
+      "detailNoTime_other": "{{count}} चरण बाकी",
+      "finish": "बदलाव पूरे करें",
+      "undo": "पूर्ववत करें"
+    },
+    "drift": {
+      "moved": "{{court}} अब {{provider}} पर {{time}} बजे शुरू होता है",
+      "movedNoTime": "{{provider}} पर {{court}} बदल गया",
+      "missing": "{{provider}} पर {{court}} का आरक्षण नहीं रहा",
+      "moveGame": "खेल खिसकाएँ",
+      "keepGame": "खेल का समय रखें",
+      "reserveAgain": "फिर से आरक्षित करें",
+      "unlink": "अलग करें"
+    },
+    "followUp": {
+      "title": "क्लब में करना है",
+      "theClub": "क्लब",
+      "cancelOld": "क्लब के ज़रिए पुराना आरक्षण रद्द करें",
+      "cancelOldAt": "क्लब के ज़रिए {{time}} का पुराना आरक्षण रद्द करें",
+      "askClub": "क्लब को बताएँ: {{court}} {{from}}–{{to}}",
+      "askClubNoTime": "क्लब को {{court}} के बारे में बताएँ",
+      "leftAtClub": "{{court}} {{from}}–{{to}} अब भी {{provider}} पर आरक्षित है",
+      "leftAtClubNoTime": "{{court}} अब भी {{provider}} पर आरक्षित है",
+      "done": "हो गया"
+    },
+    "blocker": {
+      "club": "क्लब ने {{time}} बजे {{court}} बुक किया है।",
+      "hold": "क्लब ने {{time}} बजे {{court}} रोक रखा है।",
+      "game": "{{time}} बजे {{court}} पर {{name}} है।",
+      "gameUnnamed": "{{time}} बजे {{court}} पर दूसरा गेम है।",
+      "plannedGame": "{{time}} बजे {{court}} पर {{name}} की योजना है।",
+      "plannedGameUnnamed": "{{time}} बजे {{court}} पर दूसरे गेम की योजना है।"
+    },
+    "timeline": {
+      "free": "खाली",
+      "movesTo": "{{court}} पर जाता है",
+      "legend": {
+        "reserved": "आपकी बुकिंग",
+        "reported": "क्लब के ज़रिए बुक",
+        "club": "क्लब ने बुक किया",
+        "game": "दूसरा गेम"
+      }
+    }
+  }
+}

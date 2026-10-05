@@ -7,6 +7,14 @@ export interface GameLinkedBooking {
   courtId?: string;
   bookingStart?: string;
   bookingEnd?: string;
+  /** Court slot (`GameCourt.id`) this booking reserves; absent for unplaced/legacy rows. */
+  gameCourtId?: string;
+  /** Club-side drift: what the provider says now (OK when it matches the link). */
+  upstreamState?: 'OK' | 'MOVED' | 'MISSING' | 'UNKNOWN';
+  /** Provider times when `upstreamState = MOVED`. */
+  upstreamStart?: string;
+  upstreamEnd?: string;
+  upstreamCheckedAt?: string;
 }
 
 export interface BookingSnapshotInput {
@@ -38,6 +46,8 @@ export interface LinkBookingToGameBody {
   externalBookingId: string;
   snapshot: BookingSnapshotInput;
   gamePatch?: LinkBookingToGamePatch;
+  /** Court slots: the `GameCourt` this booking reserves. Absent → placed by court. */
+  gameCourtId?: string;
 }
 
 export interface CreateGameBookingFields {
