@@ -147,6 +147,7 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   set_play_intent: 'play-intent-write-cases',
   cancel_play_intent: 'play-intent-write-cases',
   summarize_game_chat: 'game-chat-read-cases',
+  list_my_mentions: 'game-chat-read-cases',
   post_to_game_chat: 'game-chat-write-cases',
   get_weather: 'weather-read-cases',
   get_game_results: 'results-read-cases',

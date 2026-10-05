@@ -74,14 +74,29 @@ const scheduleInput = z
         'Only fixtures starting on this local day (YYYY-MM-DD, season city timezone), finished ones included. Use it for "today\'s / tomorrow\'s league games".',
       ),
     groupId: ID.optional().describe('Only this group (ids from get_league_season)'),
+    missing: z
+      .enum(['time', 'club', 'court', 'any'])
+      .optional()
+      .describe(
+        'Only unfinished fixtures still missing this: time = no date/time set, club = no club, court = no court, any = missing any of them. Use it for "check that every game has a time / court".',
+      ),
     limit: z.number().int().min(1).max(60).default(30),
   })
   .strict();
 
+const NO_COURT: Prisma.GameWhereInput = { courtId: null, gameCourts: { none: {} } };
+
+function missingWhere(missing: 'time' | 'club' | 'court' | 'any'): Prisma.GameWhereInput {
+  if (missing === 'time') return { timeIsSet: false };
+  if (missing === 'club') return { clubId: null };
+  if (missing === 'court') return NO_COURT;
+  return { OR: [{ timeIsSet: false }, { clubId: null }, NO_COURT] };
+}
+
 export const getLeagueScheduleTool = defineTool({
   name: 'get_league_schedule',
   description:
-    'Get the schedule of a league season: its rounds (number, regular/playoff, whether the start announcement was sent) and fixtures (fixtureId, round, group, localStart/localEnd in the season city time, club, court, teams, status). With date: the fixtures of that day; with roundId: that round; with neither: the unfinished fixtures, soonest first, unscheduled last. If hasMore is true the list is incomplete.',
+    'Get the schedule of a league season: its rounds (number, regular/playoff, whether the start announcement was sent) and fixtures (fixtureId, round, group, localStart/localEnd in the season city time, club, court, teams, status). With date: the fixtures of that day; with roundId: that round; with neither: the unfinished fixtures, soonest first, unscheduled last. With missing: only unfinished fixtures lacking a time, club or court (total is then the exact count of such fixtures). If hasMore is true the list is incomplete.',
   kind: 'read',
   scope: 'user',
   input: scheduleInput,
@@ -108,13 +123,15 @@ export const getLeagueScheduleTool = defineTool({
           ...(args.groupId ? { leagueGroupId: args.groupId } : {}),
           ...(args.roundId ? { leagueRoundId: args.roundId } : {}),
           ...(day ? { timeIsSet: true, startTime: { gte: day.start, lt: day.end } } : {}),
-          ...(!args.roundId && !day
+          ...((!args.roundId && !day) || args.missing
             ? { resultsStatus: { not: ResultsStatus.FINAL }, status: { not: GameStatus.ARCHIVED } }
             : {}),
         },
+        ...(args.missing ? [missingWhere(args.missing)] : []),
       ],
     };
-    const [fixtures, total, canManage] = await Promise.all([
+    const unfiltered = !args.roundId && !day && !args.missing;
+    const [fixtures, total, canManage, allFixtures] = await Promise.all([
       prisma.game.findMany({
         where,
         orderBy: [{ timeIsSet: 'desc' }, { startTime: 'asc' }, { id: 'asc' }],
@@ -123,6 +140,7 @@ export const getLeagueScheduleTool = defineTool({
       }),
       prisma.game.count({ where }),
       hasParentGamePermission(game.id, principal.userId, [ParticipantRole.OWNER, ParticipantRole.ADMIN], principal.isAdmin),
+      unfiltered ? prisma.game.count({ where: { parentId: game.id, entityType: EntityType.LEAGUE } }) : Promise.resolve(null),
     ]);
     return {
       data: {
@@ -139,6 +157,9 @@ export const getLeagueScheduleTool = defineTool({
         shown: fixtures.length,
         /** More fixtures match than were returned: narrow (date, round, group) or raise limit. */
         hasMore: total > fixtures.length,
+        ...(unfiltered && total === 0 && allFixtures
+          ? { note: `No unfinished fixtures: all ${allFixtures} fixtures of this season are finished. Pass roundId or date to list finished ones.` }
+          : {}),
         fixtures: fixtures.map(toAgentLeagueFixture),
       },
       summary: agentLeagueT(ctx.locale, 'summary.schedule', { title, count: total }),

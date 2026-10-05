@@ -372,10 +372,11 @@ void (async () => {
     for (const name of await principalCases(fixture, extras)) covered.add(name);
 
     const standings = await callTool('get_league_standings', fixture.principals.leagueOwner, { seasonId: fixture.games.privateSeason });
-    const rows = (standings.data as { standings: { players: { userId: string }[]; wins: number }[] }).standings;
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0].players[0].userId, fixture.principals.player.userId);
-    assert.equal(rows[0].wins, 2);
+    const table = standings.data as { columns: string[]; standings: unknown[][] };
+    const col = (row: unknown[], name: string) => row[table.columns.indexOf(name)];
+    assert.equal(table.standings.length, 1);
+    assert.match(String(col(table.standings[0], 'players')), /^player\b/, 'the player row (names, no ids)');
+    assert.equal(col(table.standings[0], 'wins'), 2);
 
     await redTeam(fixture, extras);
 

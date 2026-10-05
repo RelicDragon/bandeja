@@ -43,7 +43,7 @@ import { loadAgentPrincipal, type AgentPrincipal } from '../access/agentPrincipa
 import { createAgentActionService } from '../agentActions.service';
 import { createAgentChat } from '../agentChat.service';
 import { InMemoryAgentEventStore } from '../agentEvents';
-import { createAgentRunService } from '../agentRun.service';
+import { createAgentRunService, serializeToolContent } from '../agentRun.service';
 import type { AgentLlmClient, AgentLlmStreamChunk, AgentLlmStreamParams } from '../llm/deepseekStream';
 import { AGENT_TOOL_DEFINITIONS } from '../tools';
 import { AGENT_TOOL_AUTHZ_COVERAGE } from '../tools/__tests__/agentToolCoverage';
@@ -384,7 +384,69 @@ async function main(): Promise<void> {
       await expectOutcome('foreign round id', 'not_found', () => call('get_league_schedule', leagueOwner, { seasonId, roundId: `missing-${s}` }));
       const playerView = await call('get_league_schedule', seasonPlayer, { seasonId });
       assert.equal((playerView.data as { canManage: boolean }).canManage, false);
+      // No fixture has a court yet (3a assigns one): missing=court / any = every unfinished fixture.
+      const noCourt = await call('get_league_schedule', leagueOwner, { seasonId, missing: 'court' });
+      assert.equal((noCourt.data as { total: number }).total, 3, 'missing court');
+      const noAny = await call('get_league_schedule', leagueOwner, { seasonId, missing: 'any' });
+      assert.equal((noAny.data as { total: number }).total, 3, 'missing any');
+      assert.equal(tool('get_league_schedule').input.safeParse({ seasonId, missing: 'score' }).success, false);
+      // Newest PLAYING participants first; NON_PLAYING staff are not "joined players".
+      const season = await call('get_league_season', stranger, { seasonId });
+      const recent = (season.data as { recentlyJoined: { userId: string; joinedLocal: string }[] }).recentlyJoined;
+      assert.equal(recent[0]?.userId, seasonPlayer.userId, 'newest player first');
+      assert.ok(!recent.some((p) => p.userId === seasonAdmin.userId), 'non-playing admin left out');
+      assert.match(recent[0].joinedLocal, /^\w{3} \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
       console.log('schedule content: ok');
+    }
+
+    // Standings: a 100-row table across two groups fits one tool result (it was cut at ~50 rows).
+    {
+      const groupB = await prisma.leagueGroup.create({ data: { leagueSeasonId: seasonId, name: `Group B ${s}` } });
+      const groupA = await prisma.leagueGroup.findFirstOrThrow({ where: { leagueSeasonId: seasonId, name: `Group A ${s}` } });
+      const users = await Promise.all(
+        Array.from({ length: 100 }, (_, i) =>
+          prisma.user.create({
+            data: { phone: `qa-agent-standings-${i}-${s}`, firstName: `Longfirstname${i}`, lastName: 'Longlastname-Doublebarrel', currentCityId: fixture.cityId },
+            select: { id: true },
+          }),
+        ),
+      );
+      extraUserIds.push(...users.map((u) => u.id));
+      await prisma.leagueParticipant.createMany({
+        data: users.map((u, i) => ({
+          leagueId,
+          leagueSeasonId: seasonId,
+          participantType: 'USER' as const,
+          userId: u.id,
+          currentGroupId: i % 2 === 0 ? groupA.id : groupB.id,
+          wins: 100 - i,
+          points: 100 - i,
+        })),
+      });
+      const result = await call('get_league_standings', stranger, { seasonId });
+      const content = serializeToolContent({ ok: true, data: result.data });
+      assert.ok(!content.includes('"truncated"'), `100 rows fit (${content.length} chars)`);
+      const data = result.data as {
+        total: number;
+        shown: number;
+        groups: { groupId: string; name: string }[];
+        columns: string[];
+        standings: unknown[][];
+      };
+      assert.equal(data.total, 100);
+      assert.equal(data.shown, 100);
+      assert.equal(data.groups.length, 2);
+      assert.deepEqual(data.columns.slice(0, 4), ['rank', 'groupRank', 'group', 'players']);
+      assert.deepEqual(data.standings.slice(0, 3).map((r) => r.slice(0, 3)), [
+        [1, 1, groupA.name],
+        [2, 1, groupB.name],
+        [3, 2, groupA.name],
+      ]);
+      assert.match(String(data.standings[0][3]), /^Longfirstname0/, `players as names: ${String(data.standings[0][3])}`);
+      const onlyB = (await call('get_league_standings', stranger, { seasonId, groupId: groupB.id })).data as typeof data;
+      assert.equal(onlyB.total, 50);
+      assert.equal(onlyB.standings[0][1], 1);
+      console.log('standings size: ok');
     }
 
     // --- 3. confirm executes via the HTTP services -------------------------------------------------

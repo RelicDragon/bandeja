@@ -115,7 +115,7 @@ async function main() {
   );
   assert.deepEqual(
     AGENT_TOOL_DEFINITIONS.filter((t) => t.untrustedContent).map((t) => t.name),
-    ['summarize_game_chat', 'web_search', 'web_fetch', 'web_images'],
+    ['summarize_game_chat', 'list_my_mentions', 'web_search', 'web_fetch', 'web_images'],
     'untrusted-content reads',
   );
   const tiers = Object.fromEntries(

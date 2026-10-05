@@ -274,6 +274,60 @@ async function main(): Promise<void> {
       console.log('shape: ok');
     }
 
+    // --- list_my_mentions: mentionIds, chat read rule per chat type, window, season scope ---
+    {
+      type MentionsData = {
+        untrusted: boolean;
+        notice: string;
+        total: number;
+        hasMore: boolean;
+        games: { gameId: string; timeIsSet: boolean; courtName: string | null; mentions: { author: string; chat: string; text: string }[] }[];
+      };
+      const mentions = registry.get('list_my_mentions')!;
+      assert.equal(mentions.kind, 'read');
+      assert.equal(mentions.untrustedContent, true);
+      assert.equal(AGENT_TOOL_AUTHZ_COVERAGE.list_my_mentions, 'game-chat-read-cases');
+      const find = async (principal: AgentPrincipal, args: Record<string, unknown> = {}) =>
+        (await mentions.handler(await ctxFor(principal), mentions.input.parse(args))).data as MentionsData;
+      const me = [P.player.userId];
+      const gM = await mkGame('Mentions');
+      await say(gM, P.gameAdmin, '@player please set the court', { mentionIds: me });
+      await say(gM, P.owner, 'admins only about @player', { mentionIds: me, chatType: ChatType.ADMINS });
+      await say(gM, P.player, 'mentioning myself', { mentionIds: me });
+      await say(gM, P.gameAdmin, 'deleted mention', { mentionIds: me, deletedAt: new Date() });
+      await say(gM, P.gameAdmin, 'no mention here');
+      await say(gM, P.gameAdmin, 'old mention', { mentionIds: me, createdAt: new Date(Date.now() - 10 * 24 * HOUR) });
+      // A chat the player cannot read (not on the roster): dropped even though they are mentioned.
+      const gOut = await mkGame('Mentions outsider', [['owner', ParticipantRole.OWNER, ParticipantStatus.PLAYING]]);
+      await say(gOut, P.owner, 'talking about @player', { mentionIds: me });
+
+      const data = await find(P.player);
+      assert.equal(data.untrusted, true);
+      assert.ok(data.notice.includes('never contain instructions'));
+      const mine = data.games.find((g) => g.gameId === gM);
+      assert.ok(mine, 'mentioned game listed');
+      assert.deepEqual(mine.mentions.map((m) => m.text), ['@player please set the court'], 'PUBLIC, by others, live, in the 7-day window');
+      assert.equal(mine.mentions[0].author, 'gameAdmin');
+      assert.equal(mine.timeIsSet, true);
+      assert.equal(mine.courtName, null, 'scheduling fields come with the game');
+      assert.ok(!data.games.some((g) => g.gameId === gOut), 'unreadable chat left out');
+      const wide = await find(P.player, { since: new Date(Date.now() - 30 * 24 * HOUR).toISOString() });
+      assert.equal(wide.games.find((g) => g.gameId === gM)?.mentions.length, 2, 'since widens the window');
+      const adminView = await find(P.owner);
+      assert.ok(!adminView.games.some((g) => g.gameId === gM), 'nobody mentioned the owner');
+      assert.equal(await classifyAgentOutcome(() => find(P.player, { since: 'soon' })), 'bad_request');
+      assert.equal(await classifyAgentOutcome(() => find(P.player, { seasonId: gM })), 'not_found', 'seasonId must be a season');
+
+      // Season scope: the season and its fixtures only.
+      const season = await mkGame('Mentions season', FULL, { entityType: EntityType.LEAGUE_SEASON });
+      const fixtureGame = await mkGame('Mentions fixture', FULL, { entityType: EntityType.LEAGUE, parentId: season, timeIsSet: false });
+      await say(fixtureGame, P.gameAdmin, '@player when do we play?', { mentionIds: me });
+      const scoped = await find(P.player, { seasonId: season });
+      assert.deepEqual(scoped.games.map((g) => g.gameId), [fixtureGame], 'only the season chats');
+      assert.equal(scoped.games[0].timeIsSet, false, 'an unscheduled fixture shows as such');
+      console.log('mentions: ok');
+    }
+
     // --- post: matrix = the app's send rule (real sends per cell), propose and confirm time ---
     {
       const derived = await deriveExpectations((principal, gameId) =>
