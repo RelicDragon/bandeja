@@ -232,7 +232,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
                 )}
                 {betTargetTeam && (
                   <div className="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1.5 py-1 text-xs font-medium text-gray-900 dark:text-white shadow-sm">
-                    {betTargetTeam.name
+                    {betTargetTeam.userTeam?.name
+                      || betTargetTeam.name
                       || (betTargetTeam.players?.length
                         ? betTargetTeam.players
                             .map((pl) => `${pl.user?.firstName || ''} ${pl.user?.lastName || ''}`.trim() || '?')

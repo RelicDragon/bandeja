@@ -575,6 +575,7 @@
     "fixtureVsShort": "बनाम",
     "matchupWinner": "विजेता",
     "matchupYourTeam": "आपकी टीम",
+    "fixedTeamOpenUserTeam": "टीम {{team}} खोलें",
     "matchupAvgLevel": "औसत",
     "matchupLive": "लाइव",
     "matchupDraw": "ड्रॉ",

@@ -12,6 +12,10 @@ import { canUserEditGameFormat } from '@/utils/gameResults';
 import { fixedTeamSlotLimit, hasOpenEndedFixedTeams, maxFixedTeamSlots, playersPerTeamOf } from '@/utils/matchFormat';
 import { resolveFixedTeamPlayerUser } from '@/utils/resolveFixedTeamPlayerUser';
 import { parseGameSport } from '@/utils/gameSport';
+import { fixedTeamUserTeamTint } from '@/utils/fixedTeamUserTeam';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { FixedTeamUserTeamLabel } from './FixedTeamUserTeamLabel';
 function playerDisplayName(user: BasicUser): string {
   return [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
 }
@@ -124,6 +128,7 @@ interface FixedTeamsManagementProps {
 
 export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: FixedTeamsManagementProps) => {
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const user = useAuthStore((state) => state.user);
   const canEdit = game && user ? canUserEditGameFormat(game, user) : false;
   const [teams, setTeams] = useState<GameTeam[]>([]);
@@ -258,6 +263,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       updatedTeams[selectedTeamIndex] = {
         ...currentTeam,
         players: [...currentTeam.players, newEntry],
+        userTeam: undefined,
       };
 
       // Update local state immediately for better UX
@@ -286,7 +292,8 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
       const updatedTeams = [...teams];
       updatedTeams[teamIndex] = {
         ...updatedTeams[teamIndex],
-        players: updatedTeams[teamIndex].players.filter(p => p.userId !== playerId)
+        players: updatedTeams[teamIndex].players.filter(p => p.userId !== playerId),
+        userTeam: undefined,
       };
 
       // Update local state immediately for better UX
@@ -447,6 +454,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
   }
 
   const openEnded = hasOpenEndedFixedTeams(game);
+  const teamLabelOf = (team: GameTeam) => team.userTeam?.name ?? `${t('games.teamNumber')} ${team.teamNumber}`;
   const visibleTeams = visibleTeamsOf(teams, game);
   const playersPerTeam = playersPerTeamOf(game);
   const main = (
@@ -458,16 +466,54 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
           setShowPlayerSelector(true);
         };
 
+        // A full roster that is a user team: its name, face and colour (otherwise unchanged look).
+        const userTeam =
+          team.userTeam && team.players.length === playersPerTeam ? team.userTeam : null;
+        const tint = userTeam ? fixedTeamUserTeamTint(userTeam.color) : null;
+
         return (
-          <div key={team.id} className="flex items-stretch overflow-hidden rounded-xl border border-gray-200/90 bg-gray-50/90 dark:border-gray-700/70 dark:bg-gray-800/45">
+          <div
+            key={team.id}
+            style={tint ? { ...tint.vars, ...tint.wash, borderColor: 'color-mix(in srgb, var(--ut-tone) 32%, transparent)' } : undefined}
+            className="flex items-stretch overflow-hidden rounded-xl border border-gray-200/90 bg-gray-50/90 dark:border-gray-700/70 dark:bg-gray-800/45"
+          >
             <div
-              className="flex w-9 shrink-0 items-center justify-center border-e border-gray-200/90 bg-emerald-500/10 dark:border-gray-700/70 dark:bg-emerald-500/15"
+              className={`flex w-9 shrink-0 items-center justify-center border-e border-gray-200/90 dark:border-gray-700/70 ${
+                tint ? 'bg-[color:color-mix(in_srgb,var(--ut-tone)_16%,transparent)]' : 'bg-emerald-500/10 dark:bg-emerald-500/15'
+              }`}
               aria-hidden
             >
-              <span className="text-xs font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+              <span
+                className={`text-xs font-bold tabular-nums ${
+                  tint
+                    ? 'text-[color:var(--ut-accent)] dark:text-[color:var(--ut-accent-dark)]'
+                    : 'text-emerald-700 dark:text-emerald-400'
+                }`}
+              >
                 {team.teamNumber}
               </span>
             </div>
+            <div className="flex min-w-0 flex-1 flex-col">
+            <AnimatePresence initial={false}>
+              {userTeam ? (
+                <motion.div
+                  key={userTeam.id}
+                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                  animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                  transition={{ duration: reduceMotion ? 0.12 : 0.22, ease: [0.32, 0.72, 0, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-2.5 pt-2">
+                    <FixedTeamUserTeamLabel
+                      userTeam={userTeam}
+                      players={team.players.map((p) => resolveFixedTeamPlayerUser(game, p.userId, p.user))}
+                      className="max-w-full"
+                    />
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
             <div className="flex min-w-0 flex-1 divide-x divide-gray-200/90 dark:divide-gray-700/70">
               {Array.from({ length: playersPerTeam }, (_, slotIndex) => {
                 const player = team.players[slotIndex];
@@ -483,6 +529,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
                   </div>
                 );
               })}
+            </div>
             </div>
             {openEnded && canEdit ? (
               <button
@@ -526,10 +573,14 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
           unavailableLabelById={Object.fromEntries(
             visibleTeams
               .flatMap((team) =>
-                team.players.map((p) => [p.userId, `${t('games.teamNumber')} ${team.teamNumber}`] as const),
+                team.players.map((p) => [p.userId, teamLabelOf(team)] as const),
               ),
           )}
-          contextLabel={`${t('games.teamNumber')} ${teams[selectedTeamIndex]?.teamNumber ?? selectedTeamIndex + 1}`}
+          contextLabel={
+            teams[selectedTeamIndex]
+              ? teamLabelOf(teams[selectedTeamIndex])
+              : `${t('games.teamNumber')} ${selectedTeamIndex + 1}`
+          }
           teammates={(teams[selectedTeamIndex]?.players ?? []).map((p) =>
             resolveFixedTeamPlayerUser(game, p.userId, p.user),
           )}

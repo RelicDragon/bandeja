@@ -540,6 +540,7 @@
     "fixtureVsShort": "vs",
     "matchupWinner": "Ganador",
     "matchupYourTeam": "Tu equipo",
+    "fixedTeamOpenUserTeam": "Abrir equipo {{team}}",
     "matchupAvgLevel": "Media",
     "matchupLive": "En vivo",
     "matchupDraw": "Empate",

@@ -575,6 +575,7 @@
     "fixtureVsShort": "vs",
     "matchupWinner": "勝者",
     "matchupYourTeam": "あなたのチーム",
+    "fixedTeamOpenUserTeam": "チーム「{{team}}」を開く",
     "matchupAvgLevel": "平均",
     "matchupLive": "ライブ",
     "matchupDraw": "引き分け",

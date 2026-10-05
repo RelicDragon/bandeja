@@ -127,7 +127,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
       hasFixedTeamsSet && game.fixedTeams
         ? game.fixedTeams.map((team) => ({
           value: team.id,
-          label: team.name || team.players
+          label: team.userTeam?.name || team.name || team.players
             .map((pl) => `${pl.user?.firstName || ''} ${pl.user?.lastName || ''}`.trim() || '?')
             .join(' + ') || `Team ${team.teamNumber}`,
           entityType: 'TEAM' as const,

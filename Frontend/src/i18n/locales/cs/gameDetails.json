@@ -552,6 +552,7 @@
     "fixtureVsShort": "vs",
     "matchupWinner": "Vítěz",
     "matchupYourTeam": "Váš tým",
+    "fixedTeamOpenUserTeam": "Otevřít tým {{team}}",
     "matchupAvgLevel": "Prům.",
     "matchupLive": "Živě",
     "matchupDraw": "Remíza",

@@ -575,6 +575,7 @@
     "fixtureVsShort": "ضد",
     "matchupWinner": "الفائز",
     "matchupYourTeam": "فريقك",
+    "fixedTeamOpenUserTeam": "فتح فريق {{team}}",
     "matchupAvgLevel": "المتوسط",
     "matchupLive": "مباشر",
     "matchupDraw": "تعادل",

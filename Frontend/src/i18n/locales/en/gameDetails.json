@@ -575,6 +575,7 @@
     "fixtureVsShort": "vs",
     "matchupWinner": "Winner",
     "matchupYourTeam": "Your team",
+    "fixedTeamOpenUserTeam": "Open team {{team}}",
     "matchupAvgLevel": "Avg",
     "matchupLive": "Live",
     "matchupDraw": "Draw",

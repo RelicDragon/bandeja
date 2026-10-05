@@ -43,7 +43,7 @@ export type ScoreEntryGame = Pick<
   | 'matchTimedCapMinutes'
   | 'sport'
 > &
-  Partial<Pick<Game, 'playersPerMatch' | 'matchTimerEnabled'>>;
+  Partial<Pick<Game, 'playersPerMatch' | 'matchTimerEnabled' | 'fixedTeams'>>;
 
 export type ScoreEntrySaveHandler = (
   matchId: string,

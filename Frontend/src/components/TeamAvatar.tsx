@@ -121,7 +121,8 @@ function SplitFaceHalf({
   );
 }
 
-export type TeamAvatarSize = 'tile' | 'hero' | 'fill';
+/** `mini`: 32px inline badge (fixed-team rows); tile-style text, never a ring. */
+export type TeamAvatarSize = 'mini' | 'tile' | 'hero' | 'fill';
 
 interface TeamAvatarProps {
   team: UserTeam;
@@ -134,8 +135,8 @@ interface TeamAvatarProps {
 export function TeamAvatar({ team, size = 'hero', className = '', showRing, participantTip }: TeamAvatarProps) {
   const showParticipantTip = participantTip ?? size === 'tile';
   const seamMaskId = useId().replace(/:/g, '');
-  const tile = size === 'tile';
-  const ring = showRing ?? tile;
+  const tile = size === 'tile' || size === 'mini';
+  const ring = size === 'mini' ? false : (showRing ?? tile);
   const { primary, secondary } = getTeamAvatarPair(team);
   const cutAngle = team.cutAngle ?? 45;
   const tones = userTeamColorTones(team.color);
@@ -145,7 +146,9 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing, part
   }, [team.id, team.avatar]);
 
   const boxCls =
-    size === 'tile'
+    size === 'mini'
+      ? 'h-8 w-8 rounded-xl'
+      : size === 'tile'
       ? `h-11 w-11 rounded-2xl${ring ? ' ring-2 ring-white dark:ring-gray-800' : ''}`
       : size === 'fill'
         ? 'h-full min-h-0 w-full rounded-[1.2rem]'

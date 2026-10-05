@@ -575,6 +575,7 @@
     "fixtureVsShort": "vs",
     "matchupWinner": "胜者",
     "matchupYourTeam": "你的队伍",
+    "fixedTeamOpenUserTeam": "打开队伍 {{team}}",
     "matchupAvgLevel": "平均",
     "matchupLive": "直播",
     "matchupDraw": "平局",

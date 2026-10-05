@@ -546,6 +546,7 @@
     "fixtureVsShort": "protiv",
     "matchupWinner": "Pobeda",
     "matchupYourTeam": "Vaš tim",
+    "fixedTeamOpenUserTeam": "Otvori tim {{team}}",
     "matchupAvgLevel": "Pros.",
     "matchupLive": "Uživo",
     "matchupDraw": "Nerešeno",

@@ -565,6 +565,7 @@
     "fixtureVsShort": "против",
     "matchupWinner": "Победа",
     "matchupYourTeam": "Ваша команда",
+    "fixedTeamOpenUserTeam": "Открыть команду {{team}}",
     "matchupAvgLevel": "Ср.",
     "matchupLive": "Live",
     "matchupDraw": "Ничья",

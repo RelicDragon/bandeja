@@ -453,14 +453,29 @@ export interface GameTeamPlayer {
   user: BasicUser;
 }
 
+export interface FixedTeamUserTeam {
+  id: string;
+  name: string;
+  avatar: string | null;
+  /** Missing on servers before the colour/cut-angle fields were added. */
+  cutAngle?: number;
+  color?: string | null;
+  ownerId?: string;
+}
+
 export interface GameTeam {
   id: string;
   gameId: string;
   teamNumber: number;
   name?: string;
   players: GameTeamPlayer[];
-  /** The pair's own `UserTeam` (accepted members == this roster); game detail, signed-in only. `avatar` is an upload, never the generated split face. */
-  userTeam?: { id: string; name: string; avatar: string | null } | null;
+  /**
+   * The pair's own `UserTeam` (accepted members == this roster); game detail and
+   * `/game-teams/.../teams`, signed-in only. `avatar` is an upload, never the
+   * generated split face — that is drawn from `ownerId` / `cutAngle` / `color`
+   * and this team's players (`utils/fixedTeamUserTeam.ts`).
+   */
+  userTeam?: FixedTeamUserTeam | null;
 }
 
 export interface GameTeamData {

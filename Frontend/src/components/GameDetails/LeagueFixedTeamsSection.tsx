@@ -1,8 +1,7 @@
 import { Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { useState } from 'react';
-import type { BasicUser, Game, GameTeam } from '@/types';
+import type { BasicUser, FixedTeamUserTeam, Game } from '@/types';
 import { DEFAULT_SPORT } from '@shared/sport';
 import { useAuthStore } from '@/store/authStore';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
@@ -14,6 +13,9 @@ import {
   levelChangeByUserId,
   teamAverageLevel,
 } from '@/utils/leagueFixedTeamsMatchup.util';
+import { fixedTeamDisplayName, fixedTeamUserTeamTint } from '@/utils/fixedTeamUserTeam';
+import { userTeamColorTones } from '@/utils/userTeamColor';
+import { FixedTeamUserTeamLabel } from './FixedTeamUserTeamLabel';
 
 type Side = 'teamA' | 'teamB';
 type Phase = 'upcoming' | 'live' | 'final';
@@ -21,7 +23,7 @@ type Phase = 'upcoming' | 'live' | 'final';
 /* Blue corner / pink corner: each side keeps one accent through stripe, glow, label and bar. */
 const ACCENT: Record<
   Side,
-  { glow: string; stripe: string; label: string; bar: string; winRow: string; avatarRing: string }
+  { glow: string; stripe: string; label: string; bar: string; winRow: string }
 > = {
   teamA: {
     glow: 'bg-sky-400/25 dark:bg-sky-500/20',
@@ -29,7 +31,6 @@ const ACCENT: Record<
     label: 'text-sky-700 dark:text-sky-300',
     bar: 'from-sky-400 to-cyan-300',
     winRow: 'bg-sky-50/80 ring-sky-300/70 dark:bg-sky-400/[0.07] dark:ring-sky-300/40',
-    avatarRing: 'ring-sky-300/80 dark:ring-sky-400/50',
   },
   teamB: {
     glow: 'bg-rose-400/25 dark:bg-fuchsia-500/20',
@@ -37,15 +38,8 @@ const ACCENT: Record<
     label: 'text-rose-700 dark:text-fuchsia-300',
     bar: 'from-fuchsia-400 to-rose-400',
     winRow: 'bg-rose-50/80 ring-rose-300/70 dark:bg-fuchsia-400/[0.07] dark:ring-fuchsia-300/40',
-    avatarRing: 'ring-rose-300/80 dark:ring-fuchsia-400/50',
   },
 };
-
-/** Explicit fixture name first (organizer-set or copied at pairing), then the pair's own team. */
-function teamIdentity(team: GameTeam | undefined): { name: string | null; avatar: string | null } {
-  const name = team?.name?.trim() || team?.userTeam?.name?.trim() || null;
-  return { name, avatar: team?.userTeam?.avatar || null };
-}
 
 function fullName(p: BasicUser): string {
   return [p.firstName, p.lastName].filter(Boolean).join(' ');
@@ -71,7 +65,7 @@ function TeamRow({
   side,
   label,
   isNamed,
-  teamAvatar,
+  userTeam,
   players,
   isMine,
   avgLevel,
@@ -83,7 +77,8 @@ function TeamRow({
   label: string;
   /** A real team name reads as a title; the "Team 1" fallback stays a small eyebrow. */
   isNamed: boolean;
-  teamAvatar: string | null;
+  /** The pair's own team: its face, name (→ team page) and colour replace the corner accent. */
+  userTeam: FixedTeamUserTeam | null;
   players: BasicUser[];
   isMine: boolean;
   avgLevel: number | null;
@@ -93,29 +88,34 @@ function TeamRow({
 }) {
   const { t } = useTranslation();
   const accent = ACCENT[side];
-  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
-  const showTeamAvatar = teamAvatar !== null && teamAvatar !== failedAvatar;
+  const tint = userTeam ? fixedTeamUserTeamTint(userTeam.color) : null;
+  const tones = userTeam ? userTeamColorTones(userTeam.color) : null;
 
   return (
     <div
+      style={tint ? { ...tint.vars, ...tint.wash } : undefined}
       className={`relative rounded-2xl py-3 pe-3 ps-4 transition-all duration-300 ${
         isWinner ? `ring-1 ${accent.winRow}` : ''
       } ${isLoser ? 'opacity-55 saturate-[0.35]' : ''}`}
     >
       <span
         aria-hidden
-        className={`absolute inset-y-3 start-0 w-1 rounded-full bg-gradient-to-b ${accent.stripe}`}
+        style={
+          userTeam
+            ? {
+                backgroundImage: `linear-gradient(to bottom, ${tones?.light ?? 'var(--member-primary-400, #38bdf8)'}, ${
+                  tones?.dark ?? 'var(--member-primary-700, #0369a1)'
+                })`,
+              }
+            : undefined
+        }
+        className={`absolute inset-y-3 start-0 w-1 rounded-full ${userTeam ? '' : `bg-gradient-to-b ${accent.stripe}`}`}
       />
 
       <div className="flex min-w-0 items-center gap-2">
-        {showTeamAvatar && teamAvatar && (
-          <img
-            src={teamAvatar}
-            alt=""
-            onError={() => setFailedAvatar(teamAvatar)}
-            className={`h-7 w-7 shrink-0 rounded-full bg-gray-200 object-cover ring-2 dark:bg-gray-800 ${accent.avatarRing}`}
-          />
-        )}
+        {userTeam ? (
+          <FixedTeamUserTeamLabel userTeam={userTeam} players={players} className="min-w-0" />
+        ) : (
         <span
           className={`min-w-0 truncate ${
             isNamed
@@ -125,6 +125,7 @@ function TeamRow({
         >
           {label}
         </span>
+        )}
         {isMine && (
           <span className="shrink-0 rounded-full bg-gray-900/[0.06] px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-white/10 dark:text-gray-300">
             {t('gameDetails.matchupYourTeam')}
@@ -259,10 +260,12 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
 
   const { teamA, teamB } = resolveLeagueGameCardTeams(game);
   const sortedTeams = [...(game.fixedTeams ?? [])].sort((a, b) => a.teamNumber - b.teamNumber);
-  const identityA = teamIdentity(sortedTeams[0]);
-  const identityB = teamIdentity(sortedTeams[1]);
-  const labelA = identityA.name ?? t('gameDetails.team1');
-  const labelB = identityB.name ?? t('gameDetails.team2');
+  const nameA = fixedTeamDisplayName(sortedTeams[0]);
+  const nameB = fixedTeamDisplayName(sortedTeams[1]);
+  const userTeamA = sortedTeams[0]?.userTeam ?? null;
+  const userTeamB = sortedTeams[1]?.userTeam ?? null;
+  const labelA = nameA ?? t('gameDetails.team1');
+  const labelB = nameB ?? t('gameDetails.team2');
 
   const phase: Phase =
     game.resultsStatus === 'FINAL' ? 'final' : game.status === 'STARTED' ? 'live' : 'upcoming';
@@ -291,8 +294,8 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
         <TeamRow
           side="teamA"
           label={labelA}
-          isNamed={identityA.name !== null}
-          teamAvatar={identityA.avatar}
+          isNamed={nameA !== null}
+          userTeam={userTeamA}
           players={teamA}
           isMine={mineA}
           avgLevel={avgA}
@@ -304,8 +307,8 @@ export const LeagueFixedTeamsSection = ({ game }: LeagueFixedTeamsSectionProps) 
         <TeamRow
           side="teamB"
           label={labelB}
-          isNamed={identityB.name !== null}
-          teamAvatar={identityB.avatar}
+          isNamed={nameB !== null}
+          userTeam={userTeamB}
           players={teamB}
           isMine={mineB}
           avgLevel={avgB}

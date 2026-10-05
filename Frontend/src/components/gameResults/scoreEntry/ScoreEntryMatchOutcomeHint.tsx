@@ -7,6 +7,9 @@ interface ScoreEntryMatchOutcomeHintProps {
   outcome: 'A' | 'B' | 'tie';
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  /** The side's user-team name, when the side is one. */
+  teamAName?: string | null;
+  teamBName?: string | null;
 }
 
 /** Says who takes the match with the score being entered, so no further set is expected. */
@@ -14,15 +17,21 @@ export const ScoreEntryMatchOutcomeHint = ({
   outcome,
   teamAPlayers,
   teamBPlayers,
+  teamAName,
+  teamBName,
 }: ScoreEntryMatchOutcomeHintProps) => {
   const { t } = useTranslation();
   const Icon = outcome === 'tie' ? Handshake : Trophy;
   const winners = outcome === 'A' ? teamAPlayers : teamBPlayers;
+  const winnerName = outcome === 'A' ? teamAName : teamBName;
   const text =
     outcome === 'tie'
       ? t('gameResults.scoreEntryMatchDrawn')
       : t('gameResults.scoreEntryMatchWon', {
-          team: winners.length > 0 ? teamLabel(winners) : t(outcome === 'A' ? 'gameResults.teamA' : 'gameResults.teamB'),
+          team: winnerName
+            ? winnerName
+            : winners.length > 0
+              ? teamLabel(winners) : t(outcome === 'A' ? 'gameResults.teamA' : 'gameResults.teamB'),
         });
 
   return (

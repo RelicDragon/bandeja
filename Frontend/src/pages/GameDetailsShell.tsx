@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue, startTransition } from 'react';
+import { useState, useEffect, useCallback, useMemo, useReducer, useRef, useDeferredValue, startTransition, type SetStateAction } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -38,6 +38,7 @@ import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { ResultsRosterCard } from '@/components/GameDetails/ResultsRosterCard';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
+import { carryFixedTeamUserTeams } from '@/utils/fixedTeamUserTeam';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
 import { fixedTeamsManagementVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
@@ -162,6 +163,13 @@ export interface GameDetailsShellProps {
   } | null;
 }
 
+/** Game state writer: like `setState`, but an unchanged fixed-team roster keeps its known `userTeam`. */
+function gameKeepingFixedTeamUserTeams(prev: Game | null, next: SetStateAction<Game | null>): Game | null {
+  const value = typeof next === 'function' ? next(prev) : next;
+  if (!value || !prev || value.id !== prev.id) return value;
+  const carried = carryFixedTeamUserTeams(prev.fixedTeams, value.fixedTeams);
+  return carried === value.fixedTeams ? value : { ...value, fixedTeams: carried ?? undefined };
+}
 export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onChatGameSelect, layoutCancelledInfo }: GameDetailsShellProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -175,7 +183,13 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const setGameDetailsTableViewOverride = useGameDetailsChromeStore((s) => s.setGameDetailsTableViewOverride);
   const setGameDetailsTableAddRound = useGameDetailsChromeStore((s) => s.setGameDetailsTableAddRound);
 
-  const [game, setGame] = useState<Game | null>(() => initialGame && initialGame.id === id ? initialGame : null);
+  // `useReducer` (not `useState`) so every write keeps the pair's own team: most game
+  // payloads (socket updates, edit endpoints) carry no `fixedTeams[].userTeam`.
+  const [game, setGame] = useReducer(
+    gameKeepingFixedTeamUserTeams,
+    null,
+    () => (initialGame && initialGame.id === id ? initialGame : null),
+  );
   const gameRef = useRef<Game | null>(null);
   gameRef.current = game;
   const [myInvites, setMyInvites] = useState<Invite[]>([]);

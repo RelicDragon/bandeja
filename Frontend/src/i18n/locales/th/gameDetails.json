@@ -575,6 +575,7 @@
     "fixtureVsShort": "เทียบกับ",
     "matchupWinner": "ผู้ชนะ",
     "matchupYourTeam": "ทีมของคุณ",
+    "fixedTeamOpenUserTeam": "เปิดทีม {{team}}",
     "matchupAvgLevel": "เฉลี่ย",
     "matchupLive": "สด",
     "matchupDraw": "เสมอ",

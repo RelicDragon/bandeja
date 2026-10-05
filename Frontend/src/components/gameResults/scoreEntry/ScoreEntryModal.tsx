@@ -10,6 +10,7 @@ import { ScoreEntryBoard } from './ScoreEntryBoard';
 import { ScoreKeypadPanel } from './ScoreKeypadPanel';
 import { ScoreEntryMatchOutcomeHint } from './ScoreEntryMatchOutcomeHint';
 import { SCORE_ENTRY_EASE } from './scoreEntryStyles';
+import { userTeamForRoster } from '@/utils/fixedTeamUserTeam';
 import {
   useScoreEntryState,
   type ScoreEntryGame,
@@ -177,6 +178,9 @@ const ScoreEntryBody = ({
     isMultiSetMatch,
     matchOutcome,
   } = entry;
+  // A side that is a fixed team which is a user team shows under its team name.
+  const teamAUserTeam = userTeamForRoster(game?.fixedTeams, teamAPlayers.map((p) => p.id));
+  const teamBUserTeam = userTeamForRoster(game?.fixedTeams, teamBPlayers.map((p) => p.id));
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scoreboardRef = useRef<HTMLDivElement>(null);
@@ -289,6 +293,8 @@ const ScoreEntryBody = ({
             layout={layout}
             teamAPlayers={teamAPlayers}
             teamBPlayers={teamBPlayers}
+            teamAUserTeam={teamAUserTeam}
+            teamBUserTeam={teamBUserTeam}
             teamAScore={teamAScore}
             teamBScore={teamBScore}
             scoreMax={scoreMax}
@@ -340,6 +346,8 @@ const ScoreEntryBody = ({
               outcome={matchOutcome}
               teamAPlayers={teamAPlayers}
               teamBPlayers={teamBPlayers}
+              teamAName={teamAUserTeam?.name}
+              teamBName={teamBUserTeam?.name}
             />
           </motion.div>
         ) : null}

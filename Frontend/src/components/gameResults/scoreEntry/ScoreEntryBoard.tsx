@@ -1,4 +1,4 @@
-import { BasicUser } from '@/types';
+import type { BasicUser, FixedTeamUserTeam } from '@/types';
 import { ScoreEntryTeamPanel, type TeamSideState } from './ScoreEntryTeamPanel';
 import { ScoreStepper } from './ScoreStepper';
 import { TRAY_CLASS, TRAY_PLATE_CLASS } from './scoreEntryStyles';
@@ -8,6 +8,8 @@ interface ScoreEntryBoardProps {
   layout: ScoreEntryLayout;
   teamAPlayers: BasicUser[];
   teamBPlayers: BasicUser[];
+  teamAUserTeam?: FixedTeamUserTeam | null;
+  teamBUserTeam?: FixedTeamUserTeam | null;
   teamAScore: number;
   teamBScore: number;
   scoreMax: number;
@@ -60,6 +62,8 @@ export const ScoreEntryBoard = ({
   layout,
   teamAPlayers,
   teamBPlayers,
+  teamAUserTeam = null,
+  teamBUserTeam = null,
   teamAScore,
   teamBScore,
   scoreMax,
@@ -77,9 +81,9 @@ export const ScoreEntryBoard = ({
       <div className={TRAY_CLASS}>
         <div className={`${TRAY_PLATE_CLASS} px-3 pb-3 pt-4`}>
           <div className="grid grid-cols-[minmax(0,1fr)_1.25rem_minmax(0,1fr)] items-stretch gap-x-2 gap-y-3.5">
-            <ScoreEntryTeamPanel players={teamAPlayers} sideState={stateA} />
+            <ScoreEntryTeamPanel players={teamAPlayers} userTeam={teamAUserTeam} sideState={stateA} />
             <VsHairline ariaLabel={vsAriaLabel} />
-            <ScoreEntryTeamPanel players={teamBPlayers} sideState={stateB} />
+            <ScoreEntryTeamPanel players={teamBPlayers} userTeam={teamBUserTeam} sideState={stateB} />
 
             <ScoreStepper
               value={teamAScore}
@@ -113,7 +117,7 @@ export const ScoreEntryBoard = ({
       <div className={`${TRAY_PLATE_CLASS} flex flex-col gap-2.5 p-3`}>
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <ScoreEntryTeamPanel players={teamAPlayers} sideState={stateA} orientation="row" />
+            <ScoreEntryTeamPanel players={teamAPlayers} userTeam={teamAUserTeam} sideState={stateA} orientation="row" />
           </div>
           <ScoreStepper
             value={teamAScore}
@@ -131,7 +135,7 @@ export const ScoreEntryBoard = ({
 
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <ScoreEntryTeamPanel players={teamBPlayers} sideState={stateB} orientation="row" />
+            <ScoreEntryTeamPanel players={teamBPlayers} userTeam={teamBUserTeam} sideState={stateB} orientation="row" />
           </div>
           <ScoreStepper
             value={teamBScore}

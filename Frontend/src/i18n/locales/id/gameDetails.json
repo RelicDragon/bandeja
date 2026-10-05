@@ -575,6 +575,7 @@
     "fixtureVsShort": "vs",
     "matchupWinner": "Pemenang",
     "matchupYourTeam": "Tim kamu",
+    "fixedTeamOpenUserTeam": "Buka tim {{team}}",
     "matchupAvgLevel": "Rata²",
     "matchupLive": "Live",
     "matchupDraw": "Seri",

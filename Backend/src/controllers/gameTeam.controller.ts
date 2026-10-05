@@ -1,13 +1,16 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { GameTeamService } from '../services/gameTeam.service';
+import { attachUserTeamsToFixedTeams, attachUserTeamsToTeamList } from '../services/game/fixedTeamUserTeam';
 
 export const setGameTeams = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { gameId } = req.params;
     const { teams, openEndedList } = req.body;
 
-    const result = await GameTeamService.setGameTeams(gameId, teams, { openEndedList: openEndedList === true });
+    const saved = await GameTeamService.setGameTeams(gameId, teams, { openEndedList: openEndedList === true });
+    // Same `fixedTeams[].userTeam` as the game detail, so the client can swap the game in place.
+    const result = saved ? await attachUserTeamsToFixedTeams(saved) : saved;
 
     res.status(200).json({
       success: true,
@@ -22,7 +25,9 @@ export const getGameTeams = async (req: AuthRequest, res: Response, next: NextFu
   try {
     const { gameId } = req.params;
 
-    const teams = await GameTeamService.getGameTeams(gameId);
+    const rows = await GameTeamService.getGameTeams(gameId);
+    // Signed-in only, like the game detail's `fixedTeams[].userTeam`.
+    const teams = req.userId ? await attachUserTeamsToTeamList(rows) : rows;
 
     res.status(200).json({
       success: true,
