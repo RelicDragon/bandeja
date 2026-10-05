@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Check, Loader2, PenLine } from 'lucide-react';
-import { TeamAvatar } from '@/components/TeamAvatar';
 import type { UserTeam } from '@/types';
+import { userTeamWashStyle } from '@/utils/userTeamColor';
 
 export type HeroFieldStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -16,10 +16,9 @@ type HeroProps = {
 };
 
 /**
- * The top of `/user-team/:id`: an ambient wash built from the team's own
- * picture (a blurred, oversized copy of `TeamAvatar`, so a photo team and a
- * split-face team both get a backdrop in their own colours), the picture, the
- * name and the two seats.
+ * The top of `/user-team/:id`: an ambient wash in the team's colour
+ * (`UserTeam.color`, default = primary — a team photo does not change it),
+ * the picture, the name and the two seats.
  */
 export function UserTeamHero({ team, avatar, title, children }: HeroProps) {
   return (
@@ -28,14 +27,10 @@ export function UserTeamHero({ team, avatar, title, children }: HeroProps) {
       className="relative isolate overflow-hidden rounded-[2rem] bg-[var(--ui-surface)] ring-1 ring-black/[0.04] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.5)] dark:ring-white/[0.06]"
     >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 overflow-hidden [mask-image:linear-gradient(to_bottom,black_30%,transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 [mask-image:linear-gradient(to_bottom,black_35%,transparent)] dark:opacity-80"
+        style={userTeamWashStyle(team.color)}
         aria-hidden
-      >
-        <div className="absolute -inset-10 scale-125 transform-gpu opacity-45 blur-3xl saturate-150 dark:opacity-35">
-          <TeamAvatar team={team} size="fill" participantTip={false} />
-        </div>
-        <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_0%,transparent_40%,var(--ui-surface)_100%)]" />
-      </div>
+      />
 
       <div className="flex flex-col items-center px-4 pb-6 pt-4">
         <div className="drop-shadow-[0_18px_28px_rgba(15,23,42,0.22)]">{avatar}</div>

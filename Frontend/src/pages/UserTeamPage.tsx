@@ -422,7 +422,8 @@ export function UserTeamPage() {
     const cutAngleDisplay = cutAngleLive ?? team.cutAngle ?? 45;
     const colorDisplay = colorLive !== undefined ? colorLive : (team.color ?? null);
     const teamForAvatar = { ...team, cutAngle: cutAngleDisplay, color: colorDisplay };
-    const showColorPicker = isOwner && !team.avatar;
+    // The colour belongs to the team, photo or not (hero wash + initials).
+    const showColorPicker = isOwner;
     const handleColor = async (color: UserTeamColor | null) => {
       setColorLive(color);
       const rid = ++colorSaveRequestId.current;
@@ -469,7 +470,7 @@ export function UserTeamPage() {
           ) : undefined
         }
         footer={
-          showColorPicker ? (
+          isOwner && !team.avatar ? (
             <button
               type="button"
               disabled={busy}
