@@ -1,0 +1,200 @@
+{
+  "novice": {
+    "celebration": {
+      "continue": "继续",
+      "done": "出发吧",
+      "congrats": {
+        "firstTitle": "你完成了第一场比赛！",
+        "gameTitle": "第 {{number}} 场比赛完成",
+        "subtitle": "每打一场比赛，就能解锁更多应用功能。",
+        "won": "你赢了！",
+        "level": "水平",
+        "wins": "胜",
+        "ties": "平",
+        "losses": "负"
+      },
+      "achievements": {
+        "eyebrow": "新成就",
+        "titleOne": "成就已解锁",
+        "titleMany": "多项成就已解锁",
+        "subtitle": "可以在你的奖杯柜中查看。"
+      },
+      "rankUp": {
+        "eyebrow": "段位提升",
+        "title": "你现在是{{rank}}",
+        "jumped": "从{{from}}直升{{to}}",
+        "ladder": "段位阶梯",
+        "progress": "距离常客还差 {{current}}/{{target}} 场",
+        "regularReached": "已登顶阶梯"
+      },
+      "ranks": {
+        "newcomer": "新人",
+        "debut": "初登场",
+        "rookie": "新秀",
+        "contender": "竞争者",
+        "challenger": "挑战者",
+        "regular": "常客"
+      },
+      "features": {
+        "title": "为你解锁",
+        "regularTitle": "你已成为常客——完整应用全部开放",
+        "regularSubtitle": "现在一切都已开放，按自己的节奏探索吧。",
+        "unlockedName": "已解锁：{{name}}",
+        "items": {
+          "homeShell": {
+            "name": "首页",
+            "desc": "你的比赛、邀请和接下来的安排，一处查看。"
+          },
+          "findTab": {
+            "name": "发现",
+            "desc": "浏览附近的比赛，抢占空位。"
+          },
+          "calendar": {
+            "name": "日历",
+            "desc": "按天查看即将到来的比赛。"
+          },
+          "pastGames": {
+            "name": "历史比赛",
+            "desc": "回顾你的成绩和比分。"
+          },
+          "chatsTab": {
+            "name": "聊天",
+            "desc": "直接给球友和群组发消息。"
+          },
+          "followPlayers": {
+            "name": "关注球友",
+            "desc": "关注你喜欢一起打球的人。"
+          },
+          "playStreak": {
+            "name": "连续打球",
+            "desc": "每周打球，延长你的连续纪录。"
+          },
+          "createGame": {
+            "name": "创建比赛",
+            "desc": "组织你自己的比赛并邀请球友。"
+          },
+          "topTab": {
+            "name": "排行",
+            "desc": "你所在城市的排名和排行榜。"
+          },
+          "levelHistory": {
+            "name": "水平历史",
+            "desc": "看看你的水平如何逐场变化。"
+          },
+          "playerComparison": {
+            "name": "球员对比",
+            "desc": "一对一比较你们的数据。"
+          },
+          "leagues": {
+            "name": "联赛",
+            "desc": "加入一个赛季，为排名而战。"
+          },
+          "tournaments": {
+            "name": "锦标赛",
+            "desc": "报名参加锦标赛，冲击领奖台。"
+          },
+          "marketTab": {
+            "name": "市场",
+            "desc": "与其他球友买卖装备。"
+          },
+          "stories": {
+            "name": "动态",
+            "desc": "分享你比赛中的精彩瞬间。"
+          },
+          "liveRail": {
+            "name": "正在直播",
+            "desc": "关注此刻正在进行的比赛。"
+          },
+          "userTeams": {
+            "name": "球队",
+            "desc": "和固定搭档组建球队。"
+          },
+          "aiAssistant": {
+            "name": "AI 助手",
+            "desc": "用日常语言查找比赛、搭档和数据。"
+          },
+          "wallet": {
+            "name": "钱包",
+            "desc": "你的金币、奖励和竞猜。"
+          },
+          "createLeague": {
+            "name": "创建联赛",
+            "desc": "举办你自己的联赛或锦标赛。"
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "新人",
+      "cardLabel": "新人 · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_other": "带来了 {{count}} 位新球友"
+    },
+    "welcome": {
+      "greeting": "你好，{{name}}！",
+      "greetingNoName": "欢迎来到 Bandeja！",
+      "subtitle": "让我们开始你的第一场比赛。",
+      "profile": "个人资料",
+      "firstGameTitle": "你的第一场比赛",
+      "nextGameTitle": "你的下一场比赛",
+      "openGame": "打开比赛",
+      "openChat": "聊天",
+      "directions": "路线",
+      "choiceTitle": "你想做什么？",
+      "playTitle": "我想打球",
+      "playBody": "告诉我们你何时有空——我们帮你找比赛",
+      "learnTitle": "我想学习",
+      "learnBody": "附近的训练和教练",
+      "noviceGamesTitle": "本周适合新手的比赛",
+      "noviceGamesEmpty": "本周还没有适合新手的比赛。告诉我们你何时有空，我们为你匹配。",
+      "trainingsTitle": "即将开始的训练",
+      "trainingsEmpty": "本周还没有训练。",
+      "teaserTitle": "边打边解锁",
+      "teaserMore": "还有更多…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "新人",
+        "debut": "首秀",
+        "rookie": "新秀",
+        "contender": "竞争者",
+        "challenger": "挑战者",
+        "regular": "常客"
+      },
+      "ladderLabel": "通往常客的段位",
+      "progressToRegular": "已完成 {{current}} / {{target}} 场，即可成为常客",
+      "nextUnlock": "{{rank}}解锁：",
+      "unlockAll": {
+        "link": "我很熟悉了——全部显示",
+        "title": "现在显示全部内容？",
+        "message": "所有标签页和功能将立即出现。你的比赛仍会计数，但不再有升段庆祝。",
+        "confirm": "全部显示",
+        "failed": "暂时无法解锁，请重试。"
+      },
+      "features": {
+        "homeShell": "首页",
+        "findTab": "查找",
+        "calendar": "日历",
+        "pastGames": "过往比赛",
+        "chatsTab": "聊天",
+        "followPlayers": "关注球员",
+        "playStreak": "连续打球",
+        "createGame": "创建比赛",
+        "topTab": "排行榜",
+        "levelHistory": "水平历史",
+        "playerComparison": "球员对比",
+        "leagues": "联赛",
+        "tournaments": "锦标赛",
+        "marketTab": "市场",
+        "stories": "动态",
+        "liveRail": "正在直播",
+        "userTeams": "团队",
+        "aiAssistant": "AI 助手",
+        "wallet": "钱包",
+        "createLeague": "创建联赛",
+        "ads": "优惠"
+      }
+    }
+  }
+}

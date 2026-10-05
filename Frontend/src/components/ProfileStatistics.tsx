@@ -9,6 +9,7 @@ import { YourPartnersSection } from '@/components/pairs/YourPartnersSection';
 import { ProfileRecapsRow } from '@/components/recap/ProfileRecapsRow';
 import { ProfileSeriesRow } from '@/features/game-series/ProfileSeriesRow';
 import { TrophyPendingCelebrationHost } from '@/components/trophies/TrophyPendingCelebrationHost';
+import { NewPlayersBroughtStat } from '@/components/novice/badge/NewPlayersBroughtStat';
 import { useAuthStore } from '@/store/authStore';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 import { queryKeys } from '@/queries/queryKeys';
@@ -70,6 +71,11 @@ export const ProfileStatistics = () => {
       className="space-y-6"
     >
       <TrophyPendingCelebrationHost trophies={stats.user.trophies} isOwn />
+      {(stats.newPlayersBroughtCount ?? 0) > 0 && (
+        <div className="flex justify-center">
+          <NewPlayersBroughtStat count={stats.newPlayersBroughtCount} />
+        </div>
+      )}
       <LevelHistoryView stats={stats} padding="p-0" onStatsRefresh={setStats} />
       {/* PRD 352 — partners ranked by win rate, floor of 3 games together. */}
       {user?.id ? <YourPartnersSection userId={user.id} sport={sport} /> : null}

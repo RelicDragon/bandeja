@@ -19,6 +19,8 @@ interface HomeActionGridProps {
   /** Panel counts (leagues + bookings) from useMyTabPanelCounts. */
   panelCounts: MyTabPanelCounts;
   hideBookingsCta?: boolean;
+  /** PRD 358 — league entry points (hidden below the novice `leagues` rank). */
+  showLeagues?: boolean;
 }
 
 /**
@@ -38,6 +40,7 @@ function HomeActionGridView({
   primarySport,
   panelCounts,
   hideBookingsCta = false,
+  showLeagues = true,
 }: HomeActionGridProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -76,7 +79,7 @@ function HomeActionGridView({
       </AnimatedMount>
 
       {/* EARNED — show the sole league directly; group multiple leagues behind the CTA. */}
-      {panelCounts.leagues === 1 && (
+      {showLeagues && panelCounts.leagues === 1 && (
         <YourLeaguesHomeSection
           games={games}
           gamesUnreadCounts={gamesUnreadCounts}
@@ -84,7 +87,7 @@ function HomeActionGridView({
           embedded
         />
       )}
-      {panelCounts.leagues > 1 && (
+      {showLeagues && panelCounts.leagues > 1 && (
         <LeagueActionCTA
           games={games}
           gamesUnreadCounts={gamesUnreadCounts}

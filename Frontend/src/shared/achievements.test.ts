@@ -117,6 +117,8 @@ describe('achievement leaderboard families', () => {
     for (const definition of ACHIEVEMENT_CATALOG) {
       if (definition.ruleKind === 'EVENT_SEASON') continue;
       if (definition.ruleKind === 'HABIT_BUG_SHIPPED') continue;
+      if (definition.ruleKind === 'HABIT_TALENT_SCOUT') continue;
+      if (definition.ruleKind === 'HABIT_AMBASSADOR') continue;
       const family = achievementLeaderboardFamilyForRuleKind(definition.ruleKind);
       expect(family).not.toBeNull();
       expect(isAchievementLeaderboardFamily(family)).toBe(true);

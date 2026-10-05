@@ -896,6 +896,11 @@ export class UserMergeService {
           where: { ownerId: sourceId },
           data: { ownerId: survivorId },
         });
+        // PRD 358 — newcomers the source debuted are credited to the survivor.
+        await tx.user.updateMany({
+          where: { noviceDebutHostUserId: sourceId },
+          data: { noviceDebutHostUserId: survivorId },
+        });
         await tx.groupChannelInvite.updateMany({
           where: { senderId: sourceId },
           data: { senderId: survivorId },

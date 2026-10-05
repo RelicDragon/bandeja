@@ -46,6 +46,13 @@ vi.mock('@/store/authStore', () => ({
 
 vi.mock('@/api/axios', () => ({ default: { post: vi.fn() } }));
 
+const novicePush = vi.hoisted(() => ({ refreshNoviceFromPush: vi.fn() }));
+
+vi.mock('@/services/push/noviceRankUpFromPush', () => ({
+  isNoviceRankUpPushType: (type: string | null | undefined) => type === 'NOVICE_RANK_UP',
+  refreshNoviceFromPush: novicePush.refreshNoviceFromPush,
+}));
+
 vi.mock('@/services/push/pushTapBridge', () => ({
   addPendingPushTapListener: vi.fn(async () => undefined),
   consumePendingPushTapNative: vi.fn(async () => undefined),
@@ -137,5 +144,11 @@ describe('push tap routing', () => {
   it('opens the shop for a received gift', async () => {
     await tap('GOODS_GIFT_RECEIVED', { goodsId: 'goods-1', senderUserId: 'u-1' });
     expect(nav.navigateToPath).toHaveBeenCalledWith('/shop');
+  });
+
+  it('opens Home and refreshes novice state for a rank-up, so the celebration plays', async () => {
+    await tap('NOVICE_RANK_UP', { noviceRank: '2' });
+    expect(nav.navigateToHome).toHaveBeenCalledWith();
+    expect(novicePush.refreshNoviceFromPush).toHaveBeenCalledTimes(1);
   });
 });

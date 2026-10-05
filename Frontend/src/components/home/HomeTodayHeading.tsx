@@ -6,8 +6,8 @@ import { formatSearchResultDate } from '@/utils/dateFormat';
 interface HomeTodayHeadingProps {
   /** Selected day for the games list below (calendar is collapsed). */
   selectedDate: Date | null;
-  /** Expand the month calendar. */
-  onShowCalendar: () => void;
+  /** Expand the month calendar. Omitted → no toggle (calendar locked for a novice). */
+  onShowCalendar?: () => void;
 }
 
 /**
@@ -27,16 +27,18 @@ function HomeTodayHeadingView({ selectedDate, onShowCalendar }: HomeTodayHeading
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </h2>
-      <button
-        type="button"
-        onClick={onShowCalendar}
-        aria-pressed={false}
-        aria-label={t('games.calendar')}
-        data-testid="my-tab-calendar-toggle"
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted"
-      >
-        <Calendar className="h-4 w-4" strokeWidth={2.5} aria-hidden />
-      </button>
+      {onShowCalendar ? (
+        <button
+          type="button"
+          onClick={onShowCalendar}
+          aria-pressed={false}
+          aria-label={t('games.calendar')}
+          data-testid="my-tab-calendar-toggle"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted"
+        >
+          <Calendar className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+        </button>
+      ) : null}
     </div>
   );
 }

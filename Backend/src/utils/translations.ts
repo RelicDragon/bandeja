@@ -141,6 +141,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.ownerPingTitle': 'Players are looking',
     'playIntent.ownerPingBody':
       '{{count}} looking for this time · {{sport}} · {{when}} · {{place}}. Tap to invite them.',
+    'playIntent.newcomerPingTitle': 'A newcomer wants to play',
+    'playIntent.newcomerPingBody':
+      'A new player is looking for a game like yours · {{sport}} · {{when}} · {{place}}. Invite them in!',
     'playIntent.today': 'Today',
     'playIntent.tomorrow': 'Tomorrow',
     'playIntent.dayAfter': 'Day after tomorrow',
@@ -549,6 +552,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.ownerPingTitle': 'Игроки ищут игру',
     'playIntent.ownerPingBody':
       'Ищут игру на это время: {{count}} · {{sport}} · {{when}} · {{place}}. Нажмите, чтобы пригласить.',
+    'playIntent.newcomerPingTitle': 'Новичок хочет сыграть',
+    'playIntent.newcomerPingBody':
+      'Новый игрок ищет игру как у тебя · {{sport}} · {{when}} · {{place}}. Пригласи его!',
     'playIntent.today': 'Сегодня',
     'playIntent.tomorrow': 'Завтра',
     'playIntent.dayAfter': 'Послезавтра',
@@ -932,6 +938,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.ownerPingTitle': 'Igrači traže igru',
     'playIntent.ownerPingBody':
       'Traže igru za ovo vreme: {{count}} · {{sport}} · {{when}} · {{place}}. Dodirnite da ih pozovete.',
+    'playIntent.newcomerPingTitle': 'Novajlija želi da igra',
+    'playIntent.newcomerPingBody':
+      'Novi igrač traži igru poput tvoje · {{sport}} · {{when}} · {{place}}. Pozovi ga!',
     'playIntent.today': 'Danas',
     'playIntent.tomorrow': 'Sutra',
     'playIntent.dayAfter': 'Prekosutra',
@@ -1315,6 +1324,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.ownerPingTitle': 'Hay jugadores buscando',
     'playIntent.ownerPingBody':
       'Buscan partido a esta hora: {{count}} · {{sport}} · {{when}} · {{place}}. Toca para invitarlos.',
+    'playIntent.newcomerPingTitle': 'Un novato quiere jugar',
+    'playIntent.newcomerPingBody':
+      'Un jugador nuevo busca una partida como la tuya · {{sport}} · {{when}} · {{place}}. ¡Invítalo!',
     'playIntent.today': 'Hoy',
     'playIntent.tomorrow': 'Mañana',
     'playIntent.dayAfter': 'Pasado mañana',
@@ -1698,6 +1710,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.ownerPingTitle': 'Hráči hledají hru',
     'playIntent.ownerPingBody':
       'Hledají hru na tento čas: {{count}} · {{sport}} · {{when}} · {{place}}. Klepněte a pozvěte je.',
+    'playIntent.newcomerPingTitle': 'Nováček chce hrát',
+    'playIntent.newcomerPingBody':
+      'Nový hráč hledá hru jako je tvoje · {{sport}} · {{when}} · {{place}}. Pozvi ho!',
     'playIntent.today': 'Dnes',
     'playIntent.tomorrow': 'Zítra',
     'playIntent.dayAfter': 'Pozítří',
@@ -2062,6 +2077,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.gameMatchBody': '{{sport}} · {{when}} · {{place}} · {{slots}} فتحات مفتوحة. انقر للانضمام.',
     'playIntent.ownerPingTitle': 'اللاعبون يبحثون',
     'playIntent.ownerPingBody': 'يبحثون عن لعبة في هذا الوقت: {{count}} · {{sport}} · {{when}} · {{place}}. اضغط لدعوتهم.',
+    'playIntent.newcomerPingTitle': 'لاعب جديد يريد اللعب',
+    'playIntent.newcomerPingBody':
+      'لاعب جديد يبحث عن مباراة مثل مباراتك · {{sport}} · {{when}} · {{place}}. ادعُه!',
     'playIntent.today': 'اليوم',
     'playIntent.tomorrow': 'غداً',
     'playIntent.dayAfter': 'بعد غد',
@@ -2440,6 +2458,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.gameMatchBody': '{{sport}} · {{when}} · {{place}} · {{slots}} 个空位。点击加入。',
     'playIntent.ownerPingTitle': '有球员在找局',
     'playIntent.ownerPingBody': '{{count}} 人在找这个时段的比赛 · {{sport}} · {{when}} · {{place}}。点按邀请他们。',
+    'playIntent.newcomerPingTitle': '有新人想打球',
+    'playIntent.newcomerPingBody':
+      '一位新玩家在找和你类似的比赛 · {{sport}} · {{when}} · {{place}}。邀请他加入吧！',
     'playIntent.today': '今天',
     'playIntent.tomorrow': '明天',
     'playIntent.dayAfter': '后天',
@@ -2823,6 +2844,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.gameMatchBody': '{{sport}} · {{when}} · {{place}} · {{slots}} slot terbuka. Ketuk untuk bergabung.',
     'playIntent.ownerPingTitle': 'Pemain sedang mencari',
     'playIntent.ownerPingBody': '{{count}} pemain mencari main di waktu ini · {{sport}} · {{when}} · {{place}}. Ketuk untuk mengundang.',
+    'playIntent.newcomerPingTitle': 'Pemain baru ingin bermain',
+    'playIntent.newcomerPingBody':
+      'Pemain baru mencari game seperti milikmu · {{sport}} · {{when}} · {{place}}. Ajak dia!',
     'playIntent.today': 'Hari ini',
     'playIntent.tomorrow': 'Besok',
     'playIntent.dayAfter': 'Lusa',
@@ -3206,6 +3230,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.gameMatchBody': '{{sport}} · {{when}} · {{place}} · {{slots}} स्लॉट खुले। शामिल होने के लिए टैप करें।',
     'playIntent.ownerPingTitle': 'खिलाड़ी खोज रहे हैं',
     'playIntent.ownerPingBody': 'इस समय खेलना चाहते हैं: {{count}} · {{sport}} · {{when}} · {{place}}। आमंत्रित करने के लिए टैप करें।',
+    'playIntent.newcomerPingTitle': 'एक नया खिलाड़ी खेलना चाहता है',
+    'playIntent.newcomerPingBody':
+      'एक नया खिलाड़ी आपके जैसा गेम ढूंढ रहा है · {{sport}} · {{when}} · {{place}}। उसे बुलाइए!',
     'playIntent.today': 'आज',
     'playIntent.tomorrow': 'कल',
     'playIntent.dayAfter': 'परसों',
@@ -3589,6 +3616,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.gameMatchBody': '{{sport}} · {{when}} · {{place}} · ว่าง {{slots}} ที่กดเพื่อเข้าร่วม',
     'playIntent.ownerPingTitle': 'มีผู้เล่นกำลังหา',
     'playIntent.ownerPingBody': 'มีคนอยากเล่นช่วงเวลานี้ {{count}} คน · {{sport}} · {{when}} · {{place}} แตะเพื่อเชิญ',
+    'playIntent.newcomerPingTitle': 'ผู้เล่นใหม่อยากเล่น',
+    'playIntent.newcomerPingBody':
+      'ผู้เล่นใหม่กำลังหาเกมแบบของคุณ · {{sport}} · {{when}} · {{place}} ชวนเขามาเลย!',
     'playIntent.today': 'วันนี้',
     'playIntent.tomorrow': 'พรุ่งนี้',
     'playIntent.dayAfter': 'มะรืนนี้',
@@ -3972,6 +4002,9 @@ const translations: Record<string, Record<string, string>> = {
     'playIntent.gameMatchBody': '{{sport}} · {{when}} · {{place}} · 空き{{slots}}。タップして参加。',
     'playIntent.ownerPingTitle': 'プレイヤーが探しています',
     'playIntent.ownerPingBody': 'この時間に{{count}}人がプレー相手を探しています · {{sport}} · {{when}} · {{place}}。タップして招待。',
+    'playIntent.newcomerPingTitle': '新人がプレーしたがっています',
+    'playIntent.newcomerPingBody':
+      '新しいプレーヤーがあなたのような試合を探しています · {{sport}} · {{when}} · {{place}}。招待しましょう！',
     'playIntent.today': '今日',
     'playIntent.tomorrow': '明日',
     'playIntent.dayAfter': '明後日',

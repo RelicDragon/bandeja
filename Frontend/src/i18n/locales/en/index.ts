@@ -68,6 +68,7 @@ import welcome from './welcome.json';
 import weather from './weather.json';
 import weatherAlerts from './weatherAlerts.json';
 import organizerNextActions from './organizerNextActions.json';
+import novice from './novice.json';
 import stories from './stories.json';
 import agent from './agent.json';
 import sportQuestionnaireCommon from './sportQuestionnaire/common.json';
@@ -153,6 +154,7 @@ export default {
     ...weather,
     ...weatherAlerts,
     ...organizerNextActions,
+    ...novice,
     ...stories,
     sportQuestionnaire: {
         common: sportQuestionnaireCommon,

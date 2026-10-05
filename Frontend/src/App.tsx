@@ -101,6 +101,8 @@ import { GameSlotOverlapConfirmHost } from './components/gameSlotOverlap/GameSlo
 import { GenderJoinGateHost } from './components/home/GenderJoinGateHost';
 import { PrimarySportGateHost } from './components/home/PrimarySportGateHost';
 import { CityPickerRedirectHost } from './components/home/CityPickerRedirectHost';
+import { NoviceCelebrationHost } from '@/components/novice/celebration/NoviceCelebrationHost';
+import { useNoviceForegroundRefresh } from '@/hooks/useNovice';
 import { needsPrimarySportSelection } from './utils/needsPrimarySportSelection';
 import i18n from './i18n/config';
 import './i18n/config';
@@ -194,6 +196,8 @@ function AppContent() {
     prefetchPastGames: isPastGamesHomeTab,
   });
   useHeaderInvitesHydration();
+  // PRD 358 — re-read novice rank on resume (results entered while away).
+  useNoviceForegroundRefresh();
 
   const pendingAuthPath = useDeepLinkStore((s) => s.pendingAuthPath);
   const setPendingAuthPath = useDeepLinkStore((s) => s.setPendingAuthPath);
@@ -591,6 +595,8 @@ function AppContent() {
           {!isAuthPage && isAuthenticated && <UnreadMyGamesScopeSync />}
           {/* PRD 355 — applies the viewer's own chat accent (viewer-local). */}
           {!isAuthPage && isAuthenticated && <CollectionAccentEffect />}
+          {/* PRD 358 — rank-up celebration; above both the Welcome page and the shell. */}
+          {!isAuthPage && !isOnboardingPage && isAuthenticated && <NoviceCelebrationHost />}
           <PlayerCardModalManager>
             <PairSheetManager>
             <Routes>

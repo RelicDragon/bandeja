@@ -1,0 +1,205 @@
+{
+  "novice": {
+    "celebration": {
+      "continue": "متابعة",
+      "done": "هيا بنا",
+      "congrats": {
+        "firstTitle": "لعبت أول مباراة لك!",
+        "gameTitle": "انتهت المباراة رقم {{number}}",
+        "subtitle": "كل مباراة تلعبها تفتح لك جزءًا جديدًا من التطبيق.",
+        "won": "لقد فزت!",
+        "level": "المستوى",
+        "wins": "انتصارات",
+        "ties": "تعادلات",
+        "losses": "هزائم"
+      },
+      "achievements": {
+        "eyebrow": "إنجاز جديد",
+        "titleOne": "تم فتح إنجاز",
+        "titleMany": "تم فتح إنجازات",
+        "subtitle": "ستجدها في خزانة الجوائز الخاصة بك."
+      },
+      "rankUp": {
+        "eyebrow": "ترقية في الرتبة",
+        "title": "رتبتك الآن: {{rank}}",
+        "jumped": "مباشرة من {{from}} إلى {{to}}",
+        "ladder": "سلّم الرتب",
+        "progress": "{{current}}/{{target}} مباريات للوصول إلى رتبة المنتظم",
+        "regularReached": "قمة السلّم"
+      },
+      "ranks": {
+        "newcomer": "وافد جديد",
+        "debut": "مبتدئ أول",
+        "rookie": "ناشئ",
+        "contender": "منافس",
+        "challenger": "متحدٍّ",
+        "regular": "منتظم"
+      },
+      "features": {
+        "title": "تم فتحه لك",
+        "regularTitle": "أنت لاعب منتظم — التطبيق كله لك",
+        "regularSubtitle": "كل شيء مفتوح الآن. استكشف على راحتك.",
+        "unlockedName": "تم فتح {{name}}",
+        "items": {
+          "homeShell": {
+            "name": "الرئيسية",
+            "desc": "مبارياتك ودعواتك وما هو قادم في مكان واحد."
+          },
+          "findTab": {
+            "name": "البحث",
+            "desc": "تصفّح المباريات القريبة واحجز مكانًا شاغرًا."
+          },
+          "calendar": {
+            "name": "التقويم",
+            "desc": "مبارياتك القادمة يومًا بيوم."
+          },
+          "pastGames": {
+            "name": "المباريات السابقة",
+            "desc": "راجع نتائجك وأهدافك."
+          },
+          "chatsTab": {
+            "name": "المحادثات",
+            "desc": "راسل اللاعبين والمجموعات مباشرة."
+          },
+          "followPlayers": {
+            "name": "المتابعة",
+            "desc": "تابع الأشخاص الذين تحب اللعب معهم."
+          },
+          "playStreak": {
+            "name": "سلسلة اللعب",
+            "desc": "العب كل أسبوع لتطيل سلسلتك."
+          },
+          "createGame": {
+            "name": "إنشاء المباريات",
+            "desc": "نظّم مباراتك الخاصة وادعُ اللاعبين."
+          },
+          "topTab": {
+            "name": "الأفضل",
+            "desc": "التصنيفات ولوحات الصدارة في مدينتك."
+          },
+          "levelHistory": {
+            "name": "سجل المستوى",
+            "desc": "تابع تغيّر مستواك من مباراة إلى أخرى."
+          },
+          "playerComparison": {
+            "name": "مقارنة اللاعبين",
+            "desc": "قارن إحصاءاتك وجهًا لوجه."
+          },
+          "leagues": {
+            "name": "الدوريات",
+            "desc": "انضم إلى موسم والعب من أجل الترتيب."
+          },
+          "tournaments": {
+            "name": "البطولات",
+            "desc": "شارك في البطولات واسعَ إلى منصة التتويج."
+          },
+          "marketTab": {
+            "name": "السوق",
+            "desc": "اشترِ وبِع المعدات مع لاعبين آخرين."
+          },
+          "stories": {
+            "name": "القصص",
+            "desc": "شارك لحظات من مبارياتك."
+          },
+          "liveRail": {
+            "name": "مباشر الآن",
+            "desc": "تابع المباريات التي تُلعب في هذه اللحظة."
+          },
+          "userTeams": {
+            "name": "الفرق",
+            "desc": "كوّن فريقًا مع شركائك المعتادين."
+          },
+          "aiAssistant": {
+            "name": "المساعد الذكي",
+            "desc": "اطلب المباريات والشركاء والإحصاءات بكلماتك."
+          },
+          "wallet": {
+            "name": "المحفظة",
+            "desc": "عملاتك ومكافآتك ورهاناتك."
+          },
+          "createLeague": {
+            "name": "إنشاء الدوريات",
+            "desc": "أدِر دوريك أو بطولتك الخاصة."
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "وافد جديد",
+      "cardLabel": "وافد جديد · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_zero": "جلب {{count}} لاعبين جدد",
+      "broughtPlayers_one": "جلب لاعبًا جديدًا واحدًا ({{count}})",
+      "broughtPlayers_two": "جلب لاعبَين جديدَين ({{count}})",
+      "broughtPlayers_few": "جلب {{count}} لاعبين جدد",
+      "broughtPlayers_many": "جلب {{count}} لاعبًا جديدًا",
+      "broughtPlayers_other": "جلب {{count}} لاعب جديد"
+    },
+    "welcome": {
+      "greeting": "مرحبًا، {{name}}!",
+      "greetingNoName": "مرحبًا بك في Bandeja!",
+      "subtitle": "لنوصلك إلى أول مباراة لك.",
+      "profile": "الملف الشخصي",
+      "firstGameTitle": "مباراتك الأولى",
+      "nextGameTitle": "مباراتك التالية",
+      "openGame": "فتح المباراة",
+      "openChat": "المحادثة",
+      "directions": "الاتجاهات",
+      "choiceTitle": "ماذا تريد أن تفعل؟",
+      "playTitle": "أريد أن ألعب",
+      "playBody": "أخبرنا متى تكون متفرغًا — وسنجد لك مباراة",
+      "learnTitle": "أريد أن أتعلم",
+      "learnBody": "تدريبات ومدربون بالقرب منك",
+      "noviceGamesTitle": "مباريات مناسبة للمبتدئين هذا الأسبوع",
+      "noviceGamesEmpty": "لا توجد مباريات للمبتدئين هذا الأسبوع بعد. أخبرنا متى تكون متفرغًا وسنجد لك شركاء.",
+      "trainingsTitle": "التدريبات القادمة",
+      "trainingsEmpty": "لا توجد تدريبات هذا الأسبوع بعد.",
+      "teaserTitle": "يُفتح كلما لعبت",
+      "teaserMore": "والمزيد…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "وافد جديد",
+        "debut": "مُستهل",
+        "rookie": "مبتدئ",
+        "contender": "منافس",
+        "challenger": "متحدٍّ",
+        "regular": "لاعب دائم"
+      },
+      "ladderLabel": "الرتب حتى لاعب دائم",
+      "progressToRegular": "{{current}} من {{target}} مباريات للوصول إلى لاعب دائم",
+      "nextUnlock": "التالي عند {{rank}}:",
+      "unlockAll": {
+        "link": "أعرف طريقي — أظهر لي كل شيء",
+        "title": "إظهار كل شيء الآن؟",
+        "message": "ستظهر كل التبويبات والميزات فورًا. ستستمر مبارياتك في الاحتساب، لكن لن تكون هناك احتفالات بالرتب بعد الآن.",
+        "confirm": "إظهار كل شيء",
+        "failed": "تعذّر الفتح الآن. حاول مرة أخرى."
+      },
+      "features": {
+        "homeShell": "الرئيسية",
+        "findTab": "البحث",
+        "calendar": "التقويم",
+        "pastGames": "المباريات السابقة",
+        "chatsTab": "المحادثات",
+        "followPlayers": "متابعة اللاعبين",
+        "playStreak": "سلسلة اللعب",
+        "createGame": "إنشاء المباريات",
+        "topTab": "التصنيفات",
+        "levelHistory": "سجل المستوى",
+        "playerComparison": "مقارنة اللاعبين",
+        "leagues": "الدوريات",
+        "tournaments": "البطولات",
+        "marketTab": "السوق",
+        "stories": "القصص",
+        "liveRail": "مباشر الآن",
+        "userTeams": "الفرق",
+        "aiAssistant": "المساعد الذكي",
+        "wallet": "المحفظة",
+        "createLeague": "إنشاء الدوريات",
+        "ads": "العروض"
+      }
+    }
+  }
+}

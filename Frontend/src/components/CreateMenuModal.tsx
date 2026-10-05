@@ -10,6 +10,7 @@ import { CreateGroupChannelForm } from './chat/CreateGroupChannelForm';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { navigationService } from '@/services/navigationService';
 import { hasMultipleSportsEnabled, listEnabledSports } from '@/utils/profileSports';
+import { createMenuNoviceEntries } from '@/utils/noviceShell';
 
 interface CreateMenuModalProps {
   isOpen: boolean;
@@ -45,6 +46,8 @@ export const CreateMenuModal = ({
   const gameLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gameLongPressTriggered = useRef(false);
 
+  // PRD 358 — novice ranks hide create entries until their feature unlocks.
+  const noviceEntries = createMenuNoviceEntries(user);
   const multiSportCreate = hasMultipleSportsEnabled(user);
   const pickableSports = multiSportCreate ? listEnabledSports(user) : [];
   
@@ -60,9 +63,11 @@ export const CreateMenuModal = ({
   useBackButtonModal(isOpen, handleClose, 'create-menu-modal');
 
   const getEntityTypes = (): EntityType[] => {
-    const types: EntityType[] = ['GAME', 'TOURNAMENT'];
+    const types: EntityType[] = [];
+    if (noviceEntries.game) types.push('GAME');
+    if (noviceEntries.tournament) types.push('TOURNAMENT');
 
-    if (user?.isAdmin || user?.canCreateLeague) {
+    if ((user?.isAdmin || user?.canCreateLeague) && noviceEntries.league) {
       types.push('LEAGUE');
     }
     
@@ -70,13 +75,20 @@ export const CreateMenuModal = ({
       types.push('TRAINING');
     }
     
-    types.push('BAR');
-    types.push('EVENT');
+    if (noviceEntries.game) {
+      types.push('BAR');
+      types.push('EVENT');
+    }
     
     return types;
   };
   
   const entityTypes = getEntityTypes();
+  const menuGroups = {
+    entities: entityTypes.length > 0,
+    social: noviceEntries.story || noviceEntries.chats,
+    extras: noviceEntries.team || noviceEntries.listing,
+  };
 
   useEffect(() => {
     const updatePosition = () => {
@@ -325,103 +337,119 @@ export const CreateMenuModal = ({
             );
           })}
           
-          <div 
-            className={`h-px bg-gray-300 dark:bg-gray-600 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`
-            }}
-          />
+          {menuGroups.entities && menuGroups.social ? (
+            <div 
+              className={`h-px bg-gray-300 dark:bg-gray-600 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`
+              }}
+            />
+          ) : null}
           
-          <button
-            onClick={(e) => { e.stopPropagation(); onSelectStory(); }}
-            className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-            }}
-          >
-            <CirclePlay size={18} />
-            {t('stories.story', { defaultValue: 'Story' })}
-          </button>
+          {noviceEntries.story ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelectStory(); }}
+              className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <CirclePlay size={18} />
+              {t('stories.story', { defaultValue: 'Story' })}
+            </button>
+          ) : null}
 
-          <button
-            onClick={(e) => { e.stopPropagation(); handleSelectChatType('group'); }}
-            className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-            }}
-          >
-            <Users size={18} />
-            {t('chat.group', { defaultValue: 'Group' })}
-          </button>
+          {noviceEntries.chats ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleSelectChatType('group'); }}
+              className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <Users size={18} />
+              {t('chat.group', { defaultValue: 'Group' })}
+            </button>
+          ) : null}
           
-          <button
-            onClick={(e) => { e.stopPropagation(); handleSelectChatType('channel'); }}
-            className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-            }}
-          >
-            <Hash size={18} />
-            {t('chat.channel', { defaultValue: 'Channel' })}
-          </button>
+          {noviceEntries.chats ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleSelectChatType('channel'); }}
+              className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <Hash size={18} />
+              {t('chat.channel', { defaultValue: 'Channel' })}
+            </button>
+          ) : null}
 
-          <div
-            className={`h-px bg-gray-300 dark:bg-gray-600 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`
-            }}
-          />
+          {(menuGroups.entities || menuGroups.social) && menuGroups.extras ? (
+            <div
+              className={`h-px bg-gray-300 dark:bg-gray-600 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`
+              }}
+            />
+          ) : null}
 
-          <button
-            type="button"
-            onClick={handleCreateTeam}
-            className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-            }}
-          >
-            <UsersRound size={18} />
-            {t('teams.team', { defaultValue: 'Team' })}
-          </button>
+          {noviceEntries.team ? (
+            <button
+              type="button"
+              onClick={handleCreateTeam}
+              className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <UsersRound size={18} />
+              {t('teams.team', { defaultValue: 'Team' })}
+            </button>
+          ) : null}
 
-          <button
-            onClick={(e) => { e.stopPropagation(); handleCreateListing(); }}
-            className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-            }}
-          >
-            <ShoppingBag size={18} />
-            {t('marketplace.listing', { defaultValue: 'Listing' })}
-          </button>
+          {noviceEntries.listing ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleCreateListing(); }}
+              className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`,
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <ShoppingBag size={18} />
+              {t('marketplace.listing', { defaultValue: 'Listing' })}
+            </button>
+          ) : null}
 
-          <div
-            className={`h-px bg-gray-300 dark:bg-gray-600 ${
-              isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
-            }`}
-            style={{
-              animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`
-            }}
-          />
+          {menuGroups.entities || menuGroups.social || menuGroups.extras ? (
+            <div
+              className={`h-px bg-gray-300 dark:bg-gray-600 ${
+                isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'
+              }`}
+              style={{
+                animationDelay: isExiting ? `${(totalItems - (currentIndex++) - 1) * 100}ms` : `${currentIndex++ * 100}ms`
+              }}
+            />
+          ) : null}
 
           <button
             onClick={(e) => { e.stopPropagation(); handleCreateBug(); }}

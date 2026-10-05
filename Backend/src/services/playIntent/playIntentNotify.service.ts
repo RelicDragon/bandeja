@@ -2,9 +2,11 @@ import prisma from '../../config/database';
 import {
   EntityType,
   NotificationChannelType,
+  PlayIntentGameOwnerPingKind,
   PlayIntentStatus,
   Prisma,
   SpotOpenedKind,
+  type Sport,
 } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
@@ -533,7 +535,61 @@ export class PlayIntentNotifyService {
 
   static async maybeNotifyOwnerLookingPlayers(gameId: string, ownerId: string, lookingCount: number) {
     if (!ownerId || lookingCount <= 0) return;
+    await this.pingGameOwner({
+      gameId,
+      ownerId,
+      kind: PlayIntentGameOwnerPingKind.LOOKING,
+      buildCopy: (game, lang) => ({
+        title: t('playIntent.ownerPingTitle', lang) || 'Players are looking',
+        body: interpolatePlayIntentCopy(t('playIntent.ownerPingBody', lang), {
+          count: String(lookingCount),
+          sport: formatSportLabel(game.sport, lang),
+          when: gameScheduleLabel(game.startTime, game.city.timezone, lang),
+          place: game.club?.name || game.city.name,
+        }),
+      }),
+    });
+  }
 
+  /**
+   * PRD 358 — a novice-mode user's play intent fits this novice-friendly game.
+   * Newcomer flavour of the owner ping: same table, budget and delivery queue,
+   * deduped once per game per city-local day (`dayKey`), and its own 6 h budget
+   * so ordinary "players are looking" pings cannot starve it. Same notification
+   * type (`INTENT_PLAYERS_FOR_GAME` → opens the game) so store builds route it.
+   */
+  static async maybeNotifyOwnerNewcomerLooking(gameId: string, ownerId: string) {
+    if (!ownerId) return;
+    await this.pingGameOwner({
+      gameId,
+      ownerId,
+      kind: PlayIntentGameOwnerPingKind.NEWCOMER,
+      buildCopy: (game, lang) => ({
+        title: t('playIntent.newcomerPingTitle', lang) || 'A newcomer wants to play',
+        body: interpolatePlayIntentCopy(t('playIntent.newcomerPingBody', lang), {
+          sport: formatSportLabel(game.sport, lang),
+          when: gameScheduleLabel(game.startTime, game.city.timezone, lang),
+          place: game.club?.name || game.city.name,
+        }),
+      }),
+    });
+  }
+
+  private static async pingGameOwner(input: {
+    gameId: string;
+    ownerId: string;
+    kind: PlayIntentGameOwnerPingKind;
+    buildCopy: (
+      game: {
+        startTime: Date;
+        sport: Sport;
+        city: { name: string; timezone: string };
+        club: { name: string } | null;
+      },
+      lang: string,
+    ) => { title: string; body: string };
+  }) {
+    const { gameId, ownerId, kind } = input;
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: {
@@ -545,8 +601,14 @@ export class PlayIntentNotifyService {
     });
     if (!game || !gameStartIsFuture(game.startTime)) return;
 
+    // LOOKING: once per game, ever. NEWCOMER: once per game per local day.
+    const dayKey =
+      kind === PlayIntentGameOwnerPingKind.NEWCOMER
+        ? spotOpenedDayKey(game.city.timezone, new Date())
+        : '';
+
     const existing = await prisma.playIntentGameOwnerPing.findUnique({
-      where: { gameId },
+      where: { gameId_kind_dayKey: { gameId, kind, dayKey } },
       select: { id: true },
     });
     if (existing) return;
@@ -554,6 +616,7 @@ export class PlayIntentNotifyService {
     const recent = await prisma.playIntentGameOwnerPing.count({
       where: {
         ownerId,
+        kind,
         createdAt: { gte: new Date(Date.now() - 6 * 60 * 60 * 1000) },
       },
     });
@@ -573,27 +636,26 @@ export class PlayIntentNotifyService {
     if (channels.length === 0) return;
     if (!gameStartIsFuture(game.startTime)) return;
 
+    const copy = input.buildCopy(game, lang);
+    const isNewcomer = kind === PlayIntentGameOwnerPingKind.NEWCOMER;
     const payload: NotificationPayload = {
       type: NotificationType.INTENT_PLAYERS_FOR_GAME,
-      title: t('playIntent.ownerPingTitle', lang) || 'Players are looking',
-      body: interpolatePlayIntentCopy(t('playIntent.ownerPingBody', lang), {
-        count: String(lookingCount),
-        sport: formatSportLabel(game.sport, lang),
-        when: gameScheduleLabel(game.startTime, game.city.timezone, lang),
-        place: game.club?.name || game.city.name,
-      }),
-      data: { gameId },
+      title: copy.title,
+      body: copy.body,
+      data: isNewcomer ? { gameId, newcomer: '1' } : { gameId },
       sound: 'default',
     };
 
     try {
       await prisma.$transaction(async (tx) => {
         await tx.playIntentGameOwnerPing.create({
-          data: { gameId, ownerId },
+          data: { gameId, ownerId, kind, dayKey },
         });
         await PlayIntentNotificationDeliveryQueueService.enqueue(
           {
-            eventKey: `${NotificationType.INTENT_PLAYERS_FOR_GAME}:${gameId}`,
+            eventKey: isNewcomer
+              ? `${NotificationType.INTENT_PLAYERS_FOR_GAME}:newcomer:${gameId}:${dayKey}`
+              : `${NotificationType.INTENT_PLAYERS_FOR_GAME}:${gameId}`,
             sourceId: gameId,
             userId: ownerId,
             type: NotificationType.INTENT_PLAYERS_FOR_GAME,

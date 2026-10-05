@@ -1,3 +1,5 @@
+import type { NoviceUserFields } from '@shared/novice';
+import { showsNoviceWelcome } from '@/utils/noviceShell';
 import { isOnboardingPath } from './onboardingGate';
 
 /**
@@ -45,4 +47,18 @@ export function clearPostOnboardingPath(): void {
   } catch {
     // ignore
   }
+}
+
+/**
+ * PRD 358 — a Newcomer's closing choice lands on the Welcome page: "browse"
+ * (`/find`) becomes home, where the Welcome page lists novice-friendly games.
+ * "Play soon" (`/?playIntentOpen=1`) is already home and opens compose there.
+ * A deep link the gate intercepted is resolved separately and still wins.
+ */
+export function noviceFinishDestination(
+  destination: string,
+  user: NoviceUserFields | null | undefined,
+): string {
+  if (!showsNoviceWelcome(user)) return destination;
+  return destination.split('?')[0] === '/find' ? '/' : destination;
 }

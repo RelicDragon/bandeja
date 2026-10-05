@@ -1,0 +1,203 @@
+{
+  "novice": {
+    "celebration": {
+      "continue": "Pokračovat",
+      "done": "Jdeme na to",
+      "congrats": {
+        "firstTitle": "Odehráli jste svou první hru!",
+        "gameTitle": "Hra č. {{number}} odehrána",
+        "subtitle": "Každá odehraná hra odemkne další část aplikace.",
+        "won": "Vyhráli jste!",
+        "level": "Úroveň",
+        "wins": "Výhry",
+        "ties": "Remízy",
+        "losses": "Prohry"
+      },
+      "achievements": {
+        "eyebrow": "Nový úspěch",
+        "titleOne": "Úspěch odemčen",
+        "titleMany": "Úspěchy odemčeny",
+        "subtitle": "Najdete je ve své vitríně trofejí."
+      },
+      "rankUp": {
+        "eyebrow": "Nová hodnost",
+        "title": "Teď jste {{rank}}",
+        "jumped": "Rovnou z hodnosti {{from}} na {{to}}",
+        "ladder": "Žebříček hodností",
+        "progress": "{{current}}/{{target}} her do hodnosti Stálice",
+        "regularReached": "Vrchol žebříčku"
+      },
+      "ranks": {
+        "newcomer": "Nováček",
+        "debut": "Debutant",
+        "rookie": "Začátečník",
+        "contender": "Uchazeč",
+        "challenger": "Vyzyvatel",
+        "regular": "Stálice"
+      },
+      "features": {
+        "title": "Odemčeno pro vás",
+        "regularTitle": "Jste Stálice — celá aplikace je vaše",
+        "regularSubtitle": "Teď je otevřené všechno. Objevujte svým tempem.",
+        "unlockedName": "{{name}} – odemčeno",
+        "items": {
+          "homeShell": {
+            "name": "Domů",
+            "desc": "Vaše hry, pozvánky a co vás čeká, na jednom místě."
+          },
+          "findTab": {
+            "name": "Hledat",
+            "desc": "Procházejte hry poblíž a zaberte volné místo."
+          },
+          "calendar": {
+            "name": "Kalendář",
+            "desc": "Vaše nadcházející hry den po dni."
+          },
+          "pastGames": {
+            "name": "Odehrané hry",
+            "desc": "Podívejte se na své výsledky a skóre."
+          },
+          "chatsTab": {
+            "name": "Chaty",
+            "desc": "Pište přímo hráčům a skupinám."
+          },
+          "followPlayers": {
+            "name": "Sledování",
+            "desc": "Sledujte lidi, se kterými rádi hrajete."
+          },
+          "playStreak": {
+            "name": "Herní série",
+            "desc": "Hrajte každý týden a prodlužujte sérii."
+          },
+          "createGame": {
+            "name": "Vytváření her",
+            "desc": "Uspořádejte vlastní hru a pozvěte hráče."
+          },
+          "topTab": {
+            "name": "Žebříčky",
+            "desc": "Pořadí a žebříčky ve vašem městě."
+          },
+          "levelHistory": {
+            "name": "Historie úrovně",
+            "desc": "Sledujte, jak se vaše úroveň mění hru od hry."
+          },
+          "playerComparison": {
+            "name": "Srovnání hráčů",
+            "desc": "Porovnejte statistiky tváří v tvář."
+          },
+          "leagues": {
+            "name": "Ligy",
+            "desc": "Zapojte se do sezóny a hrajte o tabulku."
+          },
+          "tournaments": {
+            "name": "Turnaje",
+            "desc": "Přihlaste se do turnajů a jděte po stupních vítězů."
+          },
+          "marketTab": {
+            "name": "Tržiště",
+            "desc": "Kupujte a prodávejte vybavení s ostatními hráči."
+          },
+          "stories": {
+            "name": "Příběhy",
+            "desc": "Sdílejte momenty ze svých her."
+          },
+          "liveRail": {
+            "name": "Právě živě",
+            "desc": "Sledujte hry, které se hrají právě teď."
+          },
+          "userTeams": {
+            "name": "Týmy",
+            "desc": "Postavte tým se svými stálými spoluhráči."
+          },
+          "aiAssistant": {
+            "name": "AI asistent",
+            "desc": "Ptejte se na hry, spoluhráče a statistiky vlastními slovy."
+          },
+          "wallet": {
+            "name": "Peněženka",
+            "desc": "Vaše mince, odměny a sázky."
+          },
+          "createLeague": {
+            "name": "Vytváření lig",
+            "desc": "Pořádejte vlastní ligu nebo turnaj."
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "Nováček",
+      "cardLabel": "Nováček · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_one": "Přivedl(a) {{count}} nového hráče",
+      "broughtPlayers_few": "Přivedl(a) {{count}} nové hráče",
+      "broughtPlayers_many": "Přivedl(a) {{count}} nového hráče",
+      "broughtPlayers_other": "Přivedl(a) {{count}} nových hráčů"
+    },
+    "welcome": {
+      "greeting": "Ahoj, {{name}}!",
+      "greetingNoName": "Vítejte v Bandeja!",
+      "subtitle": "Pojďme najít vaši první hru.",
+      "profile": "Profil",
+      "firstGameTitle": "Vaše první hra",
+      "nextGameTitle": "Vaše další hra",
+      "openGame": "Otevřít hru",
+      "openChat": "Chat hry",
+      "directions": "Navigovat",
+      "choiceTitle": "Co chcete dělat?",
+      "playTitle": "Chci hrát",
+      "playBody": "Řekněte nám, kdy máte čas — najdeme vám hru",
+      "learnTitle": "Chci se učit",
+      "learnBody": "Tréninky a trenéři ve vašem okolí",
+      "noviceGamesTitle": "Hry pro začátečníky tento týden",
+      "noviceGamesEmpty": "Tento týden zatím nejsou hry pro začátečníky. Řekněte nám, kdy máte čas, a najdeme vám spoluhráče.",
+      "trainingsTitle": "Nadcházející tréninky",
+      "trainingsEmpty": "Tento týden zatím nejsou žádné tréninky.",
+      "teaserTitle": "Odemyká se, jak hrajete",
+      "teaserMore": "a mnohem víc…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Nováček",
+        "debut": "Debutant",
+        "rookie": "Začátečník",
+        "contender": "Uchazeč",
+        "challenger": "Vyzyvatel",
+        "regular": "Stálý hráč"
+      },
+      "ladderLabel": "Hodnosti ke Stálému hráči",
+      "progressToRegular": "{{current}} z {{target}} her do hodnosti Stálý hráč",
+      "nextUnlock": "Další na hodnosti {{rank}}:",
+      "unlockAll": {
+        "link": "Už se tu vyznám — ukažte mi všechno",
+        "title": "Zobrazit vše hned?",
+        "message": "Všechny karty a funkce se zobrazí hned. Hry se budou dál počítat, ale oslavy nových hodností už nebudou.",
+        "confirm": "Zobrazit vše",
+        "failed": "Teď se to nepodařilo odemknout. Zkuste to znovu."
+      },
+      "features": {
+        "homeShell": "Domů",
+        "findTab": "Hledat",
+        "calendar": "Kalendář",
+        "pastGames": "Minulé hry",
+        "chatsTab": "Chaty",
+        "followPlayers": "Sledování hráčů",
+        "playStreak": "Herní série",
+        "createGame": "Vytváření her",
+        "topTab": "Žebříčky",
+        "levelHistory": "Historie úrovně",
+        "playerComparison": "Porovnání hráčů",
+        "leagues": "Ligy",
+        "tournaments": "Turnaje",
+        "marketTab": "Tržiště",
+        "stories": "Příběhy",
+        "liveRail": "Právě živě",
+        "userTeams": "Týmy",
+        "aiAssistant": "AI asistent",
+        "wallet": "Peněženka",
+        "createLeague": "Vytváření lig",
+        "ads": "Nabídky"
+      }
+    }
+  }
+}

@@ -63,6 +63,7 @@ import gameWeatherRoutes from './gameWeather.routes';
 import liveGamesRoutes from './liveGames.routes';
 import onboardingRoutes from './onboarding.routes';
 import recapRoutes from './recap.routes';
+import noviceRoutes from './novice.routes';
 import referralRoutes from './referral.routes';
 import publicReferralRoutes from './publicReferral.routes';
 import publicPlatformFlagsRoutes from './publicPlatformFlags.routes';
@@ -116,6 +117,7 @@ router.use('/telegram', telegramAuthRoutes);
  */
 router.use('/users', onboardingRoutes); // PRD 350 — /users/me/onboarding
 router.use('/users', recapRoutes); // PRD 353 — /users/me/recaps
+router.use('/users', noviceRoutes); // PRD 358 — /users/me/novice
 router.use('/clubs', clubPublicRoutes); // PRD 354 — /clubs/:id/public
 router.use('/games', gameSeriesRoutes); // PRD 345 — /games/:id/series
 router.use('/games', gameAttendanceRoutes); // PRD 346

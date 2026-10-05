@@ -1,0 +1,200 @@
+{
+  "novice": {
+    "celebration": {
+      "continue": "次へ",
+      "done": "はじめよう",
+      "congrats": {
+        "firstTitle": "初めての試合をプレーしました！",
+        "gameTitle": "{{number}}試合目を終えました",
+        "subtitle": "試合をするたびに、アプリの機能が広がります。",
+        "won": "勝利しました！",
+        "level": "レベル",
+        "wins": "勝ち",
+        "ties": "引き分け",
+        "losses": "負け"
+      },
+      "achievements": {
+        "eyebrow": "新しい実績",
+        "titleOne": "実績を解除しました",
+        "titleMany": "複数の実績を解除しました",
+        "subtitle": "トロフィーキャビネットで確認できます。"
+      },
+      "rankUp": {
+        "eyebrow": "ランクアップ",
+        "title": "{{rank}}になりました",
+        "jumped": "{{from}}から一気に{{to}}へ",
+        "ladder": "ランクのはしご",
+        "progress": "レギュラーまで {{current}}/{{target}} 試合",
+        "regularReached": "はしごの頂上"
+      },
+      "ranks": {
+        "newcomer": "ニューカマー",
+        "debut": "デビュー",
+        "rookie": "ルーキー",
+        "contender": "コンテンダー",
+        "challenger": "チャレンジャー",
+        "regular": "レギュラー"
+      },
+      "features": {
+        "title": "あなたに解放された機能",
+        "regularTitle": "レギュラーになりました — アプリのすべてが使えます",
+        "regularSubtitle": "すべて開放されました。自分のペースで使ってみましょう。",
+        "unlockedName": "{{name}}が解放されました",
+        "items": {
+          "homeShell": {
+            "name": "ホーム",
+            "desc": "試合、招待、次の予定をひとまとめに。"
+          },
+          "findTab": {
+            "name": "さがす",
+            "desc": "近くの試合を見て空き枠に参加しよう。"
+          },
+          "calendar": {
+            "name": "カレンダー",
+            "desc": "これからの試合を日ごとに確認。"
+          },
+          "pastGames": {
+            "name": "過去の試合",
+            "desc": "結果とスコアを振り返ろう。"
+          },
+          "chatsTab": {
+            "name": "チャット",
+            "desc": "プレーヤーやグループに直接メッセージ。"
+          },
+          "followPlayers": {
+            "name": "フォロー",
+            "desc": "一緒にプレーしたい人をフォローしよう。"
+          },
+          "playStreak": {
+            "name": "連続プレー",
+            "desc": "毎週プレーして記録を伸ばそう。"
+          },
+          "createGame": {
+            "name": "試合の作成",
+            "desc": "自分で試合を主催してプレーヤーを招待。"
+          },
+          "topTab": {
+            "name": "トップ",
+            "desc": "あなたの街のランキングとリーダーボード。"
+          },
+          "levelHistory": {
+            "name": "レベル履歴",
+            "desc": "試合ごとのレベルの変化をチェック。"
+          },
+          "playerComparison": {
+            "name": "プレーヤー比較",
+            "desc": "成績を一対一で比べよう。"
+          },
+          "leagues": {
+            "name": "リーグ",
+            "desc": "シーズンに参加して順位を競おう。"
+          },
+          "tournaments": {
+            "name": "トーナメント",
+            "desc": "大会に出場して表彰台を目指そう。"
+          },
+          "marketTab": {
+            "name": "マーケット",
+            "desc": "ほかのプレーヤーと用具を売り買い。"
+          },
+          "stories": {
+            "name": "ストーリー",
+            "desc": "試合のひとコマをシェアしよう。"
+          },
+          "liveRail": {
+            "name": "ライブ中",
+            "desc": "いま行われている試合をフォロー。"
+          },
+          "userTeams": {
+            "name": "チーム",
+            "desc": "いつものパートナーとチームを作ろう。"
+          },
+          "aiAssistant": {
+            "name": "AIアシスタント",
+            "desc": "試合やパートナー、成績をふだんの言葉で質問。"
+          },
+          "wallet": {
+            "name": "ウォレット",
+            "desc": "コイン、報酬、ベット。"
+          },
+          "createLeague": {
+            "name": "リーグの作成",
+            "desc": "自分のリーグやトーナメントを運営しよう。"
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "ニューカマー",
+      "cardLabel": "ニューカマー · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_other": "新しいプレーヤーを{{count}}人連れてきました"
+    },
+    "welcome": {
+      "greeting": "こんにちは、{{name}}さん！",
+      "greetingNoName": "Bandejaへようこそ！",
+      "subtitle": "最初の試合を見つけましょう。",
+      "profile": "プロフィール",
+      "firstGameTitle": "最初の試合",
+      "nextGameTitle": "次の試合",
+      "openGame": "試合を開く",
+      "openChat": "チャット",
+      "directions": "道順",
+      "choiceTitle": "何をしますか？",
+      "playTitle": "プレーしたい",
+      "playBody": "空いている時間を教えてください — 試合を探します",
+      "learnTitle": "習いたい",
+      "learnBody": "近くのトレーニングとコーチ",
+      "noviceGamesTitle": "今週の初心者歓迎の試合",
+      "noviceGamesEmpty": "今週はまだ初心者歓迎の試合がありません。空いている時間を教えてくれればマッチングします。",
+      "trainingsTitle": "今後のトレーニング",
+      "trainingsEmpty": "今週はまだトレーニングがありません。",
+      "teaserTitle": "プレーするほど解放",
+      "teaserMore": "ほかにもたくさん…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "ニューカマー",
+        "debut": "デビュー",
+        "rookie": "ルーキー",
+        "contender": "コンテンダー",
+        "challenger": "チャレンジャー",
+        "regular": "レギュラー"
+      },
+      "ladderLabel": "レギュラーまでのランク",
+      "progressToRegular": "レギュラーまで {{current}} / {{target}} 試合",
+      "nextUnlock": "次は{{rank}}で：",
+      "unlockAll": {
+        "link": "使い方はわかっています — すべて表示",
+        "title": "今すぐすべて表示しますか？",
+        "message": "すべてのタブと機能がすぐに表示されます。試合は引き続きカウントされますが、ランクアップのお祝いはなくなります。",
+        "confirm": "すべて表示",
+        "failed": "今は解除できませんでした。もう一度お試しください。"
+      },
+      "features": {
+        "homeShell": "ホーム",
+        "findTab": "探す",
+        "calendar": "カレンダー",
+        "pastGames": "過去の試合",
+        "chatsTab": "チャット",
+        "followPlayers": "プレイヤーをフォロー",
+        "playStreak": "連続プレー",
+        "createGame": "試合を作成",
+        "topTab": "ランキング",
+        "levelHistory": "レベル履歴",
+        "playerComparison": "プレイヤー比較",
+        "leagues": "リーグ",
+        "tournaments": "トーナメント",
+        "marketTab": "マーケット",
+        "stories": "ストーリー",
+        "liveRail": "ライブ中",
+        "userTeams": "チーム",
+        "aiAssistant": "AIアシスタント",
+        "wallet": "ウォレット",
+        "createLeague": "リーグを作成",
+        "ads": "オファー"
+      }
+    }
+  }
+}

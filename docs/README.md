@@ -47,6 +47,7 @@ docs/
     cities.md play-intent.md booking.md club-admin.md marketplace.md
     social-and-profile.md stories.md economy.md subscriptions.md
     ads-and-attribution.md admin.md native.md weather.md presence.md agent.md
+    novice.md               novice mode: ranks, counted games, Talent Scout (PRD 358)
   ops/
     development.md          local run, env, Prisma, heavy lock
     testing.md              Playwright / Vitest / backend / CI

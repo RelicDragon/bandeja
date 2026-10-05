@@ -50,7 +50,9 @@
         "openCourt": "Open Court",
         "leto2026": "Leto 2026",
         "tieBreaker": "Pemutus Ikatan",
-        "bugShipped": "Pelacak bug"
+        "bugShipped": "Pelacak bug",
+        "talentScout": "Pencari Bakat",
+        "ambassador": "Duta"
       }
     },
     "leaderboard": {
@@ -380,6 +382,34 @@
       "bugShipped50": {
         "title": "Rilis Legenda",
         "description": "Kirimkan 50 bug atau saran yang sedang dalam proses atau pengujian hingga selesai atau diarsipkan."
+      },
+      "talentScout1": {
+        "title": "Pencari Bakat",
+        "description": "Jadi tuan rumah game terhitung pertama untuk 1 pemula di game milikmu."
+      },
+      "talentScout5": {
+        "title": "Jaringan Pencari Bakat",
+        "description": "Jadi tuan rumah game terhitung pertama untuk 5 pemula di game milikmu."
+      },
+      "talentScout15": {
+        "title": "Lumbung Bakat",
+        "description": "Jadi tuan rumah game terhitung pertama untuk 15 pemula di game milikmu."
+      },
+      "talentScout50": {
+        "title": "Legenda Akar Rumput",
+        "description": "Jadi tuan rumah game terhitung pertama untuk 50 pemula di game milikmu."
+      },
+      "ambassador1": {
+        "title": "Duta",
+        "description": "1 pemula yang debut bersamamu menjadi Reguler."
+      },
+      "ambassador5": {
+        "title": "Lingkar Mentor",
+        "description": "5 pemula yang debut bersamamu menjadi Reguler."
+      },
+      "ambassador15": {
+        "title": "Pembangun Klub",
+        "description": "15 pemula yang debut bersamamu menjadi Reguler."
       }
     }
   }

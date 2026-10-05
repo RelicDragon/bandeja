@@ -133,6 +133,8 @@ const user = (id: string, firstName: string) => ({
   trainerReviewCount: 0,
   weeklyAvailability: null,
   availabilityBucketBoundaries: null,
+  noviceRank: 5,
+  noviceUnlockedAllAt: null,
 });
 
 const team = (id: string, players: ReturnType<typeof user>[]) => ({

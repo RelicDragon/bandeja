@@ -64,6 +64,18 @@ Only `PLAYING` fills slots. _Avoid_: counting queue/invites as occupancy.
 
 **`GAME_MATCHES_INTENT`**: push/Telegram type (`Backend/src/types/notifications.types.ts`). Delivery queued in `playIntentNotify.service.ts` + `playIntentNotificationDeliveryQueue.service.ts`. **GAME and BAR only** — a fitting `TOURNAMENT` can appear on the radar without this notify. _Avoid_: tightening notify to radar membership or `allowDirectJoin`.
 
+## Novice mode (PRD 358)
+
+**Newcomer**: novice rank 0 — a user in novice mode with no counted game yet. In prose / the 🌱 badge, "newcomer" means any user in novice mode (`isNewcomerUser`: rank < Regular and not unlocked-all). _Avoid_: "novice" for `Game.suitableForNovices` (that is a game flag, not a user state).
+
+**Counted game**: a game that advances novice rank — user `PLAYING`, game `FINISHED` / `ARCHIVED`, not `EVENT` / `LEAGUE_SEASON`, and either a `GameOutcome` row for the user or a `TRAINING` / `BAR` without a no-show note. Each game once. Code: `countedGamesWhere`. _Avoid_: "games played" (`UserSportProfile.gamesPlayed` is per sport and rating-driven).
+
+**Novice rank**: `User.noviceRank`, 0–5, all sports combined: Newcomer → Debut → Rookie → Contender → Challenger → Regular. Monotonic.
+
+**Regular**: novice rank 5 (5 counted games). Novice mode ends; everything is visible. "Unlock everything" (`noviceUnlockedAllAt`) also ends novice mode for the UI without changing the rank.
+
+**Debut / debut host**: the user's first counted game (`noviceDebutGameId`) and that game's OWNER (`noviceDebutHostUserId`, null when self-hosted). Set once. Drives Talent Scout / Ambassador.
+
 ## Follow vs favorites
 
 **Follow / unfollow (users)**: UI copy. API is `/favorites/users` (`Frontend/src/api/favorites.ts`: `addUserToFavorites`, `GET /favorites/users/following`, `/followers`). Also used to highlight trainers in Find. _Avoid_: calling this “favorite user” in product copy; do not mix with clubs.

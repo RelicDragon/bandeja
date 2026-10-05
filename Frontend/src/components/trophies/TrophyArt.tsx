@@ -69,6 +69,15 @@ const ART_SRC: Record<TrophyArtKey, string> = {
   habit_bug_shipped_10: '/trophies/habit_bug_shipped_10.png',
   habit_bug_shipped_25: '/trophies/habit_bug_shipped_25.png',
   habit_bug_shipped_50: '/trophies/habit_bug_shipped_50.png',
+  // Novice mode (PRD 358) — placeholder art until `generate-trophy-art.ts`
+  // renders the dedicated PNGs (specs are in that script).
+  habit_talent_scout_1: '/trophies/habit_org_game_1.png',
+  habit_talent_scout_5: '/trophies/habit_org_game_10.png',
+  habit_talent_scout_15: '/trophies/habit_org_game_25.png',
+  habit_talent_scout_50: '/trophies/habit_org_game_100.png',
+  habit_ambassador_1: '/trophies/habit_dynamic_duo_10.png',
+  habit_ambassador_5: '/trophies/habit_dynamic_duo_50.png',
+  habit_ambassador_15: '/trophies/habit_dynamic_duo_100.png',
   leto_2026_participant: '/trophies/leto_2026_participant.png',
   leto_2026_playoffs: '/trophies/leto_2026_playoffs.png',
   leto_2026_place4: '/trophies/leto_2026_place4.png',

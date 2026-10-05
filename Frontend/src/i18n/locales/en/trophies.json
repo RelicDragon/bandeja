@@ -50,7 +50,9 @@
         "openCourt": "Open Court",
         "leto2026": "Leto 2026",
         "tieBreaker": "Tie-Breaker",
-        "bugShipped": "Bug tracker"
+        "bugShipped": "Bug tracker",
+        "talentScout": "Talent Scout",
+        "ambassador": "Ambassador"
       }
     },
     "leaderboard": {
@@ -380,6 +382,34 @@
       "bugShipped50": {
         "title": "Release Legend",
         "description": "Ship 50 bugs or suggestions through in progress or testing to finished or archived."
+      },
+      "talentScout1": {
+        "title": "Talent Scout",
+        "description": "Host a newcomer's first counted game in a game you own."
+      },
+      "talentScout5": {
+        "title": "Scout Network",
+        "description": "Host the first counted game of 5 newcomers in games you own."
+      },
+      "talentScout15": {
+        "title": "Talent Pipeline",
+        "description": "Host the first counted game of 15 newcomers in games you own."
+      },
+      "talentScout50": {
+        "title": "Grassroots Legend",
+        "description": "Host the first counted game of 50 newcomers in games you own."
+      },
+      "ambassador1": {
+        "title": "Ambassador",
+        "description": "A newcomer you debuted went on to become Regular."
+      },
+      "ambassador5": {
+        "title": "Mentor Circle",
+        "description": "5 newcomers you debuted went on to become Regular."
+      },
+      "ambassador15": {
+        "title": "Club Builder",
+        "description": "15 newcomers you debuted went on to become Regular."
       }
     }
   }

@@ -24,6 +24,7 @@ import {
 } from './results/matchLiveScoring.service';
 import { updateMatchWinners } from './results/matchWinner.service';
 import { undoGameOutcomes } from './results/outcomes.service';
+import { onGameResultsUndoneForNovice } from './novice/noviceProgress.service';
 import {
   collectPairRefreshTargets,
   refreshPairStatsForGame,
@@ -216,6 +217,7 @@ export async function deleteGameResults(gameId: string) {
     await invalidateAchievementStatsForGame({ gameId, tx });
   });
   await refreshPairStatsForGame(gameId, pairRefreshTargets);
+  await onGameResultsUndoneForNovice(gameId);
 }
 
 export async function resetGameResults(gameId: string) {
@@ -338,6 +340,7 @@ export async function resetGameResults(gameId: string) {
     await invalidateAchievementStatsForGame({ gameId, tx });
   });
   await refreshPairStatsForGame(gameId, pairRefreshTargets);
+  await onGameResultsUndoneForNovice(gameId);
 }
 
 export async function editGameResults(gameId: string) {
@@ -411,6 +414,7 @@ export async function editGameResults(gameId: string) {
       }
   });
   await refreshPairStatsForGame(gameId, pairRefreshTargets);
+  await onGameResultsUndoneForNovice(gameId);
 }
 
 export async function syncResults(gameId: string, rounds: any[], baseVersion?: string) {

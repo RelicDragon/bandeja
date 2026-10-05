@@ -181,6 +181,10 @@ export interface BasicUser {
   canCreateTournament?: boolean;
   maxParticipantsInGame?: number;
   sportProfiles?: UserSportProfile[];
+  /** PRD 358 — novice rank 0..5 (absent on old payloads → never novice). `@shared/novice`. */
+  noviceRank?: number | null;
+  /** PRD 358 — set once by "show me everything"; turns novice mode off. */
+  noviceUnlockedAllAt?: string | null;
 }
 
 export interface TrainerReview {
@@ -295,6 +299,10 @@ export interface User extends BasicUser {
   weeklyAvailability?: WeeklyAvailabilityDoc | null;
   availabilityBucketBoundaries?: AvailabilityBucketBoundaries | null;
   clubAdminClubs?: { id: string; name: string; avatar?: string | null }[];
+  /** PRD 358 — counted games toward Regular (own profile only). */
+  noviceCountedGames?: number | null;
+  /** PRD 358 — highest rank whose celebration was acknowledged (own profile only). */
+  noviceMilestoneSeenRank?: number | null;
 }
 
 export interface City {

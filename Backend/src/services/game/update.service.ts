@@ -69,6 +69,7 @@ import {
 } from '../gameTimeChange/gameTimeChange.service';
 import { emitAttendanceResetForTimeChange } from '../gameAttendance/attendanceTimeChange';
 import { postGameTimeChangedChatLine } from '../gameTimeChange/timeChangeChatLine';
+import { onGameEndedForNovice } from '../novice/noviceProgress.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -1125,6 +1126,8 @@ export class GameUpdateService {
       (updatedGame.status === 'FINISHED' || updatedGame.status === 'ARCHIVED')
     ) {
       await cleanupInviteParticipantsForEndedGame(id);
+      // PRD 358 — novice counted games (TRAINING / BAR count on status alone).
+      await onGameEndedForNovice(id);
     }
 
     // Handle BAR game completion when status changes to FINISHED

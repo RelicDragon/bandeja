@@ -13,6 +13,7 @@ import {
   partitionAttendanceAsk,
 } from './gameAttendance/attendanceRules';
 import { runWeatherAlertSweep } from './weather/weatherAlert.service';
+import { onGameEndedForNovice } from './novice/noviceProgress.service';
 
 export class GameStatusScheduler {
   private cronJob: cron.ScheduledTask | null = null;
@@ -166,6 +167,10 @@ export class GameStatusScheduler {
             // informational attendance counters. Idempotent (recomputed, not
             // incremented) and never allowed to break the status sweep.
             await onGameFinalizedForAttendance(game.id);
+            // PRD 358 — TRAINING / BAR count on reaching FINISHED / ARCHIVED, and
+            // the ARCHIVED sweep catches any results path without its own hook.
+            // Recounts (idempotent), never throws.
+            await onGameEndedForNovice(game.id);
           }
 
           if (

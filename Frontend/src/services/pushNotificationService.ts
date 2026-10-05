@@ -45,6 +45,7 @@ import {
 } from '@/services/push/keepWeatherPlanFromPush';
 import { playIntentKeys } from '@/hooks/usePlayIntent';
 import { isPlayIntentPushType } from '@/services/push/isPlayIntentPushType';
+import { isNoviceRankUpPushType, refreshNoviceFromPush } from '@/services/push/noviceRankUpFromPush';
 import { decodeJwtExpMs } from '@/api/authRefresh';
 import { blockAndroidLauncherIconChangesForNativeUi } from '@/services/androidLauncherIconScheduler';
 import { registerAndroidPushSafely } from '@/services/push/safePushRegistrationBridge';
@@ -367,6 +368,10 @@ class PushNotificationService {
           const normalized = this.normalizeNotificationData(notification.data);
           if (isPlayIntentPushType(normalized?.type)) {
             void queryClient.invalidateQueries({ queryKey: playIntentKeys.all });
+          }
+          // PRD 358 — a rank-up while the app is open plays the celebration now.
+          if (isNoviceRankUpPushType(normalized?.type)) {
+            refreshNoviceFromPush();
           }
           if (Capacitor.getPlatform() === 'android' && parsePushChatContext(notification.data)) {
             return;
@@ -910,6 +915,13 @@ class PushNotificationService {
       // Wallet: no coins have moved yet.
       case 'REFERRAL_JOINED':
         navigationService.navigateToProfile();
+        break;
+
+      // PRD 358 — rank-up opens Home; the refreshed novice state makes
+      // `NoviceCelebrationHost` play the milestone sequence there.
+      case 'NOVICE_RANK_UP':
+        navigationService.navigateToHome();
+        refreshNoviceFromPush();
         break;
 
       default:

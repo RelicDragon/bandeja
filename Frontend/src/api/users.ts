@@ -120,6 +120,8 @@ export interface UserStats {
    * level, reliability or rating uncertainty.
    */
   attendance?: { rate: number; sampleSize: number; minSample: number } | null;
+  /** PRD 358 — newcomers whose first counted game this user hosted. */
+  newPlayersBroughtCount?: number;
 }
 
 export type PlayerLevelFeedbackAggregate =

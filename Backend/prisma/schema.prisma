@@ -257,6 +257,19 @@ model User {
   bookedExternalBookings         GameExternalBooking[]            @relation("GameExternalBookingBookedBy")
   reportedGameCourts             GameCourt[]                      @relation("GameCourtReportedBy")
   reservationChangesCreated      GameReservationChange[]          @relation("GameReservationChangeCreatedBy")
+  /// Novice mode (PRD 358). Counted games across all sports — recomputed from the DB
+  /// by `recountNoviceProgress`, never incremented blindly.
+  noviceCountedGames             Int                              @default(0)
+  /// 0 Newcomer … 5 Regular (`@bandeja/shared/novice`). Monotonic: never lowered.
+  noviceRank                     Int                              @default(0)
+  /// Highest rank whose celebration the client acknowledged (once across devices).
+  noviceMilestoneSeenRank        Int                              @default(0)
+  /// "Show me everything": novice gating off for the UI. Counting continues.
+  noviceUnlockedAllAt            DateTime?
+  /// The game of the user's first counted game. Set once, never moved.
+  noviceDebutGameId              String?
+  /// OWNER of the debut game (Talent Scout credit). Null when the user owned it. Set once.
+  noviceDebutHostUserId          String?
 
   @@index([phone])
   @@index([telegramId])
@@ -266,6 +279,7 @@ model User {
   @@index([attributionId])
   @@index([utmCampaign])
   @@index([referredByUserId])
+  @@index([noviceDebutHostUserId])
 }
 
 model UserRefreshSession {
@@ -3776,13 +3790,24 @@ model MatchProposalMember {
   @@index([proposalId])
 }
 
+/// Owner pings about play-intent demand for a game.
+/// LOOKING: once per game ever (`dayKey` = ""). NEWCOMER (PRD 358): a novice-mode
+/// user's intent fits a novice-friendly game — once per game per city-local day.
 model PlayIntentGameOwnerPing {
-  id        String   @id @default(cuid())
-  gameId    String   @unique
+  id        String                      @id @default(cuid())
+  gameId    String
   ownerId   String
-  createdAt DateTime @default(now())
+  kind      PlayIntentGameOwnerPingKind @default(LOOKING)
+  dayKey    String                      @default("")
+  createdAt DateTime                    @default(now())
 
+  @@unique([gameId, kind, dayKey])
   @@index([ownerId, createdAt])
+}
+
+enum PlayIntentGameOwnerPingKind {
+  LOOKING
+  NEWCOMER
 }
 
 model Bet {

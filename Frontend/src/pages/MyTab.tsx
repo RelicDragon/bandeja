@@ -2,7 +2,6 @@ import { lazy, Suspense, useState, useMemo, useCallback, useEffect, useRef } fro
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
 import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
 import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
@@ -49,12 +48,11 @@ import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
-import { runWithProfileName } from '@/utils/runWithProfileName';
-import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { TabContentStack } from '@/components/motion/TabContentStack';
-import { useDeclineInvite } from '@/hooks/useDeclineInvite';
-import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
+import { useHomeInviteActions } from '@/components/home/useHomeInviteActions';
+import { NoviceProgressCard } from '@/components/home/NoviceProgressCard';
+import { myTabNoviceSections } from '@/utils/noviceShell';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -126,9 +124,13 @@ export const MyTab = () => {
   const booktime = useMyTabClubBookings();
   const { reloadMyClubs, reloadBookings } = booktime;
 
-  const [myGamesViewMode, setMyGamesViewMode] = useState<MyGamesViewMode>(() =>
+  // PRD 358 — novice ranks hide sections; the Play hero, invites and games stay.
+  const noviceSections = myTabNoviceSections(user);
+  const [storedMyGamesViewMode, setMyGamesViewMode] = useState<MyGamesViewMode>(() =>
     readMyGamesViewMode(user?.id),
   );
+  // Calendar locked for novices → the plain list, without touching the saved choice.
+  const myGamesViewMode: MyGamesViewMode = noviceSections.calendar ? storedMyGamesViewMode : 'list';
 
   useEffect(() => {
     setMyGamesViewMode(readMyGamesViewMode(user?.id));
@@ -432,66 +434,8 @@ export const MyTab = () => {
     return sortMyGamesByStatusAndDateTime(list, gameUnreadForSort);
   }, [pastGames, gameUnreadForSort]);
 
-  const [decliningInviteIds, setDecliningInviteIds] = useState<Set<string>>(new Set());
-  const acceptingInviteIdsRef = useRef<Set<string>>(new Set());
-  // Read through a ref so the handler identity does not change with the invite
-  // list — it is passed down to every invite row.
-  const invitesRef = useRef(invites);
-  invitesRef.current = invites;
-  const handleAcceptInvite = useCallback(async function acceptWithGates(inviteId: string) {
-    const authUser = useAuthStore.getState().user;
-    if (authUser && authUser.nameIsSet !== true) {
-      runWithProfileName(() => void acceptWithGates(inviteId));
-      return;
-    }
-    const inviteGame = invitesRef.current.find((inv) => inv.id === inviteId)?.game;
-    if (!runWithGenderForEvent(inviteGame, () => void acceptWithGates(inviteId))) return;
-    // Guard against a rapid double-tap firing two POSTs (the second would 404
-    // because the invite is no longer in the INVITED state, surfacing a spurious error toast).
-    if (acceptingInviteIdsRef.current.has(inviteId)) return;
-    acceptingInviteIdsRef.current.add(inviteId);
-    try {
-      const { invitesApi } = await import('@/api');
-      const response = await runWithOverlapConfirm((confirmOverlap) =>
-        invitesApi.accept(inviteId, confirmOverlap),
-      );
-      if (!response) return;
-      const message = (response as { message?: string }).message || 'Invite accepted successfully';
-
-      if (message === 'games.addedToJoinQueue') {
-        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
-      } else {
-        toast.success(t(message, { defaultValue: message }));
-      }
-
-      const { decrementPendingInvite } = useHeaderStore.getState();
-      decrementPendingInvite(inviteId);
-      void refetchMyGames(false, true);
-    } catch (error: any) {
-      if (recoverGenderUnsetJoin(error, () => void acceptWithGates(inviteId))) return;
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    } finally {
-      acceptingInviteIdsRef.current.delete(inviteId);
-    }
-  }, [refetchMyGames, t]);
-
-  const { handleDeclineInvite, declineInviteModal } = useDeclineInvite({
-    onDeclineStart: (inviteId) => {
-      setDecliningInviteIds((prev) => new Set(prev).add(inviteId));
-    },
-    onDeclined: async (inviteId) => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      useHeaderStore.getState().decrementPendingInvite(inviteId);
-    },
-    onDeclineEnd: (inviteId) => {
-      setDecliningInviteIds((prev) => {
-        const next = new Set(prev);
-        next.delete(inviteId);
-        return next;
-      });
-    },
-  });
+  const { handleAcceptInvite, handleDeclineInvite, declineInviteModal, decliningInviteIds } =
+    useHomeInviteActions(invites, refetchMyGames);
 
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
@@ -526,7 +470,7 @@ export const MyTab = () => {
         onLoadMore={loadPastGames}
         onNoteSaved={handlePastNoteSaved}
       />
-      <UserTeamsHomeSection embedded />
+      {noviceSections.userTeams ? <UserTeamsHomeSection embedded /> : null}
       <MainTabFooter isLoading={footerLoading} />
     </>
   );
@@ -534,7 +478,12 @@ export const MyTab = () => {
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
         <TabContentStack id="my-tab-desktop-stack">
-          {user && (
+          {user && noviceSections.progressCard && (
+            <AnimatedMount layout>
+              <NoviceProgressCard />
+            </AnimatedMount>
+          )}
+          {user && noviceSections.stories && (
             <AnimatedMount layout>
               <StoriesRail />
             </AnimatedMount>
@@ -552,7 +501,7 @@ export const MyTab = () => {
           {user && (
             <MyTabUnlinkedBookingsSection booktime={booktime} unlinked={unlinkedBookings} />
           )}
-          {user && user.cityIsSet === true && (
+          {user && user.cityIsSet === true && noviceSections.ads && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
           {user && (
@@ -563,9 +512,10 @@ export const MyTab = () => {
               primarySport={primarySport}
               panelCounts={panelCounts}
               hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
+              showLeagues={noviceSections.leagues}
             />
           )}
-          {user && (
+          {user && noviceSections.liveRail && (
             <LiveNowRailContainer
               variant="home"
               cityId={user.currentCityId ?? undefined}
@@ -586,7 +536,7 @@ export const MyTab = () => {
           {!calendarVisible ? (
             <HomeTodayHeading
               selectedDate={myGamesSelectedDate}
-              onShowCalendar={showCalendarView}
+              onShowCalendar={noviceSections.calendar ? showCalendarView : undefined}
             />
           ) : null}
           <AnimatedMount>
@@ -600,7 +550,7 @@ export const MyTab = () => {
               onSwitchToSearch={hasUpcomingGames ? undefined : switchToFind}
             />
           </AnimatedMount>
-          <UserTeamsHomeSection embedded />
+          {noviceSections.userTeams ? <UserTeamsHomeSection embedded /> : null}
         </TabContentStack>
         <MainTabFooter isLoading={loading} />
       </div>
@@ -661,7 +611,12 @@ export const MyTab = () => {
         ) : (
           <>
         <TabContentStack id="my-tab-mobile-stack">
-          {user && (
+          {user && noviceSections.progressCard && (
+            <AnimatedMount layout>
+              <NoviceProgressCard />
+            </AnimatedMount>
+          )}
+          {user && noviceSections.stories && (
             <AnimatedMount layout>
               <StoriesRail />
             </AnimatedMount>
@@ -679,7 +634,7 @@ export const MyTab = () => {
           {user && (
             <MyTabUnlinkedBookingsSection booktime={booktime} unlinked={unlinkedBookings} />
           )}
-          {user && user.cityIsSet === true && (
+          {user && user.cityIsSet === true && noviceSections.ads && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
           {user && (
@@ -690,9 +645,10 @@ export const MyTab = () => {
               primarySport={primarySport}
               panelCounts={panelCounts}
               hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
+              showLeagues={noviceSections.leagues}
             />
           )}
-          {user && (
+          {user && noviceSections.liveRail && (
             <LiveNowRailContainer
               variant="home"
               cityId={user.currentCityId ?? undefined}
@@ -719,7 +675,7 @@ export const MyTab = () => {
           {!calendarVisible ? (
             <HomeTodayHeading
               selectedDate={myGamesSelectedDate}
-              onShowCalendar={showCalendarView}
+              onShowCalendar={noviceSections.calendar ? showCalendarView : undefined}
             />
           ) : null}
           <AnimatedMount>
@@ -734,7 +690,7 @@ export const MyTab = () => {
             />
           </AnimatedMount>
 
-          <UserTeamsHomeSection embedded />
+          {noviceSections.userTeams ? <UserTeamsHomeSection embedded /> : null}
         </TabContentStack>
         <MainTabFooter isLoading={loading || isRefreshing} />
           </>

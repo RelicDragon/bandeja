@@ -24,6 +24,10 @@ export type TrophyRuleKind =
   | 'HABIT_TIE_BREAK'
   /** Bug tracker: report shipped through test/in progress to done. */
   | 'HABIT_BUG_SHIPPED'
+  /** Novice mode (PRD 358): newcomers whose first counted game was in a game you own. */
+  | 'HABIT_TALENT_SCOUT'
+  /** Novice mode (PRD 358): newcomers you debuted who went on to reach Regular. */
+  | 'HABIT_AMBASSADOR'
   /** One-off league-season event medals (e.g. Fix Liga Leto 2026). */
   | 'EVENT_SEASON';
 
@@ -90,6 +94,13 @@ export type TrophyArtKey =
   | 'habit_bug_shipped_10'
   | 'habit_bug_shipped_25'
   | 'habit_bug_shipped_50'
+  | 'habit_talent_scout_1'
+  | 'habit_talent_scout_5'
+  | 'habit_talent_scout_15'
+  | 'habit_talent_scout_50'
+  | 'habit_ambassador_1'
+  | 'habit_ambassador_5'
+  | 'habit_ambassador_15'
   | 'leto_2026_participant'
   | 'leto_2026_playoffs'
   | 'leto_2026_place4'
@@ -160,6 +171,13 @@ export type AchievementDefinitionId =
   | 'habit_bug_shipped_10'
   | 'habit_bug_shipped_25'
   | 'habit_bug_shipped_50'
+  | 'habit_talent_scout_1'
+  | 'habit_talent_scout_5'
+  | 'habit_talent_scout_15'
+  | 'habit_talent_scout_50'
+  | 'habit_ambassador_1'
+  | 'habit_ambassador_5'
+  | 'habit_ambassador_15'
   | 'leto_2026_participant'
   | 'leto_2026_playoffs'
   | 'leto_2026_place4'

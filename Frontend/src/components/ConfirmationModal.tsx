@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components';
-import { AlertTriangle, ImageOff } from 'lucide-react';
+import { AlertTriangle, ImageOff, type LucideIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 interface ConfirmationModalProps {
@@ -12,6 +12,8 @@ interface ConfirmationModalProps {
   confirmVariant?: 'primary' | 'danger';
   /** warning: caution (default). info: neutral emphasis for reversible / informational checks. */
   tone?: 'warning' | 'info';
+  /** Overrides the tone's default icon. */
+  icon?: LucideIcon;
   highlightedText?: string;
   isLoading?: boolean;
   loadingText?: string;
@@ -30,6 +32,7 @@ export const ConfirmationModal = ({
   cancelText,
   confirmVariant = 'primary',
   tone = 'warning',
+  icon: CustomIcon,
   highlightedText,
   isLoading = false,
   loadingText,
@@ -82,7 +85,13 @@ export const ConfirmationModal = ({
               : 'bg-orange-100 dark:bg-orange-900/20'
           }`}
         >
-          {tone === 'info' ? (
+          {CustomIcon ? (
+            <CustomIcon
+              size={24}
+              className={tone === 'info' ? 'text-sky-600 dark:text-sky-400' : 'text-orange-600 dark:text-orange-400'}
+              aria-hidden
+            />
+          ) : tone === 'info' ? (
             <ImageOff size={24} className="text-sky-600 dark:text-sky-400" aria-hidden />
           ) : (
             <AlertTriangle size={24} className="text-orange-600 dark:text-orange-400" aria-hidden />

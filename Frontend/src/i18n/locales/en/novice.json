@@ -1,0 +1,201 @@
+{
+  "novice": {
+    "celebration": {
+      "continue": "Continue",
+      "done": "Let's go",
+      "congrats": {
+        "firstTitle": "You played your first game!",
+        "gameTitle": "Game #{{number}} done",
+        "subtitle": "Every game you play opens up more of the app.",
+        "won": "You won!",
+        "level": "Level",
+        "wins": "Wins",
+        "ties": "Draws",
+        "losses": "Losses"
+      },
+      "achievements": {
+        "eyebrow": "New achievement",
+        "titleOne": "Achievement unlocked",
+        "titleMany": "Achievements unlocked",
+        "subtitle": "Find them in your trophy cabinet."
+      },
+      "rankUp": {
+        "eyebrow": "Rank up",
+        "title": "You're now {{rank}}",
+        "jumped": "Straight from {{from}} to {{to}}",
+        "ladder": "Rank ladder",
+        "progress": "{{current}}/{{target}} games to Regular",
+        "regularReached": "Top of the ladder"
+      },
+      "ranks": {
+        "newcomer": "Newcomer",
+        "debut": "Debut",
+        "rookie": "Rookie",
+        "contender": "Contender",
+        "challenger": "Challenger",
+        "regular": "Regular"
+      },
+      "features": {
+        "title": "Unlocked for you",
+        "regularTitle": "You're a Regular — the full app is yours",
+        "regularSubtitle": "Everything is open now. Explore at your own pace.",
+        "unlockedName": "{{name}} unlocked",
+        "items": {
+          "homeShell": {
+            "name": "Home",
+            "desc": "Your games, invites and what's next, in one place."
+          },
+          "findTab": {
+            "name": "Find",
+            "desc": "Browse games near you and grab an open spot."
+          },
+          "calendar": {
+            "name": "Calendar",
+            "desc": "See your upcoming games day by day."
+          },
+          "pastGames": {
+            "name": "Past games",
+            "desc": "Look back at your results and scores."
+          },
+          "chatsTab": {
+            "name": "Chats",
+            "desc": "Message players and groups directly."
+          },
+          "followPlayers": {
+            "name": "Following",
+            "desc": "Follow the people you like playing with."
+          },
+          "playStreak": {
+            "name": "Play streak",
+            "desc": "Play every week to grow your streak."
+          },
+          "createGame": {
+            "name": "Game creation",
+            "desc": "Host your own game and invite players."
+          },
+          "topTab": {
+            "name": "Top",
+            "desc": "Rankings and leaderboards in your city."
+          },
+          "levelHistory": {
+            "name": "Level history",
+            "desc": "Watch your level change game by game."
+          },
+          "playerComparison": {
+            "name": "Player comparison",
+            "desc": "Compare your stats head to head."
+          },
+          "leagues": {
+            "name": "Leagues",
+            "desc": "Join a season and play for the table."
+          },
+          "tournaments": {
+            "name": "Tournaments",
+            "desc": "Enter tournaments and chase a podium."
+          },
+          "marketTab": {
+            "name": "Market",
+            "desc": "Buy and sell gear with other players."
+          },
+          "stories": {
+            "name": "Stories",
+            "desc": "Share moments from your games."
+          },
+          "liveRail": {
+            "name": "Live now",
+            "desc": "Follow games being played right now."
+          },
+          "userTeams": {
+            "name": "Teams",
+            "desc": "Build a team with your usual partners."
+          },
+          "aiAssistant": {
+            "name": "AI assistant",
+            "desc": "Ask for games, partners and stats in plain words."
+          },
+          "wallet": {
+            "name": "Wallet",
+            "desc": "Your coins, rewards and bets."
+          },
+          "createLeague": {
+            "name": "League creation",
+            "desc": "Run your own league or tournament."
+          }
+        }
+      }
+    },
+    "badge": {
+      "newcomer": "Newcomer",
+      "cardLabel": "Newcomer · {{rank}}"
+    },
+    "organizer": {
+      "broughtPlayers_one": "Brought {{count}} new player",
+      "broughtPlayers_other": "Brought {{count}} new players"
+    },
+    "welcome": {
+      "greeting": "Hi, {{name}}!",
+      "greetingNoName": "Welcome to Bandeja!",
+      "subtitle": "Let's get you to your first game.",
+      "profile": "Profile",
+      "firstGameTitle": "Your first game",
+      "nextGameTitle": "Your next game",
+      "openGame": "Open game",
+      "openChat": "Chat",
+      "directions": "Directions",
+      "choiceTitle": "What would you like to do?",
+      "playTitle": "I want to play",
+      "playBody": "Tell us when you're free — we'll find you a game",
+      "learnTitle": "I want to learn",
+      "learnBody": "Trainings and coaches near you",
+      "noviceGamesTitle": "Beginner-friendly games this week",
+      "noviceGamesEmpty": "No beginner-friendly games this week yet. Tell us when you're free and we'll match you.",
+      "trainingsTitle": "Upcoming trainings",
+      "trainingsEmpty": "No trainings this week yet.",
+      "teaserTitle": "Unlocks as you play",
+      "teaserMore": "and more…"
+    },
+    "shell": {
+      "rank": {
+        "newcomer": "Newcomer",
+        "debut": "Debut",
+        "rookie": "Rookie",
+        "contender": "Contender",
+        "challenger": "Challenger",
+        "regular": "Regular"
+      },
+      "ladderLabel": "Ranks to Regular",
+      "progressToRegular": "{{current}} of {{target}} games to Regular",
+      "nextUnlock": "Next at {{rank}}:",
+      "unlockAll": {
+        "link": "I know my way around — show me everything",
+        "title": "Show everything now?",
+        "message": "All tabs and features appear right away. Your games still count, but there will be no more rank-up celebrations.",
+        "confirm": "Show everything",
+        "failed": "Couldn't unlock right now. Please try again."
+      },
+      "features": {
+        "homeShell": "Home",
+        "findTab": "Find",
+        "calendar": "Calendar",
+        "pastGames": "Past games",
+        "chatsTab": "Chats",
+        "followPlayers": "Follow players",
+        "playStreak": "Play streak",
+        "createGame": "Create games",
+        "topTab": "Rankings",
+        "levelHistory": "Level history",
+        "playerComparison": "Player comparison",
+        "leagues": "Leagues",
+        "tournaments": "Tournaments",
+        "marketTab": "Market",
+        "stories": "Stories",
+        "liveRail": "Live now",
+        "userTeams": "Teams",
+        "aiAssistant": "AI assistant",
+        "wallet": "Wallet",
+        "createLeague": "Create leagues",
+        "ads": "Offers"
+      }
+    }
+  }
+}
