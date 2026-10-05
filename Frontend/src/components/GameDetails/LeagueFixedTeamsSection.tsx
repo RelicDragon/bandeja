@@ -114,19 +114,30 @@ function TeamRow({
 
       <div className="flex min-w-0 items-center gap-2">
         {userTeam ? (
-          <FixedTeamUserTeamLabel userTeam={userTeam} players={players} className="min-w-0" />
+          <FixedTeamUserTeamLabel
+            userTeam={userTeam}
+            players={players}
+            className="min-w-0"
+            subtitle={
+              isMine ? (
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t('gameDetails.matchupYourTeam')}
+                </span>
+              ) : null
+            }
+          />
         ) : (
-        <span
-          className={`min-w-0 truncate ${
-            isNamed
-              ? 'text-sm font-extrabold tracking-tight text-gray-900 dark:text-white'
-              : `text-[10px] font-bold uppercase tracking-[0.14em] ${accent.label}`
-          }`}
-        >
-          {label}
-        </span>
+          <span
+            className={`min-w-0 truncate ${
+              isNamed
+                ? 'text-sm font-extrabold tracking-tight text-gray-900 dark:text-white'
+                : `text-[10px] font-bold uppercase tracking-[0.14em] ${accent.label}`
+            }`}
+          >
+            {label}
+          </span>
         )}
-        {isMine && (
+        {isMine && !userTeam && (
           <span className="shrink-0 rounded-full bg-gray-900/[0.06] px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-white/10 dark:text-gray-300">
             {t('gameDetails.matchupYourTeam')}
           </span>

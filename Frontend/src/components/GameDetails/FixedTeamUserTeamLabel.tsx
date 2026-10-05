@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
@@ -13,6 +13,8 @@ interface FixedTeamUserTeamLabelProps {
   /** `title`: bold team-coloured name. `eyebrow`: small caps line above a roster. */
   variant?: 'title' | 'eyebrow';
   showAvatar?: boolean;
+  /** Small line under the name (e.g. "Your team"), so the name keeps the row's width. */
+  subtitle?: ReactNode;
   className?: string;
 }
 
@@ -22,6 +24,7 @@ export function FixedTeamUserTeamLabel({
   players,
   variant = 'title',
   showAvatar = true,
+  subtitle,
   className = '',
 }: FixedTeamUserTeamLabelProps) {
   const { t } = useTranslation();
@@ -43,14 +46,17 @@ export function FixedTeamUserTeamLabel({
       {showAvatar && avatarTeam ? (
         <TeamAvatar team={avatarTeam} size="mini" participantTip={false} />
       ) : null}
-      <span
-        className={`min-w-0 truncate ${UT_ACCENT_TEXT} ${
-          variant === 'title'
-            ? 'text-sm font-extrabold tracking-tight'
-            : 'text-[11px] font-bold uppercase tracking-[0.12em]'
-        }`}
-      >
-        {userTeam.name}
+      <span className="flex min-w-0 flex-col">
+        <span
+          className={`min-w-0 truncate ${UT_ACCENT_TEXT} ${
+            variant === 'title'
+              ? 'text-sm font-extrabold tracking-tight'
+              : 'text-[11px] font-bold uppercase tracking-[0.12em]'
+          }`}
+        >
+          {userTeam.name}
+        </span>
+        {subtitle ? <span className="min-w-0 truncate">{subtitle}</span> : null}
       </span>
       <ChevronRight
         size={14}
