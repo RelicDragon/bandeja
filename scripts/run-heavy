@@ -1,24 +1,39 @@
 #!/bin/sh
 set -eu
 
-if [ "${PADELPULSE_HEAVY_LOCK_HELD:-}" = "1" ]; then
-  exec "$@"
-fi
-
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 
 case "$PWD/" in
   "$REPO_ROOT/Frontend/"*)
     LOCK_LANE="frontend"
+    LANE_DIR="$REPO_ROOT/Frontend"
     ;;
   "$REPO_ROOT/Backend/"*)
     LOCK_LANE="backend"
+    LANE_DIR="$REPO_ROOT/Backend"
     ;;
   *)
     LOCK_LANE="shared"
+    LANE_DIR=""
     ;;
 esac
+
+# Use the project's own toolchain: a bare `tsc`/`vitest`/`ts-node`/`prisma`
+# typed outside an npm script would otherwise resolve to a global install
+# (e.g. Homebrew tsc 5.3) and report bogus errors. Lane bin first, then the
+# repo root bin, then the caller's PATH. The command still runs from $PWD.
+if [ -d "$REPO_ROOT/node_modules/.bin" ]; then
+  PATH="$REPO_ROOT/node_modules/.bin:$PATH"
+fi
+if [ -n "$LANE_DIR" ] && [ -d "$LANE_DIR/node_modules/.bin" ]; then
+  PATH="$LANE_DIR/node_modules/.bin:$PATH"
+fi
+export PATH
+
+if [ "${PADELPULSE_HEAVY_LOCK_HELD:-}" = "1" ]; then
+  exec "$@"
+fi
 
 LOCK_FILE="${PADELPULSE_HEAVY_LOCK_FILE:-/tmp/padelpulse-$LOCK_LANE-heavy.lock}"
 

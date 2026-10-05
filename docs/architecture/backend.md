@@ -171,5 +171,6 @@ Builds, `tsc`, Vitest, Playwright, Prisma generate/migrate, backend test runners
 - Never invoke `tsc` / `vite build` / Vitest / Playwright / Prisma generate directly.
 
 `scripts/run-heavy` uses `lockf` (or flock fallback) on `/tmp/padelpulse-{frontend|backend|shared}-heavy.lock`.
+It also prepends the lane's `node_modules/.bin` (then the repo root's) to `PATH`, so bare `tsc` / `vitest` / `ts-node` / `prisma` use the project's own versions, not a global install. The command still runs from the caller's cwd. Contract test: `scripts/run-heavy.contract.test.mjs`.
 
 Prisma: `npm --prefix Backend run prisma:migrate` (named `prisma migrate dev`). **Never** `prisma db push`. Enum `ADD VALUE` cannot share a transaction with first use of the value — split migrations. Schema name for the client: `DB_SCHEMA` default `padelpulse` in `config/database.ts` (PrismaPg `search_path`).
