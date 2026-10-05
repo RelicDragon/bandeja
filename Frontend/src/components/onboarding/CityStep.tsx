@@ -52,6 +52,28 @@ export function CityStep(chrome: OnboardingStepChrome) {
     }
   };
 
+  // "Yes" on the auto-detected city must record the confirmation; otherwise the
+  // home city prompt asks again and the Play CTA opens the city picker first.
+  const handleConfirm = async () => {
+    if (user?.cityIsSet === true) {
+      chrome.onAdvance();
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const response = await usersApi.updateProfile({ cityIsSet: true });
+      updateUser(response.data);
+      chrome.onAdvance();
+    } catch (error) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        t('onboarding.errors.saveFailed');
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const coordinates =
     typeof city?.latitude === 'number' && typeof city?.longitude === 'number'
       ? { latitude: city.latitude, longitude: city.longitude }
@@ -64,7 +86,7 @@ export function CityStep(chrome: OnboardingStepChrome) {
       title={t('onboarding.city.title')}
       subtitle={t('onboarding.city.helper')}
       primaryLabel={picking ? undefined : t('onboarding.city.confirm')}
-      onPrimary={picking ? undefined : chrome.onAdvance}
+      onPrimary={picking ? undefined : handleConfirm}
       primaryBusy={submitting}
       footerExtra={
         picking && city ? (
