@@ -228,3 +228,48 @@ export async function agentUsageForAdmin(filter: { days: number; userId?: string
     }),
   };
 }
+
+type HelpMissRow = { runId: string | null; createdAt: Date; llmMessages: unknown };
+
+/** Rows scanned per request (newest first); enough for a dashboard, bounded for the DB. */
+export const AGENT_HELP_MISS_SCAN_MAX = 2000;
+
+/**
+ * `get_help` misses: topics the model asked for that the help corpus does not have, read from
+ * the tool messages stored on each run (`helpMiss` in the tool result, `tools/help.tools.ts`).
+ * Most-asked first, so missing help topics surface.
+ */
+export async function listAgentHelpMissesForAdmin(filter: { days: number; now?: Date }) {
+  const days = Math.min(Math.max(filter.days, 1), AGENT_AUDIT_USAGE_MAX_DAYS);
+  const now = filter.now ?? new Date();
+  const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const rows = await prisma.$queryRaw<HelpMissRow[]>`
+    SELECT "runId", "createdAt", "llmMessages"
+    FROM "AgentMessage"
+    WHERE role = 'TOOL' AND "createdAt" >= ${since} AND "llmMessages"::text LIKE '%helpMiss%'
+    ORDER BY "createdAt" DESC
+    LIMIT ${AGENT_HELP_MISS_SCAN_MAX}`;
+  const byTopic = new Map<string, { topic: string; count: number; lastAt: string; runIds: string[] }>();
+  for (const row of rows) {
+    const messages = Array.isArray(row.llmMessages) ? (row.llmMessages as Array<{ content?: unknown }>) : [];
+    for (const message of messages) {
+      if (typeof message.content !== 'string' || !message.content.includes('helpMiss')) continue;
+      let topic: unknown;
+      try {
+        topic = (JSON.parse(message.content) as { data?: { helpMiss?: unknown } }).data?.helpMiss;
+      } catch {
+        continue;
+      }
+      if (typeof topic !== 'string' || !topic) continue;
+      const entry = byTopic.get(topic) ?? { topic, count: 0, lastAt: row.createdAt.toISOString(), runIds: [] };
+      entry.count += 1;
+      if (row.runId && entry.runIds.length < 5 && !entry.runIds.includes(row.runId)) entry.runIds.push(row.runId);
+      byTopic.set(topic, entry);
+    }
+  }
+  return {
+    since: since.toISOString(),
+    days,
+    misses: [...byTopic.values()].sort((a, b) => b.count - a.count || b.lastAt.localeCompare(a.lastAt)),
+  };
+}

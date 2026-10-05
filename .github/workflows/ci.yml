@@ -48,6 +48,8 @@ jobs:
       - run: npx prisma generate
       - run: npx prisma migrate deploy
       - run: npm run lint
+      # Assistant help corpus: frontmatter, sections, UI labels vs Frontend locales, labels.json.
+      - run: npm run check:agent-help
       - run: npm run test:user-stats-select
       - run: npm run test:user-performance-insights
       - run: npm run test:available-games

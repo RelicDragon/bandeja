@@ -11,6 +11,8 @@ export type AgentPrincipal = {
   isAdmin: boolean;
   isTrainer: boolean;
   canCreateTournament: boolean;
+  /** Global league-creation flag (`User.canCreateLeague`); gates `league_creator` help sections. */
+  canCreateLeague: boolean;
   currentCityId: string | null;
   language: string | null;
   /**
@@ -28,6 +30,7 @@ const AGENT_PRINCIPAL_SELECT = {
   currentCityId: AUTH_USER_SELECT.currentCityId,
   language: AUTH_USER_SELECT.language,
   canCreateTournament: true,
+  canCreateLeague: true,
   agentMemoryEnabled: true,
 } as const;
 
@@ -46,6 +49,7 @@ export async function loadAgentPrincipal(userId: string): Promise<AgentPrincipal
     isAdmin: user.isAdmin,
     isTrainer: user.isTrainer,
     canCreateTournament: user.canCreateTournament,
+    canCreateLeague: user.canCreateLeague,
     currentCityId: user.currentCityId,
     language: user.language,
     agentMemoryEnabled: user.agentMemoryEnabled,

@@ -32,6 +32,7 @@ Schema: `Backend/prisma/schema.prisma` + `docs/architecture/database.md`.
 - UI behavior/workflow: update **`docs/UI_TEST_PLAN.md`** (Cursor rule `ui-test-plan.mdc`).
 - Domain behavior: update the matching **`docs/domains/`** file in the same task if docs and code would disagree.
 - Constraints: update **`docs/product/constraints.md`** and the §2.2 table together.
+- Assistant help: if you changed a file listed in a `verified_against` of `Backend/agent-help/` (grep the path there), review that help topic in the same task and run `cd Backend && npm run check:agent-help` (UI label changes too: `-- --write` refreshes `labels.json`).
 
 ## Repo mechanics (always)
 

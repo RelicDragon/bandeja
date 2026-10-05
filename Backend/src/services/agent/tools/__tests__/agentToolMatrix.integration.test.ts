@@ -398,6 +398,7 @@ void (async () => {
       if (kind === 'money-read-cases' || kind === 'money-write-cases') continue; // __tests__/agentMoney.integration.test.ts
       if (kind === 'memory-cases') continue; // __tests__/agentMemory.integration.test.ts
       if (kind === 'web-read-cases') continue; // __tests__/agentWeb.integration.test.ts
+      if (kind === 'help-read-cases') continue; // __tests__/agentHelp.integration.test.ts
       assert.ok(covered.has(name), `${name} (${kind}) has no authorization cases in this test`);
     }
     console.log(`agentToolMatrix.integration.test.ts: ok (${covered.size} tools)`);

@@ -8,6 +8,7 @@ import { AGENT_BOOKING_I18N_EN, AGENT_BOOKING_I18N_TRANSLATIONS } from '../agent
 import { AGENT_CANCEL_BOOKING_I18N_EN, AGENT_CANCEL_BOOKING_I18N_TRANSLATIONS } from '../agentCancelBookingI18n';
 import { AGENT_CANCEL_GAME_I18N_EN, AGENT_CANCEL_GAME_I18N_TRANSLATIONS } from '../agentCancelGameI18n';
 import { AGENT_GAME_CHAT_I18N_EN, AGENT_GAME_CHAT_I18N_TRANSLATIONS } from '../agentGameChatI18n';
+import { AGENT_HELP_I18N_EN, AGENT_HELP_I18N_TRANSLATIONS } from '../agentHelpI18n';
 import { AGENT_I18N_EN, AGENT_LOCALES } from '../agentI18n';
 import { AGENT_I18N_TRANSLATIONS } from '../agentI18nTranslations';
 import { AGENT_LEAGUE_I18N_EN, AGENT_LEAGUE_I18N_TRANSLATIONS } from '../agentLeagueI18n';
@@ -30,6 +31,7 @@ const DICTIONARIES: Record<string, Dictionaries> = {
   agentCancelBookingI18n: { en: AGENT_CANCEL_BOOKING_I18N_EN, translations: AGENT_CANCEL_BOOKING_I18N_TRANSLATIONS },
   agentCancelGameI18n: { en: AGENT_CANCEL_GAME_I18N_EN, translations: AGENT_CANCEL_GAME_I18N_TRANSLATIONS },
   agentGameChatI18n: { en: AGENT_GAME_CHAT_I18N_EN, translations: AGENT_GAME_CHAT_I18N_TRANSLATIONS },
+  agentHelpI18n: { en: AGENT_HELP_I18N_EN, translations: AGENT_HELP_I18N_TRANSLATIONS },
   agentLeagueI18n: { en: AGENT_LEAGUE_I18N_EN, translations: AGENT_LEAGUE_I18N_TRANSLATIONS },
   agentMemoryI18n: { en: AGENT_MEMORY_I18N_EN, translations: AGENT_MEMORY_I18N_TRANSLATIONS },
   agentMoneyI18n: { en: AGENT_MONEY_I18N_EN, translations: AGENT_MONEY_I18N_TRANSLATIONS },

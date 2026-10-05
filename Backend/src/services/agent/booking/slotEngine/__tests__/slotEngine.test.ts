@@ -23,7 +23,7 @@ const TZ = 'Europe/Belgrade';
 const SECRET = 'test-slot-secret';
 
 function principal(userId: string): AgentPrincipal {
-  return { userId, isAdmin: false, isTrainer: false, canCreateTournament: false, currentCityId: 'city-1', language: 'en', agentMemoryEnabled: true };
+  return { userId, isAdmin: false, isTrainer: false, canCreateTournament: false, canCreateLeague: false, currentCityId: 'city-1', language: 'en', agentMemoryEnabled: true };
 }
 
 function club(overrides: Partial<SlotEngineClub> = {}): SlotEngineClub {

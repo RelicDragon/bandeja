@@ -73,6 +73,10 @@
  *                     calls, strict input, personal-data refusal, per-run / per-day / global / budget
  *                     limits, audit rows, URL allowlist, taint (`__tests__/agentWeb.integration.test.ts`,
  *                     `npm run test:agent-web`)
+ *   help-read-cases — `list_help` / `get_help`: no game or principal dimension beyond the account
+ *                     role; topic found, unknown topic (miss marked on the run), section stripping
+ *                     per role, index ↔ files, frontmatter, labels (`__tests__/agentHelp.integration.test.ts`,
+ *                     `npm run test:agent-help`)
  */
 export type AgentToolCoverageKind =
   | 'game-matrix'
@@ -101,7 +105,8 @@ export type AgentToolCoverageKind =
   | 'money-read-cases'
   | 'money-write-cases'
   | 'memory-cases'
-  | 'web-read-cases';
+  | 'web-read-cases'
+  | 'help-read-cases';
 
 export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = {
   list_my_games: 'game-matrix',
@@ -169,4 +174,6 @@ export const AGENT_TOOL_AUTHZ_COVERAGE: Record<string, AgentToolCoverageKind> = 
   web_search: 'web-read-cases',
   web_fetch: 'web-read-cases',
   web_images: 'web-read-cases',
+  list_help: 'help-read-cases',
+  get_help: 'help-read-cases',
 };

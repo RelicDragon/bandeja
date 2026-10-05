@@ -22,6 +22,7 @@ import { CREATE_GAME_TOOLS } from './createGame.tools';
 import { CREATE_GAME_WITH_BOOKING_TOOLS } from './createGameWithBooking.tools';
 import { GAME_CHAT_TOOLS } from './gameChat.tools';
 import { GAME_WRITE_TOOLS } from './gameWrites.tools';
+import { HELP_TOOLS } from './help.tools';
 import { ROSTER_WRITE_TOOLS } from './rosterWrites.tools';
 import { ROSTER_TOOLS } from './roster.tools';
 import { GAME_TOOLS } from './games.tools';
@@ -74,6 +75,7 @@ export const AGENT_TOOL_DEFINITIONS: AgentToolDefinition[] = [
   ...inGroup('money', MONEY_TOOLS),
   ...inGroup('money', COST_SHARE_LIST_TOOLS),
   ...inGroup('core', MEMORY_TOOLS),
+  ...inGroup('core', HELP_TOOLS),
   ...inGroup('web', WEB_TOOLS),
   ...inGroup('admin', ADMIN_TOOLS),
 ];

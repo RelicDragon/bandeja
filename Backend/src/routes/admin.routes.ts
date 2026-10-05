@@ -302,5 +302,16 @@ router.get(
   }),
   agentAdminController.getAdminAgentFeedback,
 );
+// `get_help` topics the assistant asked for and the help corpus does not have, most-asked first.
+router.get(
+  '/agent/help-misses',
+  requireAdmin,
+  validateZod({
+    query: z.object({
+      days: z.coerce.number().int().min(1).max(AGENT_AUDIT_USAGE_MAX_DAYS).default(30),
+    }),
+  }),
+  agentAdminController.getAdminAgentHelpMisses,
+);
 
 export default router;
