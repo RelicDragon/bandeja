@@ -42,7 +42,7 @@ function TeamSwatch({ color }: { color: string | null }) {
 
 /**
  * The opposing pairs these two have faced most (top 3), with the match W–L
- * against each and a **Rematch** that opens the create flow with all four
+ * against each and a **Rematch** (icon button, so long names keep the row) that opens the create flow with all four
  * players invited. Reads the same `pairs.detail` query as `UserTeamRecord`, so
  * it costs no extra request.
  */
@@ -160,10 +160,10 @@ export function UserTeamRivalries({
                   onClick={() => rematch(rivalry)}
                   aria-label={t('teams.rivalries.rematchAria', { names })}
                   data-testid="user-team-rivalry-rematch"
-                  className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-600/10 px-3 text-xs font-semibold text-primary-700 outline-none transition-[background-color,scale] duration-150 hover:bg-primary-600/15 focus-visible:ring-2 focus-visible:ring-primary-500/40 active:scale-[0.96] dark:bg-primary-400/15 dark:text-primary-200 dark:hover:bg-primary-400/20 ${pressScaleGuard}`}
+                  title={t('teams.rivalries.rematch')}
+                  className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-600/10 text-xs font-semibold text-primary-700 outline-none transition-[background-color,scale] duration-150 hover:bg-primary-600/15 focus-visible:ring-2 focus-visible:ring-primary-500/40 active:scale-[0.96] dark:bg-primary-400/15 dark:text-primary-200 dark:hover:bg-primary-400/20 ${pressScaleGuard}`}
                 >
-                  <RotateCcw size={13} strokeWidth={2.25} aria-hidden />
-                  {t('teams.rivalries.rematch')}
+                  <RotateCcw size={16} strokeWidth={2.25} aria-hidden />
                 </button>
               ) : null}
             </motion.li>
