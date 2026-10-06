@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { defineRollupSwcMinifyOption, viteMinify } from 'rollup-plugin-swc3'
 import path from 'path'
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { join } from 'path'
@@ -70,14 +69,6 @@ const serveStaticLandings = () => {
   }
 }
 
-const swcMinify = defineRollupSwcMinifyOption({
-  module: true,
-  compress: {
-    drop_console: true,
-    drop_debugger: true,
-  },
-})
-
 export default defineConfig(({ command, mode }) => {
   const isDevServer = command === 'serve';
   const defaultApiBaseUrl = isDevServer ? 'http://localhost:3000/api' : 'https://bandeja.me/api';
@@ -86,7 +77,7 @@ export default defineConfig(({ command, mode }) => {
     process.env.VITE_DEPLOYMENT_ENV || (mode === 'staging' ? 'staging' : 'production');
 
   return {
-  plugins: [react(), tailwindcss(), viteMinify(swcMinify), ensureWellKnown(), serveStaticLandings()],
+  plugins: [react(), tailwindcss(), ensureWellKnown(), serveStaticLandings()],
   worker: {
     format: 'es',
   },
@@ -134,14 +125,24 @@ export default defineConfig(({ command, mode }) => {
     // Disable source maps for production security
     sourcemap: false,
     chunkSizeWarningLimit: 3000,
-    rollupOptions: {
+    rolldownOptions: {
+      output: {
+        // Rolldown's own oxc minifier; `build.minify: false` plus a separate minify
+        // plugin used to ship pretty-printed (whitespace re-added) JS and raw CSS.
+        minify: {
+          compress: { dropConsole: true, dropDebugger: true },
+          mangle: true,
+          codegen: { removeWhitespace: true },
+        },
+      },
       onwarn(warning, defaultHandler) {
         const msg = 'message' in warning ? String((warning as { message: string }).message) : '';
         if (msg.includes('dynamic import will not move module into another chunk')) return;
         defaultHandler(warning);
       },
     },
-    minify: false,
+    minify: 'oxc',
+    cssMinify: 'lightningcss',
     // Ensure public directory is copied
     copyPublicDir: true,
   },

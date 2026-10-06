@@ -193,6 +193,9 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
   }, [online, selection, row?.pending, status, pollTick, gameId, checkStatus, current]);
 
   const fixedLocale = selection === 'original' ? appLocale : selection;
+  useEffect(() => {
+    void i18n.loadLanguages(fixedLocale);
+  }, [i18n, fixedLocale]);
   const fixedT = i18n.getFixedT(fixedLocale);
   const contentLoaded = faqStateGameId === gameId && faqLoaded;
   const displayFaqs = useMemo(

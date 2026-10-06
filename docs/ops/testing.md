@@ -31,6 +31,13 @@ Targeted scripts (not a full-repo vitest): `test:auth`, `test:theme`, `test:prem
 
 `npm run test:avatar-paint` checks online-avatar idle rasterization in Chromium, plus pulse continuity, theme colors, equipped frames and reduced motion.
 
+## Performance (Frontend)
+
+Playwright harnesses under `Frontend/scripts/perf/`, phone-like CPU (`PERF_CPU_THROTTLE`, default 4×), 390×844 viewport.
+
+- `npm run perf:boot` measures cold and warm boot (FCP, LCP, `app-ready`, tab bar, settled, long tasks / TBT, heap, JS bytes, API waterfall with duplicates), then two passes over every bottom tab. Point `PERF_BASE_URL` at a **production build** served by `vite preview` (it proxies `/api` like dev). Dev mode loads ~9k unbundled modules and its timings mean nothing. `PERF_TOKEN` is an access JWT for a local user (mint one with `generateShortAccessToken` from a script inside `Backend/`). `PERF_OUT` writes the full JSON report.
+- `npm run perf:profile` CPU-profiles one tab switch (`PERF_TAB`, e.g. `Chats`) and prints the hottest functions. Run it against the dev server so the names are readable. `PERF_PROFILE_OUT` saves a `.cpuprofile` for DevTools.
+
 ## Backend
 
 ```

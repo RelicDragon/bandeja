@@ -18,6 +18,8 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "postbuild": "node scripts/force-sw-update.js",
     "prebuild": "npm run build:contracts",
+    "perf:boot": "../scripts/run-heavy node scripts/perf/measure-boot.mjs",
+    "perf:profile": "../scripts/run-heavy node scripts/perf/profile-action.mjs",
     "preview": "vite preview",
     "test:faq-translations": "../scripts/run-heavy vitest run src/components/GameDetails/FaqEdit.stale.test.tsx src/components/GameDetails/FaqTranslationsModal.test.tsx src/components/GameDetails/FaqTab.translation.test.tsx",
     "sync:deep-link-catalog": "node --experimental-strip-types scripts/sync-deep-link-catalog.ts",

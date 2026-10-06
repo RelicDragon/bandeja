@@ -11,7 +11,7 @@ vi.mock('@/utils/networkStatus', () => ({ useNetworkStore: (select: (state: { is
 vi.mock('react-i18next', () => {
   const t = (key: string) => key;
   const getFixedT = (locale: string) => (key: string) => `${locale}:${key}`;
-  return { useTranslation: () => ({ t, i18n: { resolvedLanguage: mock.language, language: mock.language, getFixedT } }) };
+  return { useTranslation: () => ({ t, i18n: { resolvedLanguage: mock.language, language: mock.language, getFixedT, loadLanguages: async () => undefined } }) };
 });
 
 import { FaqTab } from './FaqTab';

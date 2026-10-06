@@ -1,21 +1,48 @@
-import i18n from 'i18next';
+import i18n, { type BackendModule, type ReadCallback } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { APP_UI_LANGUAGES } from '@bandeja/app-locale';
 import en, { featureNamespaces as enNs } from './locales/en';
-import ru, { featureNamespaces as ruNs } from './locales/ru';
-import sr, { featureNamespaces as srNs } from './locales/sr';
-import es, { featureNamespaces as esNs } from './locales/es';
-import cs, { featureNamespaces as csNs } from './locales/cs';
-import ar, { featureNamespaces as arNs } from './locales/ar';
-import zh, { featureNamespaces as zhNs } from './locales/zh';
-import id, { featureNamespaces as idNs } from './locales/id';
-import hi, { featureNamespaces as hiNs } from './locales/hi';
-import th, { featureNamespaces as thNs } from './locales/th';
-import ja, { featureNamespaces as jaNs } from './locales/ja';
 import { extractLanguageCode } from '@/utils/displayPreferences';
-import { DEFAULT_NS, FEATURE_NAMESPACES, buildI18nResources } from './namespaces';
+import { DEFAULT_NS, FEATURE_NAMESPACES, buildI18nResources, type FeatureNamespaceBundles } from './namespaces';
 
 export { APP_UI_LANGUAGES };
+
+// Only English (the fallback) ships in the entry bundle. Every other locale is its own
+// chunk, fetched by this backend for the active language (and FAQ previews in another
+// locale). All 11 locales eagerly bundled were ~5 MB of the startup JS.
+type LocaleModule = { default: Record<string, unknown>; featureNamespaces: FeatureNamespaceBundles };
+const LOCALE_LOADERS: Record<string, () => Promise<LocaleModule>> = {
+  ru: () => import('./locales/ru'),
+  sr: () => import('./locales/sr'),
+  es: () => import('./locales/es'),
+  cs: () => import('./locales/cs'),
+  ar: () => import('./locales/ar'),
+  zh: () => import('./locales/zh'),
+  id: () => import('./locales/id'),
+  hi: () => import('./locales/hi'),
+  th: () => import('./locales/th'),
+  ja: () => import('./locales/ja'),
+};
+
+const lazyLocaleBackend: BackendModule = {
+  type: 'backend',
+  init() {},
+  read(language: string, namespace: string, callback: ReadCallback) {
+    const load = LOCALE_LOADERS[language];
+    if (!load) {
+      callback(null, {});
+      return;
+    }
+    load().then(
+      (mod) => {
+        const bundles = buildI18nResources({ [language]: { translation: mod.default, featureNamespaces: mod.featureNamespaces } })[language];
+        callback(null, (bundles[namespace] ?? {}) as Parameters<ReadCallback>[1]);
+      },
+      (error: unknown) => callback(error instanceof Error ? error : new Error(String(error)), false),
+    );
+  },
+};
+
 
 const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
 
@@ -55,22 +82,13 @@ const getUserLanguage = (): string => {
   return getSystemLanguage();
 };
 
-i18n.use(initReactI18next).init({
-  // Eager, bundled resources: owned namespaces (`./namespaces.ts`) sit beside the
-  // flat default `translation` bundle, so no namespace ever loads asynchronously.
+export const i18nReady = i18n.use(lazyLocaleBackend).use(initReactI18next).init({
+  // English is bundled; other locales load through `lazyLocaleBackend` before first
+  // render (main.tsx awaits `i18nReady`) and on `changeLanguage`.
   resources: buildI18nResources({
     en: { translation: en, featureNamespaces: enNs },
-    ru: { translation: ru, featureNamespaces: ruNs },
-    sr: { translation: sr, featureNamespaces: srNs },
-    es: { translation: es, featureNamespaces: esNs },
-    cs: { translation: cs, featureNamespaces: csNs },
-    ar: { translation: ar, featureNamespaces: arNs },
-    zh: { translation: zh, featureNamespaces: zhNs },
-    id: { translation: id, featureNamespaces: idNs },
-    hi: { translation: hi, featureNamespaces: hiNs },
-    th: { translation: th, featureNamespaces: thNs },
-    ja: { translation: ja, featureNamespaces: jaNs },
   }),
+  partialBundledLanguages: true,
   ns: [DEFAULT_NS, ...FEATURE_NAMESPACES],
   defaultNS: DEFAULT_NS,
   lng: getUserLanguage(),
@@ -80,6 +98,8 @@ i18n.use(initReactI18next).init({
   },
   pluralSeparator: '_',
   contextSeparator: '_',
+  // Re-render when a lazily loaded locale arrives (e.g. FAQ preview via getFixedT).
+  react: { bindI18n: 'languageChanged loaded' },
 });
 
 function applyHtmlLangDir(lng: string) {

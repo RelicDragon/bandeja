@@ -90,7 +90,7 @@ Chat is usable offline from Dexie + outbox. `OfflineBanner` still shows on the s
 
 `Frontend/src/i18n/config.ts`. Locales: **`en ru sr es cs ar zh id hi th ja`**. Files: `i18n/locales/<lng>/*.json`. Fallback `en`. RTL: `ar` (also he/fa/ur in the RTL set). User language from profile `language` or `localStorage`.
 
-Namespaces: most files are spread into the flat default namespace `translation` (`locales/<lng>/index.ts`). Features listed in `i18n/namespaces.ts` are **owned namespaces**, registered on their own and read as `useTranslation('<ns>')` / `t('<ns>:key')`. Today that is only `playerCard`. All resources are bundled eagerly. Migration rules, order and the collision guard are in `docs/product/constraints.md` → "i18n namespaces".
+Namespaces: most files are spread into the flat default namespace `translation` (`locales/<lng>/index.ts`). Features listed in `i18n/namespaces.ts` are **owned namespaces**, registered on their own and read as `useTranslation('<ns>')` / `t('<ns>:key')`. Today that is only `playerCard`. Only `en` is bundled; other locales are separate chunks loaded for the active language before first render (`i18nReady` in `main.tsx`) and on `changeLanguage`. `getFixedT(<other lng>)` needs `i18n.loadLanguages` first (see `FaqTab`). Migration rules, order and the collision guard are in `docs/product/constraints.md` → "i18n namespaces".
 
 ## Theme
 

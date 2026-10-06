@@ -19,6 +19,7 @@ import {
   applyTestProductionFavicon,
 } from './utils/environmentFavicon';
 import { StagingEnvironmentBanner } from './components/StagingEnvironmentBanner';
+import { i18nReady } from './i18n/config';
 import {
   isCurrentStagingDeployment,
   isTestProductionHostname,
@@ -102,9 +103,13 @@ if ('serviceWorker' in navigator && !isCapacitor()) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <>
-    <StagingEnvironmentBanner />
-    <App />
-  </>
-);
+// Non-English locales are a separate chunk; render once the active one is in so the
+// first frame is never in the wrong language. A failed load still renders (English).
+void i18nReady.catch(() => undefined).then(() => {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <>
+      <StagingEnvironmentBanner />
+      <App />
+    </>
+  );
+});

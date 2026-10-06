@@ -373,9 +373,13 @@ function AppContent() {
     checkServiceWorker();
   }, []);
 
+  // Keyed on the Telegram-path flag, not the pathname: re-running on every navigation
+  // refetched the profile and favorites and tore down socket handlers on each tab switch.
+  const onTelegramAutoLoginPath = isTelegramAutoLoginPath(location.pathname);
+
   useEffect(() => {
     if (authNetworkReady) {
-      if (isTelegramAutoLoginPath(location.pathname)) return;
+      if (onTelegramAutoLoginPath) return;
       if (navigator.onLine) {
         usersApi.getProfile()
           .then((response: { data: any }) => {
@@ -403,13 +407,13 @@ function AppContent() {
     } else {
       headerService.stopPolling();
     }
-  }, [authNetworkReady, fetchFavorites, location.pathname]);
+  }, [authNetworkReady, fetchFavorites, onTelegramAutoLoginPath]);
 
   useEffect(() => {
     if (!authNetworkReady) return;
-    if (isTelegramAutoLoginPath(location.pathname)) return;
+    if (onTelegramAutoLoginPath) return;
     void ensureChatSyncWarmBootstrap();
-  }, [authNetworkReady, location.pathname]);
+  }, [authNetworkReady, onTelegramAutoLoginPath]);
 
   const initializeSocketEvents = useSocketEventsStore((state) => state.initialize);
   const cleanupSocketEvents = useSocketEventsStore((state) => state.cleanup);
@@ -417,7 +421,7 @@ function AppContent() {
 
   useEffect(() => {
     if (authNetworkReady) {
-      if (isTelegramAutoLoginPath(location.pathname)) return;
+      if (onTelegramAutoLoginPath) return;
       const timer = setTimeout(() => {
         initializeSocketEvents();
       }, 500);
@@ -437,7 +441,7 @@ function AppContent() {
         socketService.off('wallet-update', handleWalletUpdate);
       };
     }
-  }, [authNetworkReady, initializeSocketEvents, cleanupSocketEvents, location.pathname]);
+  }, [authNetworkReady, initializeSocketEvents, cleanupSocketEvents, onTelegramAutoLoginPath]);
 
   useEffect(() => {
     if (versionCheck && versionCheck.status === 'optional_update' && !showOptionalUpdateModal) {

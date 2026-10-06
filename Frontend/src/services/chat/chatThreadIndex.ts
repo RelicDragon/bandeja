@@ -148,10 +148,25 @@ export async function pruneThreadIndexUserChatsNotIn(validChatIds: Set<string>):
   if (toDelete.length) await chatLocalDb.threadIndex.bulkDelete(toDelete);
 }
 
+// The live list query re-reads every row on each thread-index write. Reusing the parsed
+// item for unchanged JSON skips the re-parse and keeps object identity, so memoized
+// chat rows don't all re-render. Items are treated as immutable by list consumers.
+const PARSED_ITEM_CACHE_MAX = 4000;
+const parsedItemCache = new Map<string, ChatItem | null>();
+
+function parseItemCached(json: string): ChatItem | null {
+  const hit = parsedItemCache.get(json);
+  if (hit !== undefined) return hit;
+  const item = parseItem(json);
+  if (parsedItemCache.size >= PARSED_ITEM_CACHE_MAX) parsedItemCache.clear();
+  parsedItemCache.set(json, item);
+  return item;
+}
+
 export function mapThreadIndexRowsToSortedChatItems(rows: ChatThreadIndexRow[]): ChatItem[] {
   const pairs: { row: ChatThreadIndexRow; item: ChatItem }[] = [];
   for (const r of rows) {
-    const it = parseItem(r.itemJson);
+    const it = parseItemCached(r.itemJson);
     if (!it || it.type === 'contact') continue;
     pairs.push({ row: r, item: it });
   }

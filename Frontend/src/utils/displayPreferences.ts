@@ -37,10 +37,17 @@ export function getWeekStartFromLocale(locale: string): 0 | 1 | 6 {
   return sundayLocales.includes(normalized) ? 0 : 1;
 }
 
+const timeFormatByLocale = new Map<string, '12h' | '24h'>();
+
 export function detectTimeFormat(locale: string): '12h' | '24h' {
+  const cached = timeFormatByLocale.get(locale);
+  if (cached) return cached;
   try {
+    // Building an Intl.DateTimeFormat is costly and this runs per rendered timestamp.
     const detected = new Intl.DateTimeFormat(locale).resolvedOptions().hour12 ?? false;
-    return detected ? '12h' : '24h';
+    const format = detected ? '12h' : '24h';
+    timeFormatByLocale.set(locale, format);
+    return format;
   } catch (error) {
     console.error('Error detecting time format:', error);
     return '24h';
