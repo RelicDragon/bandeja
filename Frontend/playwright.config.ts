@@ -67,6 +67,7 @@ export default defineConfig({
         /leaderboard\/.*\.spec\.ts$/,
         /cross-cutting\/.*\.spec\.ts$/,
         /games\/.*\.spec\.ts$/,
+        /club-admin\/.*\.spec\.ts$/,
       ],
       grep: /@auth/,
       grepInvert: /@desktop/,
