@@ -45,7 +45,7 @@ export function BookingRow({
           ) : null}
         </div>
         <p className="truncate text-xs text-muted-foreground">
-          {court} · {text.detail(item)}
+          {[court, text.detail(item)].filter(Boolean).join(' · ')}
         </p>
       </div>
       <BillingChip billing={item.billing} />

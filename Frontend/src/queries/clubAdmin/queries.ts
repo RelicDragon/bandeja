@@ -42,8 +42,9 @@ export function clubAdminRetry(failureCount: number, error: unknown): boolean {
 // Clubs picker
 // ---------------------------------------------------------------------------
 
-export function useClubAdminClubsQuery(q: string) {
+export function useClubAdminClubsQuery(q: string, enabled = true) {
   return useInfiniteQuery({
+    enabled,
     queryKey: clubAdminKeys.clubs(q),
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>

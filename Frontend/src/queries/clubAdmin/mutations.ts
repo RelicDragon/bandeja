@@ -77,7 +77,7 @@ export function useCreateHoldMutation(clubId: string, timeZone: string, silentCo
 
 export interface UpdateHoldVars {
   holdId: string;
-  patch: UpdateHoldBody;
+  patch: UpdateHoldBody & { detectOverlap?: boolean };
 }
 
 export function useUpdateHoldMutation(clubId: string, timeZone: string, silentCodes: readonly ClubAdminErrorSuffix[] = ['holdOverlap']) {

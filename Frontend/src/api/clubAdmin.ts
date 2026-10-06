@@ -214,7 +214,11 @@ export const clubAdminApi = {
     return normalizeCreateHold(res.data.data);
   },
 
-  updateHold: async (clubId: string, holdId: string, body: UpdateHoldBody): Promise<void> => {
+  /**
+   * `detectOverlap` is accepted by the v2 PATCH (opt-in, like create) but is missing from the
+   * contract's `UpdateHoldBody` pick — widened here until the contract lists it.
+   */
+  updateHold: async (clubId: string, holdId: string, body: UpdateHoldBody & { detectOverlap?: boolean }): Promise<void> => {
     try {
       await api.patch(`${clubPath(clubId)}/holds/${encodeURIComponent(holdId)}`, body);
     } catch (e) {

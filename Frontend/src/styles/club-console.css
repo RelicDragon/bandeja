@@ -26,8 +26,8 @@
 
 :root {
   --ca-surface: #ffffff;
-  --ca-sunken: #f3f4f6;
-  --ca-line: #eef0f3;
+  --ca-sunken: color-mix(in srgb, var(--ui-background), black 3%);
+  --ca-line: color-mix(in srgb, var(--ui-background), black 5%);
   --ca-game: var(--member-primary-600, #0284c7);
   --ca-game-fg: #ffffff;
   --ca-planned: color-mix(in srgb, var(--member-primary-500, #0ea5e9) 12%, transparent);
@@ -48,18 +48,19 @@
 }
 
 html.dark {
-  --ca-surface: #0d1320;
-  --ca-sunken: #070b14;
-  --ca-line: #1a2232;
+  /* Derived from the page background so the Premium palette (warm black) carries through. */
+  --ca-surface: color-mix(in srgb, var(--ui-background), white 5%);
+  --ca-sunken: color-mix(in srgb, var(--ui-background), black 35%);
+  --ca-line: color-mix(in srgb, var(--ui-background), white 9%);
   --ca-game: var(--member-primary-500, #0ea5e9);
   --ca-game-fg: #04131f;
   --ca-planned: color-mix(in srgb, var(--member-primary-400, #38bdf8) 16%, transparent);
   --ca-planned-fg: var(--member-primary-200, #bae6fd);
-  --ca-hold: #1f2937;
-  --ca-hold-stripe: #2b3647;
+  --ca-hold: color-mix(in srgb, var(--ui-background), white 12%);
+  --ca-hold-stripe: color-mix(in srgb, var(--ui-background), white 20%);
   --ca-hold-fg: #d1d5db;
-  --ca-external: #172033;
-  --ca-external-dot: #475569;
+  --ca-external: color-mix(in srgb, var(--ui-background), white 8%);
+  --ca-external-dot: color-mix(in srgb, var(--ui-background), white 35%);
   --ca-external-fg: #cbd5e1;
   --ca-warn: #fbbf24;
   --ca-warn-bg: rgb(245 158 11 / 0.14);

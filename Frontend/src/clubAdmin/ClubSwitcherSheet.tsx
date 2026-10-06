@@ -27,7 +27,7 @@ export function ClubSwitcherSheet({
   const location = useLocation();
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 250);
-  const clubs = useClubAdminClubsQuery(debounced);
+  const clubs = useClubAdminClubsQuery(debounced, open);
   const items = flattenClubs(clubs.data?.pages);
   const total = clubs.data?.pages[0]?.total ?? items.length;
 

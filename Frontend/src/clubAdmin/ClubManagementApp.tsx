@@ -153,6 +153,14 @@ function ClubConsole() {
   const { clubId = '' } = useParams<{ clubId: string }>();
   const ctx = useClubConsoleContextQuery(clubId);
 
+  if (ctx.isPending && ctx.fetchStatus === 'paused') {
+    // Query paused by the app's network detection: say so instead of an endless skeleton.
+    return (
+      <div className="safe-area-all flex h-dvh items-center justify-center bg-background">
+        <ErrorState kind="offline" onRetry={() => void ctx.refetch()} />
+      </div>
+    );
+  }
   if (ctx.isPending) return <ConsoleLoading />;
   if (ctx.isError) {
     const err = parseClubAdminError(ctx.error);

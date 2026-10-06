@@ -2803,25 +2803,94 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 
 ## 17. Club admin (`/my-clubs/*`)
 
+Console behaviour: [domains/club-admin.md](./domains/club-admin.md). Check every case on a phone (375×812) **and** desktop (≥ 1024 px), light and dark, and once in Arabic (RTL). Times are always the club's wall clock.
+
+### 17.1 Entry, shell and navigation
+
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| CA-01 | My clubs entry | FAB / link | Club list |
-| CA-02 | Club home | Select club | Dashboard |
-| CA-03 | Schedule page | View schedule grid | Courts × time |
-| CA-04 | Block slot | Block slot sheet | Slot blocked |
-| CA-05 | Edit hold | Edit hold sheet | Updated |
-| CA-06 | Cancel game from schedule | Cancel sheet | Game cancelled |
-| CA-07 | Reservations page | View reservations | List loads |
-| CA-08 | Courts page | CRUD court | Court saved |
-| CA-17 | Court sport assignment | Club admin → All courts → add or edit court | Sport picker shows only club-enabled sports; saved sport appears on list row with icon and label; legacy courts without sport remain editable |
-| CA-09 | Settings page | Club settings | Updates persist |
-| CA-10 | View as player | Preview modal | Player perspective |
-| CA-11 | Coach marks | First visit | Hints shown once |
-| CA-12 | Club booking sync status banner | BOOKTIME club schedule, snapshot stale/missing | "Updating club availability…" or "No sync yet today" or "Last synced …" |
-| CA-13 | External booking unmapped courts warning | Club with unmapped external booking snapshot courts | Amber banner with count + link to All courts |
-| CA-14 | External booking unassigned lane | Schedule date with `courtId: null` snapshot busy | "Unassigned" column shows external busy slots |
-| CA-15 | External booking on grid | Mapped external booking busy in snapshot | Red external slots on matching court columns |
-| CA-16 | Club booking integration down | Snapshot load failure | "Club system unavailable" banner; app games/blocks still shown |
+| CA-01 | My clubs entry | FAB "My clubs" above the tab bar | Club picker; with exactly one club it opens that club's Today directly (back leaves the console) |
+| CA-02 | Manage from club page | Club page of a club you manage → Manage | Opens that club's Today, not the picker |
+| CA-03 | Picker | Many clubs: search, scroll to the end | Debounced search; more clubs load on scroll; a failed page shows Retry instead of looping; "Open now" judged in each club's zone |
+| CA-04 | Phone shell | Open a club on a phone | Top bar: club avatar + name + section (tap → switcher); bottom tabs Today · Schedule · Bookings · Reports · Club; safe areas respected |
+| CA-05 | Desktop shell | Same at ≥ 1024 px | Left sidebar with switcher, sections, All my clubs, Back to the app; no bottom tabs; content uses the width |
+| CA-06 | Club switcher | Schedule tab → switcher → another club | Lands on the other club's Schedule; current club is checked; All my clubs / Back to the app rows work |
+| CA-07 | STAFF role | Sign in as a club STAFF member | Only Today, Schedule, Bookings tabs; opening `/reports` or `/club` by URL shows "No access", not the page |
+| CA-08 | Back is history | Club → Club settings → back; also deep link straight to `/club/courts` → back | First: returns with a backwards slide; second: goes to the Club hub (no history to pop) |
+| CA-09 | Old links | Open `/my-clubs/:id/reservations`, `/courts`, `/settings` | Redirect to Bookings, Club → Courts, Club → Profile |
+| CA-10 | States | Kill the network / open a club you lost access to / an unknown club id | Offline: banner + retry; lost access: "No access" with All my clubs; unknown: "Club not found" |
+| CA-11 | Older backend | Point at a backend without `/context` `/dashboard` `/bookings` | Console still works: full-admin context from the club row, Today derived from today's schedule (no week chart), Bookings upcoming only (no Past) |
+
+### 17.2 Today
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CA-12 | KPIs | Open Today | Club-local date; occupancy % with bar, booked hours "of N h open", games (+ blocks · external), players; skeletons while loading |
+| CA-13 | Revenue tiles | ADMIN with billing data / STAFF | Expected + Collected only for ADMIN with values; never for STAFF |
+| CA-14 | Needs attention | Club with a double booking, provider down, unmapped courts, game without court | One row each, tapping opens the schedule day / Club → Courts; nothing to do → "All clear" |
+| CA-15 | Up next | Bookings later today | Next bookings with time, court, kind swatch, billing chip, "Now" on running ones; tap opens Schedule with it selected |
+| CA-16 | Week chart | Open Today (v2 backend) | 7 bars, today labelled; hover/tap tooltip "N% occupied · H h booked"; tapping a bar opens that day |
+| CA-17 | Setup checklist | Club missing hours / prices / photos | Card with progress and links to the right Club screen; hidden when complete |
+
+### 17.3 Schedule
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CA-18 | Grid geometry | Open Schedule, scroll both ways | Court header row and time column stay put inside one scroller; "now" red line at the current time on today; past rows dimmed |
+| CA-19 | Club time zone | Device in another zone than the club | Default date = club today; rows and blocks in club time; date bar "Today" = club today |
+| CA-20 | Overnight / closed | Club open 18:00–02:00; a day with no hours | Rows run past midnight; a closed day with nothing booked shows "Closed on this day" with "Show the grid anyway" |
+| CA-21 | Date navigation | Prev / next, date picker, Today chip, swipe the date bar on a phone | Day changes, URL `?date=` updates (replace), neighbours prefetched; no flash of the previous day's bookings |
+| CA-22 | Week view | Day | Week → pick a court | One court × 7 days, today highlighted, same booking colours; prev/next steps a week |
+| CA-23 | Kinds and labels | Day with reserved game, planned game, block, club-system booking, game without court | Colour **and** pattern differ (solid, dashed, stripes, dots, amber dashed); legend under the grid; overlaps sit side by side with a red outline; screen reader reads "Court 2, 18:00–19:30, Reserved game, …" and free cells "Court 2, 18:00, free — block this time" |
+| CA-24 | Block a slot | Tap a free cell → 90 min, Phone booking, customer name/phone, note → Block court | Sheet above the keyboard; block appears immediately (striped) and stays after refresh |
+| CA-25 | Block a range (desktop) | Press and drag down a court column | Highlighted range; release opens the block sheet with that duration |
+| CA-26 | Repeat weekly | Block with repeat 4 | Four weekly blocks at the same club time (also across a DST change); a clashing week is skipped |
+| CA-27 | Overlap | Block (or move a block) over an existing booking | "This time is already taken" lists the clashes; Back keeps the sheet; Create anyway creates it |
+| CA-28 | Block detail | Tap a block | Phone: sheet; desktop: right rail. Reason, customer, tappable phone, note, "Every week" for a series |
+| CA-29 | Edit / move block | Edit or move → other court / start → Save | Moves at once; rolls back with an error toast if the server refuses; sheet stays open on error |
+| CA-30 | Remove block | Remove block → Only this one; on a series → This and all later ones | Removed at once (later ones too); past blocks offer no remove |
+| CA-31 | Game detail | Tap a game | Host, players, Open game, Message host (opens the DM), Release court, Cancel game; ended games view-only |
+| CA-32 | Cancel & notify | Cancel game → pick a reason, add a note | Confirm disabled until a reason is chosen (says why); message preview in club time; editing the message keeps your text when changing reason; untouched message → host gets it in their own language; game disappears |
+| CA-33 | Release court | Release court → reason → confirm | Game stays but leaves the court; court shows free |
+| CA-34 | Polling | Leave Schedule open; change a booking from another device | Appears within ~15 s; no polling while a sheet is open or the app is in the background |
+| CA-35 | Club booking sync status | BOOKTIME club, snapshot stale/missing | "Updating bookings from the club's system…", "haven't synced yet today", or "Club system synced …" |
+| CA-36 | Unmapped external courts | Club with unmapped snapshot courts | Amber banner with count + "Link courts" (ADMIN) |
+| CA-37 | Unassigned lane | Day with a game without a court / snapshot busy with `courtId: null` | "No court" column with those bookings; its free cells cannot be blocked |
+| CA-38 | External bookings | Mapped provider booking in snapshot | Dotted "Club system" blocks on the matching courts, read-only |
+| CA-39 | Provider down | Snapshot load failure | "The club's booking system is unavailable" banner; app games and blocks still shown |
+
+### 17.4 Bookings
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CA-40 | List | Open Bookings | Grouped by club-local day under sticky headers (Today / Tomorrow / date); infinite scroll; "That's everything" at the end |
+| CA-41 | Filters | Past, Games/Blocks/Club system, a court, Unpaid, search a customer | Server-filtered list; URL keeps the filters; "Nothing matches" offers Clear filters |
+| CA-42 | Open from list | Tap a row | Schedule on that date with the booking selected |
+| CA-43 | Pull to refresh | Pull down on a phone | List reloads |
+
+### 17.5 Club area
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CA-44 | Club hub | Open Club | Rows for Profile, Opening hours, Courts, Pricing (per capability), setup checklist, View as player |
+| CA-45 | Settings / courts screens | Club → Profile / Courts → save | Back returns to the hub; save errors toast instead of failing silently; Today's setup checklist updates |
+| CA-46 | View as player | Club → View as player | Player club page modal |
+| CA-47 | Court sport assignment | Club → Courts → add or edit court | Sport picker shows only club-enabled sports; saved sport appears on list row with icon and label; legacy courts without sport remain editable |
+| CA-48 | Reports | Open Reports (ADMIN) | Empty state with a link to Today, no error |
+
+### 17.6 Language and accessibility
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CA-49 | Locales | Switch through all 11 languages | Every console string translated (no keys, no English fallbacks); dates/times in that language |
+| CA-50 | RTL | Arabic | Layout mirrors: sidebar on the right, chevrons flipped, time column on the right edge, stripes slant the other way |
+| CA-51 | Keyboard / screen reader | Tab through the grid and sheets; Escape; Android back | Visible focus; sheets trap focus and close with Escape / back; segmented controls move with arrow keys |
+| CA-52 | Reduced motion | Enable reduced motion | No slides, shimmer or pulses |
+
+### 17.7 Court cover (weather)
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
 | CA-WX-01 | Court cover control | Courts → add a court | Indoor/outdoor is a two-option segmented switch **Indoor · Outdoor** with icons (not a checkbox), with the helper "Outdoor courts get weather alerts before a game." |
 | CA-WX-02 | Default and persistence | New court → save → reopen; switch to Indoor → save → reopen | Defaults to **Outdoor**; Indoor persists |
 | CA-WX-03 | Edit opens on current value | Edit an existing court | Opens on that court's current value |

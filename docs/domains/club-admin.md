@@ -1,17 +1,42 @@
 # Club admin
 
-Users with `clubAdminClubs`. FAB entry. Shell: `Frontend/src/clubAdmin/ClubManagementApp.tsx` under `/my-clubs/*`.
+Users with `clubAdminClubs` (platform admins see every club). Entry: the "My clubs" FAB above the tab bar, or **Manage** on a club page (opens that club directly). Console: `Frontend/src/clubAdmin/ClubManagementApp.tsx` under `/my-clubs/*`.
 
-| Route | Page |
-|-------|------|
-| `/my-clubs` | Club picker (`MyClubsPage`, search, infinite) |
-| `/my-clubs/:clubId` | Dashboard — today stats, conflicts |
-| `/my-clubs/:clubId/schedule` | Grid: block slot (hold + reason), edit hold, cancel game on slot (optional DM preview), clear court. External sync status when integrated |
-| `/my-clubs/:clubId/reservations` | Reservations infinite list |
-| `/my-clubs/:clubId/courts` | Courts CRUD |
-| `/my-clubs/:clubId/settings` | Cancellation notice hours, integration flags |
+## Console (frontend)
 
-Holds are occupancy `kind: 'hold'` (`CourtOccupancyService` + `clubAdminSchedule.service.ts`). View-as-player modal. First-time admin coach marks.
+| Route | Screen | Capability |
+|-------|--------|------------|
+| `/my-clubs` | Club picker (`MyClubsPage`): search, infinite list, "open now" on each club's own wall clock. One club → straight into it (replace) | member |
+| `/my-clubs/:clubId` | **Today** (`ClubTodayPage`): KPIs (occupancy, booked hours, games, players; expected/collected only with `reports.revenue` and non-null values), Needs attention, Up next, 7-day occupancy chart, setup checklist | member |
+| `…/schedule?date=&view=day\|week&court=&focus=` | **Schedule** (`ClubSchedulePage`): day grid courts × time, week grid one court × 7 days | `schedule.view` (edit actions `schedule.edit`) |
+| `…/bookings?scope=&court=&kinds=&payment=&q=` | **Bookings** (`ClubBookingsPage`): infinite list grouped by club-local day | `bookings.view` |
+| `…/reports` | Reports (route + guard; content pending) | `reports.view` |
+| `…/club` | Club hub (`ClubHubPage`): rows per settings screen the role may open, setup checklist, View as player | any club capability |
+| `…/club/profile`, `…/club/hours` | Club settings screen (`ClubSettingsPage`) | `club.edit` |
+| `…/club/courts`, `…/club/pricing` | Courts screen (`ClubCourtsPage`) | `courts.edit` / `billing.configure` |
+
+Old paths redirect (query kept): `reservations` → `bookings`, `courts` → `club/courts`, `settings` → `club/profile`, anything unknown → Today. Team, activity and reviews have endpoints but no screen yet; they are listed in `consoleNav.ts` with `available: false` and stay out of the hub until they ship.
+
+**Shell** (`ConsoleLayout.tsx`). Phones: top bar (club switcher = avatar + name + section, or back + title on drilled pages; page actions via the `HeaderActions` portal) and a bottom tab bar Today · Schedule · Bookings · Reports · Club, filtered by capability (STAFF sees Today, Schedule, Bookings). Desktop ≥ 1024 px: left sidebar (switcher, sections, All my clubs, Back to the app) and wide content. The club switcher sheet keeps the current section when changing club. Back pops real history (`useConsoleBack`: `navigate(-1)` when the app has history, else the fallback with replace); the content animates by navigation type (POP slides back), 160 ms, none under reduced motion.
+
+**Context.** `GET /context` gives role, capabilities, club time zone/currency and setup checklist (`useClubConsoleContextQuery`). Against an older backend (bare 404) the console derives it from the legacy club row as a full ADMIN (`queries/clubAdmin/legacyContext.ts`). Routes the role cannot use render a forbidden state, never the page. "Today" is recomputed every minute from the device instant **in the club zone** (`ClubConsoleContext`), so a console left open past midnight rolls over with the club.
+
+**Data layer** (`Frontend/src/queries/clubAdmin/`, TanStack Query). Keys under `['clubAdmin', 'club', clubId, …]` (`keys.ts`). Every query passes its AbortSignal and never retries a 4xx. v2 endpoints fall back to legacy ones on a bare 404 and remember it (`/dashboard` → derived from today's schedule, `/bookings` → `/reservations` upcoming with client-side filters, club-scoped hold PATCH/DELETE → `/holds/:id`). Writes (`mutations.ts`): hold create/move/delete are optimistic on every cached schedule day and roll back on failure; game cancel removes the game optimistically; all invalidate schedule, bookings, dashboard and the picker (`invalidation.ts`). Errors toast the server `code` as `clubAdmin:errors.*` (`toastError.ts`); sheets close only on success. The schedule polls every 15 s (5 s while the provider snapshot loads), never while the document is hidden or a console sheet is open (`useConsoleOverlayOpen`).
+
+**Schedule grid** (`components/clubAdmin/schedule/`). `scheduleModel.ts` is pure: rows are club wall-clock minutes from `hours` + `slotMinutes` (fallback: legacy club hours, then 08:00–23:00; overnight hours run past midnight; a closed day shows "Closed" unless something is booked), widened to cover every slot; each row's instant is computed once (DST-correct) and slots are placed by binary search, so there is no per-cell scan or `Intl` construction. Overlaps on one court sit side by side with a red outline. One scroll container: header row and time column are sticky; every vertical position is `calc(var(--ca-row-h) * row)`, including the "now" line. Kinds differ by colour **and** pattern (reserved game solid, planned dashed, block stripes `bg-stripes`, club system dots `bg-dots`, no-court amber dashed). Every free cell and booking is a labelled button; past cells are dimmed and say "past". Desktop: drag down a column to select a range. Phones: swipe the date bar to change day.
+
+- **Block sheet** (`HoldSheets.tsx`): court, start, 60/90/120 min, reason, customer name/phone, note, repeat weekly 1–26 (v2 only). Create and move send `detectOverlap: true`; a 409 `holdOverlap` opens "This time is already taken" listing the clashes, and **Create anyway** retries with `force`.
+- **Booking detail** (`BookingDetail.tsx`): sheet on phones, side rail on desktop. Game: open game, message host, release court, cancel game. Block: edit/move, remove (only this one / this and later ones for a series). Club-system bookings are read-only; ended bookings are view-only.
+- **Cancel / release** (`CourtActionSheet.tsx`): reason chips (required), optional note, "Message the host" toggle, editable message. The preview is built on the club wall clock in the operator's language (`cancelMessage.ts`); untouched it is **not** sent and the server writes it in the host's language; once edited, the operator's text is sent verbatim.
+- Sync banners (provider down, updating, no sync today, unmapped courts → Link courts, double bookings) sit above the grid.
+
+**Bookings list.** `GET /bookings` (cursor) grouped by the club-local start date under sticky day headers; Upcoming/Past, type/court/payment chips (payment only with billing capabilities and a v2 backend), debounced search, pull to refresh; a failed page stops infinite scroll until Retry. Rows open the schedule on that date with the booking selected (`focus=`). Billing chips (Paid / Unpaid / Partly paid / Waived / Void) show wherever `billing` is present.
+
+**Design.** Console tokens live in `Frontend/src/styles/club-console.css` (`bg-ca-surface`, `bg-ca-sunken`, `ca-game`, `ca-warn`, …, `bg-stripes`, `bg-dots`, `ca-skeleton`); primitives in `components/clubAdmin/console/` (Section, KpiTile, AttentionRow, EmptyState, ErrorState, SkeletonRows, FilterChips, SegmentedControl, BillingChip, `ConsoleSheet` = vaul drawer, bottom sheet above the keyboard on phones, side panel on desktop, Android back closes it). All club times go through `useConsoleFormat(timeZone)` (club zone, app locale, user 12/24 h).
+
+**i18n.** Owned namespace `clubAdmin` (`i18n/namespaces.ts`), nested keys, 11 locales; the console reads `useTranslation('clubAdmin')`, other code borrows `t('clubAdmin:…')`. `clubAdmin:myClubs` stays top-level because agent-help pins it.
+
+Tests: `cd Frontend && npm run test:club-admin` (grid model, DST/overnight, slot index, keys/invalidation, optimistic edits, polling, capability gating, cancel message tz + language, legacy fallbacks); e2e `Frontend/e2e/specs/club-admin/`. UI cases: [UI_TEST_PLAN §17](../UI_TEST_PLAN.md).
 
 Courts CRUD carries `Court.isIndoor` as a two-option **Indoor · Outdoor** segmented switch (defaulting to Outdoor), and the schedule grid puts a roof icon on indoor column headers. It is a user-visible data-quality field because outdoor detection drives weather alerts — [weather.md](./weather.md).
 

@@ -187,7 +187,7 @@ export function HoldSheet({
   const submit = async (force = false) => {
     try {
       if (target.kind === 'edit') {
-        await update.mutateAsync({ holdId: target.hold.holdId, patch: body(force) });
+        await update.mutateAsync({ holdId: target.hold.holdId, patch: { ...body(force), detectOverlap: true } });
       } else {
         await create.mutateAsync({
           ...body(force),

@@ -89,7 +89,7 @@ export function ConsoleSheet({
               ) : null}
               <div className={cx('flex items-start gap-3 px-4', isLg ? 'pt-4 pb-3' : 'pt-1 pb-3')}>
                 <div className="min-w-0 flex-1 pt-1.5">
-                  <div className="text-[17px] font-semibold leading-snug text-foreground" aria-hidden={!!accessibleTitle}>
+                  <div className="text-[17px] font-semibold leading-snug text-foreground" aria-hidden>
                     {title}
                   </div>
                   {description ? <div className="mt-0.5 text-sm text-muted-foreground">{description}</div> : null}
