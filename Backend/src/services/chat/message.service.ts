@@ -443,6 +443,12 @@ export class MessageService {
     };
   }
 
+  /** List reads: `withReadReceipts: false` skips the legacy receipt join (compact wire shape). */
+  static getMessageListInclude(withReadReceipts: boolean) {
+    const include = this.getMessageInclude();
+    return withReadReceipts ? include : { ...include, readReceipts: false as const };
+  }
+
   static async finalizeMessagesForClient(
     messages: any[],
     languageCode: string,
@@ -1547,9 +1553,11 @@ export class MessageService {
       limit?: number;
       chatType?: ChatType;
       beforeMessageId?: string;
+      withReadReceipts?: boolean;
     }
   ) {
-    const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId } = options;
+    const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId, withReadReceipts = true } = options;
+    const include = this.getMessageListInclude(withReadReceipts);
     let inviteOnlyStatus: string | undefined;
 
     if (chatContextType === 'GAME') {
@@ -1598,7 +1606,7 @@ export class MessageService {
           },
           inviteOnlyStatus
         ),
-        include: this.getMessageInclude(),
+        include,
         orderBy: { createdAt: 'desc' },
         take: Number(limit)
       });
@@ -1623,7 +1631,7 @@ export class MessageService {
         },
         inviteOnlyStatus
       ),
-      include: this.getMessageInclude(),
+      include,
       orderBy: { createdAt: 'desc' },
       skip,
       take: Number(limit)
@@ -1713,7 +1721,8 @@ export class MessageService {
     contextId: string,
     userId: string,
     lastMessageId?: string | null,
-    gameChatType?: ChatType | null
+    gameChatType?: ChatType | null,
+    options: { withReadReceipts?: boolean; coldTailLimit?: number } = {}
   ): Promise<{
     messages: Awaited<ReturnType<typeof MessageService.enrichMessagesWithTranslations>>;
     threadInvalidated?: boolean;
@@ -1744,6 +1753,28 @@ export class MessageService {
       inviteOnlyStatus
     );
 
+    const include = this.getMessageListInclude(options.withReadReceipts ?? true);
+    const loadLanguageCode = async () => {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { language: true, translateToLanguage: true },
+      });
+      return resolveTranslationTargetLanguage(user);
+    };
+
+    // No cursor: the client has nothing local. Compact callers take the newest page and load
+    // older history by paging; legacy callers still get the whole history below.
+    if (!lastMessageId && options.coldTailLimit != null) {
+      const tail = await prisma.chatMessage.findMany({
+        where: baseWhere,
+        include,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: options.coldTailLimit,
+      });
+      tail.reverse();
+      return { messages: await this.enrichMessagesWithTranslations(tail, await loadLanguageCode()) };
+    }
+
     const PAGE = 500;
     const MAX_PAGES = 40;
     const all: Awaited<ReturnType<typeof prisma.chatMessage.findMany>> = [];
@@ -1768,7 +1799,7 @@ export class MessageService {
         const STALE_TAIL_RECOVERY = 150;
         const recent = await prisma.chatMessage.findMany({
           where: baseWhere,
-          include: this.getMessageInclude(),
+          include,
           orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
           take: STALE_TAIL_RECOVERY,
         });
@@ -1813,7 +1844,7 @@ export class MessageService {
 
       const batch = await prisma.chatMessage.findMany({
         where,
-        include: this.getMessageInclude(),
+        include,
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         take: PAGE,
       });

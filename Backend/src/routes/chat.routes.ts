@@ -5,6 +5,7 @@ import { chatMessageLinkPreviewValidators } from './chatMessage.validators';
 import {
   createMessage,
   getGameMessages,
+  getGameChannelActive,
   getBugMessages,
   getGameParticipants,
   updateMessage,
@@ -287,6 +288,11 @@ router.get(
 );
 
 router.get('/games/:gameId/messages', getGameMessages);
+router.get(
+  '/games/:gameId/channel-active',
+  validate([query('chatType').isIn([ChatType.PRIVATE, ChatType.ADMINS]).withMessage('Invalid chat type')]),
+  getGameChannelActive
+);
 router.get('/bugs/:bugId/messages', getBugMessages);
 router.get('/games/:gameId/participants', getGameParticipants);
 // Legacy unread endpoints: the current web client does not call them; old store builds do (#247,

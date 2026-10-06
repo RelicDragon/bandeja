@@ -77,6 +77,24 @@ export interface EnableParticipantChatsResult {
 }
 
 export class ParticipantChatsService {
+  /**
+   * A PRIVATE / ADMINS game channel is active once anybody posted in it or its activation
+   * system message exists. Answers the client's channel probe without sending messages.
+   */
+  static async isChannelActive(gameId: string, chatType: 'PRIVATE' | 'ADMINS'): Promise<boolean> {
+    const userMessage = await prisma.chatMessage.findFirst({
+      where: {
+        chatContextType: ChatContextType.GAME,
+        contextId: gameId,
+        chatType,
+        deletedAt: null,
+        senderId: { not: null },
+      },
+      select: { id: true },
+    });
+    return userMessage != null || channelHasActivationMessage(gameId, chatType);
+  }
+
   static async enableParticipantChats(gameId: string): Promise<EnableParticipantChatsResult> {
     const game = await prisma.game.findUnique({
       where: { id: gameId },

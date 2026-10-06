@@ -5,6 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 import { ChatType, ChatContextType, MessageType } from '@prisma/client';
 import { SystemMessageType } from '../utils/systemMessages';
 import { MessageService } from '../services/chat/message.service';
+import { COMPACT_MISSED_COLD_TAIL, parseChatMessageWireShape, toChatMessagesWire } from '../services/chat/chatMessageWireShape';
 import { ReactionService } from '../services/chat/reaction.service';
 import { ReadReceiptService } from '../services/chat/readReceipt.service';
 import { SystemMessageService } from '../services/chat/systemMessage.service';
@@ -26,6 +27,7 @@ import { assertDraftDeleteAccess, assertDraftWriteAccess } from '../services/cha
 import { GameReadService } from '../services/game/read.service';
 import { resolveGameMentionParticipantsFromGame } from '../services/chat/gameMentionParticipants.service';
 import { GameChatViewerAccessService } from '../services/chat/gameChatViewerAccess.service';
+import { ParticipantChatsService } from '../services/game/participantChats.service';
 import { PollService } from '../services/chat/poll.service';
 import { MessageSearchService } from '../services/chat/messageSearch.service';
 import { PinnedMessageService } from '../services/chat/pinnedMessage.service';
@@ -349,10 +351,12 @@ export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Respon
   }
 
   const resolvedChatType = chatType as ChatType;
+  const shape = parseChatMessageWireShape(req.query.shape);
   const messages = await MessageService.getMessages('GAME', gameId, userId, {
     page: Number(page),
     limit: Number(limit),
     chatType: resolvedChatType,
+    withReadReceipts: shape === 'full',
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
@@ -363,9 +367,21 @@ export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Respon
 
   res.json({
     success: true,
-    data: messages,
+    data: toChatMessagesWire(messages, shape),
     ...(isFirstPage ? { maxPeerCursor } : {}),
   });
+});
+
+export const getGameChannelActive = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId } = req.params;
+  const userId = req.userId;
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
+  }
+  const chatType = req.query.chatType === ChatType.ADMINS ? ChatType.ADMINS : ChatType.PRIVATE;
+  await GameChatViewerAccessService.assertReadable(gameId, userId, chatType);
+  const active = await ParticipantChatsService.isChannelActive(gameId, chatType);
+  res.json({ success: true, data: { active } });
 });
 
 export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -377,10 +393,12 @@ export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Respons
     throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
+  const shape = parseChatMessageWireShape(req.query.shape);
   const messages = await MessageService.getMessages('BUG', bugId, userId, {
     page: Number(page),
     limit: Number(limit),
     chatType: ChatType.PUBLIC,
+    withReadReceipts: shape === 'full',
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
@@ -391,7 +409,7 @@ export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Respons
 
   res.json({
     success: true,
-    data: messages,
+    data: toChatMessagesWire(messages, shape),
     ...(isFirstPage ? { maxPeerCursor } : {}),
   });
 });
@@ -1075,10 +1093,12 @@ export const getUserChatMessages = asyncHandler(async (req: AuthRequest, res: Re
     throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
+  const shape = parseChatMessageWireShape(req.query.shape);
   const messages = await MessageService.getMessages('USER', chatId, userId, {
     page: Number(page),
     limit: Number(limit),
     chatType: ChatType.PUBLIC,
+    withReadReceipts: shape === 'full',
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
@@ -1089,7 +1109,7 @@ export const getUserChatMessages = asyncHandler(async (req: AuthRequest, res: Re
 
   res.json({
     success: true,
-    data: messages,
+    data: toChatMessagesWire(messages, shape),
     ...(isFirstPage ? { maxPeerCursor } : {}),
   });
 });
@@ -1683,17 +1703,21 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
   const gameChatType =
     ct === 'GAME' && typeof chatType === 'string' ? (chatType as ChatType) : null;
 
+  const shape = parseChatMessageWireShape(req.query.shape);
   const result = await MessageService.getMissedMessages(
     ct,
     contextId as string,
     userId,
     (lastMessageId as string) || undefined,
-    gameChatType
+    gameChatType,
+    shape === 'compact'
+      ? { withReadReceipts: false, coldTailLimit: COMPACT_MISSED_COLD_TAIL }
+      : {}
   );
 
   res.json({
     success: true,
-    data: result.messages,
+    data: toChatMessagesWire(result.messages, shape),
     ...(result.threadInvalidated ? { meta: { threadInvalidated: true } } : {}),
   });
 });

@@ -4,6 +4,7 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
 import { MessageService } from '../services/chat/message.service';
+import { parseChatMessageWireShape, toChatMessagesWire } from '../services/chat/chatMessageWireShape';
 import { ReadReceiptService } from '../services/chat/readReceipt.service';
 import { UnreadSnapshotService } from '../services/chat/unreadSnapshot.service';
 import { ChatType } from '@prisma/client';
@@ -256,10 +257,12 @@ export const getGroupChannelMessages = asyncHandler(async (req: AuthRequest, res
   }
 
   const resolvedChatType = chatType as ChatType;
+  const shape = parseChatMessageWireShape(req.query.shape);
   const messages = await MessageService.getMessages('GROUP', id, userId, {
     page: Number(page),
     limit: Number(limit),
     chatType: resolvedChatType,
+    withReadReceipts: shape === 'full',
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
@@ -270,7 +273,7 @@ export const getGroupChannelMessages = asyncHandler(async (req: AuthRequest, res
 
   res.json({
     success: true,
-    data: messages,
+    data: toChatMessagesWire(messages, shape),
     ...(isFirstPage ? { maxPeerCursor } : {}),
   });
 });

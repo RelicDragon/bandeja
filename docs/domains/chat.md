@@ -58,6 +58,18 @@ Unread-only list: URL unread flag via `chatListUnreadUrl`. Pin/mute from inbox. 
 
 `MessageType`: `TEXT` `IMAGE` `VOICE` `VIDEO` `POLL` `STICKER` `DOCUMENT`.
 
+### Message list wire shape
+
+Message pages (`GET /chat/games/:id/messages`, `/chat/bugs/:id/messages`, `/chat/user-chats/:id/messages`, `/group-channels/:id/messages`) and `GET /chat/messages/missed` keep the full shape by default, because shipped store builds parse it (no OTA). Current web code sends `?shape=compact` (`Frontend/src/services/chat/chatMessageWire.ts`, `Backend/src/services/chat/chatMessageWireShape.ts`):
+
+- `readReceipts` is omitted and its DB join skipped. The rows are legacy (mark-read writes cursors only), ticks come from `ChatReadCursor`, and Message Details re-fetches the full message. Full shape embeds a user per receipt: in a 100-player league chat that was ~75 receipts and ~80 KB per message.
+- `sender` / `user` objects are deduped with `toCompactRefs` (`{ compact: 1, refs, value }`); `decodeChatMessageList` expands them and defaults `readReceipts` to `[]`. Expanded objects are shared between messages — read-only.
+- `missed` without `lastMessageId` (no local copy) returns only the newest `COMPACT_MISSED_COLD_TAIL` (50) messages instead of the whole history. Older history loads by paging (`beforeMessageId`). With `lastMessageId` it still returns everything after the cursor.
+
+Measured on the "Leto 2026" season chat (2026-10-06): PRIVATE page 3.8 MB → 108 KB, PUBLIC cold `missed` 11.6 MB → 132 KB.
+
+Game PRIVATE / ADMINS activation (`gameChatChannelProbe.ts`) asks `GET /chat/games/:id/channel-active?chatType=PRIVATE|ADMINS` → `{ active }`: active once anyone posted in the slice or its activation system message exists (`ParticipantChatsService.isChannelActive`, same access check as the message page). It used to download 50 full messages per channel.
+
 ### Message Details
 
 Opening Details from a message's long-press menu fetches `GET /chat/messages/:messageId/details` on every opening. The response contains the fresh message (sender and reactions with embedded profiles) and a separate `readers` list from `ChatReadCursor` coverage in that message's exact context and game chat slice. Message access is checked before readers are queried. Legacy `MessageReadReceipt` rows do not determine who appears in the list.
