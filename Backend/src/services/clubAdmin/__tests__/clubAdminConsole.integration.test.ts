@@ -48,6 +48,9 @@ void (async () => {
       expectStatus(await api.call(staffA.id, 'GET', path), 200, `staff GET ${path}`);
     }
     expectStatus(await api.call(stranger.id, 'GET', `${base}/context`), 403, 'stranger', 'clubAdmin.forbidden');
+    await prisma.club.update({ where: { id: clubA.id }, data: { integrationConfig: { secret: 'x' } } });
+    assert.equal((await api.call(staffA.id, 'GET', base)).body.data.integrationConfig, null, 'staff never sees provider config');
+    assert.deepEqual((await api.call(adminA.id, 'GET', base)).body.data.integrationConfig, { secret: 'x' });
 
     /* --- hours ----------------------------------------------------------------------------- */
     const weekly = ([1, 2, 3, 4, 5, 6, 7] as const).map((weekday) => ({

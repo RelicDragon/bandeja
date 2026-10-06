@@ -16,6 +16,7 @@ import { getClubHours, parseHoursBody, putClubHours } from '../services/clubAdmi
 import { getClubProfile, patchClubProfile } from '../services/clubAdmin/clubAdminProfile.service';
 import { addTeamMember, changeTeamRole, listTeam, removeTeamMember } from '../services/clubAdmin/clubAdminTeam.service';
 import { logClubActivity } from '../services/clubAdmin/clubAdminActivity.service';
+import { clubAdminCan } from '@bandeja/shared/clubAdmin/contract';
 
 function body(req: AuthRequest): Record<string, unknown> {
   return req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>) : {};
@@ -58,8 +59,14 @@ export const listClubAdminClubs = asyncHandler(async (req: AuthRequest, res: Res
 });
 
 export const getClubAdminClub = asyncHandler(async (req: ClubAdminRequest, res: Response) => {
-  const data = await ClubAdminClubService.getClub(req.userId!, getClubAdminContext(req).clubId);
-  res.json({ success: true, data });
+  const ctx = getClubAdminContext(req);
+  const club = await ClubAdminClubService.getClub(req.userId!, ctx.clubId);
+  // Provider configuration is for people who can edit the club; STAFF gets the rest of the row.
+  if (!clubAdminCan(ctx.role, 'club.edit')) {
+    res.json({ success: true, data: { ...club, integrationConfig: null, ptMeta: null } });
+    return;
+  }
+  res.json({ success: true, data: club });
 });
 
 export const patchClubAdminClub = asyncHandler(async (req: ClubAdminRequest, res: Response) => {
