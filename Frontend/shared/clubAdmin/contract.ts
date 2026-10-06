@@ -252,7 +252,12 @@ export interface CreateHoldBody {
   customerPhone?: string | null;
   /** Repeat weekly for N occurrences total (1 = no repeat, max 26). */
   repeatWeeks?: number;
-  /** Create even when it overlaps games/holds/external bookings. */
+  /**
+   * Opt in to overlap detection (409 `clubAdmin.holdOverlap`). Store builds never send it and keep the
+   * legacy "always create" behaviour, because they swallow non-403 errors.
+   */
+  detectOverlap?: boolean;
+  /** With `detectOverlap`: create even when it overlaps games/holds/external bookings. */
   force?: boolean;
 }
 
