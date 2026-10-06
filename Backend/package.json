@@ -14,6 +14,7 @@
     "backfill:bug-testing-started-at": "ts-node scripts/backfillBugTestingStartedAt.ts",
     "backfill:city-group-welcome-messages": "ts-node scripts/backfillCityGroupWelcomeMessages.ts",
     "backfill:city-groups": "ts-node scripts/backfillCityGroups.ts",
+    "backfill:group-created-messages": "ts-node --transpile-only scripts/backfillGroupCreatedMessages.ts",
     "backfill:league-group-chats": "ts-node --transpile-only scripts/backfillLeagueGroupChats.ts",
     "backfill:city-is-set": "ts-node scripts/backfillCityIsSet.ts",
     "backfill:content-searchable": "ts-node scripts/backfillContentSearchable.ts",

@@ -49,7 +49,9 @@ export class SystemMessageService {
     contextId: string, 
     messageData: { type: SystemMessageType; variables: Record<string, string> }, 
     chatType: ChatType = ChatType.PUBLIC,
-    chatContextType: ChatContextType = ChatContextType.GAME
+    chatContextType: ChatContextType = ChatContextType.GAME,
+    /** Backfills only: date the message to when the event actually happened. */
+    opts: { createdAt?: Date } = {}
   ) {
     const text = createSystemMessageContent(messageData);
     const content = JSON.stringify({
@@ -70,7 +72,8 @@ export class SystemMessageService {
           mediaUrls: [],
           thumbnailUrls: [],
           chatType,
-          state: MessageState.SENT
+          state: MessageState.SENT,
+          ...(opts.createdAt ? { createdAt: opts.createdAt, updatedAt: opts.createdAt } : {}),
         },
         include: SYSTEM_MESSAGE_INCLUDE
       });
@@ -84,7 +87,7 @@ export class SystemMessageService {
       );
       await tx.chatMessage.update({
         where: { id: m.id },
-        data: { serverSyncSeq: syncSeq },
+        data: { serverSyncSeq: syncSeq, ...(opts.createdAt ? { updatedAt: opts.createdAt } : {}) },
       });
       const refreshed = await tx.chatMessage.findUnique({
         where: { id: m.id },
