@@ -8,7 +8,7 @@ export async function getSetupChecklist(clubId: string): Promise<ClubSetupCheckl
   const [club, activeCourts, weeklyRows, priceRules, pricedCourts] = await Promise.all([
     prisma.club.findUnique({
       where: { id: clubId },
-      select: { photos: true, phone: true, email: true, website: true, openingTime: true, closingTime: true },
+      select: { avatar: true, photos: true, phone: true, email: true, website: true, openingTime: true, closingTime: true },
     }),
     prisma.court.count({ where: { clubId, isActive: true } }),
     prisma.clubWeeklyHours.count({ where: { clubId } }),
@@ -19,7 +19,8 @@ export async function getSetupChecklist(clubId: string): Promise<ClubSetupCheckl
     hasCourts: activeCourts > 0,
     hasHours: weeklyRows > 0 || Boolean(club?.openingTime && club?.closingTime),
     hasPrices: priceRules > 0 || pricedCourts > 0,
-    hasPhotos: parseClubPhotosJson(club?.photos).length > 0,
+    // Copy is "Add a logo or photos": either one counts.
+    hasPhotos: Boolean(club?.avatar) || parseClubPhotosJson(club?.photos).length > 0,
     hasContacts: Boolean(club?.phone || club?.email || club?.website),
   };
 }
