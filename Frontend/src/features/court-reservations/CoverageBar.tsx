@@ -14,10 +14,12 @@ export type CoverageBarProps = {
   reserved: readonly IsoInterval[];
   gaps: readonly IsoInterval[];
   planned?: boolean;
+  /** Marked reserved by the organizer only: sky, never the green of a club booking. */
+  reported?: boolean;
   className?: string;
 };
 
-export function CoverageBar({ window, reserved, gaps, planned = false, className }: CoverageBarProps) {
+export function CoverageBar({ window, reserved, gaps, planned = false, reported = false, className }: CoverageBarProps) {
   const start = window ? parseInstantMs(window.start) : null;
   const end = window ? parseInstantMs(window.end) : null;
   const range = start != null && end != null && end > start ? { startMs: start, endMs: end } : null;
@@ -43,7 +45,7 @@ export function CoverageBar({ window, reserved, gaps, planned = false, className
           key={`${kind}:${i.start}:${i.end}`}
           data-segment={kind}
           className={`cr-grow absolute inset-y-0 rounded-full transition-[inset-inline-start,width] duration-200 ease-out motion-reduce:transition-none ${
-            kind === 'reserved' ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-400 dark:bg-amber-500'
+            kind === 'reserved' ? (reported ? 'bg-sky-400 dark:bg-sky-500' : 'bg-emerald-500 dark:bg-emerald-400') : 'bg-amber-400 dark:bg-amber-500'
           }`}
           style={{ insetInlineStart: `${p!.offset}%`, width: `${p!.width}%` }}
         />

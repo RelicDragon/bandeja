@@ -1,10 +1,19 @@
 /** Pill tone for a summary or a slot (see `ReservationPill`). */
 import type { CourtSlotView, ReservationSummary } from '@shared/gameBooking/courtReservations';
+import { isReservedByReportOnly } from '@shared/gameBooking/reservationCopy';
 
-/** `gameOnly`: neutral — the organizer handles the court; nothing to reserve or worry about. */
-export type ReservationPillTone = 'planned' | 'partial' | 'reserved' | 'gap' | 'unknown' | 'gameOnly';
+/**
+ * `gameOnly`: neutral — the organizer handles the court; nothing to reserve or worry about.
+ * `reported`: the organizer marked it reserved; no club booking proves it (not green).
+ */
+export type ReservationPillTone = 'planned' | 'partial' | 'reserved' | 'reported' | 'gap' | 'unknown' | 'gameOnly';
 
-export function pillToneForSummary(summary: ReservationSummary): ReservationPillTone {
+/** Pass `slots` so a game reserved only by the organizer's word is not shown as booked. */
+export function pillToneForSummary(
+  summary: ReservationSummary,
+  slots?: readonly Pick<CourtSlotView, 'state'>[],
+): ReservationPillTone {
+  if (summary.kind === 'reserved' && slots && isReservedByReportOnly(slots)) return 'reported';
   switch (summary.kind) {
     case 'planned':
       return 'planned';
@@ -19,6 +28,7 @@ export function pillToneForSummary(summary: ReservationSummary): ReservationPill
 
 export function pillToneForSlot(slot: Pick<CourtSlotView, 'state' | 'gaps' | 'unknownTime'>): ReservationPillTone {
   if (slot.state === 'planned') return 'planned';
+  if (slot.state === 'reported') return 'reported';
   if (slot.state === 'linked' && slot.unknownTime) return 'unknown';
   if (slot.state === 'linked' && slot.gaps.length > 0) return 'gap';
   return 'reserved';

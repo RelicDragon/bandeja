@@ -110,6 +110,7 @@
     "Manage Players": "games.managePlayers",
     "Mark as reserved": "courtReservation.sheet.action.markReserved",
     "Mark not reserved": "courtReservation.sheet.action.markNotReserved",
+    "Marked as reserved": "chat.systemMessages.bookingStatuses.MANUAL",
     "Marked paid": "cost.state.markedPaid",
     "Match actions": "gameResults.matchActions",
     "Matchups": "gameFormat.steps.generation",
@@ -202,6 +203,7 @@
     "Sync participants": "gameDetails.syncParticipants",
     "Sync to Server": "gameResults.syncToServer",
     "Tap a trainer to filter trainings by them": "trainers.selectToFilterHint",
+    "This court is taken at the club": "gameDetails.courts.clubBusySaveTitle",
     "This slot was just taken—pick another time.": "createGame.booktime.slotTaken",
     "Time Format": "profile.timeFormat",
     "To do at the club": "courtReservation.followUp.title",
@@ -449,6 +451,19 @@
       "hi": "सभी कोर्ट आरक्षित",
       "th": "จองครบทุกคอร์ตแล้ว",
       "ja": "全コート予約済み"
+    },
+    "chat.systemMessages.bookingStatuses.MANUAL": {
+      "en": "Marked as reserved",
+      "ru": "Отмечено как забронированное",
+      "sr": "Označeno kao rezervisano",
+      "es": "Marcada como reservada",
+      "cs": "Označeno jako rezervované",
+      "ar": "مُعلَّم كمحجوز",
+      "zh": "已标记为预订",
+      "id": "Ditandai sudah dipesan",
+      "hi": "आरक्षित के रूप में चिह्नित",
+      "th": "ทำเครื่องหมายว่าจองแล้ว",
+      "ja": "予約済みとして登録"
     },
     "chats.bugs": {
       "en": "Bugs",
@@ -1372,6 +1387,19 @@
       "hi": "योजना में",
       "th": "วางแผนไว้",
       "ja": "予定"
+    },
+    "courtReservation.slot.reported": {
+      "en": "Marked as reserved",
+      "ru": "Отмечено как забронированное",
+      "sr": "Označeno kao rezervisano",
+      "es": "Marcada como reservada",
+      "cs": "Označeno jako rezervované",
+      "ar": "مُعلَّم كمحجوز",
+      "zh": "已标记为预订",
+      "id": "Ditandai sudah dipesan",
+      "hi": "आरक्षित के रूप में चिह्नित",
+      "th": "ทำเครื่องหมายว่าจองแล้ว",
+      "ja": "予約済みとして登録"
     },
     "createGame.addMeToGame": {
       "en": "Join the game",
@@ -2646,6 +2674,32 @@
       "hi": "ब्रैकेट प्लेऑफ़ के लिए फिक्स्ड टीमें आवश्यक।",
       "th": "รอบตัดเชือกแบบวงเล็บต้องใช้ทีมที่ตายตัว",
       "ja": "ブラケットプレーオフには固定チームが必要です。"
+    },
+    "gameDetails.courts.clubBusySaveConfirm": {
+      "en": "I booked it myself — save",
+      "ru": "Я сам(а) забронировал(а) — сохранить",
+      "sr": "Sam/a sam rezervisao/la — sačuvaj",
+      "es": "La reservé yo — guardar",
+      "cs": "Rezervoval(a) jsem sám/sama — uložit",
+      "ar": "حجزته بنفسي — حفظ",
+      "zh": "是我自己订的 — 保存",
+      "id": "Saya pesan sendiri — simpan",
+      "hi": "मैंने खुद बुक किया — सेव करें",
+      "th": "ฉันจองเอง — บันทึก",
+      "ja": "自分で予約した — 保存"
+    },
+    "gameDetails.courts.clubBusySaveTitle": {
+      "en": "This court is taken at the club",
+      "ru": "Этот корт занят в клубе",
+      "sr": "Ovaj teren je zauzet u klubu",
+      "es": "Esta pista está ocupada en el club",
+      "cs": "Tento kurt je v klubu obsazený",
+      "ar": "هذا الملعب محجوز في النادي",
+      "zh": "该场地在俱乐部已被预订",
+      "id": "Lapangan ini sudah terisi di klub",
+      "hi": "यह कोर्ट क्लब में बुक है",
+      "th": "คอร์ตนี้ถูกจองที่คลับแล้ว",
+      "ja": "このコートはクラブで予約済みです"
     },
     "gameDetails.createGroups": {
       "en": "Create Groups",

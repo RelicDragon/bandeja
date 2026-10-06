@@ -34,6 +34,7 @@ import {
   COURT_RESERVATION_I18N_KEYS,
   describeCourtSlot,
   describeReservationSummary,
+  isReservedByReportOnly,
   type ReservationCopy,
 } from '@shared/gameBooking/reservationCopy';
 
@@ -77,7 +78,7 @@ export const APPROXIMATE_PARTIAL_I18N_KEY = 'games.reservationPartly';
 // namespace, and `namespaceCollisions.test.ts` rejects flat dotted literals of an owned namespace in src.
 const ENGLISH_FALLBACKS: Readonly<Record<string, string>> = {
   [COURT_RESERVATION_I18N_KEYS.slot.planned]: 'Planned',
-  [COURT_RESERVATION_I18N_KEYS.slot.reported]: 'Reserved',
+  [COURT_RESERVATION_I18N_KEYS.slot.reported]: 'Marked as reserved',
   [COURT_RESERVATION_I18N_KEYS.slot.linked]: 'Reserved · {{provider}}',
   [COURT_RESERVATION_I18N_KEYS.slot.unknownTime]: 'Reserved · {{provider}} · time unknown',
   [COURT_RESERVATION_I18N_KEYS.slot.gap]: 'Gap {{from}}–{{to}}',
@@ -85,6 +86,7 @@ const ENGLISH_FALLBACKS: Readonly<Record<string, string>> = {
   [COURT_RESERVATION_I18N_KEYS.summary.partial]: '{{reserved}} of {{total}} reserved',
   [COURT_RESERVATION_I18N_KEYS.summary.reserved]: 'All courts reserved',
   [COURT_RESERVATION_I18N_KEYS.summary.reservedWithGap]: 'Reserved, gap at {{time}}',
+  [COURT_RESERVATION_I18N_KEYS.summary.reported]: 'Marked as reserved',
   [APPROXIMATE_PARTIAL_I18N_KEY]: 'Partly reserved',
 };
 
@@ -190,7 +192,7 @@ export function selectCourtReservationView(game: CourtReservationGame): CourtRes
   return {
     summary: result.summary,
     slots: result.slots,
-    copy: describeReservationSummary(result.summary),
+    copy: describeReservationSummary(result.summary, { reportedOnly: isReservedByReportOnly(result.slots) }),
     approximate: false,
   };
 }

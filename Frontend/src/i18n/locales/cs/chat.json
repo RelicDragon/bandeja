@@ -300,7 +300,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Všechny kurty rezervovány",
         "EXTERNAL_PARTIAL": "Částečně rezervováno",
-        "MANUAL": "Rezervováno",
+        "MANUAL": "Označeno jako rezervované",
         "NONE": "Naplánováno"
       },
       "ATTENDANCE_NUDGED": "{{userName}} požádal všechny o potvrzení účasti",

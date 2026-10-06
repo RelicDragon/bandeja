@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "Запланировано",
-      "reported": "Забронировано",
+      "reported": "Отмечено как забронированное",
       "linked": "Забронировано · {{provider}}",
       "unknownTime": "Забронировано · {{provider}} · время неизвестно",
       "gap": "Разрыв {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "Запланировано",
       "partial": "Забронировано {{reserved}} из {{total}}",
       "reserved": "Все корты забронированы",
-      "reservedWithGap": "Забронировано, разрыв в {{time}}"
+      "reservedWithGap": "Забронировано, разрыв в {{time}}",
+      "reported": "Отмечено как забронированное"
     },
     "reschedule": {
       "unchanged": "Без изменений",

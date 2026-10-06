@@ -52,6 +52,8 @@ type LocationTimeTabProps = {
   lockedCourtIds: ReadonlySet<string>;
   courtCount: number;
   onCourtCountChange: (count: number) => void;
+  /** Stepper cap: the roster need (and never below the picked courts). */
+  maxCourtCount?: number;
   /** Linked reservations pin the club (unlink them on the game page first). */
   clubLocked: boolean;
   /** The reschedule planner moves this game's time (reservations / several courts). */
@@ -135,6 +137,7 @@ export function LocationTimeTab({
   lockedCourtIds,
   courtCount,
   onCourtCountChange,
+  maxCourtCount,
   clubLocked,
   timeManagedByPlanner,
   onRequestReschedule,
@@ -195,6 +198,7 @@ export function LocationTimeTab({
         onToggle={onToggleCourt}
         count={courtCount}
         onCountChange={onCourtCountChange}
+        maxCount={maxCourtCount}
         gameOnly={bookingMode === 'GAME_ONLY'}
       />
     ) : null

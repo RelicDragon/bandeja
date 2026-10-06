@@ -61,10 +61,12 @@ void (async () => {
   const end = new Date(start.getTime() + 2 * H);
   const at = (hours: number) => new Date(start.getTime() + hours * H);
 
-  const makeGame = async (over: { courtId?: string; startTime?: Date; endTime?: Date } = {}) => {
+  const makeGame = async (
+    over: { courtId?: string; startTime?: Date; endTime?: Date; entityType?: EntityType; maxParticipants?: number } = {},
+  ) => {
     const game = await prisma.game.create({
       data: {
-        entityType: EntityType.GAME,
+        entityType: over.entityType ?? EntityType.GAME,
         sport: Sport.PADEL,
         gameType: GameType.CLASSIC,
         cityId: city.id,
@@ -73,7 +75,7 @@ void (async () => {
         startTime: over.startTime ?? start,
         endTime: over.endTime ?? end,
         timeIsSet: true,
-        maxParticipants: 4,
+        maxParticipants: over.maxParticipants ?? 4,
         participants: {
           create: [{ userId: owner.id, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING }],
         },
@@ -173,7 +175,8 @@ void (async () => {
       'CLUB game is clash-checked',
     );
     // The same move for a GAME_ONLY game is never blocked.
-    const gOnly = await makeGame({ courtId: c1.id, startTime: at(5), endTime: at(7) });
+    // Two courts: an 8-player tournament (a 4-player game is capped at one court).
+    const gOnly = await makeGame({ courtId: c1.id, startTime: at(5), endTime: at(7), entityType: EntityType.TOURNAMENT, maxParticipants: 8 });
     await GameUpdateService.updateGame(gOnly.id, { courtBookingMode: 'GAME_ONLY' }, owner.id, false);
     await GameUpdateService.updateGame(gOnly.id, { startTime: start.toISOString(), endTime: end.toISOString() }, owner.id, false, {
       timePolicy: 'explicit',

@@ -156,7 +156,8 @@ describe('buildRematchGameInitialData', () => {
     // The excluded list names the schedule/court/booking keys the duplicate does carry.
     expect(duplicate.courtId).toBe('court-7');
     expect(duplicate.startTime).toBe('2026-09-20T10:00:00.000Z');
-    expect(duplicate.hasBookedCourt).toBe(true);
+    // A reservation belongs to one date: the copy never starts as reserved.
+    expect(duplicate.hasBookedCourt).toBeUndefined();
   });
 
   it('keeps the authored name only, never a suffix', () => {

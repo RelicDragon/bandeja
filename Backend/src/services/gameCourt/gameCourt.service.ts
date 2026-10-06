@@ -3,6 +3,8 @@ import { ApiError } from '../../utils/ApiError';
 import { assertCourtMatchesGameSport } from '../../shared/clubSports';
 import { EntityType, GameBookingStatus, GameCourtReservation, Prisma } from '@prisma/client';
 import { assertNoCourtClashInTx } from './courtClash.service';
+import { defaultCourtSlotCount } from '@bandeja/shared/gameBooking/courtReservations';
+import { playersPerMatchOf } from '../../shared/matchFormat';
 import {
   gameExternalBookingSelect,
   recomputeGameBookingStatusForGame,
@@ -186,7 +188,7 @@ export class GameCourtService {
     const input = parseCourtSlotsBody(body);
     const game = await tx.game.findUnique({
       where: { id: gameId },
-      select: { sport: true, clubId: true, entityType: true },
+      select: { sport: true, clubId: true, entityType: true, maxParticipants: true, playersPerMatch: true, courtSlotCount: true },
     });
     if (!game) throw new ApiError(404, 'Game not found');
     if (game.entityType === EntityType.EVENT) {
@@ -213,6 +215,17 @@ export class GameCourtService {
       select: { id: true, courtId: true, reservation: true, _count: { select: { externalBookings: true } } },
     });
     const beforeByCourt = new Map(before.map((row) => [row.courtId, row]));
+
+    // Never more courts than the roster needs (a 4-player 2v2 has one). A game already
+    // above that (older data, or linked reservations) may keep its courts but not grow.
+    const rosterNeed = defaultCourtSlotCount({
+      maxParticipants: game.maxParticipants,
+      playersPerMatch: playersPerMatchOf(game),
+    });
+    const courtCap = Math.max(rosterNeed, before.length, game.courtSlotCount ?? 0);
+    if (courtIds.length > courtCap || (typeof input.courtSlotCount === 'number' && input.courtSlotCount > courtCap)) {
+      throw new ApiError(400, `This game needs at most ${rosterNeed} court${rosterNeed === 1 ? '' : 's'}`);
+    }
     const keep = new Set(courtIds);
     if (before.some((row) => !keep.has(row.courtId) && row._count.externalBookings > 0)) {
       // A linked booking is never dropped implicitly: unlink it (PATCH /games/:id/bookings) first.

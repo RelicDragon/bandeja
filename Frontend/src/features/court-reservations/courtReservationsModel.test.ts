@@ -140,6 +140,8 @@ describe('buildCourtSlotsBody', () => {
       .toMatchObject({ courtSlotCount: 3 });
     expect(courtCountBounds(0)).toEqual({ min: 1, max: 16 });
     expect(courtCountBounds(3)).toEqual({ min: 3, max: 16 });
+    expect(courtCountBounds(0, 1)).toEqual({ min: 1, max: 1 });
+    expect(courtCountBounds(2, 1)).toEqual({ min: 2, max: 2 });
   });
 
   it('reportedAnyCourtCountOf counts reported any-court slots only', () => {

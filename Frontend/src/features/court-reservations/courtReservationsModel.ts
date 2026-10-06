@@ -266,10 +266,15 @@ export function buildCourtSlotsBody(state: CourtSlotsState, change: CourtSlotsCh
   };
 }
 
-/** Bounds for the "Courts: − N +" stepper: never fewer than the assigned courts. */
+/**
+ * Bounds for the "Courts: − N +" stepper: never fewer than the assigned
+ * courts, never more than `max` — pass the roster need
+ * (`defaultCourtSlotCount`: 1 for a 4-player 2v2), unless there are already
+ * more assigned courts, which the stepper then only lets shrink.
+ */
 export function courtCountBounds(assignedCourtCount: number, max = 16): { min: number; max: number } {
   const min = Math.max(1, assignedCourtCount);
-  return { min, max: Math.max(min, max) };
+  return { min, max: Math.max(min, Math.min(16, max)) };
 }
 
 /* ------------------------------------------------------------------ *

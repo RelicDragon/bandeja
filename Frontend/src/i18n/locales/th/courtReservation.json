@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "วางแผนไว้",
-      "reported": "จองแล้ว",
+      "reported": "ทำเครื่องหมายว่าจองแล้ว",
       "linked": "จองแล้ว · {{provider}}",
       "unknownTime": "จองแล้ว · {{provider}} · ไม่ทราบเวลา",
       "gap": "ช่วงว่าง {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "วางแผนไว้",
       "partial": "จองแล้ว {{reserved}} จาก {{total}}",
       "reserved": "จองครบทุกคอร์ตแล้ว",
-      "reservedWithGap": "จองแล้ว มีช่วงว่างเวลา {{time}}"
+      "reservedWithGap": "จองแล้ว มีช่วงว่างเวลา {{time}}",
+      "reported": "ทำเครื่องหมายว่าจองแล้ว"
     },
     "reschedule": {
       "unchanged": "ไม่เปลี่ยน",

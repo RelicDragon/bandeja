@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "Prevista",
-      "reported": "Reservada",
+      "reported": "Marcada como reservada",
       "linked": "Reservada · {{provider}}",
       "unknownTime": "Reservada · {{provider}} · hora desconocida",
       "gap": "Hueco {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "Prevista",
       "partial": "{{reserved}} de {{total}} reservadas",
       "reserved": "Todas las pistas reservadas",
-      "reservedWithGap": "Reservada, hueco a las {{time}}"
+      "reservedWithGap": "Reservada, hueco a las {{time}}",
+      "reported": "Marcada como reservada"
     },
     "reschedule": {
       "unchanged": "Sin cambios",

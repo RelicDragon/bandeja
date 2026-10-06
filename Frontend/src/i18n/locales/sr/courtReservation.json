@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "Planirano",
-      "reported": "Rezervisano",
+      "reported": "Označeno kao rezervisano",
       "linked": "Rezervisano · {{provider}}",
       "unknownTime": "Rezervisano · {{provider}} · vreme nepoznato",
       "gap": "Rupa {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "Planirano",
       "partial": "Rezervisano {{reserved}} od {{total}}",
       "reserved": "Svi tereni rezervisani",
-      "reservedWithGap": "Rezervisano, rupa u {{time}}"
+      "reservedWithGap": "Rezervisano, rupa u {{time}}",
+      "reported": "Označeno kao rezervisano"
     },
     "reschedule": {
       "unchanged": "Bez promene",

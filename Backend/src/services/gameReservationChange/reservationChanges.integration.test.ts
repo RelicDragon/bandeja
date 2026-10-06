@@ -86,10 +86,13 @@ void (async () => {
   const end = new Date(start.getTime() + 2 * H);
   const at = (hours: number) => new Date(start.getTime() + hours * H);
 
-  const makeGame = async (over: { courtId?: string | null; startTime?: Date; endTime?: Date; maxParticipants?: number } = {}) => {
+  // Multi-court games are 8-player tournaments: a 4-player game is capped at one court.
+  const makeGame = async (
+    over: { courtId?: string | null; startTime?: Date; endTime?: Date; maxParticipants?: number; multiCourt?: boolean } = {},
+  ) => {
     const game = await prisma.game.create({
       data: {
-        entityType: EntityType.GAME,
+        entityType: over.multiCourt ? EntityType.TOURNAMENT : EntityType.GAME,
         sport: Sport.PADEL,
         gameType: GameType.CLASSIC,
         cityId: city.id,
@@ -98,7 +101,7 @@ void (async () => {
         startTime: over.startTime ?? start,
         endTime: over.endTime ?? end,
         timeIsSet: true,
-        maxParticipants: over.maxParticipants ?? 4,
+        maxParticipants: over.maxParticipants ?? (over.multiCourt ? 8 : 4),
         participants: {
           create: [
             { userId: owner.id, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING },
@@ -128,7 +131,7 @@ void (async () => {
 
   try {
     /* --- occupancy: every court slot, per-slot reservation ------------------------ */
-    const gA = await makeGame({ courtId: c1.id });
+    const gA = await makeGame({ courtId: c1.id, multiCourt: true });
     await GameCourtService.setCourtSlots(gA.id, owner.id, {
       slots: [
         { courtId: c1.id, reservation: 'REPORTED' },
@@ -167,7 +170,7 @@ void (async () => {
     assert.equal((await gameRow(gB.id)).startTime.getTime(), at(5).getTime(), '409 rolled the move back');
 
     // gA's C2 slot is only planned: a game moving onto C2 is not blocked.
-    const gC = await makeGame({ courtId: c2.id, startTime: at(5), endTime: at(7) });
+    const gC = await makeGame({ courtId: c2.id, startTime: at(5), endTime: at(7), multiCourt: true });
     await GameUpdateService.updateGame(gC.id, { startTime: start.toISOString(), endTime: end.toISOString() }, owner.id, false, { timePolicy: 'explicit' });
     assert.equal((await gameRow(gC.id)).startTime.getTime(), start.getTime(), 'planned games never block');
 
@@ -323,7 +326,7 @@ void (async () => {
     assert.equal(canTransitionStep('FAILED', 'RUNNING'), true);
     assert.equal(canTransitionStep('NEEDS_CLUB', 'RUNNING'), false);
 
-    const gJ = await makeGame({ courtId: c4.id, startTime: at(48), endTime: at(50) });
+    const gJ = await makeGame({ courtId: c4.id, startTime: at(48), endTime: at(50), multiCourt: true });
     await link(gJ.id, 'old', c4.id, at(48), at(50));
     const newStart = at(49);
     const newEnd = at(51);

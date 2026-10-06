@@ -274,17 +274,19 @@ export function useCreateGameCourtPlan({
   /* ---------------- count ---------------- */
 
   const linkedCount = slots.filter((s) => s.bookingId).length;
-  const bounds = courtSlotBounds(courts.length, linkedCount);
+  const bounds = courtSlotBounds(courts.length, linkedCount, rosterCount);
   const reportedDefault = effectiveChoice === 'alreadyReserved';
 
   // Until the organizer touches the stepper, N follows the roster (capped by the club's courts).
   const courtCount = courts.length;
+  // After a touch, N still never exceeds what the roster needs (a smaller roster shrinks it).
   useEffect(() => {
-    if (isBar || countTouched) return;
+    if (isBar) return;
     setSlots((prev) => {
       const linked = prev.filter((s) => s.bookingId).length;
       const cap = courtCount > 0 ? Math.max(courtCount, linked) : Number.POSITIVE_INFINITY;
-      const target = Math.min(cap, Math.max(rosterCount, linked));
+      const need = Math.max(rosterCount, linked);
+      const target = countTouched ? Math.min(prev.length, need) : Math.min(cap, need);
       return prev.length === target ? prev : resizeCourtSlots(prev, target, reportedDefault);
     });
   }, [isBar, countTouched, rosterCount, courtCount, reportedDefault]);

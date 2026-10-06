@@ -302,7 +302,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Semua lapangan dipesan",
         "EXTERNAL_PARTIAL": "Dipesan sebagian",
-        "MANUAL": "Dipesan",
+        "MANUAL": "Ditandai sudah dipesan",
         "NONE": "Direncanakan"
       },
       "ATTENDANCE_NUDGED": "{{userName}} meminta semua orang mengonfirmasi kehadiran",

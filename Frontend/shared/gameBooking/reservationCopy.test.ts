@@ -4,6 +4,7 @@ import {
   describeBlocker,
   describeCourtSlot,
   describeReservationSummary,
+  isReservedByReportOnly,
   describeRescheduleOutcome,
   primaryBlocker,
   providerDisplayName,
@@ -21,10 +22,10 @@ describe('describeCourtSlot', () => {
     });
   });
 
-  it('reported', () => {
+  it('reported is never the green booked look', () => {
     expect(describeCourtSlot({ state: 'reported', provider: null, gaps: [], unknownTime: false }).label).toMatchObject({
       i18nKey: 'courtReservation.slot.reported',
-      tone: 'success',
+      tone: 'neutral',
     });
   });
 
@@ -68,6 +69,21 @@ describe('describeCourtSlot', () => {
 });
 
 describe('describeReservationSummary', () => {
+  it('all courts only marked reserved → "Marked as reserved", not success', () => {
+    const summary = { kind: 'reserved', reserved: 1, total: 1, gapCount: 0 } as const;
+    expect(describeReservationSummary(summary, { reportedOnly: true })).toMatchObject({
+      i18nKey: 'courtReservation.summary.reported',
+      tone: 'neutral',
+    });
+    expect(describeReservationSummary(summary)).toMatchObject({ i18nKey: 'courtReservation.summary.reserved', tone: 'success' });
+  });
+
+  it('isReservedByReportOnly', () => {
+    expect(isReservedByReportOnly([{ state: 'reported' }])).toBe(true);
+    expect(isReservedByReportOnly([{ state: 'reported' }, { state: 'linked' }])).toBe(false);
+    expect(isReservedByReportOnly([{ state: 'planned' }])).toBe(false);
+  });
+
   it('maps every kind', () => {
     expect(describeReservationSummary({ kind: 'planned', reserved: 0, total: 2, gapCount: 0 })).toMatchObject({
       i18nKey: 'courtReservation.summary.planned',

@@ -302,7 +302,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "All courts reserved",
         "EXTERNAL_PARTIAL": "Partly reserved",
-        "MANUAL": "Reserved",
+        "MANUAL": "Marked as reserved",
         "NONE": "Planned"
       },
       "ATTENDANCE_NUDGED": "{{userName}} asked everyone to confirm attendance",

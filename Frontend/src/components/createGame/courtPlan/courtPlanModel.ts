@@ -49,11 +49,21 @@ export function linkedBookingIds(slots: readonly CourtPlanSlot[]): string[] {
   return slots.map((s) => s.bookingId).filter((id): id is string => Boolean(id));
 }
 
-/** Stepper bounds: at least one court and every linked reservation; at most the club's courts (≤ 16). */
-export function courtSlotBounds(eligibleCourtCount: number, linkedCount: number): { min: number; max: number } {
+/**
+ * Stepper bounds: at least one court and every linked reservation; at most
+ * what the roster needs (`rosterNeed`, e.g. 1 for a 4-player 2v2) and the
+ * club's courts (≤ 16). Linked reservations beyond that stay (the organizer
+ * picked them) but the stepper never adds more.
+ */
+export function courtSlotBounds(
+  eligibleCourtCount: number,
+  linkedCount: number,
+  rosterNeed: number = MAX_COURT_SLOTS,
+): { min: number; max: number } {
   const min = Math.max(1, linkedCount);
   const clubMax = eligibleCourtCount > 0 ? eligibleCourtCount : MAX_COURT_SLOTS;
-  return { min, max: Math.max(min, Math.min(MAX_COURT_SLOTS, clubMax)) };
+  const need = Math.max(1, Math.floor(rosterNeed));
+  return { min, max: Math.max(min, Math.min(MAX_COURT_SLOTS, clubMax, need)) };
 }
 
 /** Picked courts first (unique, in order), then "Any court" slots up to `count`. */

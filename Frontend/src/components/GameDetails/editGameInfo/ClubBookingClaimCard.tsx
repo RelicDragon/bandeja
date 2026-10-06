@@ -1,8 +1,9 @@
 /**
  * Under the time grid: a court the club shows as busy over the picked time.
- * The club never says whose booking it is, so we ask — "It's my booking"
- * marks the court as reserved and the game simply uses it; "Game only" stops
- * checking the club altogether. Claimed courts turn into a quiet confirmation
+ * The club never says whose booking it is, and usually it is someone else's:
+ * the card says to pick another time or court. "I booked it myself" (secondary,
+ * outlined) marks the court as reserved; "Game only" stops checking the club
+ * altogether. Claimed courts turn into a quiet confirmation
  * with Undo. Rows only animate in (CSS): nothing waits on an exit animation,
  * which a backgrounded WebView may never run.
  */
@@ -41,13 +42,13 @@ export function ClubBookingClaimCard({ open, claimed, courtName, formatTime, onC
                 <CircleHelp size={18} aria-hidden className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.clubBusyTitle', params)}</p>
-                  <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">{t('gameDetails.courts.clubBusyAsk')}</p>
+                  <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">{t('gameDetails.courts.clubBusyElse')}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => onClaim(conflict.courtId)}
-                className={`mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] ${pressScaleGuard}`}
+                className={`mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 text-sm font-semibold text-gray-900 transition-[background-color,transform] hover:bg-amber-100/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] dark:border-amber-700 dark:bg-gray-900 dark:text-white dark:hover:bg-amber-900/30 ${pressScaleGuard}`}
               >
                 <CalendarCheck2 size={16} aria-hidden />
                 {t('gameDetails.courts.clubBusyMine')}
@@ -59,7 +60,6 @@ export function ClubBookingClaimCard({ open, claimed, courtName, formatTime, onC
               >
                 {t('gameDetails.courts.clubBusyGameOnly')}
               </button>
-              <p className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">{t('gameDetails.courts.clubBusyElse')}</p>
             </section>
           );
         })}

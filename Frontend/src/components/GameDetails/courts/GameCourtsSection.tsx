@@ -20,9 +20,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { CalendarCheck2 } from 'lucide-react';
 import type { Club, Court, Game } from '@/types';
-import type { CourtSlotView } from '@shared/gameBooking/courtReservations';
+import { defaultCourtSlotCount, type CourtSlotView } from '@shared/gameBooking/courtReservations';
 import { planGapFill, type GapFillResult } from '@shared/gameBooking/planReschedule';
 import type { ProviderCapabilityOverrides } from '@shared/gameBooking/providerCapabilities';
 import type { LinkBookingToGameBody } from '@shared/gameBooking/contracts';
@@ -34,6 +33,7 @@ import { queryClient } from '@/queries/queryClient';
 import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { ClubBusySavePrompt } from '@/components/GameDetails/editGameInfo/ClubBusySavePrompt';
 import { createHydratedClubBookingProvider } from '@/integrations/booking/createClubBookingProvider';
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { buildCourtReservationsInput } from '@/utils/courtReservationView';
@@ -620,7 +620,8 @@ function OrganizerCourts({
   );
 
   const assignedCount = input.gameCourts.length;
-  const bounds = courtCountBounds(assignedCount);
+  // Never more courts than the roster needs (a 4-player 2v2 has one).
+  const bounds = courtCountBounds(assignedCount, defaultCourtSlotCount(input.game));
   const sheetPending = (assigning ? 'assign_court' : null) ?? localPending ?? (mutations.pending && mutations.pending !== 'follow_up_done' && mutations.pending !== 'set_count' ? mutations.pending : null);
 
   return (
@@ -715,17 +716,10 @@ function OrganizerCourts({
         />
       ) : null}
 
-      <ConfirmationModal
-        isOpen={modeClash != null}
-        tone="info"
-        icon={CalendarCheck2}
-        onClose={() => setModeClash(null)}
-        onConfirm={() => {
-          const courtIds = [...new Set((modeClash ?? []).map((c) => c.courtId))];
-          setModeClash(null);
-          void switchToClubBooking(courtIds);
-        }}
-        title={t('gameDetails.courts.gameOnlyClashTitle')}
+      <ClubBusySavePrompt
+        conflicts={modeClash}
+        courtName={(courtId) => courtsById[courtId]?.name ?? ''}
+        formatTime={clock.time}
         message={
           modeClash?.[0]
             ? t('gameDetails.courts.gameOnlyClashMessage', {
@@ -735,8 +729,13 @@ function OrganizerCourts({
               })
             : ''
         }
-        confirmText={t('gameDetails.courts.gameOnlyClashConfirm')}
-        cancelText={t('gameDetails.courts.gameOnlyClashKeep')}
+        primaryLabel={t('gameDetails.courts.gameOnlyClashKeep')}
+        claimLabel={t('gameDetails.courts.gameOnlyClashConfirm')}
+        onPickAnother={() => setModeClash(null)}
+        onClaimAndSave={(courtIds) => {
+          setModeClash(null);
+          void switchToClubBooking([...new Set(courtIds)]);
+        }}
       />
 
       <ConfirmationModal

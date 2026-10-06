@@ -302,7 +302,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "所有场地已预订",
         "EXTERNAL_PARTIAL": "部分预订",
-        "MANUAL": "已预订",
+        "MANUAL": "已标记为预订",
         "NONE": "已计划"
       },
       "ATTENDANCE_NUDGED": "{{userName}} 请大家确认出席",

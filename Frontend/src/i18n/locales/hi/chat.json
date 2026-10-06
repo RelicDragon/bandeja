@@ -302,7 +302,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "सभी कोर्ट आरक्षित",
         "EXTERNAL_PARTIAL": "आंशिक रूप से आरक्षित",
-        "MANUAL": "आरक्षित",
+        "MANUAL": "आरक्षित के रूप में चिह्नित",
         "NONE": "नियोजित"
       },
       "ATTENDANCE_NUDGED": "{{userName}} ने सभी से उपस्थिति की पुष्टि करने को कहा",

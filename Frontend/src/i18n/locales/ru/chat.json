@@ -306,7 +306,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Все корты забронированы",
         "EXTERNAL_PARTIAL": "Забронировано частично",
-        "MANUAL": "Забронировано",
+        "MANUAL": "Отмечено как забронированное",
         "NONE": "Запланировано"
       },
       "ATTENDANCE_NUDGED": "{{userName}} попросил всех подтвердить участие",

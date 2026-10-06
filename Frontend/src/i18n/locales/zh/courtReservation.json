@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "计划中",
-      "reported": "已预订",
+      "reported": "已标记为预订",
       "linked": "已预订 · {{provider}}",
       "unknownTime": "已预订 · {{provider}} · 时间未知",
       "gap": "空档 {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "计划中",
       "partial": "已预订 {{reserved}}/{{total}}",
       "reserved": "所有场地已预订",
-      "reservedWithGap": "已预订，{{time}} 有空档"
+      "reservedWithGap": "已预订，{{time}} 有空档",
+      "reported": "已标记为预订"
     },
     "reschedule": {
       "unchanged": "不变",

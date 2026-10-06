@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { addHours } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, CalendarClock, CalendarCheck2, Banknote, Loader2, Settings, Users } from 'lucide-react';
+import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings, Users } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
 import { gamesApi, courtsApi, clubsApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
@@ -24,6 +24,8 @@ import {
   initialCourtIds,
   saveEditLocationTime,
 } from './editGameInfo/saveEditLocationTime';
+import { defaultCourtSlotCount } from '@shared/gameBooking/courtReservations';
+import { playersPerMatchOf } from '@shared/matchFormat';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { resolvePaymentMethods } from '@shared/payments/paymentMethodSelection';
 import {
@@ -37,6 +39,7 @@ import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTime
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { useQuery } from '@tanstack/react-query';
+import { ClubBusySavePrompt } from './editGameInfo/ClubBusySavePrompt';
 import { ClubBookingClaimCard } from './editGameInfo/ClubBookingClaimCard';
 import {
   findClubBookingConflicts,
@@ -434,6 +437,12 @@ export const EditGameInfoModal = ({
   const claimsDirty =
     slotModel && !gameOnly && [...ownBookingSet].sort().join(',') !== (clubChanged ? '' : initialReportedKey);
 
+  /** Never more courts than the roster needs (a 4-player 2v2 has one); linked courts always stay. */
+  const maxCourtCount = Math.max(
+    defaultCourtSlotCount({ maxParticipants: game.maxParticipants, playersPerMatch: playersPerMatchOf(game) }),
+    lockedCourtIds.size,
+  );
+
   const handleEditCourtToggle = useCallback(
     (id: string) => {
       if (!slotModel) {
@@ -444,13 +453,23 @@ export const EditGameInfoModal = ({
       }
       if (lockedCourtIds.has(id)) return;
       setSelectedCourtIds((prev) => {
-        const next = prev.includes(id) ? prev.filter((courtId) => courtId !== id) : [...prev, id];
+        let next: string[];
+        if (prev.includes(id)) {
+          next = prev.filter((courtId) => courtId !== id);
+        } else if (prev.length >= maxCourtCount) {
+          // Full: the new court replaces the last one that can move (one court → a plain switch).
+          const swap = [...prev].reverse().find((courtId) => !lockedCourtIds.has(courtId));
+          if (!swap) return prev;
+          next = prev.map((courtId) => (courtId === swap ? id : courtId));
+        } else {
+          next = [...prev, id];
+        }
         setWhere((s) => ({ ...s, courtId: next[0] ?? '' }));
-        setCourtCount((count) => Math.max(count, next.length, 1));
+        setCourtCount((count) => Math.min(Math.max(count, next.length, 1), Math.max(maxCourtCount, next.length)));
         return next;
       });
     },
-    [slotModel, lockedCourtIds],
+    [slotModel, lockedCourtIds, maxCourtCount],
   );
 
   const handleEditCourtIdsSync = useCallback((ids: string[]) => {
@@ -816,7 +835,11 @@ export const EditGameInfoModal = ({
                 onSetCourtIds={handleEditCourtIdsSync}
                 lockedCourtIds={lockedCourtIds}
                 courtCount={Math.max(courtCount, selectedCourtIds.length, 1)}
-                onCourtCountChange={(count) => setCourtCount(Math.max(count, selectedCourtIds.length, 1))}
+                maxCourtCount={Math.max(maxCourtCount, selectedCourtIds.length)}
+                onCourtCountChange={(count) =>
+                  // An older game above the cap can only shrink.
+                  setCourtCount((prev) => Math.max(Math.min(count, Math.max(maxCourtCount, prev)), selectedCourtIds.length, 1))
+                }
                 clubLocked={clubLocked}
                 timeManagedByPlanner={timeManagedByPlanner}
                 bookingMode={bookingMode}
@@ -1012,43 +1035,21 @@ export const EditGameInfoModal = ({
       onClose={() => setSoftOverlapOpen(false)}
     />
 
-    <ConfirmationModal
-      isOpen={claimPrompt != null}
-      tone="info"
-      icon={CalendarCheck2}
-      title={t('gameDetails.courts.clubBusySaveTitle')}
-      message={
-        claimPrompt && claimPrompt.length === 1
-          ? t('gameDetails.courts.clubBusySaveMessage', {
-              court: courtNameOf(claimPrompt[0].courtId),
-              from: clubClock.time(claimPrompt[0].start),
-              to: clubClock.time(claimPrompt[0].end),
-            })
-          : t('gameDetails.courts.clubBusySaveMessageMany', {
-              courts: (claimPrompt ?? []).map((c) => courtNameOf(c.courtId)).join(', '),
-            })
-      }
-      confirmText={t('gameDetails.courts.clubBusySaveConfirm')}
-      cancelText={t('gameDetails.courts.clubBusySaveCancel')}
-      onConfirm={() => {
-        const courtIds = (claimPrompt ?? []).map((c) => c.courtId);
+    <ClubBusySavePrompt
+      conflicts={claimPrompt}
+      courtName={courtNameOf}
+      formatTime={clubClock.time}
+      onPickAnother={() => setClaimPrompt(null)}
+      onClaimAndSave={(courtIds) => {
         setClaimPrompt(null);
         claimCourts(courtIds);
         void executeSave(courtIds);
       }}
-      onClose={() => setClaimPrompt(null)}
-    >
-      <button
-        type="button"
-        onClick={() => {
-          setClaimPrompt(null);
-          setBookingMode('GAME_ONLY');
-        }}
-        className="mt-3 min-h-[44px] w-full rounded-xl text-sm font-semibold text-primary-700 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30"
-      >
-        {t('gameDetails.courts.clubBusySwitchGameOnly')}
-      </button>
-    </ConfirmationModal>
+      onGameOnly={() => {
+        setClaimPrompt(null);
+        setBookingMode('GAME_ONLY');
+      }}
+    />
 
     <ConfirmationModal
       isOpen={showConfirmRemoveTime}

@@ -13,7 +13,7 @@
 import { useId } from 'react';
 import { ChevronRight, Minus, Plus } from 'lucide-react';
 import type { CourtReservationsResult, CourtSlotView } from '@shared/gameBooking/courtReservations';
-import { describeCourtSlot, describeReservationSummary } from '@shared/gameBooking/reservationCopy';
+import { describeCourtSlot, describeReservationSummary, isReservedByReportOnly } from '@shared/gameBooking/reservationCopy';
 import type { IsoInterval } from '@shared/gameBooking/coverageIntervals';
 import { Card } from '@/components/Card';
 import { pressScaleGuard } from '@/components/motion/pressScale';
@@ -143,6 +143,7 @@ function SlotRow({
             reserved={segments.reserved}
             gaps={segments.gaps}
             planned={slot.state === 'planned'}
+            reported={slot.state === 'reported'}
           />
         ) : null}
         {gapLines.length > 0 ? (
@@ -222,8 +223,8 @@ export function CourtsCard({
           <ReservationPill tone="gameOnly" label={t('card.gameOnly')} />
         ) : (
           <ReservationPill
-            tone={pillToneForSummary(summary)}
-            label={text.copy(describeReservationSummary(summary))}
+            tone={pillToneForSummary(summary, reservations.slots)}
+            label={text.copy(describeReservationSummary(summary, { reportedOnly: isReservedByReportOnly(reservations.slots) }))}
             progress={progress}
           />
         )}

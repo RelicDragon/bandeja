@@ -310,7 +310,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "كل الملاعب محجوزة",
         "EXTERNAL_PARTIAL": "محجوز جزئيًا",
-        "MANUAL": "محجوز",
+        "MANUAL": "مُعلَّم كمحجوز",
         "NONE": "مخطط"
       },
       "ATTENDANCE_NUDGED": "طلب {{userName}} من الجميع تأكيد الحضور",

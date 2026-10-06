@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "Planned",
-      "reported": "Reserved",
+      "reported": "Marked as reserved",
       "linked": "Reserved · {{provider}}",
       "unknownTime": "Reserved · {{provider}} · time unknown",
       "gap": "Gap {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "Planned",
       "partial": "{{reserved}} of {{total}} reserved",
       "reserved": "All courts reserved",
-      "reservedWithGap": "Reserved, gap at {{time}}"
+      "reservedWithGap": "Reserved, gap at {{time}}",
+      "reported": "Marked as reserved"
     },
     "reschedule": {
       "unchanged": "No change",

@@ -302,7 +302,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "จองครบทุกคอร์ตแล้ว",
         "EXTERNAL_PARTIAL": "จองบางส่วน",
-        "MANUAL": "จองแล้ว",
+        "MANUAL": "ทำเครื่องหมายว่าจองแล้ว",
         "NONE": "วางแผนไว้"
       },
       "ATTENDANCE_NUDGED": "{{userName}} ขอให้ทุกคนยืนยันการมาเล่น",

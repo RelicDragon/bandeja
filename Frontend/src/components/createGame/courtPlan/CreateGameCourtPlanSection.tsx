@@ -6,7 +6,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court } from '@/types';
 import { ReservationPill, pillToneForSummary, useCourtReservationText } from '@/features/court-reservations';
-import { describeReservationSummary } from '@shared/gameBooking/reservationCopy';
+import { describeReservationSummary, isReservedByReportOnly } from '@shared/gameBooking/reservationCopy';
 import type { ReservationSummary } from '@shared/gameBooking/courtReservations';
 import { resolveCourtNameParts } from '@/utils/courtDisplayName';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
@@ -75,7 +75,13 @@ export function CreateGameCourtPlanSection({
         : reserved < total
           ? { kind: 'partial', reserved, total, gapCount: 0 }
           : { kind: 'reserved', reserved, total, gapCount: 0 };
-    return { tone: pillToneForSummary(summary), label: text.copy(describeReservationSummary(summary)) };
+    // Marked-reserved only (no linked reservation) never looks like a club booking.
+    const slotStates = plan.slots.map((s) => ({ state: s.bookingId ? ('linked' as const) : s.reported ? ('reported' as const) : ('planned' as const) }));
+    const reportedOnly = isReservedByReportOnly(slotStates);
+    return {
+      tone: pillToneForSummary(summary, slotStates),
+      label: text.copy(describeReservationSummary(summary, { reportedOnly })),
+    };
   })();
 
   const courtNames = (plan.filledSlots ?? plan.slots)

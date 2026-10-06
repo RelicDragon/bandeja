@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "योजना में",
-      "reported": "आरक्षित",
+      "reported": "आरक्षित के रूप में चिह्नित",
       "linked": "आरक्षित · {{provider}}",
       "unknownTime": "आरक्षित · {{provider}} · समय अज्ञात",
       "gap": "खाली समय {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "योजना में",
       "partial": "{{total}} में से {{reserved}} आरक्षित",
       "reserved": "सभी कोर्ट आरक्षित",
-      "reservedWithGap": "आरक्षित, {{time}} पर खाली समय"
+      "reservedWithGap": "आरक्षित, {{time}} पर खाली समय",
+      "reported": "आरक्षित के रूप में चिह्नित"
     },
     "reschedule": {
       "unchanged": "कोई बदलाव नहीं",

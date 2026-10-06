@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { CalendarClock, Check, Clock, type LucideIcon } from 'lucide-react';
+import { CalendarClock, Check, Clock, UserCheck, type LucideIcon } from 'lucide-react';
+import { isReservedByReportOnly } from '@shared/gameBooking/reservationCopy';
 import type { ReservationSummaryKind } from '@shared/gameBooking/courtReservations';
 import { ReservationPill } from '@/features/court-reservations/ReservationPill';
 import { pillToneForSummary } from '@/features/court-reservations/reservationPillTone';
@@ -39,11 +40,14 @@ export function ReservationSummaryPill({ view, formatTime, variant = 'pill' }: R
   const { summary } = view;
   const label = formatReservationCopy(view.copy, t, formatTime);
 
+  // Marked reserved by the organizer only: never the green "booked" look.
+  const reportedOnly = summary.kind === 'reserved' && !view.approximate && isReservedByReportOnly(view.slots);
+
   if (variant === 'inline') {
-    const Icon = INLINE_ICONS[summary.kind];
+    const Icon = reportedOnly ? UserCheck : INLINE_ICONS[summary.kind];
     return (
       <span
-        className={`inline-flex items-center gap-1 font-medium ${INLINE_CLASSES[summary.kind]}`}
+        className={`inline-flex items-center gap-1 font-medium ${reportedOnly ? 'text-sky-700 dark:text-sky-300' : INLINE_CLASSES[summary.kind]}`}
         data-testid="court-reservation-summary"
         data-kind={summary.kind}
       >
@@ -55,7 +59,7 @@ export function ReservationSummaryPill({ view, formatTime, variant = 'pill' }: R
 
   return (
     <ReservationPill
-      tone={pillToneForSummary(summary)}
+      tone={view.approximate ? pillToneForSummary(summary) : pillToneForSummary(summary, view.slots)}
       label={label}
       size="compact"
       progress={summary.total > 0 ? summary.reserved / summary.total : 0}

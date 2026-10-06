@@ -33,7 +33,8 @@ export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
     anyoneCanInvite: game.anyoneCanInvite,
     resultsByAnyone: game.resultsByAnyone,
     allowDirectJoin: game.allowDirectJoin,
-    hasBookedCourt: game.hasBookedCourt,
+    // Never `hasBookedCourt`: a reservation belongs to one date, and a copy
+    // that starts "Already reserved" would be created as reserved without a booking.
     afterGameGoToBar: game.afterGameGoToBar,
     // PRD 360 — the promise is about how this organizer runs a game, so it
     // travels with the format into the next one (plan §5.4 allow-list).

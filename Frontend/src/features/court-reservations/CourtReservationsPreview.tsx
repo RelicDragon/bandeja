@@ -11,7 +11,7 @@
  */
 import { useMemo, useState } from 'react';
 import type { CourtSlotView, DeriveCourtReservationsInput, ReservationLinkInput } from '@shared/gameBooking/courtReservations';
-import { deriveCourtReservations } from '@shared/gameBooking/courtReservations';
+import { defaultCourtSlotCount, deriveCourtReservations } from '@shared/gameBooking/courtReservations';
 import type { BookStep, PlanStep } from '@shared/gameBooking/planReschedule';
 import {
   buildCourtSlotsBody,
@@ -361,7 +361,7 @@ export function CourtReservationsPreview() {
         courtCount={{
           // Shown count: explicit choice, else what the view derived (assigned courts, else `defaultCourtSlotCount`).
           value: input.courtSlotCount ?? reservations.slots.length,
-          ...courtCountBounds(input.gameCourts.length),
+          ...courtCountBounds(input.gameCourts.length, defaultCourtSlotCount(input.game)),
           onChange: (count) => editSlots({ kind: 'set_count', count }),
         }}
       />

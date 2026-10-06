@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "予定",
-      "reported": "予約済み",
+      "reported": "予約済みとして登録",
       "linked": "予約済み · {{provider}}",
       "unknownTime": "予約済み · {{provider}} · 時間不明",
       "gap": "空き {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "予定",
       "partial": "{{total}}面中{{reserved}}面予約済み",
       "reserved": "全コート予約済み",
-      "reservedWithGap": "予約済み、{{time}}に空き"
+      "reservedWithGap": "予約済み、{{time}}に空き",
+      "reported": "予約済みとして登録"
     },
     "reschedule": {
       "unchanged": "変更なし",

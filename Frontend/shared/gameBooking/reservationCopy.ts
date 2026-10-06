@@ -5,7 +5,7 @@
  *
  * i18n keys (namespace `courtReservation.*`, proposed English):
  *   courtReservation.slot.planned              "Planned"
- *   courtReservation.slot.reported             "Reserved"
+ *   courtReservation.slot.reported             "Marked as reserved"
  *   courtReservation.slot.linked               "Reserved · {{provider}}"
  *   courtReservation.slot.unknownTime          "Reserved · {{provider}} · time unknown"
  *   courtReservation.slot.gap                  "Gap {{from}}–{{to}}"
@@ -13,6 +13,7 @@
  *   courtReservation.summary.partial           "{{reserved}} of {{total}} reserved"
  *   courtReservation.summary.reserved          "All courts reserved"
  *   courtReservation.summary.reservedWithGap   "Reserved, gap at {{time}}"
+ *   courtReservation.summary.reported          "Marked as reserved"
  *   courtReservation.reschedule.unchanged      "No change"
  *   courtReservation.reschedule.keep           "Keep reservation"
  *   courtReservation.reschedule.move           "Move reservation"
@@ -59,6 +60,7 @@ export const COURT_RESERVATION_I18N_KEYS = {
     partial: 'courtReservation.summary.partial',
     reserved: 'courtReservation.summary.reserved',
     reservedWithGap: 'courtReservation.summary.reservedWithGap',
+    reported: 'courtReservation.summary.reported',
   },
   reschedule: {
     unchanged: 'courtReservation.reschedule.unchanged',
@@ -117,7 +119,8 @@ export function describeCourtSlot(
     return { label: copy(keys.planned, 'neutral', 'calendar-event'), gaps: [] };
   }
   if (slot.state === 'reported') {
-    return { label: copy(keys.reported, 'success', 'circle-check'), gaps: [] };
+    // Someone said it is reserved; nothing in the club's system proves it — never the green "booked" look.
+    return { label: copy(keys.reported, 'neutral', 'user-check'), gaps: [] };
   }
   const provider = providerDisplayName(slot.provider);
   if (slot.unknownTime) {
@@ -130,8 +133,22 @@ export function describeCourtSlot(
   };
 }
 
-export function describeReservationSummary(summary: ReservationSummary): ReservationCopy {
+/**
+ * Every reserved court is only marked reserved by the organizer (no club
+ * booking linked): shown as "Marked as reserved", not the green "All courts reserved".
+ */
+export function isReservedByReportOnly(slots: readonly Pick<CourtSlotView, 'state'>[]): boolean {
+  return slots.some((s) => s.state === 'reported') && !slots.some((s) => s.state === 'linked');
+}
+
+export function describeReservationSummary(
+  summary: ReservationSummary,
+  options: { reportedOnly?: boolean } = {},
+): ReservationCopy {
   const keys = COURT_RESERVATION_I18N_KEYS.summary;
+  if (summary.kind === 'reserved' && options.reportedOnly) {
+    return copy(keys.reported, 'neutral', 'user-check');
+  }
   switch (summary.kind) {
     case 'planned':
       return copy(keys.planned, 'neutral', 'calendar-event');

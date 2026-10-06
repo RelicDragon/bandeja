@@ -300,7 +300,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Todas las pistas reservadas",
         "EXTERNAL_PARTIAL": "Reservado parcialmente",
-        "MANUAL": "Reservado",
+        "MANUAL": "Marcada como reservada",
         "NONE": "Planificado"
       },
       "ATTENDANCE_NUDGED": "{{userName}} pidió a todos que confirmen su asistencia",

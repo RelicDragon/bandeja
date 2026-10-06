@@ -45,6 +45,12 @@ describe('slots', () => {
     expect(courtSlotBounds(3, 0)).toEqual({ min: 1, max: 3 });
     expect(courtSlotBounds(0, 0)).toEqual({ min: 1, max: 16 });
     expect(courtSlotBounds(1, 2)).toEqual({ min: 2, max: 2 });
+    // The roster caps it: a 4-player 2v2 never asks for a second court.
+    expect(courtSlotBounds(5, 0, 1)).toEqual({ min: 1, max: 1 });
+    expect(courtSlotBounds(5, 0, 2)).toEqual({ min: 1, max: 2 });
+    expect(courtSlotBounds(2, 0, 3)).toEqual({ min: 1, max: 2 });
+    // Linked reservations beyond the need stay (the organizer picked them).
+    expect(courtSlotBounds(5, 2, 1)).toEqual({ min: 2, max: 2 });
   });
 
   it('resizes without dropping linked slots', () => {

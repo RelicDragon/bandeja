@@ -127,7 +127,7 @@ void (async () => {
     });
 
     /* --- PUT court-slots ---------------------------------------------------- */
-    const g1 = await makeGame({ courtId: c1.id });
+    const g1 = await makeGame({ courtId: c1.id, maxParticipants: 8 });
     await prisma.gameCourt.create({ data: { gameId: g1.id, courtId: c1.id, order: 1 } });
     const msgs0 = await systemMessages(g1.id);
 
@@ -215,6 +215,27 @@ void (async () => {
     view = await GameCourtService.setCourtSlots(gN.id, owner.id, { slots: [{ courtId: c1.id }], courtSlotCount: null });
     assert.equal(view.courtSlotCount, null);
     assert.equal(view.bookingStatus, 'EXTERNAL_FULL');
+
+    /* --- roster cap: never more courts than the roster needs ---------------- */
+    const gCap = await makeGame({ courtId: c1.id, maxParticipants: 4 });
+    await expectApiError(
+      GameCourtService.setCourtSlots(gCap.id, owner.id, { slots: [{ courtId: c1.id }, { courtId: c2.id }] }),
+      400,
+      '4-player 2v2: a second court',
+    );
+    await expectApiError(
+      GameCourtService.setCourtSlots(gCap.id, owner.id, { slots: [{ courtId: c1.id }], courtSlotCount: 2 }),
+      400,
+      '4-player 2v2: courtSlotCount 2',
+    );
+    view = await GameCourtService.setCourtSlots(gCap.id, owner.id, { slots: [{ courtId: c2.id }], courtSlotCount: 1 });
+    assert.deepEqual(view.gameCourts.map((gc) => gc.courtId), [c2.id], 'switching the one court is fine');
+    // A game already above the cap (older data) keeps its courts and may shrink.
+    await prisma.gameCourt.create({ data: { gameId: gCap.id, courtId: c1.id, order: 99 } });
+    view = await GameCourtService.setCourtSlots(gCap.id, owner.id, { slots: [{ courtId: c2.id }, { courtId: c1.id }] });
+    assert.equal(view.gameCourts.length, 2, 'existing courts kept');
+    view = await GameCourtService.setCourtSlots(gCap.id, owner.id, { slots: [{ courtId: c2.id }] });
+    assert.equal(view.gameCourts.length, 1, 'shrink allowed');
 
     /* --- link placement ------------------------------------------------------ */
     const g2 = await makeGame({ courtId: c1.id, maxParticipants: 8 });
@@ -321,7 +342,13 @@ void (async () => {
 
     /* --- legacy hasBookedCourt compat ------------------------------------------- */
     const g5 = await makeGame({ courtId: c1.id });
-    await GameCourtService.setCourtSlots(g5.id, owner.id, { slots: [{ courtId: c1.id }, { courtId: c2.id }] });
+    // Two courts on a 4-player game: older data (the court-slots editor now caps at the roster need).
+    await prisma.gameCourt.createMany({
+      data: [
+        { gameId: g5.id, courtId: c1.id, order: 0 },
+        { gameId: g5.id, courtId: c2.id, order: 1 },
+      ],
+    });
     const msgs5 = await systemMessages(g5.id);
     await GameUpdateService.updateGame(g5.id, { hasBookedCourt: true }, owner.id, false);
     slots = await slotsOf(g5.id);

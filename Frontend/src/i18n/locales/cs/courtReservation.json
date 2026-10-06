@@ -2,7 +2,7 @@
   "courtReservation": {
     "slot": {
       "planned": "Plánováno",
-      "reported": "Rezervováno",
+      "reported": "Označeno jako rezervované",
       "linked": "Rezervováno · {{provider}}",
       "unknownTime": "Rezervováno · {{provider}} · čas neznámý",
       "gap": "Mezera {{from}}–{{to}}"
@@ -11,7 +11,8 @@
       "planned": "Plánováno",
       "partial": "Rezervováno {{reserved}} z {{total}}",
       "reserved": "Všechny kurty rezervovány",
-      "reservedWithGap": "Rezervováno, mezera v {{time}}"
+      "reservedWithGap": "Rezervováno, mezera v {{time}}",
+      "reported": "Označeno jako rezervované"
     },
     "reschedule": {
       "unchanged": "Beze změny",

@@ -302,7 +302,7 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "全コート予約済み",
         "EXTERNAL_PARTIAL": "一部予約済み",
-        "MANUAL": "予約済み",
+        "MANUAL": "予約済みとして登録",
         "NONE": "予定"
       },
       "ATTENDANCE_NUDGED": "{{userName}}が参加確認をお願いしました",
