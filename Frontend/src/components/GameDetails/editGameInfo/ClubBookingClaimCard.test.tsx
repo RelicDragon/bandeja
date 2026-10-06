@@ -33,7 +33,6 @@ function render(verdict: ClubBookingVerdict, extra: Partial<Parameters<typeof Cl
       onClaim={() => {}}
       onUndo={() => {}}
       onUseOwn={() => {}}
-      onGameOnly={() => {}}
       {...extra}
     />,
   );

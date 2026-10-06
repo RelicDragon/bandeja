@@ -6,7 +6,7 @@ import type { CourtSlotView } from '@shared/gameBooking/courtReservations';
 import type { SharedGameRef } from '@shared/gameBooking/planReschedule';
 import { providerDisplayName } from '@shared/gameBooking/reservationCopy';
 import type { ClubFollowUp } from './clubFollowUps';
-import type { CourtRef, CourtsPrimaryAction } from './courtReservationsModel';
+import type { CourtRef, CourtsCardAction, CourtsPrimaryAction } from './courtReservationsModel';
 import type { CourtReservationText } from './useCourtReservationText';
 
 export function slotCourtName(
@@ -15,6 +15,35 @@ export function slotCourtName(
   t: CourtReservationText['t'],
 ): string {
   return (slot.effectiveCourtId && courtsById[slot.effectiveCourtId]?.name) || t('card.anyCourt');
+}
+
+/** The Courts card's main button. */
+export function cardActionLabel(
+  action: CourtsCardAction,
+  text: CourtReservationText,
+  ctx: { courtsById: Readonly<Record<string, CourtRef>>; slots: readonly CourtSlotView[]; providerName: string },
+): string {
+  const { t } = text;
+  switch (action.kind) {
+    case 'pick_club':
+      return t('action.pickClub');
+    case 'set_time':
+      return t('action.setTime');
+    case 'choose_courts':
+      return t('action.chooseCourts');
+    case 'use_own':
+      return ctx.providerName ? t('action.useOwn', { provider: ctx.providerName }) : t('action.useOwnPlain');
+    case 'reserve': {
+      if (action.count === 1) {
+        const slot = ctx.slots.find((s) => action.slotKeys.includes(s.key));
+        const court = slot?.effectiveCourtId ? ctx.courtsById[slot.effectiveCourtId]?.name : null;
+        return court ? t('action.bookCourt', { court }) : t('action.bookAnyCourt');
+      }
+      return action.remaining ? t('action.bookMore', { count: action.count }) : t('action.bookCourts', { count: action.count });
+    }
+    case 'fill_gap':
+      return primaryActionLabel(action, text);
+  }
 }
 
 export function primaryActionLabel(action: CourtsPrimaryAction, text: CourtReservationText): string {

@@ -9,6 +9,7 @@ export const BOOKING_ERROR_KEYS = {
   providerNotConfigured: 'errors.booking.providerNotConfigured',
   externalProviderMustBeBooktime: 'errors.booking.externalProviderMustBeBooktime',
   cannotClearBookedCourtWithLinks: 'errors.booking.cannotClearBookedCourtWithLinks',
+  removeBookingsBeforeClearing: 'errors.booking.removeBookingsBeforeClearing',
   patchRequiresBookingId: 'errors.booking.patchRequiresBookingId',
   updateLinksForbidden: 'errors.booking.updateLinksForbidden',
   alreadyLinked: 'errors.booking.alreadyLinked',

@@ -139,7 +139,8 @@
       "legacyExternalBookingIdRejected": "Zastaralé pole rezervace bylo odstraněno. Použijte externalBookingIds a PATCH /games/:id/bookings.",
       "companyIdRequired": "Integrace rezervací klubu vyžaduje company ID.",
       "integrationTypeMustBeOnlineBooking": "Integrace klubu musí být online rezervace.",
-      "rollbackFailed": "Nepodařilo se potvrdit zrušení rezervace."
+      "rollbackFailed": "Nepodařilo se potvrdit zrušení rezervace.",
+      "removeBookingsBeforeClearing": "Nejdřív odeberte nebo zrušte rezervace kurtů."
     },
     "cost": {
       "paymentMethod": {

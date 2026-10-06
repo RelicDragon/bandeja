@@ -804,6 +804,22 @@ export class GameUpdateService {
       throw new ApiError(400, 'Game photos must be managed via /games/:gameId/photos endpoints');
     }
 
+    // Clearing the club (or, from the editor, the time) leaves nothing a club booking could belong to:
+    // linked bookings are removed or cancelled first. Clearing the club also drops the game's courts.
+    const clearingClub = data.clubId !== undefined && !data.clubId && Boolean(oldClubId);
+    const clearingTime =
+      data.timeIsSet === false && oldTimeIsSet === true && options.timePolicy === 'explicit' && !options.clubAdminScope;
+    if (clearingClub || clearingTime) {
+      const linkCount = await prisma.gameExternalBooking.count({ where: { gameId: id } });
+      if (linkCount > 0) {
+        throw new ApiError(400, BOOKING_ERROR_KEYS.removeBookingsBeforeClearing);
+      }
+    }
+    if (clearingClub) {
+      updateData.clubId = null;
+      updateData.courtId = null;
+    }
+
     if (data.hasBookedCourt === false) {
       const linkCount = await prisma.gameExternalBooking.count({ where: { gameId: id } });
       if (linkCount > 0) {
@@ -927,6 +943,15 @@ export class GameUpdateService {
           },
         },
       });
+
+      if (clearingClub) {
+        // Courts belong to the club; a link written since the check above would fail here.
+        if ((await tx.gameExternalBooking.count({ where: { gameId: id } })) > 0) {
+          throw new ApiError(400, BOOKING_ERROR_KEYS.removeBookingsBeforeClearing);
+        }
+        await tx.gameCourt.deleteMany({ where: { gameId: id } });
+        await tx.game.update({ where: { id }, data: { courtSlotCount: null } });
+      }
 
       // Under the row lock: a concurrent link write (which flips to CLUB) cannot slip past.
       if (courtBookingMode === CourtBookingMode.GAME_ONLY) {

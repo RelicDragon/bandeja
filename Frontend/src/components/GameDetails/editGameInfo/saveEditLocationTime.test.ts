@@ -28,6 +28,28 @@ function game(patch: Partial<Game> = {}): Game {
 }
 
 describe('buildEditLocationTimeRequests', () => {
+  it('removes the date and time (nothing else) when cleared', () => {
+    expect(
+      buildEditLocationTimeRequests({ game: game(), clubId: 'club', courtIds: ['c1', 'c2'], slotModel: true, courtSlotCount: 2, time: null, clearTime: true }),
+    ).toEqual({ claimBody: null, gamePatch: { timeIsSet: false }, slotsBody: null });
+    // Already without a time: nothing to send.
+    expect(
+      buildEditLocationTimeRequests({ game: game({ timeIsSet: false }), clubId: 'club', courtIds: ['c1', 'c2'], slotModel: true, courtSlotCount: 2, time: null, clearTime: true })
+        .gamePatch,
+    ).toBeNull();
+  });
+
+  it('removes the club with an empty club id (the server drops the courts with it)', () => {
+    const requests = buildEditLocationTimeRequests({ game: game(), clubId: '', courtIds: [], slotModel: false, courtSlotCount: null, time: null });
+    expect(requests.gamePatch).toEqual({ clubId: '', courtId: '' });
+    expect(requests.slotsBody).toBeNull();
+  });
+
+  it('trims an older game to the courts its roster needs', () => {
+    const requests = buildEditLocationTimeRequests({ game: game({ courtSlotCount: 3 }), clubId: 'club', courtIds: ['c1', 'c2'], slotModel: true, courtSlotCount: 2, time: null });
+    expect(requests.slotsBody?.courtSlotCount).toBe(2);
+  });
+
   it('sends nothing when nothing changed', () => {
     expect(
       buildEditLocationTimeRequests({ game: game(), clubId: 'club', courtIds: ['c1', 'c2'], slotModel: true, courtSlotCount: 2, time: { startTime: start, endTime: end } }),

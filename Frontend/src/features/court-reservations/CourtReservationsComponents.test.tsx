@@ -37,21 +37,28 @@ const { createRunJournal } = await import('./reservationRunner');
 const { createClubTimeFormatter } = await import('./clubTime');
 const fx = await import('./courtReservationsFixtures');
 
-function card(scenario: Parameters<typeof fx.fixtureReservations>[0], canEdit = true) {
+function card(
+  scenario: Parameters<typeof fx.fixtureReservations>[0],
+  canEdit = true,
+  over: Partial<Parameters<typeof CourtsCard>[0]> = {},
+) {
   return renderToStaticMarkup(
     <CourtsCard
       reservations={fx.fixtureReservations(scenario)}
       window={fx.FIXTURE_WINDOW}
       courtsById={fx.FIXTURE_COURTS_BY_ID}
       timeZone={fx.FIXTURE_TIME_ZONE}
+      courtNeed={4}
       playerCount={16}
       clubName="X-Padel"
+      hasClub
       canEdit={canEdit}
+      onChange={() => undefined}
       followUps={fx.FIXTURE_FOLLOW_UPS}
       onSlotPress={() => undefined}
-      onPrimaryAction={() => undefined}
+      onAction={() => undefined}
       onFollowUpDone={() => undefined}
-      courtCount={{ value: 4, min: 3, max: 16, onChange: () => undefined }}
+      {...over}
     />,
   );
 }
@@ -73,39 +80,83 @@ describe('ReservationPill', () => {
 });
 
 describe('CourtsCard', () => {
-  it('mixed: header pill, context line, one row per slot, one primary action', () => {
+  it('mixed: header pill, when · where context, one row per slot, one main button, "Change"', () => {
     const html = card('mixed');
-    expect(html).toContain('card.title');
+    expect(html).toContain('card.titleMany');
     expect(html).toContain('summary.partial:reserved=3,total=4');
-    expect(html).toContain('card.players:count=16 · card.courts:count=4 · X-Padel');
+    expect(html).toContain('X-Padel · card.players:count=16');
+    expect(html).toContain('data-testid="courts-card-change"');
     expect(html.match(/data-slot-key=/g)).toHaveLength(4);
     expect(html).toContain('slot.linked:provider=Booktime');
     expect(html).toContain('slot.gap:from=19:00,to=19:30');
     expect(html).toContain('slot.reported');
     expect(html).toContain('card.anyCourt');
     expect(html.match(/data-primary-action=/g)).toHaveLength(1);
-    expect(html).toContain('action.reserveLast');
+    expect(html).toContain('action.bookAnyCourt');
     expect(html).toContain('followUp.cancelOldAt:time=18:00');
-    expect(html).toContain('data-testid="court-count-stepper"');
+    expect(html).not.toContain('court-count-stepper');
   });
 
   it('gap: the one action fills the gap, in words with a duration', () => {
     expect(card('gap')).toContain('action.fillGap:duration=duration.m:m=30');
   });
 
-  it('all reserved: no primary action at all', () => {
+  it('all booked: no main button at all', () => {
     const html = card('reserved');
     expect(html).toContain('summary.reserved');
     expect(html).not.toContain('data-primary-action');
   });
 
-  it('read-only: still informative, no buttons, no follow-ups, no stepper', () => {
+  it('no club: asks for one; no time: rows say so and the button sets it', () => {
+    const noClub = card('planned', true, { hasClub: false });
+    expect(noClub).toContain('card.noClub');
+    expect(noClub).toContain('data-primary-action="pick_club"');
+    expect(noClub).not.toContain('data-slot-key=');
+    const noTime = card('planned', true, { window: null });
+    expect(noTime).toContain('card.noDateTime');
+    expect(noTime).toContain('slot.noTime');
+    expect(noTime).toContain('data-primary-action="set_time"');
+  });
+
+  it('more courts than the roster needs: asks which to keep', () => {
+    const html = card('mixed', true, { courtNeed: 2, playerCount: 8 });
+    expect(html).toContain('data-testid="courts-card-too-many"');
+    expect(html).toContain('data-primary-action="choose_courts"');
+  });
+
+  it("the organizer's own club booking comes first", () => {
+    const slots = fx.fixtureReservations('planned').slots;
+    const html = card('planned', true, { ownBookingSlotKeys: new Set([slots[0].key]), providerName: 'Booktime' });
+    expect(html).toContain('data-primary-action="use_own"');
+    expect(html).toContain('action.useOwn:provider=Booktime');
+  });
+
+  it('one court: "Court" and the button names it', () => {
+    const one = fx.fixtureReservations('planned');
+    const html = renderToStaticMarkup(
+      <CourtsCard
+        reservations={{ ...one, slots: one.slots.slice(0, 1) }}
+        window={fx.FIXTURE_WINDOW}
+        courtsById={fx.FIXTURE_COURTS_BY_ID}
+        timeZone={fx.FIXTURE_TIME_ZONE}
+        courtNeed={1}
+        playerCount={4}
+        clubName="X-Padel"
+        hasClub
+        canEdit
+        onAction={() => undefined}
+      />,
+    );
+    expect(html).toContain('card.titleOne');
+    expect(html).not.toContain('summary.');
+  });
+
+  it('read-only: still informative, no buttons, no follow-ups', () => {
     const html = card('mixed', false);
     expect(html).toContain('summary.partial');
     expect(html).toContain('slot.gap');
     expect(html).not.toContain('<button');
     expect(html).not.toContain('followUp.');
-    expect(html).not.toContain('court-count-stepper');
   });
 });
 

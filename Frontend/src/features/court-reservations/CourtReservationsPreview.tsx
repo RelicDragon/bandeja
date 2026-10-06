@@ -10,14 +10,13 @@
  * in-memory journal.
  */
 import { useMemo, useState } from 'react';
-import type { CourtSlotView, DeriveCourtReservationsInput, ReservationLinkInput } from '@shared/gameBooking/courtReservations';
+import type { CourtSlotView, DeriveCourtReservationsInput } from '@shared/gameBooking/courtReservations';
 import { defaultCourtSlotCount, deriveCourtReservations } from '@shared/gameBooking/courtReservations';
 import type { BookStep, PlanStep } from '@shared/gameBooking/planReschedule';
 import {
   buildCourtSlotsBody,
-  courtCountBounds,
   reportedAnyCourtCountOf,
-  type CourtsPrimaryAction,
+  type CourtsCardAction,
 } from './courtReservationsModel';
 import {
   FIXTURE_CLUB_NAME,
@@ -26,7 +25,6 @@ import {
   FIXTURE_DRIFTS,
   FIXTURE_FOLLOW_UPS,
   FIXTURE_GAME_ID,
-  FIXTURE_OCCUPANCY,
   FIXTURE_SHARED_WITH,
   FIXTURE_TIME_ZONE,
   at,
@@ -35,7 +33,6 @@ import {
 } from './courtReservationsFixtures';
 import { CourtsCard } from './CourtsCard';
 import { CourtSlotSheet, type CourtSlotSheetAction } from './CourtSlotSheet';
-import { RescheduleSheet } from './RescheduleSheet';
 import { ReservationDriftBanner } from './ReservationDriftBanner';
 import { UnfinishedChangesBanner } from './UnfinishedChangesBanner';
 import {
@@ -43,11 +40,8 @@ import {
   runReservationChanges,
   type ReservationExecutors,
   type RunJournal,
-  type ServerRunJournal,
 } from './reservationRunner';
-import { createMemoryRunJournalStore } from './runJournalStorage';
 import { providerCanCancel } from './reservationExecutors';
-import { useReservationChangeRunner } from './useReservationChangeRunner';
 
 const SCENARIOS: { id: FixtureScenario; label: string }[] = [
   { id: 'mixed', label: 'Mixed' },
@@ -85,70 +79,6 @@ function fakeExecutors(opts: { failSecondBook: boolean }): ReservationExecutors 
   };
 }
 
-/** Apply a finished run to the fixture (new time, new links, dropped links). */
-function applyRun(input: DeriveCourtReservationsInput, journal: RunJournal): DeriveCourtReservationsInput {
-  if (journal.phase !== 'done' && journal.phase !== 'paused') return input;
-  const save = journal.steps.find((r) => r.step.kind === 'save_game' && r.status === 'done');
-  if (!save || save.step.kind !== 'save_game') return input;
-  const dropped = new Set<string>();
-  const added: ReservationLinkInput[] = [];
-  for (const r of journal.steps) {
-    if ((r.step.kind === 'cancel' || r.step.kind === 'manual_cancel' || r.step.kind === 'unlink') && r.status !== 'pending') {
-      dropped.add(r.step.externalBookingId);
-    }
-    if (r.step.kind === 'book' && r.booking) {
-      added.push({
-        id: `l-${r.booking.externalBookingId}`,
-        externalBookingId: r.booking.externalBookingId,
-        provider: r.step.provider,
-        courtId: r.step.courtId,
-        gameCourtId: r.step.slotKey.startsWith('gc:') ? r.step.slotKey.slice(3) : null,
-        bookingStart: r.booking.bookingStart,
-        bookingEnd: r.booking.bookingEnd,
-      });
-    }
-  }
-  const reassign = journal.steps.filter((r) => r.step.kind === 'reassign_court').map((r) => r.step);
-  let gameCourts = input.gameCourts;
-  for (const step of reassign) {
-    if (step.kind !== 'reassign_court' || !step.gameCourtId) continue;
-    gameCourts = gameCourts.map((gc) =>
-      gc.gameCourtId === step.gameCourtId ? { ...gc, courtId: step.toCourtId, reservation: 'NONE' as const } : gc,
-    );
-  }
-  return {
-    ...input,
-    game: { ...input.game, startTime: save.step.start, endTime: save.step.end },
-    gameCourts,
-    links: [...input.links.filter((l) => !dropped.has(l.externalBookingId)), ...added],
-  };
-}
-
-const PREVIEW_USER_ID = 'preview-user';
-
-type OtherRunMode = 'off' | 'mine' | 'theirs';
-
-/** A server journal that refuses to start: another change is running (409). */
-function busyServer(mode: Exclude<OtherRunMode, 'off'>): ServerRunJournal {
-  return {
-    async create() {
-      await wait(400);
-      throw {
-        response: {
-          status: 409,
-          data: {
-            code: 'reservationChange.running',
-            message: 'reservationChange.running',
-            active: { id: 'run-other', createdById: mode === 'mine' ? PREVIEW_USER_ID : 'someone-else', stale: false },
-          },
-        },
-      };
-    },
-    async step() {},
-    async finish() {},
-  };
-}
-
 function interruptedJournal(): RunJournal {
   const steps: PlanStep[] = [
     {
@@ -180,10 +110,7 @@ export function CourtReservationsPreview() {
     gap: fixtureInput('gap'),
   }));
   const [organizer, setOrganizer] = useState(true);
-  const [failSecondBook, setFailSecondBook] = useState(false);
-  const [otherRun, setOtherRun] = useState<OtherRunMode>('off');
   const [openSlotKey, setOpenSlotKey] = useState<string | null>(null);
-  const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [followUps, setFollowUps] = useState(FIXTURE_FOLLOW_UPS);
   const [drifts, setDrifts] = useState(FIXTURE_DRIFTS);
   const [log, setLog] = useState<string[]>([]);
@@ -196,25 +123,6 @@ export function CourtReservationsPreview() {
   const openSlot = reservations.slots.find((s) => s.key === openSlotKey) ?? null;
   const say = (line: string) => setLog((prev) => [line, ...prev].slice(0, 6));
 
-  const store = useMemo(() => createMemoryRunJournalStore(), []);
-  const executors = useMemo(() => fakeExecutors({ failSecondBook }), [failSecondBook]);
-  const server = useMemo(() => (otherRun === 'off' ? undefined : busyServer(otherRun)), [otherRun]);
-  const runner = useReservationChangeRunner({
-    gameId: `${FIXTURE_GAME_ID}:${scenario}`,
-    executors,
-    canCancel: providerCanCancel,
-    server,
-    store,
-    // "Finish it" adopts the other run; here: the demo's interrupted journal.
-    journalFromActiveRun: () => {
-      setOtherRun('off');
-      return { ...interruptedJournal(), gameId: `${FIXTURE_GAME_ID}:${scenario}`, serverRunId: 'run-other' };
-    },
-    onSettled: (journal) => {
-      setInputs((prev) => ({ ...prev, [scenario]: applyRun(prev[scenario], journal) }));
-      say(`run ${journal.phase}`);
-    },
-  });
 
   const editSlots = (change: Parameters<typeof buildCourtSlotsBody>[1]) => {
     const body = buildCourtSlotsBody(
@@ -274,7 +182,7 @@ export function CourtReservationsPreview() {
     }
   };
 
-  const onPrimary = (action: CourtsPrimaryAction) => say(`primary: ${JSON.stringify(action)}`);
+  const onPrimary = (action: CourtsCardAction) => say(`primary: ${JSON.stringify(action)}`);
 
   const segment = (active: boolean) =>
     `min-h-[36px] rounded-full px-3 text-xs font-medium ${
@@ -293,22 +201,6 @@ export function CourtReservationsPreview() {
       <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300">
         <label className="flex items-center gap-1.5">
           <input type="checkbox" checked={organizer} onChange={(e) => setOrganizer(e.target.checked)} /> Organizer
-        </label>
-        <label className="flex items-center gap-1.5">
-          <input type="checkbox" checked={failSecondBook} onChange={(e) => setFailSecondBook(e.target.checked)} /> Club says no
-          to the 2nd booking
-        </label>
-        <label className="flex items-center gap-1.5">
-          Another change running:
-          <select
-            value={otherRun}
-            onChange={(e) => setOtherRun(e.target.value as OtherRunMode)}
-            className="rounded-md border border-gray-200 bg-transparent px-1 py-0.5 dark:border-gray-700"
-          >
-            <option value="off">no</option>
-            <option value="mine">mine</option>
-            <option value="theirs">someone else's</option>
-          </select>
         </label>
       </div>
 
@@ -351,30 +243,17 @@ export function CourtReservationsPreview() {
         window={window}
         courtsById={FIXTURE_COURTS_BY_ID}
         timeZone={FIXTURE_TIME_ZONE}
+        courtNeed={Math.max(defaultCourtSlotCount(input.game), input.courtSlotCount ?? 0)}
         playerCount={input.game.maxParticipants}
         clubName={FIXTURE_CLUB_NAME}
+        hasClub
         canEdit={organizer}
+        onChange={(focus) => say(`open "When and where"${focus ? ` on ${focus}` : ''}`)}
         followUps={followUps}
         onSlotPress={(slot) => setOpenSlotKey(slot.key)}
-        onPrimaryAction={onPrimary}
+        onAction={onPrimary}
         onFollowUpDone={(id) => setFollowUps((prev) => prev.filter((f) => f.id !== id))}
-        courtCount={{
-          // Shown count: explicit choice, else what the view derived (assigned courts, else `defaultCourtSlotCount`).
-          value: input.courtSlotCount ?? reservations.slots.length,
-          ...courtCountBounds(input.gameCourts.length, defaultCourtSlotCount(input.game)),
-          onChange: (count) => editSlots({ kind: 'set_count', count }),
-        }}
       />
-
-      {organizer ? (
-        <button
-          type="button"
-          onClick={() => setRescheduleOpen(true)}
-          className="min-h-[48px] rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:text-white"
-        >
-          Change time…
-        </button>
-      ) : null}
 
       {log.length > 0 ? (
         <ol className="space-y-1 rounded-xl bg-gray-50 p-3 font-mono text-[10px] text-gray-500 dark:bg-gray-900 dark:text-gray-400">
@@ -402,33 +281,6 @@ export function CourtReservationsPreview() {
         canAssignCourt
       />
 
-      <RescheduleSheet
-        key={`${scenario}:${window.start}:${window.end}`}
-        open={rescheduleOpen}
-        onOpenChange={(open) => {
-          setRescheduleOpen(open);
-          if (!open && runner.journal && runner.journal.phase !== 'running') runner.dismiss();
-        }}
-        gameId={`${FIXTURE_GAME_ID}:${scenario}`}
-        currentWindow={window}
-        slots={reservations.slots}
-        courtsById={FIXTURE_COURTS_BY_ID}
-        clubCourts={FIXTURE_COURTS}
-        timeZone={FIXTURE_TIME_ZONE}
-        occupancy={FIXTURE_OCCUPANCY}
-        sharedWith={FIXTURE_SHARED_WITH}
-        playerCount={input.game.maxParticipants}
-        run={runner.journal}
-        onConfirm={(plan, newWindow) => {
-          say(`confirm ${plan.steps.length} steps → ${newWindow.start}`);
-          void runner.start(plan.steps, { from: window, to: newWindow });
-        }}
-        onRetry={() => void runner.resume()}
-        onDismissRun={runner.dismiss}
-        onResumeOtherRun={() => void runner.resumeActive()}
-        currentUserId={PREVIEW_USER_ID}
-        busy={runner.busy}
-      />
     </div>
   );
 }

@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Plánováno",
-      "reported": "Označeno jako rezervované",
+      "planned": "Zatím nerezervováno",
+      "reported": "Rezervoval organizátor",
       "linked": "Rezervováno · {{provider}}",
       "unknownTime": "Rezervováno · {{provider}} · čas neznámý",
-      "gap": "Mezera {{from}}–{{to}}"
+      "gap": "Mezera {{from}}–{{to}}",
+      "noTime": "Zatím bez času"
     },
     "summary": {
-      "planned": "Plánováno",
-      "partial": "Rezervováno {{reserved}} z {{total}}",
+      "planned": "Zatím nerezervováno",
+      "partial": "{{reserved}} z {{total}} rezervováno",
       "reserved": "Všechny kurty rezervovány",
       "reservedWithGap": "Rezervováno, mezera v {{time}}",
-      "reported": "Označeno jako rezervované"
+      "reported": "Rezervoval organizátor"
     },
     "reschedule": {
       "unchanged": "Beze změny",
@@ -32,7 +33,6 @@
       "shortM": "{{m}} min"
     },
     "card": {
-      "title": "Kurty",
       "players_one": "{{count}} hráč",
       "players_few": "{{count}} hráči",
       "players_many": "{{count}} hráče",
@@ -42,13 +42,15 @@
       "courts_many": "{{count}} kurtu",
       "courts_other": "{{count}} kurtů",
       "anyCourt": "Libovolný kurt",
-      "noTime": "Nastavte čas, abyste viděli, kolik hry je pokryto",
-      "count": "Počet kurtů",
-      "fewer": "O jeden kurt méně",
-      "more": "O jeden kurt více",
-      "gameOnly": "Jen hra",
-      "gameOnlyHint": "Kurt si s klubem domlouvá organizátor.",
-      "useClubBooking": "Raději rezervovat přes klub"
+      "titleOne": "Kurt",
+      "titleMany": "Kurty",
+      "change": "Změnit",
+      "noDateTime": "Datum a čas nenastaveny",
+      "noClub": "Zatím bez klubu. Vyberte ho, abyste mohli vybrat a rezervovat kurty.",
+      "tooMany_one": "{{players}} hráčů potřebuje {{count}} kurt. Vyberte, který ponechat.",
+      "tooMany_few": "{{players}} hráčů potřebuje {{count}} kurty. Vyberte, které ponechat.",
+      "tooMany_many": "{{players}} hráčů potřebuje {{count}} kurtů. Vyberte, které ponechat.",
+      "tooMany_other": "{{players}} hráčů potřebuje {{count}} kurtů. Vyberte, které ponechat."
     },
     "action": {
       "reserveCourt": "Rezervovat kurt",
@@ -62,41 +64,57 @@
       "reserveRemaining_many": "Rezervovat zbývající {{count}} kurtu",
       "reserveRemaining_other": "Rezervovat zbývajících {{count}} kurtů",
       "fillGap": "Zaplnit mezeru {{duration}}",
-      "fillGaps": "Zaplnit mezery"
+      "fillGaps": "Zaplnit mezery",
+      "pickClub": "Vybrat klub",
+      "setTime": "Nastavit datum a čas",
+      "chooseCourts": "Vybrat kurty, které ponechat",
+      "useOwn": "Použít vaši rezervaci z {{provider}}",
+      "useOwnPlain": "Použít vaši rezervaci",
+      "bookCourt": "Rezervovat {{court}}",
+      "bookAnyCourt": "Rezervovat kurt",
+      "bookMore_one": "Rezervovat ještě {{count}} kurt",
+      "bookMore_few": "Rezervovat ještě {{count}} kurty",
+      "bookMore_many": "Rezervovat ještě {{count}} kurtů",
+      "bookMore_other": "Rezervovat ještě {{count}} kurtů",
+      "bookCourts_one": "Rezervovat {{count}} kurt",
+      "bookCourts_few": "Rezervovat {{count}} kurty",
+      "bookCourts_many": "Rezervovat {{count}} kurtů",
+      "bookCourts_other": "Rezervovat {{count}} kurtů"
     },
     "sheet": {
       "game": "Hra",
       "reservationAt": "Rezervace · {{provider}}",
       "timeUnknown": "Čas neznámý",
-      "reportedHint": "Uvedli jste, že tento kurt máte rezervovaný v klubu.",
-      "plannedHint": "Pro tento kurt zatím není nic rezervováno.",
+      "reportedHint": "Organizátor ho zarezervoval u klubu. Aplikace to nemůže ověřit.",
+      "plannedHint": "Pro tento kurt zatím nic rezervováno není.",
       "alsoUsedBy": "Používá také {{name}} {{from}}–{{to}}",
       "pickCourt": "Který kurt?",
       "action": {
-        "reserve": "Rezervovat teď",
-        "link": "Propojit mou rezervaci",
-        "linkReported": "Propojit rezervaci",
-        "markReserved": "Označit jako rezervovaný",
-        "markNotReserved": "Označit jako nerezervovaný",
-        "verify": "Ověřit",
-        "unlink": "Odpojit",
-        "cancelAtClub": "Zrušit v klubu",
         "changeCourt": "Změnit kurt",
         "useCourtOnly": "Použít {{court}}, rezervovat později",
         "useCourtInstead": "Použít místo toho {{court}}",
-        "keepCourt": "Ponechat {{court}}"
-      }
+        "keepCourt": "Ponechat {{court}}",
+        "useOwn": "Použít tuto rezervaci",
+        "bookAt": "Rezervovat v {{club}}",
+        "linkExisting": "Použít rezervaci, kterou už mám",
+        "linkReal": "Propojit skutečnou rezervaci",
+        "bookedIt": "Zarezervoval(a) jsem",
+        "bookedOtherWay": "Zarezervoval(a) jsem jinak",
+        "mineOtherWay": "Je můj, zarezervoval(a) jsem ho jinak",
+        "notBooked": "Nakonec nerezervováno",
+        "removeFromGame": "Odebrat ze hry",
+        "cancelAt": "Zrušit v {{club}}",
+        "checkAgain": "Znovu ověřit v {{club}}",
+        "setTime": "Nastavit datum a čas"
+      },
+      "noTimeHint": "Nejdřív nastavte datum a čas hry: kurt jde rezervovat jen na konkrétní čas.",
+      "ownFound": "Nalezeno ve vašem účtu {{provider}}",
+      "busy": "V {{club}} obsazeno {{range}}.",
+      "busyNotYours": "V {{club}} obsazeno {{range}} a ve vašem účtu to není: nejspíš jde o cizí rezervaci.",
+      "booksByPhone": "Tento klub přijímá rezervace telefonicky: {{phone}}",
+      "theClub": "klubu"
     },
     "move": {
-      "title": "Změnit čas",
-      "dragLabel": "Čas hry",
-      "dragHint": "Přetáhněte hru nebo použijte tlačítka níže",
-      "start": "Začátek",
-      "length": "Délka",
-      "earlier": "O 15 minut dříve",
-      "later": "O 15 minut později",
-      "shorter": "O 15 minut kratší",
-      "longer": "O 15 minut delší",
       "courtsLabel": "Co se stane s každým kurtem",
       "notice_one": "{{count}} hráč dostane jedno oznámení o novém čase",
       "notice_few": "{{count}} hráči dostanou jedno oznámení o novém čase",
@@ -128,7 +146,6 @@
       "change": "Změnit",
       "changeFor": "Změnit, co se stane s {{court}}",
       "unchanged": "{{courts}} · beze změny",
-      "sliderValue": "Začíná v {{start}}, končí v {{end}}",
       "why": {
         "notAvailable": "Tento kurt v novém čase není volný.",
         "keep": "Rezervace stále pokrývá nový čas.",
@@ -247,16 +264,6 @@
       "gameUnnamed": "Jiná hra má {{court}} v {{time}}.",
       "plannedGame": "{{name}} je naplánovaná na {{court}} v {{time}}.",
       "plannedGameUnnamed": "Na {{court}} je v {{time}} naplánovaná jiná hra."
-    },
-    "timeline": {
-      "free": "volný",
-      "movesTo": "přesun na {{court}}",
-      "legend": {
-        "reserved": "Vaše rezervace",
-        "reported": "Rezervováno přes klub",
-        "club": "Obsazeno klubem",
-        "game": "Jiná hra"
-      }
     }
   }
 }

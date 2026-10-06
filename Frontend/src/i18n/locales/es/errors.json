@@ -139,7 +139,8 @@
       "legacyExternalBookingIdRejected": "Campo de reserva obsoleto eliminado. Usa externalBookingIds y PATCH /games/:id/bookings.",
       "companyIdRequired": "La integración de reservas del club requiere un company ID.",
       "integrationTypeMustBeOnlineBooking": "La integración del club debe ser reserva online.",
-      "rollbackFailed": "No pudimos confirmar que la reserva se canceló."
+      "rollbackFailed": "No pudimos confirmar que la reserva se canceló.",
+      "removeBookingsBeforeClearing": "Primero quita o cancela las reservas de pista."
     },
     "cost": {
       "paymentMethod": {

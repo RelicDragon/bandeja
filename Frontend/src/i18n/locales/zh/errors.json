@@ -142,7 +142,8 @@
       "legacyExternalBookingIdRejected": "旧预订字段已移除。请使用 externalBookingIds 和 PATCH /games/:id/bookings。",
       "companyIdRequired": "俱乐部预订集成需要公司 ID。",
       "integrationTypeMustBeOnlineBooking": "俱乐部集成必须为在线预订。",
-      "rollbackFailed": "无法确认预订已取消。"
+      "rollbackFailed": "无法确认预订已取消。",
+      "removeBookingsBeforeClearing": "请先移除或取消场地预订。"
     },
     "cost": {
       "paymentMethod": {

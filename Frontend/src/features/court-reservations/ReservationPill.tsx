@@ -7,7 +7,8 @@
  *  reported — sky, person-check: the organizer marked it reserved, unproven;
  *  gap      — amber clock: held, but not for the whole game;
  *  unknown  — amber clock: held, time unknown;
- *  gameOnly — neutral gray: the organizer handles the court, nothing to do.
+ *  gameOnly — neutral gray: the organizer handles the court, nothing to do;
+ *  noTime   — neutral gray: no time yet, nothing can be booked.
  *
  * A linked provider reservation carries a small tick.
  *
@@ -52,6 +53,8 @@ const TONE_CLASS: Record<ReservationPillTone, string> = {
     'border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200',
   gameOnly:
     'border border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200',
+  noTime:
+    'border border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-300',
 };
 
 function ProgressRing({ progress, size }: { progress: number; size: number }) {
@@ -92,6 +95,8 @@ function ToneIcon({ tone, progress, iconSize }: { tone: ReservationPillTone; pro
       return <Clock size={iconSize} aria-hidden className="shrink-0" />;
     case 'gameOnly':
       return <CalendarOff size={iconSize} aria-hidden className="shrink-0" />;
+    case 'noTime':
+      return <CalendarClock size={iconSize} aria-hidden className="shrink-0" />;
   }
 }
 

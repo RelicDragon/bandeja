@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "计划中",
-      "reported": "已标记为预订",
+      "planned": "尚未预订",
+      "reported": "组织者已预订",
       "linked": "已预订 · {{provider}}",
       "unknownTime": "已预订 · {{provider}} · 时间未知",
-      "gap": "空档 {{from}}–{{to}}"
+      "gap": "空档 {{from}}–{{to}}",
+      "noTime": "尚无时间"
     },
     "summary": {
-      "planned": "计划中",
+      "planned": "尚未预订",
       "partial": "已预订 {{reserved}}/{{total}}",
       "reserved": "所有场地已预订",
       "reservedWithGap": "已预订，{{time}} 有空档",
-      "reported": "已标记为预订"
+      "reported": "组织者已预订"
     },
     "reschedule": {
       "unchanged": "不变",
@@ -32,17 +33,15 @@
       "shortM": "{{m}}分"
     },
     "card": {
-      "title": "场地",
       "players_other": "{{count}} 名球员",
       "courts_other": "{{count}} 片场地",
       "anyCourt": "任意场地",
-      "noTime": "设置时间后可查看比赛的覆盖情况",
-      "count": "场地数量",
-      "fewer": "减少一片场地",
-      "more": "增加一片场地",
-      "gameOnly": "仅比赛",
-      "gameOnlyHint": "由组织者自行与俱乐部安排场地。",
-      "useClubBooking": "改用俱乐部预订"
+      "titleOne": "场地",
+      "titleMany": "场地",
+      "change": "更改",
+      "noDateTime": "日期和时间未设置",
+      "noClub": "还没有选择俱乐部。选择后即可挑选并预订场地。",
+      "tooMany_other": "{{players}} 名球员只需 {{count}} 片场地。请选择要保留的场地。"
     },
     "action": {
       "reserveCourt": "预订场地",
@@ -50,41 +49,51 @@
       "reserveLast": "预订最后一片场地",
       "reserveRemaining_other": "预订剩余 {{count}} 片场地",
       "fillGap": "补上 {{duration}} 空档",
-      "fillGaps": "补上空档"
+      "fillGaps": "补上空档",
+      "pickClub": "选择俱乐部",
+      "setTime": "设置日期和时间",
+      "chooseCourts": "选择要保留的场地",
+      "useOwn": "使用你的 {{provider}} 预订",
+      "useOwnPlain": "使用你的预订",
+      "bookCourt": "预订{{court}}",
+      "bookAnyCourt": "预订场地",
+      "bookMore_other": "再预订 {{count}} 片场地",
+      "bookCourts_other": "预订 {{count}} 片场地"
     },
     "sheet": {
       "game": "比赛",
       "reservationAt": "预订 · {{provider}}",
       "timeUnknown": "时间未知",
-      "reportedHint": "你已告知此场地已在球馆预订。",
+      "reportedHint": "组织者已向俱乐部预订。应用无法核实。",
       "plannedHint": "此场地尚未预订。",
       "alsoUsedBy": "{{name}} 也在使用 {{from}}–{{to}}",
       "pickCourt": "哪片场地？",
       "action": {
-        "reserve": "立即预订",
-        "link": "关联我的预订",
-        "linkReported": "关联预订",
-        "markReserved": "标记为已预订",
-        "markNotReserved": "标记为未预订",
-        "verify": "核实",
-        "unlink": "取消关联",
-        "cancelAtClub": "在球馆取消",
         "changeCourt": "更换场地",
         "useCourtOnly": "先用 {{court}}，稍后预订",
         "useCourtInstead": "改用 {{court}}",
-        "keepCourt": "保留 {{court}}"
-      }
+        "keepCourt": "保留 {{court}}",
+        "useOwn": "使用此预订",
+        "bookAt": "在{{club}}预订",
+        "linkExisting": "使用我已有的预订",
+        "linkReal": "关联真实预订",
+        "bookedIt": "我已预订",
+        "bookedOtherWay": "我通过其他方式预订了",
+        "mineOtherWay": "是我的，我通过其他方式预订了",
+        "notBooked": "其实没有预订",
+        "removeFromGame": "从比赛中移除",
+        "cancelAt": "在{{club}}取消",
+        "checkAgain": "在{{club}}重新核实",
+        "setTime": "设置日期和时间"
+      },
+      "noTimeHint": "请先设置比赛日期和时间：场地只能按时间预订。",
+      "ownFound": "在你的 {{provider}} 账户中找到",
+      "busy": "{{club}} 在 {{range}} 已被占用。",
+      "busyNotYours": "{{club}} 在 {{range}} 已被占用，且不在你的账户中：很可能是别人的预订。",
+      "booksByPhone": "该俱乐部通过电话预订：{{phone}}",
+      "theClub": "俱乐部"
     },
     "move": {
-      "title": "更改时间",
-      "dragLabel": "比赛时间",
-      "dragHint": "拖动比赛，或使用下方按钮",
-      "start": "开始",
-      "length": "时长",
-      "earlier": "提前 15 分钟",
-      "later": "推迟 15 分钟",
-      "shorter": "缩短 15 分钟",
-      "longer": "延长 15 分钟",
       "courtsLabel": "每片场地的变化",
       "notice_other": "{{count}} 名球员会收到一条新时间通知",
       "option": {
@@ -110,7 +119,6 @@
       "change": "更改",
       "changeFor": "更改 {{court}} 的处理方式",
       "unchanged": "{{courts}} · 不变",
-      "sliderValue": "{{start}} 开始，{{end}} 结束",
       "why": {
         "notAvailable": "新时间这块场地不空闲。",
         "keep": "现有预订仍覆盖新时间。",
@@ -220,16 +228,6 @@
       "gameUnnamed": "另一场比赛在 {{time}} 使用 {{court}}。",
       "plannedGame": "{{name}} 计划在 {{time}} 使用 {{court}}。",
       "plannedGameUnnamed": "另一场比赛计划在 {{time}} 使用 {{court}}。"
-    },
-    "timeline": {
-      "free": "空闲",
-      "movesTo": "改到 {{court}}",
-      "legend": {
-        "reserved": "你的预订",
-        "reported": "通过俱乐部预订",
-        "club": "俱乐部占用",
-        "game": "其他比赛"
-      }
     }
   }
 }

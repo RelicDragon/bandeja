@@ -142,7 +142,8 @@
       "legacyExternalBookingIdRejected": "旧予約フィールドは削除されました。externalBookingIds と PATCH /games/:id/bookings を使ってください。",
       "companyIdRequired": "クラブ予約連携には会社IDが必要です。",
       "integrationTypeMustBeOnlineBooking": "クラブ連携はオンライン予約である必要があります。",
-      "rollbackFailed": "予約キャンセルの確認ができませんでした。"
+      "rollbackFailed": "予約キャンセルの確認ができませんでした。",
+      "removeBookingsBeforeClearing": "先にコートの予約を外すかキャンセルしてください。"
     },
     "cost": {
       "paymentMethod": {

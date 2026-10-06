@@ -7,9 +7,10 @@
  *  - not in their account → it is someone else's booking: pick another time
  *    or court; "I booked it another way" stays as a small text link;
  *  - can't check (not connected / loading) → most likely someone else's;
- *    "I booked it myself" (outlined) marks the court reserved.
- * "Game only" stops checking the club altogether. Chosen courts turn into a
- * quiet confirmation with Undo — green for a linked booking, sky for a mark.
+ *    "I booked it another way" (outlined) marks the court booked by the organizer.
+ * Free courts at that time are offered as chips: one tap swaps the court.
+ * Chosen courts turn into a quiet confirmation with Undo — green for a linked
+ * booking, sky for "booked by organizer".
  * Rows only animate in (CSS): nothing waits on an exit animation, which a
  * backgrounded WebView may never run.
  */
@@ -36,8 +37,10 @@ type ClubBookingClaimCardProps = {
   onUndo: (courtId: string) => void;
   onUseOwn?: (courtId: string, booking: OwnClubBooking) => void;
   onUndoOwn?: (courtId: string) => void;
-  /** The clean opt-out: stop checking the club for this game. */
-  onGameOnly: () => void;
+  /** Courts free over the picked time (not already picked). */
+  freeCourts?: readonly { id: string; name: string }[];
+  /** Swap a busy court for a free one. */
+  onSwap?: (fromCourtId: string, toCourtId: string) => void;
 };
 
 const primaryBtn = `mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] ${pressScaleGuard}`;
@@ -57,7 +60,8 @@ export function ClubBookingClaimCard({
   onUndo,
   onUseOwn,
   onUndoOwn,
-  onGameOnly,
+  freeCourts = [],
+  onSwap,
 }: ClubBookingClaimCardProps) {
   const { t } = useTranslation();
   return (
@@ -105,9 +109,23 @@ export function ClubBookingClaimCard({
                 {t('gameDetails.courts.clubBusyMine')}
               </button>
             )}
-            <button type="button" onClick={onGameOnly} className={quietBtn}>
-              {t('gameDetails.courts.clubBusyGameOnly')}
-            </button>
+            {!ownBooking && onSwap && freeCourts.length > 0 ? (
+              <div className="mt-3" data-testid="club-busy-free-courts">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-200">{t('gameDetails.courts.clubBusyFreeCourts')}</p>
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  {freeCourts.slice(0, 6).map((court) => (
+                    <button
+                      key={court.id}
+                      type="button"
+                      onClick={() => onSwap(conflict.courtId, court.id)}
+                      className="min-h-[44px] rounded-full border border-gray-200 bg-white px-4 text-sm font-medium text-gray-800 hover:border-primary-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                    >
+                      {t('gameDetails.courts.clubBusyUseCourt', { court: court.name })}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </section>
         );
       })}

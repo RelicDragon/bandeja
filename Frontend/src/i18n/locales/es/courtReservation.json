@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Prevista",
-      "reported": "Marcada como reservada",
+      "planned": "Aún sin reservar",
+      "reported": "Reservada por el organizador",
       "linked": "Reservada · {{provider}}",
       "unknownTime": "Reservada · {{provider}} · hora desconocida",
-      "gap": "Hueco {{from}}–{{to}}"
+      "gap": "Hueco {{from}}–{{to}}",
+      "noTime": "Sin hora aún"
     },
     "summary": {
-      "planned": "Prevista",
+      "planned": "Aún sin reservar",
       "partial": "{{reserved}} de {{total}} reservadas",
       "reserved": "Todas las pistas reservadas",
       "reservedWithGap": "Reservada, hueco a las {{time}}",
-      "reported": "Marcada como reservada"
+      "reported": "Reservado por el organizador"
     },
     "reschedule": {
       "unchanged": "Sin cambios",
@@ -32,7 +33,6 @@
       "shortM": "{{m}} min"
     },
     "card": {
-      "title": "Pistas",
       "players_one": "{{count}} jugador",
       "players_many": "{{count}} de jugadores",
       "players_other": "{{count}} jugadores",
@@ -40,13 +40,14 @@
       "courts_many": "{{count}} de pistas",
       "courts_other": "{{count}} pistas",
       "anyCourt": "Cualquier pista",
-      "noTime": "Pon una hora para ver cuánto del partido está cubierto",
-      "count": "Número de pistas",
-      "fewer": "Una pista menos",
-      "more": "Una pista más",
-      "gameOnly": "Solo partido",
-      "gameOnlyHint": "El organizador gestiona la pista con el club.",
-      "useClubBooking": "Usar reserva del club"
+      "titleOne": "Pista",
+      "titleMany": "Pistas",
+      "change": "Cambiar",
+      "noDateTime": "Fecha y hora sin definir",
+      "noClub": "Aún no hay club. Elige uno para escoger y reservar pistas.",
+      "tooMany_one": "{{players}} jugadores necesitan {{count}} pista. Elige cuál mantener.",
+      "tooMany_many": "{{players}} jugadores necesitan {{count}} pistas. Elige cuáles mantener.",
+      "tooMany_other": "{{players}} jugadores necesitan {{count}} pistas. Elige cuáles mantener."
     },
     "action": {
       "reserveCourt": "Reservar la pista",
@@ -58,41 +59,55 @@
       "reserveRemaining_many": "Reservar {{count}} de pistas restantes",
       "reserveRemaining_other": "Reservar {{count}} pistas restantes",
       "fillGap": "Cubrir el hueco de {{duration}}",
-      "fillGaps": "Cubrir los huecos"
+      "fillGaps": "Cubrir los huecos",
+      "pickClub": "Elegir club",
+      "setTime": "Fijar fecha y hora",
+      "chooseCourts": "Elegir las pistas que se quedan",
+      "useOwn": "Usar tu reserva de {{provider}}",
+      "useOwnPlain": "Usar tu reserva",
+      "bookCourt": "Reservar {{court}}",
+      "bookAnyCourt": "Reservar una pista",
+      "bookMore_one": "Reservar {{count}} pista más",
+      "bookMore_many": "Reservar {{count}} pistas más",
+      "bookMore_other": "Reservar {{count}} pistas más",
+      "bookCourts_one": "Reservar {{count}} pista",
+      "bookCourts_many": "Reservar {{count}} pistas",
+      "bookCourts_other": "Reservar {{count}} pistas"
     },
     "sheet": {
       "game": "Partido",
       "reservationAt": "Reserva · {{provider}}",
       "timeUnknown": "Hora desconocida",
-      "reportedHint": "Nos dijiste que esta pista está reservada con el club.",
+      "reportedHint": "El organizador la reservó con el club. La app no puede comprobarlo.",
       "plannedHint": "Aún no hay nada reservado para esta pista.",
       "alsoUsedBy": "También la usa {{name}} {{from}}–{{to}}",
       "pickCourt": "¿Qué pista?",
       "action": {
-        "reserve": "Reservar ahora",
-        "link": "Vincular mi reserva",
-        "linkReported": "Vincular reserva",
-        "markReserved": "Marcar como reservada",
-        "markNotReserved": "Marcar como no reservada",
-        "verify": "Comprobar",
-        "unlink": "Desvincular",
-        "cancelAtClub": "Cancelar en el club",
         "changeCourt": "Cambiar pista",
         "useCourtOnly": "Usar {{court}}, reservar después",
         "useCourtInstead": "Usar {{court}} en su lugar",
-        "keepCourt": "Mantener {{court}}"
-      }
+        "keepCourt": "Mantener {{court}}",
+        "useOwn": "Usar esta reserva",
+        "bookAt": "Reservar en {{club}}",
+        "linkExisting": "Usar una reserva que ya hice",
+        "linkReal": "Vincular la reserva real",
+        "bookedIt": "Ya la reservé",
+        "bookedOtherWay": "La reservé de otra forma",
+        "mineOtherWay": "Es mía, la reservé de otra forma",
+        "notBooked": "Al final no está reservada",
+        "removeFromGame": "Quitar del partido",
+        "cancelAt": "Cancelar en {{club}}",
+        "checkAgain": "Comprobar de nuevo en {{club}}",
+        "setTime": "Fijar fecha y hora"
+      },
+      "noTimeHint": "Primero fija la fecha y hora del partido: una pista solo se reserva para una hora.",
+      "ownFound": "Encontrada en tu cuenta de {{provider}}",
+      "busy": "Ocupada en {{club}} {{range}}.",
+      "busyNotYours": "Ocupada en {{club}} {{range}} y no está en tu cuenta: seguramente es la reserva de otra persona.",
+      "booksByPhone": "Este club reserva por teléfono: {{phone}}",
+      "theClub": "el club"
     },
     "move": {
-      "title": "Cambiar hora",
-      "dragLabel": "Hora del partido",
-      "dragHint": "Arrastra el partido o usa los botones de abajo",
-      "start": "Inicio",
-      "length": "Duración",
-      "earlier": "15 minutos antes",
-      "later": "15 minutos después",
-      "shorter": "15 minutos menos",
-      "longer": "15 minutos más",
       "courtsLabel": "Qué pasa con cada pista",
       "notice_one": "{{count}} jugador recibe un aviso con la nueva hora",
       "notice_many": "{{count}} de jugadores reciben un aviso con la nueva hora",
@@ -122,7 +137,6 @@
       "change": "Cambiar",
       "changeFor": "Cambiar qué pasa con {{court}}",
       "unchanged": "{{courts}} · sin cambios",
-      "sliderValue": "Empieza a las {{start}}, termina a las {{end}}",
       "why": {
         "notAvailable": "Esta pista no está libre a la nueva hora.",
         "keep": "Su reserva sigue cubriendo la nueva hora.",
@@ -238,16 +252,6 @@
       "gameUnnamed": "Otro partido tiene {{court}} a las {{time}}.",
       "plannedGame": "{{name}} está previsto en {{court}} a las {{time}}.",
       "plannedGameUnnamed": "Hay otro partido previsto en {{court}} a las {{time}}."
-    },
-    "timeline": {
-      "free": "libre",
-      "movesTo": "pasa a {{court}}",
-      "legend": {
-        "reserved": "Tu reserva",
-        "reported": "Reservada con el club",
-        "club": "Ocupada por el club",
-        "game": "Otro partido"
-      }
     }
   }
 }

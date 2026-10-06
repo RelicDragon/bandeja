@@ -1,5 +1,5 @@
 /**
- * Edit drawer → Location & time save, in the court-slot model.
+ * "When and where" editor save, in the court-slot model.
  *
  *  1. `PUT /games/:id?timePolicy=explicit` — club, main court (non-slot
  *     entities), and the time when the plain time editor changed it. With
@@ -9,8 +9,10 @@
  *     keeping each kept court's reported reservation. Links are never touched
  *     here; reservations live in the Courts card.
  *
- * Games whose time can affect reservations never send a time from here: the
- * reschedule planner moves them (see `rescheduleNeeded`).
+ * Games whose time can affect bookings never send a time from here: the
+ * editor runs the reschedule planner for them (see `rescheduleNeeded`).
+ * `clearTime` removes the date and time; clearing the club sends `clubId: ''`
+ * (the server drops the courts with it).
  *
  * Courts the organizer claimed ("It's my booking" — the club's block is their
  * own booking) are marked reserved FIRST (`claimBody`, existing courts only, so
@@ -33,8 +35,10 @@ export type EditLocationTimeInput = {
   slotModel: boolean;
   /** Organizer-chosen total court count (slot model); `null` = unchanged/default. */
   courtSlotCount: number | null;
-  /** New window from the plain time editor, or `null` (unchanged / planner-managed). */
+  /** New window from the editor, or `null` (unchanged / planner-managed / cleared). */
   time: { startTime: string; endTime: string } | null;
+  /** Remove the date and time (owners / admins). */
+  clearTime?: boolean;
   /**
    * Courts that must be marked reserved (`REPORTED`); every other court is
    * `NONE`. Omitted: keep each kept court's current reservation.
@@ -81,7 +85,7 @@ export function currentCourtSlotCount(game: Game): number {
 }
 
 export function buildEditLocationTimeRequests(input: EditLocationTimeInput): EditLocationTimeRequests {
-  const { game, clubId, courtIds, slotModel, courtSlotCount, time, reportedCourtIds, courtBookingMode } = input;
+  const { game, clubId, courtIds, slotModel, courtSlotCount, time, clearTime, reportedCourtIds, courtBookingMode } = input;
   const clubChanged = clubId !== (game.clubId ?? '');
   const before = initialCourtIds(game);
   const courtsChanged = courtIds.join(',') !== before.join(',');
@@ -98,7 +102,9 @@ export function buildEditLocationTimeRequests(input: EditLocationTimeInput): Edi
   if (courtBookingMode && courtBookingMode !== (game.courtBookingMode ?? 'CLUB')) {
     gamePatch.courtBookingMode = courtBookingMode;
   }
-  if (time && timeChanged(game, time)) {
+  if (clearTime) {
+    if (game.timeIsSet !== false) gamePatch.timeIsSet = false;
+  } else if (time && timeChanged(game, time)) {
     gamePatch.startTime = time.startTime;
     gamePatch.endTime = time.endTime;
     gamePatch.timeIsSet = true;

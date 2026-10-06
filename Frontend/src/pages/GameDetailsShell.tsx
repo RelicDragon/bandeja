@@ -16,7 +16,6 @@ import {
   Card,
   PlayerListModal,
   ManageUsersModal,
-  CourtModal,
   GameInfo,
   GameSettings,
   LeagueScheduleTab,
@@ -61,7 +60,9 @@ import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
 import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
 import { GameCourtsSection } from '@/components/GameDetails/courts/GameCourtsSection';
-import { rescheduleNeeded } from '@/components/GameDetails/courts/gameCourtsModel';
+import { gameShowsCourtsSection } from '@/components/GameDetails/courts/gameCourtsModel';
+import { GameScheduleSheet } from '@/components/GameDetails/schedule/GameScheduleSheet';
+import type { ScheduleFocus } from '@/features/court-reservations/CourtsCard';
 import { GameRoster } from '@/components/GameDetails/roster/GameRoster';
 import { canViewGameCost } from '@/features/cost/costViewModel';
 import { SeriesGameSection } from '@/features/game-series/SeriesGameSection';
@@ -204,7 +205,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   /** PRD 346 — "What the dots mean", opened from a dot or the legend button. */
   const [showAttendanceLegend, setShowAttendanceLegend] = useState(false);
   const [courts, setCourts] = useState<Court[]>([]);
-  const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showDeleteBookingsWarning, setShowDeleteBookingsWarning] = useState(false);
@@ -221,8 +221,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [isLeaving, setIsLeaving] = useState(false);
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoInitialTabId>('general');
-  /** The court-aware reschedule planner (games with reservations or several courts). */
-  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  /** The "When and where" editor (club, date, time, courts) and the part it opens on. */
+  const [schedule, setSchedule] = useState<{ open: boolean; focus?: ScheduleFocus }>({ open: false });
   const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
   // The switch reacts to `activeTab` at once; the tab body follows as an
   // interruptible render, so a heavy General tab never holds the tap hostage.
@@ -851,19 +851,18 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const canViewSettings = canMutateRoster && canEdit;
 
   /**
-   * Every "change time" entry: a game whose reservations could be affected
-   * (linked reservations, or several court slots) goes through the reschedule
-   * planner so its courts move with it; anything else keeps the plain editor.
+   * Every "change time / club / court" entry opens the one "When and where"
+   * editor (docs/domains/booking.md); what a change does to bookings is shown
+   * inside it. `focus` scrolls to the tapped part.
    */
-  const openChangeTime = () => {
-    if (game && canViewSettings && rescheduleNeeded(game)) {
-      setIsEditGameInfoModalOpen(false);
-      setRescheduleOpen(true);
-      return;
-    }
-    setEditGameInfoInitialTab('locationTime');
-    setIsEditGameInfoModalOpen(true);
-  };
+  const openSchedule = useCallback((focus?: ScheduleFocus) => {
+    setIsEditGameInfoModalOpen(false);
+    setSchedule({ open: true, focus });
+  }, []);
+  const openChangeTime = () => openSchedule('time');
+  const onScheduleOpenChange = useCallback((open: boolean, focus?: ScheduleFocus) => {
+    setSchedule(open ? { open: true, focus } : { open: false });
+  }, []);
 
   // PRD 346 — attendance. Only fetched once the game actually has a time and is
   // still upcoming, or while an organizer can still note a no-show afterwards.
@@ -1240,26 +1239,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     onRefresh: handleRefresh,
     disabled: loading,
   });
-
-  const handleCourtSelect = async (courtId: string) => {
-    if (!id) return;
-
-    try {
-      const updateData: Partial<Game> = {
-        courtId: courtId === 'notBooked' ? '' : courtId,
-      };
-
-      await gamesApi.update(id, updateData);
-      
-      const response = await gamesApi.getById(id);
-      setGame(response.data);
-      
-      toast.success(game?.entityType === 'BAR' ? t('gameDetails.hallUpdated') : t('gameDetails.courtUpdated'));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
-  };
 
   const canDeleteGame = () => {
     if (!game || !user) return false;
@@ -1659,10 +1638,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                   setPlayerListGender(undefined);
                   setShowPlayerList(true);
                 }}
-                onEditCourt={() => {
-                  setEditGameInfoInitialTab('locationTime');
-                  setIsEditGameInfoModalOpen(true);
-                }}
+                onEditCourt={() => openSchedule('courts')}
               />
             </div>
           ) : null}
@@ -1714,7 +1690,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               courts={courts}
               canEdit={canEdit}
               onToggleFavorite={handleToggleFavorite}
-              onEditCourt={() => setIsCourtModalOpen(true)}
+              onEditCourt={() => openSchedule('courts')}
+              onEditClub={() => openSchedule('club')}
               onOpenEditGameInfo={(tab) => {
                 setEditGameInfoInitialTab(tab ?? 'general');
                 setIsEditGameInfoModalOpen(true);
@@ -1793,8 +1770,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               clubs={clubs}
               canEdit={Boolean(user) && canViewSettings}
               onGameUpdate={setGame}
-              rescheduleOpen={rescheduleOpen}
-              onRescheduleOpenChange={setRescheduleOpen}
+              scheduleOpen={schedule.open}
+              scheduleFocus={schedule.focus}
+              onScheduleOpenChange={onScheduleOpenChange}
+              onCourtsChange={handleCourtsChange}
+              onClubsChange={setClubs}
             />
           </div>
 
@@ -2246,37 +2226,33 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         onClose={() => setShowAttendanceLegend(false)}
       />
 
-      {isCourtModalOpen && game && courts.length >= 1 && (
-        <CourtModal
-          isOpen={isCourtModalOpen}
-          onClose={() => setIsCourtModalOpen(false)}
-          courts={courts}
-          selectedId={game.courtId || 'notBooked'}
-          onSelect={handleCourtSelect}
-          entityType={game.entityType}
-          preferredSport={game.sport}
-          clubSports={clubs.find((c) => c.id === game.clubId)?.sports}
-        />
-      )}
 
       {isEditGameInfoModalOpen && game && (
         <EditGameInfoModal
           isOpen={isEditGameInfoModalOpen}
           onClose={() => setIsEditGameInfoModalOpen(false)}
           game={game}
-          clubs={clubs}
-          courts={courts}
           initialTab={editGameInfoInitialTab}
           canEditSettings={canViewSettings}
           onGameUpdate={setGame}
-          onCourtsChange={handleCourtsChange}
-          onClubsChange={setClubs}
-          onRequestReschedule={() => {
-            setIsEditGameInfoModalOpen(false);
-            setRescheduleOpen(true);
-          }}
         />
       )}
+
+      {/* Games without a Court(s) card (bars, other kinds) get the same editor from here. */}
+      {schedule.open && game && canViewSettings && !gameShowsCourtsSection(game) ? (
+        <GameScheduleSheet
+          open
+          onClose={() => setSchedule({ open: false })}
+          focus={schedule.focus}
+          game={game}
+          clubs={clubs}
+          courts={courts}
+          canClear
+          onGameUpdate={setGame}
+          onCourtsChange={handleCourtsChange}
+          onClubsChange={setClubs}
+        />
+      ) : null}
 
       <ConfirmationModal
         isOpen={showLeaveConfirmation}

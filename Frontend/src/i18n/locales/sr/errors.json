@@ -142,7 +142,8 @@
       "nspadelProfileContactRequired": "Dodaj ime i broj telefona u svoj profil da bi rezervisao u NS Padel Centru.",
       "nspadelCancelViaClub": "Rezervacije u NS Padel Centru mogu se otkazati samo direktnim kontaktom sa klubom (+381 65 368 1911).",
       "integrationTypeMustBeOnlineBooking": "Integracija kluba mora biti online rezervacija.",
-      "rollbackFailed": "Nismo mogli da potvrdimo da je rezervacija otkazana."
+      "rollbackFailed": "Nismo mogli da potvrdimo da je rezervacija otkazana.",
+      "removeBookingsBeforeClearing": "Prvo uklonite ili otkažite rezervacije terena."
     },
     "cost": {
       "paymentMethod": {

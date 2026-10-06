@@ -1,24 +1,21 @@
 /**
- * Edit drawer → Location & time: club, courts, date and time. Nothing else.
+ * The body of the "When and where" editor (`GameScheduleSheet`): club, date,
+ * time, duration and courts. Nothing else.
  *
- * Reservations (reserve, link, mark as reserved, unlink, cancel) are not made
- * here any more — they live on the game page's Courts card and its sheets.
- * Courts use the slot model (ordered courts + total count). A game whose time
- * can affect reservations (linked reservations or several court slots) shows
- * its time with a "Change time" button that opens the reschedule planner
- * instead of the plain time editor. A club with linked reservations is locked
- * (unlink first).
- *
- * Court booking: "Club booking" (the club's schedule is checked; a court the
- * club shows busy asks "Is that your booking?") or "Game only" (the organizer
- * handles the court; nothing at the club is checked or blocks).
+ * Bookings are not made here — they live on the game page's court card and
+ * its sheets. What the editor does show, right where it happens:
+ *  - a court the club shows taken at the new time (`claimSection`);
+ *  - what happens to each linked booking when the time moves (`bookingsSection`);
+ *  - what happens to linked bookings when the club or time is removed.
+ * Courts: which ones, never how many — the roster decides the count.
+ * Owners and admins can remove the club or the date and time (`onClearClub`,
+ * `onClearTime`); a club with linked bookings can't be swapped for another.
  */
 import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { CalendarClock, CalendarOff, Store } from 'lucide-react';
+import { CalendarOff, MapPinOff, Undo2 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import type { Club, Court, EntityType, Game } from '@/types';
 import { scheduleSelectionToForm, type ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
@@ -27,9 +24,6 @@ import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtS
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { filterClubsBySport } from '@/utils/courtSport';
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
-import { getClubTimezone } from '@/utils/gameTimeDisplay';
-import { pressScaleGuard } from '@/components/motion/pressScale';
-import { useClubTime } from '@/features/court-reservations';
 import { EditCourtSlotsPicker } from './EditCourtSlotsPicker';
 import '@/features/court-reservations/courtReservations.css';
 
@@ -43,30 +37,32 @@ type LocationTimeTabProps = {
   onSelectClub?: (id: string, club?: Club) => void;
   onVenueCityChange?: (cityId: string) => void;
   venueCityId?: string;
-  /** GAME / TRAINING / TOURNAMENT / LEAGUE at a club: ordered courts + count. */
+  /** GAME / TRAINING / TOURNAMENT / LEAGUE at a club: ordered courts (the roster sets the count). */
   slotModel: boolean;
   /** Slot model: toggle a court in/out (order = selection order). Else: pick one (`notBooked` clears). */
   onToggleCourt: (id: string) => void;
   onSetCourtIds: (ids: string[]) => void;
-  /** Courts holding a linked reservation (cannot be dropped). */
+  /** Courts holding a linked booking (cannot be dropped; they move with the time). */
   lockedCourtIds: ReadonlySet<string>;
-  courtCount: number;
-  onCourtCountChange: (count: number) => void;
-  /** Stepper cap: the roster need (and never below the picked courts). */
-  maxCourtCount?: number;
-  /** Linked reservations pin the club (unlink them on the game page first). */
+  /** Courts the roster needs (players ÷ players per court). */
+  courtNeed: number;
+  /** Linked bookings pin the club (remove them first). */
   clubLocked: boolean;
-  /** The reschedule planner moves this game's time (reservations / several courts). */
-  timeManagedByPlanner: boolean;
-  onRequestReschedule?: () => void;
-  bookingMode: 'CLUB' | 'GAME_ONLY';
-  onBookingModeChange: (mode: 'CLUB' | 'GAME_ONLY') => void;
-  /** Linked reservations: Game only is not available (unlink first). */
-  gameOnlyLocked: boolean;
-  /** Courts the organizer reserved themselves: the club's block there is theirs. */
+  /** Courts the organizer booked themselves: the club's block is theirs. */
   ownClubBookingCourtIds?: readonly string[];
-  /** "Is that your booking?" under the time grid. */
+  /** A court the club shows taken at the picked time, under the time grid. */
   claimSection?: ReactNode;
+  /** What happens to each linked booking when the time moves / the club or time goes. */
+  bookingsSection?: ReactNode;
+  /** Owners / admins: remove the club (`null` = not offered). */
+  onClearClub?: (() => void) | null;
+  /** Owners / admins: remove the date and time (`null` = not offered). */
+  onClearTime?: (() => void) | null;
+  /** The date and time will be removed on save (Undo brings the pickers back). */
+  timeCleared?: boolean;
+  onUndoClearTime?: () => void;
+  /** Courts are locked while linked bookings move with the time (their court changes there). */
+  courtsLocked?: boolean;
   selectedDate: Date;
   selectedTime: string;
   duration: number;
@@ -85,42 +81,6 @@ type LocationTimeTabProps = {
   panelRef?: RefObject<HTMLDivElement | null>;
 };
 
-function PlannerTimeRow({ game, onRequestReschedule }: { game: Game; onRequestReschedule?: () => void }) {
-  const { t } = useTranslation();
-  const clock = useClubTime(getClubTimezone(game));
-  const day = useMemo(() => {
-    const tz = getClubTimezone(game) ?? undefined;
-    return new Intl.DateTimeFormat(undefined, { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' }).format(
-      new Date(game.startTime),
-    );
-  }, [game]);
-  return (
-    <section
-      className="rounded-2xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/60"
-      data-testid="edit-time-planner-row"
-    >
-      <div className="flex items-center gap-3">
-        <CalendarClock size={18} aria-hidden className="shrink-0 text-primary-600 dark:text-primary-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold tabular-nums text-gray-900 dark:text-white">
-            {day} · {clock.range(game.startTime, game.endTime)}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('gameDetails.courts.timeByPlanner')}</p>
-        </div>
-      </div>
-      {onRequestReschedule ? (
-        <button
-          type="button"
-          onClick={onRequestReschedule}
-          className={`mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] ${pressScaleGuard}`}
-        >
-          {t('gameDetails.courts.changeTime')}
-        </button>
-      ) : null}
-    </section>
-  );
-}
-
 export function LocationTimeTab({
   game,
   entityType,
@@ -135,17 +95,16 @@ export function LocationTimeTab({
   onToggleCourt,
   onSetCourtIds,
   lockedCourtIds,
-  courtCount,
-  onCourtCountChange,
-  maxCourtCount,
+  courtNeed,
   clubLocked,
-  timeManagedByPlanner,
-  onRequestReschedule,
-  bookingMode,
-  onBookingModeChange,
-  gameOnlyLocked,
   ownClubBookingCourtIds,
   claimSection,
+  bookingsSection,
+  onClearClub,
+  onClearTime,
+  timeCleared = false,
+  onUndoClearTime,
+  courtsLocked = false,
   selectedDate,
   selectedTime,
   duration,
@@ -181,13 +140,11 @@ export function LocationTimeTab({
     if (!courts.some((court) => court.id === pendingClubSchedule.courtId)) return;
     const form = scheduleSelectionToForm(pendingClubSchedule);
     onSetCourtIds(form.courtIds);
-    if (!timeManagedByPlanner) {
-      onDateChange(form.selectedDate);
-      onTimeChange(form.selectedTime);
-      onDurationChange(form.durationHours);
-    }
+    onDateChange(form.selectedDate);
+    onTimeChange(form.selectedTime);
+    onDurationChange(form.durationHours);
     setPendingClubSchedule(null);
-  }, [pendingClubSchedule, selectedClub, courts, timeManagedByPlanner, onSetCourtIds, onDateChange, onTimeChange, onDurationChange]);
+  }, [pendingClubSchedule, selectedClub, courts, onSetCourtIds, onDateChange, onTimeChange, onDurationChange]);
 
   const courtSection = slotModel ? (
     selectedClub && courts.length > 0 ? (
@@ -196,10 +153,8 @@ export function LocationTimeTab({
         selectedIds={selectedCourtIds}
         lockedIds={lockedCourtIds}
         onToggle={onToggleCourt}
-        count={courtCount}
-        onCountChange={onCourtCountChange}
-        maxCount={maxCourtCount}
-        gameOnly={bookingMode === 'GAME_ONLY'}
+        need={courtNeed}
+        locked={courtsLocked}
       />
     ) : null
   ) : (
@@ -221,34 +176,8 @@ export function LocationTimeTab({
     />
   );
 
-  const gameOnly = bookingMode === 'GAME_ONLY';
-  const bookingModeSection = slotModel && selectedClub ? (
-    <section className="space-y-2" data-testid="edit-court-booking-mode">
-      <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.bookingModeTitle')}</p>
-      <SegmentedSwitch
-        tabs={[
-          { id: 'CLUB', label: t('gameDetails.courts.bookingModeClub'), icon: Store },
-          { id: 'GAME_ONLY', label: t('gameDetails.courts.bookingModeGameOnly'), icon: CalendarOff },
-        ]}
-        activeId={bookingMode}
-        onChange={(id) => {
-          if (id === 'GAME_ONLY' && gameOnlyLocked) {
-            toast(t('gameDetails.courts.gameOnlyHasLinks'));
-            return;
-          }
-          onBookingModeChange(id as 'CLUB' | 'GAME_ONLY');
-        }}
-        showOnlyActiveTabText={false}
-        layoutId="edit-court-booking-mode"
-        fullWidth
-        size="sm"
-        ariaLabel={t('gameDetails.courts.bookingModeTitle')}
-      />
-      <p key={bookingMode} className="cr-enter text-xs leading-snug text-gray-600 dark:text-gray-400">
-        {t(gameOnly ? 'gameDetails.courts.bookingModeGameOnlyHint' : 'gameDetails.courts.bookingModeClubHint')}
-      </p>
-    </section>
-  ) : null;
+  const quietBtn =
+    'inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-sm font-medium text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-300 dark:hover:bg-gray-800';
 
   return (
     <div ref={panelRef} data-testid="edit-location-time-panel" className="space-y-4">
@@ -277,13 +206,30 @@ export function LocationTimeTab({
         onLockedActivate={() => toast(t('gameDetails.courts.clubLocked'))}
       />
 
-      {bookingModeSection}
+      {onClearClub && selectedClub ? (
+        <div className="-mt-2 flex justify-end">
+          <button type="button" onClick={onClearClub} className={quietBtn} data-testid="schedule-clear-club">
+            <MapPinOff size={15} aria-hidden />
+            {t('gameDetails.whenWhere.removeClub')}
+          </button>
+        </div>
+      ) : null}
 
-      {timeManagedByPlanner ? (
-        <>
-          <PlannerTimeRow game={game} onRequestReschedule={onRequestReschedule} />
-          {courtSection}
-        </>
+      <span data-testid="schedule-time-anchor" aria-hidden className="block h-0 scroll-mt-2" />
+      {timeCleared ? (
+        <section
+          className="cr-enter flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/60"
+          data-testid="schedule-time-cleared"
+        >
+          <CalendarOff size={18} aria-hidden className="shrink-0 text-gray-500 dark:text-gray-400" />
+          <p className="min-w-0 flex-1 text-sm text-gray-700 dark:text-gray-200">{t('gameDetails.whenWhere.timeWillBeRemoved')}</p>
+          {onUndoClearTime ? (
+            <button type="button" onClick={onUndoClearTime} className={quietBtn}>
+              <Undo2 size={15} aria-hidden />
+              {t('gameDetails.courts.clubBusyUndo')}
+            </button>
+          ) : null}
+        </section>
       ) : (
         <>
           <CreateGameDateSection
@@ -324,12 +270,21 @@ export function LocationTimeTab({
             hideDateSection
             excludeGameId={game.id}
             ownClubBookingCourtIds={ownClubBookingCourtIds}
-            hideOccupancyOverlay={gameOnly}
-            hideClubBookingsInOverlay={slotModel && !gameOnly}
+            hideClubBookingsInOverlay={slotModel}
           />
           {claimSection}
+          {onClearTime ? (
+            <div className="-mt-2 flex justify-end">
+              <button type="button" onClick={onClearTime} className={quietBtn} data-testid="schedule-clear-time">
+                <CalendarOff size={15} aria-hidden />
+                {t('gameDetails.whenWhere.removeTime')}
+              </button>
+            </div>
+          ) : null}
         </>
       )}
+
+      {bookingsSection}
     </div>
   );
 }

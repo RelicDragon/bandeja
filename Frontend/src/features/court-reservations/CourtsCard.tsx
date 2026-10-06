@@ -1,17 +1,22 @@
 /**
- * "Courts" on the game page.
+ * "Court" / "Courts" on the game page — when, where and whether each court is
+ * booked, in one card (docs/domains/booking.md "Game page").
  *
- * Header: title + the summary pill. One quiet context line ("16 players ·
- * 4 courts · X-Padel"). Then one row per court slot: name (or "Any court"),
- * its pill, and a thin bar of the game window showing what is held. At most
- * ONE primary action, chosen from the state ("Reserve 2 remaining courts",
- * "Fill the 30 min gap", or nothing). Rows open the court sheet.
+ * Header: title, the summary pill (several courts) and, for organizers, the
+ * one "Change" button that opens the "When and where" editor. One context
+ * line: "Tue 13 Oct · 18:00–20:00 · KSC". Then one row per court with one of
+ * three states — Booked · Booktime (green, checked at the club), Booked by
+ * organizer (sky, their word), Not booked yet (amber) — or "No time yet"
+ * while the game has no time (nothing can be booked then).
  *
- * Organizers also see "do this at the club" follow-ups. Everyone else gets
- * the same information without any action (rows are not buttons).
+ * At most ONE main button, chosen from the state: pick a club, set a time,
+ * choose the courts to keep (more courts than the roster needs), use the
+ * organizer's own booking found at the club, book, or fill a gap. Rows open
+ * the court sheet. Notices (club moved a booking, unfinished changes) sit
+ * inside the card, above the rows. Players see the same card without actions.
  */
-import { useId } from 'react';
-import { ChevronRight, Minus, Plus } from 'lucide-react';
+import { useId, type ReactNode } from 'react';
+import { ChevronRight, MapPinOff, Pencil, TriangleAlert } from 'lucide-react';
 import type { CourtReservationsResult, CourtSlotView } from '@shared/gameBooking/courtReservations';
 import { describeCourtSlot, describeReservationSummary, isReservedByReportOnly } from '@shared/gameBooking/reservationCopy';
 import type { IsoInterval } from '@shared/gameBooking/coverageIntervals';
@@ -21,77 +26,45 @@ import './courtReservations.css';
 import { ClubFollowUpRow } from './ClubFollowUpRow';
 import type { ClubFollowUp } from './clubFollowUps';
 import { CoverageBar } from './CoverageBar';
-import {
-  courtsPrimaryAction,
-  slotCoverageSegments,
-  type CourtRef,
-  type CourtsPrimaryAction,
-} from './courtReservationsModel';
+import { courtsCardAction, slotCoverageSegments, type CourtRef, type CourtsCardAction } from './courtReservationsModel';
 import { ReservationPill } from './ReservationPill';
 import { pillToneForSlot, pillToneForSummary } from './reservationPillTone';
-import { primaryActionLabel, slotCourtName } from './courtReservationsCopy';
+import { cardActionLabel, slotCourtName } from './courtReservationsCopy';
 import { useCourtReservationText, type CourtReservationText } from './useCourtReservationText';
+
+/** Which part of the "When and where" editor a tap opens on. */
+export type ScheduleFocus = 'club' | 'time' | 'courts';
 
 export type CourtsCardProps = {
   reservations: Pick<CourtReservationsResult, 'slots' | 'summary'>;
-  /** Game window; `null` when the game has no time yet (bars are hidden). */
+  /** Game window; `null` when the game has no time yet. */
   window: IsoInterval | null;
   courtsById: Readonly<Record<string, CourtRef>>;
   timeZone: string;
-  /** Roster size shown in the context line (e.g. max participants). */
+  /** Courts the roster needs (players ÷ players per court). */
+  courtNeed: number;
   playerCount: number;
   clubName?: string | null;
+  /** The game has a club (courts come from it). */
+  hasClub: boolean;
   canEdit: boolean;
+  /** Organizers: open the "When and where" editor. */
+  onChange?: (focus?: ScheduleFocus) => void;
   followUps?: readonly ClubFollowUp[];
   onSlotPress?: (slot: CourtSlotView) => void;
-  onPrimaryAction?: (action: CourtsPrimaryAction) => void;
+  /** Book / fill a gap / use own booking (the card's main button for those). */
+  onAction?: (action: CourtsCardAction) => void;
   onFollowUpDone?: (id: string) => void;
-  /** The primary action is running (spinner-free: the button just disables). */
   primaryBusy?: boolean;
-  /**
-   * "Number of courts − N +" (organizers). `value` is the slot count shown,
-   * prefilled from `defaultCourtSlotCount` when the game has no explicit count.
-   */
-  courtCount?: { value: number; min: number; max: number; busy?: boolean; onChange: (next: number) => void };
-  /**
-   * Game only: the organizer handles the court with the club. Courts are just
-   * labels — no reservation states, nothing to reserve.
-   */
-  gameOnly?: boolean;
-  /** Organizers: switch the game back to club booking. */
-  onUseClubBooking?: () => void;
-  useClubBookingBusy?: boolean;
+  /** Slots whose court the organizer already booked at the club (found in their account). */
+  ownBookingSlotKeys?: ReadonlySet<string>;
+  providerName?: string;
+  /** Per-slot warning (the club moved or dropped its booking). */
+  slotNotices?: Readonly<Record<string, string>>;
+  /** Card-level notices (an unfinished change), above the rows. */
+  notices?: ReactNode;
   className?: string;
 };
-
-function CourtCountStepper({
-  value,
-  min,
-  max,
-  busy,
-  onChange,
-  text,
-}: NonNullable<CourtsCardProps['courtCount']> & { text: CourtReservationText }) {
-  const { t } = text;
-  const btn =
-    'flex h-11 w-11 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-40 dark:text-gray-200 dark:hover:bg-gray-700';
-  return (
-    <div className="mt-1 flex items-center justify-between gap-3 px-2.5" data-testid="court-count-stepper">
-      <span className="text-sm text-gray-600 dark:text-gray-300">{t('card.count')}</span>
-      <span className="flex items-center gap-1">
-        <button type="button" className={btn} aria-label={t('card.fewer')} disabled={busy || value <= min} onClick={() => onChange(value - 1)}>
-          <Minus size={16} aria-hidden />
-        </button>
-        <span className="w-6 text-center text-sm font-semibold tabular-nums text-gray-900 dark:text-white" aria-live="polite">
-          {value}
-        </span>
-        <button type="button" className={btn} aria-label={t('card.more')} disabled={busy || value >= max} onClick={() => onChange(value + 1)}>
-          <Plus size={16} aria-hidden />
-        </button>
-      </span>
-    </div>
-  );
-}
 
 function SlotRow({
   slot,
@@ -99,31 +72,24 @@ function SlotRow({
   courtsById,
   text,
   interactive,
+  notice,
   onPress,
-  gameOnly = false,
 }: {
-  gameOnly?: boolean;
   slot: CourtSlotView;
   window: IsoInterval | null;
   courtsById: Readonly<Record<string, CourtRef>>;
   text: CourtReservationText;
   interactive: boolean;
+  notice?: string;
   onPress?: (slot: CourtSlotView) => void;
 }) {
-  if (gameOnly) {
-    return (
-      <li data-slot-key={slot.key} className="flex min-h-[44px] items-center gap-3 px-2.5 py-2">
-        <span className="truncate text-sm font-medium text-gray-900 dark:text-white">{slotCourtName(slot, courtsById, text.t)}</span>
-      </li>
-    );
-  }
-  const described = describeCourtSlot(slot);
   const name = slotCourtName(slot, courtsById, text.t);
+  const described = describeCourtSlot(slot);
+  const noTime = window == null && slot.state === 'planned';
+  const stateLabel = noTime ? text.t('slot.noTime') : text.copy(described.label);
   const segments = window ? slotCoverageSegments(slot, window) : null;
-  const gapLines = described.gaps.map((g) => text.copy(g));
-  const stateLabel = text.copy(described.label);
-  // Court + state (+ gaps): the row's visible text, joined so a screen reader hears it as one name.
-  const accessibleName = [name, stateLabel, ...gapLines].join(', ');
+  const gapLines = window ? described.gaps.map((g) => text.copy(g)) : [];
+  const accessibleName = [name, stateLabel, ...gapLines, ...(notice ? [notice] : [])].join(', ');
   const body = (
     <>
       <span className="min-w-0 flex-1">
@@ -131,35 +97,30 @@ function SlotRow({
           <span className="truncate text-sm font-medium text-gray-900 dark:text-white">{name}</span>
           <ReservationPill
             size="compact"
-            tone={pillToneForSlot(slot)}
+            tone={noTime ? 'noTime' : pillToneForSlot(slot)}
             label={stateLabel}
             linked={slot.state === 'linked'}
           />
         </span>
-        {segments ? (
-          <CoverageBar
-            className="mt-2"
-            window={window}
-            reserved={segments.reserved}
-            gaps={segments.gaps}
-            planned={slot.state === 'planned'}
-            reported={slot.state === 'reported'}
-          />
+        {segments && slot.state === 'linked' ? (
+          <CoverageBar className="mt-2" window={window} reserved={segments.reserved} gaps={segments.gaps} />
         ) : null}
         {gapLines.length > 0 ? (
-          <span className="mt-1 block text-[11px] leading-snug text-amber-700 dark:text-amber-300">
-            {gapLines.join(' · ')}
+          <span className="mt-1 block text-[11px] leading-snug text-amber-700 dark:text-amber-300">{gapLines.join(' · ')}</span>
+        ) : null}
+        {notice ? (
+          <span className="mt-1 flex items-start gap-1 text-[11px] leading-snug text-amber-700 dark:text-amber-300">
+            <TriangleAlert size={12} aria-hidden className="mt-px shrink-0" />
+            {notice}
           </span>
         ) : null}
       </span>
-      {interactive ? (
-        <ChevronRight size={16} aria-hidden className="shrink-0 text-gray-400 rtl:rotate-180 dark:text-gray-500" />
-      ) : null}
+      {interactive ? <ChevronRight size={16} aria-hidden className="shrink-0 text-gray-400 rtl:rotate-180 dark:text-gray-500" /> : null}
     </>
   );
   if (!interactive) {
     return (
-      <li data-slot-key={slot.key} className="flex min-h-[56px] items-center gap-3 px-2.5 py-2">
+      <li data-slot-key={slot.key} className="flex min-h-[52px] items-center gap-3 px-2.5 py-2">
         {body}
       </li>
     );
@@ -170,7 +131,7 @@ function SlotRow({
         type="button"
         aria-label={accessibleName}
         onClick={() => onPress?.(slot)}
-        className={`flex min-h-[56px] w-full items-center gap-3 rounded-xl px-2.5 py-2 text-start transition-[background-color,transform] duration-150 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.99] dark:hover:bg-gray-800/60 ${pressScaleGuard}`}
+        className={`flex min-h-[52px] w-full items-center gap-3 rounded-xl px-2.5 py-2 text-start transition-[background-color,transform] duration-150 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.99] dark:hover:bg-gray-800/60 ${pressScaleGuard}`}
       >
         {body}
       </button>
@@ -183,86 +144,106 @@ export function CourtsCard({
   window,
   courtsById,
   timeZone,
+  courtNeed,
   playerCount,
   clubName,
+  hasClub,
   canEdit,
+  onChange,
   followUps = [],
   onSlotPress,
-  onPrimaryAction,
+  onAction,
   onFollowUpDone,
   primaryBusy = false,
-  courtCount,
-  gameOnly = false,
-  onUseClubBooking,
-  useClubBookingBusy = false,
+  ownBookingSlotKeys,
+  providerName = '',
+  slotNotices,
+  notices,
   className,
 }: CourtsCardProps) {
   const text = useCourtReservationText(timeZone);
-  const { t } = text;
+  const { t, clock } = text;
   const headingId = useId();
   const summary = reservations.summary;
-  const action = gameOnly ? null : courtsPrimaryAction(reservations, { canEdit });
-  const context = [
-    t('card.players', { count: playerCount }),
-    t('card.courts', { count: reservations.slots.length }),
-    clubName || null,
-  ]
+  const slots = reservations.slots;
+  const several = Math.max(courtNeed, slots.length) > 1;
+  const action = courtsCardAction(reservations, { canEdit, hasClub, hasTime: window != null, courtNeed, ownBookingSlotKeys });
+  const when = window ? `${clock.day(window.start)} · ${clock.range(window.start, window.end)}` : t('card.noDateTime');
+  const context = [when, hasClub ? clubName || null : null, several ? t('card.players', { count: playerCount }) : null]
     .filter(Boolean)
     .join(' · ');
   const progress = summary.total > 0 ? summary.reserved / summary.total : 0;
-  const interactive = !gameOnly && canEdit && Boolean(onSlotPress);
-  const visibleFollowUps = canEdit && !gameOnly ? followUps : [];
+  const interactive = canEdit && Boolean(onSlotPress);
+  const visibleFollowUps = canEdit ? followUps : [];
+  const tooMany = hasClub && slots.length > courtNeed;
+
+  const runAction = (a: CourtsCardAction) => {
+    if (a.kind === 'pick_club') onChange?.('club');
+    else if (a.kind === 'set_time') onChange?.('time');
+    else if (a.kind === 'choose_courts') onChange?.('courts');
+    else onAction?.(a);
+  };
 
   return (
     <Card className={`p-3 ${className ?? ''}`} role="region" aria-labelledby={headingId} data-testid="courts-card">
-      <div className="flex items-center justify-between gap-3 px-1">
+      <div className="flex items-center justify-between gap-2 ps-1">
         <h3 id={headingId} className="text-base font-semibold text-gray-900 dark:text-white">
-          {t('card.title')}
+          {several ? t('card.titleMany') : t('card.titleOne')}
         </h3>
-        {gameOnly ? (
-          <ReservationPill tone="gameOnly" label={t('card.gameOnly')} />
-        ) : (
-          <ReservationPill
-            tone={pillToneForSummary(summary, reservations.slots)}
-            label={text.copy(describeReservationSummary(summary, { reportedOnly: isReservedByReportOnly(reservations.slots) }))}
-            progress={progress}
-          />
-        )}
+        <span className="flex items-center gap-1">
+          {hasClub && window && slots.length > 1 ? (
+            <ReservationPill
+              tone={pillToneForSummary(summary, slots)}
+              label={text.copy(describeReservationSummary(summary, { reportedOnly: isReservedByReportOnly(slots) }))}
+              progress={progress}
+            />
+          ) : null}
+          {canEdit && onChange ? (
+            <button
+              type="button"
+              onClick={() => onChange()}
+              data-testid="courts-card-change"
+              className="inline-flex min-h-[44px] items-center gap-1 rounded-full px-3 text-sm font-medium text-primary-700 hover:bg-primary-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-primary-300 dark:hover:bg-primary-950/40"
+            >
+              <Pencil size={14} aria-hidden />
+              {t('card.change')}
+            </button>
+          ) : null}
+        </span>
       </div>
-      <p className="mt-0.5 px-1 text-xs text-gray-500 dark:text-gray-400">{context}</p>
-      {gameOnly ? (
-        <p className="mt-1 px-1 text-xs text-gray-600 dark:text-gray-300">{t('card.gameOnlyHint')}</p>
-      ) : !window ? (
-        <p className="mt-1 px-1 text-xs text-gray-500 dark:text-gray-400">{t('card.noTime')}</p>
-      ) : null}
+      <p className="mt-0.5 px-1 text-xs tabular-nums text-gray-500 dark:text-gray-400" data-testid="courts-card-context">
+        {context}
+      </p>
 
-      <ul className="mt-2 flex flex-col">
-        {reservations.slots.map((slot) => (
-          <SlotRow
-            key={slot.key}
-            slot={slot}
-            window={window}
-            courtsById={courtsById}
-            text={text}
-            interactive={interactive}
-            onPress={onSlotPress}
-            gameOnly={gameOnly}
-          />
-        ))}
-      </ul>
+      {notices ? <div className="mt-2 flex flex-col gap-2">{notices}</div> : null}
 
-      {canEdit && courtCount ? <CourtCountStepper {...courtCount} text={text} /> : null}
+      {!hasClub ? (
+        <p className="mt-2 flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
+          <MapPinOff size={16} aria-hidden className="shrink-0" />
+          {t('card.noClub')}
+        </p>
+      ) : (
+        <ul className="mt-1.5 flex flex-col">
+          {slots.map((slot) => (
+            <SlotRow
+              key={slot.key}
+              slot={slot}
+              window={window}
+              courtsById={courtsById}
+              text={text}
+              interactive={interactive}
+              notice={slotNotices?.[slot.key]}
+              onPress={onSlotPress}
+            />
+          ))}
+        </ul>
+      )}
 
-      {gameOnly && canEdit && onUseClubBooking ? (
-        <button
-          type="button"
-          disabled={useClubBookingBusy}
-          onClick={onUseClubBooking}
-          data-testid="courts-use-club-booking"
-          className="mt-2 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-gray-200 px-4 text-sm font-semibold text-gray-800 transition-[background-color,transform] hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-60 enabled:active:scale-[0.98] dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800/60"
-        >
-          {t('card.useClubBooking')}
-        </button>
+      {tooMany ? (
+        <p className="mt-1 flex items-start gap-2 px-2.5 text-xs leading-snug text-amber-700 dark:text-amber-300" data-testid="courts-card-too-many">
+          <TriangleAlert size={14} aria-hidden className="mt-px shrink-0" />
+          {t('card.tooMany', { players: playerCount, count: courtNeed })}
+        </p>
       ) : null}
 
       {visibleFollowUps.length > 0 ? (
@@ -273,16 +254,16 @@ export function CourtsCard({
         </ul>
       ) : null}
 
-      {action && onPrimaryAction ? (
+      {action ? (
         <div key={action.kind} className="cr-enter">
           <button
             type="button"
             disabled={primaryBusy}
-            onClick={() => onPrimaryAction(action)}
+            onClick={() => runAction(action)}
             data-primary-action={action.kind}
             className={`mt-2 flex min-h-[48px] w-full items-center justify-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white shadow-xs transition-[background-color,transform] duration-150 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 enabled:active:scale-[0.98] dark:focus-visible:ring-offset-gray-900 ${pressScaleGuard}`}
           >
-            {primaryActionLabel(action, text)}
+            {cardActionLabel(action, text, { courtsById, slots, providerName })}
           </button>
         </div>
       ) : null}

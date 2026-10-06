@@ -15,6 +15,8 @@ export type ClubTimeFormatter = {
   range(start: string | number, end: string | number): string;
   /** Local `yyyy-MM-dd` and `HH:mm` (provider booking params). */
   wallClock(iso: string | number): { dateKey: string; time: string } | null;
+  /** `Tue 13 Oct` in the club's timezone. Empty for an unparseable instant. */
+  day(iso: string | number): string;
 };
 
 export type ClubTimeOptions = { timeZone: string; locale?: string; hour12?: boolean };
@@ -30,6 +32,12 @@ export function createClubTimeFormatter({ timeZone, locale = 'en-GB', hour12 = f
     display = new Intl.DateTimeFormat(locale, { timeZone, hour: 'numeric', minute: '2-digit', hour12 });
   } catch {
     display = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', hour: 'numeric', minute: '2-digit', hour12 });
+  }
+  let dayFormat: Intl.DateTimeFormat;
+  try {
+    dayFormat = new Intl.DateTimeFormat(locale, { timeZone, weekday: 'short', day: 'numeric', month: 'short' });
+  } catch {
+    dayFormat = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' });
   }
   const wall = new Intl.DateTimeFormat('en-CA', {
     timeZone,
@@ -48,6 +56,10 @@ export function createClubTimeFormatter({ timeZone, locale = 'en-GB', hour12 = f
     timeZone,
     time,
     range: (start, end) => `\u2066${time(start)}–${time(end)}\u2069`,
+    day: (iso) => {
+      const d = toDate(iso);
+      return d ? dayFormat.format(d) : '';
+    },
     wallClock: (iso) => {
       const d = toDate(iso);
       if (!d) return null;

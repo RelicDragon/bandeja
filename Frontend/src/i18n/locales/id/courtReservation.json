@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Direncanakan",
-      "reported": "Ditandai sudah dipesan",
+      "planned": "Belum dipesan",
+      "reported": "Dipesan oleh penyelenggara",
       "linked": "Dipesan · {{provider}}",
       "unknownTime": "Dipesan · {{provider}} · waktu tidak diketahui",
-      "gap": "Celah {{from}}–{{to}}"
+      "gap": "Celah {{from}}–{{to}}",
+      "noTime": "Belum ada waktu"
     },
     "summary": {
-      "planned": "Direncanakan",
+      "planned": "Belum dipesan",
       "partial": "{{reserved}} dari {{total}} dipesan",
       "reserved": "Semua lapangan dipesan",
       "reservedWithGap": "Dipesan, ada celah pukul {{time}}",
-      "reported": "Ditandai sudah dipesan"
+      "reported": "Dipesan oleh penyelenggara"
     },
     "reschedule": {
       "unchanged": "Tidak berubah",
@@ -32,17 +33,15 @@
       "shortM": "{{m}} mnt"
     },
     "card": {
-      "title": "Lapangan",
       "players_other": "{{count}} pemain",
       "courts_other": "{{count}} lapangan",
       "anyCourt": "Lapangan mana saja",
-      "noTime": "Atur waktu untuk melihat seberapa banyak permainan yang tercakup",
-      "count": "Jumlah lapangan",
-      "fewer": "Kurangi satu lapangan",
-      "more": "Tambah satu lapangan",
-      "gameOnly": "Hanya game",
-      "gameOnlyHint": "Penyelenggara mengurus lapangan dengan klub sendiri.",
-      "useClubBooking": "Pakai pemesanan via klub"
+      "titleOne": "Lapangan",
+      "titleMany": "Lapangan",
+      "change": "Ubah",
+      "noDateTime": "Tanggal dan waktu belum diatur",
+      "noClub": "Belum ada klub. Pilih klub untuk memilih dan memesan lapangan.",
+      "tooMany_other": "{{players}} pemain butuh {{count}} lapangan. Pilih yang dipertahankan."
     },
     "action": {
       "reserveCourt": "Pesan lapangan",
@@ -50,41 +49,51 @@
       "reserveLast": "Pesan lapangan terakhir",
       "reserveRemaining_other": "Pesan {{count}} lapangan tersisa",
       "fillGap": "Isi celah {{duration}}",
-      "fillGaps": "Isi semua celah"
+      "fillGaps": "Isi semua celah",
+      "pickClub": "Pilih klub",
+      "setTime": "Atur tanggal dan waktu",
+      "chooseCourts": "Pilih lapangan yang dipertahankan",
+      "useOwn": "Pakai pesanan {{provider}} Anda",
+      "useOwnPlain": "Pakai pesanan Anda",
+      "bookCourt": "Pesan {{court}}",
+      "bookAnyCourt": "Pesan lapangan",
+      "bookMore_other": "Pesan {{count}} lapangan lagi",
+      "bookCourts_other": "Pesan {{count}} lapangan"
     },
     "sheet": {
       "game": "Permainan",
       "reservationAt": "Pesanan · {{provider}}",
       "timeUnknown": "Waktu tidak diketahui",
-      "reportedHint": "Kamu bilang lapangan ini sudah dipesan di klub.",
-      "plannedHint": "Belum ada pesanan untuk lapangan ini.",
+      "reportedHint": "Penyelenggara memesannya ke klub. Aplikasi tidak bisa memeriksanya.",
+      "plannedHint": "Belum ada yang dipesan untuk lapangan ini.",
       "alsoUsedBy": "Juga dipakai {{name}} {{from}}–{{to}}",
       "pickCourt": "Lapangan yang mana?",
       "action": {
-        "reserve": "Pesan sekarang",
-        "link": "Tautkan pesananku",
-        "linkReported": "Tautkan pesanan",
-        "markReserved": "Tandai sudah dipesan",
-        "markNotReserved": "Tandai belum dipesan",
-        "verify": "Periksa",
-        "unlink": "Lepas tautan",
-        "cancelAtClub": "Batalkan di klub",
         "changeCourt": "Ganti lapangan",
         "useCourtOnly": "Pakai {{court}}, pesan nanti",
         "useCourtInstead": "Pakai {{court}} sebagai gantinya",
-        "keepCourt": "Tetap {{court}}"
-      }
+        "keepCourt": "Tetap {{court}}",
+        "useOwn": "Pakai pesanan ini",
+        "bookAt": "Pesan di {{club}}",
+        "linkExisting": "Pakai pesanan yang sudah saya buat",
+        "linkReal": "Tautkan pesanan sebenarnya",
+        "bookedIt": "Saya sudah memesan",
+        "bookedOtherWay": "Saya memesan dengan cara lain",
+        "mineOtherWay": "Ini milik saya, saya memesan dengan cara lain",
+        "notBooked": "Ternyata belum dipesan",
+        "removeFromGame": "Hapus dari permainan",
+        "cancelAt": "Batalkan di {{club}}",
+        "checkAgain": "Periksa lagi di {{club}}",
+        "setTime": "Atur tanggal dan waktu"
+      },
+      "noTimeHint": "Atur tanggal dan waktu permainan dulu: lapangan hanya bisa dipesan untuk waktu tertentu.",
+      "ownFound": "Ditemukan di akun {{provider}} Anda",
+      "busy": "Terisi di {{club}} {{range}}.",
+      "busyNotYours": "Terisi di {{club}} {{range}}, dan tidak ada di akun Anda: kemungkinan besar pesanan orang lain.",
+      "booksByPhone": "Klub ini menerima pesanan lewat telepon: {{phone}}",
+      "theClub": "klub"
     },
     "move": {
-      "title": "Ubah waktu",
-      "dragLabel": "Waktu permainan",
-      "dragHint": "Seret permainan, atau pakai tombol di bawah",
-      "start": "Mulai",
-      "length": "Durasi",
-      "earlier": "15 menit lebih awal",
-      "later": "15 menit lebih lambat",
-      "shorter": "15 menit lebih singkat",
-      "longer": "15 menit lebih lama",
       "courtsLabel": "Yang terjadi pada tiap lapangan",
       "notice_other": "{{count}} pemain menerima satu pemberitahuan waktu baru",
       "option": {
@@ -110,7 +119,6 @@
       "change": "Ubah",
       "changeFor": "Ubah apa yang terjadi pada {{court}}",
       "unchanged": "{{courts}} · tidak berubah",
-      "sliderValue": "Mulai {{start}}, selesai {{end}}",
       "why": {
         "notAvailable": "Lapangan ini tidak kosong pada waktu baru.",
         "keep": "Reservasinya masih mencakup waktu baru.",
@@ -220,16 +228,6 @@
       "gameUnnamed": "Permainan lain memakai {{court}} pukul {{time}}.",
       "plannedGame": "{{name}} direncanakan di {{court}} pukul {{time}}.",
       "plannedGameUnnamed": "Ada permainan lain yang direncanakan di {{court}} pukul {{time}}."
-    },
-    "timeline": {
-      "free": "kosong",
-      "movesTo": "pindah ke {{court}}",
-      "legend": {
-        "reserved": "Reservasi Anda",
-        "reported": "Dipesan lewat klub",
-        "club": "Dipakai klub",
-        "game": "Permainan lain"
-      }
     }
   }
 }

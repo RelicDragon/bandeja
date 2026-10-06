@@ -50,11 +50,11 @@ Open with the avatar button. Segments: "Profile"{profile.title} (stats), "Genera
 Opening any game shows one scrolling page (league seasons have tabs instead, see below). Top to bottom, roughly:
 - Organizer to-do hints, then the game info card with "Edit"{common.edit} (owner, game admins, platform admins), "Share Game", "Add to calendar" and "Navigate to club".
 - The players card: roster, open spots, attendance and the cost split. Under it "Invite"{games.invite} and "Players"{games.players} (opens "Manage Players"{games.managePlayers} for the owner and admins), and the "Waiting List"{games.joinQueue} with accept and decline buttons.
-- Courts: court slots and linked court reservations.
+- Court(s): when and where, each court's booking (Booked · <club system>, "Booked by organizer"{courtReservation.slot.reported}, "Not booked yet"{courtReservation.slot.planned}), and for organizers "Change"{courtReservation.card.change}, which opens "When and where"{gameDetails.whenWhere.title} (club, date, time, courts).
 - Photos, results, format, training results, participants-only chat, settings ("Rating game", "Public game", "Anyone can invite other players", "Novices welcome"{createGame.suitableForNovices.title}, "Results by anyone", "Enter without confirmation", ...).
 - Action buttons at the bottom: "Start Results Entry" (or "Finish Training"{training.finishTraining} on a training), "Leave"{common.leave} or "Don't play"{gameDetails.dontPlayInGame} for the owner, "Duplicate"{gameDetails.duplicate}, and "Delete"{common.delete} (owner, before results).
 
-"Edit details"{gameDetails.editModal.title} has tabs "General"{gameDetails.editTab.general}, "Location & time"{gameDetails.editTab.locationTime}, "Price"{gameDetails.editTab.price}, "Participants"{gameDetails.editTab.participants} and "Settings"{gameDetails.editTab.settings}.
+"Edit details"{gameDetails.editModal.title} has tabs "General"{gameDetails.editTab.general}, "Price"{gameDetails.editTab.price}, "Participants"{gameDetails.editTab.participants} and "Settings"{gameDetails.editTab.settings}. Club, date, time and courts are edited in "When and where"{gameDetails.whenWhere.title}.
 
 A league season page has tabs "General"{gameDetails.general}, "Schedule"{gameDetails.schedule}, "Planner"{gameDetails.plannerTab} (season participants), "Standings"{gameDetails.standings} and "FAQ"{gameDetails.faq} when there are questions. A league fixture links back with "Open League Season".
 

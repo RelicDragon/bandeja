@@ -70,11 +70,45 @@ export function courtsPrimaryAction(
   return null;
 }
 
+/**
+ * The Courts card's one main button (organizers), in order: a club to pick,
+ * a time to set (nothing can be booked without one), courts to drop (more
+ * than the roster needs), the organizer's own club booking to use, then
+ * book / fill a gap ({@link courtsPrimaryAction}).
+ */
+export type CourtsCardAction =
+  | { kind: 'pick_club' }
+  | { kind: 'set_time' }
+  | { kind: 'choose_courts' }
+  | { kind: 'use_own'; slotKey: string }
+  | CourtsPrimaryAction;
+
+export function courtsCardAction(
+  result: Pick<CourtReservationsResult, 'slots' | 'summary'>,
+  options: {
+    canEdit: boolean;
+    hasClub: boolean;
+    hasTime: boolean;
+    courtNeed: number;
+    ownBookingSlotKeys?: ReadonlySet<string>;
+  },
+): CourtsCardAction | null {
+  if (!options.canEdit) return null;
+  if (!options.hasClub) return { kind: 'pick_club' };
+  if (!options.hasTime) return { kind: 'set_time' };
+  if (result.slots.length > options.courtNeed) return { kind: 'choose_courts' };
+  const own = result.slots.find((s) => s.state !== 'linked' && options.ownBookingSlotKeys?.has(s.key));
+  if (own) return { kind: 'use_own', slotKey: own.key };
+  return courtsPrimaryAction(result, { canEdit: true });
+}
+
 /* ------------------------------------------------------------------ *
  * Slot sheet actions
  * ------------------------------------------------------------------ */
 
 export type SlotActionKind =
+  /** Link the organizer's own club booking found for this court and time. */
+  | 'use_own'
   | 'reserve'
   | 'link'
   | 'mark_reserved'
@@ -91,6 +125,8 @@ export type SlotActionSpec = {
   primary: boolean;
   /** Destructive styling (red text, never filled). */
   destructive: boolean;
+  /** A quiet text button (the honest fallback, never the main way). */
+  quiet?: boolean;
   /** The link this action targets (linked slots). */
   linkId?: string;
 };
@@ -99,21 +135,27 @@ export type SlotActionContext = {
   canEdit: boolean;
   /** The club has a booking integration the viewer can book through. */
   canBookHere: boolean;
+  /** The club's booking system lists the organizer's bookings (link an existing one). Defaults to `canBookHere`. */
+  canLink?: boolean;
+  /** The organizer's own club booking for this court and time was found (offer it first). */
+  ownBooking?: boolean;
   /** The linked reservation is also used by other games (never cancelled from here). */
   shared: boolean;
   /** Provider has a live lookup (`ClubBookingProvider.verifyBooking`). */
   canVerify?: (provider: string) => boolean;
   providerCapabilities?: ProviderCapabilityOverrides;
+  /** The game has no time: nothing can be booked or linked yet. */
+  noTime?: boolean;
 };
 
-export const MAX_SLOT_ACTIONS = 3;
+export const MAX_SLOT_ACTIONS = 4;
 
 /**
  * Standalone court choice in the slot sheet (opt-in):
  *  - `assign`: an "Any court" slot (not linked) can just get a court — no
  *    reservation decision forced;
  *  - `change`: a planned slot that has a court can take another one;
- *  - `none`: otherwise (reserved courts move through the reschedule flow).
+ *  - `none`: otherwise (booked courts move with the game's time).
  */
 export type CourtPickMode = 'none' | 'assign' | 'change';
 
@@ -129,29 +171,43 @@ export function courtPickMode(
   return 'none';
 }
 
+/**
+ * What a court sheet offers, by state (docs/domains/booking.md "Court sheet"):
+ *   Not booked yet → Use this booking (found in the organizer's club account) ·
+ *                    Book at the club · Use a booking I already made ·
+ *                    I booked it another way (quiet; the main button at a club without a booking system)
+ *   Booked by organizer → Link the real booking · Not booked after all
+ *   Booked (linked) → Remove from game · Cancel at the club (provider can, not shared) · Check again (quiet)
+ * Without a time nothing can be booked: no actions (the sheet points to the editor).
+ */
 export function slotSheetActions(
   slot: Pick<CourtSlotView, 'state' | 'links' | 'provider'>,
   ctx: SlotActionContext,
 ): SlotActionSpec[] {
   if (!ctx.canEdit) return [];
+  const canLink = ctx.canLink ?? ctx.canBookHere;
   const out: SlotActionSpec[] = [];
   if (slot.state === 'planned') {
-    if (ctx.canBookHere) out.push({ kind: 'reserve', primary: true, destructive: false });
-    out.push({ kind: 'link', primary: !ctx.canBookHere, destructive: false });
-    out.push({ kind: 'mark_reserved', primary: false, destructive: false });
+    if (ctx.noTime) return [];
+    if (ctx.ownBooking) out.push({ kind: 'use_own', primary: true, destructive: false });
+    if (ctx.canBookHere) out.push({ kind: 'reserve', primary: !ctx.ownBooking, destructive: false });
+    if (canLink && !ctx.ownBooking) out.push({ kind: 'link', primary: false, destructive: false });
+    const onlyHonest = !ctx.canBookHere && !canLink && !ctx.ownBooking;
+    out.push({ kind: 'mark_reserved', primary: onlyHonest, destructive: false, quiet: !onlyHonest });
   } else if (slot.state === 'reported') {
-    out.push({ kind: 'link', primary: true, destructive: false });
-    out.push({ kind: 'mark_not_reserved', primary: false, destructive: true });
+    if (ctx.ownBooking) out.push({ kind: 'use_own', primary: true, destructive: false });
+    else if (canLink) out.push({ kind: 'link', primary: true, destructive: false });
+    out.push({ kind: 'mark_not_reserved', primary: false, destructive: false, quiet: true });
   } else {
     const link = slot.links[0];
     const provider = slot.provider ?? link?.provider ?? null;
     const caps = resolveProviderCapabilities(provider, ctx.providerCapabilities);
-    if (provider && ctx.canVerify?.(provider)) {
-      out.push({ kind: 'verify', primary: true, destructive: false, linkId: link?.id });
-    }
     out.push({ kind: 'unlink', primary: false, destructive: false, linkId: link?.id });
     if (caps?.canCancel && !ctx.shared && link) {
       out.push({ kind: 'cancel_at_club', primary: false, destructive: true, linkId: link.id });
+    }
+    if (provider && ctx.canVerify?.(provider)) {
+      out.push({ kind: 'verify', primary: false, destructive: false, quiet: true, linkId: link?.id });
     }
   }
   return out.slice(0, MAX_SLOT_ACTIONS);

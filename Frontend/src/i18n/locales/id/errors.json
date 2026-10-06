@@ -142,7 +142,8 @@
       "legacyExternalBookingIdRejected": "Kolom pemesanan lama dihapus. Gunakan externalBookingIds dan PATCH /games/:id/bookings.",
       "companyIdRequired": "Integrasi pemesanan klub memerlukan ID perusahaan.",
       "integrationTypeMustBeOnlineBooking": "Integrasi klub harus berupa pemesanan online.",
-      "rollbackFailed": "Tidak dapat mengonfirmasi bahwa reservasi dibatalkan."
+      "rollbackFailed": "Tidak dapat mengonfirmasi bahwa reservasi dibatalkan.",
+      "removeBookingsBeforeClearing": "Hapus atau batalkan dulu pesanan lapangannya."
     },
     "cost": {
       "paymentMethod": {

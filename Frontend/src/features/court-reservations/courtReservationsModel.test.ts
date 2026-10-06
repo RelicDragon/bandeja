@@ -4,6 +4,7 @@ import {
   buildCourtSlotsBody,
   courtCountBounds,
   courtPickMode,
+  courtsCardAction,
   courtsPrimaryAction,
   hourTicks,
   paddedTimelineRange,
@@ -50,37 +51,72 @@ describe('slotSheetActions', () => {
   const slots = fixtureReservations('mixed').slots;
   const kinds = (list: { kind: string }[]) => list.map((a) => a.kind);
 
-  it('planned: reserve now (primary) · link · mark as reserved', () => {
+  it('not booked: book (primary) · use a booking I already made · "I booked it another way" (quiet)', () => {
     const actions = slotSheetActions(slots[3], ctx);
     expect(kinds(actions)).toEqual(['reserve', 'link', 'mark_reserved']);
     expect(actions[0].primary).toBe(true);
+    expect(actions[2].quiet).toBe(true);
   });
 
-  it('planned without a bookable integration: linking becomes the primary action', () => {
-    const actions = slotSheetActions(slots[3], { ...ctx, canBookHere: false });
-    expect(kinds(actions)).toEqual(['link', 'mark_reserved']);
+  it('not booked, own booking found at the club: "Use this booking" comes first', () => {
+    const actions = slotSheetActions(slots[3], { ...ctx, ownBooking: true });
+    expect(kinds(actions)).toEqual(['use_own', 'reserve', 'mark_reserved']);
     expect(actions[0].primary).toBe(true);
+    expect(actions[1].primary).toBe(false);
   });
 
-  it('reported: link · mark not reserved (destructive)', () => {
+  it('a club without a booking system: one honest "I booked it" as the main button', () => {
+    const actions = slotSheetActions(slots[3], { ...ctx, canBookHere: false, canLink: false });
+    expect(kinds(actions)).toEqual(['mark_reserved']);
+    expect(actions[0].primary).toBe(true);
+    expect(actions[0].quiet).toBeFalsy();
+  });
+
+  it('no time yet: nothing can be booked', () => {
+    expect(slotSheetActions(slots[3], { ...ctx, noTime: true })).toEqual([]);
+  });
+
+  it('booked by organizer: link the real booking · not booked after all (quiet)', () => {
     const actions = slotSheetActions(slots[2], ctx);
     expect(kinds(actions)).toEqual(['link', 'mark_not_reserved']);
+    expect(actions[0].primary).toBe(true);
+    expect(actions[1].quiet).toBe(true);
+  });
+
+  it('booked: remove from game · cancel at the club (provider can, nobody shares it) · check again (quiet)', () => {
+    const actions = slotSheetActions(slots[0], ctx);
+    expect(kinds(actions)).toEqual(['unlink', 'cancel_at_club', 'verify']);
     expect(actions[1].destructive).toBe(true);
+    expect(actions.some((a) => a.primary)).toBe(false);
+    expect(kinds(slotSheetActions(slots[0], { ...ctx, shared: true }))).toEqual(['unlink', 'verify']);
   });
 
-  it('linked: verify · unlink · cancel at the club when the provider can cancel and nobody shares it', () => {
-    expect(kinds(slotSheetActions(slots[0], ctx))).toEqual(['verify', 'unlink', 'cancel_at_club']);
-    expect(kinds(slotSheetActions(slots[0], { ...ctx, shared: true }))).toEqual(['verify', 'unlink']);
-  });
-
-  it('never more than three, and nothing for a non-organizer', () => {
-    for (const slot of slots) expect(slotSheetActions(slot, ctx).length).toBeLessThanOrEqual(3);
+  it('never more than four, and nothing for a non-organizer', () => {
+    for (const slot of slots) expect(slotSheetActions(slot, ctx).length).toBeLessThanOrEqual(4);
     expect(slotSheetActions(slots[0], { ...ctx, canEdit: false })).toEqual([]);
   });
 
   it('Weltner (cannot cancel via API) never offers cancel', () => {
     const slot = { ...slots[0], provider: 'WELTNER', links: slots[0].links.map((l) => ({ ...l, provider: 'WELTNER' })) };
     expect(kinds(slotSheetActions(slot, { ...ctx, canVerify: () => false }))).toEqual(['unlink']);
+  });
+});
+
+describe('courtsCardAction', () => {
+  const base = { canEdit: true, hasClub: true, hasTime: true, courtNeed: 4 };
+  it('asks for a club, then a time, then which courts to keep, before booking', () => {
+    const planned = fixtureReservations('planned');
+    expect(courtsCardAction(planned, { ...base, hasClub: false })).toEqual({ kind: 'pick_club' });
+    expect(courtsCardAction(planned, { ...base, hasTime: false })).toEqual({ kind: 'set_time' });
+    expect(courtsCardAction(planned, { ...base, courtNeed: 1 })).toEqual({ kind: 'choose_courts' });
+    expect(courtsCardAction(planned, base)?.kind).toBe('reserve');
+    expect(courtsCardAction(planned, { ...base, canEdit: false })).toBeNull();
+  });
+
+  it("the organizer's own booking found at the club beats booking a new one", () => {
+    const planned = fixtureReservations('planned');
+    const key = planned.slots[1].key;
+    expect(courtsCardAction(planned, { ...base, ownBookingSlotKeys: new Set([key]) })).toEqual({ kind: 'use_own', slotKey: key });
   });
 });
 

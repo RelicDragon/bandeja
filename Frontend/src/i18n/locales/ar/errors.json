@@ -142,7 +142,8 @@
       "legacyExternalBookingIdRejected": "أُزيل حقل الحجز القديم. استخدم externalBookingIds و PATCH /games/:id/bookings.",
       "companyIdRequired": "تكامل حجز النادي يتطلب معرّف شركة.",
       "integrationTypeMustBeOnlineBooking": "يجب أن يكون تكامل النادي حجزاً عبر الإنترنت.",
-      "rollbackFailed": "تعذّر تأكيد إلغاء الحجز."
+      "rollbackFailed": "تعذّر تأكيد إلغاء الحجز.",
+      "removeBookingsBeforeClearing": "أزل حجوزات الملاعب أو ألغها أولًا."
     },
     "cost": {
       "paymentMethod": {

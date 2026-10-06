@@ -142,7 +142,8 @@
       "legacyExternalBookingIdRejected": "पुराना बुकिंग फ़ील्ड हटाया गया। externalBookingIds और PATCH /games/:id/bookings उपयोग करें।",
       "companyIdRequired": "क्लब बुकिंग एकीकरण के लिए कंपनी ID आवश्यक है।",
       "integrationTypeMustBeOnlineBooking": "क्लब एकीकरण ऑनलाइन बुकिंग होना चाहिए।",
-      "rollbackFailed": "आरक्षण रद्द होने की पुष्टि नहीं हो सकी।"
+      "rollbackFailed": "आरक्षण रद्द होने की पुष्टि नहीं हो सकी।",
+      "removeBookingsBeforeClearing": "पहले कोर्ट बुकिंग हटाएं या रद्द करें।"
     },
     "cost": {
       "paymentMethod": {

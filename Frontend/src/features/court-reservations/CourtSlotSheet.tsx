@@ -1,24 +1,30 @@
 /**
- * One court slot, up close (bottom sheet).
+ * One court, up close (bottom sheet): its booking and what can be done with it.
  *
- * A mini timeline puts this court's reservations against the game window;
- * games sharing the reservation are listed in words. At most three actions,
- * chosen from the state ({@link slotSheetActions}):
- *   Planned  → Reserve now · Link my reservation · Mark as reserved
- *   Reported → Link reservation · Mark not reserved
- *   Linked   → Verify · Unlink · Cancel at the club (provider can cancel, not shared)
- * An "Any court" slot picks its court inline first. Actions are callbacks.
+ * A mini timeline puts this court's bookings against the game window; games
+ * sharing a booking are listed in words. The actions follow the state
+ * ({@link slotSheetActions}):
+ *   Not booked yet → Use this booking (found in the organizer's club account,
+ *                    shown first) · Book at the club · Use a booking I already
+ *                    made · "I booked it another way" (quiet)
+ *   Booked by organizer → Link the real booking · Not booked after all
+ *   Booked → Remove from game · Cancel at the club · Check again (quiet)
+ * A club without a booking system offers one honest "I booked it" and shows
+ * the club's phone. A court the club shows taken (and not in the organizer's
+ * account) says so above the actions. Without a time nothing can be booked:
+ * the sheet points to the editor instead. An "Any court" slot picks its court
+ * inline first. Actions are callbacks; confirmations (remove, cancel) belong
+ * to the caller.
  *
  * With `canAssignCourt`, choosing a court is also a decision of its own
- * (`assign_court`): an "Any court" slot can just take a court ("Use Court 3,
- * reserve later") and a planned slot can "Change court" — neither forces a
- * reservation choice.
+ * (`assign_court`): an "Any court" slot can just take a court and a not-booked
+ * slot can "Change court" — neither forces a booking choice.
  *
  * The caller closes the sheet when an action succeeds; on failure it stays
  * open and shows `error` inline (role="alert") above the actions.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { BadgeCheck, CalendarClock, LoaderCircle, Phone, TriangleAlert } from 'lucide-react';
 import type { CourtSlotView } from '@shared/gameBooking/courtReservations';
 import type { IsoInterval } from '@shared/gameBooking/coverageIntervals';
 import type { SharedGameRef } from '@shared/gameBooking/planReschedule';
@@ -79,22 +85,46 @@ export type CourtSlotSheetProps = {
   canAssignCourt?: boolean;
   /** The last action failed: shown inline, the sheet stays open. */
   error?: string | null;
+  /** The club's booking system lists the organizer's bookings (link an existing one). Defaults to `canBookHere`. */
+  canLink?: boolean;
+  /** The organizer's own club booking for this court and time (offered first). */
+  ownBooking?: { start: string; end: string; providerName: string } | null;
+  /** The club shows the court taken over the game, and it is not (known to be) the organizer's. */
+  busyAtClub?: { start: string; end: string; notInAccount: boolean } | null;
+  clubName?: string | null;
+  /** Shown for a club without a booking system ("books by phone"). */
+  clubPhone?: string | null;
+  /** No time yet: "Set date and time" opens the editor. */
+  onSetTime?: () => void;
 };
 
-const ACTION_KEY: Record<SlotActionKind, string> = {
-  reserve: 'sheet.action.reserve',
-  link: 'sheet.action.link',
-  mark_reserved: 'sheet.action.markReserved',
-  mark_not_reserved: 'sheet.action.markNotReserved',
-  verify: 'sheet.action.verify',
-  unlink: 'sheet.action.unlink',
-  cancel_at_club: 'sheet.action.cancelAtClub',
-  assign_court: 'sheet.action.changeCourt',
-};
-
-function actionLabel(spec: SlotActionSpec, slot: CourtSlotView, t: CourtReservationText['t']): string {
-  if (spec.kind === 'link' && slot.state === 'reported') return t('sheet.action.linkReported');
-  return t(ACTION_KEY[spec.kind]);
+function actionLabel(
+  spec: SlotActionSpec,
+  slot: CourtSlotView,
+  t: CourtReservationText['t'],
+  ctx: { club: string; busyNotInAccount: boolean },
+): string {
+  switch (spec.kind) {
+    case 'use_own':
+      return t('sheet.action.useOwn');
+    case 'reserve':
+      return t('sheet.action.bookAt', { club: ctx.club });
+    case 'link':
+      return slot.state === 'reported' ? t('sheet.action.linkReal') : t('sheet.action.linkExisting');
+    case 'mark_reserved':
+      if (spec.primary) return t('sheet.action.bookedIt');
+      return ctx.busyNotInAccount ? t('sheet.action.mineOtherWay') : t('sheet.action.bookedOtherWay');
+    case 'mark_not_reserved':
+      return t('sheet.action.notBooked');
+    case 'unlink':
+      return t('sheet.action.removeFromGame');
+    case 'cancel_at_club':
+      return t('sheet.action.cancelAt', { club: ctx.club });
+    case 'verify':
+      return t('sheet.action.checkAgain', { club: ctx.club });
+    case 'assign_court':
+      return t('sheet.action.changeCourt');
+  }
 }
 
 function SlotTimeline({
@@ -180,6 +210,12 @@ export function CourtSlotSheet({
   nested,
   canAssignCourt = false,
   error = null,
+  canLink,
+  ownBooking = null,
+  busyAtClub = null,
+  clubName,
+  clubPhone,
+  onSetTime,
 }: CourtSlotSheetProps) {
   const text = useCourtReservationText(timeZone);
   const { t, clock } = text;
@@ -198,12 +234,23 @@ export function CourtSlotSheet({
   const actions = useMemo(
     () =>
       slot
-        ? slotSheetActions(slot, { canEdit, canBookHere, shared: sharers.length > 0, canVerify, providerCapabilities })
+        ? slotSheetActions(slot, {
+            canEdit,
+            canBookHere,
+            canLink,
+            ownBooking: ownBooking != null,
+            shared: sharers.length > 0,
+            canVerify,
+            providerCapabilities,
+            noTime: window == null,
+          })
         : [],
-    [slot, canEdit, canBookHere, sharers.length, canVerify, providerCapabilities],
+    [slot, canEdit, canBookHere, canLink, ownBooking, sharers.length, canVerify, providerCapabilities, window],
   );
+  const club = clubName?.trim() || t('sheet.theClub');
+  const noTime = window == null && slot?.state === 'planned';
 
-  const title = slot ? slotCourtName(slot, courtsById, t) : t('card.title');
+  const title = slot ? slotCourtName(slot, courtsById, t) : t('card.titleOne');
   const described = slot ? describeCourtSlot(slot) : null;
   const pickMode = slot
     ? courtPickMode(slot, { canEdit, canAssignCourt, pickableCourtIds: pickableCourts.map((c) => c.id) })
@@ -233,7 +280,11 @@ export function CourtSlotSheet({
                 <DrawerTitle ref={headingRef} tabIndex={-1} className="truncate outline-none">
                   {title}
                 </DrawerTitle>
-                <ReservationPill tone={pillToneForSlot(slot)} label={text.copy(described.label)} linked={slot.state === 'linked'} />
+                <ReservationPill
+                  tone={noTime ? 'noTime' : pillToneForSlot(slot)}
+                  label={noTime ? t('slot.noTime') : text.copy(described.label)}
+                  linked={slot.state === 'linked'}
+                />
               </DrawerHeader>
               <DrawerDescription className="sr-only">{text.copy(described.label)}</DrawerDescription>
 
@@ -259,7 +310,7 @@ export function CourtSlotSheet({
                 {slot.state === 'reported' ? (
                   <p className="text-gray-500 dark:text-gray-400">{t('sheet.reportedHint')}</p>
                 ) : null}
-                {slot.state === 'planned' ? (
+                {slot.state === 'planned' && !noTime ? (
                   <p className="text-gray-500 dark:text-gray-400">{t('sheet.plannedHint')}</p>
                 ) : null}
                 {described.gaps.map((g) => (
@@ -348,6 +399,64 @@ export function CourtSlotSheet({
                 </fieldset>
               ) : null}
 
+              {noTime ? (
+                <div className="cr-enter mt-4 rounded-2xl bg-gray-50 p-3 dark:bg-gray-900/60" data-testid="slot-no-time">
+                  <p className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+                    <CalendarClock size={16} aria-hidden className="mt-0.5 shrink-0" />
+                    {t('sheet.noTimeHint')}
+                  </p>
+                  {onSetTime ? (
+                    <button
+                      type="button"
+                      onClick={onSetTime}
+                      className={`mt-3 flex min-h-[48px] w-full items-center justify-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] ${pressScaleGuard}`}
+                    >
+                      {t('sheet.action.setTime')}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {ownBooking && slot.state !== 'linked' && !noTime ? (
+                <div
+                  className="cr-enter mt-4 flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-800/60 dark:bg-emerald-900/20"
+                  data-testid="slot-own-booking"
+                >
+                  <BadgeCheck size={18} aria-hidden className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span>
+                    <span className="block font-semibold text-gray-900 dark:text-white">
+                      {t('sheet.ownFound', { provider: ownBooking.providerName })}
+                    </span>
+                    <span className="tabular-nums text-gray-600 dark:text-gray-300">
+                      {title} · {clock.range(ownBooking.start, ownBooking.end)}
+                    </span>
+                  </span>
+                </div>
+              ) : null}
+
+              {busyAtClub && slot.state === 'planned' && !ownBooking && !noTime ? (
+                <p
+                  className="cr-enter mt-4 flex items-start gap-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-900/20 dark:text-amber-100"
+                  data-testid="slot-busy-at-club"
+                >
+                  <TriangleAlert size={16} aria-hidden className="mt-0.5 shrink-0" />
+                  {busyAtClub.notInAccount
+                    ? t('sheet.busyNotYours', { club, range: clock.range(busyAtClub.start, busyAtClub.end) })
+                    : t('sheet.busy', { club, range: clock.range(busyAtClub.start, busyAtClub.end) })}
+                </p>
+              ) : null}
+
+              {!canBookHere && !(canLink ?? canBookHere) && clubPhone && slot.state === 'planned' && !noTime ? (
+                <a
+                  href={`tel:${clubPhone.replace(/[^+\d]/g, '')}`}
+                  className="mt-4 flex min-h-[44px] items-center gap-2 rounded-2xl bg-gray-50 px-3 text-sm text-gray-700 hover:bg-gray-100 dark:bg-gray-900/60 dark:text-gray-200 dark:hover:bg-gray-800"
+                  data-testid="slot-club-phone"
+                >
+                  <Phone size={16} aria-hidden className="shrink-0" />
+                  <span>{t('sheet.booksByPhone', { phone: clubPhone })}</span>
+                </a>
+              ) : null}
+
               {error ? (
                 <p
                   role="alert"
@@ -366,7 +475,9 @@ export function CourtSlotSheet({
                       ? 'bg-primary-600 text-white hover:bg-primary-700'
                       : spec.destructive
                         ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30'
-                        : 'border border-gray-200 text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800';
+                        : spec.quiet
+                          ? 'font-medium text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                          : 'border border-gray-200 text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800';
                     return (
                       <button
                         key={spec.kind}
@@ -378,7 +489,7 @@ export function CourtSlotSheet({
                         className={`flex min-h-[48px] items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-[background-color,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-60 enabled:active:scale-[0.98] ${pressScaleGuard} ${style}`}
                       >
                         {busy ? <LoaderCircle size={16} aria-hidden className="animate-spin motion-reduce:animate-none" /> : null}
-                        {actionLabel(spec, slot, t)}
+                        {actionLabel(spec, slot, t, { club, busyNotInAccount: Boolean(busyAtClub?.notInAccount) })}
                       </button>
                     );
                   })}

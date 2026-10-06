@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "مخطط",
-      "reported": "مُعلَّم كمحجوز",
+      "planned": "لم يُحجز بعد",
+      "reported": "حجزه المنظّم",
       "linked": "محجوز · {{provider}}",
       "unknownTime": "محجوز · {{provider}} · الوقت غير معروف",
-      "gap": "فجوة {{from}}–{{to}}"
+      "gap": "فجوة {{from}}–{{to}}",
+      "noTime": "لا وقت بعد"
     },
     "summary": {
-      "planned": "مخطط",
+      "planned": "لم يُحجز بعد",
       "partial": "{{reserved}} من {{total}} محجوزة",
       "reserved": "كل الملاعب محجوزة",
       "reservedWithGap": "محجوز، فجوة عند {{time}}",
-      "reported": "مُعلَّم كمحجوز"
+      "reported": "حجزه المنظّم"
     },
     "reschedule": {
       "unchanged": "بلا تغيير",
@@ -32,7 +33,6 @@
       "shortM": "{{m}} د"
     },
     "card": {
-      "title": "الملاعب",
       "players_zero": "{{count}} لاعب",
       "players_one": "{{count}} لاعب",
       "players_two": "{{count}} لاعبان",
@@ -46,13 +46,17 @@
       "courts_many": "{{count}} ملعبًا",
       "courts_other": "{{count}} ملعب",
       "anyCourt": "أي ملعب",
-      "noTime": "حدّد وقتًا لترى كم من المباراة مغطى",
-      "count": "عدد الملاعب",
-      "fewer": "ملعب واحد أقل",
-      "more": "ملعب واحد إضافي",
-      "gameOnly": "المباراة فقط",
-      "gameOnlyHint": "يتولى المنظّم ترتيب الملعب مع النادي.",
-      "useClubBooking": "استخدم حجز النادي بدلًا من ذلك"
+      "titleOne": "الملعب",
+      "titleMany": "الملاعب",
+      "change": "تغيير",
+      "noDateTime": "التاريخ والوقت غير محددين",
+      "noClub": "لا يوجد نادٍ بعد. اختر ناديًا لاختيار الملاعب وحجزها.",
+      "tooMany_zero": "{{players}} لاعبين يحتاجون إلى {{count}} ملاعب. اختر ما تحتفظ به.",
+      "tooMany_one": "{{players}} لاعبين يحتاجون إلى {{count}} ملعب. اختر ما تحتفظ به.",
+      "tooMany_two": "{{players}} لاعبين يحتاجون إلى {{count}} ملعبين. اختر ما تحتفظ به.",
+      "tooMany_few": "{{players}} لاعبين يحتاجون إلى {{count}} ملاعب. اختر ما تحتفظ به.",
+      "tooMany_many": "{{players}} لاعبين يحتاجون إلى {{count}} ملاعب. اختر ما تحتفظ به.",
+      "tooMany_other": "{{players}} لاعبين يحتاجون إلى {{count}} ملاعب. اختر ما تحتفظ به."
     },
     "action": {
       "reserveCourt": "احجز الملعب",
@@ -70,41 +74,61 @@
       "reserveRemaining_many": "احجز {{count}} ملعبًا متبقيًا",
       "reserveRemaining_other": "احجز {{count}} ملعب متبقٍ",
       "fillGap": "املأ فجوة {{duration}}",
-      "fillGaps": "املأ الفجوات"
+      "fillGaps": "املأ الفجوات",
+      "pickClub": "اختر ناديًا",
+      "setTime": "حدد التاريخ والوقت",
+      "chooseCourts": "اختر الملاعب التي تحتفظ بها",
+      "useOwn": "استخدم حجزك في {{provider}}",
+      "useOwnPlain": "استخدم حجزك",
+      "bookCourt": "احجز {{court}}",
+      "bookAnyCourt": "احجز ملعبًا",
+      "bookMore_zero": "احجز {{count}} ملاعب أخرى",
+      "bookMore_one": "احجز {{count}} ملعب آخر",
+      "bookMore_two": "احجز {{count}} ملعبين آخرين",
+      "bookMore_few": "احجز {{count}} ملاعب أخرى",
+      "bookMore_many": "احجز {{count}} ملاعب أخرى",
+      "bookMore_other": "احجز {{count}} ملاعب أخرى",
+      "bookCourts_zero": "احجز {{count}} ملاعب",
+      "bookCourts_one": "احجز {{count}} ملعب",
+      "bookCourts_two": "احجز {{count}} ملعبين",
+      "bookCourts_few": "احجز {{count}} ملاعب",
+      "bookCourts_many": "احجز {{count}} ملاعب",
+      "bookCourts_other": "احجز {{count}} ملاعب"
     },
     "sheet": {
       "game": "المباراة",
       "reservationAt": "الحجز · {{provider}}",
       "timeUnknown": "الوقت غير معروف",
-      "reportedHint": "أخبرتنا أن هذا الملعب محجوز لدى النادي.",
-      "plannedHint": "لا يوجد حجز لهذا الملعب بعد.",
+      "reportedHint": "حجزه المنظّم مع النادي. لا يمكن للتطبيق التحقق من ذلك.",
+      "plannedHint": "لم يُحجز شيء لهذا الملعب بعد.",
       "alsoUsedBy": "يستخدمه أيضًا {{name}} {{from}}–{{to}}",
       "pickCourt": "أي ملعب؟",
       "action": {
-        "reserve": "احجز الآن",
-        "link": "اربط حجزي",
-        "linkReported": "اربط الحجز",
-        "markReserved": "علّمه كمحجوز",
-        "markNotReserved": "علّمه كغير محجوز",
-        "verify": "تحقّق",
-        "unlink": "فك الربط",
-        "cancelAtClub": "ألغِ لدى النادي",
         "changeCourt": "تغيير الملعب",
         "useCourtOnly": "استخدم {{court}} واحجز لاحقًا",
         "useCourtInstead": "استخدم {{court}} بدلًا منه",
-        "keepCourt": "أبقِ {{court}}"
-      }
+        "keepCourt": "أبقِ {{court}}",
+        "useOwn": "استخدم هذا الحجز",
+        "bookAt": "احجز في {{club}}",
+        "linkExisting": "استخدم حجزًا قمت به مسبقًا",
+        "linkReal": "اربط الحجز الفعلي",
+        "bookedIt": "حجزته",
+        "bookedOtherWay": "حجزته بطريقة أخرى",
+        "mineOtherWay": "إنه لي، حجزته بطريقة أخرى",
+        "notBooked": "لم يُحجز في النهاية",
+        "removeFromGame": "إزالة من المباراة",
+        "cancelAt": "إلغاء في {{club}}",
+        "checkAgain": "تحقق مجددًا في {{club}}",
+        "setTime": "حدد التاريخ والوقت"
+      },
+      "noTimeHint": "حدد تاريخ المباراة ووقتها أولًا: لا يمكن حجز ملعب إلا لوقت محدد.",
+      "ownFound": "موجود في حسابك على {{provider}}",
+      "busy": "محجوز في {{club}} {{range}}.",
+      "busyNotYours": "محجوز في {{club}} {{range}}، وليس في حسابك: على الأرجح حجز شخص آخر.",
+      "booksByPhone": "يقبل هذا النادي الحجز عبر الهاتف: {{phone}}",
+      "theClub": "النادي"
     },
     "move": {
-      "title": "تغيير الوقت",
-      "dragLabel": "وقت المباراة",
-      "dragHint": "اسحب المباراة أو استخدم الأزرار أدناه",
-      "start": "البداية",
-      "length": "المدة",
-      "earlier": "أبكر بـ15 دقيقة",
-      "later": "أبعد بـ15 دقيقة",
-      "shorter": "أقصر بـ15 دقيقة",
-      "longer": "أطول بـ15 دقيقة",
       "courtsLabel": "ماذا يحدث لكل ملعب",
       "notice_zero": "{{count}} لاعب يتلقى إشعارًا واحدًا بالوقت الجديد",
       "notice_one": "{{count}} لاعب يتلقى إشعارًا واحدًا بالوقت الجديد",
@@ -140,7 +164,6 @@
       "change": "تغيير",
       "changeFor": "تغيير ما يحدث لـ{{court}}",
       "unchanged": "{{courts}} · دون تغيير",
-      "sliderValue": "تبدأ {{start}}، وتنتهي {{end}}",
       "why": {
         "notAvailable": "هذا الملعب غير متاح في الوقت الجديد.",
         "keep": "الحجز ما زال يغطي الوقت الجديد.",
@@ -265,16 +288,6 @@
       "gameUnnamed": "مباراة أخرى تشغل {{court}} الساعة {{time}}.",
       "plannedGame": "{{name}} مخطط لها على {{court}} الساعة {{time}}.",
       "plannedGameUnnamed": "هناك مباراة أخرى مخطط لها على {{court}} الساعة {{time}}."
-    },
-    "timeline": {
-      "free": "متاح",
-      "movesTo": "ينتقل إلى {{court}}",
-      "legend": {
-        "reserved": "حجزك",
-        "reported": "محجوز عبر النادي",
-        "club": "محجوز من النادي",
-        "game": "مباراة أخرى"
-      }
     }
   }
 }

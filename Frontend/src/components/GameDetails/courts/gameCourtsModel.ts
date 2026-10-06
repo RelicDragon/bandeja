@@ -79,25 +79,27 @@ export function gameHasCourtSlots(game: Game): boolean {
 /** DOM anchor of the Courts card (organizer next steps scroll here). */
 export const GAME_COURTS_SECTION_ID = 'game-courts';
 
-/** Whether the Courts card belongs on this game's page: an open game with court slots. */
+/**
+ * Whether the Court(s) card belongs on this game's page: an open game of a
+ * kind that books club courts — with or without a club yet (no club: the
+ * organizer's card asks for one; players see nothing).
+ */
 export function gameShowsCourtsSection(game: Game): boolean {
   return (
-    gameHasCourtSlots(game) &&
+    supportsClubBookingFlow(game.entityType, 'edit') &&
     game.resultsStatus === 'NONE' &&
     (game.status === 'ANNOUNCED' || game.status === 'STARTED')
   );
 }
 
 /**
- * Changing the time must go through the reschedule planner (RescheduleSheet)
- * when it can affect reservations: any linked reservation, or more than one
- * court slot. Everything else keeps the plain time editor.
+ * A time change runs the reschedule planner inside the "When and where"
+ * editor when it can affect bookings: any linked booking, or more than one
+ * court slot. Everything else saves the time directly.
  */
 export function rescheduleNeeded(game: Game): boolean {
   if (!gameHasCourtSlots(game) || !gameWindow(game)) return false;
   if ((game.linkedBookings ?? []).length > 0) return true;
-  // Game only: nothing at the club moves with the game.
-  if (game.courtBookingMode === 'GAME_ONLY') return false;
   return deriveGameCourtReservations(game).slots.length > 1;
 }
 

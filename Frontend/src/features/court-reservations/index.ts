@@ -2,9 +2,9 @@
  * Court reservations (booking redesign) — public surface.
  * Domain core: `@shared/gameBooking/{courtReservations,planReschedule,reservationCopy,providerCapabilities}`.
  */
-export { CourtsCard, type CourtsCardProps } from './CourtsCard';
+export { CourtsCard, type CourtsCardProps, type ScheduleFocus } from './CourtsCard';
 export { CourtSlotSheet, type CourtSlotSheetAction, type CourtSlotSheetProps } from './CourtSlotSheet';
-export { RescheduleSheet, type RescheduleSheetProps } from './RescheduleSheet';
+export { RescheduleOutcomeList } from './RescheduleOutcomeRows';
 export { ReservationPill, type ReservationPillProps } from './ReservationPill';
 export { pillToneForSlot, pillToneForSummary, type ReservationPillTone } from './reservationPillTone';
 export { UnfinishedChangesBanner, type UnfinishedChangesBannerProps } from './UnfinishedChangesBanner';
@@ -40,9 +40,11 @@ export {
   buildCourtSlotsBody,
   courtCountBounds,
   courtPickMode,
+  courtsCardAction,
   courtsPrimaryAction,
   slotSheetActions,
   type CourtPickMode,
   type CourtRef,
+  type CourtsCardAction,
   type CourtsPrimaryAction,
 } from './courtReservationsModel';

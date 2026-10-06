@@ -6,7 +6,8 @@ import { isReservedByReportOnly } from '@shared/gameBooking/reservationCopy';
  * `gameOnly`: neutral — the organizer handles the court; nothing to reserve or worry about.
  * `reported`: the organizer marked it reserved; no club booking proves it (not green).
  */
-export type ReservationPillTone = 'planned' | 'partial' | 'reserved' | 'reported' | 'gap' | 'unknown' | 'gameOnly';
+/** `noTime`: the game has no time yet, so nothing can be booked (neutral). */
+export type ReservationPillTone = 'planned' | 'partial' | 'reserved' | 'reported' | 'gap' | 'unknown' | 'gameOnly' | 'noTime';
 
 /** Pass `slots` so a game reserved only by the organizer's word is not shown as booked. */
 export function pillToneForSummary(

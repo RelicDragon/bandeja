@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "予定",
-      "reported": "予約済みとして登録",
+      "planned": "未予約",
+      "reported": "主催者が予約済み",
       "linked": "予約済み · {{provider}}",
       "unknownTime": "予約済み · {{provider}} · 時間不明",
-      "gap": "空き {{from}}–{{to}}"
+      "gap": "空き {{from}}–{{to}}",
+      "noTime": "時間未定"
     },
     "summary": {
-      "planned": "予定",
+      "planned": "未予約",
       "partial": "{{total}}面中{{reserved}}面予約済み",
       "reserved": "全コート予約済み",
       "reservedWithGap": "予約済み、{{time}}に空き",
-      "reported": "予約済みとして登録"
+      "reported": "主催者が予約済み"
     },
     "reschedule": {
       "unchanged": "変更なし",
@@ -32,17 +33,15 @@
       "shortM": "{{m}}分"
     },
     "card": {
-      "title": "コート",
       "players_other": "{{count}}人",
       "courts_other": "{{count}}面",
       "anyCourt": "どのコートでも",
-      "noTime": "時間を設定すると、試合のどれだけがカバーされているか分かります",
-      "count": "コート数",
-      "fewer": "コートを1面減らす",
-      "more": "コートを1面増やす",
-      "gameOnly": "ゲームのみ",
-      "gameOnlyHint": "コートは主催者がクラブと調整します。",
-      "useClubBooking": "クラブ予約を使う"
+      "titleOne": "コート",
+      "titleMany": "コート",
+      "change": "変更",
+      "noDateTime": "日時未定",
+      "noClub": "クラブ未定です。クラブを選ぶとコートを選んで予約できます。",
+      "tooMany_other": "{{players}}人に必要なコートは{{count}}面です。残すコートを選んでください。"
     },
     "action": {
       "reserveCourt": "コートを予約",
@@ -50,41 +49,51 @@
       "reserveLast": "最後のコートを予約",
       "reserveRemaining_other": "残り{{count}}面を予約",
       "fillGap": "{{duration}}の空きを埋める",
-      "fillGaps": "空きを埋める"
+      "fillGaps": "空きを埋める",
+      "pickClub": "クラブを選ぶ",
+      "setTime": "日時を設定",
+      "chooseCourts": "残すコートを選ぶ",
+      "useOwn": "{{provider}}の予約を使う",
+      "useOwnPlain": "自分の予約を使う",
+      "bookCourt": "{{court}}を予約",
+      "bookAnyCourt": "コートを予約",
+      "bookMore_other": "あと{{count}}面予約",
+      "bookCourts_other": "{{count}}面予約"
     },
     "sheet": {
       "game": "試合",
       "reservationAt": "予約 · {{provider}}",
       "timeUnknown": "時間不明",
-      "reportedHint": "このコートはクラブで予約済みと報告されています。",
+      "reportedHint": "主催者がクラブで予約しました。アプリでは確認できません。",
       "plannedHint": "このコートはまだ予約されていません。",
       "alsoUsedBy": "{{name}}も使用 {{from}}–{{to}}",
       "pickCourt": "どのコート？",
       "action": {
-        "reserve": "今すぐ予約",
-        "link": "自分の予約を紐づける",
-        "linkReported": "予約を紐づける",
-        "markReserved": "予約済みにする",
-        "markNotReserved": "未予約にする",
-        "verify": "確認する",
-        "unlink": "紐づけを解除",
-        "cancelAtClub": "クラブでキャンセル",
         "changeCourt": "コートを変更",
         "useCourtOnly": "{{court}} を使う（予約は後で）",
         "useCourtInstead": "代わりに {{court}} を使う",
-        "keepCourt": "{{court}} のままにする"
-      }
+        "keepCourt": "{{court}} のままにする",
+        "useOwn": "この予約を使う",
+        "bookAt": "{{club}}で予約",
+        "linkExisting": "予約済みのものを使う",
+        "linkReal": "実際の予約を紐づける",
+        "bookedIt": "予約しました",
+        "bookedOtherWay": "別の方法で予約しました",
+        "mineOtherWay": "自分の予約です（別の方法で予約）",
+        "notBooked": "やはり予約していない",
+        "removeFromGame": "ゲームから外す",
+        "cancelAt": "{{club}}でキャンセル",
+        "checkAgain": "{{club}}で再確認",
+        "setTime": "日時を設定"
+      },
+      "noTimeHint": "先に日時を設定してください。コートは時間を決めないと予約できません。",
+      "ownFound": "{{provider}}アカウントで見つかりました",
+      "busy": "{{club}}で{{range}}は埋まっています。",
+      "busyNotYours": "{{club}}で{{range}}は埋まっていて、あなたのアカウントにはありません。おそらく他の人の予約です。",
+      "booksByPhone": "このクラブは電話で予約を受け付けています：{{phone}}",
+      "theClub": "クラブ"
     },
     "move": {
-      "title": "時間を変更",
-      "dragLabel": "試合の時間",
-      "dragHint": "試合をドラッグするか、下のボタンを使ってください",
-      "start": "開始",
-      "length": "長さ",
-      "earlier": "15分早く",
-      "later": "15分遅く",
-      "shorter": "15分短く",
-      "longer": "15分長く",
       "courtsLabel": "各コートの扱い",
       "notice_other": "{{count}}人に新しい時間の通知が1件届きます",
       "option": {
@@ -110,7 +119,6 @@
       "change": "変更",
       "changeFor": "{{court}} の扱いを変更",
       "unchanged": "{{courts}} · 変更なし",
-      "sliderValue": "{{start}} 開始、{{end}} 終了",
       "why": {
         "notAvailable": "新しい時間はこのコートが空いていません。",
         "keep": "今の予約で新しい時間もカバーできます。",
@@ -220,16 +228,6 @@
       "gameUnnamed": "別のゲームが {{time}} に {{court}} を使います。",
       "plannedGame": "{{name}} が {{time}} に {{court}} で予定されています。",
       "plannedGameUnnamed": "別のゲームが {{time}} に {{court}} で予定されています。"
-    },
-    "timeline": {
-      "free": "空き",
-      "movesTo": "{{court}} へ移動",
-      "legend": {
-        "reserved": "あなたの予約",
-        "reported": "クラブで予約済み",
-        "club": "クラブの予約",
-        "game": "別のゲーム"
-      }
     }
   }
 }

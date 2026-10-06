@@ -97,11 +97,30 @@
   animation: cr-tick 200ms ease-out;
 }
 
+/* "Answer this first": a short nudge on the block Save is waiting for (end state = no transform). */
+@keyframes cr-attention {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.cr-attention {
+  animation: cr-attention 320ms ease-in-out 2;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cr-enter,
   .cr-fade,
   .cr-pop,
   .cr-grow,
+  .cr-attention,
   .cr-tick path {
     animation: none;
   }

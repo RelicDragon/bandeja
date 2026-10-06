@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { addHours } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings, Users } from 'lucide-react';
-import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
-import { gamesApi, courtsApi, clubsApi, mediaApi } from '@/api';
+import { Save, Edit3, Banknote, Loader2, Settings, Users } from 'lucide-react';
+import { Game, PriceType, PriceCurrency } from '@/types';
+import { gamesApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
 import toast from 'react-hot-toast';
@@ -13,19 +12,8 @@ import {
   DrawerContent,
 } from '@/components/ui/Drawer';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
-import { identityKey, useStableIdentity } from '@/hooks/useStableIdentity';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { GeneralTab, type GeneralTabState } from './editGameInfo/GeneralTab';
-import { LocationTimeTab } from './editGameInfo/LocationTimeTab';
-import type { WhereTabState } from './editGameInfo/locationTimeTypes';
-import {
-  buildEditLocationTimeRequests,
-  currentCourtSlotCount,
-  initialCourtIds,
-  saveEditLocationTime,
-} from './editGameInfo/saveEditLocationTime';
-import { defaultCourtSlotCount } from '@shared/gameBooking/courtReservations';
-import { playersPerMatchOf } from '@shared/matchFormat';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { resolvePaymentMethods } from '@shared/payments/paymentMethodSelection';
 import {
@@ -35,66 +23,27 @@ import {
 } from '@/features/cost/gameEditPricePayload';
 import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import { GameSettings } from './GameSettings';
-import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
-import { useQuery } from '@tanstack/react-query';
-import { ClubBusySavePrompt } from './editGameInfo/ClubBusySavePrompt';
-import { useOwnClubBookings } from './editGameInfo/useOwnClubBookings';
-import { courtSlotsApi } from '@/api/courtSlots';
-import { providerDisplayName } from '@shared/gameBooking/reservationCopy';
-import { ClubBookingClaimCard } from './editGameInfo/ClubBookingClaimCard';
-import {
-  findClubBookingConflicts,
-  reportedCourtIdsOf,
-  summarizeVerdicts,
-  verifyClubBookingConflict,
-  type OwnClubBooking,
-  type ClubBookingConflict,
-} from './editGameInfo/clubBookingClaims';
-import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
 import { SeriesScopeSheet } from '@/features/game-series/SeriesScopeSheet';
-import { courtMatchesSportFilter } from '@/utils/courtSport';
-import {
-  courtClashDetails,
-  describeCourtClash,
-  linkedCourtIds,
-  rescheduleNeeded,
-} from '@/components/GameDetails/courts/gameCourtsModel';
-import { getClubTimezone } from '@/utils/gameTimeDisplay';
-import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
-import { ClubPoliciesBlock } from '@/components/createGame/ClubPoliciesBlock';
-import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { createClubTimeFormatter } from '@/features/court-reservations/clubTime';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
-export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'participants' | 'settings';
-export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
+export type EditGameInfoTabId = 'general' | 'price' | 'participants' | 'settings';
+export type EditGameInfoInitialTabId = EditGameInfoTabId;
 
 interface EditGameInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
   game: Game;
-  clubs: Club[];
-  courts: Court[];
   initialTab?: EditGameInfoInitialTabId;
   /** Owner/admin with results still open — mirrors shell `canViewSettings`. */
   canEditSettings?: boolean;
   onGameUpdate?: (game: Game) => void;
-  onCourtsChange?: (courts: Court[]) => void;
-  onClubsChange?: (clubs: Club[]) => void;
-  /**
-   * Games whose time can affect reservations move through the reschedule
-   * planner on the game page; the Location & time tab hands off to it.
-   */
-  onRequestReschedule?: () => void;
 }
 
 const TABS = [
   { id: 'general' as const, icon: Edit3 },
-  { id: 'locationTime' as const, icon: CalendarClock },
   { id: 'price' as const, icon: Banknote },
   { id: 'participants' as const, icon: Users },
   { id: 'settings' as const, icon: Settings },
@@ -107,13 +56,6 @@ function getInitialGeneralState(game: Game): GeneralTabState {
     description: authored.description,
     pendingAvatar: null,
     removeAvatar: false,
-  };
-}
-
-function getInitialWhereState(game: Game): WhereTabState {
-  return {
-    clubId: game.clubId || '',
-    courtId: game.courtId || '',
   };
 }
 
@@ -133,126 +75,33 @@ export const EditGameInfoModal = ({
   isOpen,
   onClose,
   game,
-  clubs: clubsProp,
-  courts,
-  initialTab: initialTabProp = 'general',
+  initialTab = 'general',
   canEditSettings = true,
   onGameUpdate,
-  onCourtsChange,
-  onClubsChange,
-  onRequestReschedule,
 }: EditGameInfoModalProps) => {
   const { t } = useTranslation();
-  // The shell refetches clubs/courts while the drawer is open and hands back
-  // equal-but-fresh arrays. Everything keyed on a club object (booking auth,
-  // company meta, snapshots, time options) resets on that identity change, so
-  // the drawer re-renders and blinks. Pin the reference while data is equal.
-  const clubs = useStableIdentity(clubsProp);
   const user = useAuthStore((s) => s.user);
   const userCurrency = resolveUserCurrency(user?.defaultCurrency);
-  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const canEditParticipants =
     canEditSettings && Boolean(onGameUpdate) && entitySupportsParticipantSetup(game.entityType);
 
-  const initialTab: EditGameInfoTabId =
-    initialTabProp === 'where' || initialTabProp === 'when' ? 'locationTime' : initialTabProp;
   const [activeTab, setActiveTab] = useState<EditGameInfoTabId>(initialTab);
   /** PRD 345 — non-null while the "Apply to" sheet is open after a save. */
   const [seriesScopePatch, setSeriesScopePatch] = useState<Record<string, unknown> | null>(null);
   const [general, setGeneral] = useState<GeneralTabState>(() => getInitialGeneralState(game));
-  const [where, setWhere] = useState<WhereTabState>(() => getInitialWhereState(game));
-  const [venueCityId, setVenueCityId] = useState(
-    () => game.city?.id || game.club?.cityId || '',
-  );
-
-  const clubsRef = useRef(clubs);
-  clubsRef.current = clubs;
-
-  useEffect(() => {
-    if (!isOpen || !venueCityId) return;
-    let cancelled = false;
-    void clubsApi
-      .getByCityId(venueCityId, game.entityType)
-      .then((res) => {
-        if (cancelled || !res.success) return;
-        const next = res.data ?? [];
-        // The shell already loaded this city; re-publishing an equal list only
-        // re-renders the page under the drawer and churns club identities.
-        if (identityKey(next) === identityKey(clubsRef.current)) return;
-        onClubsChange?.(next);
-      })
-      .catch(() => {
-        /* keep current clubs */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [game.entityType, isOpen, onClubsChange, venueCityId]);
+  const venueCityId = game.city?.id || game.club?.cityId || '';
   const [price, setPrice] = useState<PriceTabState>(() => getInitialPriceState(game, userCurrency));
   // PRD 348 — the picker offers the rails that exist where the game is played.
   const paymentCountryIso2 = useCityCountryQuery(venueCityId);
-  const [whenSelectedDate, setWhenSelectedDate] = useState<Date>(() =>
-    game.startTime ? new Date(game.startTime) : new Date()
-  );
-  const [whenSelectedTime, setWhenSelectedTime] = useState<string>(() =>
-    game.startTime ? new Date(game.startTime).toTimeString().slice(0, 5) : ''
-  );
-  const [whenDuration, setWhenDuration] = useState<number>(() =>
-    game.startTime && game.endTime
-      ? (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60)
-      : 2
-  );
-  const [whenShowDatePicker, setWhenShowDatePicker] = useState(false);
-  const [disableWhenAutoAdjust, setDisableWhenAutoAdjust] = useState(true);
-  const [modalCourts, setModalCourts] = useState<Court[]>(courts);
-  const courtsRef = useRef(courts);
-  courtsRef.current = courts;
-  const [_isLoadingCourts, setIsLoadingCourts] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
-  const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
-  /** Soft overlap gate: a planned game (`soft`) or another game's reserved court (`reserved`). */
-  const [overlapKind, setOverlapKind] = useState<'soft' | 'reserved'>('soft');
-  const [courtCount, setCourtCount] = useState<number>(() => currentCourtSlotCount(game));
-  const initialCourtIdsKey = useMemo(() => initialCourtIds(game).join(','), [game]);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [participantsDirty, setParticipantsDirty] = useState(false);
   const [participantsSaving, setParticipantsSaving] = useState(false);
-  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => initialCourtIds(game));
-  /** Club booking (app checks the club's schedule) or Game only (organizer handles the court). */
-  const [bookingMode, setBookingMode] = useState<'CLUB' | 'GAME_ONLY'>(() => game.courtBookingMode ?? 'CLUB');
-  /** Courts marked reserved: the club's block on them is the organizer's own booking. */
-  const [ownBookingCourtIds, setOwnBookingCourtIds] = useState<string[]>(() => reportedCourtIdsOf(game));
-  /** Courts whose club block is the organizer's own reservation (checked in their club account): linked on save. */
-  const [linkChoices, setLinkChoices] = useState<Record<string, OwnClubBooking>>({});
-  /** Save-time "Is this your booking?" for courts still busy at the club. */
-  const [claimPrompt, setClaimPrompt] = useState<ClubBookingConflict[] | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const prevIsOpenRef = useRef(false);
-  const fetchAbortRef = useRef<AbortController | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
-  const locationTimePanelRef = useRef<HTMLDivElement>(null);
-
-  const whenInitialValues = useMemo(
-    () => ({
-      initialDate: game.startTime ? new Date(game.startTime) : new Date(),
-      initialTime: game.startTime ? new Date(game.startTime).toTimeString().slice(0, 5) : '',
-      initialDuration:
-        game.startTime && game.endTime
-          ? (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60)
-          : 2,
-    }),
-    [game.startTime, game.endTime]
-  );
-
-  const openInitRef = useRef({
-    initialTab,
-    game,
-    userCurrency,
-    courts,
-    whenInitialValues,
-  });
-  openInitRef.current = { initialTab, game, userCurrency, courts, whenInitialValues };
+  const openInitRef = useRef({ initialTab, game, userCurrency });
+  openInitRef.current = { initialTab, game, userCurrency };
 
   const segmentedTabs = useMemo(() => {
     const tabs = TABS.filter((tab) => {
@@ -279,35 +128,9 @@ export const EditGameInfoModal = ({
     }
   }, [activeTab, canEditParticipants, canEditSettings, onGameUpdate]);
 
-  const {
-    selectedDate: hookDate,
-    setSelectedDate: setHookDate,
-    selectedTime: hookTime,
-    setSelectedTime: setHookTime,
-    duration: hookDuration,
-    setDuration: setHookDuration,
-    generateTimeOptions,
-    generateTimeOptionsForDate,
-    canAccommodateDuration,
-    getAdjustedStartTime,
-    getTimeSlotsForDuration,
-    isSlotHighlighted,
-  } = useGameTimeDuration({
-    clubs,
-    selectedClub: where.clubId,
-    initialDate: whenInitialValues.initialDate,
-    disableAutoAdjust: disableWhenAutoAdjust,
-  });
-
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
-      const {
-        initialTab: tab,
-        game: openGame,
-        userCurrency: currency,
-        courts: courtsList,
-        whenInitialValues: when,
-      } = openInitRef.current;
+      const { initialTab: tab, game: openGame, userCurrency: currency } = openInitRef.current;
       const resolvedTab =
         (tab === 'settings' && (!canEditSettings || !onGameUpdate)) ||
         (tab === 'participants' && !canEditParticipants)
@@ -315,41 +138,13 @@ export const EditGameInfoModal = ({
           : tab;
       setActiveTab(resolvedTab);
       setGeneral(getInitialGeneralState(openGame));
-      setWhere(getInitialWhereState(openGame));
       setPrice(getInitialPriceState(openGame, currency));
-      setWhenSelectedDate(when.initialDate);
-      setWhenSelectedTime(when.initialTime);
-      setWhenDuration(when.initialDuration);
-      setHookDate(when.initialDate);
-      setHookTime(when.initialTime);
-      setHookDuration(when.initialDuration);
-      setDisableWhenAutoAdjust(true);
-      setModalCourts(
-        openGame.clubId && courtsList.length > 0 && courtsList[0]?.clubId === openGame.clubId
-          ? courtsList
-          : [],
-      );
-      setSelectedCourtIds(initialCourtIds(openGame));
-      setCourtCount(currentCourtSlotCount(openGame));
-      setBookingMode(openGame.courtBookingMode ?? 'CLUB');
-      setOwnBookingCourtIds(reportedCourtIdsOf(openGame));
-      setLinkChoices({});
-      setClaimPrompt(null);
       setShowDiscardConfirm(false);
       setParticipantsDirty(false);
       setParticipantsSaving(false);
-      setTimeout(() => setDisableWhenAutoAdjust(false), 200);
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, canEditParticipants, canEditSettings, onGameUpdate, setHookDate, setHookTime, setHookDuration]);
-
-  useEffect(() => {
-    if (!disableWhenAutoAdjust) {
-      setWhenSelectedDate(hookDate);
-      setWhenSelectedTime(hookTime);
-      setWhenDuration(hookDuration);
-    }
-  }, [disableWhenAutoAdjust, hookDate, hookTime, hookDuration]);
+  }, [isOpen, canEditParticipants, canEditSettings, onGameUpdate]);
 
   useEffect(() => {
     contentScrollRef.current?.scrollTo({ top: 0 });
@@ -364,221 +159,6 @@ export const EditGameInfoModal = ({
     }
     setAvatarPreviewUrl(null);
   }, [isOpen, general.pendingAvatar]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    if (!where.clubId) {
-      setModalCourts([]);
-      return;
-    }
-    if (fetchAbortRef.current) fetchAbortRef.current.abort();
-    const ac = new AbortController();
-    fetchAbortRef.current = ac;
-    setIsLoadingCourts(true);
-    courtsApi
-      .getByClubId(where.clubId, { sport: game.sport })
-      .then((res) => {
-        if (ac.signal.aborted) return;
-        const nextKey = identityKey(res.data);
-        setModalCourts((prev) => (identityKey(prev) === nextKey ? prev : res.data));
-        if (nextKey !== identityKey(courtsRef.current)) onCourtsChange?.(res.data);
-      })
-      .catch((err) => {
-        if (err?.name === 'AbortError' || ac.signal.aborted) return;
-        setModalCourts([]);
-      })
-      .finally(() => {
-        if (!ac.signal.aborted) setIsLoadingCourts(false);
-        if (fetchAbortRef.current === ac) fetchAbortRef.current = null;
-      });
-    return () => {
-      ac.abort();
-    };
-  }, [isOpen, where.clubId, game.sport, onCourtsChange]);
-
-  useEffect(() => {
-    if (!isOpen || modalCourts.length === 0) return;
-    setSelectedCourtIds((prev) => {
-      const filtered = prev.filter((id) => {
-        const court = modalCourts.find((c) => c.id === id);
-        return !court || courtMatchesSportFilter(court, game.sport);
-      });
-      return filtered.length === prev.length ? prev : filtered;
-    });
-  }, [isOpen, modalCourts, game.sport]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setWhere((s) => {
-      if (!s.courtId || selectedCourtIds.includes(s.courtId)) return s;
-      return { ...s, courtId: selectedCourtIds[0] ?? '' };
-    });
-  }, [isOpen, selectedCourtIds]);
-
-  const selectedClubData = clubs.find((c) => c.id === where.clubId);
-  const weatherPreviewTiming = useMemo(() => {
-    if (!selectedClubData?.cityId || !whenSelectedTime) return null;
-    const start = createDateFromClubTime(whenSelectedDate, whenSelectedTime, selectedClubData);
-    const end = addHours(start, whenDuration);
-    return {
-      cityId: selectedClubData.cityId,
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
-    };
-  }, [selectedClubData, whenDuration, whenSelectedDate, whenSelectedTime]);
-  const showClubPoliciesFooter =
-    game.entityType !== 'BAR' &&
-    Boolean(selectedClubData) &&
-    Boolean(selectedClubData?.policyText?.trim() || selectedClubData?.cancellationNoticeHours);
-  const slotModel = supportsClubBookingFlow(game.entityType, 'edit') && Boolean(where.clubId);
-  const clubChanged = where.clubId !== (game.clubId || '');
-  const lockedCourtIds = useMemo(() => (clubChanged ? new Set<string>() : linkedCourtIds(game)), [clubChanged, game]);
-  const clubLocked = (game.linkedBookings ?? []).length > 0;
-  const gameOnly = bookingMode === 'GAME_ONLY';
-  const initialBookingMode = game.courtBookingMode ?? 'CLUB';
-  const initialReportedKey = useMemo(() => [...reportedCourtIdsOf(game)].sort().join(','), [game]);
-  // Game only never moves a reservation: the plain time editor is enough (unless links exist).
-  const timeManagedByPlanner = !clubChanged && rescheduleNeeded({ ...game, courtBookingMode: bookingMode });
-  const ownBookingSet = useMemo(
-    () => new Set(ownBookingCourtIds.filter((id) => selectedCourtIds.includes(id))),
-    [ownBookingCourtIds, selectedCourtIds],
-  );
-  /** Own reservations chosen for linking, on courts still picked. */
-  const linkSet = useMemo(
-    () => new Set(Object.keys(linkChoices).filter((id) => selectedCourtIds.includes(id))),
-    [linkChoices, selectedCourtIds],
-  );
-  const claimsDirty =
-    slotModel && !gameOnly && [...ownBookingSet].sort().join(',') !== (clubChanged ? '' : initialReportedKey);
-
-  /** Never more courts than the roster needs (a 4-player 2v2 has one); linked courts always stay. */
-  const maxCourtCount = Math.max(
-    defaultCourtSlotCount({ maxParticipants: game.maxParticipants, playersPerMatch: playersPerMatchOf(game) }),
-    lockedCourtIds.size,
-  );
-
-  const handleEditCourtToggle = useCallback(
-    (id: string) => {
-      if (!slotModel) {
-        const next = id === 'notBooked' ? [] : [id];
-        setSelectedCourtIds(next);
-        setWhere((s) => ({ ...s, courtId: next[0] ?? '' }));
-        return;
-      }
-      if (lockedCourtIds.has(id)) return;
-      setSelectedCourtIds((prev) => {
-        let next: string[];
-        if (prev.includes(id)) {
-          next = prev.filter((courtId) => courtId !== id);
-        } else if (prev.length >= maxCourtCount) {
-          // Full: the new court replaces the last one that can move (one court → a plain switch).
-          const swap = [...prev].reverse().find((courtId) => !lockedCourtIds.has(courtId));
-          if (!swap) return prev;
-          next = prev.map((courtId) => (courtId === swap ? id : courtId));
-        } else {
-          next = [...prev, id];
-        }
-        setWhere((s) => ({ ...s, courtId: next[0] ?? '' }));
-        setCourtCount((count) => Math.min(Math.max(count, next.length, 1), Math.max(maxCourtCount, next.length)));
-        return next;
-      });
-    },
-    [slotModel, lockedCourtIds, maxCourtCount],
-  );
-
-  const handleEditCourtIdsSync = useCallback((ids: string[]) => {
-    setSelectedCourtIds(ids);
-    setWhere((s) => ({ ...s, courtId: ids[0] ?? '' }));
-    setCourtCount((count) => Math.max(count, ids.length, 1));
-  }, []);
-
-  /** The new window from the plain time editor (never for planner-managed games). */
-  const editedWindow = useMemo(() => {
-    if (timeManagedByPlanner || !whenSelectedTime || !whenDuration) return null;
-    const start = createDateFromClubTime(whenSelectedDate, whenSelectedTime, selectedClubData);
-    return { startTime: start.toISOString(), endTime: addHours(start, whenDuration).toISOString() };
-  }, [timeManagedByPlanner, whenSelectedDate, whenSelectedTime, whenDuration, selectedClubData]);
-
-  const claimChecksOn =
-    isOpen && activeTab === 'locationTime' && slotModel && !gameOnly && !timeManagedByPlanner && Boolean(editedWindow);
-  const dayKey = whenSelectedDate.toDateString();
-  const dayBookingsQuery = useQuery({
-    queryKey: ['editGameClubDayBookings', where.clubId, dayKey],
-    queryFn: () => fetchBookedCourtsForDay({ clubId: where.clubId, selectedDate: whenSelectedDate, club: selectedClubData }),
-    enabled: claimChecksOn && Boolean(where.clubId),
-    staleTime: 30_000,
-  });
-  const clubConflicts = useMemo(() => {
-    if (!claimChecksOn || !editedWindow || !dayBookingsQuery.data) return [];
-    return findClubBookingConflicts(dayBookingsQuery.data, selectedCourtIds, {
-      startMs: Date.parse(editedWindow.startTime),
-      endMs: Date.parse(editedWindow.endTime),
-    });
-  }, [claimChecksOn, editedWindow, dayBookingsQuery.data, selectedCourtIds]);
-  // Checked against the organizer's own club account (same club only: a booking links to this game's club).
-  const ownClubBookings = useOwnClubBookings({
-    game,
-    club: selectedClubData,
-    courts: modalCourts,
-    selectedDate: whenSelectedDate,
-    enabled: claimChecksOn && !clubChanged && clubConflicts.length > 0,
-  });
-  const verdictOf = useCallback(
-    (conflict: ClubBookingConflict) =>
-      editedWindow
-        ? verifyClubBookingConflict(
-            conflict,
-            { startMs: Date.parse(editedWindow.startTime), endMs: Date.parse(editedWindow.endTime) },
-            ownClubBookings,
-          )
-        : ({ kind: 'unknown' } as const),
-    [editedWindow, ownClubBookings],
-  );
-  const providerName = providerDisplayName(selectedClubData?.integrationType ?? null);
-  const initiallyReported = useMemo(() => new Set(initialReportedKey ? initialReportedKey.split(',') : []), [initialReportedKey]);
-  const openConflicts = clubConflicts.filter((c) => !ownBookingSet.has(c.courtId) && !linkSet.has(c.courtId));
-  const linkedConflicts = clubConflicts.filter((c) => linkSet.has(c.courtId) && linkChoices[c.courtId]);
-  const claimPromptVerdict = useMemo(
-    () => (claimPrompt ? summarizeVerdicts(claimPrompt.map(verdictOf)) : 'unknown'),
-    [claimPrompt, verdictOf],
-  );
-  const claimedConflicts = clubConflicts.filter(
-    (c) => ownBookingSet.has(c.courtId) && (clubChanged || !initiallyReported.has(c.courtId)),
-  );
-  const clubClock = useMemo(
-    () =>
-      createClubTimeFormatter({
-        timeZone: getClubTimezone(game) ?? selectedClubData?.city?.timezone ?? 'UTC',
-        locale: displaySettings.locale,
-        hour12: displaySettings.hour12,
-      }),
-    [game, selectedClubData, displaySettings.locale, displaySettings.hour12],
-  );
-  const courtNameOf = useCallback(
-    (courtId: string) =>
-      modalCourts.find((c) => c.id === courtId)?.name ??
-      courts.find((c) => c.id === courtId)?.name ??
-      game.gameCourts?.find((gc) => gc.courtId === courtId)?.court?.name ??
-      (game.court?.id === courtId ? game.court.name : undefined) ??
-      '',
-    [modalCourts, courts, game.gameCourts, game.court],
-  );
-  const claimCourts = useCallback((courtIds: readonly string[]) => {
-    setOwnBookingCourtIds((prev) => [...new Set([...prev, ...courtIds])]);
-  }, []);
-  const chooseOwnBooking = useCallback((courtId: string, booking: OwnClubBooking) => {
-    setLinkChoices((prev) => ({ ...prev, [courtId]: booking }));
-  }, []);
-  const unchooseOwnBooking = useCallback((courtId: string) => {
-    setLinkChoices((prev) => {
-      const next = { ...prev };
-      delete next[courtId];
-      return next;
-    });
-  }, []);
-  const unclaimCourt = useCallback((courtId: string) => {
-    setOwnBookingCourtIds((prev) => prev.filter((id) => id !== courtId));
-  }, []);
 
   const initialGeneral = useMemo(() => getInitialGeneralState(game), [game]);
   const initialPrice = useMemo(() => getInitialPriceState(game, userCurrency), [game, userCurrency]);
@@ -595,18 +175,7 @@ export const EditGameInfoModal = ({
         (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null) ||
         JSON.stringify(cleanPaymentMethods(price.paymentMethods)) !==
           JSON.stringify(cleanPaymentMethods(initialPrice.paymentMethods))));
-  const scheduleDirty =
-    clubChanged ||
-    bookingMode !== initialBookingMode ||
-    claimsDirty ||
-    (!gameOnly && linkSet.size > 0) ||
-    selectedCourtIds.join(',') !== initialCourtIdsKey ||
-    (slotModel && courtCount !== currentCourtSlotCount(game)) ||
-    (!timeManagedByPlanner &&
-      (whenSelectedTime !== whenInitialValues.initialTime ||
-        whenDuration !== whenInitialValues.initialDuration ||
-        whenSelectedDate.toDateString() !== whenInitialValues.initialDate.toDateString()));
-  const isDirty = generalDirty || priceDirty || scheduleDirty || participantsDirty;
+  const isDirty = generalDirty || priceDirty || participantsDirty;
 
   const handleRequestClose = useCallback(() => {
     if (isSaving || participantsSaving) return;
@@ -619,73 +188,9 @@ export const EditGameInfoModal = ({
 
   useBackButtonModal(isOpen, handleRequestClose, 'edit-game-info-modal');
 
-  const handleRemoveTime = async () => {
-    if (!game.id) return;
-    setIsSaving(true);
-    try {
-      await gamesApi.update(game.id, { timeIsSet: false });
-      const response = await gamesApi.getById(game.id);
-      onGameUpdate?.(response.data);
-      toast.success(t('gameDetails.timeRemoved'));
-      setShowConfirmRemoveTime(false);
-      onClose();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'errors.generic';
-      toast.error(t(msg, { defaultValue: msg }));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const validatePrice = (): boolean => {
     if (price.priceType !== 'NOT_KNOWN' && price.priceType !== 'FREE') {
       if (price.priceTotal == null || price.priceTotal <= 0) return false;
-    }
-    return true;
-  };
-
-  const runBookingOverlapGate = async (): Promise<boolean> => {
-    if (!where.clubId || !editedWindow || selectedCourtIds.length === 0) return true;
-    const scheduleUnchanged =
-      !clubChanged &&
-      selectedCourtIds.join(',') === initialCourtIdsKey &&
-      whenSelectedTime === whenInitialValues.initialTime &&
-      whenDuration === whenInitialValues.initialDuration &&
-      whenSelectedDate.toDateString() === whenInitialValues.initialDate.toDateString();
-    if (scheduleUnchanged) return true;
-
-    const club = clubs.find((c) => c.id === where.clubId);
-    try {
-      const courtIds = new Set(selectedCourtIds);
-      const bookings = (
-        await fetchBookedCourtsForDay({ clubId: where.clubId, selectedDate: whenSelectedDate, club })
-      ).filter((b) => b.courtId != null && courtIds.has(b.courtId));
-      if (!gameOnly && slotModel) {
-        const unclaimed = findClubBookingConflicts(bookings, selectedCourtIds, {
-          startMs: Date.parse(editedWindow.startTime),
-          endMs: Date.parse(editedWindow.endTime),
-        }).filter((c) => !ownBookingSet.has(c.courtId) && !linkSet.has(c.courtId));
-        if (unclaimed.length > 0) {
-          setActiveTab('locationTime');
-          setClaimPrompt(unclaimed);
-          return false;
-        }
-      }
-      const overlap = checkBookingOverlap(
-        // Club bookings on claimed courts are the organizer's own; game only checks nothing at the club.
-        gameOnly ? bookings.filter((b) => !b.clubBooked && !b.holdBlocked) : bookings.filter((b) => !(b.courtId && (ownBookingSet.has(b.courtId) || linkSet.has(b.courtId)) && b.clubBooked && !b.holdBlocked)),
-        whenSelectedTime,
-        whenDuration,
-        club,
-        { excludeGameId: game.id },
-      );
-      if ((!gameOnly && overlap.reservedGameCount > 0) || overlap.hasSoftOverlap) {
-        setOverlapKind(overlap.reservedGameCount > 0 ? 'reserved' : 'soft');
-        setSoftOverlapOpen(true);
-        return false;
-      }
-    } catch {
-      /* proceed: the server's clash guard still answers */
     }
     return true;
   };
@@ -702,31 +207,11 @@ export const EditGameInfoModal = ({
       return;
     }
 
-    setIsSaving(true);
-    try {
-      const overlapOk = await runBookingOverlapGate();
-      if (!overlapOk) {
-        setIsSaving(false);
-        return;
-      }
-
-      await executeSave();
-    } catch {
-      setIsSaving(false);
-    }
+    await executeSave();
   };
 
-  const executeSave = async (claimOverride?: readonly string[], linkOverride?: readonly OwnClubBooking[]) => {
+  const executeSave = async () => {
     if (!game.id) return;
-    const links = gameOnly
-      ? []
-      : [...[...linkSet].map((courtId) => linkChoices[courtId]), ...(linkOverride ?? [])].filter(
-          (b, i, all) => all.findIndex((x) => x.externalBookingId === b.externalBookingId) === i,
-        );
-    const linkedCourts = new Set(links.map((b) => b.courtId));
-    // A linked court is reserved by its link, never also marked.
-    const reportedCourtIds = new Set([...ownBookingSet, ...(claimOverride ?? [])].filter((id) => !linkedCourts.has(id)));
-
     setIsSaving(true);
     try {
       if (general.pendingAvatar) {
@@ -749,32 +234,6 @@ export const EditGameInfoModal = ({
 
       await gamesApi.update(game.id, updateData);
 
-      // Link the organizer's own reservations before the time moves: the clash guard then sees them as this game's.
-      for (const booking of links) {
-        await courtSlotsApi.linkBooking(game.id, booking.body);
-      }
-
-      if (scheduleDirty || links.length > 0) {
-        await saveEditLocationTime(
-          game.id,
-          buildEditLocationTimeRequests({
-            game,
-            clubId: where.clubId,
-            courtIds: selectedCourtIds,
-            slotModel,
-            courtSlotCount: slotModel ? courtCount : null,
-            time: editedWindow,
-            courtBookingMode: bookingMode !== initialBookingMode ? bookingMode : undefined,
-            reportedCourtIds: slotModel && !gameOnly ? reportedCourtIds : undefined,
-          }),
-        );
-      }
-
-      if (where.clubId && where.clubId !== game.clubId) {
-        const res = await courtsApi.getByClubId(where.clubId, { sport: game.sport });
-        onCourtsChange?.(res.data);
-      }
-
       const response = await gamesApi.getById(game.id);
       onGameUpdate?.(response.data);
       toast.success(t('gameDetails.settingsUpdated'));
@@ -787,18 +246,6 @@ export const EditGameInfoModal = ({
       }
       onClose();
     } catch (err: unknown) {
-      const clash = courtClashDetails(err);
-      if (clash) {
-        const clock = createClubTimeFormatter({
-          timeZone: getClubTimezone(game) ?? selectedClubData?.city?.timezone ?? 'UTC',
-          locale: displaySettings.locale,
-          hour12: displaySettings.hour12,
-        });
-        const message = describeCourtClash(clash, (id) => modalCourts.find((c) => c.id === id)?.name, clock.time);
-        toast.error(t(message.key, message.params));
-        setActiveTab('locationTime');
-        return;
-      }
       const axiosErr = err as {
         response?: { data?: { message?: string; externalBookingId?: string } };
       };
@@ -864,124 +311,6 @@ export const EditGameInfoModal = ({
               onChange={(patch) => setGeneral((s) => ({ ...s, ...patch }))}
               avatarPreviewUrl={avatarPreviewUrl}
             />
-          )}
-          {activeTab === 'locationTime' && (
-            <div className="space-y-4">
-              <LocationTimeTab
-                game={game}
-                entityType={game.entityType}
-                clubs={clubs}
-                courts={modalCourts}
-                selectedClub={where.clubId}
-                selectedCourtIds={selectedCourtIds}
-                onSelectClub={(id, club) => {
-                  if (club) {
-                    onClubsChange?.(clubs.some((c) => c.id === club.id)
-                      ? clubs.map((c) => c.id === club.id ? club : c)
-                      : [...clubs, club]);
-                  }
-                  if (club?.cityId) setVenueCityId(club.cityId);
-                  setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
-                  setSelectedCourtIds([]);
-                  setOwnBookingCourtIds([]);
-                  setLinkChoices({});
-                }}
-                onVenueCityChange={(id) => {
-                  if (id === venueCityId) return;
-                  setVenueCityId(id);
-                  setWhere((s) => ({ ...s, clubId: '', courtId: '' }));
-                  setSelectedCourtIds([]);
-                }}
-                venueCityId={venueCityId}
-                slotModel={slotModel}
-                onToggleCourt={handleEditCourtToggle}
-                onSetCourtIds={handleEditCourtIdsSync}
-                lockedCourtIds={lockedCourtIds}
-                courtCount={Math.max(courtCount, selectedCourtIds.length, 1)}
-                maxCourtCount={Math.max(maxCourtCount, selectedCourtIds.length)}
-                onCourtCountChange={(count) =>
-                  // An older game above the cap can only shrink.
-                  setCourtCount((prev) => Math.max(Math.min(count, Math.max(maxCourtCount, prev)), selectedCourtIds.length, 1))
-                }
-                clubLocked={clubLocked}
-                timeManagedByPlanner={timeManagedByPlanner}
-                bookingMode={bookingMode}
-                onBookingModeChange={setBookingMode}
-                gameOnlyLocked={clubLocked}
-                ownClubBookingCourtIds={gameOnly ? undefined : [...ownBookingSet]}
-                claimSection={
-                  !gameOnly && (openConflicts.length > 0 || claimedConflicts.length > 0) ? (
-                    <ClubBookingClaimCard
-                      open={openConflicts}
-                      claimed={claimedConflicts}
-                      linked={linkedConflicts.map((conflict) => ({ conflict, booking: linkChoices[conflict.courtId] }))}
-                      courtName={courtNameOf}
-                      formatTime={clubClock.time}
-                      verdictOf={verdictOf}
-                      providerName={providerName}
-                      onClaim={(courtId) => claimCourts([courtId])}
-                      onUndo={unclaimCourt}
-                      onUseOwn={chooseOwnBooking}
-                      onUndoOwn={unchooseOwnBooking}
-                      onGameOnly={() => setBookingMode('GAME_ONLY')}
-                    />
-                  ) : null
-                }
-                onRequestReschedule={
-                  onRequestReschedule
-                    ? () => {
-                        if (isDirty) {
-                          toast(t('gameDetails.courts.saveFirst'));
-                          return;
-                        }
-                        onRequestReschedule();
-                      }
-                    : undefined
-                }
-                selectedDate={whenSelectedDate}
-                selectedTime={whenSelectedTime}
-                duration={whenDuration}
-                showDatePicker={whenShowDatePicker}
-                onDateChange={(d) => {
-                  setWhenSelectedDate(d);
-                  setHookDate(d);
-                }}
-                onTimeChange={(timeValue) => {
-                  setWhenSelectedTime(timeValue);
-                  setHookTime(timeValue);
-                }}
-                onDurationChange={(d) => {
-                  setWhenDuration(d);
-                  setHookDuration(d);
-                }}
-                onShowDatePickerChange={setWhenShowDatePicker}
-                generateTimeOptions={generateTimeOptions}
-                generateTimeOptionsForDate={generateTimeOptionsForDate}
-                canAccommodateDuration={canAccommodateDuration}
-                getAdjustedStartTime={getAdjustedStartTime}
-                getTimeSlotsForDuration={getTimeSlotsForDuration}
-                isSlotHighlighted={isSlotHighlighted}
-                dateInputRef={{ current: null }}
-                panelRef={locationTimePanelRef}
-              />
-              {showClubPoliciesFooter || weatherPreviewTiming ? (
-                <div className="space-y-3">
-                  {showClubPoliciesFooter && selectedClubData ? (
-                    <ClubPoliciesBlock club={selectedClubData} entityType={game.entityType} />
-                  ) : null}
-                  {weatherPreviewTiming ? (
-                    <WeatherPreviewCard
-                      cityId={weatherPreviewTiming.cityId}
-                      startTime={weatherPreviewTiming.startTime}
-                      endTime={weatherPreviewTiming.endTime}
-                      enabled={game.entityType !== 'BAR'}
-                      locale={displaySettings.locale}
-                      hour12={displaySettings.hour12}
-                    />
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
           )}
           {activeTab === 'price' && (
             <PriceTab
@@ -1086,55 +415,6 @@ export const EditGameInfoModal = ({
       message={t('gameDetails.editModal.discardMessage')}
       confirmText={t('gameDetails.editModal.discardConfirm')}
       cancelText={t('gameDetails.editModal.keepEditing')}
-      confirmVariant="danger"
-    />
-
-    <ConfirmationModal
-      isOpen={softOverlapOpen}
-      tone="warning"
-      title={t('createGame.overlapSoftTitle')}
-      message={t(overlapKind === 'reserved' ? 'gameDetails.courts.overlapReserved' : 'createGame.overlapSoftMessage')}
-      confirmText={t('createGame.overlapSoftProceed')}
-      cancelText={t('common.cancel')}
-      onConfirm={() => {
-        setSoftOverlapOpen(false);
-        void executeSave();
-      }}
-      onClose={() => setSoftOverlapOpen(false)}
-    />
-
-    <ClubBusySavePrompt
-      conflicts={claimPrompt}
-      courtName={courtNameOf}
-      formatTime={clubClock.time}
-      verdict={claimPromptVerdict}
-      providerName={providerName}
-      onUseOwnAndSave={() => {
-        const own = (claimPrompt ?? []).map(verdictOf).flatMap((v) => (v.kind === 'own' ? [v.booking] : []));
-        setClaimPrompt(null);
-        for (const booking of own) chooseOwnBooking(booking.courtId, booking);
-        void executeSave(undefined, own);
-      }}
-      onPickAnother={() => setClaimPrompt(null)}
-      onClaimAndSave={(courtIds) => {
-        setClaimPrompt(null);
-        claimCourts(courtIds);
-        void executeSave(courtIds);
-      }}
-      onGameOnly={() => {
-        setClaimPrompt(null);
-        setBookingMode('GAME_ONLY');
-      }}
-    />
-
-    <ConfirmationModal
-      isOpen={showConfirmRemoveTime}
-      onClose={() => setShowConfirmRemoveTime(false)}
-      onConfirm={() => void handleRemoveTime()}
-      title={t('gameDetails.removeTime')}
-      message={t('gameDetails.removeTimeConfirmation')}
-      confirmText={isSaving ? t('common.removing') : t('common.remove')}
-      cancelText={t('common.cancel')}
       confirmVariant="danger"
     />
 

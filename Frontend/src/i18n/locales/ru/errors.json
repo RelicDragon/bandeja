@@ -139,7 +139,8 @@
       "legacyExternalBookingIdRejected": "Устаревшее поле бронирования удалено. Используйте externalBookingIds и PATCH /games/:id/bookings.",
       "companyIdRequired": "Для интеграции бронирования клуба нужен company ID.",
       "integrationTypeMustBeOnlineBooking": "Интеграция клуба должна быть онлайн-бронированием.",
-      "rollbackFailed": "Не удалось подтвердить отмену бронирования."
+      "rollbackFailed": "Не удалось подтвердить отмену бронирования.",
+      "removeBookingsBeforeClearing": "Сначала уберите или отмените брони кортов."
     },
     "cost": {
       "paymentMethod": {

@@ -38,11 +38,15 @@ describe('courtReservation i18n keys', () => {
     expect(all.filter((key) => !exists(toNamespaceKey(key)))).toEqual([]);
   });
 
-  it('never uses the forbidden vocabulary', () => {
-    // "Game only" is the explicit opt-out mode (`Game.courtBookingMode = GAME_ONLY`) and may only
-    // appear as its own label/hint — never as a word for a planned, unreserved court.
-    const { gameOnly: _label, gameOnlyHint: _hint, ...card } = en.courtReservation.card;
-    const text = JSON.stringify({ ...en.courtReservation, card }).toLowerCase();
-    for (const word of ['game only', 'fully booked', 'booked']) expect(text).not.toContain(word);
+  it('says "booked" one way: three court states, never "Game only" or "fully booked"', () => {
+    // Every court is Booked · <provider> (checked at the club), Booked by organizer (their word) or
+    // Not booked yet (docs/domains/booking.md "Court states").
+    expect(en.courtReservation.slot.planned).toBe('Not booked yet');
+    expect(en.courtReservation.slot.reported).toBe('Booked by organizer');
+    expect(en.courtReservation.slot.linked).toBe('Booked · {{provider}}');
+    const values = (node: unknown): string[] =>
+      typeof node === 'string' ? [node] : node && typeof node === 'object' ? Object.values(node).flatMap(values) : [];
+    const text = values(en.courtReservation).join('\n').toLowerCase();
+    for (const word of ['game only', 'fully booked', 'marked as reserved', 'reservation']) expect(text).not.toContain(word);
   });
 });

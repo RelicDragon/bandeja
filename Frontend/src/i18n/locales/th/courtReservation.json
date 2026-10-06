@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "วางแผนไว้",
-      "reported": "ทำเครื่องหมายว่าจองแล้ว",
+      "planned": "ยังไม่ได้จอง",
+      "reported": "ผู้จัดจองแล้ว",
       "linked": "จองแล้ว · {{provider}}",
       "unknownTime": "จองแล้ว · {{provider}} · ไม่ทราบเวลา",
-      "gap": "ช่วงว่าง {{from}}–{{to}}"
+      "gap": "ช่วงว่าง {{from}}–{{to}}",
+      "noTime": "ยังไม่มีเวลา"
     },
     "summary": {
-      "planned": "วางแผนไว้",
+      "planned": "ยังไม่ได้จอง",
       "partial": "จองแล้ว {{reserved}} จาก {{total}}",
-      "reserved": "จองครบทุกคอร์ตแล้ว",
-      "reservedWithGap": "จองแล้ว มีช่วงว่างเวลา {{time}}",
-      "reported": "ทำเครื่องหมายว่าจองแล้ว"
+      "reserved": "จองครบทุกคอร์ต",
+      "reservedWithGap": "จองแล้ว มีช่องว่างเวลา {{time}}",
+      "reported": "ผู้จัดจองแล้ว"
     },
     "reschedule": {
       "unchanged": "ไม่เปลี่ยน",
@@ -32,17 +33,15 @@
       "shortM": "{{m}} น."
     },
     "card": {
-      "title": "คอร์ต",
       "players_other": "ผู้เล่น {{count}} คน",
       "courts_other": "{{count}} คอร์ต",
       "anyCourt": "คอร์ตใดก็ได้",
-      "noTime": "ตั้งเวลาเพื่อดูว่าเกมถูกครอบคลุมแค่ไหน",
-      "count": "จำนวนคอร์ต",
-      "fewer": "ลดหนึ่งคอร์ต",
-      "more": "เพิ่มหนึ่งคอร์ต",
-      "gameOnly": "เฉพาะเกม",
-      "gameOnlyHint": "ผู้จัดเป็นผู้จัดการคอร์ตกับคลับเอง",
-      "useClubBooking": "ใช้การจองผ่านคลับแทน"
+      "titleOne": "คอร์ต",
+      "titleMany": "คอร์ต",
+      "change": "เปลี่ยน",
+      "noDateTime": "ยังไม่ได้ตั้งวันและเวลา",
+      "noClub": "ยังไม่มีคลับ เลือกคลับเพื่อเลือกและจองคอร์ต",
+      "tooMany_other": "ผู้เล่น {{players}} คนต้องใช้ {{count}} คอร์ต เลือกคอร์ตที่จะเก็บไว้"
     },
     "action": {
       "reserveCourt": "จองคอร์ต",
@@ -50,41 +49,51 @@
       "reserveLast": "จองคอร์ตสุดท้าย",
       "reserveRemaining_other": "จองอีก {{count}} คอร์ตที่เหลือ",
       "fillGap": "เติมช่วงว่าง {{duration}}",
-      "fillGaps": "เติมช่วงว่างทั้งหมด"
+      "fillGaps": "เติมช่วงว่างทั้งหมด",
+      "pickClub": "เลือกคลับ",
+      "setTime": "ตั้งวันและเวลา",
+      "chooseCourts": "เลือกคอร์ตที่จะเก็บไว้",
+      "useOwn": "ใช้การจอง {{provider}} ของคุณ",
+      "useOwnPlain": "ใช้การจองของคุณ",
+      "bookCourt": "จอง {{court}}",
+      "bookAnyCourt": "จองคอร์ต",
+      "bookMore_other": "จองเพิ่มอีก {{count}} คอร์ต",
+      "bookCourts_other": "จอง {{count}} คอร์ต"
     },
     "sheet": {
       "game": "เกม",
       "reservationAt": "การจอง · {{provider}}",
       "timeUnknown": "ไม่ทราบเวลา",
-      "reportedHint": "คุณแจ้งว่าคอร์ตนี้จองกับสโมสรแล้ว",
-      "plannedHint": "คอร์ตนี้ยังไม่มีการจอง",
+      "reportedHint": "ผู้จัดจองกับคลับแล้ว แอปตรวจสอบไม่ได้",
+      "plannedHint": "คอร์ตนี้ยังไม่ได้จอง",
       "alsoUsedBy": "{{name}} ใช้ด้วย {{from}}–{{to}}",
       "pickCourt": "คอร์ตไหน?",
       "action": {
-        "reserve": "จองเลย",
-        "link": "เชื่อมการจองของฉัน",
-        "linkReported": "เชื่อมการจอง",
-        "markReserved": "ทำเครื่องหมายว่าจองแล้ว",
-        "markNotReserved": "ทำเครื่องหมายว่ายังไม่จอง",
-        "verify": "ตรวจสอบ",
-        "unlink": "ยกเลิกการเชื่อม",
-        "cancelAtClub": "ยกเลิกที่สโมสร",
         "changeCourt": "เปลี่ยนคอร์ต",
         "useCourtOnly": "ใช้ {{court}} ไว้ก่อน จองทีหลัง",
         "useCourtInstead": "ใช้ {{court}} แทน",
-        "keepCourt": "ใช้ {{court}} เหมือนเดิม"
-      }
+        "keepCourt": "ใช้ {{court}} เหมือนเดิม",
+        "useOwn": "ใช้การจองนี้",
+        "bookAt": "จองที่ {{club}}",
+        "linkExisting": "ใช้การจองที่ฉันจองไว้แล้ว",
+        "linkReal": "เชื่อมการจองจริง",
+        "bookedIt": "ฉันจองแล้ว",
+        "bookedOtherWay": "ฉันจองด้วยวิธีอื่น",
+        "mineOtherWay": "เป็นของฉัน ฉันจองด้วยวิธีอื่น",
+        "notBooked": "สรุปว่ายังไม่ได้จอง",
+        "removeFromGame": "นำออกจากเกม",
+        "cancelAt": "ยกเลิกที่ {{club}}",
+        "checkAgain": "ตรวจสอบอีกครั้งที่ {{club}}",
+        "setTime": "ตั้งวันและเวลา"
+      },
+      "noTimeHint": "ตั้งวันและเวลาของเกมก่อน คอร์ตจองได้เฉพาะเมื่อมีเวลา",
+      "ownFound": "พบในบัญชี {{provider}} ของคุณ",
+      "busy": "ที่ {{club}} มีคนจองช่วง {{range}}",
+      "busyNotYours": "ที่ {{club}} มีคนจองช่วง {{range}} และไม่อยู่ในบัญชีของคุณ น่าจะเป็นการจองของคนอื่น",
+      "booksByPhone": "คลับนี้รับจองทางโทรศัพท์: {{phone}}",
+      "theClub": "คลับ"
     },
     "move": {
-      "title": "เปลี่ยนเวลา",
-      "dragLabel": "เวลาเกม",
-      "dragHint": "ลากเกม หรือใช้ปุ่มด้านล่าง",
-      "start": "เริ่ม",
-      "length": "ความยาว",
-      "earlier": "เร็วขึ้น 15 นาที",
-      "later": "ช้าลง 15 นาที",
-      "shorter": "สั้นลง 15 นาที",
-      "longer": "ยาวขึ้น 15 นาที",
       "courtsLabel": "สิ่งที่เกิดกับแต่ละคอร์ต",
       "notice_other": "ผู้เล่น {{count}} คนจะได้รับการแจ้งเตือนเวลาใหม่หนึ่งครั้ง",
       "option": {
@@ -110,7 +119,6 @@
       "change": "เปลี่ยน",
       "changeFor": "เปลี่ยนสิ่งที่จะเกิดกับ {{court}}",
       "unchanged": "{{courts}} · ไม่เปลี่ยน",
-      "sliderValue": "เริ่ม {{start}} จบ {{end}}",
       "why": {
         "notAvailable": "คอร์ตนี้ไม่ว่างในเวลาใหม่",
         "keep": "การจองเดิมยังครอบคลุมเวลาใหม่",
@@ -220,16 +228,6 @@
       "gameUnnamed": "เกมอื่นใช้ {{court}} ตอน {{time}}",
       "plannedGame": "{{name}} วางแผนไว้ที่ {{court}} ตอน {{time}}",
       "plannedGameUnnamed": "มีเกมอื่นวางแผนไว้ที่ {{court}} ตอน {{time}}"
-    },
-    "timeline": {
-      "free": "ว่าง",
-      "movesTo": "ย้ายไป {{court}}",
-      "legend": {
-        "reserved": "การจองของคุณ",
-        "reported": "จองผ่านคลับ",
-        "club": "คลับจองไว้",
-        "game": "เกมอื่น"
-      }
     }
   }
 }

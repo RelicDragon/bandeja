@@ -1,42 +1,50 @@
 /**
- * Courts on the game page — the one place a game's court slots and their
- * reservations live (replaces the old "multiple courts" card and the linked
- * bookings section). Everyone sees the `CourtsCard`; organizers also get:
- *  - row tap → `CourtSlotSheet` (reserve now, link my reservation, mark as
- *    reserved / not reserved, verify, unlink, cancel at the club);
- *  - the court-count stepper and the card's one primary action;
- *  - club-side drift (`ReservationDriftBanner`), an unfinished reservation
- *    change (`UnfinishedChangesBanner`) and "to do at the club" follow-ups;
- *  - the reschedule planner (`RescheduleSheet`), opened by the page's
- *    "change time" entries (`rescheduleOpen`).
- * Every write goes through `@/api/courtSlots` (`?timePolicy=explicit`); its
- * response is applied to the game at once (`applyCourtSlotsWrite`) and the
- * full game is re-fetched in the background. Only one sheet is open at a time:
- * an action that succeeds closes the slot sheet (a failure stays inline), and
- * opening the reschedule planner closes the slot / link sheets.
- * Domain: docs/domains/booking.md (Court slots, Clash guard, Club-side drift,
- * Reschedule journal).
+ * Court(s) on the game page — the one place a game's courts, their bookings
+ * and the "When and where" editor live (docs/domains/booking.md "Game page").
+ * Everyone sees the `CourtsCard`; organizers also get:
+ *  - "Change" (and every change-time / club / court entry of the page) →
+ *    `GameScheduleSheet`, which also runs the club changes when a game with
+ *    bookings moves (the runner lives here, so the card's "unfinished
+ *    changes" notice and the editor share one run);
+ *  - row tap → `CourtSlotSheet` (use my booking found at the club, book now,
+ *    use a booking I already made, I booked it another way, link the real
+ *    booking, not booked after all, remove from game, cancel at the club,
+ *    check again);
+ *  - the card's one main button (pick a club, set a time, choose the courts
+ *    to keep, use my booking, book, fill a gap);
+ *  - club-side drift, an unfinished change and "to do at the club"
+ *    follow-ups, inside the card.
+ * Removing a booking from the game and cancelling it at the club both ask
+ * first. Every write goes through `@/api/courtSlots` (`?timePolicy=explicit`);
+ * its response is applied to the game at once (`applyCourtSlotsWrite`) and
+ * the full game is re-fetched in the background. Only one sheet is open at a
+ * time. A game without a club shows the card (organizers only) with "Pick a
+ * club". Domain: docs/domains/booking.md (Court slots, Clash guard,
+ * Club-side drift, Reschedule journal).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import type { Club, Court, Game } from '@/types';
 import { defaultCourtSlotCount, type CourtSlotView } from '@shared/gameBooking/courtReservations';
+import { playersPerMatchOf } from '@shared/matchFormat';
+import { parseInstantMs } from '@shared/gameBooking/coverageIntervals';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { planGapFill, type GapFillResult } from '@shared/gameBooking/planReschedule';
 import type { ProviderCapabilityOverrides } from '@shared/gameBooking/providerCapabilities';
 import type { LinkBookingToGameBody } from '@shared/gameBooking/contracts';
 import { booktimeIsoToUtcIso } from '@shared/booktime/localTime';
 import { gamesApi } from '@/api/games';
-import api from '@/api/axios';
 import { courtSlotsApi } from '@/api/courtSlots';
 import { queryClient } from '@/queries/queryClient';
 import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { ClubBusySavePrompt } from '@/components/GameDetails/editGameInfo/ClubBusySavePrompt';
 import { useOwnClubBookings } from '@/components/GameDetails/editGameInfo/useOwnClubBookings';
-import { summarizeVerdicts, verifyClubBookingConflict } from '@/components/GameDetails/editGameInfo/clubBookingClaims';
+import type { OwnClubBooking } from '@/components/GameDetails/editGameInfo/clubBookingClaims';
 import { providerDisplayName } from '@shared/gameBooking/reservationCopy';
+import { GameScheduleSheet } from '@/components/GameDetails/schedule/GameScheduleSheet';
+import type { SchedulePlanner } from '@/components/GameDetails/schedule/schedulePlanner';
 import { createHydratedClubBookingProvider } from '@/integrations/booking/createClubBookingProvider';
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { buildCourtReservationsInput } from '@/utils/courtReservationView';
@@ -48,13 +56,11 @@ import {
   mergeAcceptUpstreamIntoGame,
   mergeLinkedBookingsIntoGame,
   buildCourtSlotsBody,
-  RescheduleSheet,
   ReservationDriftBanner,
   UnfinishedChangesBanner,
   clubFollowUpsFromPayload,
   clubFollowUpsFromRun,
   collectReservationDrifts,
-  courtCountBounds,
   createReservationExecutors,
   createServerJournalLoader,
   createServerRunJournal,
@@ -70,12 +76,15 @@ import {
   type AcceptUpstreamResult,
   type CourtSlotsMutationOutcome,
   type CourtSlotsWriteResult,
-  type CourtsPrimaryAction,
+  type CourtsCardAction,
   type DriftActionKind,
+  type ScheduleFocus,
   type ReservationDrift,
 } from '@/features/court-reservations';
 import type { LinkedBookingPayload } from '@/features/court-reservations/courtReservationsInput';
 import { reportedAnyCourtCountOf } from '@/features/court-reservations/courtReservationsModel';
+import type { EffectiveReschedulePlan } from '@/features/court-reservations/rescheduleChoices';
+import type { IsoInterval } from '@shared/gameBooking/coverageIntervals';
 import {
   buildCourtsById,
   clubCanBookHere,
@@ -92,7 +101,6 @@ import {
   providerCanVerify,
   resolveGameClub,
   timeChangeNoticeCount,
-  type CourtClashDetail,
   type ReserveEntry,
 } from './gameCourtsModel';
 import { gameCourtsQueryKeys, useGameCourtOccupancy, useGameSharedWith } from './useGameCourtsData';
@@ -107,10 +115,18 @@ export type GameCourtsSectionProps = {
   /** Owner/admin while the game is still open. */
   canEdit: boolean;
   onGameUpdate: (game: Game) => void;
-  /** The reschedule planner (organizers; ignored for read-only viewers). */
-  rescheduleOpen?: boolean;
-  onRescheduleOpenChange?: (open: boolean) => void;
+  /** The "When and where" editor (organizers; ignored for read-only viewers). */
+  scheduleOpen?: boolean;
+  scheduleFocus?: ScheduleFocus;
+  onScheduleOpenChange?: (open: boolean, focus?: ScheduleFocus) => void;
+  onCourtsChange?: (courts: Court[]) => void;
+  onClubsChange?: (clubs: Club[]) => void;
 };
+
+/** Courts the roster needs (players ÷ players per court), at least one. */
+function courtNeedOf(game: Game): number {
+  return defaultCourtSlotCount({ maxParticipants: game.maxParticipants, playersPerMatch: playersPerMatchOf(game) });
+}
 
 function courtRefs(courts: readonly Court[]): CourtRef[] {
   return courts.map((c) => ({ id: c.id, name: c.name, externalCourtId: c.externalCourtId ?? null, isIndoor: c.isIndoor }));
@@ -120,10 +136,60 @@ export function GameCourtsSection(props: GameCourtsSectionProps) {
   const { game, clubs, courts, canEdit } = props;
   const club = useMemo(() => resolveGameClub(game, clubs, courts), [game, clubs, courts]);
   if (!gameShowsCourtsSection(game)) return null;
+  // No club yet: only organizers get the card ("Pick a club").
+  if (!club && !canEdit) return null;
   return (
     <div id={GAME_COURTS_SECTION_ID} className="flex scroll-mt-24 flex-col gap-2">
-      {canEdit && club ? <OrganizerCourts {...props} club={club} /> : <ReadOnlyCourts game={game} club={club} />}
+      {canEdit && club ? (
+        <OrganizerCourts {...props} club={club} />
+      ) : canEdit ? (
+        <OrganizerNoClub {...props} />
+      ) : (
+        <ReadOnlyCourts game={game} club={club} />
+      )}
     </div>
+  );
+}
+
+function OrganizerNoClub({
+  game,
+  courts,
+  clubs,
+  onGameUpdate,
+  scheduleOpen = false,
+  scheduleFocus,
+  onScheduleOpenChange,
+  onCourtsChange,
+  onClubsChange,
+}: GameCourtsSectionProps) {
+  const reservations = useMemo(() => deriveGameCourtReservations(game), [game]);
+  const timeZone = getClubTimezone(game) ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return (
+    <>
+      <CourtsCard
+        reservations={reservations}
+        window={gameWindow(game)}
+        courtsById={{}}
+        timeZone={timeZone}
+        courtNeed={courtNeedOf(game)}
+        playerCount={game.maxParticipants}
+        hasClub={false}
+        canEdit
+        onChange={(focus) => onScheduleOpenChange?.(true, focus ?? 'club')}
+      />
+      <GameScheduleSheet
+        open={scheduleOpen}
+        onClose={() => onScheduleOpenChange?.(false)}
+        focus={scheduleFocus}
+        game={game}
+        clubs={clubs}
+        courts={courts}
+        canClear
+        onGameUpdate={onGameUpdate}
+        onCourtsChange={onCourtsChange}
+        onClubsChange={onClubsChange}
+      />
+    </>
   );
 }
 
@@ -136,10 +202,11 @@ function ReadOnlyCourts({ game, club }: { game: Game; club: Club | undefined }) 
       window={gameWindow(game)}
       courtsById={courtsById}
       timeZone={getClubTimezone(game) ?? club?.city?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone}
+      courtNeed={courtNeedOf(game)}
       playerCount={game.maxParticipants}
       clubName={club?.name ?? null}
+      hasClub={Boolean(club)}
       canEdit={false}
-      gameOnly={game.courtBookingMode === 'GAME_ONLY'}
     />
   );
 }
@@ -149,10 +216,14 @@ type ReserveRequest = { entries: ReserveEntry[]; replace?: string[] };
 function OrganizerCourts({
   game,
   courts,
+  clubs,
   club,
   onGameUpdate,
-  rescheduleOpen = false,
-  onRescheduleOpenChange,
+  scheduleOpen = false,
+  scheduleFocus,
+  onScheduleOpenChange,
+  onCourtsChange,
+  onClubsChange,
 }: GameCourtsSectionProps & { club: Club }) {
   const { t } = useTranslation();
   const userId = useAuthStore((state) => state.user?.id ?? null);
@@ -171,6 +242,7 @@ function OrganizerCourts({
   const [gapConfirm, setGapConfirm] = useState<{ entries: ReserveEntry[]; result: GapFillResult } | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [cancelLink, setCancelLink] = useState<LinkedBookingPayload | null>(null);
+  const [confirmUnlink, setConfirmUnlink] = useState<{ slot: CourtSlotView; link: LinkedBookingPayload } | null>(null);
   const [localPending, setLocalPending] = useState<'verify' | 'cancel_at_club' | null>(null);
   const [pendingDrift, setPendingDrift] = useState<string | null>(null);
   const [dismissedFollowUps, setDismissedFollowUps] = useState<ReadonlySet<string>>(() => new Set());
@@ -227,68 +299,51 @@ function OrganizerCourts({
   );
   const showError = useCallback((error: unknown) => void toast.error(errorMessage(error)), [errorMessage]);
 
-  const gameOnly = game.courtBookingMode === 'GAME_ONLY';
-  const [modeBusy, setModeBusy] = useState(false);
-  /** Club booking at a time the club shows busy: "Is this your booking?" */
-  const [modeClash, setModeClash] = useState<CourtClashDetail[] | null>(null);
-  /**
-   * Game only → club booking. The clash guard checks the courts again; when only
-   * the club's own bookings are in the way, they are most likely the organizer's,
-   * so we ask instead of failing.
-   */
-  const switchToClubBooking = useCallback(
-    async (claimCourtIds: readonly string[] = []) => {
-      setModeBusy(true);
-      try {
-        if (claimCourtIds.length > 0) {
-          // Marked reserved first (no clash guard runs in Game only), then the mode flips.
-          const current = buildCourtReservationsInput(gameRef.current);
-          await courtSlotsApi.putCourtSlots(game.id, {
-            slots: current.gameCourts.map((gc) => ({
-              courtId: gc.courtId,
-              reservation: claimCourtIds.includes(gc.courtId) ? 'REPORTED' : gc.reservation,
-            })),
-            reportedAnyCourtCount: current.reportedAnyCourtCount ?? 0,
-          });
-        }
-        await api.put(`/games/${game.id}`, { courtBookingMode: 'CLUB' }, { params: { timePolicy: 'explicit' } });
-        await refresh();
-      } catch (error) {
-        const clash = courtClashDetails(error);
-        if (clash && clash.length > 0 && clash.every((c) => c.kind === 'club') && claimCourtIds.length === 0) {
-          setModeClash(clash);
-        } else {
-          showError(error);
-        }
-      } finally {
-        setModeBusy(false);
-      }
+  const openSchedule = useCallback(
+    (focus?: ScheduleFocus) => {
+      setOpenSlotKey(null);
+      setLinkSlot(null);
+      onScheduleOpenChange?.(true, focus);
     },
-    [game.id, refresh, showError],
+    [onScheduleOpenChange],
   );
 
-  // The club's block may be the organizer's own reservation: check their club account.
-  const clashDate = useMemo(() => new Date(game.startTime), [game.startTime]);
-  const ownClubBookings = useOwnClubBookings({ game, club, courts, selectedDate: clashDate, enabled: modeClash != null });
-  const modeClashVerdicts = useMemo(() => {
-    if (!modeClash || !window) return [];
-    const span = { startMs: Date.parse(window.start), endMs: Date.parse(window.end) };
-    return modeClash.map((c) => verifyClubBookingConflict(c, span, ownClubBookings));
-  }, [modeClash, window, ownClubBookings]);
-  /** Their own reservations: linking them flips the game back to club booking on the server ("links win"). */
-  const linkOwnAndUseClub = useCallback(async () => {
-    const own = modeClashVerdicts.flatMap((v) => (v.kind === 'own' ? [v.booking] : []));
-    setModeClash(null);
-    setModeBusy(true);
-    try {
-      for (const booking of own) await courtSlotsApi.linkBooking(game.id, booking.body);
-      await refresh();
-    } catch (error) {
-      showError(error);
-    } finally {
-      setModeBusy(false);
+  /* ---------------- the organizer's own club bookings ---------------- */
+
+  // A court the club shows busy may be the organizer's own booking: check their club account.
+  const gameDate = useMemo(() => new Date(game.startTime), [game.startTime]);
+  const anyOpen = reservations.slots.some((s) => s.state !== 'linked');
+  const ownClubBookings = useOwnClubBookings({
+    game,
+    club,
+    courts,
+    selectedDate: gameDate,
+    enabled: window != null && anyOpen && clubHasBookingIntegration(club),
+  });
+  /** Per not-yet-linked slot: an own booking on its court overlapping the game (each booking used once). */
+  const ownBySlot = useMemo(() => {
+    const out: Record<string, OwnClubBooking> = {};
+    if (!ownClubBookings || !window) return out;
+    const ws = parseInstantMs(window.start) ?? 0;
+    const we = parseInstantMs(window.end) ?? 0;
+    const used = new Set<string>();
+    const overlaps = (b: OwnClubBooking) => Date.parse(b.start) < we && Date.parse(b.end) > ws;
+    const open = reservations.slots.filter((s) => s.state !== 'linked');
+    // Courts first, then "Any court" slots take what is left.
+    for (const slot of [...open.filter((s) => s.effectiveCourtId), ...open.filter((s) => !s.effectiveCourtId)]) {
+      const match = ownClubBookings.find(
+        (b) => !used.has(b.externalBookingId) && overlaps(b) && (!slot.effectiveCourtId || b.courtId === slot.effectiveCourtId),
+      );
+      if (match) {
+        used.add(match.externalBookingId);
+        out[slot.key] = match;
+      }
     }
-  }, [modeClashVerdicts, game.id, refresh, showError]);
+    return out;
+  }, [ownClubBookings, window, reservations.slots]);
+  const ownBookingSlotKeys = useMemo(() => new Set(Object.keys(ownBySlot)), [ownBySlot]);
+  const providerName = providerDisplayName(club.integrationType ?? null);
+
 
   // Errors are reported per call site: inline in the slot sheet, toast elsewhere.
   const mutations = useCourtSlotsMutations({
@@ -298,6 +353,15 @@ function OrganizerCourts({
     courtSlotCount: game.courtSlotCount ?? null,
     onChanged: applyWrite,
   });
+
+  const linkOwnBooking = useCallback(
+    async (slot: CourtSlotView): Promise<CourtSlotsMutationOutcome | null> => {
+      const booking = ownBySlot[slot.key];
+      if (!booking) return null;
+      return mutations.linkBooking(slot.courtId ? slot : { ...slot, courtId: booking.courtId }, booking.body);
+    },
+    [ownBySlot, mutations],
+  );
 
   const openSheet = useCallback((key: string | null) => {
     setSheetError(null);
@@ -335,21 +399,21 @@ function OrganizerCourts({
   });
   const { journal, unfinished, busy: runnerBusy, dismiss: dismissRun } = runner;
 
-  // One sheet at a time: the reschedule planner replaces the slot / link sheets.
+  // One sheet at a time: the editor replaces the slot / link sheets.
   useEffect(() => {
-    if (!rescheduleOpen) return;
+    if (!scheduleOpen) return;
     setOpenSlotKey(null);
     setLinkSlot(null);
     setSheetError(null);
-  }, [rescheduleOpen]);
+  }, [scheduleOpen]);
 
-  // A fresh "change time" never opens on the last finished run's checklist.
-  const wasRescheduleOpen = useRef(false);
+  // A fresh "change" never opens on the last finished run's checklist.
+  const wasScheduleOpen = useRef(false);
   useEffect(() => {
-    const opened = rescheduleOpen && !wasRescheduleOpen.current;
-    wasRescheduleOpen.current = rescheduleOpen;
+    const opened = scheduleOpen && !wasScheduleOpen.current;
+    wasScheduleOpen.current = scheduleOpen;
     if (opened && journal && !unfinished && !runnerBusy && journal.phase !== 'running') dismissRun();
-  }, [rescheduleOpen, journal, unfinished, runnerBusy, dismissRun]);
+  }, [scheduleOpen, journal, unfinished, runnerBusy, dismissRun]);
 
   const linkTimes = useMemo(() => {
     const out: Record<string, { start?: string | null; end?: string | null; courtId?: string | null }> = {};
@@ -412,8 +476,18 @@ function OrganizerCourts({
     [window, club.integrationType, occupancy.blocks, courtsById, clock, t],
   );
 
-  const onPrimaryAction = useCallback(
-    (action: CourtsPrimaryAction) => {
+  const onCardAction = useCallback(
+    (action: CourtsCardAction) => {
+      if (action.kind === 'use_own') {
+        const slot = reservations.slots.find((s) => s.key === action.slotKey);
+        if (slot) {
+          void linkOwnBooking(slot).then((outcome) => {
+            if (outcome && !outcome.ok) showError(outcome.error);
+          });
+        }
+        return;
+      }
+      if (action.kind !== 'reserve' && action.kind !== 'fill_gap') return;
       const targets =
         action.kind === 'reserve'
           ? reservations.slots.filter((s) => action.slotKeys.includes(s.key))
@@ -430,7 +504,7 @@ function OrganizerCourts({
       }
       startReserve(targets);
     },
-    [reservations.slots, canBookHere, startReserve, startGapFill, openSheet],
+    [reservations.slots, canBookHere, startReserve, startGapFill, openSheet, linkOwnBooking, showError],
   );
 
   const onPickLink = useCallback(
@@ -548,6 +622,11 @@ function OrganizerCourts({
         else setSheetError(errorMessage(outcome.error));
       };
       switch (action.kind) {
+        case 'use_own': {
+          const outcome = await linkOwnBooking(slot);
+          if (outcome) settle(outcome);
+          return;
+        }
         case 'assign_court':
           if (action.courtId) await assignCourt(slot, action.courtId);
           return;
@@ -570,8 +649,7 @@ function OrganizerCourts({
           return;
         case 'unlink': {
           const link = linkById(action.linkId) ?? slot.links[0];
-          if (!link) return;
-          settle(await mutations.unlink([link.externalBookingId]));
+          if (link) setConfirmUnlink({ slot, link: link as LinkedBookingPayload });
           return;
         }
         case 'verify': {
@@ -586,8 +664,17 @@ function OrganizerCourts({
         }
       }
     },
-    [startReserve, mutations, linkById, verifyLink, assignCourt, openSheet, errorMessage],
+    [startReserve, mutations, linkById, verifyLink, assignCourt, openSheet, errorMessage, linkOwnBooking],
   );
+
+  const removeFromGame = useCallback(async () => {
+    const target = confirmUnlink;
+    if (!target) return;
+    const outcome = await mutations.unlink([target.link.externalBookingId]);
+    setConfirmUnlink(null);
+    if (outcome.ok) openSheet(null);
+    else setSheetError(errorMessage(outcome.error));
+  }, [confirmUnlink, mutations, openSheet, errorMessage]);
 
   const openLink = openSlot?.links[0] ?? null;
   const openSlotOwned = openLink ? viewer.ownsBooking(openLink.externalBookingId) : false;
@@ -645,59 +732,128 @@ function OrganizerCourts({
     [followUps, mutations, showError],
   );
 
-  const assignedCount = input.gameCourts.length;
-  // Never more courts than the roster needs (a 4-player 2v2 has one).
-  const bounds = courtCountBounds(assignedCount, defaultCourtSlotCount(input.game));
   const sheetPending = (assigning ? 'assign_court' : null) ?? localPending ?? (mutations.pending && mutations.pending !== 'follow_up_done' && mutations.pending !== 'set_count' ? mutations.pending : null);
+
+  /* ---------------- the editor's planner bundle ---------------- */
+
+  const openSlotBusy = useMemo(() => {
+    if (!openSlot || !window || !openSlot.effectiveCourtId || openSlot.state !== 'planned') return null;
+    const ws = parseInstantMs(window.start) ?? 0;
+    const we = parseInstantMs(window.end) ?? 0;
+    const blocks = occupancy.blocks.filter(
+      (b) =>
+        b.kind === 'club' &&
+        b.courtId === openSlot.effectiveCourtId &&
+        (parseInstantMs(b.start) ?? 0) < we &&
+        (parseInstantMs(b.end) ?? 0) > ws,
+    );
+    if (blocks.length === 0) return null;
+    return {
+      start: blocks.map((b) => b.start).sort()[0],
+      end: blocks.map((b) => b.end).sort().slice(-1)[0],
+      notInAccount: ownClubBookings != null && !ownBySlot[openSlot.key],
+    };
+  }, [openSlot, window, occupancy.blocks, ownClubBookings, ownBySlot]);
+
+  const releaseLinks = useCallback(
+    async (choices: readonly { link: LinkedBookingPayload; cancel: boolean }[]) => {
+      if (choices.length === 0) return;
+      if (choices.some((c) => c.cancel)) {
+        const provider = await createHydratedClubBookingProvider(club);
+        if (!provider) throw new Error('cancel_unavailable');
+        for (const c of choices) if (c.cancel) await provider.cancelBooking(c.link.externalBookingId, async () => true);
+      }
+      const next = await courtSlotsApi.unlinkBookings(
+        game.id,
+        choices.map((c) => c.link.externalBookingId),
+      );
+      applyGame(mergeLinkedBookingsIntoGame(gameRef.current, next));
+    },
+    [club, game.id, applyGame],
+  );
+
+  const planner = useMemo<SchedulePlanner>(
+    () => ({
+      slots: reservations.slots,
+      courtsById,
+      clubCourts,
+      occupancy: occupancy.blocks,
+      sharedWith,
+      playerCount: timeChangeNoticeCount(game, userId),
+      links: links.map((link) => ({
+        link,
+        canCancel: providerCanCancel(link.externalBookingProvider) && viewer.ownsBooking(link.externalBookingId) && !(sharedWith[link.id]?.length),
+      })),
+      run: journal,
+      busy: runnerBusy,
+      start: (plan: EffectiveReschedulePlan, from: IsoInterval, to: IsoInterval) => void runner.start(plan.steps, { from, to }),
+      retry: () => void runner.resume(),
+      dismissRun,
+      resumeOther: () => void runner.resumeActive(),
+      releaseLinks,
+    }),
+    [reservations.slots, courtsById, clubCourts, occupancy.blocks, sharedWith, game, userId, links, viewer, journal, runnerBusy, runner, dismissRun, releaseLinks],
+  );
+
+  const slotNotices = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const drift of drifts) {
+      const slot = reservations.slots.find((s) => s.links.some((l) => l.id === drift.linkId));
+      if (slot) out[slot.key] = t(drift.state === 'MISSING' ? 'gameDetails.courts.driftMissing' : 'gameDetails.courts.driftMoved');
+    }
+    return out;
+  }, [drifts, reservations.slots, t]);
+
+  const cancelPolicy = club.cancellationNoticeHours
+    ? t('gameDetails.courts.cancelPolicy', { hours: club.cancellationNoticeHours })
+    : '';
 
   return (
     <>
-      {unfinished && journal ? (
-        <UnfinishedChangesBanner
-          journal={journal}
-          timeZone={timeZone}
-          busy={runnerBusy}
-          onFinish={() => {
-            onRescheduleOpenChange?.(true);
-            void runner.resume();
-          }}
-          onUndo={() => void runner.undo()}
-        />
-      ) : null}
-
-      <ReservationDriftBanner
-        drifts={drifts}
-        courtsById={courtsById}
-        timeZone={timeZone}
-        pending={pendingDrift}
-        onAction={(drift, kind) => void onDriftAction(drift, kind)}
-      />
-
       <CourtsCard
         reservations={reservations}
         window={window}
         courtsById={courtsById}
         timeZone={timeZone}
+        courtNeed={courtNeedOf(game)}
         playerCount={game.maxParticipants}
         clubName={club.name}
+        hasClub
         canEdit
-        gameOnly={gameOnly}
-        onUseClubBooking={() => void switchToClubBooking()}
-        useClubBookingBusy={modeBusy}
+        onChange={openSchedule}
         followUps={followUps}
         onSlotPress={(slot) => openSheet(slot.key)}
-        onPrimaryAction={onPrimaryAction}
+        onAction={onCardAction}
         onFollowUpDone={onFollowUpDone}
         primaryBusy={mutations.pending != null || reserve != null}
-        courtCount={{
-          value: Math.max(bounds.min, game.courtSlotCount ?? reservations.slots.length),
-          ...bounds,
-          busy: mutations.pending === 'set_count',
-          onChange: (count) =>
-            void mutations.setCourtCount(count).then((outcome) => {
-              if (!outcome.ok) showError(outcome.error);
-            }),
-        }}
+        ownBookingSlotKeys={ownBookingSlotKeys}
+        providerName={providerName}
+        slotNotices={slotNotices}
+        notices={
+          (unfinished && journal) || drifts.length > 0 ? (
+            <>
+              {unfinished && journal ? (
+                <UnfinishedChangesBanner
+                  journal={journal}
+                  timeZone={timeZone}
+                  busy={runnerBusy}
+                  onFinish={() => {
+                    openSchedule();
+                    void runner.resume();
+                  }}
+                  onUndo={() => void runner.undo()}
+                />
+              ) : null}
+              <ReservationDriftBanner
+                drifts={drifts}
+                courtsById={courtsById}
+                timeZone={timeZone}
+                pending={pendingDrift}
+                onAction={(drift, kind) => void onDriftAction(drift, kind)}
+              />
+            </>
+          ) : null
+        }
       />
 
       <CourtSlotSheet
@@ -710,6 +866,7 @@ function OrganizerCourts({
         timeZone={timeZone}
         canEdit
         canBookHere={canBookHere}
+        canLink={canBookHere}
         canAssignCourt
         canVerify={sheetCanVerify}
         providerCapabilities={sheetCapabilities}
@@ -717,6 +874,15 @@ function OrganizerCourts({
         pickableCourts={pickableCourts}
         pendingAction={sheetPending as CourtSlotSheetAction['kind'] | null}
         onAction={(action) => void onSlotAction(action)}
+        ownBooking={
+          openSlot && ownBySlot[openSlot.key]
+            ? { start: ownBySlot[openSlot.key].start, end: ownBySlot[openSlot.key].end, providerName }
+            : null
+        }
+        busyAtClub={openSlotBusy}
+        clubName={club.name}
+        clubPhone={club.phone ?? null}
+        onSetTime={() => openSchedule('time')}
       />
 
       <GameCourtLinkSheet
@@ -742,31 +908,6 @@ function OrganizerCourts({
         />
       ) : null}
 
-      <ClubBusySavePrompt
-        conflicts={modeClash}
-        courtName={(courtId) => courtsById[courtId]?.name ?? ''}
-        formatTime={clock.time}
-        message={
-          modeClash?.[0]
-            ? t('gameDetails.courts.gameOnlyClashMessage', {
-                court: courtsById[modeClash[0].courtId]?.name ?? '',
-                from: clock.time(modeClash[0].start),
-                to: clock.time(modeClash[0].end),
-              })
-            : ''
-        }
-        verdict={summarizeVerdicts(modeClashVerdicts)}
-        providerName={providerDisplayName(club.integrationType ?? null)}
-        onUseOwnAndSave={() => void linkOwnAndUseClub()}
-        primaryLabel={t('gameDetails.courts.gameOnlyClashKeep')}
-        claimLabel={t('gameDetails.courts.gameOnlyClashConfirm')}
-        onPickAnother={() => setModeClash(null)}
-        onClaimAndSave={(courtIds) => {
-          setModeClash(null);
-          void switchToClubBooking([...new Set(courtIds)]);
-        }}
-      />
-
       <ConfirmationModal
         isOpen={gapConfirm != null}
         tone="info"
@@ -782,11 +923,38 @@ function OrganizerCourts({
       />
 
       <ConfirmationModal
+        isOpen={confirmUnlink != null}
+        onClose={() => mutations.pending !== 'unlink' && setConfirmUnlink(null)}
+        onConfirm={() => void removeFromGame()}
+        title={t('gameDetails.courts.removeTitle')}
+        message={t('gameDetails.courts.removeMessage', {
+          club: club.name,
+          court: confirmUnlink ? courtsById[confirmUnlink.slot.effectiveCourtId ?? '']?.name ?? t('gameDetails.courts.theCourt') : '',
+        })}
+        confirmText={t('gameDetails.courts.removeConfirm')}
+        cancelText={t('common.cancel')}
+        isLoading={mutations.pending === 'unlink'}
+        closeOnConfirm={false}
+      />
+
+      <ConfirmationModal
         isOpen={cancelLink != null}
         onClose={() => localPending !== 'cancel_at_club' && setCancelLink(null)}
         onConfirm={() => void cancelAtClub()}
-        title={t('club.booktime.cancelConfirmTitle')}
-        message={t('gameDetails.courts.cancelMessage')}
+        title={t('gameDetails.courts.cancelTitle', { club: club.name })}
+        message={[
+          cancelLink
+            ? t(cancelLink.bookingStart && cancelLink.bookingEnd ? 'gameDetails.courts.cancelWhat' : 'gameDetails.courts.cancelWhatNoTime', {
+                provider: providerDisplayName(cancelLink.externalBookingProvider),
+                court: courtsById[cancelLink.courtId ?? '']?.name ?? t('gameDetails.courts.theCourt'),
+                range: cancelLink.bookingStart && cancelLink.bookingEnd ? clock.range(cancelLink.bookingStart, cancelLink.bookingEnd) : '',
+              })
+            : '',
+          cancelPolicy,
+          t('gameDetails.courts.cancelMessage'),
+        ]
+          .filter(Boolean)
+          .join(' ')}
         confirmText={t('club.booktime.cancelConfirmCta')}
         cancelText={t('common.cancel')}
         confirmVariant="danger"
@@ -794,29 +962,22 @@ function OrganizerCourts({
         closeOnConfirm={false}
       />
 
-      {window ? (
-        <RescheduleSheet
-          key={`${window.start}:${window.end}`}
-          open={rescheduleOpen}
-          onOpenChange={(open) => {
-            onRescheduleOpenChange?.(open);
-            if (!open && journal && journal.phase !== 'running' && !unfinished) dismissRun();
-          }}
-          gameId={game.id}
-          currentWindow={window}
-          slots={reservations.slots}
-          courtsById={courtsById}
-          clubCourts={clubCourts}
-          timeZone={timeZone}
-          occupancy={occupancy.blocks}
-          sharedWith={sharedWith}
-          playerCount={timeChangeNoticeCount(game, userId)}
-          run={journal}
-          onConfirm={(plan, newWindow) => void runner.start(plan.steps, { from: window, to: newWindow })}
-          onRetry={() => void runner.resume()}
-          onDismissRun={dismissRun}
-        />
-      ) : null}
+      <GameScheduleSheet
+        open={scheduleOpen}
+        onClose={() => {
+          onScheduleOpenChange?.(false);
+          if (journal && journal.phase !== 'running' && !unfinished) dismissRun();
+        }}
+        focus={scheduleFocus}
+        game={game}
+        clubs={clubs}
+        courts={courts}
+        canClear
+        onGameUpdate={onGameUpdate}
+        onCourtsChange={onCourtsChange}
+        onClubsChange={onClubsChange}
+        planner={planner}
+      />
     </>
   );
 }

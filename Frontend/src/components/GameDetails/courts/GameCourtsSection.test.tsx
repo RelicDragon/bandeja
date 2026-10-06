@@ -83,10 +83,16 @@ describe('GameCourtsSection', () => {
     expect(html).not.toContain('<button');
   });
 
-  it('stays off the page for bars, events, games without a club and finished games', () => {
+  it('stays off the page for bars, events and finished games; without a club only organizers see it', () => {
     expect(gameShowsCourtsSection(game({ entityType: 'BAR' }))).toBe(false);
     expect(gameShowsCourtsSection(game({ entityType: 'EVENT' } as Partial<Game>))).toBe(false);
-    expect(gameShowsCourtsSection(game({ clubId: undefined, club: undefined }))).toBe(false);
+    // No club yet: the organizer's card asks for one; players see nothing.
+    expect(gameShowsCourtsSection(game({ clubId: undefined, club: undefined }))).toBe(true);
+    expect(
+      renderToStaticMarkup(
+        <GameCourtsSection game={game({ clubId: undefined, club: undefined })} courts={[]} clubs={[]} canEdit={false} onGameUpdate={() => undefined} />,
+      ),
+    ).toBe('');
     expect(gameShowsCourtsSection(game({ status: 'FINISHED' }))).toBe(false);
     expect(gameShowsCourtsSection(game({ resultsStatus: 'FINAL' }))).toBe(false);
     expect(render(game({ entityType: 'BAR' }))).toBe('');

@@ -24,6 +24,7 @@ import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
 import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
 import { ReservationSummaryPill } from '@/components/GameDetails/ReservationSummaryPill';
+import { gameShowsCourtsSection } from '@/components/GameDetails/courts/gameCourtsModel';
 import {
   gameShowsCourtReservation,
   reservationTimeFormatter,
@@ -80,7 +81,10 @@ interface GameInfoProps {
   courts: any[];
   canEdit: boolean;
   onToggleFavorite: () => void;
+  /** Opens the "When and where" editor on the courts (bar halls included). */
   onEditCourt: () => void;
+  /** Opens the "When and where" editor on the club. */
+  onEditClub?: () => void;
   onOpenEditGameInfo?: (initialTab?: EditGameInfoInitialTabId) => void;
   /**
    * Date/time taps. The page routes games with reservations or several courts
@@ -102,6 +106,7 @@ export const GameInfo = ({
   canEdit,
   onToggleFavorite,
   onEditCourt,
+  onEditClub,
   onOpenEditGameInfo,
   onChangeTime,
   collapsedByDefault = false,
@@ -121,8 +126,7 @@ export const GameInfo = ({
   const hasAuthoredDescription = Boolean(game.description?.trim() || displayDescription?.trim());
   const clubTz = getClubTimezone(game);
   const handleChangeTime = () => {
-    if (onChangeTime) onChangeTime();
-    else onOpenEditGameInfo?.('locationTime');
+    onChangeTime?.();
   };
   // PRD 354 — the club name links out to the public club page.
   const clubPageId = game.court?.club?.id ?? game.club?.id ?? null;
@@ -1001,7 +1005,7 @@ export const GameInfo = ({
                 <div className="flex items-center gap-2">
                   {canEdit && canShowEdit ? (
                     <button
-                      onClick={() => onOpenEditGameInfo?.('locationTime')}
+                      onClick={() => onEditClub?.()}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                     >
                       {game.court?.club?.name || game.club?.name}
@@ -1046,7 +1050,7 @@ export const GameInfo = ({
                     {t(game.entityType === 'BAR' ? 'createGame.hallNotSelected' : 'createGame.courtNotSelected')}
                   </p>
                 )}
-                {reservationView ? (
+                {reservationView && !gameShowsCourtsSection(game) ? (
                   <div className="mt-1">
                     <ReservationSummaryPill
                       view={reservationView}

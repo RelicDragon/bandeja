@@ -66,6 +66,7 @@ vi.mock('@/components/GameDetails/LeagueSeasonPointsSection', () => ({ LeagueSea
 vi.mock('@/components/GameDetails/FaqTab', () => ({ FaqTab: () => null }));
 vi.mock('@/components/GameDetails/FaqEdit', () => ({ FaqEdit: () => null }));
 vi.mock('@/components/GameDetails/EditGameInfoModal', () => ({ EditGameInfoModal: () => null }));
+vi.mock('@/components/GameDetails/schedule/GameScheduleSheet', () => ({ GameScheduleSheet: () => null }));
 vi.mock('@/components/weather/WeatherRiskBanner', () => ({ WeatherRiskBanner: () => null }));
 vi.mock('@/components/GameDetails/GameResultsEntryEmbedded', () => ({ GameResultsEntryEmbedded: () => null }));
 vi.mock('@/components/GameDetails/LiveWatchBlock', () => ({ LiveWatchBlock: () => null }));

@@ -1,18 +1,19 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Planirano",
-      "reported": "Označeno kao rezervisano",
-      "linked": "Rezervisano · {{provider}}",
-      "unknownTime": "Rezervisano · {{provider}} · vreme nepoznato",
-      "gap": "Rupa {{from}}–{{to}}"
+      "planned": "Još nije rezervisan",
+      "reported": "Rezervisao organizator",
+      "linked": "Rezervisan · {{provider}}",
+      "unknownTime": "Rezervisan · {{provider}} · vreme nepoznato",
+      "gap": "Rupa {{from}}–{{to}}",
+      "noTime": "Još bez vremena"
     },
     "summary": {
-      "planned": "Planirano",
+      "planned": "Još nije rezervisano",
       "partial": "Rezervisano {{reserved}} od {{total}}",
       "reserved": "Svi tereni rezervisani",
       "reservedWithGap": "Rezervisano, rupa u {{time}}",
-      "reported": "Označeno kao rezervisano"
+      "reported": "Rezervisao organizator"
     },
     "reschedule": {
       "unchanged": "Bez promene",
@@ -32,7 +33,6 @@
       "shortM": "{{m}} min"
     },
     "card": {
-      "title": "Tereni",
       "players_one": "{{count}} igrač",
       "players_few": "{{count}} igrača",
       "players_other": "{{count}} igrača",
@@ -40,13 +40,14 @@
       "courts_few": "{{count}} terena",
       "courts_other": "{{count}} terena",
       "anyCourt": "Bilo koji teren",
-      "noTime": "Podesi vreme da vidiš koliko je igre pokriveno",
-      "count": "Broj terena",
-      "fewer": "Jedan teren manje",
-      "more": "Jedan teren više",
-      "gameOnly": "Samo igra",
-      "gameOnlyHint": "Organizator sam dogovara teren sa klubom.",
-      "useClubBooking": "Ipak rezerviši preko kluba"
+      "titleOne": "Teren",
+      "titleMany": "Tereni",
+      "change": "Izmeni",
+      "noDateTime": "Datum i vreme nisu podešeni",
+      "noClub": "Još nema kluba. Izaberite ga da biste birali i rezervisali terene.",
+      "tooMany_one": "{{players}} igrača treba {{count}} teren. Izaberite koji ostaje.",
+      "tooMany_few": "{{players}} igrača treba {{count}} terena. Izaberite koji ostaju.",
+      "tooMany_other": "{{players}} igrača treba {{count}} terena. Izaberite koji ostaju."
     },
     "action": {
       "reserveCourt": "Rezerviši teren",
@@ -58,41 +59,55 @@
       "reserveRemaining_few": "Rezerviši preostala {{count}} terena",
       "reserveRemaining_other": "Rezerviši preostalih {{count}} terena",
       "fillGap": "Popuni rupu od {{duration}}",
-      "fillGaps": "Popuni rupe"
+      "fillGaps": "Popuni rupe",
+      "pickClub": "Izaberi klub",
+      "setTime": "Podesi datum i vreme",
+      "chooseCourts": "Izaberi terene koji ostaju",
+      "useOwn": "Koristi svoju {{provider}} rezervaciju",
+      "useOwnPlain": "Koristi svoju rezervaciju",
+      "bookCourt": "Rezerviši {{court}}",
+      "bookAnyCourt": "Rezerviši teren",
+      "bookMore_one": "Rezerviši još {{count}} teren",
+      "bookMore_few": "Rezerviši još {{count}} terena",
+      "bookMore_other": "Rezerviši još {{count}} terena",
+      "bookCourts_one": "Rezerviši {{count}} teren",
+      "bookCourts_few": "Rezerviši {{count}} terena",
+      "bookCourts_other": "Rezerviši {{count}} terena"
     },
     "sheet": {
       "game": "Igra",
       "reservationAt": "Rezervacija · {{provider}}",
       "timeUnknown": "Vreme nepoznato",
-      "reportedHint": "Naveo si da je ovaj teren rezervisan u klubu.",
+      "reportedHint": "Organizator ga je rezervisao u klubu. Aplikacija to ne može da proveri.",
       "plannedHint": "Za ovaj teren još ništa nije rezervisano.",
       "alsoUsedBy": "Koristi ga i {{name}} {{from}}–{{to}}",
       "pickCourt": "Koji teren?",
       "action": {
-        "reserve": "Rezerviši sada",
-        "link": "Poveži moju rezervaciju",
-        "linkReported": "Poveži rezervaciju",
-        "markReserved": "Označi kao rezervisan",
-        "markNotReserved": "Označi kao nerezervisan",
-        "verify": "Proveri",
-        "unlink": "Odveži",
-        "cancelAtClub": "Otkaži u klubu",
         "changeCourt": "Promeni teren",
         "useCourtOnly": "Uzmi {{court}}, rezerviši kasnije",
         "useCourtInstead": "Uzmi {{court}} umesto ovog",
-        "keepCourt": "Zadrži {{court}}"
-      }
+        "keepCourt": "Zadrži {{court}}",
+        "useOwn": "Koristi ovu rezervaciju",
+        "bookAt": "Rezerviši u {{club}}",
+        "linkExisting": "Koristi rezervaciju koju već imam",
+        "linkReal": "Poveži pravu rezervaciju",
+        "bookedIt": "Rezervisao sam",
+        "bookedOtherWay": "Rezervisao sam na drugi način",
+        "mineOtherWay": "Moj je, rezervisao sam na drugi način",
+        "notBooked": "Ipak nije rezervisan",
+        "removeFromGame": "Ukloni iz igre",
+        "cancelAt": "Otkaži u {{club}}",
+        "checkAgain": "Proveri ponovo u {{club}}",
+        "setTime": "Podesi datum i vreme"
+      },
+      "noTimeHint": "Prvo podesite datum i vreme igre: teren se rezerviše samo za određeno vreme.",
+      "ownFound": "Pronađeno na vašem {{provider}} nalogu",
+      "busy": "Zauzet u {{club}} {{range}}.",
+      "busyNotYours": "Zauzet u {{club}} {{range}}, a nije na vašem nalogu: verovatno je tuđa rezervacija.",
+      "booksByPhone": "Ovaj klub prima rezervacije telefonom: {{phone}}",
+      "theClub": "klubu"
     },
     "move": {
-      "title": "Promeni vreme",
-      "dragLabel": "Vreme igre",
-      "dragHint": "Prevuci igru ili koristi dugmad ispod",
-      "start": "Početak",
-      "length": "Trajanje",
-      "earlier": "15 minuta ranije",
-      "later": "15 minuta kasnije",
-      "shorter": "15 minuta kraće",
-      "longer": "15 minuta duže",
       "courtsLabel": "Šta se dešava sa svakim terenom",
       "notice_one": "{{count}} igrač dobija jedno obaveštenje o novom vremenu",
       "notice_few": "{{count}} igrača dobijaju jedno obaveštenje o novom vremenu",
@@ -122,7 +137,6 @@
       "change": "Promeni",
       "changeFor": "Promeni šta se dešava sa terenom {{court}}",
       "unchanged": "{{courts}} · bez promene",
-      "sliderValue": "Počinje u {{start}}, završava se u {{end}}",
       "why": {
         "notAvailable": "Ovaj teren nije slobodan u novo vreme.",
         "keep": "Rezervacija i dalje pokriva novo vreme.",
@@ -238,16 +252,6 @@
       "gameUnnamed": "Druga igra ima {{court}} u {{time}}.",
       "plannedGame": "{{name}} je planirana na terenu {{court}} u {{time}}.",
       "plannedGameUnnamed": "Druga igra je planirana na terenu {{court}} u {{time}}."
-    },
-    "timeline": {
-      "free": "slobodan",
-      "movesTo": "prelazi na {{court}}",
-      "legend": {
-        "reserved": "Vaša rezervacija",
-        "reported": "Rezervisano preko kluba",
-        "club": "Zauzeo klub",
-        "game": "Druga igra"
-      }
     }
   }
 }
