@@ -3,8 +3,8 @@
  *   · capabilities: STAFF can run the desk but not edit the club, courts, hours or team —
  *     on v2 and legacy routes alike;
  *   · hours: PUT/GET round trip, past-midnight window on the schedule;
- *   · holds: overlap 409 with details, force, weekly repeat skipping clashes, series delete,
- *     legacy PATCH stays overlap-free;
+ *   · holds: overlap 409 with details (opt-in `detectOverlap`), force, weekly repeat skipping
+ *     clashes, series delete, legacy create/PATCH stay overlap-free;
  *   · bookings: keyset pages are complete, ordered and duplicate-free in both scopes; filters;
  *   · team: last-admin guard, duplicate member;
  *   · courts reorder/impact, profile, context, dashboard, activity rows.
@@ -94,6 +94,7 @@ void (async () => {
       startTime: new Date(hourAt(1).getTime() + 30 * 60_000).toISOString(),
       endTime: hourAt(3).toISOString(),
       label: 'WALK_IN',
+      detectOverlap: true,
     });
     expectStatus(clash, 409, 'overlap', 'clubAdmin.holdOverlap');
     const overlaps = (clash.body.details as { overlaps: Array<{ kind: string; id: string }> }).overlaps;
@@ -103,9 +104,19 @@ void (async () => {
       startTime: hourAt(1).toISOString(),
       endTime: hourAt(2).toISOString(),
       label: 'WALK_IN',
+      detectOverlap: true,
       force: true,
     });
     expectStatus(forced, 201, 'force');
+    // Store builds share this path, never send detectOverlap and swallow errors: always create.
+    const legacyOver = await api.call(adminA.id, 'POST', `${base}/holds`, {
+      courtId: a1.id,
+      startTime: hourAt(1).toISOString(),
+      endTime: hourAt(2).toISOString(),
+      label: 'PHONE',
+    });
+    expectStatus(legacyOver, 201, 'legacy create over an overlap');
+    assert.deepEqual(legacyOver.body.data.skipped, []);
 
     // Weekly x3 on a2; week 2 clashes with a game → skipped.
     const g2 = await f.makeGame({ courtId: a2.id, startTime: new Date(hourAt(5).getTime() + 7 * 24 * H), endTime: new Date(hourAt(6).getTime() + 7 * 24 * H) });
@@ -115,27 +126,30 @@ void (async () => {
       endTime: hourAt(6).toISOString(),
       label: 'ACADEMY',
       repeatWeeks: 3,
+      detectOverlap: true,
     });
     expectStatus(series, 201, 'series');
     assert.equal(series.body.data.holdIds.length, 2, 'one occurrence skipped');
     assert.equal(series.body.data.skipped.length, 1);
     assert.ok(series.body.data.seriesId, 'series id');
     expectStatus(
-      await api.call(adminA.id, 'POST', `${base}/holds`, { courtId: a2.id, startTime: g2.startTime.toISOString(), endTime: g2.endTime.toISOString(), label: 'OTHER' }),
+      await api.call(adminA.id, 'POST', `${base}/holds`, { courtId: a2.id, startTime: g2.startTime.toISOString(), endTime: g2.endTime.toISOString(), label: 'OTHER', detectOverlap: true }),
       409,
       'game overlap',
       'clubAdmin.holdOverlap'
     );
     expectStatus(await api.call(adminA.id, 'POST', `${base}/holds`, { courtId: a2.id, startTime: hourAt(5).toISOString(), endTime: hourAt(6).toISOString(), label: 'OTHER', repeatWeeks: 27 }), 400, 'repeat max', 'clubAdmin.validation');
 
-    // v2 PATCH checks overlaps; the legacy path does not.
+    // v2 PATCH checks overlaps when asked; the legacy path never does.
     const [s1, s2] = series.body.data.holdIds as string[];
+    const movePatch = { courtId: a2.id, startTime: hourAt(5).toISOString(), endTime: hourAt(6).toISOString() };
     expectStatus(
-      await api.call(adminA.id, 'PATCH', `${base}/holds/${forced.body.data.id}`, { courtId: a2.id, startTime: hourAt(5).toISOString(), endTime: hourAt(6).toISOString() }),
+      await api.call(adminA.id, 'PATCH', `${base}/holds/${forced.body.data.id}`, { ...movePatch, detectOverlap: true }),
       409,
       'v2 patch overlap',
       'clubAdmin.holdOverlap'
     );
+    expectStatus(await api.call(adminA.id, 'PATCH', `${base}/holds/${legacyOver.body.data.id}`, movePatch), 200, 'v2 patch without detectOverlap');
     expectStatus(await api.call(adminA.id, 'PATCH', `/club-admin/holds/${forced.body.data.id}`, { note: 'legacy ok' }), 200, 'legacy patch');
     const del = await api.call(adminA.id, 'DELETE', `${base}/holds/${s1}?scope=following`);
     expectStatus(del, 200, 'series delete');

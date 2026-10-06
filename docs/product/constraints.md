@@ -232,7 +232,7 @@ Club admin access is a `ClubAdmin` row (`role` `ADMIN` \| `STAFF`); a platform a
 
 "Today", day windows and opening hours are **club-local** (`club.city.timezone`, `@bandeja/shared/clubAdmin/clubTime`), never the server's or the device's zone; a club day is 23 h / 25 h on DST days and opening windows may run past midnight. One resolver serves every surface (`services/clubAdmin/clubAdminHours.service.ts`). A game belongs to a club when its club, primary court or any court slot is there (`clubAdminGameScope.ts`) — one predicate for every club-scoped read and write.
 
-Legacy club-admin endpoints and response shapes keep working for store builds: fields are only **added** (e.g. `POST /holds` returns the hold row plus `holdIds/seriesId/skipped`). Hold deletes are soft (`CourtSlotHold.deletedAt`): every hold read filters `deletedAt: null`. Detail: [club-admin.md](../domains/club-admin.md).
+Legacy club-admin endpoints and response shapes keep working for store builds: fields are only **added** (e.g. `POST /holds` returns the hold row plus `holdIds/seriesId/skipped`). New refusals on a path store builds call must be **opt-in**: hold overlap detection (409 `holdOverlap`) runs only when the body sends `detectOverlap: true`, because shipped builds post to the same `POST /clubs/:clubId/holds`, swallow non-403 errors and would silently lose the hold. Hold deletes are soft (`CourtSlotHold.deletedAt`): every hold read filters `deletedAt: null`. Detail: [club-admin.md](../domains/club-admin.md).
 
 ## Novice rank never blocks routes (PRD 358)
 

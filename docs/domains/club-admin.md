@@ -40,10 +40,10 @@ The club time zone is `club.city.timezone`. "Today", the schedule day, dashboard
 Holds are occupancy `kind: 'hold'` (`CourtOccupancyService` + `clubAdminSchedule.service.ts`). Create/update validate the label, ISO instants, `end > start`, ≤ 24 h, not entirely past (`holdInPast`) and an active court of this club (`courtInactive`). v2 additions (`services/clubAdmin/clubAdminHold.service.ts`):
 
 - `repeatWeeks` 1–26: weekly occurrences at the same club-local wall time (DST-safe), sharing a `seriesId`.
-- Overlap with a live game slot, another hold or a provider booking on that court → 409 `holdOverlap` with every clash, unless `force`. With a repeat, clashing weeks are skipped (`skipped[]`); all clashing → 409.
+- Overlap detection is **opt-in**: only a body with `detectOverlap: true` is checked. Then an overlap with a live game slot, another hold or a provider booking on that court → 409 `holdOverlap` with every clash, unless `force`; with a repeat, clashing weeks are skipped (`skipped[]`), all clashing → 409. Store builds post to the same path without the flag and swallow errors, so without it the hold is always created (no 409, no skipping).
 - `customerName` / `customerPhone` are stored on the hold and shown only in the console (schedule, bookings) — never on occupancy blocks, which also feed player-facing availability.
 - Delete is **soft** (`deletedAt`, `deletedById`); `?scope=following` deletes this and later holds of the series. Every hold read filters `deletedAt: null`.
-- `POST /clubs/:clubId/holds` keeps the legacy response (the hold row) and adds `holdIds`, `seriesId`, `skipped`. Legacy `PATCH /holds/:holdId` never checks overlaps (shipped builds never send `force`); `PATCH /clubs/:clubId/holds/:holdId` does.
+- `POST /clubs/:clubId/holds` keeps the legacy response (the hold row) and adds `holdIds`, `seriesId`, `skipped`. Legacy `PATCH /holds/:holdId` never checks overlaps; `PATCH /clubs/:clubId/holds/:holdId` checks them only with `detectOverlap: true`.
 
 ## Cancel and clear court
 

@@ -272,7 +272,9 @@ export interface CreateHoldResponse {
   skipped: Array<{ startTime: string; endTime: string }>;
 }
 
-export type UpdateHoldBody = Partial<Pick<CreateHoldBody, 'courtId' | 'startTime' | 'endTime' | 'label' | 'note' | 'customerName' | 'customerPhone' | 'force'>>;
+export type UpdateHoldBody = Partial<
+  Pick<CreateHoldBody, 'courtId' | 'startTime' | 'endTime' | 'label' | 'note' | 'customerName' | 'customerPhone' | 'detectOverlap' | 'force'>
+>;
 
 /** DELETE /holds/:holdId?scope=one|following */
 export type HoldDeleteScope = 'one' | 'following';

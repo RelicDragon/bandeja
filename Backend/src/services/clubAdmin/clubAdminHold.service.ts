@@ -136,7 +136,8 @@ export interface HoldActor {
 export class ClubAdminHoldService {
   /**
    * `POST /clubs/:clubId/holds`. The response keeps the legacy shape (the first hold row) and
-   * adds `CreateHoldResponse` fields.
+   * adds `CreateHoldResponse` fields. Overlap detection (409 `holdOverlap`, repeat skipping) runs
+   * only with `detectOverlap: true` — shipped builds share this path and never send it.
    */
   static async createHold(actor: HoldActor, data: Record<string, unknown>) {
     const { userId, clubId, timezone } = actor;
@@ -147,6 +148,8 @@ export class ClubAdminHoldService {
     const note = parseOptionalText(data.note, 'note');
     const customerName = parseOptionalText(data.customerName, 'customerName', 100);
     const customerPhone = parseOptionalText(data.customerPhone, 'customerPhone', 40);
+    // Store builds post here without `detectOverlap` and swallow errors: they always create.
+    const detectOverlap = parseOptionalBoolean(data.detectOverlap, 'detectOverlap') === true;
     const force = parseOptionalBoolean(data.force, 'force') ?? false;
     const repeatWeeks = data.repeatWeeks === undefined || data.repeatWeeks === null ? 1 : data.repeatWeeks;
     if (typeof repeatWeeks !== 'number' || !Number.isInteger(repeatWeeks) || repeatWeeks < 1 || repeatWeeks > MAX_REPEAT_WEEKS) {
@@ -158,7 +161,7 @@ export class ClubAdminHoldService {
     const occurrences = weeklyOccurrences(startTime, endTime, repeatWeeks, timezone);
     const skipped: CreateHoldResponse['skipped'] = [];
     let toCreate = occurrences;
-    if (!force) {
+    if (detectOverlap && !force) {
       const overlaps = await findHoldOverlaps(clubId, court.id, occurrences);
       const clashing = overlaps.flat();
       if (repeatWeeks === 1 && clashing.length > 0) throw overlapError(clashing);
@@ -202,8 +205,8 @@ export class ClubAdminHoldService {
   }
 
   /**
-   * `PATCH /holds/:holdId` (legacy, no overlap check — shipped builds never sent `force`) and
-   * `PATCH /clubs/:clubId/holds/:holdId` (v2, `checkOverlap`).
+   * `PATCH /holds/:holdId` (legacy, never checks overlaps) and `PATCH /clubs/:clubId/holds/:holdId`
+   * (v2, `checkOverlap`: checks only when the body opts in with `detectOverlap: true`).
    */
   static async updateHold(
     actor: HoldActor,
@@ -220,6 +223,7 @@ export class ClubAdminHoldService {
     const note = parseOptionalText(data.note, 'note');
     const customerName = parseOptionalText(data.customerName, 'customerName', 100);
     const customerPhone = parseOptionalText(data.customerPhone, 'customerPhone', 40);
+    const detectOverlap = parseOptionalBoolean(data.detectOverlap, 'detectOverlap') === true;
     const force = parseOptionalBoolean(data.force, 'force') ?? false;
     const startTime = data.startTime !== undefined ? parseInstant(data.startTime, 'startTime') : hold.startTime;
     const endTime = data.endTime !== undefined ? parseInstant(data.endTime, 'endTime') : hold.endTime;
@@ -230,7 +234,7 @@ export class ClubAdminHoldService {
     const court = courtChanged ? await assertHoldCourt(hold.clubId, data.courtId) : null;
     const courtId = court?.id ?? hold.courtId;
 
-    if (options.checkOverlap && !force && (timeChanged || courtChanged)) {
+    if (options.checkOverlap && detectOverlap && !force && (timeChanged || courtChanged)) {
       const [overlaps] = await findHoldOverlaps(clubId, courtId, [{ start: startTime, end: endTime }], new Set([hold.id]));
       if (overlaps.length > 0) throw overlapError(overlaps);
     }
