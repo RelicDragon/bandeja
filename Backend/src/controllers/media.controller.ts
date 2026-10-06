@@ -392,7 +392,7 @@ export const uploadClubAvatar = asyncHandler(async (req: AuthRequest, res: Respo
   }
   if (!req.user?.isAdmin) {
     const { ClubAdminService } = await import('../services/clubAdmin/clubAdmin.service');
-    await ClubAdminService.assertClubAdmin(req.userId!, clubId);
+    await ClubAdminService.assertClubCapability(req.userId!, clubId, 'club.edit');
   }
   if (!req.file) {
     throw new ApiError(400, 'Original image file is required');
@@ -411,7 +411,7 @@ export const uploadClubPhoto = asyncHandler(async (req: AuthRequest, res: Respon
   }
   if (!req.user?.isAdmin) {
     const { ClubAdminService } = await import('../services/clubAdmin/clubAdmin.service');
-    await ClubAdminService.assertClubAdmin(req.userId!, clubId);
+    await ClubAdminService.assertClubCapability(req.userId!, clubId, 'club.edit');
   }
   const club = await prisma.club.findUnique({
     where: { id: clubId },

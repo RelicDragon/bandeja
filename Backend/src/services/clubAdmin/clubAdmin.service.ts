@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { clubAdminCan, type ClubAdminCapability } from '@bandeja/shared/clubAdmin/contract';
 
 export interface ClubAdminClubSummary {
   id: string;
@@ -63,6 +64,20 @@ export class ClubAdminService {
     const ok = await this.isClubAdmin(userId, clubId);
     if (!ok) {
       throw new ApiError(403, 'clubAdmin.forbidden', true, { code: 'clubAdmin.forbidden' });
+    }
+  }
+
+  /** Club admin with a role capability (STAFF is front desk only). Platform admins pass. */
+  static async assertClubCapability(userId: string, clubId: string, capability: ClubAdminCapability): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+    if (user?.isAdmin) return;
+    const row = await prisma.clubAdmin.findUnique({
+      where: { userId_clubId: { userId, clubId } },
+      select: { role: true },
+    });
+    if (!row) throw new ApiError(403, 'clubAdmin.forbidden', true, { code: 'clubAdmin.forbidden' });
+    if (!clubAdminCan(row.role, capability)) {
+      throw new ApiError(403, 'clubAdmin.capability', true, { code: 'clubAdmin.capability', capability });
     }
   }
 }

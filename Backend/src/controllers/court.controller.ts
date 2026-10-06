@@ -12,7 +12,7 @@ import { normalizeWebCameraUrl } from '../utils/normalizeWebCameraUrl';
 async function assertCourtMutationAllowed(req: AuthRequest, clubId: string) {
   if (req.user?.isAdmin) return;
   if (!req.userId) throw new ApiError(401, 'User not authenticated');
-  await ClubAdminService.assertClubAdmin(req.userId, clubId);
+  await ClubAdminService.assertClubCapability(req.userId, clubId, 'courts.edit');
 }
 
 export const getCourtsByClub = asyncHandler(async (req: AuthRequest, res: Response) => {
