@@ -247,6 +247,12 @@ void (async () => {
     expectStatus(profile, 200, 'profile');
     assert.equal(profile.body.data.currency, 'RSD');
     assert.deepEqual(profile.body.data.amenities, ['Bar']);
+    const storedAmenities = (await prisma.club.findUniqueOrThrow({ where: { id: clubA.id }, select: { amenities: true } })).amenities;
+    assert.deepEqual(storedAmenities, { Bar: true }, 'stored in the public-page object shape');
+    await prisma.club.update({ where: { id: clubA.id }, data: { amenities: { showers: true, wifi: false, parking: 'paid' } } });
+    const legacyProfile = await api.call(adminA.id, 'GET', `${base}/profile`);
+    expectStatus(legacyProfile, 200, 'legacy amenities');
+    assert.deepEqual([...legacyProfile.body.data.amenities].sort(), ['parking', 'showers'], 'legacy object normalised to string[] (jsonb key order)');
     assert.equal(profile.body.data.integrationHealthy, null);
 
     const dash = await api.call(adminA.id, 'GET', `${base}/dashboard`);

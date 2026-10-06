@@ -60,6 +60,8 @@ export function BookingDetail({
   const visual = bookingVisual(slot);
   const past = Date.parse(slot.endTime) <= nowMs;
   const editable = canEdit && !past;
+  // Only games and holds have schedule-edit actions; the note explains why those are missing.
+  const pastLocked = canEdit && past && (slot.type === 'game' || slot.type === 'game_court' || slot.type === 'hold');
   const chargeSource = chargeSourceOf(slot);
   const billing = 'billing' in slot ? slot.billing : null;
 
@@ -131,8 +133,6 @@ export function BookingDetail({
 
       {chargeSource && billing ? <BookingPaymentSection source={chargeSource} billing={billing} fmt={fmt} nested={nestedSheets} /> : null}
 
-      {past ? <p className="text-sm text-muted-foreground">{t('detail.pastReadOnly')}</p> : null}
-
       <div className="grid gap-2">
         {slot.type === 'game' || slot.type === 'game_court' ? (
           <>
@@ -203,6 +203,8 @@ export function BookingDetail({
             </div>
           )
         ) : null}
+
+        {pastLocked ? <p className="text-sm text-muted-foreground">{t('detail.pastReadOnly')}</p> : null}
       </div>
     </div>
   );

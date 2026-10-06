@@ -54,12 +54,13 @@ function safeMeta(raw: Prisma.JsonValue): ClubActivityItem['meta'] {
 }
 
 export async function listClubActivity(clubId: string, query: Record<string, unknown>): Promise<Paged<ClubActivityItem>> {
-  const action = typeof query.action === 'string' && query.action ? query.action : undefined;
-  if (action !== undefined && !ACTIONS.includes(action)) throw clubAdminValidation('action', 'unknown action');
+  // `action` is one action or a comma-separated list (the console filters by action group).
+  const actions = typeof query.action === 'string' ? [...new Set(query.action.split(',').map((a) => a.trim()).filter(Boolean))] : [];
+  for (const a of actions) if (!ACTIONS.includes(a)) throw clubAdminValidation('action', `unknown action: ${a}`);
   const limit = parseIntParam(query.limit, 'limit', { fallback: 30, min: 1, max: 100 });
   const cursor = decodeCursor(query.cursor);
   const rows = await prisma.clubActivity.findMany({
-    where: { AND: [{ clubId, ...(action ? { action: action as ClubActivityAction } : {}) }, before(cursor)] },
+    where: { AND: [{ clubId, ...(actions.length ? { action: { in: actions as ClubActivityAction[] } } : {}) }, before(cursor)] },
     include: { actor: { select: { id: true, firstName: true, lastName: true, avatar: true } } },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: limit + 1,

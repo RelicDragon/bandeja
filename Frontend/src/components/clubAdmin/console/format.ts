@@ -2,6 +2,7 @@
  * Console formatters. Every club datum is formatted in the **club** time zone with the active app
  * locale (`sr` → Serbian Latin via `resolveIntlLocale`) and the user's 12/24 h preference.
  * Formatters are built once per (locale, zone, hour12) and reused — never construct `Intl` per cell.
+ * Money is not here: use `formatCents` from `billing/money` (`*Cents` is always amount × 100).
  */
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,9 +10,7 @@ import { minutesToTime } from '@shared/clubAdmin/clubTime';
 import { resolveAppLocale, resolveDisplaySettings } from '@/utils/displayPreferences';
 import { resolveIntlLocale } from '@/utils/intlLocale';
 import { formatIntlPercent } from '@/utils/intlPercent';
-import { CURRENCY_INFO, formatPrice } from '@/utils/currency';
 import { useAuthStore } from '@/store/authStore';
-import type { PriceCurrency } from '@/types';
 
 export interface ConsoleFormatOptions {
   locale: string;
@@ -40,7 +39,6 @@ export interface ConsoleFormat {
   dateTime: (iso: string) => string;
   number: (n: number) => string;
   percent: (n: number) => string;
-  money: (cents: number, currency: string) => string;
 }
 
 function dateFromClubDate(date: string): Date {
@@ -95,14 +93,6 @@ export function createConsoleFormat({ locale: rawLocale, timeZone, hour12 }: Con
     dateTime: (iso) => dateTime.format(new Date(iso)),
     number: (n) => numberFmt.format(n),
     percent: (n) => formatIntlPercent(n, locale),
-    money: (cents, currency) => {
-      if (currency in CURRENCY_INFO) return formatPrice(cents, currency as PriceCurrency);
-      try {
-        return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100);
-      } catch {
-        return `${(cents / 100).toFixed(2)} ${currency}`;
-      }
-    },
   };
 }
 

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { registerUnsavedGuard } from './guardedNavigate';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
@@ -133,11 +134,11 @@ export function ConfirmSheet({
 // Unsaved-changes guard
 // ---------------------------------------------------------------------------
 
-type Pending = { kind: 'back'; fallback: string } | { kind: 'href'; href: string } | { kind: 'hardwareBack' };
+type Pending = { kind: 'back'; fallback: string } | { kind: 'href'; href: string; replace?: boolean } | { kind: 'hardwareBack' };
 
 /**
  * While `dirty`: the console back button (`data-console-back`), in-app links, Android back and a
- * page unload ask before leaving. `fallback` = where back goes without in-app history.
+ * page unload ask before leaving; so does `useGuardedNavigate`. `fallback` = where back goes without in-app history.
  */
 export function UnsavedChangesGuard({ dirty, fallback }: { dirty: boolean; fallback: string }) {
   const { t } = useTranslation('clubAdmin');
@@ -175,6 +176,11 @@ export function UnsavedChangesGuard({ dirty, fallback }: { dirty: boolean; fallb
     };
   }, [dirty, fallback]);
 
+  useEffect(() => {
+    if (!dirty) return;
+    return registerUnsavedGuard((href, replace) => setPending({ kind: 'href', href, replace }));
+  }, [dirty]);
+
   // Android back while dirty: ask instead of leaving (registered like a modal so it runs first).
   useBackButtonModal(dirty && !pending, () => setPending({ kind: 'hardwareBack' }), 'club-form-unsaved-guard');
 
@@ -182,7 +188,7 @@ export function UnsavedChangesGuard({ dirty, fallback }: { dirty: boolean; fallb
     const p = pending;
     setPending(null);
     if (!p) return;
-    if (p.kind === 'href') navigate(p.href);
+    if (p.kind === 'href') navigate(p.href, { replace: p.replace });
     else back(p.kind === 'back' ? p.fallback : fallback);
   }, [pending, navigate, back, fallback]);
 

@@ -22,6 +22,7 @@ import { PersonFace } from '@/components/clubAdmin/club/PersonFace';
 import { useClubConsole } from '@/clubAdmin/clubConsoleContextValue';
 import { useConsoleHeader } from '@/clubAdmin/consoleChrome';
 import { consoleBase } from '@/clubAdmin/consoleNav';
+import { formatCents } from '@/components/clubAdmin/billing/money';
 import { clubAreaKeys, useClubActivityQuery } from '@/queries/clubAdmin/clubArea';
 
 function ActivityRow({ item, fmt, currency }: { item: ClubActivityItem; fmt: ConsoleFormat; currency: string }) {
@@ -32,7 +33,7 @@ function ActivityRow({ item, fmt, currency }: { item: ClubActivityItem; fmt: Con
     ...s.values,
     actor,
     when: s.startTime ? fmt.dateTime(s.startTime) : '',
-    amount: s.amountCents !== null ? fmt.money(s.amountCents, s.currency ?? currency) : '',
+    amount: s.amountCents !== null ? formatCents(s.amountCents, s.currency ?? currency, fmt.locale) : '',
   };
   if (typeof values.label === 'string') values.label = t(`holdLabel.${values.label}`, { defaultValue: values.label });
   if (typeof values.role === 'string') values.role = t(`club.team.role.${values.role}`, { defaultValue: values.role });
@@ -61,11 +62,8 @@ export function ClubActivityPage() {
   const groupRaw = params.get('group');
   const group = (ACTIVITY_GROUP_IDS as string[]).includes(groupRaw ?? '') ? (groupRaw as ActivityGroup) : null;
   const actions = group ? ACTIVITY_GROUPS[group] : null;
-  // A one-action group can use the server filter; larger groups filter loaded pages.
-  const serverAction = actions && actions.length === 1 ? actions[0] : null;
-  const list = useClubActivityQuery(clubId, serverAction);
-  const all = useMemo(() => (list.data?.pages ?? []).flatMap((p) => p.items), [list.data]);
-  const items = useMemo(() => (actions ? all.filter((i) => actions.includes(i.action)) : all), [all, actions]);
+  const list = useClubActivityQuery(clubId, actions);
+  const items = useMemo(() => (list.data?.pages ?? []).flatMap((p) => p.items), [list.data]);
 
   const days = useMemo(() => {
     const out: Array<{ date: string; items: ClubActivityItem[] }> = [];
@@ -91,8 +89,7 @@ export function ClubActivityPage() {
     );
     io.observe(el);
     return () => io.disconnect();
-    // `all.length`: re-observe after every page so a filtered-out page keeps paging.
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isFetchNextPageError, scrollRef, all.length]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isFetchNextPageError, scrollRef]);
 
   const dayLabel = (date: string) =>
     date === today
@@ -102,7 +99,7 @@ export function ClubActivityPage() {
         : fmt.dateLong(date);
 
   return (
-    <ConsolePullToRefresh onRefresh={() => qc.invalidateQueries({ queryKey: clubAreaKeys.activity(clubId, serverAction) })}>
+    <ConsolePullToRefresh onRefresh={() => qc.invalidateQueries({ queryKey: clubAreaKeys.activity(clubId, actions) })}>
       <div className="mx-auto w-full max-w-2xl space-y-3 p-4 pb-8 lg:p-6">
         <FilterChips
           ariaLabel={t('club.activity.filter')}
@@ -122,9 +119,9 @@ export function ClubActivityPage() {
         />
         {list.isPending ? (
           <SkeletonRows rows={6} />
-        ) : list.isError && all.length === 0 ? (
+        ) : list.isError && items.length === 0 ? (
           <ErrorState onRetry={() => void list.refetch()} />
-        ) : items.length === 0 && !hasNextPage ? (
+        ) : items.length === 0 ? (
           <EmptyState icon={ScrollText} title={t('club.activity.emptyTitle')} body={group ? t('club.activity.emptyFiltered') : t('club.activity.emptyBody')} />
         ) : (
           <div className="space-y-4">

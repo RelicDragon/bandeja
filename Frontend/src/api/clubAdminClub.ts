@@ -85,8 +85,11 @@ export const clubAdminClubApi = {
     return res.data.data as ClubTeamMember[];
   },
 
-  listActivity: (clubId: string, q: { cursor?: string; action?: ClubActivityAction }, opts?: RequestOpts) =>
-    get<Paged<ClubActivityItem>>(`${clubPath(clubId)}/activity`, { ...opts, params: q }),
+  listActivity: (clubId: string, q: { cursor?: string; actions?: readonly ClubActivityAction[] }, opts?: RequestOpts) =>
+    get<Paged<ClubActivityItem>>(`${clubPath(clubId)}/activity`, {
+      ...opts,
+      params: { cursor: q.cursor, action: q.actions?.length ? q.actions.join(',') : undefined },
+    }),
   listReviews: (clubId: string, q: { cursor?: string }, opts?: RequestOpts) =>
     get<ClubAdminReviewsResponse>(`${clubPath(clubId)}/reviews`, { ...opts, params: q }),
 };

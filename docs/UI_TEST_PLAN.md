@@ -2878,7 +2878,7 @@ Console behaviour: [domains/club-admin.md](./domains/club-admin.md). Check every
 | CA-45 | Club screens | Club → any row → save | Back returns to the hub; save errors toast or land on the field instead of failing silently; Today's setup checklist updates; old `/settings` and `/courts` URLs redirect to Profile / Courts |
 | CA-46 | View as player | Club → View as player | Player club page modal |
 | CA-47 | Court sport assignment | Club → Courts → add or edit court | Sport picker shows only club-enabled sports; saved sport appears on list row with icon and label; legacy courts without sport remain editable |
-| CA-48 | Reports | Open Reports (ADMIN) | Empty state with a link to Today, no error |
+| CA-48 | Reports | Open Reports (ADMIN) | The Reports page loads (cases CA-RP-* in §17.9), no error |
 
 ### 17.6 Language and accessibility
 
@@ -2927,6 +2927,30 @@ Mobile-first: run on a phone (Capacitor) with the software keyboard, then on des
 | CA-CL-19 | Activity filter | Tap Payments, then Team | Only that family of actions; empty filter shows "Nothing of this kind yet."; filter survives reload (`?group=`) |
 | CA-CL-20 | Reviews | Club → Reviews | Average with stars, count, 5→1 distribution bars; reviews with author, date, stars, text and photos; infinite scroll; empty club shows the empty state |
 | CA-CL-21 | STAFF and direct URLs | As STAFF open `/my-clubs/:id/club/pricing` (or team, activity) | Forbidden state, never the page |
+| CA-CL-22 | Switcher with unsaved edits | Edit Profile (don't save) → top bar / sidebar switcher → another club; also All my clubs | Switcher closes and "Leave without saving?" opens; Cancel stays on the dirty form; "Discard and leave" lands on the other club (same section) |
+
+### 17.9 Reports, billing and payments
+
+Money: every amount is `*Cents` ÷ 100 in the club currency for **every** currency — check one club in EUR and one in RSD (a 2 500 RSD price shows as 2 500, not 250 000 or 25).
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CA-RP-01 | Reports overview | ADMIN → Reports → 7 / 30 / 90 days, then a custom range | KPIs with deltas vs the previous period; daily trend (switch metric), weekday × hour heatmap, per-court / game-type bars, top regulars, rating trend; dates are club-local |
+| CA-RP-02 | Revenue block | Same, with revenue | Expected / charged / outstanding / collected and by-method in the club currency; "Payments ledger" link opens the ledger on the same range |
+| CA-RP-03 | Revenue hidden | As a role without `reports.revenue` | No revenue section, no collected KPI, no payments CSV; the rest of the report works |
+| CA-RP-04 | CSV export | Export bookings, players, payments | Each downloads (phones: share sheet) with a club-local file name; opens in a spreadsheet with correct accents |
+| CA-RP-05 | Range limit | Custom range reaching 366 days | The period line shows the maximum hint; a longer range gets the inline "range too large" message, not a crash |
+| CA-BL-01 | Take payment | Schedule → a priced booking → Take payment → defaults to the balance → Card → Pay | Toast; Paid / balance update in the sheet, the grid chip and Bookings; amount above the balance shows the inline "exceeds" error |
+| CA-BL-02 | Partial payment | Take payment for part of the balance | Chip "Partly paid"; balance = rest; a second payment for the rest → "Paid" |
+| CA-BL-03 | Void a payment | Payment row → void → confirm | Inline confirm names the amount; balance and chip roll back; the ledger shows the row struck through with VOID; Activity logs it |
+| CA-BL-04 | Waive | Charge with a balance → Waive → confirm | Chip "Waived"; collected payments stay; no further payments accepted |
+| CA-BL-05 | Void the charge | Charge with no live payments → Void → confirm | Chip "Void"; with live payments the action is not offered |
+| CA-BL-06 | Ended booking | Open a booking that has ended, with a balance | Payment section works and sits right under the details; "This booking is over…" shows only beside the (missing) edit actions, not above the payment section |
+| CA-BL-07 | STAFF collects | As STAFF on a booking | Take payment / void payment work; pricing and reports stay forbidden |
+| CA-PL-01 | Ledger | Bookings header → ledger icon (also Today → Collected, Reports → ledger link) | `/my-clubs/:id/payments`, today by default; totals collected and by method for the whole range; rows grouped by club-local day |
+| CA-PL-02 | Ledger filters | Change range and method | URL keeps `from` / `to` / `method`; totals follow the filter; voided rows listed but excluded from totals |
+| CA-PL-03 | Ledger row | Tap a booking payment | The booking opens in the schedule on its date with its detail; a manual charge (no booking) opens that day with nothing selected |
+| CA-PL-04 | Ledger access | As a member without `billing.collect`, open `/payments` by URL | Forbidden state, never the page |
 
 ---
 

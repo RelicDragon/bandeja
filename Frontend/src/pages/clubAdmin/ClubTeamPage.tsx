@@ -2,7 +2,7 @@
  * `/my-clubs/:clubId/club/team` (`team.manage`) — who runs the club. Members with their role,
  * change role or remove from a member sheet (remove asks first), add a member through the app's
  * player search (`PlayerListModal`) and a role picker that explains ADMIN vs STAFF. The server
- * refuses to drop the last admin (`clubAdmin.lastAdmin`); the UI also locks that row.
+ * refuses to drop the last admin (error code `lastAdmin`); the UI also locks that row.
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

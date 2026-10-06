@@ -27,6 +27,7 @@ import {
   useUpsertCourtMutation,
 } from '@/queries/clubAdmin/clubArea';
 import { getSportConfig } from '@/sport/sportRegistry';
+import { formatCents } from '@/components/clubAdmin/billing/money';
 import type { Sport } from '@/types';
 
 export function ClubCourtsPage() {
@@ -82,7 +83,7 @@ export function ClubCourtsPage() {
       c.sport ? tApp(getSportConfig(c.sport as Sport).labelKey) : null,
       c.isIndoor ? t('club.courts.indoor') : t('club.courts.outdoor'),
       c.courtType,
-      c.pricePerHourCents !== null ? t('club.courts.perHour', { price: fmt.money(c.pricePerHourCents, currency) }) : null,
+      c.pricePerHourCents !== null ? t('club.courts.perHour', { price: formatCents(c.pricePerHourCents, currency, fmt.locale) }) : null,
     ]
       .filter(Boolean)
       .join(' · ');

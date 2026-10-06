@@ -36,6 +36,7 @@ import { deriveDashboard } from '@/components/clubAdmin/today/deriveDashboard';
 import { SetupChecklistCard } from '@/components/clubAdmin/today/SetupChecklistCard';
 import { WeekOccupancyChart } from '@/components/clubAdmin/today/WeekOccupancyChart';
 import { useScheduleModel } from '@/components/clubAdmin/schedule/useScheduleModel';
+import { formatCents } from '@/components/clubAdmin/billing/money';
 import { clubAdminKeys, useClubDashboardQuery, useClubScheduleQuery } from '@/queries/clubAdmin';
 
 const ATTENTION_ICON: Record<AttentionIcon, LucideIcon> = {
@@ -135,20 +136,20 @@ export function ClubTodayPage() {
                     <KpiTile
                       icon={CircleDollarSign}
                       label={t('today.kpi.expected')}
-                      value={fmt.money(k.expectedRevenueCents ?? 0, k.currency)}
+                      value={formatCents(k.expectedRevenueCents ?? 0, k.currency, fmt.locale)}
                     />
                     {k.collectedCents != null ? (
                       can('billing.collect') ? (
                         <Link
                           to={paymentsPath(clubId)}
                           className="block rounded-2xl transition-opacity duration-150 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                          aria-label={`${t('today.kpi.collected')}: ${fmt.money(k.collectedCents, k.currency)} — ${t('billing.ledger.title')}`}
+                          aria-label={`${t('today.kpi.collected')}: ${formatCents(k.collectedCents, k.currency, fmt.locale)} — ${t('billing.ledger.title')}`}
                         >
                           <KpiTile
                             icon={Wallet}
                             label={t('today.kpi.collected')}
                             tone="ok"
-                            value={fmt.money(k.collectedCents, k.currency)}
+                            value={formatCents(k.collectedCents, k.currency, fmt.locale)}
                             hint={t('billing.ledger.open')}
                           />
                         </Link>
@@ -157,7 +158,7 @@ export function ClubTodayPage() {
                           icon={Wallet}
                           label={t('today.kpi.collected')}
                           tone="ok"
-                          value={fmt.money(k.collectedCents, k.currency)}
+                          value={formatCents(k.collectedCents, k.currency, fmt.locale)}
                         />
                       )
                     ) : null}
@@ -186,7 +187,7 @@ export function ClubTodayPage() {
                         tone={r.tone}
                         title={t(r.titleKey, {
                           ...r.values,
-                          amount: r.amount ? fmt.money(r.amount.cents, r.amount.currency) : '',
+                          amount: r.amount ? formatCents(r.amount.cents, r.amount.currency, fmt.locale) : '',
                         })}
                         to={r.to ?? undefined}
                       />

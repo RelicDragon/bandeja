@@ -3,7 +3,7 @@
  * Keys live under the club prefix (`['clubAdmin', 'club', clubId, …]`), so the existing
  * `invalidateAfterClubChange` refreshes them together with the context (setup checklist),
  * schedule columns and the picker. Writes toast the server `code` unless the caller asks to
- * handle validation itself (`clubAdmin.validation` → per-field errors from `details`).
+ * handle validation itself (error code `validation` in the clubAdmin family → per-field errors from `details`).
  */
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
@@ -31,8 +31,8 @@ export const clubAreaKeys = {
   quote: (clubId: string, courtId: string, startTime: string, endTime: string) =>
     [...clubAdminKeys.club(clubId), 'quote', courtId, startTime, endTime] as const,
   team: (clubId: string) => [...clubAdminKeys.club(clubId), 'team'] as const,
-  activity: (clubId: string, action: ClubActivityAction | null) =>
-    [...clubAdminKeys.club(clubId), 'activity', action ?? 'all'] as const,
+  activity: (clubId: string, actions: readonly ClubActivityAction[] | null) =>
+    [...clubAdminKeys.club(clubId), 'activity', actions?.length ? actions.join(',') : 'all'] as const,
   reviews: (clubId: string) => [...clubAdminKeys.club(clubId), 'reviews'] as const,
 };
 
@@ -107,12 +107,13 @@ export function useClubTeamQuery(clubId: string) {
   });
 }
 
-export function useClubActivityQuery(clubId: string, action: ClubActivityAction | null) {
+/** `actions` filters server-side (any of them); `null` lists everything. */
+export function useClubActivityQuery(clubId: string, actions: readonly ClubActivityAction[] | null) {
   return useInfiniteQuery({
-    queryKey: clubAreaKeys.activity(clubId, action),
+    queryKey: clubAreaKeys.activity(clubId, actions),
     initialPageParam: null as string | null,
     queryFn: ({ pageParam, signal }) =>
-      clubAdminClubApi.listActivity(clubId, { cursor: pageParam ?? undefined, action: action ?? undefined }, { signal }),
+      clubAdminClubApi.listActivity(clubId, { cursor: pageParam ?? undefined, actions: actions ?? undefined }, { signal }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     staleTime: 30_000,
     retry: clubAdminRetry,

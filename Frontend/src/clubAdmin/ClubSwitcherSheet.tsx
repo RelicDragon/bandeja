@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, LayoutGrid, LogOut } from 'lucide-react';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { useDebounce } from '@/components/CityMap/useDebounce';
+import { useGuardedNavigate } from '@/components/clubAdmin/club/guardedNavigate';
 import { ConsoleSheet } from '@/components/clubAdmin/console/ConsoleSheet';
 import { inputClass } from '@/components/clubAdmin/console/controls';
 import { ErrorState, SkeletonRows } from '@/components/clubAdmin/console/primitives';
@@ -23,7 +24,8 @@ export function ClubSwitcherSheet({
   currentClubId: string;
 }) {
   const { t } = useTranslation('clubAdmin');
-  const navigate = useNavigate();
+  // Same leave prompt as the Club forms' links when a form has unsaved changes.
+  const navigate = useGuardedNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
   const debounced = useDebounce(query, 250);

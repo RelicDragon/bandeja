@@ -281,6 +281,12 @@ void (async () => {
     const actions = new Set((await prisma.clubActivity.findMany({ where: { clubId: clubA.id }, select: { action: true } })).map((a) => a.action));
     for (const a of ['PRICING_UPDATED', 'CHARGE_CREATED', 'CHARGE_UPDATED', 'PAYMENT_RECORDED', 'PAYMENT_VOIDED'] as const) assert.ok(actions.has(a), a);
     expectStatus(await api.call(adminA.id, 'GET', `${base}/activity?action=NOPE`), 400, 'action', 'clubAdmin.validation');
+    const money = await api.call(adminA.id, 'GET', `${base}/activity?action=PAYMENT_RECORDED,PAYMENT_VOIDED&limit=100`);
+    expectStatus(money, 200, 'activity, comma list');
+    const moneyActions = (money.body.data.items as { action: string }[]).map((i) => i.action);
+    assert.ok(moneyActions.length > 4 && moneyActions.includes('PAYMENT_VOIDED'), 'both actions returned');
+    assert.ok(moneyActions.every((a) => a === 'PAYMENT_RECORDED' || a === 'PAYMENT_VOIDED'), 'only listed actions');
+    expectStatus(await api.call(adminA.id, 'GET', `${base}/activity?action=PAYMENT_RECORDED,NOPE`), 400, 'action', 'clubAdmin.validation');
     const rev = await api.call(adminA.id, 'GET', `${base}/reviews?limit=2`);
     expectStatus(rev, 200, 'reviews');
     assert.deepEqual(rev.body.data.summary, { averageStars: 3.67, count: 3, distribution: { 1: 0, 2: 1, 3: 0, 4: 1, 5: 1 } });

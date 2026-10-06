@@ -8,7 +8,7 @@ export function useFormBottomPadding(dirty: boolean): number {
   return (dirty ? 96 : 32) + (keyboard.visible ? keyboard.insetPx : 0);
 }
 
-/** `clubAdmin.validation` details as `{ field: message }` (null for any other error). */
+/** Details of the club-admin `validation` error as `{ field: message }` (null for any other error). */
 export function validationFieldErrors(err: unknown): Record<string, string> | null {
   const parsed = parseClubAdminError(err);
   if (parsed.suffix !== 'validation') return null;

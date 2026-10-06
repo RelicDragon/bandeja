@@ -1,9 +1,9 @@
-import { PriceCurrency, Prisma } from '@prisma/client';
+import { PriceCurrency } from '@prisma/client';
 import type { ClubProfile } from '@bandeja/shared/clubAdmin/contract';
 import { clubHasBookingIntegration } from '@bandeja/shared/clubIntegration';
 import prisma from '../../config/database';
 import { parseClubPhotosJson } from '../../utils/clubPhotosJson';
-import { buildClubPatchData } from './clubAdminClubPatch';
+import { amenitiesToList, buildClubPatchData } from './clubAdminClubPatch';
 import { clubAdminNotFound, clubAdminValidation } from './clubAdminErrors';
 import { logClubActivity } from './clubAdminActivity.service';
 import { DEFAULT_SLOT_MINUTES } from './clubAdminSchedule.service';
@@ -26,10 +26,6 @@ const PROFILE_PATCH_KEYS = [
   'photos',
 ] as const;
 
-function amenitiesList(raw: Prisma.JsonValue | null): string[] {
-  return Array.isArray(raw) ? raw.filter((a): a is string => typeof a === 'string') : [];
-}
-
 /** `photos` are the stored originals' URLs; PATCH may only reorder/remove them. */
 export async function getClubProfile(clubId: string): Promise<ClubProfile> {
   const club = await prisma.club.findUnique({ where: { id: clubId } });
@@ -46,7 +42,7 @@ export async function getClubProfile(clubId: string): Promise<ClubProfile> {
     address: club.address,
     latitude: club.latitude,
     longitude: club.longitude,
-    amenities: amenitiesList(club.amenities),
+    amenities: amenitiesToList(club.amenities),
     sports: club.sports,
     policyText: club.policyText,
     defaultSlotMinutes: club.defaultSlotMinutes ?? DEFAULT_SLOT_MINUTES,

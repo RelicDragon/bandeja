@@ -38,6 +38,7 @@ import {
   usePriceQuoteQuery,
   useSaveClubPricingMutation,
 } from '@/queries/clubAdmin/clubArea';
+import { formatCents } from '@/components/clubAdmin/billing/money';
 import { SUPPORTED_CURRENCIES } from '@/utils/currency';
 
 const BILLABLE_CANDIDATES: HoldLabel[] = ['WALK_IN', 'PHONE', 'ACADEMY', 'OTHER'];
@@ -437,7 +438,7 @@ function WeekPreview({
   const label = (s: PriceSegment) => {
     const range = `${fmt.wallTime(s.startMinute)}–${s.endMinute >= 1440 ? fmt.wallTime(0) : fmt.wallTime(s.endMinute)}`;
     if (s.source.kind === 'none') return `${range} · ${t('club.pricing.noPrice')}`;
-    const price = fmt.money(s.source.pricePerHourCents, draft.currency);
+    const price = formatCents(s.source.pricePerHourCents, draft.currency, fmt.locale);
     if (s.source.kind === 'base') return `${range} · ${t('club.pricing.baseRateShort')} · ${price}`;
     const key = s.source.ruleKey;
     const rule = draft.rules.find((r) => r.key === key);
@@ -491,7 +492,7 @@ function WeekPreview({
                       style={{ insetInlineStart: `${(s.startMinute / 1440) * 100}%`, width: `${((s.endMinute - s.startMinute) / 1440) * 100}%` }}
                     >
                       {s.source.kind !== 'none' && s.endMinute - s.startMinute >= 180
-                        ? fmt.money(s.source.pricePerHourCents, draft.currency)
+                        ? formatCents(s.source.pricePerHourCents, draft.currency, fmt.locale)
                         : null}
                     </div>
                   ))}
@@ -568,7 +569,7 @@ function QuoteTester({ courts, dirty }: { courts: readonly ClubAdminCourt[]; dir
                   ? t('club.pricing.quoteError')
                   : quote.data?.amountCents == null
                     ? t('club.pricing.noPrice')
-                    : fmt.money(quote.data.amountCents, quote.data.currency)}
+                    : formatCents(quote.data.amountCents, quote.data.currency, fmt.locale)}
           </span>
         </div>
         <p className="text-xs text-muted-foreground">{dirty ? t('club.pricing.quoteSavedOnlyDirty') : t('club.pricing.quoteSavedOnly')}</p>

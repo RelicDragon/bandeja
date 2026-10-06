@@ -57,6 +57,21 @@ function stringList(raw: unknown, field: string, maxItems: number, maxLen: numbe
 }
 
 /**
+ * `Club.amenities` is stored as `{ [key]: true }` — the shape the public club page and shipped
+ * store builds read (`amenityEntries`). The console contract is `string[]`: reads normalise any
+ * stored shape (object, or a `string[]` written by the admin panel) and writes convert back.
+ */
+export function amenitiesToList(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.filter((a): a is string => typeof a === 'string' && a.trim() !== '');
+  if (!raw || typeof raw !== 'object') return [];
+  return Object.entries(raw).filter(([, v]) => v === true || (typeof v === 'string' && v.trim() !== '')).map(([k]) => k);
+}
+
+function amenitiesToStored(list: string[]): Record<string, true> {
+  return Object.fromEntries(list.map((a) => [a, true] as const));
+}
+
+/**
  * Photos can only be reordered or removed here; uploads go through `POST /media/upload/club/photo`.
  * Items are either the stored `{ originalUrl, thumbnailUrl }` or a bare `originalUrl` string; each
  * must name a photo the club already has.
@@ -136,8 +151,11 @@ export async function buildClubPatchData(
     data[key] = v as string | null;
   }
   if (has('amenities')) {
-    const amenities = stringList(body.amenities, 'amenities', 50, 100);
-    data.amenities = amenities === null ? Prisma.DbNull : amenities;
+    // The legacy settings page (shipped builds, `PATCH /clubs/:clubId`) sends the stored object shape.
+    const raw = body.amenities;
+    const legacy = raw !== null && typeof raw === 'object' && !Array.isArray(raw);
+    const amenities = stringList(legacy ? amenitiesToList(raw) : raw, 'amenities', 50, 100);
+    data.amenities = amenities === null ? Prisma.DbNull : amenitiesToStored(amenities);
   }
   if (has('latitude')) data.latitude = coordinate(body.latitude, 'latitude', 90);
   if (has('longitude')) data.longitude = coordinate(body.longitude, 'longitude', 180);
