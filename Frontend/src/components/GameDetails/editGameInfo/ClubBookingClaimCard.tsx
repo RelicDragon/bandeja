@@ -1,91 +1,162 @@
 /**
  * Under the time grid: a court the club shows as busy over the picked time.
- * The club never says whose booking it is, and usually it is someone else's:
- * the card says to pick another time or court. "I booked it myself" (secondary,
- * outlined) marks the court as reserved; "Game only" stops checking the club
- * altogether. Claimed courts turn into a quiet confirmation
- * with Undo. Rows only animate in (CSS): nothing waits on an exit animation,
- * which a backgrounded WebView may never run.
+ *
+ * When the organizer's club account is connected we check it (`verdictOf`):
+ *  - their own reservation → "Use my <provider> booking" (primary): it is
+ *    linked to the game on save, a real reservation rather than a mark;
+ *  - not in their account → it is someone else's booking: pick another time
+ *    or court; "I booked it another way" stays as a small text link;
+ *  - can't check (not connected / loading) → most likely someone else's;
+ *    "I booked it myself" (outlined) marks the court reserved.
+ * "Game only" stops checking the club altogether. Chosen courts turn into a
+ * quiet confirmation with Undo — green for a linked booking, sky for a mark.
+ * Rows only animate in (CSS): nothing waits on an exit animation, which a
+ * backgrounded WebView may never run.
  */
 import { useTranslation } from 'react-i18next';
-import { CalendarCheck2, CircleHelp } from 'lucide-react';
+import { BadgeCheck, CalendarCheck2, CalendarX2, CircleHelp, UserCheck } from 'lucide-react';
 import { pressScaleGuard } from '@/components/motion/pressScale';
-import type { ClubBookingConflict } from './clubBookingClaims';
+import type { ClubBookingConflict, ClubBookingVerdict, OwnClubBooking } from './clubBookingClaims';
 import '@/features/court-reservations/courtReservations.css';
 
 type ClubBookingClaimCardProps = {
   /** Busy at the club, not claimed yet. */
   open: readonly ClubBookingConflict[];
-  /** Claimed in this edit (Undo offered). */
+  /** Marked reserved in this edit (Undo offered). */
   claimed: readonly ClubBookingConflict[];
+  /** Own reservations chosen for linking in this edit (Undo offered). */
+  linked?: readonly { conflict: ClubBookingConflict; booking: OwnClubBooking }[];
   courtName: (courtId: string) => string;
   formatTime: (iso: string) => string;
+  /** Whose booking it is, from the organizer's club account. */
+  verdictOf?: (conflict: ClubBookingConflict) => ClubBookingVerdict;
+  /** Display name of the club's booking system ("Booktime"). */
+  providerName?: string;
   onClaim: (courtId: string) => void;
   onUndo: (courtId: string) => void;
+  onUseOwn?: (courtId: string, booking: OwnClubBooking) => void;
+  onUndoOwn?: (courtId: string) => void;
   /** The clean opt-out: stop checking the club for this game. */
   onGameOnly: () => void;
 };
 
-export function ClubBookingClaimCard({ open, claimed, courtName, formatTime, onClaim, onUndo, onGameOnly }: ClubBookingClaimCardProps) {
+const primaryBtn = `mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] ${pressScaleGuard}`;
+const outlineBtn = `mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 text-sm font-semibold text-gray-900 transition-[background-color,transform] hover:bg-amber-100/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] dark:border-amber-700 dark:bg-gray-900 dark:text-white dark:hover:bg-amber-900/30 ${pressScaleGuard}`;
+const quietBtn =
+  'mt-1 flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 text-sm font-semibold text-gray-700 hover:bg-amber-100/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-200 dark:hover:bg-amber-900/30';
+
+export function ClubBookingClaimCard({
+  open,
+  claimed,
+  linked = [],
+  courtName,
+  formatTime,
+  verdictOf,
+  providerName = '',
+  onClaim,
+  onUndo,
+  onUseOwn,
+  onUndoOwn,
+  onGameOnly,
+}: ClubBookingClaimCardProps) {
   const { t } = useTranslation();
   return (
     <div className="space-y-2" data-testid="club-booking-claims">
-        {open.map((conflict) => {
-          const params = { court: courtName(conflict.courtId), from: formatTime(conflict.start), to: formatTime(conflict.end) };
-          return (
-            <section
-              key={`open-${conflict.courtId}`}
-              className="cr-enter rounded-2xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/60 dark:bg-amber-900/20"
-              data-testid="club-booking-claim"
-            >
-              <div className="flex items-start gap-3">
+      {open.map((conflict) => {
+        const params = { court: courtName(conflict.courtId), from: formatTime(conflict.start), to: formatTime(conflict.end), provider: providerName };
+        const verdict = verdictOf?.(conflict) ?? { kind: 'unknown' as const };
+        const ownBooking = verdict.kind === 'own' && onUseOwn ? verdict.booking : null;
+        return (
+          <section
+            key={`open-${conflict.courtId}`}
+            className="cr-enter rounded-2xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/60 dark:bg-amber-900/20"
+            data-testid="club-booking-claim"
+            data-verdict={verdict.kind}
+          >
+            <div className="flex items-start gap-3">
+              {verdict.kind === 'notInAccount' ? (
+                <CalendarX2 size={18} aria-hidden className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              ) : (
                 <CircleHelp size={18} aria-hidden className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.clubBusyTitle', params)}</p>
-                  <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">{t('gameDetails.courts.clubBusyElse')}</p>
-                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.clubBusyTitle', params)}</p>
+                <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">
+                  {ownBooking
+                    ? t('gameDetails.courts.clubBusyOwnFound', params)
+                    : verdict.kind === 'notInAccount'
+                      ? t('gameDetails.courts.clubBusyNotInAccount', params)
+                      : t('gameDetails.courts.clubBusyElse')}
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onClaim(conflict.courtId)}
-                className={`mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 text-sm font-semibold text-gray-900 transition-[background-color,transform] hover:bg-amber-100/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 active:scale-[0.98] dark:border-amber-700 dark:bg-gray-900 dark:text-white dark:hover:bg-amber-900/30 ${pressScaleGuard}`}
-              >
+            </div>
+            {ownBooking ? (
+              <button type="button" onClick={() => onUseOwn?.(conflict.courtId, ownBooking)} className={primaryBtn}>
+                <BadgeCheck size={16} aria-hidden />
+                {t('gameDetails.courts.clubBusyUseOwn', params)}
+              </button>
+            ) : verdict.kind === 'notInAccount' ? (
+              <button type="button" onClick={() => onClaim(conflict.courtId)} className={quietBtn}>
+                {t('gameDetails.courts.clubBusyMineOtherWay')}
+              </button>
+            ) : (
+              <button type="button" onClick={() => onClaim(conflict.courtId)} className={outlineBtn}>
                 <CalendarCheck2 size={16} aria-hidden />
                 {t('gameDetails.courts.clubBusyMine')}
               </button>
-              <button
-                type="button"
-                onClick={onGameOnly}
-                className="mt-1 flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 text-sm font-semibold text-gray-700 hover:bg-amber-100/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-200 dark:hover:bg-amber-900/30"
-              >
-                {t('gameDetails.courts.clubBusyGameOnly')}
-              </button>
-            </section>
-          );
-        })}
-        {claimed.map((conflict) => {
-          const params = { court: courtName(conflict.courtId), from: formatTime(conflict.start), to: formatTime(conflict.end) };
-          return (
-            <section
-              key={`claimed-${conflict.courtId}`}
-              className="cr-enter flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 dark:border-emerald-800/60 dark:bg-emerald-900/20"
-              data-testid="club-booking-claimed"
+            )}
+            <button type="button" onClick={onGameOnly} className={quietBtn}>
+              {t('gameDetails.courts.clubBusyGameOnly')}
+            </button>
+          </section>
+        );
+      })}
+      {linked.map(({ conflict, booking }) => {
+        const params = { court: courtName(conflict.courtId), from: formatTime(booking.start), to: formatTime(booking.end), provider: providerName };
+        return (
+          <section
+            key={`linked-${conflict.courtId}`}
+            className="cr-enter flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 dark:border-emerald-800/60 dark:bg-emerald-900/20"
+            data-testid="club-booking-linked"
+          >
+            <BadgeCheck size={18} aria-hidden className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.clubBusyOwnLinked', params)}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">{t('gameDetails.courts.clubBusyOwnLinkedHint', params)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onUndoOwn?.(conflict.courtId)}
+              className="min-h-[44px] shrink-0 rounded-xl px-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
             >
-              <CalendarCheck2 size={18} aria-hidden className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.clubBusyClaimed', params)}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-300">{t('gameDetails.courts.clubBusyClaimedHint', params)}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onUndo(conflict.courtId)}
-                className="min-h-[44px] shrink-0 rounded-xl px-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
-              >
-                {t('gameDetails.courts.clubBusyUndo')}
-              </button>
-            </section>
-          );
-        })}
+              {t('gameDetails.courts.clubBusyUndo')}
+            </button>
+          </section>
+        );
+      })}
+      {claimed.map((conflict) => {
+        const params = { court: courtName(conflict.courtId), from: formatTime(conflict.start), to: formatTime(conflict.end) };
+        return (
+          <section
+            key={`claimed-${conflict.courtId}`}
+            className="cr-enter flex items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-3 py-2.5 dark:border-sky-800/60 dark:bg-sky-900/20"
+            data-testid="club-booking-claimed"
+          >
+            <UserCheck size={18} aria-hidden className="shrink-0 text-sky-600 dark:text-sky-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.clubBusyClaimed', params)}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">{t('gameDetails.courts.clubBusyClaimedHint', params)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onUndo(conflict.courtId)}
+              className="min-h-[44px] shrink-0 rounded-xl px-3 text-sm font-semibold text-sky-700 hover:bg-sky-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-sky-300 dark:hover:bg-sky-900/40"
+            >
+              {t('gameDetails.courts.clubBusyUndo')}
+            </button>
+          </section>
+        );
+      })}
     </div>
   );
 }

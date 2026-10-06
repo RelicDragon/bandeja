@@ -910,7 +910,7 @@
       "clubBusyMine": "मैंने खुद बुक किया",
       "clubBusyGameOnly": "सिर्फ़ गेम — क्लब न जाँचें",
       "clubBusyElse": "संभवतः यह किसी और की बुकिंग है। कोई और समय या कोर्ट चुनें।",
-      "clubBusyClaimed": "आपकी बुकिंग · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "आरक्षित के रूप में चिह्नित · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}} इस गेम के लिए आरक्षित के रूप में चिह्नित दिखेगा।",
       "clubBusyUndo": "पूर्ववत करें",
       "clubBusySaveTitle": "यह कोर्ट क्लब में बुक है",
@@ -923,7 +923,20 @@
       "pickerHintGameOnly": "कोर्ट क्रम से चुनें।",
       "gameOnlyClashMessage": "क्लब में {{court}} {{from}}–{{to}} बुक दिख रहा है। अगर यह आपकी बुकिंग है, तो गेम इसे आरक्षित के रूप में इस्तेमाल करेगा।",
       "gameOnlyClashConfirm": "मैंने खुद बुक किया",
-      "gameOnlyClashKeep": "सिर्फ़ गेम रखें"
+      "gameOnlyClashKeep": "सिर्फ़ गेम रखें",
+      "clubBusyOwnFound": "यह {{provider}} पर आपकी बुकिंग है।",
+      "clubBusyUseOwn": "{{provider}} की मेरी बुकिंग इस्तेमाल करें",
+      "clubBusyNotInAccount": "यह आपके {{provider}} खाते में नहीं है — किसी और ने बुक किया है। कोई और समय या कोर्ट चुनें।",
+      "clubBusyMineOtherWay": "मैंने दूसरे तरीके से बुक किया",
+      "clubBusyOwnLinked": "{{provider}} पर आपकी बुकिंग · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "सेव करने पर इस गेम से जुड़ जाएगी।",
+      "clubBusySaveOwnTitle": "{{provider}} पर आपकी बुकिंग",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} आपके {{provider}} खाते में बुक है। इसे इस गेम से जोड़कर सेव करें?",
+      "clubBusySaveOwnMessageMany": "{{courts}} इस समय आपके {{provider}} खाते में बुक हैं। इन्हें इस गेम से जोड़कर सेव करें?",
+      "clubBusySaveUseOwn": "{{provider}} की मेरी बुकिंग इस्तेमाल करें — सेव करें",
+      "clubBusySaveNotInAccount": "{{court}} क्लब में {{from}}–{{to}} बुक है, और यह आपके {{provider}} खाते में नहीं है — किसी और ने बुक किया है। कोई और समय या कोर्ट चुनें।",
+      "clubBusySaveNotInAccountMany": "{{courts}} इस समय क्लब में बुक हैं, और आपके {{provider}} खाते में नहीं हैं — किसी और ने बुक किए हैं। कोई और समय या कोर्ट चुनें।",
+      "clubBusySaveMineOtherWay": "मैंने दूसरे तरीके से बुक किया — सेव करें"
     }
   }
 }

@@ -910,7 +910,7 @@
       "clubBusyMine": "I booked it myself",
       "clubBusyGameOnly": "Game only — don't check the club",
       "clubBusyElse": "Most likely someone else's booking. Pick another time or court.",
-      "clubBusyClaimed": "Your booking · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "Marked reserved · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}} will show as marked reserved for this game.",
       "clubBusyUndo": "Undo",
       "clubBusySaveTitle": "This court is taken at the club",
@@ -923,7 +923,20 @@
       "pickerHintGameOnly": "Pick the courts in order.",
       "gameOnlyClashMessage": "The club shows {{court}} booked {{from}}–{{to}}. If it's your booking, the game uses it as reserved.",
       "gameOnlyClashConfirm": "I booked it myself",
-      "gameOnlyClashKeep": "Keep Game only"
+      "gameOnlyClashKeep": "Keep Game only",
+      "clubBusyOwnFound": "That's your {{provider}} booking.",
+      "clubBusyUseOwn": "Use my {{provider}} booking",
+      "clubBusyNotInAccount": "It isn't in your {{provider}} account — someone else booked it. Pick another time or court.",
+      "clubBusyMineOtherWay": "I booked it another way",
+      "clubBusyOwnLinked": "Your {{provider}} booking · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "Linked to this game when you save.",
+      "clubBusySaveOwnTitle": "Your {{provider}} booking",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} is booked in your {{provider}} account. Link it to this game and save?",
+      "clubBusySaveOwnMessageMany": "{{courts}} are booked in your {{provider}} account at this time. Link them to this game and save?",
+      "clubBusySaveUseOwn": "Use my {{provider}} booking — save",
+      "clubBusySaveNotInAccount": "{{court}} is booked at the club {{from}}–{{to}}, and it isn't in your {{provider}} account — someone else booked it. Pick another time or court.",
+      "clubBusySaveNotInAccountMany": "{{courts}} are booked at the club at this time, and not in your {{provider}} account — someone else booked them. Pick another time or court.",
+      "clubBusySaveMineOtherWay": "I booked it another way — save"
     }
   }
 }

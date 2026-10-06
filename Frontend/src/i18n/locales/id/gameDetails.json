@@ -910,7 +910,7 @@
       "clubBusyMine": "Saya pesan sendiri",
       "clubBusyGameOnly": "Hanya game — jangan cek klub",
       "clubBusyElse": "Kemungkinan besar ini pesanan orang lain. Pilih waktu atau lapangan lain.",
-      "clubBusyClaimed": "Pesananmu · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "Ditandai sudah dipesan · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}} akan tampil ditandai sudah dipesan untuk permainan ini.",
       "clubBusyUndo": "Urungkan",
       "clubBusySaveTitle": "Lapangan ini sudah terisi di klub",
@@ -923,7 +923,20 @@
       "pickerHintGameOnly": "Pilih lapangan secara berurutan.",
       "gameOnlyClashMessage": "Klub menampilkan {{court}} sudah dipesan {{from}}–{{to}}. Jika itu pesananmu, permainan memakainya sebagai dipesan.",
       "gameOnlyClashConfirm": "Saya pesan sendiri",
-      "gameOnlyClashKeep": "Tetap Hanya game"
+      "gameOnlyClashKeep": "Tetap Hanya game",
+      "clubBusyOwnFound": "Itu pesanan Anda di {{provider}}.",
+      "clubBusyUseOwn": "Pakai pesanan {{provider}} saya",
+      "clubBusyNotInAccount": "Tidak ada di akun {{provider}} Anda — orang lain yang memesannya. Pilih waktu atau lapangan lain.",
+      "clubBusyMineOtherWay": "Saya memesan dengan cara lain",
+      "clubBusyOwnLinked": "Pesanan {{provider}} Anda · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "Akan ditautkan ke permainan ini saat Anda menyimpan.",
+      "clubBusySaveOwnTitle": "Pesanan {{provider}} Anda",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} dipesan di akun {{provider}} Anda. Tautkan ke permainan ini dan simpan?",
+      "clubBusySaveOwnMessageMany": "{{courts}} dipesan di akun {{provider}} Anda pada waktu ini. Tautkan ke permainan ini dan simpan?",
+      "clubBusySaveUseOwn": "Pakai pesanan {{provider}} saya — simpan",
+      "clubBusySaveNotInAccount": "{{court}} sudah dipesan di klub {{from}}–{{to}}, dan tidak ada di akun {{provider}} Anda — orang lain yang memesannya. Pilih waktu atau lapangan lain.",
+      "clubBusySaveNotInAccountMany": "{{courts}} sudah dipesan di klub pada waktu ini, dan tidak ada di akun {{provider}} Anda — orang lain yang memesannya. Pilih waktu atau lapangan lain.",
+      "clubBusySaveMineOtherWay": "Saya memesan dengan cara lain — simpan"
     }
   }
 }

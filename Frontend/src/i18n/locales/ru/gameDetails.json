@@ -915,7 +915,7 @@
       "clubBusyMine": "Я сам(а) забронировал(а)",
       "clubBusyGameOnly": "Только игра — без проверки клуба",
       "clubBusyElse": "Скорее всего, это чужая бронь. Выберите другое время или корт.",
-      "clubBusyClaimed": "Ваша бронь · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "Отмечен забронированным · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}} будет отмечен как забронированный для этой игры.",
       "clubBusyUndo": "Отменить",
       "clubBusySaveTitle": "Этот корт занят в клубе",
@@ -928,7 +928,20 @@
       "pickerHintGameOnly": "Выберите корты по порядку.",
       "gameOnlyClashMessage": "По данным клуба, {{court}} забронирован {{from}}–{{to}}. Если это ваша бронь, игра использует её как забронированную.",
       "gameOnlyClashConfirm": "Я сам(а) забронировал(а)",
-      "gameOnlyClashKeep": "Оставить «Только игра»"
+      "gameOnlyClashKeep": "Оставить «Только игра»",
+      "clubBusyOwnFound": "Это ваша бронь в {{provider}}.",
+      "clubBusyUseOwn": "Использовать мою бронь в {{provider}}",
+      "clubBusyNotInAccount": "Её нет в вашем аккаунте {{provider}} — корт забронировал кто-то другой. Выберите другое время или корт.",
+      "clubBusyMineOtherWay": "Я бронировал(а) иначе",
+      "clubBusyOwnLinked": "Ваша бронь в {{provider}} · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "Будет привязана к игре при сохранении.",
+      "clubBusySaveOwnTitle": "Ваша бронь в {{provider}}",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} забронирован в вашем аккаунте {{provider}}. Привязать бронь к игре и сохранить?",
+      "clubBusySaveOwnMessageMany": "{{courts}} забронированы в вашем аккаунте {{provider}} в это время. Привязать брони к игре и сохранить?",
+      "clubBusySaveUseOwn": "Использовать мою бронь в {{provider}} — сохранить",
+      "clubBusySaveNotInAccount": "{{court}} забронирован в клубе {{from}}–{{to}}, и этой брони нет в вашем аккаунте {{provider}} — её сделал кто-то другой. Выберите другое время или корт.",
+      "clubBusySaveNotInAccountMany": "{{courts}} забронированы в клубе в это время, и этих броней нет в вашем аккаунте {{provider}} — их сделал кто-то другой. Выберите другое время или корт.",
+      "clubBusySaveMineOtherWay": "Я бронировал(а) иначе — сохранить"
     }
   }
 }

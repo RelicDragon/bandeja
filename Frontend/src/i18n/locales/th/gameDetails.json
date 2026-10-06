@@ -910,7 +910,7 @@
       "clubBusyMine": "ฉันจองเอง",
       "clubBusyGameOnly": "เฉพาะเกม — ไม่ตรวจคลับ",
       "clubBusyElse": "น่าจะเป็นการจองของคนอื่น เลือกเวลาหรือคอร์ตอื่น",
-      "clubBusyClaimed": "การจองของคุณ · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "ทำเครื่องหมายว่าจองแล้ว · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}} จะแสดงว่าทำเครื่องหมายว่าจองแล้วสำหรับเกมนี้",
       "clubBusyUndo": "เลิกทำ",
       "clubBusySaveTitle": "คอร์ตนี้ถูกจองที่คลับแล้ว",
@@ -923,7 +923,20 @@
       "pickerHintGameOnly": "เลือกคอร์ตตามลำดับ",
       "gameOnlyClashMessage": "คลับแสดงว่า {{court}} ถูกจอง {{from}}–{{to}} ถ้าเป็นการจองของคุณ เกมจะใช้เป็นคอร์ตที่จองแล้ว",
       "gameOnlyClashConfirm": "ฉันจองเอง",
-      "gameOnlyClashKeep": "คงเฉพาะเกม"
+      "gameOnlyClashKeep": "คงเฉพาะเกม",
+      "clubBusyOwnFound": "นี่คือการจองของคุณใน {{provider}}",
+      "clubBusyUseOwn": "ใช้การจอง {{provider}} ของฉัน",
+      "clubBusyNotInAccount": "ไม่มีในบัญชี {{provider}} ของคุณ — คนอื่นจองไว้ เลือกเวลาหรือคอร์ตอื่น",
+      "clubBusyMineOtherWay": "ฉันจองด้วยวิธีอื่น",
+      "clubBusyOwnLinked": "การจอง {{provider}} ของคุณ · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "จะเชื่อมกับเกมนี้เมื่อคุณบันทึก",
+      "clubBusySaveOwnTitle": "การจอง {{provider}} ของคุณ",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} ถูกจองในบัญชี {{provider}} ของคุณ เชื่อมกับเกมนี้แล้วบันทึกไหม?",
+      "clubBusySaveOwnMessageMany": "{{courts}} ถูกจองในบัญชี {{provider}} ของคุณในเวลานี้ เชื่อมกับเกมนี้แล้วบันทึกไหม?",
+      "clubBusySaveUseOwn": "ใช้การจอง {{provider}} ของฉัน — บันทึก",
+      "clubBusySaveNotInAccount": "{{court}} ถูกจองที่คลับ {{from}}–{{to}} และไม่มีในบัญชี {{provider}} ของคุณ — คนอื่นจองไว้ เลือกเวลาหรือคอร์ตอื่น",
+      "clubBusySaveNotInAccountMany": "{{courts}} ถูกจองที่คลับในเวลานี้ และไม่มีในบัญชี {{provider}} ของคุณ — คนอื่นจองไว้ เลือกเวลาหรือคอร์ตอื่น",
+      "clubBusySaveMineOtherWay": "ฉันจองด้วยวิธีอื่น — บันทึก"
     }
   }
 }

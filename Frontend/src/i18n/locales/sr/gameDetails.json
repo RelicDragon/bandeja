@@ -908,7 +908,7 @@
       "clubBusyMine": "Sam/a sam rezervisao/la",
       "clubBusyGameOnly": "Samo igra — bez provere kluba",
       "clubBusyElse": "Najverovatnije je to tuđa rezervacija. Izaberite drugo vreme ili teren.",
-      "clubBusyClaimed": "Vaša rezervacija · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "Označeno kao rezervisano · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}} će biti označen kao rezervisan za ovu igru.",
       "clubBusyUndo": "Poništi",
       "clubBusySaveTitle": "Ovaj teren je zauzet u klubu",
@@ -921,7 +921,20 @@
       "pickerHintGameOnly": "Izaberite terene redom.",
       "gameOnlyClashMessage": "Klub prikazuje {{court}} kao rezervisan {{from}}–{{to}}. Ako je to vaša rezervacija, igra je koristi kao rezervisanu.",
       "gameOnlyClashConfirm": "Sam/a sam rezervisao/la",
-      "gameOnlyClashKeep": "Zadrži Samo igra"
+      "gameOnlyClashKeep": "Zadrži Samo igra",
+      "clubBusyOwnFound": "To je vaša rezervacija u {{provider}}.",
+      "clubBusyUseOwn": "Koristi moju rezervaciju u {{provider}}",
+      "clubBusyNotInAccount": "Nije u vašem {{provider}} nalogu — teren je rezervisao neko drugi. Izaberite drugo vreme ili teren.",
+      "clubBusyMineOtherWay": "Rezervisao/la sam drugačije",
+      "clubBusyOwnLinked": "Vaša rezervacija u {{provider}} · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "Biće povezana sa igrom kada sačuvate.",
+      "clubBusySaveOwnTitle": "Vaša rezervacija u {{provider}}",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} je rezervisan u vašem {{provider}} nalogu. Povezati rezervaciju sa igrom i sačuvati?",
+      "clubBusySaveOwnMessageMany": "{{courts}} su rezervisani u vašem {{provider}} nalogu u ovo vreme. Povezati rezervacije sa igrom i sačuvati?",
+      "clubBusySaveUseOwn": "Koristi moju rezervaciju u {{provider}} — sačuvaj",
+      "clubBusySaveNotInAccount": "{{court}} je rezervisan u klubu {{from}}–{{to}}, a te rezervacije nema u vašem {{provider}} nalogu — napravio ju je neko drugi. Izaberite drugo vreme ili teren.",
+      "clubBusySaveNotInAccountMany": "{{courts}} su rezervisani u klubu u ovo vreme, a tih rezervacija nema u vašem {{provider}} nalogu — napravio ih je neko drugi. Izaberite drugo vreme ili teren.",
+      "clubBusySaveMineOtherWay": "Rezervisao/la sam drugačije — sačuvaj"
     }
   }
 }

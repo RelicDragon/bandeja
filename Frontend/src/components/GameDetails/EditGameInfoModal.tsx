@@ -40,10 +40,16 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { useQuery } from '@tanstack/react-query';
 import { ClubBusySavePrompt } from './editGameInfo/ClubBusySavePrompt';
+import { useOwnClubBookings } from './editGameInfo/useOwnClubBookings';
+import { courtSlotsApi } from '@/api/courtSlots';
+import { providerDisplayName } from '@shared/gameBooking/reservationCopy';
 import { ClubBookingClaimCard } from './editGameInfo/ClubBookingClaimCard';
 import {
   findClubBookingConflicts,
   reportedCourtIdsOf,
+  summarizeVerdicts,
+  verifyClubBookingConflict,
+  type OwnClubBooking,
   type ClubBookingConflict,
 } from './editGameInfo/clubBookingClaims';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
@@ -217,6 +223,8 @@ export const EditGameInfoModal = ({
   const [bookingMode, setBookingMode] = useState<'CLUB' | 'GAME_ONLY'>(() => game.courtBookingMode ?? 'CLUB');
   /** Courts marked reserved: the club's block on them is the organizer's own booking. */
   const [ownBookingCourtIds, setOwnBookingCourtIds] = useState<string[]>(() => reportedCourtIdsOf(game));
+  /** Courts whose club block is the organizer's own reservation (checked in their club account): linked on save. */
+  const [linkChoices, setLinkChoices] = useState<Record<string, OwnClubBooking>>({});
   /** Save-time "Is this your booking?" for courts still busy at the club. */
   const [claimPrompt, setClaimPrompt] = useState<ClubBookingConflict[] | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
@@ -325,6 +333,7 @@ export const EditGameInfoModal = ({
       setCourtCount(currentCourtSlotCount(openGame));
       setBookingMode(openGame.courtBookingMode ?? 'CLUB');
       setOwnBookingCourtIds(reportedCourtIdsOf(openGame));
+      setLinkChoices({});
       setClaimPrompt(null);
       setShowDiscardConfirm(false);
       setParticipantsDirty(false);
@@ -434,6 +443,11 @@ export const EditGameInfoModal = ({
     () => new Set(ownBookingCourtIds.filter((id) => selectedCourtIds.includes(id))),
     [ownBookingCourtIds, selectedCourtIds],
   );
+  /** Own reservations chosen for linking, on courts still picked. */
+  const linkSet = useMemo(
+    () => new Set(Object.keys(linkChoices).filter((id) => selectedCourtIds.includes(id))),
+    [linkChoices, selectedCourtIds],
+  );
   const claimsDirty =
     slotModel && !gameOnly && [...ownBookingSet].sort().join(',') !== (clubChanged ? '' : initialReportedKey);
 
@@ -501,8 +515,33 @@ export const EditGameInfoModal = ({
       endMs: Date.parse(editedWindow.endTime),
     });
   }, [claimChecksOn, editedWindow, dayBookingsQuery.data, selectedCourtIds]);
+  // Checked against the organizer's own club account (same club only: a booking links to this game's club).
+  const ownClubBookings = useOwnClubBookings({
+    game,
+    club: selectedClubData,
+    courts: modalCourts,
+    selectedDate: whenSelectedDate,
+    enabled: claimChecksOn && !clubChanged && clubConflicts.length > 0,
+  });
+  const verdictOf = useCallback(
+    (conflict: ClubBookingConflict) =>
+      editedWindow
+        ? verifyClubBookingConflict(
+            conflict,
+            { startMs: Date.parse(editedWindow.startTime), endMs: Date.parse(editedWindow.endTime) },
+            ownClubBookings,
+          )
+        : ({ kind: 'unknown' } as const),
+    [editedWindow, ownClubBookings],
+  );
+  const providerName = providerDisplayName(selectedClubData?.integrationType ?? null);
   const initiallyReported = useMemo(() => new Set(initialReportedKey ? initialReportedKey.split(',') : []), [initialReportedKey]);
-  const openConflicts = clubConflicts.filter((c) => !ownBookingSet.has(c.courtId));
+  const openConflicts = clubConflicts.filter((c) => !ownBookingSet.has(c.courtId) && !linkSet.has(c.courtId));
+  const linkedConflicts = clubConflicts.filter((c) => linkSet.has(c.courtId) && linkChoices[c.courtId]);
+  const claimPromptVerdict = useMemo(
+    () => (claimPrompt ? summarizeVerdicts(claimPrompt.map(verdictOf)) : 'unknown'),
+    [claimPrompt, verdictOf],
+  );
   const claimedConflicts = clubConflicts.filter(
     (c) => ownBookingSet.has(c.courtId) && (clubChanged || !initiallyReported.has(c.courtId)),
   );
@@ -527,6 +566,16 @@ export const EditGameInfoModal = ({
   const claimCourts = useCallback((courtIds: readonly string[]) => {
     setOwnBookingCourtIds((prev) => [...new Set([...prev, ...courtIds])]);
   }, []);
+  const chooseOwnBooking = useCallback((courtId: string, booking: OwnClubBooking) => {
+    setLinkChoices((prev) => ({ ...prev, [courtId]: booking }));
+  }, []);
+  const unchooseOwnBooking = useCallback((courtId: string) => {
+    setLinkChoices((prev) => {
+      const next = { ...prev };
+      delete next[courtId];
+      return next;
+    });
+  }, []);
   const unclaimCourt = useCallback((courtId: string) => {
     setOwnBookingCourtIds((prev) => prev.filter((id) => id !== courtId));
   }, []);
@@ -550,6 +599,7 @@ export const EditGameInfoModal = ({
     clubChanged ||
     bookingMode !== initialBookingMode ||
     claimsDirty ||
+    (!gameOnly && linkSet.size > 0) ||
     selectedCourtIds.join(',') !== initialCourtIdsKey ||
     (slotModel && courtCount !== currentCourtSlotCount(game)) ||
     (!timeManagedByPlanner &&
@@ -614,7 +664,7 @@ export const EditGameInfoModal = ({
         const unclaimed = findClubBookingConflicts(bookings, selectedCourtIds, {
           startMs: Date.parse(editedWindow.startTime),
           endMs: Date.parse(editedWindow.endTime),
-        }).filter((c) => !ownBookingSet.has(c.courtId));
+        }).filter((c) => !ownBookingSet.has(c.courtId) && !linkSet.has(c.courtId));
         if (unclaimed.length > 0) {
           setActiveTab('locationTime');
           setClaimPrompt(unclaimed);
@@ -623,7 +673,7 @@ export const EditGameInfoModal = ({
       }
       const overlap = checkBookingOverlap(
         // Club bookings on claimed courts are the organizer's own; game only checks nothing at the club.
-        gameOnly ? bookings.filter((b) => !b.clubBooked && !b.holdBlocked) : bookings.filter((b) => !(b.courtId && ownBookingSet.has(b.courtId) && b.clubBooked && !b.holdBlocked)),
+        gameOnly ? bookings.filter((b) => !b.clubBooked && !b.holdBlocked) : bookings.filter((b) => !(b.courtId && (ownBookingSet.has(b.courtId) || linkSet.has(b.courtId)) && b.clubBooked && !b.holdBlocked)),
         whenSelectedTime,
         whenDuration,
         club,
@@ -666,9 +716,16 @@ export const EditGameInfoModal = ({
     }
   };
 
-  const executeSave = async (claimOverride?: readonly string[]) => {
+  const executeSave = async (claimOverride?: readonly string[], linkOverride?: readonly OwnClubBooking[]) => {
     if (!game.id) return;
-    const reportedCourtIds = new Set([...ownBookingSet, ...(claimOverride ?? [])]);
+    const links = gameOnly
+      ? []
+      : [...[...linkSet].map((courtId) => linkChoices[courtId]), ...(linkOverride ?? [])].filter(
+          (b, i, all) => all.findIndex((x) => x.externalBookingId === b.externalBookingId) === i,
+        );
+    const linkedCourts = new Set(links.map((b) => b.courtId));
+    // A linked court is reserved by its link, never also marked.
+    const reportedCourtIds = new Set([...ownBookingSet, ...(claimOverride ?? [])].filter((id) => !linkedCourts.has(id)));
 
     setIsSaving(true);
     try {
@@ -692,7 +749,12 @@ export const EditGameInfoModal = ({
 
       await gamesApi.update(game.id, updateData);
 
-      if (scheduleDirty) {
+      // Link the organizer's own reservations before the time moves: the clash guard then sees them as this game's.
+      for (const booking of links) {
+        await courtSlotsApi.linkBooking(game.id, booking.body);
+      }
+
+      if (scheduleDirty || links.length > 0) {
         await saveEditLocationTime(
           game.id,
           buildEditLocationTimeRequests({
@@ -822,6 +884,7 @@ export const EditGameInfoModal = ({
                   setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
                   setSelectedCourtIds([]);
                   setOwnBookingCourtIds([]);
+                  setLinkChoices({});
                 }}
                 onVenueCityChange={(id) => {
                   if (id === venueCityId) return;
@@ -851,10 +914,15 @@ export const EditGameInfoModal = ({
                     <ClubBookingClaimCard
                       open={openConflicts}
                       claimed={claimedConflicts}
+                      linked={linkedConflicts.map((conflict) => ({ conflict, booking: linkChoices[conflict.courtId] }))}
                       courtName={courtNameOf}
                       formatTime={clubClock.time}
+                      verdictOf={verdictOf}
+                      providerName={providerName}
                       onClaim={(courtId) => claimCourts([courtId])}
                       onUndo={unclaimCourt}
+                      onUseOwn={chooseOwnBooking}
+                      onUndoOwn={unchooseOwnBooking}
                       onGameOnly={() => setBookingMode('GAME_ONLY')}
                     />
                   ) : null
@@ -1039,6 +1107,14 @@ export const EditGameInfoModal = ({
       conflicts={claimPrompt}
       courtName={courtNameOf}
       formatTime={clubClock.time}
+      verdict={claimPromptVerdict}
+      providerName={providerName}
+      onUseOwnAndSave={() => {
+        const own = (claimPrompt ?? []).map(verdictOf).flatMap((v) => (v.kind === 'own' ? [v.booking] : []));
+        setClaimPrompt(null);
+        for (const booking of own) chooseOwnBooking(booking.courtId, booking);
+        void executeSave(undefined, own);
+      }}
       onPickAnother={() => setClaimPrompt(null)}
       onClaimAndSave={(courtIds) => {
         setClaimPrompt(null);

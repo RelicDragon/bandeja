@@ -934,7 +934,7 @@
       "clubBusyMine": "حجزته بنفسي",
       "clubBusyGameOnly": "المباراة فقط — دون التحقق من النادي",
       "clubBusyElse": "على الأرجح هذا حجز شخص آخر. اختر وقتًا أو ملعبًا آخر.",
-      "clubBusyClaimed": "حجزك · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "مُعلَّم كمحجوز · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "سيظهر {{court}} مُعلَّمًا كمحجوز لهذه المباراة.",
       "clubBusyUndo": "تراجع",
       "clubBusySaveTitle": "هذا الملعب محجوز في النادي",
@@ -947,7 +947,20 @@
       "pickerHintGameOnly": "اختر الملاعب بالترتيب.",
       "gameOnlyClashMessage": "يُظهر النادي أن {{court}} محجوز {{from}}–{{to}}. إذا كان حجزك، تستخدمه المباراة كملعب محجوز.",
       "gameOnlyClashConfirm": "حجزته بنفسي",
-      "gameOnlyClashKeep": "إبقاء المباراة فقط"
+      "gameOnlyClashKeep": "إبقاء المباراة فقط",
+      "clubBusyOwnFound": "هذا حجزك في {{provider}}.",
+      "clubBusyUseOwn": "استخدم حجزي في {{provider}}",
+      "clubBusyNotInAccount": "ليس في حسابك على {{provider}} — حجزه شخص آخر. اختر وقتًا أو ملعبًا آخر.",
+      "clubBusyMineOtherWay": "حجزته بطريقة أخرى",
+      "clubBusyOwnLinked": "حجزك في {{provider}} · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "سيُربط بهذه المباراة عند الحفظ.",
+      "clubBusySaveOwnTitle": "حجزك في {{provider}}",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} محجوز في حسابك على {{provider}}. هل تريد ربطه بهذه المباراة والحفظ؟",
+      "clubBusySaveOwnMessageMany": "{{courts}} محجوزة في حسابك على {{provider}} في هذا الوقت. هل تريد ربطها بهذه المباراة والحفظ؟",
+      "clubBusySaveUseOwn": "استخدم حجزي في {{provider}} — حفظ",
+      "clubBusySaveNotInAccount": "{{court}} محجوز في النادي {{from}}–{{to}}، وليس في حسابك على {{provider}} — حجزه شخص آخر. اختر وقتًا أو ملعبًا آخر.",
+      "clubBusySaveNotInAccountMany": "{{courts}} محجوزة في النادي في هذا الوقت، وليست في حسابك على {{provider}} — حجزها شخص آخر. اختر وقتًا أو ملعبًا آخر.",
+      "clubBusySaveMineOtherWay": "حجزته بطريقة أخرى — حفظ"
     }
   }
 }

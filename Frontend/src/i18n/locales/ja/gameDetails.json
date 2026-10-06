@@ -910,7 +910,7 @@
       "clubBusyMine": "自分で予約した",
       "clubBusyGameOnly": "ゲームのみ（クラブを確認しない）",
       "clubBusyElse": "おそらく他の人の予約です。別の時間かコートを選んでください。",
-      "clubBusyClaimed": "あなたの予約 · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "予約済みとして登録 · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}}はこのゲームで予約済みとして登録されます。",
       "clubBusyUndo": "元に戻す",
       "clubBusySaveTitle": "このコートはクラブで予約済みです",
@@ -923,7 +923,20 @@
       "pickerHintGameOnly": "コートを順番に選びます。",
       "gameOnlyClashMessage": "クラブでは {{court}} が {{from}}–{{to}} に予約済みです。あなたの予約なら、ゲームでは予約済みとして扱います。",
       "gameOnlyClashConfirm": "自分で予約した",
-      "gameOnlyClashKeep": "ゲームのみのまま"
+      "gameOnlyClashKeep": "ゲームのみのまま",
+      "clubBusyOwnFound": "{{provider}}でのあなたの予約です。",
+      "clubBusyUseOwn": "{{provider}}の自分の予約を使う",
+      "clubBusyNotInAccount": "あなたの{{provider}}アカウントにはありません — 他の人の予約です。別の時間かコートを選んでください。",
+      "clubBusyMineOtherWay": "別の方法で予約した",
+      "clubBusyOwnLinked": "あなたの{{provider}}の予約 · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "保存するとこのゲームに紐づけられます。",
+      "clubBusySaveOwnTitle": "あなたの{{provider}}の予約",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}}はあなたの{{provider}}アカウントで予約されています。このゲームに紐づけて保存しますか？",
+      "clubBusySaveOwnMessageMany": "{{courts}}はこの時間あなたの{{provider}}アカウントで予約されています。このゲームに紐づけて保存しますか？",
+      "clubBusySaveUseOwn": "{{provider}}の自分の予約を使う — 保存",
+      "clubBusySaveNotInAccount": "{{court}}はクラブで{{from}}–{{to}}に予約されていますが、あなたの{{provider}}アカウントにはありません — 他の人の予約です。別の時間かコートを選んでください。",
+      "clubBusySaveNotInAccountMany": "{{courts}}はこの時間クラブで予約されていますが、あなたの{{provider}}アカウントにはありません — 他の人の予約です。別の時間かコートを選んでください。",
+      "clubBusySaveMineOtherWay": "別の方法で予約した — 保存"
     }
   }
 }

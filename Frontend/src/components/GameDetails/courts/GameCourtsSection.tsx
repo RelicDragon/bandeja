@@ -34,6 +34,9 @@ import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { ClubBusySavePrompt } from '@/components/GameDetails/editGameInfo/ClubBusySavePrompt';
+import { useOwnClubBookings } from '@/components/GameDetails/editGameInfo/useOwnClubBookings';
+import { summarizeVerdicts, verifyClubBookingConflict } from '@/components/GameDetails/editGameInfo/clubBookingClaims';
+import { providerDisplayName } from '@shared/gameBooking/reservationCopy';
 import { createHydratedClubBookingProvider } from '@/integrations/booking/createClubBookingProvider';
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { buildCourtReservationsInput } from '@/utils/courtReservationView';
@@ -263,6 +266,29 @@ function OrganizerCourts({
     },
     [game.id, refresh, showError],
   );
+
+  // The club's block may be the organizer's own reservation: check their club account.
+  const clashDate = useMemo(() => new Date(game.startTime), [game.startTime]);
+  const ownClubBookings = useOwnClubBookings({ game, club, courts, selectedDate: clashDate, enabled: modeClash != null });
+  const modeClashVerdicts = useMemo(() => {
+    if (!modeClash || !window) return [];
+    const span = { startMs: Date.parse(window.start), endMs: Date.parse(window.end) };
+    return modeClash.map((c) => verifyClubBookingConflict(c, span, ownClubBookings));
+  }, [modeClash, window, ownClubBookings]);
+  /** Their own reservations: linking them flips the game back to club booking on the server ("links win"). */
+  const linkOwnAndUseClub = useCallback(async () => {
+    const own = modeClashVerdicts.flatMap((v) => (v.kind === 'own' ? [v.booking] : []));
+    setModeClash(null);
+    setModeBusy(true);
+    try {
+      for (const booking of own) await courtSlotsApi.linkBooking(game.id, booking.body);
+      await refresh();
+    } catch (error) {
+      showError(error);
+    } finally {
+      setModeBusy(false);
+    }
+  }, [modeClashVerdicts, game.id, refresh, showError]);
 
   // Errors are reported per call site: inline in the slot sheet, toast elsewhere.
   const mutations = useCourtSlotsMutations({
@@ -729,6 +755,9 @@ function OrganizerCourts({
               })
             : ''
         }
+        verdict={summarizeVerdicts(modeClashVerdicts)}
+        providerName={providerDisplayName(club.integrationType ?? null)}
+        onUseOwnAndSave={() => void linkOwnAndUseClub()}
         primaryLabel={t('gameDetails.courts.gameOnlyClashKeep')}
         claimLabel={t('gameDetails.courts.gameOnlyClashConfirm')}
         onPickAnother={() => setModeClash(null)}

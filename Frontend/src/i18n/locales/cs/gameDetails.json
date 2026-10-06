@@ -902,7 +902,7 @@
       "clubBusyMine": "Rezervoval(a) jsem sám/sama",
       "clubBusyGameOnly": "Jen hra — bez kontroly klubu",
       "clubBusyElse": "Nejspíš jde o cizí rezervaci. Vyberte jiný čas nebo kurt.",
-      "clubBusyClaimed": "Vaše rezervace · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimed": "Označeno jako rezervované · {{court}} · {{from}}–{{to}}",
       "clubBusyClaimedHint": "{{court}} bude u této hry označen jako rezervovaný.",
       "clubBusyUndo": "Zpět",
       "clubBusySaveTitle": "Tento kurt je v klubu obsazený",
@@ -915,7 +915,20 @@
       "pickerHintGameOnly": "Vyberte kurty v pořadí.",
       "gameOnlyClashMessage": "Klub uvádí {{court}} jako rezervovaný {{from}}–{{to}}. Pokud je to vaše rezervace, hra ji použije jako rezervovanou.",
       "gameOnlyClashConfirm": "Rezervoval(a) jsem sám/sama",
-      "gameOnlyClashKeep": "Ponechat Jen hra"
+      "gameOnlyClashKeep": "Ponechat Jen hra",
+      "clubBusyOwnFound": "To je vaše rezervace v {{provider}}.",
+      "clubBusyUseOwn": "Použít moji rezervaci v {{provider}}",
+      "clubBusyNotInAccount": "Není ve vašem účtu {{provider}} — kurt rezervoval někdo jiný. Vyberte jiný čas nebo kurt.",
+      "clubBusyMineOtherWay": "Rezervoval(a) jsem jinak",
+      "clubBusyOwnLinked": "Vaše rezervace v {{provider}} · {{court}} · {{from}}–{{to}}",
+      "clubBusyOwnLinkedHint": "Při uložení se připojí k této hře.",
+      "clubBusySaveOwnTitle": "Vaše rezervace v {{provider}}",
+      "clubBusySaveOwnMessage": "{{court}} {{from}}–{{to}} je rezervovaný ve vašem účtu {{provider}}. Připojit rezervaci ke hře a uložit?",
+      "clubBusySaveOwnMessageMany": "{{courts}} jsou v tuto dobu rezervované ve vašem účtu {{provider}}. Připojit rezervace ke hře a uložit?",
+      "clubBusySaveUseOwn": "Použít moji rezervaci v {{provider}} — uložit",
+      "clubBusySaveNotInAccount": "{{court}} je v klubu rezervovaný {{from}}–{{to}} a tato rezervace není ve vašem účtu {{provider}} — udělal ji někdo jiný. Vyberte jiný čas nebo kurt.",
+      "clubBusySaveNotInAccountMany": "{{courts}} jsou v tuto dobu v klubu rezervované a tyto rezervace nejsou ve vašem účtu {{provider}} — udělal je někdo jiný. Vyberte jiný čas nebo kurt.",
+      "clubBusySaveMineOtherWay": "Rezervoval(a) jsem jinak — uložit"
     }
   }
 }
