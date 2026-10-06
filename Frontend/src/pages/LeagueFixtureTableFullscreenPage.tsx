@@ -1,3 +1,4 @@
+import { leagueGroupsData, leagueRoundsData, leagueStandingsData } from '@/queries/league/leagueSeasonData';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +7,7 @@ import { Card } from '@/components';
 import { LeagueFixtureMatrix } from '@/components/GameDetails/LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from '@/components/GameDetails/LeagueFixtureDetailSheet';
 import { gamesApi } from '@/api';
-import { leaguesApi, type LeagueGroup, type LeagueRound, type LeagueStanding, type LeagueRosterAlias } from '@/api/leagues';
+import { type LeagueGroup, type LeagueRound, type LeagueStanding, type LeagueRosterAlias } from '@/api/leagues';
 import { standingsTeamsForGroup, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import type { Game } from '@/types';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -59,9 +60,9 @@ export const LeagueFixtureTableFullscreenPage = () => {
     setLoading(true);
     try {
       const [roundsRes, standingsRes, groupsRes] = await Promise.all([
-        leaguesApi.getRounds(leagueSeasonId),
-        leaguesApi.getStandings(leagueSeasonId),
-        leaguesApi.getGroups(leagueSeasonId),
+        leagueRoundsData.load(leagueSeasonId),
+        leagueStandingsData.load(leagueSeasonId),
+        leagueGroupsData.load(leagueSeasonId),
       ]);
       setRounds(roundsRes.data);
       setStandings(standingsRes.data);

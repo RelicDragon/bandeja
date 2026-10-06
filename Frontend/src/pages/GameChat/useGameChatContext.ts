@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, type RefObject } from 'react'
 import type { NavigateFunction } from 'react-router-dom';
 import { chatApi } from '@/api/chat';
 import { gamesApi } from '@/api/games';
+import { takeFreshGame } from '@/services/game/freshGameHandoff';
 import { usePlayersStore } from '@/store/playersStore';
 import type { ChatContextType, UserChat as UserChatType, GroupChannel } from '@/api/chat';
 import type { Game, Bug } from '@/types';
@@ -106,7 +107,8 @@ export function useGameChatContext({
     const requestId = id;
     try {
       if (contextType === 'GAME') {
-        const response = await gamesApi.getById(id);
+        const handedOff = options?.force ? null : takeFreshGame(id);
+        const response = handedOff ? { data: handedOff } : await gamesApi.getById(id);
         if (currentIdRef.current !== requestId) return null;
         const archivedLocally = await hydrateThreadArchivedMemory('GAME', requestId);
         if (currentIdRef.current !== requestId) return null;

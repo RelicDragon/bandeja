@@ -1,3 +1,4 @@
+import { leagueGroupsData, leagueStandingsData } from '@/queries/league/leagueSeasonData';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -195,8 +196,8 @@ export const PlayoffConfigurationModal = ({
     setLoading(true);
     try {
       const [standingsRes, groupsRes, seasonGameRes] = await Promise.all([
-        leaguesApi.getStandings(leagueSeasonId),
-        leaguesApi.getGroups(leagueSeasonId).catch(() => ({ data: { groups: [], unassignedParticipants: [] } })),
+        leagueStandingsData.load(leagueSeasonId),
+        leagueGroupsData.load(leagueSeasonId).catch(() => ({ data: { groups: [], unassignedParticipants: [] } })),
         gamesApi.getById(leagueSeasonId).catch(() => null),
       ]);
       setStandings(standingsRes.data ?? []);

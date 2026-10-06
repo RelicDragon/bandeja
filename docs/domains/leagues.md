@@ -35,6 +35,8 @@ Season reads follow the **direct-link model** of `GET /games/:id` (`GameReadServ
 - Invited players and people sent a shared link open schedule/standings before they join. Shipped store builds call these endpoints on that path.
 - Parity with `getGameById` holds: an unknown id answers 404 (`loadLeagueSeasonSportOrThrow` / `getGroupsReadOnly`). The system-game refusal is moot because `Game.cityId` is non-null.
 
+**Season read payloads.** `GET .../rounds` returns every game of the season with its club, courts, parent season and player users. `?shape=compact` (opt-in, sent by current web code; store builds keep the plain array) returns `{ compact: 1, refs, value }`: each repeated related row (`user`, `club`, `court`, `parent`, `leagueSeason`, `league`, `leagueGroup`, `leagueRound`) is sent once and referenced by `{ $ref }` (`Backend/src/utils/compactRefs.ts`; `expandCompactRefs` restores the plain shape in `leaguesApi.getRounds`). On the client, Schedule, Standings, Planner, the fullscreen pages and the league modals share one cache per season (`Frontend/src/queries/league/leagueSeasonData.ts`): tab switches paint the cached season and revalidate; identical requests within 2 s coalesce; mutations call `load(..., { force: true })`.
+
 The planner is the participants-only read (`canAccessGame`). Detailed fixture results (`GET /api/results/game/:id`) are stricter by design, because they are guest-readable: for a private fixture, only the roster of the fixture or of its season sees them ([results.md](./results.md)). The AI agent treats league seasons and their fixtures as public to every signed-in principal (`isAgentLeagueContent`, `assertAgentCanViewLeagueSeason`), matching these reads; see [agent.md](./agent.md). If private seasons ever need to be hidden from id holders, change `getGameById` and these reads together. Do not gate only the tabs.
 
 LEAGUE fixture details: link to parent season; no season tabs. Parent owner/admin permissions inherit (`parentGamePermissions.ts`).
@@ -66,7 +68,7 @@ Test: `npm run test:league-permissions` (`Backend/src/routes/__tests__/league.ro
 | Session playoff | `POST .../playoff` `gameType` **WINNER_COURT** or **AMERICANO** (mini-tournaments). Seeds: `PLAYOFF_GAME_TYPE_TEMPLATES` / `playoffTemplates.ts` — not `CREATE_TEMPLATES` |
 | Bracket playoff | `POST .../playoff/bracket` (+ preview). Scope `PER_GROUP` \| `CROSS_GROUP`. Options: third place, consolation, double elimination, custom byes, play-in (`BracketSlotKind`) |
 | Groups | CRUD, assign, reorder (`groups.service.ts`) |
-| Standings | `GET .../standings`; `POST .../standings/recalculate` (`leagueStandingsRecalculate.service.ts`) |
+| Standings | `GET .../standings` (`meta.hasBracketPlayoff` picks Standings' default view without loading rounds); `POST .../standings/recalculate` (`leagueStandingsRecalculate.service.ts`) |
 | Bracket slots | patch, **walkover** (`.../slots/:slotId/walkover`) — walkover is **playoff** vocabulary |
 | Round start message | `POST /rounds/:id/send-start-message` |
 | Mid-season player swap | `.../swap-player` (`canEditGame`). Blocked after team withdrawal |

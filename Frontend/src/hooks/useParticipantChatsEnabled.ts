@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { chatApi } from '@/api/chat';
-import { gameChatChannelIsActive } from '@/utils/gameChatChannelActivity';
+import { probeGameChatChannelActive } from '@/services/chat/gameChatChannelProbe';
 
 export interface ParticipantChatsEnabledState {
   isLoading: boolean;
@@ -33,13 +32,14 @@ export function useParticipantChatsEnabled(gameId: string | undefined): Particip
 
     void (async () => {
       try {
-        const [privateMessages, adminsMessages] = await Promise.all([
-          chatApi.getGameMessages(gameId, 1, 20, 'PRIVATE'),
-          chatApi.getGameMessages(gameId, 1, 20, 'ADMINS'),
+        const fresh = refreshToken > 0;
+        const [privateActive, adminsActive] = await Promise.all([
+          probeGameChatChannelActive(gameId, 'PRIVATE', { fresh }),
+          probeGameChatChannelActive(gameId, 'ADMINS', { fresh }),
         ]);
         if (cancelled) return;
-        setPrivateEnabled(gameChatChannelIsActive(privateMessages, 'PRIVATE'));
-        setAdminsEnabled(gameChatChannelIsActive(adminsMessages, 'ADMINS'));
+        setPrivateEnabled(privateActive);
+        setAdminsEnabled(adminsActive);
       } catch {
         if (!cancelled) {
           setPrivateEnabled(false);

@@ -6,7 +6,7 @@ import {
 
 vi.mock('@/api/results', () => ({
   resultsApi: {
-    getGameResults: vi.fn(),
+    getGameResultsBatched: vi.fn(),
   },
 }));
 
@@ -15,11 +15,11 @@ import { resultsApi } from '@/api/results';
 describe('leagueFixtureResultsCache', () => {
   beforeEach(() => {
     __resetLeagueFixtureResultsCacheForTests();
-    vi.mocked(resultsApi.getGameResults).mockReset();
+    vi.mocked(resultsApi.getGameResultsBatched).mockReset();
   });
 
   it('fetchGame stores converted rounds and status', async () => {
-    vi.mocked(resultsApi.getGameResults).mockResolvedValue({
+    vi.mocked(resultsApi.getGameResultsBatched).mockResolvedValue({
       data: {
         resultsStatus: 'IN_PROGRESS',
         rounds: [
@@ -50,7 +50,7 @@ describe('leagueFixtureResultsCache', () => {
 
   it('scheduleFetch debounces rapid calls into one fetch', async () => {
     vi.useFakeTimers();
-    vi.mocked(resultsApi.getGameResults).mockResolvedValue({
+    vi.mocked(resultsApi.getGameResultsBatched).mockResolvedValue({
       data: { resultsStatus: 'IN_PROGRESS', rounds: [] },
     } as never);
 
@@ -58,17 +58,17 @@ describe('leagueFixtureResultsCache', () => {
     scheduleFetch('g1', 300);
     scheduleFetch('g1', 300);
     scheduleFetch('g1', 300);
-    expect(resultsApi.getGameResults).not.toHaveBeenCalled();
+    expect(resultsApi.getGameResultsBatched).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(300);
-    expect(resultsApi.getGameResults).toHaveBeenCalledTimes(1);
-    expect(resultsApi.getGameResults).toHaveBeenCalledWith('g1');
+    expect(resultsApi.getGameResultsBatched).toHaveBeenCalledTimes(1);
+    expect(resultsApi.getGameResultsBatched).toHaveBeenCalledWith('g1');
     vi.useRealTimers();
   });
 
   it('dedupes concurrent fetchGame calls', async () => {
     let resolveFetch: ((value: unknown) => void) | undefined;
-    vi.mocked(resultsApi.getGameResults).mockImplementation(
+    vi.mocked(resultsApi.getGameResultsBatched).mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveFetch = resolve;
@@ -77,10 +77,10 @@ describe('leagueFixtureResultsCache', () => {
 
     const p1 = useLeagueFixtureResultsCache.getState().fetchGame('g1');
     const p2 = useLeagueFixtureResultsCache.getState().fetchGame('g1');
-    expect(resultsApi.getGameResults).toHaveBeenCalledTimes(1);
+    expect(resultsApi.getGameResultsBatched).toHaveBeenCalledTimes(1);
     resolveFetch?.({ data: { resultsStatus: 'NONE', rounds: [] } });
     await Promise.all([p1, p2]);
-    expect(resultsApi.getGameResults).toHaveBeenCalledTimes(1);
+    expect(resultsApi.getGameResultsBatched).toHaveBeenCalledTimes(1);
   });
 
   it('applyLocalRounds write-through updates siblings immediately', () => {
@@ -109,7 +109,7 @@ describe('leagueFixtureResultsCache', () => {
 
   it('ignores stale fetch responses after a newer generation', async () => {
     const resolvers: Array<(value: unknown) => void> = [];
-    vi.mocked(resultsApi.getGameResults).mockImplementation(
+    vi.mocked(resultsApi.getGameResultsBatched).mockImplementation(
       () =>
         new Promise((resolve) => {
           resolvers.push(resolve);

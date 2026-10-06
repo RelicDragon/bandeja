@@ -1,4 +1,5 @@
 import api from './axios';
+import { expandCompactRefs, isCompactRefsPayload, type CompactRefsPayload } from '@/utils/compactRefs';
 import type { ApiResponse, BasicUser, Game, GameSetupParams, Gender, Sport } from '@/types';
 
 export interface CreateLeagueRequest {
@@ -423,9 +424,18 @@ export const leaguesApi = {
     const response = await api.post<ApiResponse<League>>('/leagues', data);
     return response.data;
   },
-  getRounds: async (leagueSeasonId: string) => {
-    const response = await api.get<ApiResponse<LeagueRound[]>>(`/leagues/${leagueSeasonId}/rounds`);
-    return response.data;
+  getRounds: async (leagueSeasonId: string): Promise<ApiResponse<LeagueRound[]>> => {
+    // Compact shape sends each repeated club / season / user once; older servers ignore
+    // the param and return the plain array.
+    const response = await api.get<ApiResponse<LeagueRound[] | CompactRefsPayload>>(
+      `/leagues/${leagueSeasonId}/rounds`,
+      { params: { shape: 'compact' } },
+    );
+    const body = response.data;
+    if (isCompactRefsPayload(body.data)) {
+      return { ...body, data: expandCompactRefs<LeagueRound[]>(body.data) };
+    }
+    return body as ApiResponse<LeagueRound[]>;
   },
   getStandings: async (leagueSeasonId: string) => {
     const response = await api.get<
@@ -433,6 +443,8 @@ export const leaguesApi = {
         meta?: {
           rosterAliases?: LeagueRosterAlias[];
           tieClusters?: LeagueStandingsTieCluster[];
+          /** Season has a bracket playoff round (absent on older servers). */
+          hasBracketPlayoff?: boolean;
         };
       }
     >(`/leagues/${leagueSeasonId}/standings`);

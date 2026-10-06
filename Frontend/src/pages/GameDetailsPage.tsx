@@ -1,3 +1,4 @@
+import { offerFreshGame } from '@/services/game/freshGameHandoff';
 import { useRef, useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { Card } from '@/components';
@@ -117,6 +118,7 @@ export const GameDetailsPage = () => {
       .then((res) => {
         if (cancelled) return;
         const data = res.data;
+        offerFreshGame(data);
         setLayoutTableAvailable(canShowTournamentTableView(data));
         const et = data.entityType;
         const variant =

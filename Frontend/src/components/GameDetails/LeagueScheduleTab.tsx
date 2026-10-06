@@ -11,6 +11,7 @@ import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { LeagueFixtureMatrix } from './LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
+import { leagueGroupsData, leagueRoundsData, leagueStandingsData } from '@/queries/league/leagueSeasonData';
 import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding, type LeagueRosterAlias } from '@/api/leagues';
 import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2 } from 'lucide-react';
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
@@ -110,39 +111,66 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const canManageGroups = canEdit && hasGroups;
   const canAddRound = canEdit && (rounds.length > 0 || (hasGroups && participantCount > 0));
 
-  const fetchRounds = useCallback(async () => {
-    try {
-      const response = await leaguesApi.getRounds(leagueSeasonId);
-      setRounds(response.data);
-      const lastRoundId = response.data[response.data.length - 1]?.id;
-      
-      setExpandedRoundId((prev) => {
-        if (response.data.some((round) => round.id === prev)) {
-          return prev;
-        }
-        return lastRoundId ?? null;
-      });
-      
-      if (lastRoundId) {
-        setLoadedRoundIds((prev) => new Set([...prev, lastRoundId]));
+  const applyRounds = useCallback((data: LeagueRound[]) => {
+    setRounds(data);
+    const lastRoundId = data[data.length - 1]?.id;
+    setExpandedRoundId((prev) => {
+      if (data.some((round) => round.id === prev)) {
+        return prev;
       }
-      
-      const standingsResponse = await leaguesApi.getStandings(leagueSeasonId);
-      setStandings(standingsResponse.data);
-      setRosterAliases(standingsResponse.meta?.rosterAliases ?? []);
-      setParticipantCount(standingsResponse.data.length);
+      return lastRoundId ?? null;
+    });
+    if (lastRoundId) {
+      setLoadedRoundIds((prev) => new Set([...prev, lastRoundId]));
+    }
+  }, []);
 
-      try {
-        const groupsResponse = await leaguesApi.getGroups(leagueSeasonId);
-        const fetchedGroups = groupsResponse.data.groups;
-        setGroups(fetchedGroups);
-        setHasGroups(fetchedGroups.length > 0);
-        setGroupsInitialized(true);
-      } catch (error) {
-        console.error('Failed to fetch groups:', error);
-        setGroups([]);
-        setHasGroups(false);
-        setGroupsInitialized(true);
+  const applyStandings = useCallback((response: Awaited<ReturnType<typeof leaguesApi.getStandings>>) => {
+    setStandings(response.data);
+    setRosterAliases(response.meta?.rosterAliases ?? []);
+    setParticipantCount(response.data.length);
+  }, []);
+
+  const applyGroups = useCallback((fetchedGroups: LeagueGroup[]) => {
+    setGroups(fetchedGroups);
+    setHasGroups(fetchedGroups.length > 0);
+    setGroupsInitialized(true);
+  }, []);
+
+  /**
+   * Rounds, standings and groups load in parallel through the shared season cache.
+   * `initial` paints the cached season first (tab switches), then revalidates; every
+   * other call (after a mutation) forces fresh data.
+   */
+  const fetchRounds = useCallback(async (options?: { initial?: boolean }) => {
+    const initial = options?.initial === true;
+    if (initial) {
+      const cachedRounds = leagueRoundsData.peek(leagueSeasonId);
+      const cachedStandings = leagueStandingsData.peek(leagueSeasonId);
+      if (cachedRounds && cachedStandings) {
+        applyRounds(cachedRounds.data);
+        applyStandings(cachedStandings);
+        const cachedGroups = leagueGroupsData.peek(leagueSeasonId);
+        if (cachedGroups) applyGroups(cachedGroups.data.groups);
+        setLoading(false);
+      }
+    }
+    const force = !initial;
+    try {
+      const [roundsResult, standingsResult, groupsResult] = await Promise.allSettled([
+        leagueRoundsData.load(leagueSeasonId, { force }),
+        leagueStandingsData.load(leagueSeasonId, { force }),
+        leagueGroupsData.load(leagueSeasonId, { force }),
+      ]);
+      if (roundsResult.status === 'rejected') throw roundsResult.reason;
+      applyRounds(roundsResult.value.data);
+      if (standingsResult.status === 'rejected') throw standingsResult.reason;
+      applyStandings(standingsResult.value);
+      if (groupsResult.status === 'fulfilled') {
+        applyGroups(groupsResult.value.data.groups);
+      } else {
+        console.error('Failed to fetch groups:', groupsResult.reason);
+        applyGroups([]);
       }
     } catch (error) {
       console.error('Failed to fetch league rounds:', error);
@@ -150,13 +178,16 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
     } finally {
       setLoading(false);
     }
-  }, [leagueSeasonId]);
+  }, [leagueSeasonId, applyRounds, applyStandings, applyGroups]);
 
   useEffect(() => {
-    fetchRounds().catch((error) => {
+    fetchRounds({ initial: true }).catch((error) => {
       console.error('Failed to fetch rounds on initial load:', error);
     });
   }, [fetchRounds]);
+
+  /** Post-mutation refresh (always fresh); safe to pass as an event callback. */
+  const refreshRounds = useCallback(() => fetchRounds(), [fetchRounds]);
 
   useEffect(() => {
     setIsClient(true);
@@ -977,8 +1008,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onEditGame={handleEditGame}
           onOpenGame={(game) => handleOpenGame(game, { preferBracketPosition: true })}
           onDeleteGame={handleDeleteGame}
-          onNoteSaved={fetchRounds}
-          onResultsChanged={fetchRounds}
+          onNoteSaved={refreshRounds}
+          onResultsChanged={refreshRounds}
           t={t}
         />
       ) : (
@@ -1024,8 +1055,8 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
                 onOpenGame={handleOpenGame}
                 onDeleteGame={handleDeleteGame}
                 onSendStartMessage={() => handleSendStartMessage(round.id)}
-                onNoteSaved={fetchRounds}
-                onResultsChanged={fetchRounds}
+                onNoteSaved={refreshRounds}
+                onResultsChanged={refreshRounds}
                 selectedGameChatId={selectedGameChatId}
                 onChatGameSelect={onChatGameSelect}
                 t={t}
@@ -1061,7 +1092,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           isOpen={showGroupEditor}
           leagueSeasonId={leagueSeasonId}
           onClose={() => setShowGroupEditor(false)}
-          onUpdated={fetchRounds}
+          onUpdated={refreshRounds}
           canRecreateSeasonTable={hasSeasonTable}
         />
       )}
@@ -1071,7 +1102,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           onClose={() => setShowPlayoffModal(false)}
           leagueSeasonId={leagueSeasonId}
           hasFixedTeams={hasFixedTeams ?? false}
-          onCreated={fetchRounds}
+          onCreated={refreshRounds}
         />
       )}
       {isClient && bracketRestartConfirmOpen && (

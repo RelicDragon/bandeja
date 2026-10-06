@@ -1,3 +1,4 @@
+import { leagueGroupsData, leagueRoundsData } from '@/queries/league/leagueSeasonData';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -73,12 +74,12 @@ export const LeagueBracketFullscreenPage = () => {
     setBracketError(false);
     setBracketPayload(null);
     try {
-      const roundsRes = await leaguesApi.getRounds(leagueSeasonId);
+      const roundsRes = await leagueRoundsData.load(leagueSeasonId);
       setAllRounds(roundsRes.data);
       const playoffs = findBracketRounds(roundsRes.data);
       setBracketRounds(playoffs);
       const round = resolveSelectedBracketRound(playoffs, selectedBracketRoundId);
-      const [groupsRes] = await Promise.all([leaguesApi.getGroups(leagueSeasonId)]);
+      const [groupsRes] = await Promise.all([leagueGroupsData.load(leagueSeasonId)]);
       setGroups(groupsRes.data.groups);
       if (!round) {
         setBracketPayload(null);

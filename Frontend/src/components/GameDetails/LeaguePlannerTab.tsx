@@ -1,3 +1,4 @@
+import { leagueGroupsData, leagueStandingsData } from '@/queries/league/leagueSeasonData';
 import {
   lazy,
   Suspense,
@@ -180,7 +181,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     let cancelled = false;
     const run = async () => {
       try {
-        const gr = await leaguesApi.getGroups(leagueSeasonId);
+        const gr = await leagueGroupsData.load(leagueSeasonId);
         if (cancelled) return;
         const g = gr.data.groups;
         setGroups(g.map((x) => ({ id: x.id, name: x.name, color: x.color ?? undefined })));
@@ -202,7 +203,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
     let cancelled = false;
     const run = async () => {
       try {
-        const st = await leaguesApi.getStandings(leagueSeasonId);
+        const st = await leagueStandingsData.load(leagueSeasonId);
         if (!cancelled) setStandings(st.data);
       } catch {
         if (!cancelled) setStandings([]);

@@ -3,6 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components';
 import {
+  leagueGroupChatsData,
+  leagueGroupsData,
+  leagueRoundsData,
+  leagueStandingsData,
+} from '@/queries/league/leagueSeasonData';
+import {
   leaguesApi,
   LeagueStanding,
   LeagueGroup,
@@ -10,6 +16,7 @@ import {
   type BracketPlayoffGroupDto,
   type BracketPlayoffResponse,
   type LeagueStandingsTieCluster,
+  type LeagueGroupChatLink,
 } from '@/api/leagues';
 import { Loader2, MessageCircle } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
@@ -91,24 +98,49 @@ export const LeagueStandingsTab = ({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    type StandingsResponse = Awaited<ReturnType<typeof leaguesApi.getStandings>>;
+    const apply = (
+      standingsResponse: StandingsResponse,
+      groupsResponse: { data: { groups: LeagueGroup[] } },
+      groupChatsResponse: { data?: LeagueGroupChatLink[] },
+      hasBracketPlayoff: boolean,
+    ) => {
+      setStandings(standingsResponse.data);
+      setTieClusters(standingsResponse.meta?.tieClusters ?? []);
+      setGroups(groupsResponse.data.groups);
+      setGroupChatIdByGroupId(
+        new Map((groupChatsResponse.data ?? []).map((c) => [c.leagueGroupId, c.groupChannelId]))
+      );
+      setSelectedRoundType(hasBracketPlayoff ? 'PLAYOFF' : 'REGULAR');
+    };
+
+    // Remounting the tab paints the cached season at once; the fetch below revalidates.
+    const cachedStandings = leagueStandingsData.peek(leagueSeasonId);
+    const cachedGroups = leagueGroupsData.peek(leagueSeasonId);
+    const cachedHasBracket = cachedStandings?.meta?.hasBracketPlayoff;
+    if (cachedStandings && cachedGroups && cachedHasBracket !== undefined) {
+      apply(cachedStandings, cachedGroups, leagueGroupChatsData.peek(leagueSeasonId) ?? { data: [] }, cachedHasBracket);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     const fetchData = async () => {
       try {
-        const [standingsResponse, groupsResponse, roundsResponse, groupChatsResponse] = await Promise.all([
-          leaguesApi.getStandings(leagueSeasonId),
-          leaguesApi.getGroups(leagueSeasonId).catch(() => ({ data: { groups: [] } })),
-          leaguesApi.getRounds(leagueSeasonId).catch(() => ({ data: [] })),
-          leaguesApi.getMyGroupChats(leagueSeasonId).catch(() => ({ data: [] })),
+        const [standingsResponse, groupsResponse, groupChatsResponse] = await Promise.all([
+          leagueStandingsData.load(leagueSeasonId),
+          leagueGroupsData.load(leagueSeasonId).catch(() => ({ data: { groups: [] as LeagueGroup[] } })),
+          leagueGroupChatsData.load(leagueSeasonId).catch(() => ({ data: [] as LeagueGroupChatLink[] })),
         ]);
+        // The standings meta answers "is there a bracket playoff?"; only older servers
+        // without it need the full rounds payload for that.
+        let hasBracketPlayoff = standingsResponse.meta?.hasBracketPlayoff;
+        if (hasBracketPlayoff === undefined) {
+          const roundsResponse = await leagueRoundsData.load(leagueSeasonId).catch(() => ({ data: [] as LeagueRound[] }));
+          hasBracketPlayoff = findBracketRounds(roundsResponse.data ?? []).length > 0;
+        }
         if (cancelled) return;
-        setStandings(standingsResponse.data);
-        setTieClusters(standingsResponse.meta?.tieClusters ?? []);
-        setGroups(groupsResponse.data.groups);
-        setGroupChatIdByGroupId(
-          new Map((groupChatsResponse.data ?? []).map((c) => [c.leagueGroupId, c.groupChannelId]))
-        );
-        const rounds = roundsResponse.data ?? [];
-        setSelectedRoundType(findBracketRounds(rounds).length > 0 ? 'PLAYOFF' : 'REGULAR');
+        apply(standingsResponse, groupsResponse, groupChatsResponse, hasBracketPlayoff);
       } catch (error) {
         if (!cancelled) console.error('Failed to fetch league data:', error);
       } finally {
@@ -128,7 +160,7 @@ export const LeagueStandingsTab = ({
       return;
     }
     try {
-      const roundsRes = await leaguesApi.getRounds(leagueSeasonId);
+      const roundsRes = await leagueRoundsData.load(leagueSeasonId);
       const playoffs = findBracketRounds(roundsRes.data);
       setBracketRounds(playoffs);
       const round = resolveSelectedBracketRound(playoffs, selectedBracketRoundId);

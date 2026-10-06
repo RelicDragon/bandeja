@@ -1,3 +1,4 @@
+import { leagueGroupsData } from '@/queries/league/leagueSeasonData';
 import { PremiumName } from '@/components/PremiumName';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -55,7 +56,7 @@ export const LeagueGroupEditorModal = ({
     async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoading(true);
       try {
-        const response = await leaguesApi.getGroups(leagueSeasonId);
+        const response = await leagueGroupsData.load(leagueSeasonId);
         setData(response.data);
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || 'errors.generic';

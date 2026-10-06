@@ -68,6 +68,66 @@ export interface GameLevelEvaluations {
   players: GameLevelEvaluationPlayer[];
 }
 
+const RESULTS_BATCH_MAX = 50;
+const RESULTS_BATCH_WINDOW_MS = 16;
+type ResultsWaiter = { resolve: (value: ApiResponse<any>) => void; reject: (error: unknown) => void };
+const pendingResults = new Map<string, ResultsWaiter[]>();
+let resultsBatchTimer: ReturnType<typeof setTimeout> | null = null;
+/** Flipped off when the server predates `/results/games` (404). */
+let resultsBatchSupported = true;
+
+function enqueueGameResults(gameId: string): Promise<ApiResponse<any>> {
+  if (!resultsBatchSupported) return resultsApi.getGameResults(gameId);
+  return new Promise((resolve, reject) => {
+    const waiters = pendingResults.get(gameId);
+    if (waiters) waiters.push({ resolve, reject });
+    else pendingResults.set(gameId, [{ resolve, reject }]);
+    if (pendingResults.size >= RESULTS_BATCH_MAX) flushGameResults();
+    else if (!resultsBatchTimer) resultsBatchTimer = setTimeout(flushGameResults, RESULTS_BATCH_WINDOW_MS);
+  });
+}
+
+function flushGameResults(): void {
+  if (resultsBatchTimer) {
+    clearTimeout(resultsBatchTimer);
+    resultsBatchTimer = null;
+  }
+  const batch = new Map(pendingResults);
+  pendingResults.clear();
+  if (batch.size === 0) return;
+  const ids = [...batch.keys()];
+  const settle = (gameId: string, run: (waiter: ResultsWaiter) => void) => batch.get(gameId)?.forEach(run);
+
+  void api
+    .get<ApiResponse<Record<string, { data?: unknown; error?: { status: number } }>>>('/results/games', {
+      params: { ids: ids.join(',') },
+    })
+    .then((response) => {
+      const byId = response.data.data ?? {};
+      for (const gameId of ids) {
+        const entry = byId[gameId];
+        if (entry && 'data' in entry) {
+          settle(gameId, (w) => w.resolve({ success: true, data: entry.data } as ApiResponse<any>));
+        } else {
+          const error = new Error(`results unavailable (${entry?.error?.status ?? 'missing'})`);
+          settle(gameId, (w) => w.reject(error));
+        }
+      }
+    })
+    .catch((error: { response?: { status?: number } }) => {
+      if (error?.response?.status === 404) {
+        resultsBatchSupported = false;
+        for (const gameId of ids) {
+          settle(gameId, (w) => {
+            resultsApi.getGameResults(gameId).then(w.resolve, w.reject);
+          });
+        }
+        return;
+      }
+      for (const gameId of ids) settle(gameId, (w) => w.reject(error));
+    });
+}
+
 export const resultsApi = {
   getLevelEvaluations: async (gameId: string) => {
     const response = await api.get<ApiResponse<GameLevelEvaluations>>(
@@ -109,6 +169,11 @@ export const resultsApi = {
     const response = await api.get<ApiResponse<any>>(`/results/game/${gameId}`);
     return response.data;
   },
+  /**
+   * Same payload as `getGameResults`, but calls made within a few ms are sent as one
+   * `GET /results/games?ids=` (league schedules mount one results card per fixture).
+   */
+  getGameResultsBatched: (gameId: string): Promise<ApiResponse<any>> => enqueueGameResults(gameId),
 
   syncResults: async (gameId: string, rounds: Round[], baseVersion?: string | null) => {
     const response = await api.post<ApiResponse<any>>(`/results/game/${gameId}/sync`, {

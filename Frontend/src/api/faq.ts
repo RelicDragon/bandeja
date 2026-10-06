@@ -41,12 +41,20 @@ export interface UpdateFaqData {
   order?: number;
 }
 
+const inFlightGameFaqs = new Map<string, Promise<ApiResponse<Faq[]>>>();
+
 export const faqApi = {
-  getGameFaqs: async (gameId: string, locale?: string) => {
-    const response = await api.get<ApiResponse<Faq[]>>(`/faqs/game/${gameId}`, {
-      params: locale ? { locale } : undefined,
-    });
-    return response.data;
+  /** Identical concurrent reads share one request (the season shell and FAQ editor ask together). */
+  getGameFaqs: (gameId: string, locale?: string): Promise<ApiResponse<Faq[]>> => {
+    const key = `${gameId}|${locale ?? ''}`;
+    const pending = inFlightGameFaqs.get(key);
+    if (pending) return pending;
+    const request = api
+      .get<ApiResponse<Faq[]>>(`/faqs/game/${gameId}`, { params: locale ? { locale } : undefined })
+      .then((response) => response.data)
+      .finally(() => inFlightGameFaqs.delete(key));
+    inFlightGameFaqs.set(key, request);
+    return request;
   },
 
   getTranslations: async (gameId: string) => {

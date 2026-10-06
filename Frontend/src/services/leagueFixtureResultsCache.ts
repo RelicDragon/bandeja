@@ -65,7 +65,7 @@ export const useLeagueFixtureResultsCache = create<LeagueFixtureResultsCacheStat
       }));
 
       try {
-        const response = await resultsApi.getGameResults(gameId);
+        const response = await resultsApi.getGameResultsBatched(gameId);
         if (fetchGeneration.get(gameId) !== generation) return;
 
         const payload = response.data;

@@ -27,7 +27,7 @@ npm run test:e2e:report
 
 ## Vitest (Frontend)
 
-Targeted scripts (not a full-repo vitest): `test:auth`, `test:theme`, `test:premium-navigation`, `test:premium-header-scroll` (Chrome scroll rasterization and animation continuity), `test:deep-link-catalog`, `test:next-game`, `test:play-intent`, `test:live-scoring`, `test:game-invite`, `test:invites`, `test:find`, `test:home-render`, `test:queries`, `test:group-channel`, `test:chat-inbox-feed`, `test:chat-drafts`, `test:chat-open`, `test:chat-outbox`, `test:chat-stickers`, `test:unread`, `test:stories`, `test:achievements`, `test:keyboard-layout`, `test:gender-join`, `test:user-team`, `test:bugs`, `test:avatar-crop`, `test:game-slot-overlap`, `test:training-attendance`, `test:leaderboard`, `test:game-results-share`, `test:ios-shared-packages`.
+Targeted scripts (not a full-repo vitest): `test:auth`, `test:theme`, `test:premium-navigation`, `test:premium-header-scroll` (Chrome scroll rasterization and animation continuity), `test:deep-link-catalog`, `test:next-game`, `test:play-intent`, `test:live-scoring`, `test:game-invite`, `test:invites`, `test:find`, `test:home-render`, `test:queries`, `test:group-channel`, `test:chat-inbox-feed`, `test:chat-drafts`, `test:chat-open`, `test:chat-outbox`, `test:chat-stickers`, `test:unread`, `test:stories`, `test:achievements`, `test:keyboard-layout`, `test:gender-join`, `test:user-team`, `test:bugs`, `test:avatar-crop`, `test:game-slot-overlap`, `test:training-attendance`, `test:leaderboard`, `test:league-data`, `test:game-results-share`, `test:ios-shared-packages`.
 
 `npm run test:avatar-paint` checks online-avatar idle rasterization in Chromium, plus pulse continuity, theme colors, equipped frames and reduced motion.
 
@@ -36,6 +36,7 @@ Targeted scripts (not a full-repo vitest): `test:auth`, `test:theme`, `test:prem
 Playwright harnesses under `Frontend/scripts/perf/`, phone-like CPU (`PERF_CPU_THROTTLE`, default 4×), 390×844 viewport.
 
 - `npm run perf:boot` measures cold and warm boot (FCP, LCP, `app-ready`, tab bar, settled, long tasks / TBT, heap, JS bytes, API waterfall with duplicates), then two passes over every bottom tab. Point `PERF_BASE_URL` at a **production build** served by `vite preview` (it proxies `/api` like dev). Dev mode loads ~9k unbundled modules and its timings mean nothing. `PERF_TOKEN` is an access JWT for a local user (mint one with `generateShortAccessToken` from a script inside `Backend/`). `PERF_OUT` writes the full JSON report.
+- `npm run perf:page-tabs` opens one page (`PERF_PATH`, e.g. a league season) and clicks through its tabs (`PERF_TABS="Schedule,Standings,General"`), reporting settle time, long tasks and every API call with its JSON size per step. Keep the Browser pane out of it: a hidden pane runs no animation frames, so animated tab switches never finish there.
 - `npm run perf:profile` CPU-profiles one tab switch (`PERF_TAB`, e.g. `Chats`) and prints the hottest functions. Run it against the dev server so the names are readable. `PERF_PROFILE_OUT` saves a `.cpuprofile` for DevTools.
 
 ## Backend

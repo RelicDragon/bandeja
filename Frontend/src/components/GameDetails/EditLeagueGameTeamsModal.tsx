@@ -1,3 +1,4 @@
+import { leagueStandingsData } from '@/queries/league/leagueSeasonData';
 import { PremiumName } from '@/components/PremiumName';
 import { buildEditLocationTimeSaveDraft, saveLocationTime } from '@/components/gameLocationTime/useSaveGameLocationTime';
 import { scheduleSelectionToForm, type ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
@@ -9,7 +10,7 @@ import { PlayerAvatar, ClubModal, CourtModal, ToggleSwitch, GameStartSection, Co
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { Game, Club, Court, EntityType, BasicUser } from '@/types';
-import { gamesApi, leaguesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
+import { gamesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import { addHours, differenceInHours } from 'date-fns';
@@ -117,7 +118,7 @@ export const EditLeagueGameTeamsModal = ({
   const fetchStandings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await leaguesApi.getStandings(leagueSeasonId);
+      const response = await leagueStandingsData.load(leagueSeasonId);
       setStandings(response.data);
     } catch (error) {
       console.error('Failed to fetch standings:', error);

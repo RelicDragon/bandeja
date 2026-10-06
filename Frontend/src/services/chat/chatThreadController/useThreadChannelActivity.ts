@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { chatApi, type ChatMessage } from '@/api/chat';
+import { type ChatMessage } from '@/api/chat';
 import {
   chatMessageActivatesGameChannel,
   EMPTY_GAME_CHAT_CHANNEL_ACTIVITY,
-  gameChatChannelIsActive,
   type GameChatChannelActivity,
 } from '@/utils/gameChatChannelActivity';
 import { getAvailableGameChatTypes } from '@/utils/chatType';
+import { probeGameChatChannelActive } from '@/services/chat/gameChatChannelProbe';
 import type { Game } from '@/types';
 
 export function useThreadChannelActivity(game: Game | null, userId: string | undefined) {
@@ -40,8 +40,7 @@ export function useThreadChannelActivity(game: Game | null, userId: string | und
       const results = await Promise.all(
         toProbe.map(async (chatType) => {
           try {
-            const messages = await chatApi.getGameMessages(gameId, 1, 50, chatType);
-            return { chatType, active: gameChatChannelIsActive(messages, chatType) };
+            return { chatType, active: await probeGameChatChannelActive(gameId, chatType) };
           } catch {
             return { chatType, active: false };
           }
