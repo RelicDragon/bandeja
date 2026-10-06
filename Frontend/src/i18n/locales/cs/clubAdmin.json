@@ -322,6 +322,7 @@
       "failed": "Rezervační systém klubu není dostupný — zobrazují se jen zápasy a blokace z aplikace.",
       "updating": "Aktualizace rezervací ze systému klubu…",
       "noSyncToday": "Rezervace ze systému klubu se dnes ještě nesynchronizovaly.",
+      "noSyncDay": "Rezervace ze systému klubu pro tento den zatím nejsou k dispozici.",
       "lastSync": "Systém klubu synchronizován {{time}}",
       "unmapped_one": "{{count}} kurt z rezervačního systému není propojený s kurtem zde.",
       "unmapped_few": "{{count}} kurty z rezervačního systému nejsou propojené s kurty zde.",

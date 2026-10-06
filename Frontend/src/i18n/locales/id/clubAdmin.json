@@ -292,6 +292,7 @@
       "failed": "Sistem pemesanan klub tidak tersedia — hanya menampilkan permainan dan blok dari aplikasi.",
       "updating": "Memperbarui pemesanan dari sistem klub…",
       "noSyncToday": "Pemesanan dari sistem klub belum disinkronkan hari ini.",
+      "noSyncDay": "Pemesanan dari sistem klub belum tersedia untuk hari ini.",
       "lastSync": "Sistem klub disinkronkan {{time}}",
       "unmapped_other": "{{count}} lapangan dari sistem pemesanan belum ditautkan ke lapangan di sini.",
       "manageCourts": "Tautkan lapangan",

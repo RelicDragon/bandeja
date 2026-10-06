@@ -33,12 +33,15 @@ export function ScheduleBanners({
   courtsHref,
   canEditCourts,
   isToday,
+  syncing,
 }: {
   data: ClubScheduleResponseV2 | undefined;
   integrationType: string | null;
   courtsHref: string;
   canEditCourts: boolean;
   isToday: boolean;
+  /** The console is refreshing the provider snapshot for this date right now. */
+  syncing: boolean;
 }) {
   const { t } = useTranslation('clubAdmin');
   if (!data) return null;
@@ -51,16 +54,18 @@ export function ScheduleBanners({
         {t('sync.failed')}
       </Banner>
     );
-  } else if (data.isLoadingExternalSlots) {
+  } else if (syncing) {
     items.push(
       <Banner key="loading" tone="info" icon={<Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}>
         {t('sync.updating')}
       </Banner>
     );
-  } else if (integrated && data.hasSnapshotForDate === false && isToday) {
+  } else if (integrated && data.hasSnapshotForDate === false) {
+    // `isLoadingExternalSlots` only means "snapshot older than the freshness window" — it turns
+    // true a minute after every sync, so it can't drive the banner; the console's own refresh does.
     items.push(
       <Banner key="nosync" tone="warn" icon={<RefreshCcw className="h-3.5 w-3.5" aria-hidden />}>
-        {t('sync.noSyncToday')}
+        {isToday ? t('sync.noSyncToday') : t('sync.noSyncDay')}
       </Banner>
     );
   }
@@ -84,7 +89,7 @@ export function ScheduleBanners({
     );
   }
   const synced =
-    integrated && !data.externalSlotsFailed && !data.isLoadingExternalSlots && data.snapshotFetchedAt
+    integrated && !data.externalSlotsFailed && !syncing && data.snapshotFetchedAt
       ? t('sync.lastSync', { time: formatRelativeTime(data.snapshotFetchedAt) })
       : null;
 

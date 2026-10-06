@@ -27,6 +27,7 @@ import { BookingDetail } from '@/components/clubAdmin/schedule/BookingDetail';
 import { CourtActionSheet } from '@/components/clubAdmin/schedule/CourtActionSheet';
 import { HoldSheet, type HoldSheetTarget } from '@/components/clubAdmin/schedule/HoldSheets';
 import { ScheduleBanners, ScheduleLegend } from '@/components/clubAdmin/schedule/ScheduleBanners';
+import { useScheduleExternalSync } from '@/components/clubAdmin/schedule/useScheduleExternalSync';
 import { ScheduleDateBar, type ScheduleView } from '@/components/clubAdmin/schedule/ScheduleDateBar';
 import { useDaySwipe } from '@/components/clubAdmin/schedule/useDaySwipe';
 import { ScheduleGrid, type GridColumn } from '@/components/clubAdmin/schedule/ScheduleGrid';
@@ -290,6 +291,7 @@ export function ClubSchedulePage() {
   ) : null;
 
   const refresh = () => void qc.invalidateQueries({ queryKey: clubAdminKeys.scheduleAll(clubId) });
+  const { syncing } = useScheduleExternalSync(clubId, date, timeZone, !!context.club.integrationType, refresh);
   const swipe = useDaySwipe((d) => setParam({ date: addDaysToDate(date, d * (view === 'week' ? 7 : 1)) }), !isLg && columns.length <= 3);
   const dayData = view === 'day' ? dayQ.data : weekDatas[0];
   const [showClosed, setShowClosed] = useState(false);
@@ -334,6 +336,7 @@ export function ClubSchedulePage() {
         courtsHref={`${consoleBase(clubId)}/club/courts`}
         canEditCourts={can('courts.edit')}
         isToday={date === today}
+        syncing={syncing}
       />
       <div className="flex min-h-0 flex-1">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col" {...swipe}>

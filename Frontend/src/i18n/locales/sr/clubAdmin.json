@@ -312,6 +312,7 @@
       "failed": "Sistem za rezervacije kluba nije dostupan — prikazane su samo utakmice i blokade iz aplikacije.",
       "updating": "Ažuriranje rezervacija iz sistema kluba…",
       "noSyncToday": "Rezervacije iz sistema kluba danas još nisu sinhronizovane.",
+      "noSyncDay": "Rezervacije iz sistema kluba za ovaj dan još nisu dostupne.",
       "lastSync": "Sistem kluba sinhronizovan {{time}}",
       "unmapped_one": "{{count}} teren iz sistema za rezervacije nije povezan sa terenom ovde.",
       "unmapped_few": "{{count}} terena iz sistema za rezervacije nisu povezana sa terenima ovde.",

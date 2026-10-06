@@ -25,6 +25,7 @@ export const clubAdminKeys = {
   club: (clubId: string) => ['clubAdmin', 'club', clubId] as const,
   context: (clubId: string) => ['clubAdmin', 'club', clubId, 'context'] as const,
   legacyClub: (clubId: string) => ['clubAdmin', 'club', clubId, 'legacyClub'] as const,
+  fullClub: (clubId: string) => ['clubAdmin', 'club', clubId, 'fullClub'] as const,
   dashboard: (clubId: string, date: string) => ['clubAdmin', 'club', clubId, 'dashboard', date] as const,
   dashboardAll: (clubId: string) => ['clubAdmin', 'club', clubId, 'dashboard'] as const,
   schedule: (clubId: string, date: string) => ['clubAdmin', 'club', clubId, 'schedule', date] as const,
