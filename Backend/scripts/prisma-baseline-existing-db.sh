@@ -5,15 +5,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-BASELINE="${PRISMA_BASELINE_MIGRATION:-20260613120000_baseline}"
+BASELINE="${PRISMA_BASELINE_MIGRATION:-20261006140000_baseline}"
 
-if [[ -z "${DB_URL:-}" ]]; then
-  if [[ -f .env ]]; then
-    set -a
-    # shellcheck source=/dev/null
-    source .env
-    set +a
-  fi
+# Only DB_URL is read from .env: sourcing the whole file breaks on multi-line values.
+if [[ -z "${DB_URL:-}" && -f .env ]]; then
+  DB_URL="$(grep -E '^DB_URL=' .env | tail -1 | cut -d= -f2- | sed -E 's/^["'\'']//; s/["'\'']$//')"
+  export DB_URL
 fi
 
 if [[ -z "${DB_URL:-}" ]]; then
@@ -26,7 +23,12 @@ echo "Baseline migration: ${BASELINE}"
 echo ""
 echo "This clears padelpulse._prisma_migrations and marks baseline as applied."
 echo "Schema and data are not modified."
-read -r -p "Continue? [y/N] " confirm
+confirm="n"
+if [[ "${1:-}" == "--yes" ]]; then
+  confirm="y"
+else
+  read -r -p "Continue? [y/N] " confirm
+fi
 if [[ "${confirm}" != [yY] ]]; then
   echo "Aborted."
   exit 1

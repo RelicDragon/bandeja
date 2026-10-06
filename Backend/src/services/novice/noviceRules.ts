@@ -3,7 +3,7 @@
  *
  * Kept free of Prisma client calls so the rules are unit-testable; the DB side
  * lives in `noviceProgress.service.ts`. The SQL backfill in
- * `prisma/migrations/20261005210000_novice_mode` mirrors `countedGamesWhere`.
+ * `prisma/backfills/20261005210000_novice_mode.sql` mirrors `countedGamesWhere`.
  */
 import { EntityType, GameStatus, ParticipantStatus, type Prisma } from '@prisma/client';
 import { NOVICE_MAX_RANK, noviceRankForCount } from '@bandeja/shared/novice';

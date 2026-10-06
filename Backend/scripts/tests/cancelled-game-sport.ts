@@ -23,7 +23,7 @@ function testSchemaAndMigration(): void {
   assert(/^\s+sport\s+Sport\s+@default\(PADEL\)/m.test(modelMatch![0]), 'CancelledGame.sport with PADEL default');
 
   const baselineMigration =
-    process.env.PRISMA_BASELINE_MIGRATION ?? '20260613120000_baseline';
+    process.env.PRISMA_BASELINE_MIGRATION ?? '20261006140000_baseline';
   const migrationSql = readFileSync(
     join(backendRoot, 'prisma/migrations', baselineMigration, 'migration.sql'),
     'utf8',

@@ -178,6 +178,20 @@ Workflow: **Actions → Prisma migrate deploy → Run workflow**
 
 Uses secret `DATABASE_URL`. Use when you need migrations without a full backend deploy.
 
+### Migration baseline (squash)
+
+`Backend/prisma/migrations` starts at `20261006140000_baseline`: every earlier
+migration squashed into one file, verified identical (`pg_dump --schema-only`)
+to prod and dev. It also carries what `schema.prisma` cannot express (partial
+and GIN indexes, CHECK constraints, NOT NULL arrays, `PlatformSetting` seed
+rows) — keep such objects in a migration, never only in a database.
+
+Fresh databases (CI, new dev machines) apply it normally. A database that
+already has the schema (prod, dev, the `padelpulse_test` clone) records it once
+with `Backend/scripts/prisma-baseline-existing-db.sh`, which clears
+`_prisma_migrations` and runs `prisma migrate resolve --applied`. Historical
+one-time data backfills live in `Backend/prisma/backfills/` (never run on deploy).
+
 ## Mobile app store releases
 
 Web deploy (CI / `upd.sh`) does **not** ship Android or iOS. Native apps are built locally and submitted to Google Play and App Store separately.

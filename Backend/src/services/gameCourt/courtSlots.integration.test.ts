@@ -371,7 +371,7 @@ void (async () => {
 
     /* --- migration backfill (rolled back) ---------------------------------------- */
     const migrationSql = fs.readFileSync(
-      path.join(__dirname, '../../../prisma/migrations/20261005220000_game_court_slots/migration.sql'),
+      path.join(__dirname, '../../../prisma/backfills/20261005220000_game_court_slots.sql'),
       'utf8',
     );
     const backfill = migrationSql

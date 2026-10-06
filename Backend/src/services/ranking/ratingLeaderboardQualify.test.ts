@@ -254,13 +254,18 @@ const reconcileSrc = readFileSync(
 assert.equal(reconcileSrc.includes('refreshSportProfilesInactive'), true);
 
 const migrationSrc = readFileSync(
-  join(rankingDir, '../../../prisma/migrations/20260823090000_add_sport_profile_inactive/migration.sql'),
+  join(rankingDir, '../../../prisma/backfills/20260823090000_add_sport_profile_inactive.sql'),
   'utf8',
 );
 assert.equal(migrationSrc.includes('GameParticipant'), true);
 assert.equal(migrationSrc.includes('affectsRating'), true);
 assert.equal(migrationSrc.includes('lastRatingActivityAt'), false);
-assert.equal(migrationSrc.includes('UserSportProfile_active_sport_idx'), true);
+// The partial index survives the squash: it lives in the baseline migration.
+const baselineSrc = readFileSync(
+  join(rankingDir, '../../../prisma/migrations/20261006140000_baseline/migration.sql'),
+  'utf8',
+);
+assert.equal(baselineSrc.includes('UserSportProfile_active_sport_idx'), true);
 
 const schedulerSrc = readFileSync(join(rankingDir, '../ratingInactiveScheduler.service.ts'), 'utf8');
 assert.equal(schedulerSrc.includes('refreshAgedSportProfileInactive'), true);

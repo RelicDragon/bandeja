@@ -1,2 +1,0 @@
--- AlterEnum
-ALTER TYPE "ChatSyncEventType" ADD VALUE 'READ_CURSOR_UPDATE';

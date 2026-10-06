@@ -1,2 +1,0 @@
--- AlterEnum
-ALTER TYPE "WinnerOfGame" ADD VALUE 'BY_SCORES_MADE';

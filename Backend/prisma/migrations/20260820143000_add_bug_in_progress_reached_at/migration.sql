@@ -1,1 +1,0 @@
-ALTER TABLE "Bug" ADD COLUMN "inProgressReachedAt" TIMESTAMP(3);
