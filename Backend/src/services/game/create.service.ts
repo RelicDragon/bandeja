@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
-import { ClubIntegrationType, EntityType, Prisma } from '@prisma/client';
+import { ClubIntegrationType, CourtBookingMode, EntityType, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
+import { parseCourtBookingMode } from './courtBookingMode';
 import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
@@ -164,6 +165,9 @@ export class GameCreateService {
     options: GameCreateOptions = {},
   ) {
     assertNoLegacyExternalBookingId(data);
+    // Validated up front (400 before any write); stored on the row, and a link added in
+    // the same transaction flips it back to CLUB in `syncGameBookingState`.
+    const courtBookingMode = parseCourtBookingMode(data);
 
     const externalBookingIds = parseExternalBookingIds(data);
     const bookingSnapshots = parseBookingSnapshots(data);
@@ -199,6 +203,7 @@ export class GameCreateService {
         externalBookingProvider,
         hasBookedCourtCreate,
         timeOverride,
+        courtBookingMode,
       },
       options,
     );
@@ -214,6 +219,7 @@ export class GameCreateService {
       externalBookingProvider: ClubIntegrationType | null;
       hasBookedCourtCreate: boolean;
       timeOverride: boolean;
+      courtBookingMode?: CourtBookingMode;
     },
     options: GameCreateOptions,
   ) {
@@ -627,6 +633,7 @@ export class GameCreateService {
         resultsByAnyone: entityType === EntityType.TOURNAMENT || isEventEntity ? false : (data.resultsByAnyone || false),
         allowDirectJoin: isEventEntity ? true : (data.allowDirectJoin || false),
         hasBookedCourt: booking.hasBookedCourtCreate,
+        ...(booking.courtBookingMode ? { courtBookingMode: booking.courtBookingMode } : {}),
         timeOverride: booking.timeOverride,
         afterGameGoToBar: data.afterGameGoToBar || false,
         // PRD 360 — an organizer promise about atmosphere, so it only exists on

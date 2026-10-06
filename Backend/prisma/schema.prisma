@@ -803,6 +803,8 @@ model Game {
   allowDirectJoin            Boolean                         @default(false)
   hasBookedCourt             Boolean                         @default(false)
   bookingStatus              GameBookingStatus               @default(NONE)
+  /// GAME_ONLY: the organizer handles the court; no club-schedule checks, never blocked. A linked booking flips it back to CLUB.
+  courtBookingMode           CourtBookingMode                @default(CLUB)
   afterGameGoToBar           Boolean                         @default(false)
   hasFixedTeams              Boolean                         @default(false)
   allowUserInMultipleTeams   Boolean                         @default(false)
@@ -2936,6 +2938,11 @@ enum GameBookingStatus {
   MANUAL
   EXTERNAL_PARTIAL
   EXTERNAL_FULL
+}
+
+enum CourtBookingMode {
+  CLUB
+  GAME_ONLY
 }
 
 enum GameCourtReservation {

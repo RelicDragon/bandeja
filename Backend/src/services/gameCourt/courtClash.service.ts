@@ -11,8 +11,9 @@
  * gaps (its own bookings show up in the club snapshot); a REPORTED slot is exempt (the
  * organizer's phone booking shows up as club-busy too — the reschedule planner turns it
  * into "tell the club"). Games sharing one of this game's bookings never clash with it.
+ * A "Game only" game (`courtBookingMode = GAME_ONLY`) is never checked.
  */
-import { EntityType, GameCourtReservation, GameStatus, Prisma } from '@prisma/client';
+import { CourtBookingMode, EntityType, GameCourtReservation, GameStatus, Prisma } from '@prisma/client';
 import { computeCoverageGapsMs, intervalsOverlap, mergeIntervals, type MsInterval } from '@bandeja/shared/gameBooking/coverageIntervals';
 import { ApiError } from '../../utils/ApiError';
 import {
@@ -144,6 +145,7 @@ export async function assertNoCourtClashInTx(
       timeIsSet: true,
       entityType: true,
       status: true,
+      courtBookingMode: true,
       court: { select: { clubId: true } },
       gameCourts: { select: { id: true, courtId: true, reservation: true } },
       externalBookings: {
@@ -152,6 +154,8 @@ export async function assertNoCourtClashInTx(
     },
   });
   if (!game || !game.timeIsSet || game.entityType === EntityType.EVENT) return;
+  // "Game only": the organizer handles the court; the club's schedule is never checked.
+  if (game.courtBookingMode === CourtBookingMode.GAME_ONLY) return;
   if (game.status !== GameStatus.ANNOUNCED && game.status !== GameStatus.STARTED) return;
   const clubId = game.clubId ?? game.court?.clubId ?? null;
   if (!clubId || game.gameCourts.length === 0) return;

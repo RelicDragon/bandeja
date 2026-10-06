@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
+import { CourtBookingMode, EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
@@ -70,6 +70,7 @@ import {
 import { emitAttendanceResetForTimeChange } from '../gameAttendance/attendanceTimeChange';
 import { postGameTimeChangedChatLine } from '../gameTimeChange/timeChangeChatLine';
 import { onGameEndedForNovice } from '../novice/noviceProgress.service';
+import { assertGameOnlyWithoutLinksInTx, parseCourtBookingMode } from './courtBookingMode';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -147,6 +148,8 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'metadata',
   'lastMessagePreview',
   'sport',
+  // "Game only" court booking mode (docs/domains/booking.md).
+  'courtBookingMode',
 ]);
 
 function pickUncheckedGameScalars(src: Record<string, unknown>): Prisma.GameUncheckedUpdateInput {
@@ -192,6 +195,7 @@ export class GameUpdateService {
     options: GameUpdateOptions = {},
   ) {
     assertNoLegacyExternalBookingFieldsOnUpdate(data);
+    const courtBookingMode = parseCourtBookingMode(data);
 
     // Validate currency if provided
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
@@ -889,6 +893,11 @@ export class GameUpdateService {
           },
         },
       });
+
+      // Under the row lock: a concurrent link write (which flips to CLUB) cannot slip past.
+      if (courtBookingMode === CourtBookingMode.GAME_ONLY) {
+        await assertGameOnlyWithoutLinksInTx(tx, id);
+      }
 
       const nameInPatch = Object.prototype.hasOwnProperty.call(data, 'name');
       const descriptionInPatch = Object.prototype.hasOwnProperty.call(data, 'description');

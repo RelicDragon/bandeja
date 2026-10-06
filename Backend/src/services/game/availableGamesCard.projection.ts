@@ -58,6 +58,8 @@ export const FIND_CARD_GAME_SELECT = {
   affectsRating: true,
   hasBookedCourt: true,
   bookingStatus: true,
+  /** "Game only" court booking mode (docs/domains/booking.md). */
+  courtBookingMode: true,
   hasFixedTeams: true,
   genderTeams: true,
   status: true,

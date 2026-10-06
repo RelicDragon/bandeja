@@ -1,6 +1,7 @@
 import { weltnerBookingLinkData } from '../weltner/weltnerBookingLinks';
 import {
   ClubIntegrationType,
+  CourtBookingMode,
   EntityType,
   GameBookingStatus,
   GameExternalBookingUpstreamState,
@@ -78,7 +79,8 @@ export function gamePatchAffectsBookingStatus(patch: Record<string, unknown>): b
 }
 
 /**
- * Booking status sync entry points (must all call syncGameBookingState):
+ * Booking status sync entry points (must all call syncGameBookingState; it also flips a
+ * "Game only" game back to CLUB once it has a linked booking):
  * - POST /games (create) — create.service transaction
  * - PATCH /games/:id — update.service transaction (when patch affects status fields)
  * - PATCH /games/:id/bookings — patchGameBookings
@@ -414,6 +416,7 @@ async function syncGameBookingState(
       playersPerMatch: true,
       bookingStatus: true,
       entityType: true,
+      courtBookingMode: true,
     },
   });
   if (!game) throw new ApiError(404, 'Game not found');
@@ -422,6 +425,11 @@ async function syncGameBookingState(
   const patch: Prisma.GameUncheckedUpdateInput = {};
 
   const linkCount = await tx.gameExternalBooking.count({ where: { gameId } });
+  // Links win: every link write funnels through here, so a "Game only" game that gains a
+  // linked booking is a club booking again, in the same transaction.
+  if (linkCount > 0 && game.courtBookingMode === CourtBookingMode.GAME_ONLY) {
+    patch.courtBookingMode = CourtBookingMode.CLUB;
+  }
 
   let courtId = game.courtId;
   if (!courtId && linkCount > 0) {

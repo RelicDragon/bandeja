@@ -249,6 +249,7 @@ function runGameDetail() {
     'lastSeatOpenedAt',
     'autoFillFromQueue',
     'showOnLiveRail',
+    'courtBookingMode',
     'weatherAlertState',
     // PRD 360 — the details header tag and the settings toggle both read it.
     'suitableForNovices',

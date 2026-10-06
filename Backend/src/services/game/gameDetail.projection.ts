@@ -115,6 +115,8 @@ export const GAME_DETAIL_GAME_SCALAR_SELECT = {
   allowDirectJoin: true,
   hasBookedCourt: true,
   bookingStatus: true,
+  /** "Game only" court booking mode (docs/domains/booking.md). */
+  courtBookingMode: true,
   reportedAnyCourtCount: true,
   courtSlotCount: true,
   afterGameGoToBar: true,
