@@ -36,6 +36,8 @@ HTML report: `Frontend/playwright-report` (`npm run test:e2e:report`)
 
 `FindPage.waitForShell()` — `getByRole('button', { name: /^chats$/i })` timeout 30s.
 
+Part of this was the storage state going stale: it held only an access JWT (no refresh cookie), so specs starting after the token neared expiry were logged out to `/login`. Global setup now re-logs in and rewrites `e2e/.auth/*.json` every ≤10 min. Re-check this cluster on the next full run.
+
 **Files:** `e2e/pages/find.page.ts`, `e2e/specs/find/*.spec.ts`
 
 ---
@@ -192,7 +194,7 @@ Low effort, no app logic changes.
 
 | Step | Action | Files | Unblocks |
 |------|--------|-------|----------|
-| 4.1 | Disable React Query DevTools when `E2E_TEST_HEADER` or `import.meta.env.MODE === 'test'` — devtools overlay intercepts Send clicks | `src/queries/QueryProvider.tsx` | T2-CH-01, T2-CH-10, possibly T2-X-01 |
+| 4.1 | ✅ Done: devtools hidden when `navigator.webdriver` (covers reused dev servers without `VITE_DISABLE_RQ_DEVTOOLS`) — overlay intercepted Send / club-nav clicks | `src/queries/QueryProvider.tsx` | T2-CH-01, T2-CH-10, CA-04, possibly T2-X-01 |
 | 4.2 | Offline tests: use `page.goto(..., { waitUntil: 'domcontentloaded' })` or route mock instead of full navigation while offline; align gate heading locator with current copy | `e2e/specs/shell/offline.spec.ts`, `e2e/pages/offline.page.ts` | G-06, G-07, X-10 |
 
 **Verify:** `npm run test:e2e:two-user` + `npm run test:e2e:guest -- e2e/specs/shell/offline.spec.ts`

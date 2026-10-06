@@ -8,6 +8,8 @@ Heavy tests go through serialized npm scripts / `scripts/run-heavy`. Same lane n
 
 Config: `Frontend/playwright.config.ts`. Starts Backend `:3000` + Frontend `:3001` unless already up. Header `X-E2E-Test: 1`.
 
+**Auth state:** `e2e/global-setup.ts` logs users A/B in via the API and writes `e2e/.auth/user{,-a,-b}.json` (access JWT in localStorage, no refresh cookie). It keeps rewriting them with a fresh token every ≤10 min while the run lasts, because the app clears a near-expiry token it cannot refresh. React Query devtools are hidden when `navigator.webdriver` is set.
+
 **Projects:** `guest`, `login`, `authenticated` (storageState `e2e/.auth/user.json`), `desktop` (`@desktop`), `games-guest`, `two-user` (`@two-user`).
 
 ```
