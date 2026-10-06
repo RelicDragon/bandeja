@@ -33,6 +33,15 @@ describe('clubTime', () => {
     expect(clubWallTimeToUtc('2026-01-15', 9 * 60, 'Asia/Bangkok').toISOString()).toBe('2026-01-15T02:00:00.000Z');
   });
 
+  it('resolves DST overlaps to the first occurrence and gaps forward', () => {
+    // 2026-10-25 Europe/Belgrade: 03:00 CEST → 02:00 CET, so 02:30 happens twice.
+    expect(clubWallTimeToUtc('2026-10-25', 150, 'Europe/Belgrade').toISOString()).toBe('2026-10-25T00:30:00.000Z');
+    expect(clubWallTimeToUtc('2026-10-25', 210, 'Europe/Belgrade').toISOString()).toBe('2026-10-25T02:30:00.000Z');
+    // 2026-03-29: 02:00 CET → 03:00 CEST, so 02:30 does not exist → 03:30 CEST.
+    expect(clubWallTimeToUtc('2026-03-29', 150, 'Europe/Belgrade').toISOString()).toBe('2026-03-29T01:30:00.000Z');
+    expect(clubWallTimeToUtc('2026-11-01', 90, 'America/New_York').toISOString()).toBe('2026-11-01T05:30:00.000Z');
+  });
+
   it('rolls opening windows past midnight', () => {
     const w = openingWindowUtc('2026-07-01', '08:00', '01:00', 'Europe/Madrid');
     expect(w.start.toISOString()).toBe('2026-07-01T06:00:00.000Z');

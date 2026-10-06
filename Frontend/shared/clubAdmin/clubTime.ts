@@ -132,10 +132,12 @@ export function clubWallTimeToUtc(date: string, minutes: number, timeZone: strin
   const m = DATE_RE.exec(date);
   if (!m) throw new RangeError(`Invalid date: ${date}`);
   const wallUtc = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 0, minutes);
-  // Two passes converge for every real-world zone (offset changes at most once per window).
-  let guess = wallUtc - offsetMs(new Date(wallUtc), timeZone);
-  guess = wallUtc - offsetMs(new Date(guess), timeZone);
-  return new Date(guess);
+  // Offsets a day either side bracket at most one transition (true for every real-world zone).
+  const before = wallUtc - offsetMs(new Date(wallUtc - 86_400_000), timeZone);
+  const after = wallUtc - offsetMs(new Date(wallUtc + 86_400_000), timeZone);
+  const valid = [before, after].filter((c) => c + offsetMs(new Date(c), timeZone) === wallUtc);
+  // Overlap (both valid): first occurrence. Gap (none valid): resolve forward, i.e. the later instant.
+  return new Date(valid.length > 0 ? Math.min(...valid) : Math.max(before, after));
 }
 
 /** Zone offset (local − UTC) in ms at an instant. */
