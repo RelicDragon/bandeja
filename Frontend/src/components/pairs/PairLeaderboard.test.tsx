@@ -76,8 +76,8 @@ vi.mock('@/components/userTeam/ChallengeUserTeamSheet', () => ({ ChallengeUserTe
 vi.mock('@/components/userTeam/CreateUserTeamExplainerSheet', () => ({
   CreateUserTeamExplainerSheet: () => null,
 }));
-const toastMock = vi.hoisted(() => vi.fn());
-vi.mock('react-hot-toast', () => ({ default: Object.assign(toastMock, { error: vi.fn(), success: vi.fn() }) }));
+const getTeamById = vi.hoisted(() => vi.fn(async (id: string) => ({ id, size: 2, members: [] })));
+vi.mock('@/api/userTeams', () => ({ userTeamsApi: { getById: getTeamById } }));
 vi.mock('@/utils/profileSports', () => ({
   getViewerPrimarySport: () => 'PADEL',
   hasMultipleSportsEnabled: () => false,
@@ -165,7 +165,7 @@ beforeEach(() => {
   teamsState.teams = [];
   teamsState.memberships = [];
   teamsState.lastFetchedAt = null;
-  toastMock.mockClear();
+  getTeamById.mockClear();
 });
 
 afterEach(() => {
@@ -331,7 +331,7 @@ describe('PairLeaderboard (PRD 352)', () => {
     expect(buttons.map((b) => b.closest<HTMLElement>('[data-pair-id]')!.dataset.pairId)).toEqual(['a4,b4']);
   });
 
-  it('says why a row cannot be challenged: ad-hoc pair, or one sharing the viewer\'s partner', () => {
+  it('shows no control on rows that cannot be challenged and says "only teams" once', () => {
     const accepted = (userId: string) => ({ userId, status: 'ACCEPTED' });
     teamsState.teams = [{ id: 'my-team', size: 2, members: [accepted('me'), accepted('zz')] }];
     teamsState.lastFetchedAt = 1;
@@ -346,25 +346,49 @@ describe('PairLeaderboard (PRD 352)', () => {
     ]);
     render();
 
+    const challenge = [...container.querySelectorAll<HTMLElement>('[data-testid="pair-row-challenge"]')];
+    expect(challenge.map((b) => b.closest<HTMLElement>('[data-pair-id]')!.dataset.pairId)).toEqual(['a4,b4']);
+    for (const pairId of ['zz,c6', 'a7,b7', 'me,zz']) {
+      const row = container.querySelector(`[data-pair-id="${pairId}"]`)!;
+      expect(row.querySelector('[data-testid^="pair-row-challenge"]')).toBeNull();
+      expect(row.querySelector('[aria-label^="teams.challenge"]')).toBeNull();
+    }
+    expect(container.querySelector('[data-testid="pair-challenge-hint-teams-only"]')!.textContent).toContain(
+      'teams.challenge.boardHintTeamsOnly',
+    );
     expect(container.querySelector('[data-testid="pair-challenge-hint"]')).toBeNull();
-    const muted = [
-      ...container.querySelectorAll<HTMLElement>('[data-testid="pair-row-challenge-unavailable"]'),
-    ];
-    expect(muted.map((b) => b.closest<HTMLElement>('[data-pair-id]')!.dataset.pairId)).toEqual([
-      'zz,c6',
-      'a7,b7',
-    ]);
+  });
 
-    act(() => muted[0]!.click());
-    expect(toastMock).toHaveBeenLastCalledWith(
-      expect.stringContaining('teams.challenge.rowSharesPlayer'),
-      expect.anything(),
-    );
-    act(() => muted[1]!.click());
-    expect(toastMock).toHaveBeenLastCalledWith(
-      expect.stringContaining('teams.challenge.rowNotTeam'),
-      expect.anything(),
-    );
+  it('skips the "only teams" line when every other pair on the board is a team', () => {
+    const accepted = (userId: string) => ({ userId, status: 'ACCEPTED' });
+    teamsState.teams = [{ id: 'my-team', size: 2, members: [accepted('me'), accepted('zz')] }];
+    teamsState.lastFetchedAt = 1;
+    setQuery([page([{ ...entry(1, 'a1', 'b1'), teamId: 't1' }, { ...entry(2, 'me', 'zz', true), teamId: 'my-team' }])]);
+    render();
+    expect(container.querySelector('[data-testid="pair-challenge-hint-teams-only"]')).toBeNull();
+  });
+
+  it('offers Challenge on a podium team without opening its page', async () => {
+    const accepted = (userId: string) => ({ userId, status: 'ACCEPTED' });
+    teamsState.teams = [{ id: 'my-team', size: 2, members: [accepted('me'), accepted('zz')] }];
+    teamsState.lastFetchedAt = 1;
+    setQuery([
+      page([
+        { ...entry(1, 'a1', 'b1'), teamId: 'podium-team' },
+        entry(2, 'a2', 'b2'),
+        { ...entry(3, 'zz', 'b3'), teamId: 'shares-my-partner' },
+        { ...entry(4, 'me', 'zz', true), teamId: 'my-team' },
+      ]),
+    ]);
+    render();
+
+    const buttons = [...container.querySelectorAll<HTMLElement>('[data-testid="pair-podium-challenge"]')];
+    expect(buttons).toHaveLength(1);
+    await act(async () => {
+      buttons[0]!.click();
+    });
+    expect(getTeamById).toHaveBeenCalledWith('podium-team');
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('tells a viewer with no complete pair once, above the board, instead of on every row', () => {

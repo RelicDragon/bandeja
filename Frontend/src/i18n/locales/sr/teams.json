@@ -133,10 +133,8 @@
       "draftTitle": "{{challenger}} protiv {{challenged}}",
       "draftHint": "Izaberite klub i vreme. Oba para dobijaju poziv kada se igra kreira.",
       "draftHintEdited": "Promenili ste igrače, pa se šalju obični pozivi.",
-      "rowUnavailableAria": "Zašto {{names}} ne mogu biti izazvani",
-      "rowNotTeam": "{{names}} još nisu napravili tim — izazvati se može samo tim.",
-      "rowSharesPlayer": "Vaš tim deli igrača sa {{names}}.",
       "boardHint": "Izazovi su tim protiv tima. Napravite tim sa partnerom da biste izazivali druge.",
+      "boardHintTeamsOnly": "Izazvati se mogu samo timovi — parovi bez tima nemaju mačeve.",
       "boardHintPending": "{{name}} može izazivati druge kada partner prihvati.",
       "boardHintCreate": "Napravi tim",
       "boardHintOpen": "Otvori"

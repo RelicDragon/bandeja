@@ -127,10 +127,8 @@
       "draftTitle": "{{challenger}} vs {{challenged}}",
       "draftHint": "Pilih klub dan waktu. Kedua pasangan diundang setelah permainan dibuat.",
       "draftHintEdited": "Anda mengubah pemain, jadi yang dikirim undangan biasa.",
-      "rowUnavailableAria": "Mengapa {{names}} tidak bisa ditantang",
-      "rowNotTeam": "{{names}} belum membentuk tim — hanya tim yang bisa ditantang.",
-      "rowSharesPlayer": "Tim kamu punya pemain yang sama dengan {{names}}.",
       "boardHint": "Tantangan adalah tim lawan tim. Bentuk tim dengan partnermu untuk menantang yang lain.",
+      "boardHintTeamsOnly": "Hanya tim yang bisa ditantang — pasangan tanpa tim tidak punya pedang.",
       "boardHintPending": "{{name}} bisa menantang yang lain setelah partnermu menerima.",
       "boardHintCreate": "Buat tim",
       "boardHintOpen": "Buka"

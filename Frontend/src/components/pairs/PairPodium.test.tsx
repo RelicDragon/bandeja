@@ -145,6 +145,38 @@ describe('PairPodium (PRD 352)', () => {
     expect(second!.querySelector('[data-testid="pair-avatars"]')).not.toBeNull();
   });
 
+  it('puts a challenge button on challengeable cards only, outside the card button', () => {
+    const onOpen = vi.fn();
+    const onChallenge = vi.fn();
+    act(() => {
+      root.render(
+        <PairPodium
+          pairs={PAIRS}
+          onOpen={onOpen}
+          canChallenge={(e) => e.pairId === 'ben,zora'}
+          onChallenge={onChallenge}
+        />,
+      );
+    });
+    const buttons = [...container.querySelectorAll<HTMLElement>('[data-testid="pair-podium-challenge"]')];
+    expect(buttons).toHaveLength(1);
+    // Never nested in the card (a button inside a button), so the tap can't open the team page.
+    expect(buttons[0]!.closest('[data-testid="pair-podium-card"]')).toBeNull();
+    expect(buttons[0]!.closest('li')!.querySelector('[data-testid="pair-podium-card"]')!.dataset.pairId).toBe(
+      'ben,zora',
+    );
+    act(() => buttons[0]!.click());
+    expect(onChallenge).toHaveBeenCalledWith(PAIRS[1]);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it('shows no challenge button without a handler', () => {
+    act(() => {
+      root.render(<PairPodium pairs={PAIRS} onOpen={() => {}} canChallenge={() => true} />);
+    });
+    expect(container.querySelector('[data-testid="pair-podium-challenge"]')).toBeNull();
+  });
+
   it('renders nothing when there are no pairs', () => {
     render([]);
     expect(container.querySelector('[data-testid="pair-podium"]')).toBeNull();

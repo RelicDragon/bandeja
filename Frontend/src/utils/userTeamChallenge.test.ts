@@ -78,11 +78,11 @@ describe('pairRowChallengeState', () => {
     expect(pairRowChallengeState('me', [mine], row('a', 'b', 't1'))).toBe('available');
   });
 
-  it('explains an ad-hoc pair: no team to challenge', () => {
+  it('marks an ad-hoc pair: no team to challenge', () => {
     expect(pairRowChallengeState('me', [mine], row('a', 'b', null))).toBe('notTeam');
   });
 
-  it('explains a team that shares the viewer\'s partner', () => {
+  it('marks a team that shares the viewer\'s partner', () => {
     expect(pairRowChallengeState('me', [mine], row('mate', 'b', 't1'))).toBe('sharesPlayer');
   });
 

@@ -43,12 +43,14 @@ export function challengerTeamsFor(
 }
 
 /**
- * What a pair-leaderboard row offers the viewer:
+ * Whether a pair-leaderboard row / podium card can be challenged. Only
+ * `available` shows a control; the rest show none:
  * - `available`: someone else's complete user team the viewer can challenge;
- * - `notTeam`: an ad-hoc pair (no formal two-person team) — nothing to challenge;
+ * - `notTeam`: an ad-hoc pair (no formal two-person team) — nothing to challenge
+ *   (the board's single "only teams" line covers it);
  * - `sharesPlayer`: every complete pair of the viewer's shares a player with it;
- * - `null`: nothing to show (the viewer's own pair, or a viewer with no complete
- *   pair — the board explains that once, not on every row).
+ * - `null`: the viewer's own pair, or a viewer with no complete pair (the board
+ *   hint offers to create / open their team).
  */
 export type PairRowChallengeState = 'available' | 'notTeam' | 'sharesPlayer' | null;
 

@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { Swords } from 'lucide-react';
 import type { PairEntry } from '@/api/pairs';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CountUpNumber } from '@/components/ui/CountUpNumber';
@@ -14,6 +15,10 @@ export interface PairPodiumProps {
   /** Already ordered; only the first three are drawn. */
   pairs: PairEntry[];
   onOpen: (entry: PairEntry) => void;
+  /** Whether the viewer can challenge this pair's user team (`pairRowChallengeState`). */
+  canChallenge?: (entry: PairEntry) => boolean;
+  /** Opens the challenge sheet; a sibling of the card, so it never opens the team page. */
+  onChallenge?: (entry: PairEntry) => void;
 }
 
 const RINGS: PairAvatarsRing[] = ['gold', 'silver', 'bronze'];
@@ -41,7 +46,7 @@ const STAGGER_MS = 80;
  * 18 games". They rise into place with an 80 ms staggered spring; under
  * reduced motion they are simply there, with no stagger and no transform.
  */
-export const PairPodium = memo(({ pairs, onOpen }: PairPodiumProps) => {
+export const PairPodium = memo(({ pairs, onOpen, canChallenge, onChallenge }: PairPodiumProps) => {
   const { t } = useTranslation();
   const formatters = usePairFormatters();
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -60,26 +65,28 @@ export const PairPodium = memo(({ pairs, onOpen }: PairPodiumProps) => {
         const teamName = entry.team?.name?.trim() || null;
         const tint = avatarTeam ? fixedTeamUserTeamTint(entry.team?.color) : null;
         const faceSize = FACE_SIZES[index]!;
+        const challengeable = Boolean(onChallenge && canChallenge?.(entry));
+        const rise = {
+          initial: prefersReducedMotion ? false : { opacity: 0, y: 18 },
+          animate: { opacity: 1, y: 0 },
+          transition: prefersReducedMotion
+            ? { duration: 0 }
+            : {
+                type: 'spring' as const,
+                stiffness: 260,
+                damping: 24,
+                delay: (index * STAGGER_MS) / 1000,
+              },
+        };
 
         return (
-          <li key={entry.pairId} className="flex min-w-0 flex-1 justify-center">
+          <li key={entry.pairId} className="relative flex min-w-0 flex-1 justify-center">
             <motion.button
               type="button"
               data-testid="pair-podium-card"
               data-pair-id={entry.pairId}
               onClick={() => onOpen(entry)}
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : {
-                      type: 'spring',
-                      stiffness: 260,
-                      damping: 24,
-                      delay: (index * STAGGER_MS) / 1000,
-                    }
-              }
+              {...rise}
               style={{
                 minHeight: MIN_HEIGHTS[index],
                 ...(tint && !entry.isViewerPair ? { ...tint.vars, ...tint.wash } : tint?.vars),
@@ -145,6 +152,26 @@ export const PairPodium = memo(({ pairs, onOpen }: PairPodiumProps) => {
                 {gamesLabel}
               </span>
             </motion.button>
+            {challengeable ? (
+              // Sibling, not child: a button can't nest in the card button. It
+              // rides the same spring and sits in the top-end corner opposite
+              // the place numeral; the ::before pad makes the hit area 40 px.
+              <motion.button
+                type="button"
+                data-testid="pair-podium-challenge"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onChallenge?.(entry);
+                }}
+                aria-label={t('teams.challenge.rowAria', {
+                  names: teamName ?? spokenNames,
+                })}
+                {...rise}
+                className="absolute end-0.5 top-0.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 transition-[background-color,scale] before:absolute before:-inset-1.5 before:content-[''] hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 active:scale-95 dark:bg-amber-400/15 dark:text-amber-300"
+              >
+                <Swords size={14} strokeWidth={2.2} aria-hidden />
+              </motion.button>
+            ) : null}
           </li>
         );
       })}

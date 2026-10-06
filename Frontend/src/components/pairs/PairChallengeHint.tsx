@@ -5,20 +5,34 @@ import { Swords } from 'lucide-react';
 import type { UserTeam } from '@/types';
 import { CreateUserTeamExplainerSheet } from '@/components/userTeam/CreateUserTeamExplainerSheet';
 
-type Props = {
-  /** The viewer's pair still waiting for a partner; null = no pair at all. */
-  pendingPair: UserTeam | null;
-};
+type Props =
+  /** Viewer has a complete team; the board holds pairs that aren't teams. */
+  | { teamsOnly: true; pendingPair?: never }
+  /** Viewer has no complete team: `pendingPair` is the one waiting for a partner, null = none. */
+  | { teamsOnly?: false; pendingPair: UserTeam | null };
 
 /**
- * Pair challenges are pair team vs pair team. A viewer without a complete pair
- * sees no swords on any row, so the board says why once, with the next step:
- * open the pair that is waiting for its partner, or create one.
+ * Pair challenges are team vs team, and rows that aren't challengeable show no
+ * control. The board says so once: a quiet "only teams" line for a viewer who
+ * can challenge, or the next step (open the waiting team / create one) for a
+ * viewer who can't yet.
  */
-export function PairChallengeHint({ pendingPair }: Props) {
+export function PairChallengeHint({ teamsOnly, pendingPair }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [explainerOpen, setExplainerOpen] = useState(false);
+
+  if (teamsOnly) {
+    return (
+      <p
+        data-testid="pair-challenge-hint-teams-only"
+        className="flex items-center gap-1.5 px-1 text-[11px] leading-snug text-gray-500 dark:text-gray-400"
+      >
+        <Swords size={12} strokeWidth={2.1} className="shrink-0 text-amber-500/80" aria-hidden />
+        <span className="min-w-0">{t('teams.challenge.boardHintTeamsOnly')}</span>
+      </p>
+    );
+  }
 
   return (
     <div
