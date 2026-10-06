@@ -47,7 +47,10 @@ export const createLeague = asyncHandler(async (req: AuthRequest, res: Response)
 export const getLeagueRounds = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
 
-  const rounds = await LeagueReadService.getLeagueRounds(leagueSeasonId, req.userId);
+  // `?bracketOnly=1` (opt-in): only bracket playoff rounds, for the Standings podium.
+  const rounds = await LeagueReadService.getLeagueRounds(leagueSeasonId, req.userId, {
+    bracketOnly: req.query.bracketOnly === '1',
+  });
 
   // `?shape=compact` (opt-in; shipped apps keep the plain array): each repeated related
   // row is sent once. A 223-game season drops from ~4.2 MB of JSON to a fraction.

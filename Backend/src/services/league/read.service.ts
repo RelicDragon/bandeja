@@ -15,10 +15,14 @@ import { applyGroupStandingsTiebreakersWithClusters } from './leagueGroupStandin
 import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
 
 export class LeagueReadService {
-  static async getLeagueRounds(leagueSeasonId: string, userId?: string) {
+  /** `bracketOnly`: just the bracket playoff rounds (the Standings podium), not the whole season. */
+  static async getLeagueRounds(leagueSeasonId: string, userId?: string, options: { bracketOnly?: boolean } = {}) {
     const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
     const rounds = await prisma.leagueRound.findMany({
-      where: { leagueSeasonId },
+      where: {
+        leagueSeasonId,
+        ...(options.bracketOnly ? { roundType: 'PLAYOFF' as const, playoffFormat: PlayoffFormat.BRACKET } : {}),
+      },
       include: {
         games: {
           include: {

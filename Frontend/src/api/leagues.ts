@@ -424,12 +424,16 @@ export const leaguesApi = {
     const response = await api.post<ApiResponse<League>>('/leagues', data);
     return response.data;
   },
-  getRounds: async (leagueSeasonId: string): Promise<ApiResponse<LeagueRound[]>> => {
+  getRounds: async (
+    leagueSeasonId: string,
+    options?: { bracketOnly?: boolean },
+  ): Promise<ApiResponse<LeagueRound[]>> => {
     // Compact shape sends each repeated club / season / user once; older servers ignore
-    // the param and return the plain array.
+    // the param and return the plain array. `bracketOnly` asks for just the bracket
+    // playoff rounds; servers without it return every round, which callers filter anyway.
     const response = await api.get<ApiResponse<LeagueRound[] | CompactRefsPayload>>(
       `/leagues/${leagueSeasonId}/rounds`,
-      { params: { shape: 'compact' } },
+      { params: { shape: 'compact', ...(options?.bracketOnly ? { bracketOnly: 1 } : {}) } },
     );
     const body = response.data;
     if (isCompactRefsPayload(body.data)) {
@@ -437,6 +441,8 @@ export const leaguesApi = {
     }
     return body as ApiResponse<LeagueRound[]>;
   },
+  getBracketRounds: (leagueSeasonId: string): Promise<ApiResponse<LeagueRound[]>> =>
+    leaguesApi.getRounds(leagueSeasonId, { bracketOnly: true }),
   getStandings: async (leagueSeasonId: string) => {
     const response = await api.get<
       ApiResponse<LeagueStanding[]> & {

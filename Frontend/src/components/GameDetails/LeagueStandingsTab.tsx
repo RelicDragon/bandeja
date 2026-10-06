@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components';
 import {
   leagueGroupChatsData,
+  leagueBracketRoundsData,
   leagueGroupsData,
-  leagueRoundsData,
   leagueStandingsData,
 } from '@/queries/league/leagueSeasonData';
 import {
@@ -136,7 +136,7 @@ export const LeagueStandingsTab = ({
         // without it need the full rounds payload for that.
         let hasBracketPlayoff = standingsResponse.meta?.hasBracketPlayoff;
         if (hasBracketPlayoff === undefined) {
-          const roundsResponse = await leagueRoundsData.load(leagueSeasonId).catch(() => ({ data: [] as LeagueRound[] }));
+          const roundsResponse = await leagueBracketRoundsData.load(leagueSeasonId).catch(() => ({ data: [] as LeagueRound[] }));
           hasBracketPlayoff = findBracketRounds(roundsResponse.data ?? []).length > 0;
         }
         if (cancelled) return;
@@ -153,31 +153,25 @@ export const LeagueStandingsTab = ({
     };
   }, [leagueSeasonId]);
 
-  const loadBracketPodium = useCallback(async () => {
+  // The podium needs only the bracket playoff rounds, not the season's full rounds payload.
+  useEffect(() => {
     if (selectedRoundType !== 'PLAYOFF') {
-      setBracketPayload(null);
       setBracketRounds([]);
       return;
     }
-    try {
-      const roundsRes = await leagueRoundsData.load(leagueSeasonId);
-      const playoffs = findBracketRounds(roundsRes.data);
-      setBracketRounds(playoffs);
-      const round = resolveSelectedBracketRound(playoffs, selectedBracketRoundId);
-      if (!round) {
-        setBracketPayload(null);
-        return;
-      }
-      const bracketRes = await leaguesApi.getBracketPlayoff(leagueSeasonId, { roundId: round.id });
-      const games = round.games ?? [];
-      setBracketPayload({
-        ...bracketRes.data,
-        groups: enrichBracketGroups(bracketRes.data.groups, games),
+    let cancelled = false;
+    leagueBracketRoundsData
+      .load(leagueSeasonId)
+      .then((res) => {
+        if (!cancelled) setBracketRounds(findBracketRounds(res.data ?? []));
+      })
+      .catch(() => {
+        if (!cancelled) setBracketRounds([]);
       });
-    } catch {
-      setBracketPayload(null);
-    }
-  }, [leagueSeasonId, selectedRoundType, selectedBracketRoundId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [leagueSeasonId, selectedRoundType]);
 
   useEffect(() => {
     if (bracketRounds.length === 0) {
@@ -190,9 +184,34 @@ export const LeagueStandingsTab = ({
     });
   }, [bracketRounds]);
 
+  // Keyed by the resolved round id, so adopting the default selection does not refetch.
+  const podiumRoundId = resolveSelectedBracketRound(bracketRounds, selectedBracketRoundId)?.id ?? null;
+
   useEffect(() => {
-    void loadBracketPodium();
-  }, [loadBracketPodium]);
+    if (!podiumRoundId) {
+      setBracketPayload(null);
+      return;
+    }
+    let cancelled = false;
+    leaguesApi
+      .getBracketPlayoff(leagueSeasonId, { roundId: podiumRoundId })
+      .then((bracketRes) => {
+        if (cancelled) return;
+        setBracketPayload({
+          ...bracketRes.data,
+          groups: enrichBracketGroups(
+            bracketRes.data.groups,
+            bracketRounds.find((r) => r.id === podiumRoundId)?.games ?? [],
+          ),
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setBracketPayload(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [leagueSeasonId, podiumRoundId, bracketRounds]);
 
   useEffect(() => {
     let cancelled = false;

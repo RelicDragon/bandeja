@@ -14,7 +14,7 @@ import { queryClient } from '@/queries/queryClient';
  */
 const DEDUPE_MS = 2000;
 
-type LeagueSeasonPart = 'getRounds' | 'getStandings' | 'getGroups' | 'getMyGroupChats';
+type LeagueSeasonPart = 'getRounds' | 'getBracketRounds' | 'getStandings' | 'getGroups' | 'getMyGroupChats';
 type PartResponse<P extends LeagueSeasonPart> = Awaited<ReturnType<(typeof leaguesApi)[P]>>;
 
 export const leagueSeasonDataKeys = {
@@ -43,6 +43,8 @@ function createLeagueSeasonPart<P extends LeagueSeasonPart>(part: P) {
 }
 
 export const leagueRoundsData = createLeagueSeasonPart('getRounds');
+/** Bracket playoff rounds only — the Standings podium, without the whole season's rounds. */
+export const leagueBracketRoundsData = createLeagueSeasonPart('getBracketRounds');
 export const leagueStandingsData = createLeagueSeasonPart('getStandings');
 export const leagueGroupsData = createLeagueSeasonPart('getGroups');
 export const leagueGroupChatsData = createLeagueSeasonPart('getMyGroupChats');
