@@ -42,6 +42,8 @@ export class GameDeleteService {
         name: true,
         sport: true,
         cityId: true,
+        clubId: true,
+        courtId: true,
         startTime: true,
         parentId: true,
         isPublic: true,
@@ -87,6 +89,8 @@ export class GameDeleteService {
           sport: game.sport ?? Sport.PADEL,
           cancelledByUserId,
           cityId: game.cityId,
+          clubId: game.clubId,
+          courtId: game.courtId,
           startTime: game.startTime,
           parentId: game.parentId,
           participants: {

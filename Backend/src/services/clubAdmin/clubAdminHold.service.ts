@@ -73,7 +73,7 @@ export class ClubAdminHoldService {
   }
 
   static async updateHold(userId: string, clubId: string, holdId: string, data: Record<string, unknown>) {
-    const hold = await prisma.courtSlotHold.findFirst({ where: { id: holdId, clubId } });
+    const hold = await prisma.courtSlotHold.findFirst({ where: { id: holdId, clubId, deletedAt: null } });
     if (!hold) throw clubAdminNotFound('Hold');
     await ClubAdminService.assertClubAdmin(userId, hold.clubId);
 
@@ -98,9 +98,9 @@ export class ClubAdminHoldService {
   }
 
   static async deleteHold(userId: string, clubId: string, holdId: string) {
-    const hold = await prisma.courtSlotHold.findFirst({ where: { id: holdId, clubId } });
+    const hold = await prisma.courtSlotHold.findFirst({ where: { id: holdId, clubId, deletedAt: null } });
     if (!hold) throw clubAdminNotFound('Hold');
     await ClubAdminService.assertClubAdmin(userId, hold.clubId);
-    await prisma.courtSlotHold.delete({ where: { id: holdId } });
+    await prisma.courtSlotHold.update({ where: { id: holdId }, data: { deletedAt: new Date(), deletedById: userId } });
   }
 }

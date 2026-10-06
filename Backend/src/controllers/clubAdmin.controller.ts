@@ -13,8 +13,8 @@ import { clubAdminNotFound, clubAdminValidation, parseIntParam } from '../servic
 import type { ClubAdminGameActionBody } from '../services/clubAdmin/clubAdminGame.service';
 
 async function assertHoldClubAdmin(userId: string, holdId: string): Promise<string> {
-  const hold = await prisma.courtSlotHold.findUnique({
-    where: { id: holdId },
+  const hold = await prisma.courtSlotHold.findFirst({
+    where: { id: holdId, deletedAt: null },
     select: { clubId: true },
   });
   if (!hold) throw clubAdminNotFound('Hold');

@@ -218,6 +218,7 @@ async function queryHoldBlocks(
   const holds = await prisma.courtSlotHold.findMany({
     where: {
       clubId,
+      deletedAt: null,
       ...(courtId ? { courtId } : {}),
       ...(applyDateRange
         ? {

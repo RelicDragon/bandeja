@@ -199,6 +199,12 @@ model User {
   refreshSessions                UserRefreshSession[]
   clubAdmins                     ClubAdmin[]
   courtSlotHoldsCreated          CourtSlotHold[]
+  courtSlotHoldsDeleted          CourtSlotHold[]                  @relation("CourtSlotHoldDeletedBy")
+  clubChargesCreated             ClubCharge[]                     @relation("ClubChargeCreatedBy")
+  clubPaymentsRecorded           ClubPayment[]                    @relation("ClubPaymentRecordedBy")
+  clubPaymentsVoided             ClubPayment[]                    @relation("ClubPaymentVoidedBy")
+  clubPaymentsPaid               ClubPayment[]                    @relation("ClubPaymentPayer")
+  clubActivities                 ClubActivity[]
   booktimeClubAuths              UserClubBooktimeAuth[]
   padelooClubAuths               UserClubPadelooAuth[]
   klikterenClubAuths             UserClubKlikterenAuth[]
@@ -444,10 +450,20 @@ model Club {
   defaultSlotMinutes         Int?
   cancellationNoticeHours    Int?
   policyText                 String?
+  /// Club console billing currency (docs/domains/club-admin.md).
+  currency                   PriceCurrency               @default(EUR)
+  /// Hold labels that create billable bookings. MAINTENANCE is never billable.
+  billableHoldLabels         CourtSlotHoldLabel[]        @default([WALK_IN, PHONE, ACADEMY, OTHER])
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
   city                       City                        @relation(fields: [cityId], references: [id], onDelete: Cascade)
   courts                     Court[]
+  weeklyHours                ClubWeeklyHours[]
+  closures                   ClubClosure[]
+  priceRules                 ClubPriceRule[]
+  charges                    ClubCharge[]
+  payments                   ClubPayment[]
+  activities                 ClubActivity[]
   games                      Game[]
   favoritedBy                UserFavoriteClub[]
   leagues                    League[]
@@ -709,9 +725,13 @@ model Court {
   integrationCourtName   String?
   webCameraUrl           String?
   isActive               Boolean                     @default(true)
+  /// Club console column order (ascending, then name).
+  sortOrder              Int                         @default(0)
   createdAt              DateTime                    @default(now())
   updatedAt              DateTime                    @updatedAt
   club                   Club                        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  priceRules             ClubPriceRule[]
+  charges                ClubCharge[]
   games                  Game[]
   gameCourts             GameCourt[]
   matches                Match[]
@@ -726,6 +746,7 @@ model Court {
   scheduledBracketSlots  LeagueBracketSlot[]         @relation("BracketScheduledCourt")
 
   @@index([clubId])
+  @@index([clubId, sortOrder])
   @@index([isActive])
   @@index([externalCourtId])
 }
@@ -765,15 +786,190 @@ model CourtSlotHold {
   endTime         DateTime
   label           CourtSlotHoldLabel
   note            String?
+  /// Weekly repeat group (club console "repeat weekly"); null = single hold.
+  seriesId        String?
+  customerName    String?
+  customerPhone   String?
   createdByUserId String
+  /// Soft delete: every hold read must filter `deletedAt: null` (occupancy, schedule, bookings).
+  deletedAt       DateTime?
+  deletedById     String?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   club            Club               @relation(fields: [clubId], references: [id], onDelete: Cascade)
   court           Court              @relation(fields: [courtId], references: [id], onDelete: Cascade)
   createdBy       User               @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  deletedBy       User?              @relation("CourtSlotHoldDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  charges         ClubCharge[]
 
   @@index([clubId, startTime, endTime])
   @@index([courtId, startTime])
+  @@index([seriesId, startTime])
+}
+
+/// Club console weekly opening hours, ISO weekday 1 = Monday ... 7 = Sunday. Minutes from
+/// club-local midnight; `closeMinute <= openMinute` runs past midnight. Legacy
+/// `Club.openingTime/closingTime` mirror Monday for shipped builds.
+model ClubWeeklyHours {
+  id          String   @id @default(cuid())
+  clubId      String
+  weekday     Int
+  closed      Boolean  @default(false)
+  openMinute  Int
+  closeMinute Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, weekday])
+}
+
+/// One club-local date closed (`openMinute` null) or with special hours.
+model ClubClosure {
+  id          String   @id @default(cuid())
+  clubId      String
+  /// Club-local `yyyy-MM-dd`.
+  date        String
+  openMinute  Int?
+  closeMinute Int?
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([clubId, date])
+}
+
+/// Court price rule: `[startMinute, endMinute)` club-local on `weekdays` (ISO). Null court = every court.
+model ClubPriceRule {
+  id                String   @id @default(cuid())
+  clubId            String
+  courtId           String?
+  label             String?
+  weekdays          Int[]
+  startMinute       Int
+  endMinute         Int
+  pricePerHourCents Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  club              Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  court             Court?   @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
+  @@index([courtId])
+}
+
+enum ClubChargeSourceKind {
+  GAME
+  HOLD
+  MANUAL
+}
+
+enum ChargeStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  WAIVED
+  VOID
+}
+
+enum ClubPaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  ONLINE
+  OTHER
+}
+
+/// What the club expects to be paid for a booking. At most one non-VOID charge per (club, game)
+/// and per hold — enforced in the billing service, not by a unique index (VOID rows stay).
+model ClubCharge {
+  id          String               @id @default(cuid())
+  clubId      String
+  sourceKind  ClubChargeSourceKind
+  gameId      String?
+  holdId      String?
+  courtId     String?
+  startTime   DateTime?
+  endTime     DateTime?
+  description String?
+  amountCents Int
+  currency    PriceCurrency
+  status      ChargeStatus         @default(UNPAID)
+  createdById String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  club        Club                 @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  game        Game?                @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  hold        CourtSlotHold?       @relation(fields: [holdId], references: [id], onDelete: SetNull)
+  court       Court?               @relation(fields: [courtId], references: [id], onDelete: SetNull)
+  createdBy   User?                @relation("ClubChargeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  payments    ClubPayment[]
+
+  @@index([clubId, startTime])
+  @@index([clubId, status])
+  @@index([gameId, clubId])
+  @@index([holdId])
+}
+
+/// Money taken against a charge. Voided, never deleted.
+model ClubPayment {
+  id           String            @id @default(cuid())
+  chargeId     String
+  clubId       String
+  amountCents  Int
+  method       ClubPaymentMethod
+  paidAt       DateTime
+  payerName    String?
+  payerUserId  String?
+  note         String?
+  recordedById String?
+  voidedAt     DateTime?
+  voidedById   String?
+  createdAt    DateTime          @default(now())
+  charge       ClubCharge        @relation(fields: [chargeId], references: [id], onDelete: Cascade)
+  club         Club              @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  payer        User?             @relation("ClubPaymentPayer", fields: [payerUserId], references: [id], onDelete: SetNull)
+  recordedBy   User?             @relation("ClubPaymentRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+  voidedBy     User?             @relation("ClubPaymentVoidedBy", fields: [voidedById], references: [id], onDelete: SetNull)
+
+  @@index([chargeId])
+  @@index([clubId, paidAt])
+}
+
+enum ClubActivityAction {
+  HOLD_CREATED
+  HOLD_UPDATED
+  HOLD_DELETED
+  GAME_CANCELLED
+  COURT_CLEARED
+  COURT_CREATED
+  COURT_UPDATED
+  COURTS_REORDERED
+  CLUB_UPDATED
+  HOURS_UPDATED
+  PRICING_UPDATED
+  CHARGE_CREATED
+  CHARGE_UPDATED
+  PAYMENT_RECORDED
+  PAYMENT_VOIDED
+  TEAM_ADDED
+  TEAM_REMOVED
+  TEAM_ROLE_CHANGED
+}
+
+/// Club console audit trail: one row per mutation. `meta` holds short render-safe values.
+model ClubActivity {
+  id        String             @id @default(cuid())
+  clubId    String
+  actorId   String?
+  action    ClubActivityAction
+  meta      Json               @default("{}")
+  createdAt DateTime           @default(now())
+  club      Club               @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  actor     User?              @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([clubId, createdAt])
 }
 
 model Game {
@@ -921,6 +1117,7 @@ model Game {
   bets                       Bet[]
   trainerReviews             TrainerReview[]
   clubReviews                ClubReview[]
+  clubCharges                ClubCharge[]
   workoutSummaries           GameWorkoutSummary[]
   reactions                  GameReaction[]                  @relation("GameReactions")
   photos                     GamePhoto[]
@@ -1206,11 +1403,15 @@ model CancelledGame {
   cityId            String
   startTime         DateTime
   parentId          String?
+  /// Club / primary court at cancel time (club console reports). Plain columns, no FK.
+  clubId            String?
+  courtId           String?
   city              City                       @relation(fields: [cityId], references: [id], onDelete: Cascade)
   participants      CancelledGameParticipant[]
 
   @@index([cityId])
   @@index([parentId])
+  @@index([clubId, cancelledAt])
 }
 
 model CancelledGameParticipant {
@@ -1342,6 +1543,7 @@ model ClubReview {
 
   @@unique([reviewerId, gameId])
   @@index([clubId])
+  @@index([clubId, createdAt])
   @@index([gameId])
   @@index([reviewerId])
 }

@@ -39,7 +39,7 @@ export class ClubAdminReservationsService {
         orderBy: { startTime: 'asc' },
       }),
       prisma.courtSlotHold.findMany({
-        where: { clubId, endTime: { gt: now } },
+        where: { clubId, deletedAt: null, endTime: { gt: now } },
         include: { court: { select: { id: true, name: true } } },
         orderBy: { startTime: 'asc' },
       }),
