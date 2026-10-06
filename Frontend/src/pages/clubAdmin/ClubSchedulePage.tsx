@@ -296,7 +296,6 @@ export function ClubSchedulePage() {
     void qc.invalidateQueries({ queryKey: clubAdminKeys.schedule(clubId, d) })
   );
   const swipe = useDaySwipe((d) => setParam({ date: addDaysToDate(date, d * (view === 'week' ? 7 : 1)) }), !isLg && columns.length <= 3);
-  const dayData = view === 'day' ? dayQ.data : weekDatas[0];
   const [showClosed, setShowClosed] = useState(false);
   useEffect(() => setShowClosed(false), [date]);
   const closedDay = view === 'day' && !!dayModel?.window.closed && (dayQ.data?.slots.length ?? 0) === 0 && !showClosed;
@@ -334,17 +333,17 @@ export function ClubSchedulePage() {
         }
       />
       <ScheduleBanners
-        data={dayData}
+        days={
+          view === 'week'
+            ? weekDates.map((d, i) => ({ label: fmt.dateMedium(d), data: weekDatas[i] }))
+            : [{ label: fmt.dateMedium(date), data: dayQ.data }]
+        }
+        week={view === 'week'}
         integrationType={context.club.integrationType}
         courtsHref={`${consoleBase(clubId)}/club/courts`}
         canEditCourts={can('courts.edit')}
         isToday={date === today}
         syncing={syncing}
-        missingDays={
-          view === 'week'
-            ? weekDates.filter((_, i) => weekDatas[i]?.hasSnapshotForDate === false).map((d) => fmt.dateMedium(d))
-            : undefined
-        }
       />
       <div className="flex min-h-0 flex-1">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col" {...swipe}>

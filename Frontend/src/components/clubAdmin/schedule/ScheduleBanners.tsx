@@ -27,34 +27,50 @@ function Banner({ tone, icon, children }: { tone: 'warn' | 'info' | 'danger'; ic
   );
 }
 
+export interface ScheduleBannerDay {
+  /** Short display label of the date ("Wed 12 Aug"), used when the week view names days. */
+  label: string;
+  data: ClubScheduleResponseV2 | undefined;
+}
+
+/**
+ * Day view passes one day; week view passes all seven and every banner covers the whole week
+ * (naming the affected days), since the week grid shows one court and can't outline the rest.
+ */
 export function ScheduleBanners({
-  data,
+  days,
+  week,
   integrationType,
   courtsHref,
   canEditCourts,
   isToday,
   syncing,
-  missingDays,
 }: {
-  data: ClubScheduleResponseV2 | undefined;
+  days: ScheduleBannerDay[];
+  week: boolean;
   integrationType: string | null;
   courtsHref: string;
   canEditCourts: boolean;
+  /** Day view only: the shown day is today. */
   isToday: boolean;
-  /** The console is refreshing the provider snapshot for this date right now. */
+  /** The console is refreshing provider snapshots for the shown dates right now. */
   syncing: boolean;
-  /** Week view: labels of the days that have no provider snapshot (replaces `data.hasSnapshotForDate`). */
-  missingDays?: string[];
 }) {
   const { t } = useTranslation('clubAdmin');
-  if (!data) return null;
+  const loaded = days.filter((d): d is ScheduleBannerDay & { data: ClubScheduleResponseV2 } => !!d.data);
+  if (loaded.length === 0) return null;
   const items: React.ReactNode[] = [];
   const integrated = !!integrationType;
+  const labels = (pick: (d: ClubScheduleResponseV2) => boolean) => loaded.filter((d) => pick(d.data)).map((d) => d.label);
 
-  if (data.externalSlotsFailed) {
+  const failedDays = labels((d) => !!d.externalSlotsFailed);
+  // `isLoadingExternalSlots` only means "snapshot older than the freshness window" — it turns
+  // true a minute after every sync, so it can't drive the banner; the console's own refresh does.
+  const missingDays = labels((d) => d.hasSnapshotForDate === false);
+  if (failedDays.length > 0) {
     items.push(
       <Banner key="failed" tone="warn" icon={<CloudOff className="h-3.5 w-3.5" aria-hidden />}>
-        {t('sync.failed')}
+        {week ? t('sync.failedDays', { days: failedDays.join(', ') }) : t('sync.failed')}
       </Banner>
     );
   } else if (syncing) {
@@ -63,25 +79,23 @@ export function ScheduleBanners({
         {t('sync.updating')}
       </Banner>
     );
-  } else if (integrated && missingDays && missingDays.length > 0) {
+  } else if (integrated && missingDays.length > 0) {
     items.push(
       <Banner key="nosync" tone="warn" icon={<RefreshCcw className="h-3.5 w-3.5" aria-hidden />}>
-        {t('sync.noSyncDays', { days: missingDays.join(', ') })}
-      </Banner>
-    );
-  } else if (integrated && !missingDays && data.hasSnapshotForDate === false) {
-    // `isLoadingExternalSlots` only means "snapshot older than the freshness window" — it turns
-    // true a minute after every sync, so it can't drive the banner; the console's own refresh does.
-    items.push(
-      <Banner key="nosync" tone="warn" icon={<RefreshCcw className="h-3.5 w-3.5" aria-hidden />}>
-        {isToday ? t('sync.noSyncToday') : t('sync.noSyncDay')}
+        {week
+          ? t('sync.noSyncDays', { days: missingDays.join(', ') })
+          : isToday
+            ? t('sync.noSyncToday')
+            : t('sync.noSyncDay')}
       </Banner>
     );
   }
-  if ((data.unmappedExternalCourtCount ?? 0) > 0) {
+  // Club-wide mapping state: the worst day is the current truth.
+  const unmapped = Math.max(...loaded.map((d) => d.data.unmappedExternalCourtCount ?? 0));
+  if (unmapped > 0) {
     items.push(
       <Banner key="unmapped" tone="warn" icon={<AlertTriangle className="h-3.5 w-3.5" aria-hidden />}>
-        {t('sync.unmapped', { count: data.unmappedExternalCourtCount ?? 0 })}{' '}
+        {t('sync.unmapped', { count: unmapped })}{' '}
         {canEditCourts ? (
           <Link to={courtsHref} className="underline underline-offset-2">
             {t('sync.manageCourts')}
@@ -90,17 +104,32 @@ export function ScheduleBanners({
       </Banner>
     );
   }
-  if (data.conflicts.length > 0) {
+  // A conflict crossing midnight can be reported by both days: count it once.
+  const conflictKeys = new Set<string>();
+  const conflictDays: string[] = [];
+  for (const d of loaded) {
+    let fresh = false;
+    for (const c of d.data.conflicts) {
+      const key = `${c.courtId}|${c.startTime}|${c.endTime}`;
+      if (!conflictKeys.has(key)) fresh = true;
+      conflictKeys.add(key);
+    }
+    if (fresh) conflictDays.push(d.label);
+  }
+  if (conflictKeys.size > 0) {
     items.push(
       <Banner key="conflicts" tone="danger" icon={<AlertTriangle className="h-3.5 w-3.5" aria-hidden />}>
-        {t('sync.conflicts', { count: data.conflicts.length })}
+        {week
+          ? t('sync.conflictsDays', { count: conflictKeys.size, days: conflictDays.join(', ') })
+          : t('sync.conflicts', { count: conflictKeys.size })}
       </Banner>
     );
   }
+  // Oldest snapshot across the shown days: "last synced" must not overstate freshness.
+  const fetched = loaded.map((d) => d.data.snapshotFetchedAt).filter((v): v is string => !!v);
+  const oldest = fetched.length === loaded.length && fetched.length > 0 ? fetched.reduce((a, b) => (a < b ? a : b)) : null;
   const synced =
-    integrated && !data.externalSlotsFailed && !syncing && data.snapshotFetchedAt
-      ? t('sync.lastSync', { time: formatRelativeTime(data.snapshotFetchedAt) })
-      : null;
+    integrated && !syncing && oldest ? t('sync.lastSync', { time: formatRelativeTime(oldest) }) : null;
 
   if (items.length === 0 && !synced) return null;
   return (

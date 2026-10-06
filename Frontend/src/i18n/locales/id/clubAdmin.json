@@ -294,6 +294,8 @@
       "noSyncToday": "Pemesanan dari sistem klub belum disinkronkan hari ini.",
       "noSyncDay": "Pemesanan dari sistem klub belum tersedia untuk hari ini.",
       "noSyncDays": "Pemesanan dari sistem klub belum tersedia untuk: {{days}}.",
+      "failedDays": "Sistem pemesanan klub tidak tersedia untuk {{days}} — hari-hari itu hanya menampilkan game dan blokir dari aplikasi.",
+      "conflictsDays_other": "{{count}} pemesanan ganda minggu ini ({{days}}).",
       "lastSync": "Sistem klub disinkronkan {{time}}",
       "unmapped_other": "{{count}} lapangan dari sistem pemesanan belum ditautkan ke lapangan di sini.",
       "manageCourts": "Tautkan lapangan",
