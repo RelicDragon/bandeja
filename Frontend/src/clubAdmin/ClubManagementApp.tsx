@@ -1,85 +1,190 @@
-import { useEffect, useRef } from 'react';
+/**
+ * Club admin console (`/my-clubs/*`). Routes: picker at `/my-clubs`; per club Today (index),
+ * schedule, bookings, reports and the Club area (`club/*`). Legacy paths redirect:
+ * `reservations` → `bookings`, `courts` → `club/courts`, `settings` → `club/profile`.
+ * `GET /context` (legacy fallback: the club row) supplies role, capabilities and the club zone;
+ * routes the role cannot use render a forbidden state instead of the page.
+ */
+import type { ReactNode } from 'react';
+import { Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronLeft } from 'lucide-react';
-import { ClubAdminScrollContext } from '@/components/clubAdmin/ClubAdminScrollContext';
-import { ClubAdminShellProvider } from './ClubAdminShellProvider';
-import { useClubAdminShell } from './useClubAdminShell';
-import { CLUB_ADMIN_PAGE_TRANSITION, CLUB_ADMIN_PAGE_VARIANTS, clubAdminRouteKey } from './navigation';
+import type { ClubAdminCapability } from '@shared/clubAdmin/contract';
+import { parseClubAdminError } from '@/api/clubAdminErrors';
+import { ErrorState, Skeleton, SkeletonRows } from '@/components/clubAdmin/console/primitives';
+import { buttonClass } from '@/components/clubAdmin/console/classes';
+import { useClubConsoleContextQuery } from '@/queries/clubAdmin';
 import { MyClubsPage } from '@/pages/clubAdmin/MyClubsPage';
-import { ClubAdminHomePage } from '@/pages/clubAdmin/ClubAdminHomePage';
+import { ClubTodayPage } from '@/pages/clubAdmin/ClubTodayPage';
 import { ClubSchedulePage } from '@/pages/clubAdmin/ClubSchedulePage';
+import { ClubBookingsPage } from '@/pages/clubAdmin/ClubBookingsPage';
+import { ClubReportsPage } from '@/pages/clubAdmin/ClubReportsPage';
+import { ClubHubPage } from '@/pages/clubAdmin/ClubHubPage';
 import { ClubCourtsPage } from '@/pages/clubAdmin/ClubCourtsPage';
 import { ClubSettingsPage } from '@/pages/clubAdmin/ClubSettingsPage';
-import { ClubReservationsPage } from '@/pages/clubAdmin/ClubReservationsPage';
+import { ClubConsoleProvider } from './ClubConsoleContext';
+import { useClubConsole } from './clubConsoleContextValue';
+import { ConsoleLayout } from './ConsoleLayout';
+import { CLUB_AREA_CAPABILITIES, consoleBase, hasAny } from './consoleNav';
 
-function ClubAdminShellFrame() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const navigationType = useNavigationType();
-  const reduceMotion = useReducedMotion();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const { screen } = useClubAdminShell();
-  const direction = navigationType === 'POP' ? -1 : 1;
-  const routeKey = clubAdminRouteKey(location.pathname);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo(0, 0);
-  }, [routeKey]);
-
+function RequireCapability({ anyOf, children }: { anyOf: readonly ClubAdminCapability[]; children: ReactNode }) {
+  const { t } = useTranslation('clubAdmin');
+  const { context, clubId } = useClubConsole();
+  if (hasAny(context.capabilities, anyOf)) return <>{children}</>;
   return (
-    <ClubAdminScrollContext.Provider value={scrollRef}>
-      <div className="safe-area-all flex h-dvh max-h-dvh flex-col overflow-hidden bg-gray-50 dark:bg-gray-950">
-        <header className="z-30 flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95">
-          <button
-            type="button"
-            className="rounded-full p-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-            onClick={() => navigate(screen.backTo)}
-            aria-label={t('common.back')}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <h1 className="flex-1 truncate text-lg font-semibold text-gray-900 dark:text-white">{screen.title}</h1>
-          {screen.actions ?? <span className="w-9" aria-hidden />}
-        </header>
+    <ErrorState
+      kind="forbidden"
+      body={t('states.forbidden.role')}
+      action={
+        <Link to={consoleBase(clubId)} replace className={buttonClass('secondary')}>
+          {t('nav.today')}
+        </Link>
+      }
+    />
+  );
+}
 
-        <div
-          ref={scrollRef}
-          className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain"
-        >
-          <AnimatePresence mode="wait" custom={direction} initial={false}>
-            <motion.div
-              key={routeKey}
-              custom={direction}
-              variants={reduceMotion ? undefined : CLUB_ADMIN_PAGE_VARIANTS}
-              initial={reduceMotion ? false : 'enter'}
-              animate="center"
-              exit={reduceMotion ? undefined : 'exit'}
-              transition={reduceMotion ? { duration: 0 } : CLUB_ADMIN_PAGE_TRANSITION}
-              className="min-h-full p-3"
-            >
-              <Routes location={location}>
-                <Route index element={<MyClubsPage />} />
-                <Route path=":clubId" element={<ClubAdminHomePage />} />
-                <Route path=":clubId/schedule" element={<ClubSchedulePage />} />
-                <Route path=":clubId/reservations" element={<ClubReservationsPage />} />
-                <Route path=":clubId/courts" element={<ClubCourtsPage />} />
-                <Route path=":clubId/settings" element={<ClubSettingsPage />} />
-              </Routes>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+/** Absolute redirect inside the console, keeping the query string (e.g. `?date=`). */
+function ConsoleRedirect({ to }: { to: string }) {
+  const { clubId } = useClubConsole();
+  const { search } = useLocation();
+  return <Navigate to={`${consoleBase(clubId)}${to ? `/${to}` : ''}${search}`} replace />;
+}
+
+function ConsoleRoutes() {
+  return (
+    <ConsoleLayout>
+      {(location) => (
+        <Routes location={location}>
+          <Route index element={<ClubTodayPage />} />
+          <Route
+            path="schedule"
+            element={
+              <RequireCapability anyOf={['schedule.view']}>
+                <ClubSchedulePage />
+              </RequireCapability>
+            }
+          />
+          <Route
+            path="bookings"
+            element={
+              <RequireCapability anyOf={['bookings.view']}>
+                <ClubBookingsPage />
+              </RequireCapability>
+            }
+          />
+          <Route path="reservations" element={<ConsoleRedirect to="bookings" />} />
+          <Route
+            path="reports"
+            element={
+              <RequireCapability anyOf={['reports.view']}>
+                <ClubReportsPage />
+              </RequireCapability>
+            }
+          />
+          <Route
+            path="club"
+            element={
+              <RequireCapability anyOf={CLUB_AREA_CAPABILITIES}>
+                <ClubHubPage />
+              </RequireCapability>
+            }
+          />
+          <Route
+            path="club/profile"
+            element={
+              <RequireCapability anyOf={['club.edit']}>
+                <ClubSettingsPage />
+              </RequireCapability>
+            }
+          />
+          <Route
+            path="club/hours"
+            element={
+              <RequireCapability anyOf={['club.edit']}>
+                <ClubSettingsPage />
+              </RequireCapability>
+            }
+          />
+          <Route
+            path="club/courts"
+            element={
+              <RequireCapability anyOf={['courts.edit']}>
+                <ClubCourtsPage />
+              </RequireCapability>
+            }
+          />
+          <Route
+            path="club/pricing"
+            element={
+              <RequireCapability anyOf={['billing.configure']}>
+                <ClubCourtsPage />
+              </RequireCapability>
+            }
+          />
+          <Route path="courts" element={<ConsoleRedirect to="club/courts" />} />
+          <Route path="settings" element={<ConsoleRedirect to="club/profile" />} />
+          <Route path="*" element={<ConsoleRedirect to="" />} />
+        </Routes>
+      )}
+    </ConsoleLayout>
+  );
+}
+
+function ConsoleLoading() {
+  return (
+    <div className="safe-area-top flex h-dvh flex-col bg-background">
+      <div className="flex h-14 items-center gap-3 border-b border-border px-4">
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-4 w-40" />
       </div>
-    </ClubAdminScrollContext.Provider>
+      <div className="mx-auto w-full max-w-3xl p-4">
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+        </div>
+        <SkeletonRows rows={4} />
+      </div>
+    </div>
+  );
+}
+
+function ClubConsole() {
+  const { t } = useTranslation('clubAdmin');
+  const { clubId = '' } = useParams<{ clubId: string }>();
+  const ctx = useClubConsoleContextQuery(clubId);
+
+  if (ctx.isPending) return <ConsoleLoading />;
+  if (ctx.isError) {
+    const err = parseClubAdminError(ctx.error);
+    const kind = err.status === 403 ? 'forbidden' : err.status === 404 ? 'notFound' : err.network ? 'offline' : 'error';
+    return (
+      <div className="safe-area-all flex h-dvh items-center justify-center bg-background">
+        <ErrorState
+          kind={kind}
+          onRetry={kind === 'error' || kind === 'offline' ? () => void ctx.refetch() : undefined}
+          action={
+            kind === 'forbidden' || kind === 'notFound' ? (
+              <Link to="/my-clubs" replace className={buttonClass('secondary')}>
+                {t('switcher.allClubs')}
+              </Link>
+            ) : undefined
+          }
+        />
+      </div>
+    );
+  }
+  return (
+    <ClubConsoleProvider key={clubId} context={ctx.data}>
+      <ConsoleRoutes />
+    </ClubConsoleProvider>
   );
 }
 
 export default function ClubManagementApp() {
   return (
-    <ClubAdminShellProvider>
-      <ClubAdminShellFrame />
-    </ClubAdminShellProvider>
+    <Routes>
+      <Route index element={<MyClubsPage />} />
+      <Route path=":clubId/*" element={<ClubConsole />} />
+    </Routes>
   );
 }

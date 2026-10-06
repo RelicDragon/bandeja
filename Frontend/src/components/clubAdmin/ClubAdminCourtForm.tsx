@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { toastClubAdminError } from '@/queries/clubAdmin/toastError';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Home, Sun } from 'lucide-react';
 import { Button } from '@/components';
@@ -108,6 +109,8 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
         ...(court ? { isActive } : {}),
       });
       dismiss();
+    } catch (e) {
+      toastClubAdminError(e);
     } finally {
       setSaving(false);
     }
@@ -121,12 +124,12 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
     >
       <DialogContent>
         <DialogHeader className="border-gray-200 dark:border-gray-800">
-          <DialogTitle>{court ? t('clubAdmin.editCourt') : t('clubAdmin.addCourt')}</DialogTitle>
+          <DialogTitle>{court ? t('clubAdmin:courts.edit') : t('clubAdmin:courts.add')}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4" style={{ minHeight: 0 }}>
           <div className="space-y-4">
-            <Field label={t('clubAdmin.courtName')}>
+            <Field label={t('clubAdmin:courts.name')}>
               <input
                 className={INPUT_CLASS}
                 value={name}
@@ -134,7 +137,7 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
                 autoFocus
               />
             </Field>
-            <Field label={t('clubAdmin.courtSport')}>
+            <Field label={t('clubAdmin:courts.sport')}>
               <div className="mt-1.5 flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -145,7 +148,7 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
                   }`}
                   onClick={() => setSport(null)}
                 >
-                  {t('clubAdmin.unassignedCourt')}
+                  {t('clubAdmin:courts.noSport')}
                 </button>
                 {clubSports.map((s) => {
                   const config = getSportConfig(s);
@@ -169,14 +172,14 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
               </div>
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label={t('clubAdmin.courtType')}>
+              <Field label={t('clubAdmin:courts.type')}>
                 <input className={INPUT_CLASS} value={courtType} onChange={(e) => setCourtType(e.target.value)} />
               </Field>
-              <Field label={t('clubAdmin.surfaceType')}>
+              <Field label={t('clubAdmin:courts.surface')}>
                 <input className={INPUT_CLASS} value={surfaceType} onChange={(e) => setSurfaceType(e.target.value)} />
               </Field>
             </div>
-            <Field label={t('clubAdmin.pricePerHour')}>
+            <Field label={t('clubAdmin:courts.pricePerHour')}>
               <input
                 type="number"
                 min={0}
@@ -185,7 +188,7 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
                 onChange={(e) => setPricePerHour(e.target.value)}
               />
             </Field>
-            <Field label={t('clubAdmin.webCameraUrl')}>
+            <Field label={t('clubAdmin:courts.webCameraUrl')}>
               <input
                 type="url"
                 className={INPUT_CLASS}
@@ -225,7 +228,7 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
             {court && (
               <div className="overflow-hidden rounded-xl border border-border bg-muted/20 divide-y divide-border">
                 <label className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
-                  <span className="text-sm font-medium text-foreground">{t('clubAdmin.active')}</span>
+                  <span className="text-sm font-medium text-foreground">{t('clubAdmin:courts.active')}</span>
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
@@ -238,7 +241,7 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
 
             {court?.externalCourtId && (
               <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                {t('clubAdmin.externalCourtId')}:{' '}
+                {t('clubAdmin:courts.externalId')}:{' '}
                 <span className="font-mono text-foreground">{court.externalCourtId}</span>
               </p>
             )}

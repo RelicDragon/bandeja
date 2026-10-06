@@ -26,6 +26,12 @@ export const PARITY_IDENTICAL_ALLOWLIST: string[] = [
   'courtReservation.duration.h',
   'courtReservation.duration.m',
   'courtReservation.duration.hm',
+  // Brand / loanword used as-is in most locales.
+  'clubAdmin.settings.amenity.wifi',
+  // "Email" is the everyday word in es, sr, cs, id, …
+  'clubAdmin.settings.email',
+  // "Sport" is the Czech word too.
+  'clubAdmin.courts.sport',
 ];
 
 /** `Frontend/src/i18n/config.ts` builds exactly these 11 bundles. */
@@ -87,11 +93,15 @@ const AGENT_NAMESPACES = ['agent'] as const;
 /** Court reservations (booking redesign; owned namespace). */
 const COURT_RESERVATION_NAMESPACES = ['courtReservation'] as const;
 
+/** Club admin console (owned namespace). */
+const CLUB_ADMIN_NAMESPACES = ['clubAdmin'] as const;
+
 const NAMESPACES = [
   ...PROGRAM_NAMESPACES,
   ...ENGAGEMENT_NAMESPACES,
   ...AGENT_NAMESPACES,
   ...COURT_RESERVATION_NAMESPACES,
+  ...CLUB_ADMIN_NAMESPACES,
   ...LEGACY_CLEAN_NAMESPACES,
 ];
 

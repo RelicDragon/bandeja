@@ -1,0 +1,148 @@
+/*
+ * Club admin console tokens (`/my-clubs/*`). Calm operator palette: neutral surfaces, one accent
+ * (the app primary, so Premium's gold carries through), and booking kinds told apart by
+ * pattern *and* colour so they survive colour-blindness and dark mode.
+ */
+
+@theme {
+  --color-ca-surface: var(--ca-surface);
+  --color-ca-sunken: var(--ca-sunken);
+  --color-ca-line: var(--ca-line);
+  --color-ca-game: var(--ca-game);
+  --color-ca-game-fg: var(--ca-game-fg);
+  --color-ca-planned: var(--ca-planned);
+  --color-ca-planned-fg: var(--ca-planned-fg);
+  --color-ca-hold: var(--ca-hold);
+  --color-ca-hold-fg: var(--ca-hold-fg);
+  --color-ca-external: var(--ca-external);
+  --color-ca-external-fg: var(--ca-external-fg);
+  --color-ca-warn: var(--ca-warn);
+  --color-ca-warn-bg: var(--ca-warn-bg);
+  --color-ca-ok: var(--ca-ok);
+  --color-ca-ok-bg: var(--ca-ok-bg);
+  --color-ca-danger-bg: var(--ca-danger-bg);
+  --color-ca-now: var(--ca-now);
+}
+
+:root {
+  --ca-surface: #ffffff;
+  --ca-sunken: #f3f4f6;
+  --ca-line: #eef0f3;
+  --ca-game: var(--member-primary-600, #0284c7);
+  --ca-game-fg: #ffffff;
+  --ca-planned: color-mix(in srgb, var(--member-primary-500, #0ea5e9) 12%, transparent);
+  --ca-planned-fg: var(--member-primary-800, #075985);
+  --ca-hold: #e5e7eb;
+  --ca-hold-stripe: #d1d5db;
+  --ca-hold-fg: #374151;
+  --ca-external: #f1f5f9;
+  --ca-external-dot: #94a3b8;
+  --ca-external-fg: #334155;
+  --ca-warn: #b45309;
+  --ca-warn-bg: #fef3c7;
+  --ca-ok: #047857;
+  --ca-ok-bg: #d1fae5;
+  --ca-danger-bg: #fee2e2;
+  --ca-now: #dc2626;
+  --ca-motion: 180ms;
+}
+
+html.dark {
+  --ca-surface: #0d1320;
+  --ca-sunken: #070b14;
+  --ca-line: #1a2232;
+  --ca-game: var(--member-primary-500, #0ea5e9);
+  --ca-game-fg: #04131f;
+  --ca-planned: color-mix(in srgb, var(--member-primary-400, #38bdf8) 16%, transparent);
+  --ca-planned-fg: var(--member-primary-200, #bae6fd);
+  --ca-hold: #1f2937;
+  --ca-hold-stripe: #2b3647;
+  --ca-hold-fg: #d1d5db;
+  --ca-external: #172033;
+  --ca-external-dot: #475569;
+  --ca-external-fg: #cbd5e1;
+  --ca-warn: #fbbf24;
+  --ca-warn-bg: rgb(245 158 11 / 0.14);
+  --ca-ok: #34d399;
+  --ca-ok-bg: rgb(16 185 129 / 0.14);
+  --ca-danger-bg: rgb(239 68 68 / 0.14);
+  --ca-now: #f87171;
+}
+
+/* Diagonal stripes: blocked (hold) slots. Mirrors in RTL so the slant follows reading direction. */
+@utility bg-stripes {
+  background-color: var(--ca-hold);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--ca-hold-stripe) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+[dir='rtl'] .bg-stripes {
+  background-image: repeating-linear-gradient(45deg, var(--ca-hold-stripe) 0 6px, transparent 6px 12px);
+}
+
+/* Dot grid: bookings made in the club's own system (read-only here). */
+@utility bg-dots {
+  background-color: var(--ca-external);
+  background-image: radial-gradient(var(--ca-external-dot) 1px, transparent 1.2px);
+  background-size: 8px 8px;
+}
+
+/* Shimmering skeleton block. */
+@utility ca-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--ca-sunken);
+  border-radius: 0.5rem;
+}
+
+.ca-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  animation: ca-shimmer 1.4s ease-in-out infinite;
+}
+
+html.dark .ca-skeleton::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.05), transparent);
+}
+
+@keyframes ca-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Schedule grid geometry hooks (set by ScheduleGrid). */
+.ca-grid {
+  --ca-row-h: 44px;
+  --ca-time-col: 3.5rem;
+  --ca-col-min: 7.5rem;
+}
+
+@media (min-width: 1024px) {
+  .ca-grid {
+    --ca-row-h: 40px;
+    --ca-time-col: 4rem;
+    --ca-col-min: 9rem;
+  }
+}
+
+/* Hide scrollbars on chip rails without losing scroll. */
+.ca-no-scrollbar {
+  scrollbar-width: none;
+}
+
+.ca-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ca-skeleton::after {
+    animation: none;
+  }
+}

@@ -293,7 +293,7 @@ export const ClubPage = () => {
           onCreate={() => goToCreateGame()}
           onBook={() => goToCreateGame()}
           onDirections={handleDirections}
-          onManage={() => navigate('/my-clubs')}
+          onManage={() => navigate(`/my-clubs/${encodeURIComponent(club.id)}`)}
         />
 
         {club.booking.available && todayQuery.data ? (

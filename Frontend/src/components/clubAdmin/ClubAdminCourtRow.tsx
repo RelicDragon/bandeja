@@ -24,8 +24,8 @@ export function ClubAdminCourtRow({ court, onEdit }: ClubAdminCourtRowProps) {
               <span aria-hidden>·</span>
             </span>
           )}
-          {court.isActive === false ? t('clubAdmin.inactive') : t('clubAdmin.active')}
-          {court.isIndoor ? ` · ${t('clubAdmin.indoor')}` : ''}
+          {court.isActive === false ? t('clubAdmin:courts.inactive') : t('clubAdmin:courts.active')}
+          {court.isIndoor ? ` · ${t('clubAdmin:courts.indoor')}` : ''}
           {court.courtType ? ` · ${court.courtType}` : ''}
         </p>
       </div>
@@ -33,7 +33,7 @@ export function ClubAdminCourtRow({ court, onEdit }: ClubAdminCourtRowProps) {
         type="button"
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onEdit}
-        aria-label={t('clubAdmin.editCourt')}
+        aria-label={t('clubAdmin:courts.edit')}
       >
         <Pencil className="h-4 w-4" />
       </button>

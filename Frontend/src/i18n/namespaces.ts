@@ -14,7 +14,7 @@
  */
 export const DEFAULT_NS = 'translation';
 
-export const FEATURE_NAMESPACES = ['playerCard', 'courtReservation'] as const;
+export const FEATURE_NAMESPACES = ['playerCard', 'courtReservation', 'clubAdmin'] as const;
 
 export type FeatureNamespace = (typeof FEATURE_NAMESPACES)[number];
 

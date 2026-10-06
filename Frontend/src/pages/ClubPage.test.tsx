@@ -269,7 +269,7 @@ describe('ClubPage', () => {
     const manage = container.querySelector<HTMLElement>('[data-testid="club-page-manage"]');
     expect(manage).not.toBeNull();
     manage?.click();
-    expect(mocks.navigate).toHaveBeenCalledWith('/my-clubs');
+    expect(mocks.navigate).toHaveBeenCalledWith(`/my-clubs/${club.id}`);
   });
 
   it('shows Book only when the club has a booking integration', async () => {

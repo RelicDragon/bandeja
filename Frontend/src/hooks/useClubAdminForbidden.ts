@@ -11,7 +11,7 @@ export function useClubAdminForbidden() {
   return useCallback(
     (err: unknown): boolean => {
       if (isAxiosError(err) && err.response?.status === 403) {
-        toast.error(t('clubAdmin.accessRevoked'));
+        toast.error(t('clubAdmin:errors.accessRevoked'));
         navigate('/my-clubs', { replace: true });
         return true;
       }

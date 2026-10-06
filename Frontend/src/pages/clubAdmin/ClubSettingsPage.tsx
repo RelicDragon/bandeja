@@ -3,8 +3,11 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { clubAdminApi } from '@/api/clubAdmin';
 import { mediaApi } from '@/api/media';
-import { ClubAdminCoachMark } from '@/components/clubAdmin/ClubAdminCoachMark';
-import { useClubAdminScreen } from '@/clubAdmin/useClubAdminShell';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { useClubAdminScreen } from '@/clubAdmin/consoleChrome';
+import { SkeletonRows } from '@/components/clubAdmin/console/primitives';
+import { invalidateAfterClubChange, toastClubAdminError } from '@/queries/clubAdmin';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { Club, ClubPhoto, Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
@@ -13,10 +16,6 @@ import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
 import { CLUB_AMENITY_KEYS, ClubAmenityKey } from '@/utils/clubAdmin/constants';
 import { normalizeClubPhotos } from '@/utils/clubPhotos';
 import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
-import {
-  markClubAdminCoachStep,
-  readClubAdminCoachMarks,
-} from '@/utils/clubAdminCoachMarksStorage';
 
 type ClubAdminClub = Club & {
   policyText?: string | null;
@@ -29,16 +28,16 @@ export function ClubSettingsPage() {
   const { clubId } = useParams<{ clubId: string }>();
   const { t } = useTranslation();
   const handleForbidden = useClubAdminForbidden();
+  const queryClient = useQueryClient();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [club, setClub] = useState<ClubAdminClub | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [coachMarks, setCoachMarks] = useState(readClubAdminCoachMarks);
 
   useClubAdminScreen({
-    title: t('clubAdmin.settings'),
-    backTo: `/my-clubs/${clubId}`,
+    title: t('clubAdmin:settings.title'),
+    backTo: `/my-clubs/${clubId}/club`,
   });
 
   useEffect(() => {
@@ -91,8 +90,10 @@ export function ClubSettingsPage() {
         sports: clubSports,
       });
       setClub(updated as ClubAdminClub);
+      toast.success(t('clubAdmin:common.saved'));
+      void invalidateAfterClubChange(queryClient, clubId);
     } catch (e) {
-      handleForbidden(e);
+      if (!handleForbidden(e)) toastClubAdminError(e);
     } finally {
       setSaving(false);
     }
@@ -138,7 +139,7 @@ export function ClubSettingsPage() {
     }
   };
 
-  if (!club) return null;
+  if (!club) return <SkeletonRows rows={5} className="mx-auto w-full max-w-2xl p-4 lg:p-6" />;
 
   const field = (label: string, key: keyof Club, multiline = false) => (
     <label className="block text-sm">
@@ -163,15 +164,7 @@ export function ClubSettingsPage() {
   );
 
   return (
-    <ClubAdminCoachMark
-        show={coachMarks.schedule && coachMarks.tapSlot && !coachMarks.settings}
-        stepLabel={t('clubAdmin.coachStep', { current: 3, total: 3 })}
-        message={t('clubAdmin.coachSettings')}
-        onDismiss={() => {
-          markClubAdminCoachStep('settings');
-          setCoachMarks(readClubAdminCoachMarks());
-        }}
-      >
+    <div className="mx-auto w-full max-w-2xl p-4 pb-8 lg:p-6">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <ClubAvatar club={club} variant="card" className="h-16 w-16" />
@@ -189,7 +182,7 @@ export function ClubSettingsPage() {
                 disabled={uploadingAvatar}
                 onClick={() => avatarInputRef.current?.click()}
               >
-                {uploadingAvatar ? t('common.loading') : t('clubAdmin.changeAvatar')}
+                {uploadingAvatar ? t('common.loading') : t('clubAdmin:settings.changeAvatar')}
               </button>
             </div>
           </div>
@@ -197,22 +190,22 @@ export function ClubSettingsPage() {
           {club.integrationActive !== undefined && (
             <p className="text-xs text-muted-foreground">
               {club.integrationActive
-                ? t('clubAdmin.integrationLinked')
-                : t('clubAdmin.integrationNone')}
+                ? t('clubAdmin:settings.integrationLinked')
+                : t('clubAdmin:settings.integrationNone')}
             </p>
           )}
 
-          {field(t('clubAdmin.name'), 'name')}
-          {field(t('clubAdmin.description'), 'description', true)}
-          {field(t('clubAdmin.phone'), 'phone')}
-          {field(t('clubAdmin.email'), 'email')}
-          {field(t('clubAdmin.website'), 'website')}
-          {field(t('clubAdmin.address'), 'address')}
-          {field(t('clubAdmin.openingTime'), 'openingTime')}
-          {field(t('clubAdmin.closingTime'), 'closingTime')}
+          {field(t('clubAdmin:settings.name'), 'name')}
+          {field(t('clubAdmin:settings.description'), 'description', true)}
+          {field(t('clubAdmin:settings.phone'), 'phone')}
+          {field(t('clubAdmin:settings.email'), 'email')}
+          {field(t('clubAdmin:settings.website'), 'website')}
+          {field(t('clubAdmin:settings.address'), 'address')}
+          {field(t('clubAdmin:settings.openingTime'), 'openingTime')}
+          {field(t('clubAdmin:settings.closingTime'), 'closingTime')}
 
           <div>
-            <p className="mb-2 text-sm text-muted-foreground">{t('clubAdmin.photos')}</p>
+            <p className="mb-2 text-sm text-muted-foreground">{t('clubAdmin:settings.photos')}</p>
             <div className="flex flex-wrap gap-2">
               {photos.map((ph, i) => (
                 <div key={`${ph.thumbnailUrl}-${i}`} className="relative h-16 w-16 overflow-hidden rounded-lg">
@@ -237,20 +230,20 @@ export function ClubSettingsPage() {
           </div>
 
           <label className="block text-sm">
-            <span className="text-muted-foreground">{t('clubAdmin.policyText')}</span>
+            <span className="text-muted-foreground">{t('clubAdmin:settings.policyText')}</span>
             <ExpandableTextarea
               wrapperClassName="mt-1"
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
               value={club.policyText ?? ''}
               onValueChange={(policyText) => setClub({ ...club, policyText })}
-              fullscreenTitle={t('clubAdmin.policyText')}
+              fullscreenTitle={t('clubAdmin:settings.policyText')}
               rows={3}
             />
           </label>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block text-sm">
-              <span className="text-muted-foreground">{t('clubAdmin.defaultSlotMinutes')}</span>
+              <span className="text-muted-foreground">{t('clubAdmin:settings.defaultSlotMinutes')}</span>
               <input
                 type="number"
                 min={15}
@@ -266,7 +259,7 @@ export function ClubSettingsPage() {
               />
             </label>
             <label className="block text-sm">
-              <span className="text-muted-foreground">{t('clubAdmin.cancellationNoticeHours')}</span>
+              <span className="text-muted-foreground">{t('clubAdmin:settings.cancellationNoticeHours')}</span>
               <input
                 type="number"
                 min={0}
@@ -283,8 +276,8 @@ export function ClubSettingsPage() {
           </div>
 
           <div>
-            <p className="mb-1 text-sm text-muted-foreground">{t('clubAdmin.sports')}</p>
-            <p className="mb-2 text-xs text-muted-foreground">{t('clubAdmin.sportsHint')}</p>
+            <p className="mb-1 text-sm text-muted-foreground">{t('clubAdmin:settings.sports')}</p>
+            <p className="mb-2 text-xs text-muted-foreground">{t('clubAdmin:settings.sportsHint')}</p>
             <div className="flex flex-wrap gap-2">
               {selectableSports.map((sport) => {
                 const enabled = clubSports.includes(sport);
@@ -308,7 +301,7 @@ export function ClubSettingsPage() {
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-muted-foreground">{t('clubAdmin.amenities')}</p>
+            <p className="mb-2 text-sm text-muted-foreground">{t('clubAdmin:settings.amenities')}</p>
             <div className="flex flex-wrap gap-2">
               {CLUB_AMENITY_KEYS.map((key) => (
                 <button
@@ -321,7 +314,7 @@ export function ClubSettingsPage() {
                   }`}
                   onClick={() => toggleAmenity(key)}
                 >
-                  {t(`clubAdmin.amenity.${key}`)}
+                  {t(`clubAdmin:settings.amenity.${key}`)}
                 </button>
               ))}
             </div>
@@ -331,6 +324,6 @@ export function ClubSettingsPage() {
             {t('common.save')}
           </button>
         </div>
-      </ClubAdminCoachMark>
+      </div>
   );
 }

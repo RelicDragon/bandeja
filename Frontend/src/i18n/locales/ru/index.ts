@@ -83,6 +83,7 @@ import sportQuestionnaireSquash from './sportQuestionnaire/squash.json';
 export const featureNamespaces: FeatureNamespaceBundles = {
     playerCard: playerCard.playerCard,
     courtReservation: courtReservation.courtReservation,
+    clubAdmin: clubAdmin.clubAdmin,
 };
 
 export default {
@@ -101,7 +102,6 @@ export default {
     ...browseCity,
     ...city,
     ...club,
-    ...clubAdmin,
     ...clubPage,
     ...common,
     ...conflicts,

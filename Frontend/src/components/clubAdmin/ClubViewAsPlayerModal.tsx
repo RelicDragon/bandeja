@@ -69,7 +69,7 @@ export function ClubViewAsPlayerModal({ clubId, open, onClose }: ClubViewAsPlaye
             {t('common.close')}
           </button>
           <h2 className="flex-1 truncate text-center text-lg font-semibold text-gray-900 dark:text-white">
-            {t('clubAdmin.viewAsPlayer')}
+            {t('clubAdmin:club.viewAsPlayer')}
           </h2>
           <span className="w-[4.5rem]" aria-hidden />
         </header>
