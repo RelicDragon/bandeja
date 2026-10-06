@@ -36,22 +36,18 @@ export type ClubPageId = 'profile' | 'hours' | 'courts' | 'pricing' | 'team' | '
 
 export interface ClubPageEntry {
   id: ClubPageId;
+  /** Hub row, route guard and setup checklist links all use this capability. */
   capability: ClubAdminCapability;
-  /**
-   * Has a screen today. Team, activity and reviews have endpoints in the contract but no screen
-   * yet; they stay out of the hub until one ships rather than showing a dead row.
-   */
-  available: boolean;
 }
 
 export const CLUB_PAGES: readonly ClubPageEntry[] = [
-  { id: 'profile', capability: 'club.edit', available: true },
-  { id: 'hours', capability: 'club.edit', available: true },
-  { id: 'courts', capability: 'courts.edit', available: true },
-  { id: 'pricing', capability: 'billing.configure', available: true },
-  { id: 'team', capability: 'team.manage', available: false },
-  { id: 'activity', capability: 'activity.view', available: false },
-  { id: 'reviews', capability: 'reviews.view', available: false },
+  { id: 'profile', capability: 'club.edit' },
+  { id: 'hours', capability: 'club.edit' },
+  { id: 'courts', capability: 'courts.edit' },
+  { id: 'pricing', capability: 'billing.configure' },
+  { id: 'team', capability: 'team.manage' },
+  { id: 'activity', capability: 'activity.view' },
+  { id: 'reviews', capability: 'reviews.view' },
 ];
 
 export function hasAny(capabilities: readonly ClubAdminCapability[], anyOf: readonly ClubAdminCapability[]): boolean {
@@ -63,7 +59,7 @@ export function visibleSections(capabilities: readonly ClubAdminCapability[]): C
 }
 
 export function visibleClubPages(capabilities: readonly ClubAdminCapability[]): ClubPageEntry[] {
-  return CLUB_PAGES.filter((p) => p.available && capabilities.includes(p.capability));
+  return CLUB_PAGES.filter((p) => capabilities.includes(p.capability));
 }
 
 export function consoleBase(clubId: string): string {

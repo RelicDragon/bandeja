@@ -39,7 +39,7 @@ describe('capability gating', () => {
 
   it('shows ADMIN every section and every club screen that exists', () => {
     expect(visibleSections(admin).map((s) => s.id)).toEqual(['today', 'schedule', 'bookings', 'reports', 'club']);
-    expect(visibleClubPages(admin).map((p) => p.id)).toEqual(['profile', 'hours', 'courts', 'pricing']);
+    expect(visibleClubPages(admin).map((p) => p.id)).toEqual(['profile', 'hours', 'courts', 'pricing', 'team', 'activity', 'reviews']);
   });
 
   it('opens the Club area for any one club capability', () => {

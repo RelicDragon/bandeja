@@ -32,8 +32,3 @@ export function useConsoleHeader({ title, backTo = null, fill = false }: Partial
     setHeader?.({ title: title ?? '', backTo, fill });
   }, [setHeader, title, backTo, fill]);
 }
-
-/** Legacy pages (courts, settings) still declare `{ title, backTo }`. */
-export function useClubAdminScreen({ title, backTo }: { title: string; backTo: string }): void {
-  useConsoleHeader({ title, backTo });
-}

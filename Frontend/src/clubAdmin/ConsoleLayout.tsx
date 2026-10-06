@@ -203,6 +203,7 @@ export function ConsoleLayout({ children }: { children: (location: ReturnType<ty
                     <button
                       type="button"
                       className={iconButtonClass}
+                      data-console-back=""
                       onClick={() => back(header.backTo ?? sectionPath(clubId, section))}
                       aria-label={t('common.back')}
                     >

@@ -19,29 +19,14 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@/components', () => ({
-  Button: ({
-    children,
-    onClick,
-    disabled,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button type="button" onClick={onClick} disabled={disabled}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock('@/components/ui/Dialog', () => ({
-  Dialog: ({ open, children }: { open: boolean; children: ReactNode }) =>
-    open ? <div>{children}</div> : null,
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+vi.mock('./console/ConsoleSheet', () => ({
+  ConsoleSheet: ({ open, children, footer }: { open: boolean; children: ReactNode; footer?: ReactNode }) =>
+    open ? (
+      <div>
+        {children}
+        {footer}
+      </div>
+    ) : null,
 }));
 
 vi.mock('@/sport/sportRegistry', () => ({ getSportConfig: () => ({ labelKey: 'sport.padel' }) }));

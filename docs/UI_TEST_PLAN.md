@@ -2874,8 +2874,8 @@ Console behaviour: [domains/club-admin.md](./domains/club-admin.md). Check every
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| CA-44 | Club hub | Open Club | Rows for Profile, Opening hours, Courts, Pricing (per capability), setup checklist, View as player |
-| CA-45 | Settings / courts screens | Club → Profile / Courts → save | Back returns to the hub; save errors toast instead of failing silently; Today's setup checklist updates |
+| CA-44 | Club hub | Open Club | Rows for Profile, Opening hours, Courts, Pricing, Team, Activity, Reviews (per capability), setup checklist, View as player; STAFF has no Club tab |
+| CA-45 | Club screens | Club → any row → save | Back returns to the hub; save errors toast or land on the field instead of failing silently; Today's setup checklist updates; old `/settings` and `/courts` URLs redirect to Profile / Courts |
 | CA-46 | View as player | Club → View as player | Player club page modal |
 | CA-47 | Court sport assignment | Club → Courts → add or edit court | Sport picker shows only club-enabled sports; saved sport appears on list row with icon and label; legacy courts without sport remain editable |
 | CA-48 | Reports | Open Reports (ADMIN) | Empty state with a link to Today, no error |
@@ -2899,6 +2899,34 @@ Console behaviour: [domains/club-admin.md](./domains/club-admin.md). Check every
 | CA-WX-04 | Keyboard | Arrow keys on the control | Moves between the two options; each is announced with its label |
 | CA-WX-05 | Schedule grid roof icon | Open the schedule grid with indoor and outdoor courts, including a long court name | Small roof icon in every indoor column header with an "Indoor court" accessible label; outdoor columns have no icon; long names truncate rather than pushing the icon out of view |
 | CA-WX-06 | Flip stops alerts | Flip a court from outdoor to indoor | Its games stop producing weather alerts on the next pass (§9.16). `@manual` |
+
+### 17.8 Club area screens
+
+Mobile-first: run on a phone (Capacitor) with the software keyboard, then on desktop ≥ 1024 px.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CA-CL-01 | Profile draft and save bar | Club → Profile → edit name and description | A sticky "Unsaved changes" bar with Discard / Save appears above the tab bar; while typing in a lower field it rides above the keyboard; Save → "Saved" toast, bar hides; Discard restores the saved values |
+| CA-CL-02 | Profile field validation | Enter `club@`, `www.club`, `abc` as email, website, phone → Save | Each field shows its own error and nothing is sent; a server `validation` error (e.g. too-long name) appears under that field |
+| CA-CL-03 | Chips | Toggle amenities and sports | Chips are toggle buttons (`aria-pressed`); the last sport can't be turned off |
+| CA-CL-04 | Unsaved-changes guard | Edit a field → tap back / another tab / Android back | "Leave without saving?" sheet; Cancel stays with edits, "Discard and leave" navigates; a browser reload warns |
+| CA-CL-05 | Avatar and photos | Change logo; add a photo; reorder (drag on desktop, ‹ › buttons on phones); remove one | Logo and photos update at once; first photo is labelled Cover; remove asks first; order persists after reload and on the public club page |
+| CA-CL-06 | Weekly hours | Club → Opening hours → set Fri 08:00–01:00, close Sunday, "Copy Monday to all" | "Closes the next day at 01:00" under Friday; closed days hide the time pickers; copy applies Monday's open/closed + times to every day; Save → schedule grid uses the new hours |
+| CA-CL-07 | Closures | Add day → all day; add another → Special hours 10:00–14:00 with a note; pick the same date twice | Duplicate date / past date / missing times show inline errors and block saving; after save the list is sorted by date; Today's checklist "Set opening hours" is done |
+| CA-CL-08 | Hours never configured | Club without weekly hours → Opening hours | Banner says hours come from the old settings with "Save these hours" |
+| CA-CL-09 | Courts list and reorder | Club → Courts → move a court down (phone) or drag it (desktop) | Order changes at once and persists; the schedule columns follow the new order; a failure rolls back with a toast |
+| CA-CL-10 | Add / edit court | + → name, sport, Indoor·Outdoor, base price 25.50, camera link → Save | Sheet slides up above the keyboard (side panel on desktop), Android back closes it; row shows sport · cover · price/h; invalid price or link disables Save |
+| CA-CL-11 | Switch a court off | Edit an active court with future bookings → Switch off | Confirm sheet reads e.g. "3 future games, 5 blocks — they stay booked." plus the next booking time; confirming shows the court as Off (dimmed) and it leaves the schedule; Switch on brings it back |
+| CA-CL-12 | Pricing rules | Club → Pricing → Add rule "Peak", all courts, Mon–Fri, 18:00–22:00, 30; add a court-specific rule over it | Missing days / end before start / bad price show inline; weekly preview bars show base rate, Peak and the court rule (court rule wins on its court; striped = no price); preview follows unsaved edits |
+| CA-CL-13 | Base rates and billable blocks | Set a court base rate; toggle Walk-in / Phone billable → Save | Both saved together; Maintenance is never offered; bookings/billing quotes use the new prices |
+| CA-CL-14 | Quote tester | Pick court, date, time, 90 min | Shows the saved price (or "No price"); with unsaved edits it says to save first |
+| CA-CL-15 | Team | Club → Team → Add member → search a player → pick Staff → Add | Role picker explains Admin vs Staff; new member listed with a Staff badge; already-a-member players are hidden from search |
+| CA-CL-16 | Change role / remove | Tap a member → switch role → Save role; Remove → confirm | Role badge updates; remove asks first; the only admin's row is locked ("Make someone else an admin first") and the server's `lastAdmin` error toasts "A club needs at least one admin." |
+| CA-CL-17 | Self-demotion | Demote yourself to Staff | Warning before saving; after saving the Club tab disappears |
+| CA-CL-18 | Activity | Club → Activity | Newest first under sticky day headers (club-local days); sentences like "Ana blocked Court 2 for Tue, 6 Oct, 18:00 (Walk-in)"; infinite scroll; pull to refresh |
+| CA-CL-19 | Activity filter | Tap Payments, then Team | Only that family of actions; empty filter shows "Nothing of this kind yet."; filter survives reload (`?group=`) |
+| CA-CL-20 | Reviews | Club → Reviews | Average with stars, count, 5→1 distribution bars; reviews with author, date, stars, text and photos; infinite scroll; empty club shows the empty state |
+| CA-CL-21 | STAFF and direct URLs | As STAFF open `/my-clubs/:id/club/pricing` (or team, activity) | Forbidden state, never the page |
 
 ---
 

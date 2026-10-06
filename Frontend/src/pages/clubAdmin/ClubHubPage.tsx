@@ -1,7 +1,6 @@
 /**
- * `/my-clubs/:clubId/club` — the Club area hub: one row per settings screen the role may open.
- * Profile/hours open the club settings screen, courts/pricing the courts screen, until their
- * dedicated screens ship.
+ * `/my-clubs/:clubId/club` — the Club area hub: one row per Club screen the role may open
+ * (`visibleClubPages`), the setup checklist and "View as player".
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

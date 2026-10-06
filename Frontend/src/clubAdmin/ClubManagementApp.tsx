@@ -1,6 +1,7 @@
 /**
  * Club admin console (`/my-clubs/*`). Routes: picker at `/my-clubs`; per club Today (index),
- * schedule, bookings, reports and the Club area (`club/*`). Legacy paths redirect:
+ * schedule, bookings, reports and the Club area (`club` hub + one route per `CLUB_PAGES` entry,
+ * each guarded by its capability). Legacy paths redirect:
  * `reservations` → `bookings`, `courts` → `club/courts`, `settings` → `club/profile`.
  * `GET /context` (legacy fallback: the club row) supplies role, capabilities and the club zone;
  * routes the role cannot use render a forbidden state instead of the page.
@@ -20,12 +21,27 @@ import { ClubBookingsPage } from '@/pages/clubAdmin/ClubBookingsPage';
 import { ClubReportsPage } from '@/pages/clubAdmin/ClubReportsPage';
 import { ClubPaymentsPage } from '@/pages/clubAdmin/ClubPaymentsPage';
 import { ClubHubPage } from '@/pages/clubAdmin/ClubHubPage';
+import { ClubProfilePage } from '@/pages/clubAdmin/ClubProfilePage';
+import { ClubHoursPage } from '@/pages/clubAdmin/ClubHoursPage';
 import { ClubCourtsPage } from '@/pages/clubAdmin/ClubCourtsPage';
-import { ClubSettingsPage } from '@/pages/clubAdmin/ClubSettingsPage';
+import { ClubPricingPage } from '@/pages/clubAdmin/ClubPricingPage';
+import { ClubTeamPage } from '@/pages/clubAdmin/ClubTeamPage';
+import { ClubActivityPage } from '@/pages/clubAdmin/ClubActivityPage';
+import { ClubReviewsPage } from '@/pages/clubAdmin/ClubReviewsPage';
 import { ClubConsoleProvider } from './ClubConsoleContext';
 import { useClubConsole } from './clubConsoleContextValue';
 import { ConsoleLayout } from './ConsoleLayout';
-import { CLUB_AREA_CAPABILITIES, consoleBase, hasAny } from './consoleNav';
+import { CLUB_AREA_CAPABILITIES, CLUB_PAGES, consoleBase, hasAny, type ClubPageId } from './consoleNav';
+
+const CLUB_PAGE_COMPONENTS: Record<ClubPageId, () => ReactNode> = {
+  profile: ClubProfilePage,
+  hours: ClubHoursPage,
+  courts: ClubCourtsPage,
+  pricing: ClubPricingPage,
+  team: ClubTeamPage,
+  activity: ClubActivityPage,
+  reviews: ClubReviewsPage,
+};
 
 function RequireCapability({ anyOf, children }: { anyOf: readonly ClubAdminCapability[]; children: ReactNode }) {
   const { t } = useTranslation('clubAdmin');
@@ -98,38 +114,20 @@ function ConsoleRoutes() {
               </RequireCapability>
             }
           />
-          <Route
-            path="club/profile"
-            element={
-              <RequireCapability anyOf={['club.edit']}>
-                <ClubSettingsPage />
-              </RequireCapability>
-            }
-          />
-          <Route
-            path="club/hours"
-            element={
-              <RequireCapability anyOf={['club.edit']}>
-                <ClubSettingsPage />
-              </RequireCapability>
-            }
-          />
-          <Route
-            path="club/courts"
-            element={
-              <RequireCapability anyOf={['courts.edit']}>
-                <ClubCourtsPage />
-              </RequireCapability>
-            }
-          />
-          <Route
-            path="club/pricing"
-            element={
-              <RequireCapability anyOf={['billing.configure']}>
-                <ClubCourtsPage />
-              </RequireCapability>
-            }
-          />
+          {CLUB_PAGES.map((p) => {
+            const Page = CLUB_PAGE_COMPONENTS[p.id];
+            return (
+              <Route
+                key={p.id}
+                path={`club/${p.id}`}
+                element={
+                  <RequireCapability anyOf={[p.capability]}>
+                    <Page />
+                  </RequireCapability>
+                }
+              />
+            );
+          })}
           <Route path="courts" element={<ConsoleRedirect to="club/courts" />} />
           <Route path="settings" element={<ConsoleRedirect to="club/profile" />} />
           <Route path="*" element={<ConsoleRedirect to="" />} />

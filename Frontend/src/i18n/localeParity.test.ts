@@ -27,11 +27,11 @@ export const PARITY_IDENTICAL_ALLOWLIST: string[] = [
   'courtReservation.duration.m',
   'courtReservation.duration.hm',
   // Brand / loanword used as-is in most locales.
-  'clubAdmin.settings.amenity.wifi',
+  'clubAdmin.club.profile.amenity.wifi',
   // "Email" is the everyday word in es, sr, cs, id, …
-  'clubAdmin.settings.email',
+  'clubAdmin.club.profile.email',
   // "Sport" is the Czech word too.
-  'clubAdmin.courts.sport',
+  'clubAdmin.club.courts.sport',
 ];
 
 /** `Frontend/src/i18n/config.ts` builds exactly these 11 bundles. */

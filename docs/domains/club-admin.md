@@ -12,10 +12,15 @@ Users with `clubAdminClubs` (platform admins see every club). Entry: the "My clu
 | `…/bookings?scope=&court=&kinds=&payment=&q=` | **Bookings** (`ClubBookingsPage`): infinite list grouped by club-local day | `bookings.view` |
 | `…/reports` | Reports (route + guard; content pending) | `reports.view` |
 | `…/club` | Club hub (`ClubHubPage`): rows per settings screen the role may open, setup checklist, View as player | any club capability |
-| `…/club/profile`, `…/club/hours` | Club settings screen (`ClubSettingsPage`) | `club.edit` |
-| `…/club/courts`, `…/club/pricing` | Courts screen (`ClubCourtsPage`) | `courts.edit` / `billing.configure` |
+| `…/club/profile` | **Profile** (`ClubProfilePage`) | `club.edit` |
+| `…/club/hours` | **Opening hours** (`ClubHoursPage`) | `club.edit` |
+| `…/club/courts` | **Courts** (`ClubCourtsPage`) | `courts.edit` |
+| `…/club/pricing` | **Pricing** (`ClubPricingPage`) | `billing.configure` |
+| `…/club/team` | **Team** (`ClubTeamPage`) | `team.manage` |
+| `…/club/activity?group=` | **Activity** (`ClubActivityPage`) | `activity.view` |
+| `…/club/reviews` | **Reviews** (`ClubReviewsPage`) | `reviews.view` |
 
-Old paths redirect (query kept): `reservations` → `bookings`, `courts` → `club/courts`, `settings` → `club/profile`, anything unknown → Today. Team, activity and reviews have endpoints but no screen yet; they are listed in `consoleNav.ts` with `available: false` and stay out of the hub until they ship.
+Old paths redirect (query kept): `reservations` → `bookings`, `courts` → `club/courts`, `settings` → `club/profile`, anything unknown → Today. Club routes, hub rows and guards all come from `CLUB_PAGES` in `consoleNav.ts`.
 
 **Shell** (`ConsoleLayout.tsx`). Phones: top bar (club switcher = avatar + name + section, or back + title on drilled pages; page actions via the `HeaderActions` portal) and a bottom tab bar Today · Schedule · Bookings · Reports · Club, filtered by capability (STAFF sees Today, Schedule, Bookings). Desktop ≥ 1024 px: left sidebar (switcher, sections, All my clubs, Back to the app) and wide content. The club switcher sheet keeps the current section when changing club. Back pops real history (`useConsoleBack`: `navigate(-1)` when the app has history, else the fallback with replace); the content animates by navigation type (POP slides back), 160 ms, none under reduced motion.
 
@@ -31,6 +36,15 @@ Old paths redirect (query kept): `reservations` → `bookings`, `courts` → `cl
 - Sync banners (provider down, updating, no sync today, unmapped courts → Link courts, double bookings) sit above the grid.
 
 **Bookings list.** `GET /bookings` (cursor) grouped by the club-local start date under sticky day headers; Upcoming/Past, type/court/payment chips (payment only with billing capabilities and a v2 backend), debounced search, pull to refresh; a failed page stops infinite scroll until Retry. Rows open the schedule on that date with the booking selected (`focus=`). Billing chips (Paid / Unpaid / Partly paid / Waived / Void) show wherever `billing` is present.
+
+**Club area** (`pages/clubAdmin/Club*Page.tsx`, `components/clubAdmin/club/`, data in `queries/clubAdmin/clubArea.ts`, HTTP in `api/clubAdminClub.ts`). Profile, hours and pricing edit a local draft: a sticky save bar (Discard / Save) appears when it differs from the server, sits above the bottom tabs and rides `--keyboard-height` above the software keyboard (Capacitor `resize: none`); leaving with unsaved edits (console back, in-app links, Android back, unload) asks first (`UnsavedChangesGuard`). Client validation runs before sending; a `clubAdmin.validation` error lands on its field (`details`). Every Club write invalidates the club prefix (`invalidateAfterClubChange`), so the setup checklist, schedule columns and the picker refresh.
+- **Profile**: text fields, contacts (email / `http(s)://` link / phone checked client-side like the server), amenities and sports chips (`aria-pressed`, at least one sport), slot length, cancellation notice, currency, policy text. Logo and photos change immediately (upload via `/media/upload/club/avatar|photo`; reorder by drag on desktop or ‹ › on phones and remove-with-confirm via `PATCH /profile { photos }`; the first photo is the cover).
+- **Opening hours**: seven weekday rows (open switch, time pickers, "closes the next day" when `close <= open`), Copy Monday to all, closures (date, closed all day or special hours, note); a club never configured shows the derived hours with "Save these hours". Pure rules in `hoursModel.ts`.
+- **Courts**: console order with drag / up-down reorder (optimistic `POST /courts/reorder`), add/edit sheet (`ClubAdminCourtForm`: sport, Indoor·Outdoor, type, surface, base rate in major units → `pricePerHourCents`, camera link), switch off/on; switching off first shows `GET /courts/:id/impact` ("3 future games, 5 blocks — they stay booked").
+- **Pricing**: currency, per-court base rates (saved with `PATCH /courts/:id` before `PUT /pricing`), rules (label, all courts or one, weekday chips, `[from, until)` with `00:00` = midnight, price), a weekly preview resolved exactly like the quote engine (court rule beats club-wide, later start, smaller id; uncovered minutes fall back to the base rate; `pricingModel.ts`), billable block reasons (never Maintenance) and a quote tester against the **saved** prices.
+- **Team**: members with role badge; tap → role picker (Admin vs Staff explained) and Remove (confirm). Add = the app's player search (`PlayerListModal`, existing members filtered out) then a role. The only admin's row is locked; the server's `lastAdmin` still toasts.
+- **Activity**: infinite, grouped by club-local day, one sentence per action from `meta` (`activityModel.ts`). Group chips (bookings, courts, settings, payments, team): `GET /activity` filters one action at a time, so groups filter the loaded pages and keep paging.
+- **Reviews**: all-time summary (average, 5→1 distribution) + infinite list; read-only.
 
 **Design.** Console tokens live in `Frontend/src/styles/club-console.css` (`bg-ca-surface`, `bg-ca-sunken`, `ca-game`, `ca-warn`, …, `bg-stripes`, `bg-dots`, `ca-skeleton`); primitives in `components/clubAdmin/console/` (Section, KpiTile, AttentionRow, EmptyState, ErrorState, SkeletonRows, FilterChips, SegmentedControl, BillingChip, `ConsoleSheet` = vaul drawer, bottom sheet above the keyboard on phones, side panel on desktop, Android back closes it). All club times go through `useConsoleFormat(timeZone)` (club zone, app locale, user 12/24 h).
 
