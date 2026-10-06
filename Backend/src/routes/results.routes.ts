@@ -10,6 +10,7 @@ const router = Router();
 
 router.get('/game/:gameId/spectator', resultsController.getGameResultsForSpectator);
 router.get('/game/:gameId', optionalAuth, resultsController.getGameResults);
+router.get('/games', optionalAuth, resultsController.getGameResultsBatch);
 router.get(
   '/game/:gameId/level-evaluations',
   authenticate,

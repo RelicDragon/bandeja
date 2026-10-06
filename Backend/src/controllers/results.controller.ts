@@ -56,6 +56,40 @@ export const getGameResults = asyncHandler(async (req: AuthRequest, res: Respons
   });
 });
 
+const GAME_RESULTS_BATCH_MAX = 50;
+
+/**
+ * `GET /results/games?ids=a,b,c` — several `GET /results/game/:id` in one round trip
+ * (league schedule loads one card per fixture). Same access rule and payload per game;
+ * a game the viewer may not read comes back as `{ error: { status } }` instead of failing
+ * the batch.
+ */
+export const getGameResultsBatch = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const raw = typeof req.query.ids === 'string' ? req.query.ids : '';
+  const ids = [...new Set(raw.split(',').map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0 || ids.length > GAME_RESULTS_BATCH_MAX) {
+    throw new ApiError(400, `ids must list 1-${GAME_RESULTS_BATCH_MAX} game ids`);
+  }
+
+  const entries = await Promise.all(
+    ids.map(async (gameId) => {
+      try {
+        await assertCanReadGameResults(gameId, req.userId ?? null);
+        return [gameId, { data: await resultsService.getGameResults(gameId) }] as const;
+      } catch (error) {
+        const status = error instanceof ApiError ? error.statusCode : 500;
+        if (status >= 500) throw error;
+        return [gameId, { error: { status } }] as const;
+      }
+    }),
+  );
+
+  res.json({
+    success: true,
+    data: Object.fromEntries(entries),
+  });
+});
+
 export const getRoundResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { roundId } = req.params;
 

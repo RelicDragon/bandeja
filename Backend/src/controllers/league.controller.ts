@@ -16,6 +16,19 @@ import { LeagueGroupChatService, queueLeagueGroupChatReconcile } from '../servic
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import type { GamePermissionActor } from '../services/game/gamePermission';
+import { toCompactRefs } from '../utils/compactRefs';
+
+// Related rows repeated on every game of a season (club, parent season, player users…).
+const LEAGUE_ROUNDS_REF_PROPS: ReadonlySet<string> = new Set([
+  'user',
+  'club',
+  'court',
+  'parent',
+  'leagueSeason',
+  'league',
+  'leagueGroup',
+  'leagueRound',
+]);
 
 const actorOf = (req: AuthRequest): GamePermissionActor => ({
   userId: req.userId!,
@@ -36,6 +49,16 @@ export const getLeagueRounds = asyncHandler(async (req: AuthRequest, res: Respon
 
   const rounds = await LeagueReadService.getLeagueRounds(leagueSeasonId, req.userId);
 
+  // `?shape=compact` (opt-in; shipped apps keep the plain array): each repeated related
+  // row is sent once. A 223-game season drops from ~4.2 MB of JSON to a fraction.
+  if (req.query.shape === 'compact') {
+    res.json({
+      success: true,
+      data: toCompactRefs(rounds, LEAGUE_ROUNDS_REF_PROPS),
+    });
+    return;
+  }
+
   res.json({
     success: true,
     data: rounds,
@@ -45,11 +68,15 @@ export const getLeagueRounds = asyncHandler(async (req: AuthRequest, res: Respon
 export const getLeagueStandings = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
   
-  const [standingsPayload, rosterAliases] = await Promise.all([
+  const [standingsPayload, rosterAliases, bracketPlayoffRound] = await Promise.all([
     LeagueReadService.getLeagueStandings(leagueSeasonId),
     prisma.leagueTeamRosterAlias.findMany({
       where: { leagueSeasonId },
       select: { rosterKey: true, leagueTeamId: true },
+    }),
+    prisma.leagueRound.findFirst({
+      where: { leagueSeasonId, roundType: 'PLAYOFF', playoffFormat: 'BRACKET' },
+      select: { id: true },
     }),
   ]);
 
@@ -59,6 +86,8 @@ export const getLeagueStandings = asyncHandler(async (req: AuthRequest, res: Res
     meta: {
       rosterAliases,
       tieClusters: standingsPayload.tieClusters,
+      // Lets Standings pick its default view without downloading every round.
+      hasBracketPlayoff: bracketPlayoffRound !== null,
     },
   });
 });
