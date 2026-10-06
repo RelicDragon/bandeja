@@ -542,7 +542,9 @@
         "reservationsNudge": "Tienes una reserva en este club ese día.",
         "useThem": "Usarla",
         "authSkip": "Todavía no — reservaré más tarde",
-        "markSkip": "Omitir — solo marcar las pistas como reservadas"
+        "markSkip": "Omitir — solo marcar las pistas como reservadas",
+        "gameOnly": "Solo partido",
+        "gameOnlyHint": "Tú gestionas la pista con el club. No revisamos el horario del club ni bloqueamos ninguna hora."
       },
       "reservations": {
         "title": "Tus reservas ese día",
@@ -560,7 +562,9 @@
         "reservedGame": "{{court}} está ocupada por un partido reservado",
         "notEnoughCourts": "No hay suficientes pistas libres ({{free}} de {{needed}})",
         "softNote": "A esa hora también hay un partido planificado en una pista — aún puedes elegirla.",
-        "unavailableAt": "{{time}} no está disponible: {{reason}}"
+        "unavailableAt": "{{time}} no está disponible: {{reason}}",
+        "mineAction": "Es mi reserva",
+        "gameOnlyAction": "Solo partido"
       },
       "summary": {
         "willReserve": "Se reserva al crear",

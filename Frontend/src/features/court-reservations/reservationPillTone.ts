@@ -1,7 +1,8 @@
 /** Pill tone for a summary or a slot (see `ReservationPill`). */
 import type { CourtSlotView, ReservationSummary } from '@shared/gameBooking/courtReservations';
 
-export type ReservationPillTone = 'planned' | 'partial' | 'reserved' | 'gap' | 'unknown';
+/** `gameOnly`: neutral — the organizer handles the court; nothing to reserve or worry about. */
+export type ReservationPillTone = 'planned' | 'partial' | 'reserved' | 'gap' | 'unknown' | 'gameOnly';
 
 export function pillToneForSummary(summary: ReservationSummary): ReservationPillTone {
   switch (summary.kind) {

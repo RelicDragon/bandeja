@@ -923,7 +923,32 @@
       "gapClash": "{{court}} محجوز {{time}}، لذا لا يمكن سدّ الفجوة هنا. اسأل النادي أو اختر ملعبًا آخر.",
       "gapAskClub": "لا يبيع النادي حجزًا يناسب هذه الفجوة. اسأل النادي.",
       "gapUnavailable": "لا يمكن سدّ هذه الفجوة من التطبيق. اسأل النادي.",
-      "connectSkip": "ليس الآن"
+      "connectSkip": "ليس الآن",
+      "bookingModeTitle": "حجز الملعب",
+      "bookingModeClub": "حجز النادي",
+      "bookingModeGameOnly": "المباراة فقط",
+      "bookingModeClubHint": "نتحقق من جدول النادي حتى تُقام المباراة على ملعب متاح فقط.",
+      "bookingModeGameOnlyHint": "تتولى أنت ترتيب الملعب مع النادي. لن نتحقق من جدوله ولن نحجز أي وقت.",
+      "gameOnlyHasLinks": "تستخدم هذه المباراة حجزًا مرتبطًا. ألغِ ربطه من صفحة المباراة أولًا.",
+      "clubBusyTitle": "{{court}} محجوز في النادي {{from}}–{{to}}",
+      "clubBusyAsk": "هل هذا حجزك؟ إذن تستخدمه هذه المباراة ببساطة.",
+      "clubBusyMine": "هذا حجزي",
+      "clubBusyGameOnly": "المباراة فقط — دون التحقق من النادي",
+      "clubBusyElse": "ليس حجزك؟ اختر وقتًا أو ملعبًا آخر.",
+      "clubBusyClaimed": "حجزك · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "سيظهر {{court}} محجوزًا لهذه المباراة.",
+      "clubBusyUndo": "تراجع",
+      "clubBusySaveTitle": "هل هذا حجزك؟",
+      "clubBusySaveMessage": "{{court}} محجوز في النادي {{from}}–{{to}}. إذا كان حجزك، فستستخدمه المباراة.",
+      "clubBusySaveMessageMany": "{{courts}} محجوزة في النادي في هذا الوقت. إذا كانت حجوزاتك، فستستخدمها المباراة.",
+      "clubBusySaveConfirm": "حجزي — احفظ",
+      "clubBusySaveCancel": "وقت آخر",
+      "clubBusySwitchGameOnly": "التبديل إلى المباراة فقط",
+      "pickerHintGameOnly": "اختر الملاعب بالترتيب.",
+      "gameOnlyClashTitle": "هل هذا حجزك؟",
+      "gameOnlyClashMessage": "يُظهر النادي أن {{court}} محجوز {{from}}–{{to}}. إذا كان حجزك، تستخدمه المباراة كملعب محجوز.",
+      "gameOnlyClashConfirm": "حجزي",
+      "gameOnlyClashKeep": "إبقاء المباراة فقط"
     }
   }
 }

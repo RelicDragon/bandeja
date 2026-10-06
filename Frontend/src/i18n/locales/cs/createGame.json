@@ -551,7 +551,9 @@
         "reservationsNudge": "V tomto klubu máte ten den rezervaci.",
         "useThem": "Použít",
         "authSkip": "Zatím ne — zarezervuji později",
-        "markSkip": "Přeskočit — jen označit kurty jako rezervované"
+        "markSkip": "Přeskočit — jen označit kurty jako rezervované",
+        "gameOnly": "Jen hra",
+        "gameOnlyHint": "Kurt si s klubem domluvíte sami. Nebudeme kontrolovat rozvrh klubu ani blokovat čas."
       },
       "reservations": {
         "title": "Vaše rezervace v ten den",
@@ -569,7 +571,9 @@
         "reservedGame": "{{court}} obsadila rezervovaná hra",
         "notEnoughCourts": "Nedostatek volných kurtů ({{free}} z {{needed}})",
         "softNote": "V tu dobu je na kurtu naplánovaná i jiná hra — čas přesto můžete zvolit.",
-        "unavailableAt": "{{time}} není k dispozici: {{reason}}"
+        "unavailableAt": "{{time}} není k dispozici: {{reason}}",
+        "mineAction": "Je moje",
+        "gameOnlyAction": "Jen hra"
       },
       "summary": {
         "willReserve": "Rezervace při vytvoření",

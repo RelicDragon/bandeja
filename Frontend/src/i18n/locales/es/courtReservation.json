@@ -42,7 +42,10 @@
       "noTime": "Pon una hora para ver cuánto del partido está cubierto",
       "count": "Número de pistas",
       "fewer": "Una pista menos",
-      "more": "Una pista más"
+      "more": "Una pista más",
+      "gameOnly": "Solo partido",
+      "gameOnlyHint": "El organizador gestiona la pista con el club.",
+      "useClubBooking": "Usar reserva del club"
     },
     "action": {
       "reserveCourt": "Reservar la pista",

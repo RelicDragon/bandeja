@@ -889,7 +889,32 @@
       "gapClash": "{{court}} está ocupada {{time}}, así que el hueco no se puede cubrir aquí. Pregunta al club o elige otra pista.",
       "gapAskClub": "El club no vende una reserva que encaje en este hueco. Pregunta al club.",
       "gapUnavailable": "Este hueco no se puede cubrir desde la app. Pregunta al club.",
-      "connectSkip": "Ahora no"
+      "connectSkip": "Ahora no",
+      "bookingModeTitle": "Reserva de pista",
+      "bookingModeClub": "Reserva del club",
+      "bookingModeGameOnly": "Solo partido",
+      "bookingModeClubHint": "Revisamos el horario del club para que el partido solo caiga en una pista libre.",
+      "bookingModeGameOnlyHint": "Tú gestionas la pista con el club. No revisamos su horario ni bloqueamos ninguna hora.",
+      "gameOnlyHasLinks": "Este partido usa una reserva vinculada. Desvincúlala primero en la página del partido.",
+      "clubBusyTitle": "{{court}} está reservada en el club {{from}}–{{to}}",
+      "clubBusyAsk": "¿Es tu reserva? Entonces este partido simplemente la usa.",
+      "clubBusyMine": "Es mi reserva",
+      "clubBusyGameOnly": "Solo partido: no revisar el club",
+      "clubBusyElse": "¿No es tuya? Elige otra hora u otra pista.",
+      "clubBusyClaimed": "Tu reserva · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} aparecerá como reservada para este partido.",
+      "clubBusyUndo": "Deshacer",
+      "clubBusySaveTitle": "¿Es tu reserva?",
+      "clubBusySaveMessage": "{{court}} está reservada en el club {{from}}–{{to}}. Si es tu reserva, el partido la usará.",
+      "clubBusySaveMessageMany": "{{courts}} están reservadas en el club a esa hora. Si son tus reservas, el partido las usará.",
+      "clubBusySaveConfirm": "Es mía, guardar",
+      "clubBusySaveCancel": "Elegir otra hora",
+      "clubBusySwitchGameOnly": "Cambiar a Solo partido",
+      "pickerHintGameOnly": "Elige las pistas en orden.",
+      "gameOnlyClashTitle": "¿Es tu reserva?",
+      "gameOnlyClashMessage": "El club muestra {{court}} reservada {{from}}–{{to}}. Si es tu reserva, el partido la usa como reservada.",
+      "gameOnlyClashConfirm": "Es mía",
+      "gameOnlyClashKeep": "Seguir con Solo partido"
     }
   }
 }

@@ -556,7 +556,9 @@
         "reservationsNudge": "Kamu punya reservasi di klub ini pada hari itu.",
         "useThem": "Gunakan",
         "authSkip": "Belum — saya pesan nanti",
-        "markSkip": "Lewati — tandai saja lapangan sudah dipesan"
+        "markSkip": "Lewati — tandai saja lapangan sudah dipesan",
+        "gameOnly": "Hanya game",
+        "gameOnlyHint": "Kamu urus lapangan dengan klub sendiri. Kami tidak cek jadwal klub atau memblokir waktu apa pun."
       },
       "reservations": {
         "title": "Reservasimu hari itu",
@@ -574,7 +576,9 @@
         "reservedGame": "{{court}} dipakai game yang sudah dipesan",
         "notEnoughCourts": "Lapangan kosong tidak cukup ({{free}} dari {{needed}})",
         "softNote": "Ada game terencana lain di lapangan pada waktu itu — kamu tetap bisa memilihnya.",
-        "unavailableAt": "{{time}} tidak tersedia: {{reason}}"
+        "unavailableAt": "{{time}} tidak tersedia: {{reason}}",
+        "mineAction": "Itu pesananku",
+        "gameOnlyAction": "Hanya game"
       },
       "summary": {
         "willReserve": "Dipesan saat dibuat",

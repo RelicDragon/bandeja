@@ -899,7 +899,32 @@
       "gapClash": "{{court}} is taken {{time}}, so the gap can't be closed here. Ask the club or pick another court.",
       "gapAskClub": "The club doesn't sell a booking that fits this gap. Ask the club.",
       "gapUnavailable": "This gap can't be filled from the app. Ask the club.",
-      "connectSkip": "Not now"
+      "connectSkip": "Not now",
+      "bookingModeTitle": "Court booking",
+      "bookingModeClub": "Club booking",
+      "bookingModeGameOnly": "Game only",
+      "bookingModeClubHint": "We check the club's schedule, so the game only lands on a free court.",
+      "bookingModeGameOnlyHint": "You sort out the court with the club yourself. We won't check its schedule or block any time.",
+      "gameOnlyHasLinks": "This game uses a linked reservation. Unlink it on the game page first.",
+      "clubBusyTitle": "{{court}} is booked at the club {{from}}–{{to}}",
+      "clubBusyAsk": "Is that your booking? Then this game simply uses it.",
+      "clubBusyMine": "It's my booking",
+      "clubBusyGameOnly": "Game only — don't check the club",
+      "clubBusyElse": "Not yours? Pick another time or court.",
+      "clubBusyClaimed": "Your booking · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} will show as reserved for this game.",
+      "clubBusyUndo": "Undo",
+      "clubBusySaveTitle": "Is this your booking?",
+      "clubBusySaveMessage": "{{court}} is booked at the club {{from}}–{{to}}. If it's your booking, the game will use it.",
+      "clubBusySaveMessageMany": "{{courts}} are booked at the club at this time. If they're your bookings, the game will use them.",
+      "clubBusySaveConfirm": "It's mine — save",
+      "clubBusySaveCancel": "Pick another time",
+      "clubBusySwitchGameOnly": "Switch to Game only",
+      "pickerHintGameOnly": "Pick the courts in order.",
+      "gameOnlyClashTitle": "Is this your booking?",
+      "gameOnlyClashMessage": "The club shows {{court}} booked {{from}}–{{to}}. If it's your booking, the game uses it as reserved.",
+      "gameOnlyClashConfirm": "It's mine",
+      "gameOnlyClashKeep": "Keep Game only"
     }
   }
 }

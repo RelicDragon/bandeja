@@ -5,7 +5,8 @@
  *  partial  — amber, with a tiny ring showing how many courts are held;
  *  reserved — green check;
  *  gap      — amber clock: held, but not for the whole game;
- *  unknown  — amber clock: held, time unknown.
+ *  unknown  — amber clock: held, time unknown;
+ *  gameOnly — neutral gray: the organizer handles the court, nothing to do.
  *
  * A linked provider reservation carries a small tick.
  *
@@ -17,7 +18,7 @@
  * reduced motion there is no overlay at all.
  */
 import { useEffect, useState } from 'react';
-import { BadgeCheck, CalendarClock, Check, Clock } from 'lucide-react';
+import { BadgeCheck, CalendarClock, CalendarOff, Check, Clock } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { ReservationPillTone } from './reservationPillTone';
 import './courtReservations.css';
@@ -46,6 +47,8 @@ const TONE_CLASS: Record<ReservationPillTone, string> = {
   gap: 'border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200',
   unknown:
     'border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-200',
+  gameOnly:
+    'border border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-200',
 };
 
 function ProgressRing({ progress, size }: { progress: number; size: number }) {
@@ -82,6 +85,8 @@ function ToneIcon({ tone, progress, iconSize }: { tone: ReservationPillTone; pro
     case 'gap':
     case 'unknown':
       return <Clock size={iconSize} aria-hidden className="shrink-0" />;
+    case 'gameOnly':
+      return <CalendarOff size={iconSize} aria-hidden className="shrink-0" />;
   }
 }
 

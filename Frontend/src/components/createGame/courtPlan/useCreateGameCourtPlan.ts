@@ -114,6 +114,8 @@ export type CourtPlanCreateFields = {
   externalBookingProvider?: ExternalBookingProvider;
   bookingSnapshots?: BookingSnapshotInput[];
   courtSlotsBody: CreateCourtSlotsBody | null;
+  /** Sent only for "Game only" (old servers ignore it; the default is `CLUB`). */
+  courtBookingMode?: 'GAME_ONLY';
 };
 
 export type CourtPlanBookingOverrides = {
@@ -555,7 +557,7 @@ export function useCreateGameCourtPlan({
   const occupancy = useCreateGameOccupancy({
     club,
     selectedDate,
-    enabled: Boolean(club) && !isBar,
+    enabled: Boolean(club) && !isBar && effectiveChoice !== 'gameOnly',
     refreshSnapshot: snapshotEnabled ? refreshSnapshot : undefined,
   });
   const courtIds = useMemo(() => courts.map((c) => c.id), [courts]);
@@ -576,6 +578,7 @@ export function useCreateGameCourtPlan({
 
   const planBlockAt = useCallback(
     (time: string): PlanTimeBlock | null => {
+      if (effectiveChoice === 'gameOnly') return null;
       const states = statesAt(time);
       if (!states) return null;
       return resolvePlanTimeBlock({
@@ -602,13 +605,30 @@ export function useCreateGameCourtPlan({
     [t, courtNameById],
   );
 
+  /**
+   * Ways out of a hard block: the club's booking may be the organizer's own
+   * ("It's my booking" → Already reserved), and "Game only" never checks the club.
+   */
+  const blockActions = useCallback(
+    (block: PlanTimeBlock): TimeSlotBlock['actions'] => {
+      if (block.kind !== 'hard' || (effectiveChoice !== 'notYet' && effectiveChoice !== 'reserveNow')) return undefined;
+      const actions: NonNullable<TimeSlotBlock['actions']>[number][] = [];
+      if (block.reason === 'club') {
+        actions.push({ id: 'mine', label: t('createGame.courtPlan.time.mineAction'), onSelect: () => setChoiceOverride('alreadyReserved') });
+      }
+      actions.push({ id: 'gameOnly', label: t('createGame.courtPlan.time.gameOnlyAction'), onSelect: () => setChoiceOverride('gameOnly') });
+      return actions;
+    },
+    [effectiveChoice, t],
+  );
+
   const slotBlock = useCallback(
     (time: string): TimeSlotBlock | null => {
       if (isBar) return null;
       const block = planBlockAt(time);
-      return block ? { kind: block.kind, reason: describeBlock(block) } : null;
+      return block ? { kind: block.kind, reason: describeBlock(block), actions: blockActions(block) } : null;
     },
-    [isBar, planBlockAt, describeBlock],
+    [isBar, planBlockAt, describeBlock, blockActions],
   );
 
   const selectedStates = useMemo(() => statesAt(selectedTime), [statesAt, selectedTime]);
@@ -748,6 +768,7 @@ export function useCreateGameCourtPlan({
         bookingSnapshots:
           snapshots.length > 0 ? applyCourtIdsToBookingSnapshots(snapshots, courtIdsForGame) : undefined,
         courtSlotsBody: buildCreateCourtSlotsBody(planSlots),
+        ...(effectiveChoice === 'gameOnly' && externalBookingIds.length === 0 ? { courtBookingMode: 'GAME_ONLY' as const } : {}),
       };
     },
     [

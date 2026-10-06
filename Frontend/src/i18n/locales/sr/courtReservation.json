@@ -42,7 +42,10 @@
       "noTime": "Podesi vreme da vidiš koliko je igre pokriveno",
       "count": "Broj terena",
       "fewer": "Jedan teren manje",
-      "more": "Jedan teren više"
+      "more": "Jedan teren više",
+      "gameOnly": "Samo igra",
+      "gameOnlyHint": "Organizator sam dogovara teren sa klubom.",
+      "useClubBooking": "Ipak rezerviši preko kluba"
     },
     "action": {
       "reserveCourt": "Rezerviši teren",

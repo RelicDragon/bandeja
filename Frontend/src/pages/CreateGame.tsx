@@ -1354,6 +1354,7 @@ export const CreateGame = ({
         anyoneCanInvite,
         allowDirectJoin,
         hasBookedCourt: bookingFields.hasBookedCourt,
+        ...(bookingFields.courtBookingMode ? { courtBookingMode: bookingFields.courtBookingMode } : {}),
         externalBookingIds: bookingFields.externalBookingIds,
         externalBookingProvider: bookingFields.externalBookingProvider,
         bookingSnapshots: bookingFields.bookingSnapshots,

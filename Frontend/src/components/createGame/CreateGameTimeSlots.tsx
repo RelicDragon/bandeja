@@ -35,7 +35,14 @@ interface BookedSlotInfo {
  * game window and every court it needs. `hard`: cannot be picked (tapping
  * shows `reason`); `soft`: can be picked, `reason` is shown as a quiet note.
  */
-export type TimeSlotBlock = { kind: 'hard' | 'soft'; reason: string };
+export type TimeSlotBlock = {
+  kind: 'hard' | 'soft';
+  reason: string;
+  /** Hard blocks the organizer can lift (e.g. "It's my booking", "Game only"); picking one also selects the time. */
+  actions?: ReadonlyArray<{ id: string; label: string; onSelect: () => void }>;
+};
+
+type BlockedTap = { time: string; reason: string; actions?: TimeSlotBlock['actions'] };
 
 interface CreateGameTimeSlotsProps {
   times: string[];
@@ -148,13 +155,15 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
 }: CreateGameTimeSlotsProps) {
   const { t } = useTranslation();
   const reservationGrid = useReservationGridSync();
-  const [blockedTap, setBlockedTap] = useState<{ time: string; reason: string } | null>(null);
+  const [blockedTap, setBlockedTap] = useState<BlockedTap | null>(null);
   const blockedTapKey = blockedTap ? `${blockedTap.time}|${blockedTap.reason}` : null;
+  const blockedTapHasActions = Boolean(blockedTap?.actions?.length);
   useEffect(() => {
     if (!blockedTapKey) return;
-    const timer = window.setTimeout(() => setBlockedTap(null), 4000);
+    // A way out stays up long enough to read and tap.
+    const timer = window.setTimeout(() => setBlockedTap(null), blockedTapHasActions ? 12000 : 4000);
     return () => window.clearTimeout(timer);
-  }, [blockedTapKey]);
+  }, [blockedTapKey, blockedTapHasActions]);
   const selectedSoftNote =
     slotBlock && selectedTime ? slotBlock(selectedTime) : null;
 
@@ -251,7 +260,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                 const handleTimeClick = () => {
                   if (entityType !== 'BAR' && blockHardBookedSlot) return;
                   if (block?.kind === 'hard') {
-                    setBlockedTap({ time, reason: block.reason });
+                    setBlockedTap({ time, reason: block.reason, actions: block.actions });
                     return;
                   }
                   setBlockedTap(null);
@@ -273,7 +282,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                     const adjustedStartTime = getAdjustedStartTime(time, duration);
                     const adjustedBlock = adjustedStartTime && slotBlock ? slotBlock(adjustedStartTime) : null;
                     if (adjustedBlock?.kind === 'hard') {
-                      setBlockedTap({ time, reason: adjustedBlock.reason });
+                      setBlockedTap({ time: adjustedStartTime ?? time, reason: adjustedBlock.reason, actions: adjustedBlock.actions });
                     } else if (adjustedStartTime) {
                       onTimeSelect(adjustedStartTime);
                     }
@@ -364,17 +373,41 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
       {slotBlock ? (
         <AnimatePresence initial={false} mode="popLayout">
           {blockedTap ? (
-            <motion.p
+            <motion.div
               key={`blocked-${blockedTap.time}`}
               role="status"
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.18 }}
-              className="mt-2 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+              className="mt-2 rounded-xl bg-gray-100 px-3 py-2 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+              data-testid="time-slot-blocked"
             >
-              {t('createGame.courtPlan.time.unavailableAt', { time: blockedTap.time, reason: blockedTap.reason })}
-            </motion.p>
+              <p>{t('createGame.courtPlan.time.unavailableAt', { time: blockedTap.time, reason: blockedTap.reason })}</p>
+              {blockedTap.actions?.length ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {blockedTap.actions.map((action, index) => (
+                    <button
+                      key={action.id}
+                      type="button"
+                      onClick={() => {
+                        const time = blockedTap.time;
+                        setBlockedTap(null);
+                        action.onSelect();
+                        onTimeSelect(time);
+                      }}
+                      className={`min-h-[40px] rounded-full px-4 text-sm font-semibold transition-transform active:scale-[0.97] ${
+                        index === 0
+                          ? 'bg-primary-600 text-white hover:bg-primary-700'
+                          : 'border border-gray-300 bg-white text-gray-800 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100'
+                      }`}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </motion.div>
           ) : selectedSoftNote?.kind === 'soft' ? (
             <motion.p
               key="soft-note"
@@ -392,9 +425,8 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
       ) : null}
       {!slotBlock && !hideOccupancyOverlay && groupedBookedSlots.length > 0 ? (
         (() => {
-          const hasExternalBooking = selectedTime
-            ? hasExternallyBookedSlot(selectedTime)
-            : groupedBookedSlots.some((info) => info.clubBooked || info.holdBlocked);
+          // From the listed items: the caller may have moved club bookings elsewhere.
+          const hasExternalBooking = groupedBookedSlots.some((info) => info.clubBooked || info.holdBlocked);
           const bgColor = hasExternalBooking
             ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
             : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';

@@ -904,7 +904,32 @@
       "gapClash": "{{court}} занят {{time}}, поэтому промежуток здесь не закрыть. Спросите клуб или выберите другой корт.",
       "gapAskClub": "Клуб не продаёт бронь, которая подходит под этот промежуток. Спросите клуб.",
       "gapUnavailable": "Этот промежуток нельзя закрыть из приложения. Спросите клуб.",
-      "connectSkip": "Не сейчас"
+      "connectSkip": "Не сейчас",
+      "bookingModeTitle": "Бронирование корта",
+      "bookingModeClub": "Через клуб",
+      "bookingModeGameOnly": "Только игра",
+      "bookingModeClubHint": "Мы проверяем расписание клуба, чтобы игра попала только на свободный корт.",
+      "bookingModeGameOnlyHint": "Корт с клубом вы решаете сами. Мы не проверяем его расписание и не блокируем время.",
+      "gameOnlyHasLinks": "К этой игре привязана бронь. Сначала отвяжите её на странице игры.",
+      "clubBusyTitle": "{{court}} забронирован в клубе {{from}}–{{to}}",
+      "clubBusyAsk": "Это ваша бронь? Тогда игра просто её использует.",
+      "clubBusyMine": "Это моя бронь",
+      "clubBusyGameOnly": "Только игра — без проверки клуба",
+      "clubBusyElse": "Не ваша? Выберите другое время или корт.",
+      "clubBusyClaimed": "Ваша бронь · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} будет отмечен как забронированный для этой игры.",
+      "clubBusyUndo": "Отменить",
+      "clubBusySaveTitle": "Это ваша бронь?",
+      "clubBusySaveMessage": "{{court}} забронирован в клубе {{from}}–{{to}}. Если это ваша бронь, игра её использует.",
+      "clubBusySaveMessageMany": "{{courts}} забронированы в клубе в это время. Если это ваши брони, игра их использует.",
+      "clubBusySaveConfirm": "Моя — сохранить",
+      "clubBusySaveCancel": "Другое время",
+      "clubBusySwitchGameOnly": "Переключить на «Только игра»",
+      "pickerHintGameOnly": "Выберите корты по порядку.",
+      "gameOnlyClashTitle": "Это ваша бронь?",
+      "gameOnlyClashMessage": "По данным клуба, {{court}} забронирован {{from}}–{{to}}. Если это ваша бронь, игра использует её как забронированную.",
+      "gameOnlyClashConfirm": "Моя",
+      "gameOnlyClashKeep": "Оставить «Только игра»"
     }
   }
 }

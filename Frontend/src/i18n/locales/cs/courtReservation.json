@@ -44,7 +44,10 @@
       "noTime": "Nastavte čas, abyste viděli, kolik hry je pokryto",
       "count": "Počet kurtů",
       "fewer": "O jeden kurt méně",
-      "more": "O jeden kurt více"
+      "more": "O jeden kurt více",
+      "gameOnly": "Jen hra",
+      "gameOnlyHint": "Kurt si s klubem domlouvá organizátor.",
+      "useClubBooking": "Raději rezervovat přes klub"
     },
     "action": {
       "reserveCourt": "Rezervovat kurt",

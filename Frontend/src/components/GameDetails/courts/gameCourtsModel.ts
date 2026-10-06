@@ -96,6 +96,8 @@ export function gameShowsCourtsSection(game: Game): boolean {
 export function rescheduleNeeded(game: Game): boolean {
   if (!gameHasCourtSlots(game) || !gameWindow(game)) return false;
   if ((game.linkedBookings ?? []).length > 0) return true;
+  // Game only: nothing at the club moves with the game.
+  if (game.courtBookingMode === 'GAME_ONLY') return false;
   return deriveGameCourtReservations(game).slots.length > 1;
 }
 

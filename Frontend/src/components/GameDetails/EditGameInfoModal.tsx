@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { addHours } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings, Users } from 'lucide-react';
+import { Save, Edit3, CalendarClock, CalendarCheck2, Banknote, Loader2, Settings, Users } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
 import { gamesApi, courtsApi, clubsApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
@@ -36,6 +36,13 @@ import { GameSettings } from './GameSettings';
 import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
+import { useQuery } from '@tanstack/react-query';
+import { ClubBookingClaimCard } from './editGameInfo/ClubBookingClaimCard';
+import {
+  findClubBookingConflicts,
+  reportedCourtIdsOf,
+  type ClubBookingConflict,
+} from './editGameInfo/clubBookingClaims';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
 import { SeriesScopeSheet } from '@/features/game-series/SeriesScopeSheet';
@@ -203,6 +210,12 @@ export const EditGameInfoModal = ({
   const [participantsDirty, setParticipantsDirty] = useState(false);
   const [participantsSaving, setParticipantsSaving] = useState(false);
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => initialCourtIds(game));
+  /** Club booking (app checks the club's schedule) or Game only (organizer handles the court). */
+  const [bookingMode, setBookingMode] = useState<'CLUB' | 'GAME_ONLY'>(() => game.courtBookingMode ?? 'CLUB');
+  /** Courts marked reserved: the club's block on them is the organizer's own booking. */
+  const [ownBookingCourtIds, setOwnBookingCourtIds] = useState<string[]>(() => reportedCourtIdsOf(game));
+  /** Save-time "Is this your booking?" for courts still busy at the club. */
+  const [claimPrompt, setClaimPrompt] = useState<ClubBookingConflict[] | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const prevIsOpenRef = useRef(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
@@ -307,6 +320,9 @@ export const EditGameInfoModal = ({
       );
       setSelectedCourtIds(initialCourtIds(openGame));
       setCourtCount(currentCourtSlotCount(openGame));
+      setBookingMode(openGame.courtBookingMode ?? 'CLUB');
+      setOwnBookingCourtIds(reportedCourtIdsOf(openGame));
+      setClaimPrompt(null);
       setShowDiscardConfirm(false);
       setParticipantsDirty(false);
       setParticipantsSaving(false);
@@ -406,7 +422,17 @@ export const EditGameInfoModal = ({
   const clubChanged = where.clubId !== (game.clubId || '');
   const lockedCourtIds = useMemo(() => (clubChanged ? new Set<string>() : linkedCourtIds(game)), [clubChanged, game]);
   const clubLocked = (game.linkedBookings ?? []).length > 0;
-  const timeManagedByPlanner = !clubChanged && rescheduleNeeded(game);
+  const gameOnly = bookingMode === 'GAME_ONLY';
+  const initialBookingMode = game.courtBookingMode ?? 'CLUB';
+  const initialReportedKey = useMemo(() => [...reportedCourtIdsOf(game)].sort().join(','), [game]);
+  // Game only never moves a reservation: the plain time editor is enough (unless links exist).
+  const timeManagedByPlanner = !clubChanged && rescheduleNeeded({ ...game, courtBookingMode: bookingMode });
+  const ownBookingSet = useMemo(
+    () => new Set(ownBookingCourtIds.filter((id) => selectedCourtIds.includes(id))),
+    [ownBookingCourtIds, selectedCourtIds],
+  );
+  const claimsDirty =
+    slotModel && !gameOnly && [...ownBookingSet].sort().join(',') !== (clubChanged ? '' : initialReportedKey);
 
   const handleEditCourtToggle = useCallback(
     (id: string) => {
@@ -440,6 +466,52 @@ export const EditGameInfoModal = ({
     return { startTime: start.toISOString(), endTime: addHours(start, whenDuration).toISOString() };
   }, [timeManagedByPlanner, whenSelectedDate, whenSelectedTime, whenDuration, selectedClubData]);
 
+  const claimChecksOn =
+    isOpen && activeTab === 'locationTime' && slotModel && !gameOnly && !timeManagedByPlanner && Boolean(editedWindow);
+  const dayKey = whenSelectedDate.toDateString();
+  const dayBookingsQuery = useQuery({
+    queryKey: ['editGameClubDayBookings', where.clubId, dayKey],
+    queryFn: () => fetchBookedCourtsForDay({ clubId: where.clubId, selectedDate: whenSelectedDate, club: selectedClubData }),
+    enabled: claimChecksOn && Boolean(where.clubId),
+    staleTime: 30_000,
+  });
+  const clubConflicts = useMemo(() => {
+    if (!claimChecksOn || !editedWindow || !dayBookingsQuery.data) return [];
+    return findClubBookingConflicts(dayBookingsQuery.data, selectedCourtIds, {
+      startMs: Date.parse(editedWindow.startTime),
+      endMs: Date.parse(editedWindow.endTime),
+    });
+  }, [claimChecksOn, editedWindow, dayBookingsQuery.data, selectedCourtIds]);
+  const initiallyReported = useMemo(() => new Set(initialReportedKey ? initialReportedKey.split(',') : []), [initialReportedKey]);
+  const openConflicts = clubConflicts.filter((c) => !ownBookingSet.has(c.courtId));
+  const claimedConflicts = clubConflicts.filter(
+    (c) => ownBookingSet.has(c.courtId) && (clubChanged || !initiallyReported.has(c.courtId)),
+  );
+  const clubClock = useMemo(
+    () =>
+      createClubTimeFormatter({
+        timeZone: getClubTimezone(game) ?? selectedClubData?.city?.timezone ?? 'UTC',
+        locale: displaySettings.locale,
+        hour12: displaySettings.hour12,
+      }),
+    [game, selectedClubData, displaySettings.locale, displaySettings.hour12],
+  );
+  const courtNameOf = useCallback(
+    (courtId: string) =>
+      modalCourts.find((c) => c.id === courtId)?.name ??
+      courts.find((c) => c.id === courtId)?.name ??
+      game.gameCourts?.find((gc) => gc.courtId === courtId)?.court?.name ??
+      (game.court?.id === courtId ? game.court.name : undefined) ??
+      '',
+    [modalCourts, courts, game.gameCourts, game.court],
+  );
+  const claimCourts = useCallback((courtIds: readonly string[]) => {
+    setOwnBookingCourtIds((prev) => [...new Set([...prev, ...courtIds])]);
+  }, []);
+  const unclaimCourt = useCallback((courtId: string) => {
+    setOwnBookingCourtIds((prev) => prev.filter((id) => id !== courtId));
+  }, []);
+
   const initialGeneral = useMemo(() => getInitialGeneralState(game), [game]);
   const initialPrice = useMemo(() => getInitialPriceState(game, userCurrency), [game, userCurrency]);
   const generalDirty =
@@ -457,6 +529,8 @@ export const EditGameInfoModal = ({
           JSON.stringify(cleanPaymentMethods(initialPrice.paymentMethods))));
   const scheduleDirty =
     clubChanged ||
+    bookingMode !== initialBookingMode ||
+    claimsDirty ||
     selectedCourtIds.join(',') !== initialCourtIdsKey ||
     (slotModel && courtCount !== currentCourtSlotCount(game)) ||
     (!timeManagedByPlanner &&
@@ -517,8 +591,26 @@ export const EditGameInfoModal = ({
       const bookings = (
         await fetchBookedCourtsForDay({ clubId: where.clubId, selectedDate: whenSelectedDate, club })
       ).filter((b) => b.courtId != null && courtIds.has(b.courtId));
-      const overlap = checkBookingOverlap(bookings, whenSelectedTime, whenDuration, club, { excludeGameId: game.id });
-      if (overlap.reservedGameCount > 0 || overlap.hasSoftOverlap) {
+      if (!gameOnly && slotModel) {
+        const unclaimed = findClubBookingConflicts(bookings, selectedCourtIds, {
+          startMs: Date.parse(editedWindow.startTime),
+          endMs: Date.parse(editedWindow.endTime),
+        }).filter((c) => !ownBookingSet.has(c.courtId));
+        if (unclaimed.length > 0) {
+          setActiveTab('locationTime');
+          setClaimPrompt(unclaimed);
+          return false;
+        }
+      }
+      const overlap = checkBookingOverlap(
+        // Club bookings on claimed courts are the organizer's own; game only checks nothing at the club.
+        gameOnly ? bookings.filter((b) => !b.clubBooked && !b.holdBlocked) : bookings.filter((b) => !(b.courtId && ownBookingSet.has(b.courtId) && b.clubBooked && !b.holdBlocked)),
+        whenSelectedTime,
+        whenDuration,
+        club,
+        { excludeGameId: game.id },
+      );
+      if ((!gameOnly && overlap.reservedGameCount > 0) || overlap.hasSoftOverlap) {
         setOverlapKind(overlap.reservedGameCount > 0 ? 'reserved' : 'soft');
         setSoftOverlapOpen(true);
         return false;
@@ -555,8 +647,9 @@ export const EditGameInfoModal = ({
     }
   };
 
-  const executeSave = async () => {
+  const executeSave = async (claimOverride?: readonly string[]) => {
     if (!game.id) return;
+    const reportedCourtIds = new Set([...ownBookingSet, ...(claimOverride ?? [])]);
 
     setIsSaving(true);
     try {
@@ -590,6 +683,8 @@ export const EditGameInfoModal = ({
             slotModel,
             courtSlotCount: slotModel ? courtCount : null,
             time: editedWindow,
+            courtBookingMode: bookingMode !== initialBookingMode ? bookingMode : undefined,
+            reportedCourtIds: slotModel && !gameOnly ? reportedCourtIds : undefined,
           }),
         );
       }
@@ -707,6 +802,7 @@ export const EditGameInfoModal = ({
                   if (club?.cityId) setVenueCityId(club.cityId);
                   setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
                   setSelectedCourtIds([]);
+                  setOwnBookingCourtIds([]);
                 }}
                 onVenueCityChange={(id) => {
                   if (id === venueCityId) return;
@@ -723,6 +819,23 @@ export const EditGameInfoModal = ({
                 onCourtCountChange={(count) => setCourtCount(Math.max(count, selectedCourtIds.length, 1))}
                 clubLocked={clubLocked}
                 timeManagedByPlanner={timeManagedByPlanner}
+                bookingMode={bookingMode}
+                onBookingModeChange={setBookingMode}
+                gameOnlyLocked={clubLocked}
+                ownClubBookingCourtIds={gameOnly ? undefined : [...ownBookingSet]}
+                claimSection={
+                  !gameOnly && (openConflicts.length > 0 || claimedConflicts.length > 0) ? (
+                    <ClubBookingClaimCard
+                      open={openConflicts}
+                      claimed={claimedConflicts}
+                      courtName={courtNameOf}
+                      formatTime={clubClock.time}
+                      onClaim={(courtId) => claimCourts([courtId])}
+                      onUndo={unclaimCourt}
+                      onGameOnly={() => setBookingMode('GAME_ONLY')}
+                    />
+                  ) : null
+                }
                 onRequestReschedule={
                   onRequestReschedule
                     ? () => {
@@ -898,6 +1011,44 @@ export const EditGameInfoModal = ({
       }}
       onClose={() => setSoftOverlapOpen(false)}
     />
+
+    <ConfirmationModal
+      isOpen={claimPrompt != null}
+      tone="info"
+      icon={CalendarCheck2}
+      title={t('gameDetails.courts.clubBusySaveTitle')}
+      message={
+        claimPrompt && claimPrompt.length === 1
+          ? t('gameDetails.courts.clubBusySaveMessage', {
+              court: courtNameOf(claimPrompt[0].courtId),
+              from: clubClock.time(claimPrompt[0].start),
+              to: clubClock.time(claimPrompt[0].end),
+            })
+          : t('gameDetails.courts.clubBusySaveMessageMany', {
+              courts: (claimPrompt ?? []).map((c) => courtNameOf(c.courtId)).join(', '),
+            })
+      }
+      confirmText={t('gameDetails.courts.clubBusySaveConfirm')}
+      cancelText={t('gameDetails.courts.clubBusySaveCancel')}
+      onConfirm={() => {
+        const courtIds = (claimPrompt ?? []).map((c) => c.courtId);
+        setClaimPrompt(null);
+        claimCourts(courtIds);
+        void executeSave(courtIds);
+      }}
+      onClose={() => setClaimPrompt(null)}
+    >
+      <button
+        type="button"
+        onClick={() => {
+          setClaimPrompt(null);
+          setBookingMode('GAME_ONLY');
+        }}
+        className="mt-3 min-h-[44px] w-full rounded-xl text-sm font-semibold text-primary-700 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30"
+      >
+        {t('gameDetails.courts.clubBusySwitchGameOnly')}
+      </button>
+    </ConfirmationModal>
 
     <ConfirmationModal
       isOpen={showConfirmRemoveTime}

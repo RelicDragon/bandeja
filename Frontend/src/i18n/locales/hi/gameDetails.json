@@ -899,7 +899,32 @@
       "gapClash": "{{court}} {{time}} बुक है, इसलिए यहाँ खाली समय नहीं भरा जा सकता। क्लब से पूछें या दूसरा कोर्ट चुनें।",
       "gapAskClub": "क्लब इस खाली समय के लायक बुकिंग नहीं बेचता। क्लब से पूछें।",
       "gapUnavailable": "यह खाली समय ऐप से नहीं भरा जा सकता। क्लब से पूछें।",
-      "connectSkip": "अभी नहीं"
+      "connectSkip": "अभी नहीं",
+      "bookingModeTitle": "कोर्ट बुकिंग",
+      "bookingModeClub": "क्लब बुकिंग",
+      "bookingModeGameOnly": "सिर्फ़ गेम",
+      "bookingModeClubHint": "हम क्लब का शेड्यूल जाँचते हैं, ताकि गेम सिर्फ़ खाली कोर्ट पर हो।",
+      "bookingModeGameOnlyHint": "कोर्ट का इंतज़ाम आप खुद क्लब से करें। हम उसका शेड्यूल नहीं जाँचेंगे और कोई समय ब्लॉक नहीं करेंगे।",
+      "gameOnlyHasLinks": "इस गेम में एक जुड़ा हुआ आरक्षण है। पहले गेम पेज पर उसे हटाएँ।",
+      "clubBusyTitle": "{{court}} क्लब में {{from}}–{{to}} बुक है",
+      "clubBusyAsk": "क्या यह आपकी बुकिंग है? तो यह गेम बस उसी का उपयोग करेगा।",
+      "clubBusyMine": "मेरी बुकिंग है",
+      "clubBusyGameOnly": "सिर्फ़ गेम — क्लब न जाँचें",
+      "clubBusyElse": "आपकी नहीं? दूसरा समय या कोर्ट चुनें।",
+      "clubBusyClaimed": "आपकी बुकिंग · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} इस गेम के लिए आरक्षित दिखेगा।",
+      "clubBusyUndo": "पूर्ववत करें",
+      "clubBusySaveTitle": "क्या यह आपकी बुकिंग है?",
+      "clubBusySaveMessage": "{{court}} क्लब में {{from}}–{{to}} बुक है। अगर यह आपकी बुकिंग है, तो गेम इसका उपयोग करेगा।",
+      "clubBusySaveMessageMany": "{{courts}} इस समय क्लब में बुक हैं। अगर ये आपकी बुकिंग हैं, तो गेम इनका उपयोग करेगा।",
+      "clubBusySaveConfirm": "मेरी है — सहेजें",
+      "clubBusySaveCancel": "दूसरा समय",
+      "clubBusySwitchGameOnly": "सिर्फ़ गेम पर जाएँ",
+      "pickerHintGameOnly": "कोर्ट क्रम से चुनें।",
+      "gameOnlyClashTitle": "क्या यह आपकी बुकिंग है?",
+      "gameOnlyClashMessage": "क्लब में {{court}} {{from}}–{{to}} बुक दिख रहा है। अगर यह आपकी बुकिंग है, तो गेम इसे आरक्षित के रूप में इस्तेमाल करेगा।",
+      "gameOnlyClashConfirm": "मेरी है",
+      "gameOnlyClashKeep": "सिर्फ़ गेम रखें"
     }
   }
 }

@@ -11,6 +11,10 @@
  *
  * Games whose time can affect reservations never send a time from here: the
  * reschedule planner moves them (see `rescheduleNeeded`).
+ *
+ * Courts the organizer claimed ("It's my booking" — the club's block is their
+ * own booking) are marked reserved FIRST (`claimBody`, existing courts only, so
+ * it can never clash): the time move in step 1 then trusts them.
  */
 import api from '@/api/axios';
 import { courtSlotsApi, type CourtSlotsBody } from '@/api/courtSlots';
@@ -31,9 +35,18 @@ export type EditLocationTimeInput = {
   courtSlotCount: number | null;
   /** New window from the plain time editor, or `null` (unchanged / planner-managed). */
   time: { startTime: string; endTime: string } | null;
+  /**
+   * Courts that must be marked reserved (`REPORTED`); every other court is
+   * `NONE`. Omitted: keep each kept court's current reservation.
+   */
+  reportedCourtIds?: ReadonlySet<string>;
+  /** Set only when the organizer switched it (Club booking ⇄ Game only). */
+  courtBookingMode?: 'CLUB' | 'GAME_ONLY';
 };
 
 export type EditLocationTimeRequests = {
+  /** Mark already-kept courts reserved before the time moves (never adds courts). */
+  claimBody: CourtSlotsBody | null;
   gamePatch: Record<string, unknown> | null;
   slotsBody: CourtSlotsBody | null;
 };
@@ -68,7 +81,7 @@ export function currentCourtSlotCount(game: Game): number {
 }
 
 export function buildEditLocationTimeRequests(input: EditLocationTimeInput): EditLocationTimeRequests {
-  const { game, clubId, courtIds, slotModel, courtSlotCount, time } = input;
+  const { game, clubId, courtIds, slotModel, courtSlotCount, time, reportedCourtIds, courtBookingMode } = input;
   const clubChanged = clubId !== (game.clubId ?? '');
   const before = initialCourtIds(game);
   const courtsChanged = courtIds.join(',') !== before.join(',');
@@ -81,17 +94,50 @@ export function buildEditLocationTimeRequests(input: EditLocationTimeInput): Edi
   } else if (!slotModel && courtsChanged) {
     gamePatch.courtId = courtIds[0] ?? '';
   }
+  // Same request as the time: the server's clash guard reads the new mode.
+  if (courtBookingMode && courtBookingMode !== (game.courtBookingMode ?? 'CLUB')) {
+    gamePatch.courtBookingMode = courtBookingMode;
+  }
   if (time && timeChanged(game, time)) {
     gamePatch.startTime = time.startTime;
     gamePatch.endTime = time.endTime;
     gamePatch.timeIsSet = true;
   }
 
+  const current = buildCourtReservationsInput(game);
+  const currentReservationOf = (courtId: string) =>
+    current.gameCourts.find((gc) => gc.courtId === courtId)?.reservation ?? 'NONE';
+  const reservationOf = (courtId: string): 'NONE' | 'REPORTED' => {
+    if (reportedCourtIds) return reportedCourtIds.has(courtId) ? 'REPORTED' : 'NONE';
+    return clubChanged ? 'NONE' : currentReservationOf(courtId);
+  };
+  const reservationsChanged =
+    slotModel && courtIds.some((courtId) => reservationOf(courtId) !== (clubChanged ? 'NONE' : currentReservationOf(courtId)));
+
+  // Claims on courts the game already has: written before the time moves.
+  let claimBody: CourtSlotsBody | null = null;
+  if (slotModel && !clubChanged && reportedCourtIds) {
+    const claims = before.filter((courtId) => reportedCourtIds.has(courtId) && currentReservationOf(courtId) !== 'REPORTED');
+    if (claims.length > 0) {
+      claimBody = {
+        slots: before.map((courtId) => ({
+          courtId,
+          reservation: reportedCourtIds.has(courtId) ? 'REPORTED' : currentReservationOf(courtId),
+        })),
+        reportedAnyCourtCount: current.reportedAnyCourtCount ?? 0,
+      };
+    }
+  }
+
+  const claimed = claimBody?.slots ?? [];
+  const claimCoversAll =
+    claimBody != null &&
+    !courtsChanged &&
+    !countChanged &&
+    courtIds.every((courtId) => claimed.find((slot) => slot.courtId === courtId)?.reservation === reservationOf(courtId));
+
   let slotsBody: CourtSlotsBody | null = null;
-  if (slotModel && (clubChanged || courtsChanged || countChanged)) {
-    const current = buildCourtReservationsInput(game);
-    const reservationOf = (courtId: string) =>
-      clubChanged ? 'NONE' : current.gameCourts.find((gc) => gc.courtId === courtId)?.reservation ?? 'NONE';
+  if (slotModel && (clubChanged || courtsChanged || countChanged || reservationsChanged) && !claimCoversAll) {
     const total = Math.max(courtIds.length, courtSlotCount ?? currentCourtSlotCount(game), 1);
     const reportedAny = clubChanged ? 0 : Math.min(current.reportedAnyCourtCount ?? 0, Math.max(0, total - courtIds.length));
     slotsBody = {
@@ -102,12 +148,16 @@ export function buildEditLocationTimeRequests(input: EditLocationTimeInput): Edi
   }
 
   return {
+    claimBody,
     gamePatch: Object.keys(gamePatch).length > 0 ? gamePatch : null,
     slotsBody,
   };
 }
 
 export async function saveEditLocationTime(gameId: string, requests: EditLocationTimeRequests): Promise<void> {
+  if (requests.claimBody) {
+    await courtSlotsApi.putCourtSlots(gameId, requests.claimBody);
+  }
   if (requests.gamePatch) {
     await api.put(`/games/${gameId}`, requests.gamePatch, { params: { timePolicy: 'explicit' } });
   }

@@ -25,6 +25,13 @@ interface UseCourtOccupancyProps {
   occupancyCourts?: Court[];
   snapshotRefreshEnabled?: boolean;
   enabled?: boolean;
+  /** The game being edited: its own court blocks are never "taken". */
+  excludeGameId?: string | null;
+  /**
+   * Courts the organizer said they already reserved: the club's block on them
+   * is their own booking, so it is not shown as taken.
+   */
+  ownClubBookingCourtIds?: readonly string[];
 }
 
 interface BookedSlotInfo {
@@ -45,6 +52,8 @@ export const useCourtOccupancy = ({
   occupancyCourts,
   snapshotRefreshEnabled = true,
   enabled = true,
+  excludeGameId = null,
+  ownClubBookingCourtIds,
 }: UseCourtOccupancyProps) => {
   const [bookedCourts, setBookedCourts] = useState<BookedCourtSlot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -160,10 +169,20 @@ export const useCourtOccupancy = ({
     occupancyCourts != null &&
     occupancyCourts.length > 0;
 
+  const ownCourtsKey = ownClubBookingCourtIds?.join(',') ?? '';
+  const visibleBookedCourts = useMemo(() => {
+    const ownCourts = new Set(ownCourtsKey ? ownCourtsKey.split(',') : []);
+    if (!excludeGameId && ownCourts.size === 0) return bookedCourts;
+    return bookedCourts.filter((booking) => {
+      if (excludeGameId && booking.gameId === excludeGameId) return false;
+      return !(isClaimableClubBooking(booking) && booking.courtId != null && ownCourts.has(booking.courtId));
+    });
+  }, [bookedCourts, excludeGameId, ownCourtsKey]);
+
   const relevantBookedCourts = useMemo(() => {
-    if (!isAggregateOccupancy || !occupancyCourts) return bookedCourts;
-    return filterBookingsByCourts(bookedCourts, occupancyCourts);
-  }, [bookedCourts, isAggregateOccupancy, occupancyCourts]);
+    if (!isAggregateOccupancy || !occupancyCourts) return visibleBookedCourts;
+    return filterBookingsByCourts(visibleBookedCourts, occupancyCourts);
+  }, [visibleBookedCourts, isAggregateOccupancy, occupancyCourts]);
 
   const courtTimeMap = useMemo(() => {
     if (!isAggregateOccupancy) return null;
@@ -316,8 +335,16 @@ export const useCourtOccupancy = ({
     snapshotBanner,
     refreshSnapshot,
     refetch: fetchBookedCourts,
+    /** The day's blocks after `excludeGameId` / `ownClubBookingCourtIds`. */
+    visibleBookedCourts,
   };
 };
+
+/** A club-system booking (not an admin hold): could be the organizer's own phone booking. */
+export function isClaimableClubBooking(booking: Pick<BookedCourtSlot, 'clubBooked' | 'holdBlocked' | 'slotKind'>): boolean {
+  if (booking.holdBlocked || booking.slotKind === 'hold') return false;
+  return Boolean(booking.clubBooked || booking.slotKind === 'external');
+}
 
 export type { ClubSnapshotBanner };
 

@@ -8,11 +8,17 @@
  * its time with a "Change time" button that opens the reschedule planner
  * instead of the plain time editor. A club with linked reservations is locked
  * (unlink first).
+ *
+ * Court booking: "Club booking" (the club's schedule is checked; a court the
+ * club shows busy asks "Is that your booking?") or "Game only" (the organizer
+ * handles the court; nothing at the club is checked or blocks).
  */
 import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, CalendarOff, Store } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import type { Club, Court, EntityType, Game } from '@/types';
 import { scheduleSelectionToForm, type ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
@@ -25,6 +31,7 @@ import { getClubTimezone } from '@/utils/gameTimeDisplay';
 import { pressScaleGuard } from '@/components/motion/pressScale';
 import { useClubTime } from '@/features/court-reservations';
 import { EditCourtSlotsPicker } from './EditCourtSlotsPicker';
+import '@/features/court-reservations/courtReservations.css';
 
 type LocationTimeTabProps = {
   game: Game;
@@ -50,6 +57,14 @@ type LocationTimeTabProps = {
   /** The reschedule planner moves this game's time (reservations / several courts). */
   timeManagedByPlanner: boolean;
   onRequestReschedule?: () => void;
+  bookingMode: 'CLUB' | 'GAME_ONLY';
+  onBookingModeChange: (mode: 'CLUB' | 'GAME_ONLY') => void;
+  /** Linked reservations: Game only is not available (unlink first). */
+  gameOnlyLocked: boolean;
+  /** Courts the organizer reserved themselves: the club's block there is theirs. */
+  ownClubBookingCourtIds?: readonly string[];
+  /** "Is that your booking?" under the time grid. */
+  claimSection?: ReactNode;
   selectedDate: Date;
   selectedTime: string;
   duration: number;
@@ -123,6 +138,11 @@ export function LocationTimeTab({
   clubLocked,
   timeManagedByPlanner,
   onRequestReschedule,
+  bookingMode,
+  onBookingModeChange,
+  gameOnlyLocked,
+  ownClubBookingCourtIds,
+  claimSection,
   selectedDate,
   selectedTime,
   duration,
@@ -175,6 +195,7 @@ export function LocationTimeTab({
         onToggle={onToggleCourt}
         count={courtCount}
         onCountChange={onCourtCountChange}
+        gameOnly={bookingMode === 'GAME_ONLY'}
       />
     ) : null
   ) : (
@@ -195,6 +216,35 @@ export function LocationTimeTab({
       showHasBookedSwitch={false}
     />
   );
+
+  const gameOnly = bookingMode === 'GAME_ONLY';
+  const bookingModeSection = slotModel && selectedClub ? (
+    <section className="space-y-2" data-testid="edit-court-booking-mode">
+      <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameDetails.courts.bookingModeTitle')}</p>
+      <SegmentedSwitch
+        tabs={[
+          { id: 'CLUB', label: t('gameDetails.courts.bookingModeClub'), icon: Store },
+          { id: 'GAME_ONLY', label: t('gameDetails.courts.bookingModeGameOnly'), icon: CalendarOff },
+        ]}
+        activeId={bookingMode}
+        onChange={(id) => {
+          if (id === 'GAME_ONLY' && gameOnlyLocked) {
+            toast(t('gameDetails.courts.gameOnlyHasLinks'));
+            return;
+          }
+          onBookingModeChange(id as 'CLUB' | 'GAME_ONLY');
+        }}
+        showOnlyActiveTabText={false}
+        layoutId="edit-court-booking-mode"
+        fullWidth
+        size="sm"
+        ariaLabel={t('gameDetails.courts.bookingModeTitle')}
+      />
+      <p key={bookingMode} className="cr-enter text-xs leading-snug text-gray-600 dark:text-gray-400">
+        {t(gameOnly ? 'gameDetails.courts.bookingModeGameOnlyHint' : 'gameDetails.courts.bookingModeClubHint')}
+      </p>
+    </section>
+  ) : null;
 
   return (
     <div ref={panelRef} data-testid="edit-location-time-panel" className="space-y-4">
@@ -222,6 +272,8 @@ export function LocationTimeTab({
         locked={clubLocked}
         onLockedActivate={() => toast(t('gameDetails.courts.clubLocked'))}
       />
+
+      {bookingModeSection}
 
       {timeManagedByPlanner ? (
         <>
@@ -266,7 +318,12 @@ export function LocationTimeTab({
             panelMode="edit"
             compact
             hideDateSection
+            excludeGameId={game.id}
+            ownClubBookingCourtIds={ownClubBookingCourtIds}
+            hideOccupancyOverlay={gameOnly}
+            hideClubBookingsInOverlay={slotModel && !gameOnly}
           />
+          {claimSection}
         </>
       )}
     </div>

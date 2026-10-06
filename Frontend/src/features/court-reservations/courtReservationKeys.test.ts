@@ -39,7 +39,10 @@ describe('courtReservation i18n keys', () => {
   });
 
   it('never uses the forbidden vocabulary', () => {
-    const text = JSON.stringify(en).toLowerCase();
+    // "Game only" is the explicit opt-out mode (`Game.courtBookingMode = GAME_ONLY`) and may only
+    // appear as its own label/hint — never as a word for a planned, unreserved court.
+    const { gameOnly: _label, gameOnlyHint: _hint, ...card } = en.courtReservation.card;
+    const text = JSON.stringify({ ...en.courtReservation, card }).toLowerCase();
     for (const word of ['game only', 'fully booked', 'booked']) expect(text).not.toContain(word);
   });
 });

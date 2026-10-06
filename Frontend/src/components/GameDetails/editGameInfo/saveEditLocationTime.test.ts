@@ -31,7 +31,7 @@ describe('buildEditLocationTimeRequests', () => {
   it('sends nothing when nothing changed', () => {
     expect(
       buildEditLocationTimeRequests({ game: game(), clubId: 'club', courtIds: ['c1', 'c2'], slotModel: true, courtSlotCount: 2, time: { startTime: start, endTime: end } }),
-    ).toEqual({ gamePatch: null, slotsBody: null });
+    ).toEqual({ claimBody: null, gamePatch: null, slotsBody: null });
   });
 
   it('keeps reported courts, adds new ones as planned and sets an explicit count', () => {
@@ -90,6 +90,73 @@ describe('buildEditLocationTimeRequests', () => {
       courtSlotCount: null,
       time: null,
     });
-    expect(requests).toEqual({ gamePatch: { courtId: 'h2' }, slotsBody: null });
+    expect(requests).toEqual({ claimBody: null, gamePatch: { courtId: 'h2' }, slotsBody: null });
+  });
+
+  describe('"It\'s my booking" claims', () => {
+    const moved = { startTime: '2026-10-10T20:00:00.000Z', endTime: '2026-10-10T21:00:00.000Z' };
+
+    it('marks a kept court reserved before the time moves, with nothing else to send', () => {
+      const requests = buildEditLocationTimeRequests({
+        game: game({ gameCourts: [gameCourt('c1', 1)], courtSlotCount: 1 }),
+        clubId: 'club',
+        courtIds: ['c1'],
+        slotModel: true,
+        courtSlotCount: 1,
+        time: moved,
+        reportedCourtIds: new Set(['c1']),
+      });
+      expect(requests.claimBody).toEqual({ slots: [{ courtId: 'c1', reservation: 'REPORTED' }], reportedAnyCourtCount: 0 });
+      expect(requests.gamePatch).toEqual({ ...moved, timeIsSet: true });
+      expect(requests.slotsBody).toBeNull();
+    });
+
+    it('claims kept courts first and sends added courts with their own claim afterwards', () => {
+      const requests = buildEditLocationTimeRequests({
+        game: game(),
+        clubId: 'club',
+        courtIds: ['c1', 'c2', 'c3'],
+        slotModel: true,
+        courtSlotCount: 3,
+        time: moved,
+        reportedCourtIds: new Set(['c1', 'c2', 'c3']),
+      });
+      expect(requests.claimBody?.slots).toEqual([
+        { courtId: 'c1', reservation: 'REPORTED' },
+        { courtId: 'c2', reservation: 'REPORTED' },
+      ]);
+      expect(requests.slotsBody?.slots).toEqual([
+        { courtId: 'c1', reservation: 'REPORTED' },
+        { courtId: 'c2', reservation: 'REPORTED' },
+        { courtId: 'c3', reservation: 'REPORTED' },
+      ]);
+    });
+
+    it('claims a court at a new club in the slots request (no claim step)', () => {
+      const requests = buildEditLocationTimeRequests({
+        game: game(),
+        clubId: 'club2',
+        courtIds: ['x1'],
+        slotModel: true,
+        courtSlotCount: null,
+        time: moved,
+        reportedCourtIds: new Set(['x1']),
+      });
+      expect(requests.claimBody).toBeNull();
+      expect(requests.slotsBody?.slots).toEqual([{ courtId: 'x1', reservation: 'REPORTED' }]);
+    });
+
+    it('sends nothing extra when the claimed courts are already reserved', () => {
+      const requests = buildEditLocationTimeRequests({
+        game: game(),
+        clubId: 'club',
+        courtIds: ['c1', 'c2'],
+        slotModel: true,
+        courtSlotCount: 2,
+        time: { startTime: start, endTime: end },
+        reportedCourtIds: new Set(['c1']),
+      });
+      expect(requests).toEqual({ claimBody: null, gamePatch: null, slotsBody: null });
+    });
   });
 });

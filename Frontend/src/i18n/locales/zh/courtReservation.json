@@ -38,7 +38,10 @@
       "noTime": "设置时间后可查看比赛的覆盖情况",
       "count": "场地数量",
       "fewer": "减少一片场地",
-      "more": "增加一片场地"
+      "more": "增加一片场地",
+      "gameOnly": "仅比赛",
+      "gameOnlyHint": "由组织者自行与俱乐部安排场地。",
+      "useClubBooking": "改用俱乐部预订"
     },
     "action": {
       "reserveCourt": "预订场地",

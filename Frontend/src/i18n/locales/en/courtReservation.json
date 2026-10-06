@@ -40,7 +40,10 @@
       "noTime": "Set a time to see how much of the game is covered",
       "count": "Number of courts",
       "fewer": "One court fewer",
-      "more": "One more court"
+      "more": "One more court",
+      "gameOnly": "Game only",
+      "gameOnlyHint": "The organizer sorts out the court with the club.",
+      "useClubBooking": "Use club booking instead"
     },
     "action": {
       "reserveCourt": "Reserve the court",

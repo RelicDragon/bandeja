@@ -557,7 +557,9 @@
         "reservationsNudge": "You have a reservation at this club that day.",
         "useThem": "Use it",
         "authSkip": "Not yet — I'll reserve later",
-        "markSkip": "Skip — just mark the courts as reserved"
+        "markSkip": "Skip — just mark the courts as reserved",
+        "gameOnly": "Game only",
+        "gameOnlyHint": "You sort out the court with the club yourself. We won't check the club's schedule or block any time."
       },
       "reservations": {
         "title": "Your reservations that day",
@@ -575,7 +577,9 @@
         "reservedGame": "{{court}} is taken by a reserved game",
         "notEnoughCourts": "Not enough free courts ({{free}} of {{needed}})",
         "softNote": "A planned game also uses a court then — you can still pick this time.",
-        "unavailableAt": "{{time}} isn't available: {{reason}}"
+        "unavailableAt": "{{time}} isn't available: {{reason}}",
+        "mineAction": "It's my booking",
+        "gameOnlyAction": "Game only"
       },
       "summary": {
         "willReserve": "Reserved on create",

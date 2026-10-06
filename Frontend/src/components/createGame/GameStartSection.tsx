@@ -59,6 +59,12 @@ interface GameStartSectionProps {
   needsBooktimeAuth?: boolean;
   bookCourtEnabled?: boolean;
   hideOccupancyOverlay?: boolean;
+  /** Edit: the game being edited never occupies its own courts. */
+  excludeGameId?: string | null;
+  /** Courts the organizer reserved themselves: the club's block there is their own booking. */
+  ownClubBookingCourtIds?: readonly string[];
+  /** Club bookings are explained by the caller ("Is that your booking?"), not listed as taken. */
+  hideClubBookingsInOverlay?: boolean;
   dateFixedDates?: Date[];
   hideCalendar?: boolean;
   hideDateSection?: boolean;
@@ -117,6 +123,9 @@ export const GameStartSection = ({
   needsBooktimeAuth = false,
   bookCourtEnabled = false,
   hideOccupancyOverlay = false,
+  excludeGameId = null,
+  ownClubBookingCourtIds,
+  hideClubBookingsInOverlay = false,
   dateFixedDates,
   hideCalendar = false,
   hideDateSection = false,
@@ -175,6 +184,8 @@ export const GameStartSection = ({
     occupancyCourts,
     snapshotRefreshEnabled: !bookCourtEnabled,
     enabled: bookedCourtsEnabled,
+    excludeGameId,
+    ownClubBookingCourtIds,
   });
 
   const showTimezone = club && isTimezoneDifferent(club);
@@ -182,10 +193,11 @@ export const GameStartSection = ({
 
   const bookedSlotInfo = useMemo(() => {
     if (hideOccupancyOverlay || !selectedTime) return null;
-    return entityType !== 'BAR' && duration
-      ? getOverlappingBookings(selectedTime, duration)
-      : getBookedSlotInfo(selectedTime);
-  }, [selectedTime, duration, entityType, getOverlappingBookings, getBookedSlotInfo, hideOccupancyOverlay]);
+    const info =
+      entityType !== 'BAR' && duration ? getOverlappingBookings(selectedTime, duration) : getBookedSlotInfo(selectedTime);
+    if (!info || !hideClubBookingsInOverlay) return info;
+    return info.filter((slot) => !(slot.clubBooked && !slot.holdBlocked));
+  }, [selectedTime, duration, entityType, getOverlappingBookings, getBookedSlotInfo, hideOccupancyOverlay, hideClubBookingsInOverlay]);
 
   const timeOptions = useMemo(() => generateTimeOptions(), [generateTimeOptions]);
   const hasTimeSlots = timeOptions.length > 0;

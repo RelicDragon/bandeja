@@ -897,7 +897,32 @@
       "gapClash": "{{court}} je zauzet {{time}}, pa se praznina ovde ne može popuniti. Pitajte klub ili izaberite drugi teren.",
       "gapAskClub": "Klub ne prodaje rezervaciju koja odgovara ovoj praznini. Pitajte klub.",
       "gapUnavailable": "Ova praznina se ne može popuniti iz aplikacije. Pitajte klub.",
-      "connectSkip": "Ne sada"
+      "connectSkip": "Ne sada",
+      "bookingModeTitle": "Rezervacija terena",
+      "bookingModeClub": "Preko kluba",
+      "bookingModeGameOnly": "Samo igra",
+      "bookingModeClubHint": "Proveravamo raspored kluba, pa igra dobija samo slobodan teren.",
+      "bookingModeGameOnlyHint": "Teren sa klubom dogovarate sami. Ne proveravamo njegov raspored niti blokiramo vreme.",
+      "gameOnlyHasLinks": "Ova igra koristi povezanu rezervaciju. Prvo je odvežite na stranici igre.",
+      "clubBusyTitle": "{{court}} je rezervisan u klubu {{from}}–{{to}}",
+      "clubBusyAsk": "Da li je to vaša rezervacija? Onda je ova igra jednostavno koristi.",
+      "clubBusyMine": "Moja je",
+      "clubBusyGameOnly": "Samo igra — bez provere kluba",
+      "clubBusyElse": "Nije vaša? Izaberite drugo vreme ili teren.",
+      "clubBusyClaimed": "Vaša rezervacija · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} će biti prikazan kao rezervisan za ovu igru.",
+      "clubBusyUndo": "Poništi",
+      "clubBusySaveTitle": "Da li je ovo vaša rezervacija?",
+      "clubBusySaveMessage": "{{court}} je rezervisan u klubu {{from}}–{{to}}. Ako je to vaša rezervacija, igra će je koristiti.",
+      "clubBusySaveMessageMany": "{{courts}} su rezervisani u klubu u to vreme. Ako su to vaše rezervacije, igra će ih koristiti.",
+      "clubBusySaveConfirm": "Moja je — sačuvaj",
+      "clubBusySaveCancel": "Drugo vreme",
+      "clubBusySwitchGameOnly": "Prebaci na Samo igra",
+      "pickerHintGameOnly": "Izaberite terene redom.",
+      "gameOnlyClashTitle": "Da li je ovo vaša rezervacija?",
+      "gameOnlyClashMessage": "Klub prikazuje {{court}} kao rezervisan {{from}}–{{to}}. Ako je to vaša rezervacija, igra je koristi kao rezervisanu.",
+      "gameOnlyClashConfirm": "Moja je",
+      "gameOnlyClashKeep": "Zadrži Samo igra"
     }
   }
 }

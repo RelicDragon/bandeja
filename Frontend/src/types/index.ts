@@ -682,6 +682,8 @@ export interface Game extends GameCardEnrichment {
    * else the roster need). See `@shared/gameBooking/courtReservations`.
    */
   courtSlotCount?: number | null;
+  /** `GAME_ONLY`: the organizer handles the court; the club's schedule is never checked. Missing = `CLUB`. */
+  courtBookingMode?: 'CLUB' | 'GAME_ONLY';
   timeOverride?: boolean;
   linkedBookings?: Array<{
     id: string;

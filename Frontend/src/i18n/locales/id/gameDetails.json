@@ -899,7 +899,32 @@
       "gapClash": "{{court}} terpakai {{time}}, jadi celah tidak bisa diisi di sini. Tanyakan ke klub atau pilih lapangan lain.",
       "gapAskClub": "Klub tidak menjual reservasi yang pas untuk celah ini. Tanyakan ke klub.",
       "gapUnavailable": "Celah ini tidak bisa diisi dari aplikasi. Tanyakan ke klub.",
-      "connectSkip": "Nanti saja"
+      "connectSkip": "Nanti saja",
+      "bookingModeTitle": "Pemesanan lapangan",
+      "bookingModeClub": "Pesan via klub",
+      "bookingModeGameOnly": "Hanya game",
+      "bookingModeClubHint": "Kami cek jadwal klub agar permainan hanya mendapat lapangan yang kosong.",
+      "bookingModeGameOnlyHint": "Kamu urus lapangan dengan klub sendiri. Kami tidak cek jadwalnya atau memblokir waktu apa pun.",
+      "gameOnlyHasLinks": "Permainan ini memakai reservasi yang ditautkan. Lepas tautannya dulu di halaman permainan.",
+      "clubBusyTitle": "{{court}} sudah dipesan di klub {{from}}–{{to}}",
+      "clubBusyAsk": "Itu pesananmu? Kalau begitu permainan ini cukup memakainya.",
+      "clubBusyMine": "Itu pesananku",
+      "clubBusyGameOnly": "Hanya game — jangan cek klub",
+      "clubBusyElse": "Bukan milikmu? Pilih waktu atau lapangan lain.",
+      "clubBusyClaimed": "Pesananmu · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} akan tampil sebagai dipesan untuk permainan ini.",
+      "clubBusyUndo": "Urungkan",
+      "clubBusySaveTitle": "Ini pesananmu?",
+      "clubBusySaveMessage": "{{court}} sudah dipesan di klub {{from}}–{{to}}. Jika itu pesananmu, permainan akan memakainya.",
+      "clubBusySaveMessageMany": "{{courts}} sudah dipesan di klub pada waktu ini. Jika itu pesananmu, permainan akan memakainya.",
+      "clubBusySaveConfirm": "Punyaku — simpan",
+      "clubBusySaveCancel": "Pilih waktu lain",
+      "clubBusySwitchGameOnly": "Beralih ke Hanya game",
+      "pickerHintGameOnly": "Pilih lapangan secara berurutan.",
+      "gameOnlyClashTitle": "Ini pesananmu?",
+      "gameOnlyClashMessage": "Klub menampilkan {{court}} sudah dipesan {{from}}–{{to}}. Jika itu pesananmu, permainan memakainya sebagai dipesan.",
+      "gameOnlyClashConfirm": "Punyaku",
+      "gameOnlyClashKeep": "Tetap Hanya game"
     }
   }
 }

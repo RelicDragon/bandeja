@@ -899,7 +899,32 @@
       "gapClash": "{{court}} 在 {{time}} 已被占用，无法在此补上空档。请联系俱乐部或选择其他场地。",
       "gapAskClub": "俱乐部没有适合此空档的预订时长。请联系俱乐部。",
       "gapUnavailable": "无法在应用中补上此空档。请联系俱乐部。",
-      "connectSkip": "暂不"
+      "connectSkip": "暂不",
+      "bookingModeTitle": "场地预订",
+      "bookingModeClub": "俱乐部预订",
+      "bookingModeGameOnly": "仅比赛",
+      "bookingModeClubHint": "我们会核对俱乐部的排期，确保比赛只安排在空闲场地。",
+      "bookingModeGameOnlyHint": "由你自己与俱乐部安排场地。我们不会核对排期，也不会占用任何时间。",
+      "gameOnlyHasLinks": "此比赛使用了已关联的预订。请先在比赛页面取消关联。",
+      "clubBusyTitle": "{{court}} 已在俱乐部预订 {{from}}–{{to}}",
+      "clubBusyAsk": "这是你的预订吗？如果是，本场比赛直接使用它。",
+      "clubBusyMine": "是我的预订",
+      "clubBusyGameOnly": "仅比赛 — 不核对俱乐部",
+      "clubBusyElse": "不是你的？请选择其他时间或场地。",
+      "clubBusyClaimed": "你的预订 · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} 将显示为本场比赛已预订。",
+      "clubBusyUndo": "撤销",
+      "clubBusySaveTitle": "这是你的预订吗？",
+      "clubBusySaveMessage": "{{court}} 已在俱乐部预订 {{from}}–{{to}}。如果是你的预订，比赛将使用它。",
+      "clubBusySaveMessageMany": "{{courts}} 在此时间已在俱乐部预订。如果是你的预订，比赛将使用它们。",
+      "clubBusySaveConfirm": "是我的 — 保存",
+      "clubBusySaveCancel": "换个时间",
+      "clubBusySwitchGameOnly": "切换为仅比赛",
+      "pickerHintGameOnly": "按顺序选择场地。",
+      "gameOnlyClashTitle": "这是你的预订吗？",
+      "gameOnlyClashMessage": "俱乐部显示 {{court}} 已预订 {{from}}–{{to}}。如果是你的预订，比赛将其作为已预订使用。",
+      "gameOnlyClashConfirm": "是我的",
+      "gameOnlyClashKeep": "保持仅比赛"
     }
   }
 }

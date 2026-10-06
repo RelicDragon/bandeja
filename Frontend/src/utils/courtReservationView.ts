@@ -94,9 +94,11 @@ const ENGLISH_FALLBACKS: Readonly<Record<string, string>> = {
  * BAR tables and EVENTs are not court slots.
  */
 export function gameShowsCourtReservation(
-  game: Pick<Game, 'entityType' | 'clubId' | 'club' | 'court'>,
+  game: Pick<Game, 'entityType' | 'clubId' | 'club' | 'court' | 'courtBookingMode'>,
 ): boolean {
   if (!supportsClubBookingFlow(game.entityType, 'edit')) return false;
+  // Game only: the organizer handles the court; there is no reservation state to show.
+  if (game.courtBookingMode === 'GAME_ONLY') return false;
   return Boolean(game.clubId || game.club || game.court?.club);
 }
 

@@ -93,7 +93,9 @@ export function OrganizerNextActionsSection({
 
   const user = useAuthStore((state) => state.user);
   const reservationView = useCourtReservationView(game);
-  const reservation = useMemo<OrganizerReservationInput>(() => {
+  const reservation = useMemo<OrganizerReservationInput | null>(() => {
+    // Game only: the organizer handles the court — never nag about reserving.
+    if (game.courtBookingMode === 'GAME_ONLY') return null;
     const summary = reservationView.summary;
     const gapTime =
       summary.kind === 'reserved_with_gap'

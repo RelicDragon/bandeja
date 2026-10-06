@@ -38,7 +38,10 @@
       "noTime": "Atur waktu untuk melihat seberapa banyak permainan yang tercakup",
       "count": "Jumlah lapangan",
       "fewer": "Kurangi satu lapangan",
-      "more": "Tambah satu lapangan"
+      "more": "Tambah satu lapangan",
+      "gameOnly": "Hanya game",
+      "gameOnlyHint": "Penyelenggara mengurus lapangan dengan klub sendiri.",
+      "useClubBooking": "Pakai pemesanan via klub"
     },
     "action": {
       "reserveCourt": "Pesan lapangan",

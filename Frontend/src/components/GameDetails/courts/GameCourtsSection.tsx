@@ -20,6 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { CalendarCheck2 } from 'lucide-react';
 import type { Club, Court, Game } from '@/types';
 import type { CourtSlotView } from '@shared/gameBooking/courtReservations';
 import { planGapFill, type GapFillResult } from '@shared/gameBooking/planReschedule';
@@ -27,6 +28,7 @@ import type { ProviderCapabilityOverrides } from '@shared/gameBooking/providerCa
 import type { LinkBookingToGameBody } from '@shared/gameBooking/contracts';
 import { booktimeIsoToUtcIso } from '@shared/booktime/localTime';
 import { gamesApi } from '@/api/games';
+import api from '@/api/axios';
 import { courtSlotsApi } from '@/api/courtSlots';
 import { queryClient } from '@/queries/queryClient';
 import { queryKeys } from '@/queries/queryKeys';
@@ -87,6 +89,7 @@ import {
   providerCanVerify,
   resolveGameClub,
   timeChangeNoticeCount,
+  type CourtClashDetail,
   type ReserveEntry,
 } from './gameCourtsModel';
 import { gameCourtsQueryKeys, useGameCourtOccupancy, useGameSharedWith } from './useGameCourtsData';
@@ -133,6 +136,7 @@ function ReadOnlyCourts({ game, club }: { game: Game; club: Club | undefined }) 
       playerCount={game.maxParticipants}
       clubName={club?.name ?? null}
       canEdit={false}
+      gameOnly={game.courtBookingMode === 'GAME_ONLY'}
     />
   );
 }
@@ -219,6 +223,46 @@ function OrganizerCourts({
     [courtsById, t, clock],
   );
   const showError = useCallback((error: unknown) => void toast.error(errorMessage(error)), [errorMessage]);
+
+  const gameOnly = game.courtBookingMode === 'GAME_ONLY';
+  const [modeBusy, setModeBusy] = useState(false);
+  /** Club booking at a time the club shows busy: "Is this your booking?" */
+  const [modeClash, setModeClash] = useState<CourtClashDetail[] | null>(null);
+  /**
+   * Game only → club booking. The clash guard checks the courts again; when only
+   * the club's own bookings are in the way, they are most likely the organizer's,
+   * so we ask instead of failing.
+   */
+  const switchToClubBooking = useCallback(
+    async (claimCourtIds: readonly string[] = []) => {
+      setModeBusy(true);
+      try {
+        if (claimCourtIds.length > 0) {
+          // Marked reserved first (no clash guard runs in Game only), then the mode flips.
+          const current = buildCourtReservationsInput(gameRef.current);
+          await courtSlotsApi.putCourtSlots(game.id, {
+            slots: current.gameCourts.map((gc) => ({
+              courtId: gc.courtId,
+              reservation: claimCourtIds.includes(gc.courtId) ? 'REPORTED' : gc.reservation,
+            })),
+            reportedAnyCourtCount: current.reportedAnyCourtCount ?? 0,
+          });
+        }
+        await api.put(`/games/${game.id}`, { courtBookingMode: 'CLUB' }, { params: { timePolicy: 'explicit' } });
+        await refresh();
+      } catch (error) {
+        const clash = courtClashDetails(error);
+        if (clash && clash.length > 0 && clash.every((c) => c.kind === 'club') && claimCourtIds.length === 0) {
+          setModeClash(clash);
+        } else {
+          showError(error);
+        }
+      } finally {
+        setModeBusy(false);
+      }
+    },
+    [game.id, refresh, showError],
+  );
 
   // Errors are reported per call site: inline in the slot sheet, toast elsewhere.
   const mutations = useCourtSlotsMutations({
@@ -610,6 +654,9 @@ function OrganizerCourts({
         playerCount={game.maxParticipants}
         clubName={club.name}
         canEdit
+        gameOnly={gameOnly}
+        onUseClubBooking={() => void switchToClubBooking()}
+        useClubBookingBusy={modeBusy}
         followUps={followUps}
         onSlotPress={(slot) => openSheet(slot.key)}
         onPrimaryAction={onPrimaryAction}
@@ -667,6 +714,30 @@ function OrganizerCourts({
           onLinked={refresh}
         />
       ) : null}
+
+      <ConfirmationModal
+        isOpen={modeClash != null}
+        tone="info"
+        icon={CalendarCheck2}
+        onClose={() => setModeClash(null)}
+        onConfirm={() => {
+          const courtIds = [...new Set((modeClash ?? []).map((c) => c.courtId))];
+          setModeClash(null);
+          void switchToClubBooking(courtIds);
+        }}
+        title={t('gameDetails.courts.gameOnlyClashTitle')}
+        message={
+          modeClash?.[0]
+            ? t('gameDetails.courts.gameOnlyClashMessage', {
+                court: courtsById[modeClash[0].courtId]?.name ?? '',
+                from: clock.time(modeClash[0].start),
+                to: clock.time(modeClash[0].end),
+              })
+            : ''
+        }
+        confirmText={t('gameDetails.courts.gameOnlyClashConfirm')}
+        cancelText={t('gameDetails.courts.gameOnlyClashKeep')}
+      />
 
       <ConfirmationModal
         isOpen={gapConfirm != null}

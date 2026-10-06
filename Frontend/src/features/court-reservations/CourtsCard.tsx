@@ -53,6 +53,14 @@ export type CourtsCardProps = {
    * prefilled from `defaultCourtSlotCount` when the game has no explicit count.
    */
   courtCount?: { value: number; min: number; max: number; busy?: boolean; onChange: (next: number) => void };
+  /**
+   * Game only: the organizer handles the court with the club. Courts are just
+   * labels — no reservation states, nothing to reserve.
+   */
+  gameOnly?: boolean;
+  /** Organizers: switch the game back to club booking. */
+  onUseClubBooking?: () => void;
+  useClubBookingBusy?: boolean;
   className?: string;
 };
 
@@ -92,7 +100,9 @@ function SlotRow({
   text,
   interactive,
   onPress,
+  gameOnly = false,
 }: {
+  gameOnly?: boolean;
   slot: CourtSlotView;
   window: IsoInterval | null;
   courtsById: Readonly<Record<string, CourtRef>>;
@@ -100,6 +110,13 @@ function SlotRow({
   interactive: boolean;
   onPress?: (slot: CourtSlotView) => void;
 }) {
+  if (gameOnly) {
+    return (
+      <li data-slot-key={slot.key} className="flex min-h-[44px] items-center gap-3 px-2.5 py-2">
+        <span className="truncate text-sm font-medium text-gray-900 dark:text-white">{slotCourtName(slot, courtsById, text.t)}</span>
+      </li>
+    );
+  }
   const described = describeCourtSlot(slot);
   const name = slotCourtName(slot, courtsById, text.t);
   const segments = window ? slotCoverageSegments(slot, window) : null;
@@ -174,13 +191,16 @@ export function CourtsCard({
   onFollowUpDone,
   primaryBusy = false,
   courtCount,
+  gameOnly = false,
+  onUseClubBooking,
+  useClubBookingBusy = false,
   className,
 }: CourtsCardProps) {
   const text = useCourtReservationText(timeZone);
   const { t } = text;
   const headingId = useId();
   const summary = reservations.summary;
-  const action = courtsPrimaryAction(reservations, { canEdit });
+  const action = gameOnly ? null : courtsPrimaryAction(reservations, { canEdit });
   const context = [
     t('card.players', { count: playerCount }),
     t('card.courts', { count: reservations.slots.length }),
@@ -189,8 +209,8 @@ export function CourtsCard({
     .filter(Boolean)
     .join(' · ');
   const progress = summary.total > 0 ? summary.reserved / summary.total : 0;
-  const interactive = canEdit && Boolean(onSlotPress);
-  const visibleFollowUps = canEdit ? followUps : [];
+  const interactive = !gameOnly && canEdit && Boolean(onSlotPress);
+  const visibleFollowUps = canEdit && !gameOnly ? followUps : [];
 
   return (
     <Card className={`p-3 ${className ?? ''}`} role="region" aria-labelledby={headingId} data-testid="courts-card">
@@ -198,14 +218,20 @@ export function CourtsCard({
         <h3 id={headingId} className="text-base font-semibold text-gray-900 dark:text-white">
           {t('card.title')}
         </h3>
-        <ReservationPill
-          tone={pillToneForSummary(summary)}
-          label={text.copy(describeReservationSummary(summary))}
-          progress={progress}
-        />
+        {gameOnly ? (
+          <ReservationPill tone="gameOnly" label={t('card.gameOnly')} />
+        ) : (
+          <ReservationPill
+            tone={pillToneForSummary(summary)}
+            label={text.copy(describeReservationSummary(summary))}
+            progress={progress}
+          />
+        )}
       </div>
       <p className="mt-0.5 px-1 text-xs text-gray-500 dark:text-gray-400">{context}</p>
-      {!window ? (
+      {gameOnly ? (
+        <p className="mt-1 px-1 text-xs text-gray-600 dark:text-gray-300">{t('card.gameOnlyHint')}</p>
+      ) : !window ? (
         <p className="mt-1 px-1 text-xs text-gray-500 dark:text-gray-400">{t('card.noTime')}</p>
       ) : null}
 
@@ -219,11 +245,24 @@ export function CourtsCard({
             text={text}
             interactive={interactive}
             onPress={onSlotPress}
+            gameOnly={gameOnly}
           />
         ))}
       </ul>
 
       {canEdit && courtCount ? <CourtCountStepper {...courtCount} text={text} /> : null}
+
+      {gameOnly && canEdit && onUseClubBooking ? (
+        <button
+          type="button"
+          disabled={useClubBookingBusy}
+          onClick={onUseClubBooking}
+          data-testid="courts-use-club-booking"
+          className="mt-2 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-gray-200 px-4 text-sm font-semibold text-gray-800 transition-[background-color,transform] hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-60 enabled:active:scale-[0.98] dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800/60"
+        >
+          {t('card.useClubBooking')}
+        </button>
+      ) : null}
 
       {visibleFollowUps.length > 0 ? (
         <ul className="mt-2 flex flex-col gap-1.5" aria-label={t('followUp.title')}>

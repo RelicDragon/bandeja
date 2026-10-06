@@ -14,9 +14,13 @@ import type { EntityType } from '@/types';
 import type { CourtSlotReservation } from '@shared/gameBooking/courtReservations';
 import type { OccupancyBlock } from '@shared/gameBooking/planReschedule';
 
-export type AtClubChoice = 'reserveNow' | 'alreadyReserved' | 'notYet';
+/**
+ * `gameOnly`: the organizer handles the court outside the app — the club's
+ * schedule is never checked and never blocks (`Game.courtBookingMode = GAME_ONLY`).
+ */
+export type AtClubChoice = 'reserveNow' | 'alreadyReserved' | 'notYet' | 'gameOnly';
 
-export const AT_CLUB_CHOICES: readonly AtClubChoice[] = ['reserveNow', 'alreadyReserved', 'notYet'];
+export const AT_CLUB_CHOICES: readonly AtClubChoice[] = ['reserveNow', 'alreadyReserved', 'notYet', 'gameOnly'];
 
 export type CourtPlanSlot = {
   courtId: string | null;

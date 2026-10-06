@@ -21,6 +21,8 @@ export type EditCourtSlotsPickerProps = {
   count: number;
   onCountChange: (count: number) => void;
   maxCount?: number;
+  /** Game only: courts are labels; nothing is reserved from the game page. */
+  gameOnly?: boolean;
 };
 
 export function EditCourtSlotsPicker({
@@ -31,6 +33,7 @@ export function EditCourtSlotsPicker({
   count,
   onCountChange,
   maxCount = 16,
+  gameOnly = false,
 }: EditCourtSlotsPickerProps) {
   const { t } = useTranslation();
   const min = Math.max(1, selectedIds.length);
@@ -45,7 +48,7 @@ export function EditCourtSlotsPicker({
         title={t('gameDetails.courts.pickerTitle')}
         done={selectedIds.length > 0}
       />
-      <p className="text-xs text-gray-500 dark:text-gray-400">{t('gameDetails.courts.pickerHint')}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{t(gameOnly ? 'gameDetails.courts.pickerHintGameOnly' : 'gameDetails.courts.pickerHint')}</p>
       <div className="flex flex-wrap gap-2" role="group" aria-label={t('gameDetails.courts.pickerTitle')}>
         {courts.map((court) => {
           const position = selectedIds.indexOf(court.id);

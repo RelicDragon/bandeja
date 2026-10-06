@@ -899,7 +899,32 @@
       "gapClash": "{{court}} ไม่ว่าง {{time}} จึงเติมช่วงว่างตรงนี้ไม่ได้ โปรดสอบถามสโมสรหรือเลือกคอร์ตอื่น",
       "gapAskClub": "สโมสรไม่มีการจองที่พอดีกับช่วงว่างนี้ โปรดสอบถามสโมสร",
       "gapUnavailable": "เติมช่วงว่างนี้จากแอปไม่ได้ โปรดสอบถามสโมสร",
-      "connectSkip": "ไม่ใช่ตอนนี้"
+      "connectSkip": "ไม่ใช่ตอนนี้",
+      "bookingModeTitle": "การจองคอร์ต",
+      "bookingModeClub": "จองผ่านคลับ",
+      "bookingModeGameOnly": "เฉพาะเกม",
+      "bookingModeClubHint": "เราตรวจตารางของคลับ เพื่อให้เกมได้คอร์ตที่ว่างเท่านั้น",
+      "bookingModeGameOnlyHint": "คุณจัดการคอร์ตกับคลับเอง เราจะไม่ตรวจตารางหรือกันเวลาใดๆ",
+      "gameOnlyHasLinks": "เกมนี้ใช้การจองที่เชื่อมไว้ ยกเลิกการเชื่อมในหน้าเกมก่อน",
+      "clubBusyTitle": "{{court}} ถูกจองที่คลับ {{from}}–{{to}}",
+      "clubBusyAsk": "นี่คือการจองของคุณใช่ไหม? ถ้าใช่ เกมนี้จะใช้การจองนั้นเลย",
+      "clubBusyMine": "จองของฉันเอง",
+      "clubBusyGameOnly": "เฉพาะเกม — ไม่ตรวจคลับ",
+      "clubBusyElse": "ไม่ใช่ของคุณ? เลือกเวลาหรือคอร์ตอื่น",
+      "clubBusyClaimed": "การจองของคุณ · {{court}} · {{from}}–{{to}}",
+      "clubBusyClaimedHint": "{{court}} จะแสดงเป็นจองแล้วสำหรับเกมนี้",
+      "clubBusyUndo": "เลิกทำ",
+      "clubBusySaveTitle": "นี่คือการจองของคุณใช่ไหม?",
+      "clubBusySaveMessage": "{{court}} ถูกจองที่คลับ {{from}}–{{to}} ถ้าเป็นการจองของคุณ เกมจะใช้การจองนั้น",
+      "clubBusySaveMessageMany": "{{courts}} ถูกจองที่คลับในเวลานี้ ถ้าเป็นการจองของคุณ เกมจะใช้การจองเหล่านั้น",
+      "clubBusySaveConfirm": "ของฉัน — บันทึก",
+      "clubBusySaveCancel": "เลือกเวลาอื่น",
+      "clubBusySwitchGameOnly": "เปลี่ยนเป็นเฉพาะเกม",
+      "pickerHintGameOnly": "เลือกคอร์ตตามลำดับ",
+      "gameOnlyClashTitle": "นี่คือการจองของคุณใช่ไหม?",
+      "gameOnlyClashMessage": "คลับแสดงว่า {{court}} ถูกจอง {{from}}–{{to}} ถ้าเป็นการจองของคุณ เกมจะใช้เป็นคอร์ตที่จองแล้ว",
+      "gameOnlyClashConfirm": "ของฉัน",
+      "gameOnlyClashKeep": "คงเฉพาะเกม"
     }
   }
 }
