@@ -831,6 +831,7 @@ export class GameUpdateService {
           endTime: true,
           timeIsSet: true,
           entityType: true,
+          courtBookingMode: true,
         },
       });
       if (!locked) {
@@ -979,17 +980,22 @@ export class GameUpdateService {
       }
 
       // Hard-clash guard (new clients only): a moved window checks every slot, a moved
-      // primary court only that court. 409 `court.clash` rolls the whole update back.
+      // primary court only that court. Switching "Game only" back to club booking checks
+      // every slot too (the client then asks "Is this your booking?" → REPORTED, retry).
+      // 409 `court.clash` rolls the whole update back.
       if (options.timePolicy === 'explicit' && options.clashGuard !== false) {
         const after = await tx.game.findUnique({
           where: { id },
-          select: { startTime: true, endTime: true, courtId: true },
+          select: { startTime: true, endTime: true, courtId: true, courtBookingMode: true },
         });
         if (after) {
           const windowMoved =
             after.startTime.getTime() !== locked.startTime.getTime() ||
             after.endTime.getTime() !== locked.endTime.getTime();
-          if (windowMoved) {
+          const backToClub =
+            locked.courtBookingMode === CourtBookingMode.GAME_ONLY &&
+            after.courtBookingMode === CourtBookingMode.CLUB;
+          if (windowMoved || backToClub) {
             await assertNoCourtClashInTx(tx, id);
           } else if (after.courtId && after.courtId !== (currentGame?.courtId ?? null)) {
             await assertNoCourtClashInTx(tx, id, { onlyCourtIds: new Set([after.courtId]) });

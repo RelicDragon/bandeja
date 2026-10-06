@@ -186,6 +186,26 @@ void (async () => {
     // Adding a court slot is not checked either.
     await GameCourtService.setCourtSlots(gOnly.id, owner.id, { slots: [{ courtId: c1.id }, { courtId: c2.id }] }, { timePolicy: 'explicit' });
 
+    /* --- switching back to club booking is clash-checked (explicit only) ------------- */
+    // C1 is busy at gOnly's window (gA's reserved slot): back to CLUB → 409, nothing written.
+    await expectApiError(
+      GameUpdateService.updateGame(gOnly.id, { courtBookingMode: 'CLUB' }, owner.id, false, { timePolicy: 'explicit' }),
+      409,
+      'GAME_ONLY → CLUB on a busy window',
+    );
+    assert.equal(await mode(gOnly.id), 'GAME_ONLY', '409 rolled the switch back');
+    // "Is this your booking?" → the organizer reports C1; the retry passes.
+    await GameCourtService.setCourtSlots(gOnly.id, owner.id, {
+      slots: [{ courtId: c1.id, reservation: 'REPORTED' }, { courtId: c2.id }],
+    });
+    await GameUpdateService.updateGame(gOnly.id, { courtBookingMode: 'CLUB' }, owner.id, false, { timePolicy: 'explicit' });
+    assert.equal(await mode(gOnly.id), 'CLUB', 'REPORTED slot → switch back succeeds');
+    // Old clients (no policy) are never clash-checked.
+    const gOldClient = await makeGame({ courtId: c1.id });
+    await GameUpdateService.updateGame(gOldClient.id, { courtBookingMode: 'GAME_ONLY' }, owner.id, false);
+    await GameUpdateService.updateGame(gOldClient.id, { courtBookingMode: 'CLUB' }, owner.id, false);
+    assert.equal(await mode(gOldClient.id), 'CLUB', 'no policy → no clash check');
+
     /* --- links win ----------------------------------------------------------------- */
     const gL = await makeGame({ courtId: c2.id, startTime: at(10), endTime: at(12) });
     await GameUpdateService.updateGame(gL.id, { courtBookingMode: 'GAME_ONLY' }, owner.id, false);
