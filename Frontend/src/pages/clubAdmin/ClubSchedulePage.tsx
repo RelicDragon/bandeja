@@ -291,7 +291,10 @@ export function ClubSchedulePage() {
   ) : null;
 
   const refresh = () => void qc.invalidateQueries({ queryKey: clubAdminKeys.scheduleAll(clubId) });
-  const { syncing } = useScheduleExternalSync(clubId, date, timeZone, !!context.club.integrationType, refresh);
+  const syncDates = useMemo(() => (view === 'week' ? weekDates : [date]), [view, weekDates, date]);
+  const { syncing } = useScheduleExternalSync(clubId, syncDates, timeZone, !!context.club.integrationType, (d) =>
+    void qc.invalidateQueries({ queryKey: clubAdminKeys.schedule(clubId, d) })
+  );
   const swipe = useDaySwipe((d) => setParam({ date: addDaysToDate(date, d * (view === 'week' ? 7 : 1)) }), !isLg && columns.length <= 3);
   const dayData = view === 'day' ? dayQ.data : weekDatas[0];
   const [showClosed, setShowClosed] = useState(false);
