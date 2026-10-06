@@ -323,6 +323,7 @@
       "updating": "Aktualizace rezervací ze systému klubu…",
       "noSyncToday": "Rezervace ze systému klubu se dnes ještě nesynchronizovaly.",
       "noSyncDay": "Rezervace ze systému klubu pro tento den zatím nejsou k dispozici.",
+      "noSyncDays": "Rezervace ze systému klubu zatím nejsou k dispozici pro: {{days}}.",
       "lastSync": "Systém klubu synchronizován {{time}}",
       "unmapped_one": "{{count}} kurt z rezervačního systému není propojený s kurtem zde.",
       "unmapped_few": "{{count}} kurty z rezervačního systému nejsou propojené s kurty zde.",

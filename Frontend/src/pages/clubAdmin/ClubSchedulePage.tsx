@@ -340,6 +340,11 @@ export function ClubSchedulePage() {
         canEditCourts={can('courts.edit')}
         isToday={date === today}
         syncing={syncing}
+        missingDays={
+          view === 'week'
+            ? weekDates.filter((_, i) => weekDatas[i]?.hasSnapshotForDate === false).map((d) => fmt.dateMedium(d))
+            : undefined
+        }
       />
       <div className="flex min-h-0 flex-1">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col" {...swipe}>

@@ -293,6 +293,7 @@
       "updating": "Memperbarui pemesanan dari sistem klub…",
       "noSyncToday": "Pemesanan dari sistem klub belum disinkronkan hari ini.",
       "noSyncDay": "Pemesanan dari sistem klub belum tersedia untuk hari ini.",
+      "noSyncDays": "Pemesanan dari sistem klub belum tersedia untuk: {{days}}.",
       "lastSync": "Sistem klub disinkronkan {{time}}",
       "unmapped_other": "{{count}} lapangan dari sistem pemesanan belum ditautkan ke lapangan di sini.",
       "manageCourts": "Tautkan lapangan",

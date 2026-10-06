@@ -303,6 +303,7 @@
       "updating": "Updating bookings from the club's system…",
       "noSyncToday": "Bookings from the club's system haven't synced yet today.",
       "noSyncDay": "Bookings from the club's system aren't available for this day yet.",
+      "noSyncDays": "Bookings from the club's system aren't available yet for: {{days}}.",
       "lastSync": "Club system synced {{time}}",
       "unmapped_one": "{{count}} court from the booking system isn't linked to a court here.",
       "unmapped_other": "{{count}} courts from the booking system aren't linked to courts here.",

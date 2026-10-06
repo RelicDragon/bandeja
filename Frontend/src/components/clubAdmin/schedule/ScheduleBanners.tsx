@@ -34,6 +34,7 @@ export function ScheduleBanners({
   canEditCourts,
   isToday,
   syncing,
+  missingDays,
 }: {
   data: ClubScheduleResponseV2 | undefined;
   integrationType: string | null;
@@ -42,6 +43,8 @@ export function ScheduleBanners({
   isToday: boolean;
   /** The console is refreshing the provider snapshot for this date right now. */
   syncing: boolean;
+  /** Week view: labels of the days that have no provider snapshot (replaces `data.hasSnapshotForDate`). */
+  missingDays?: string[];
 }) {
   const { t } = useTranslation('clubAdmin');
   if (!data) return null;
@@ -60,7 +63,13 @@ export function ScheduleBanners({
         {t('sync.updating')}
       </Banner>
     );
-  } else if (integrated && data.hasSnapshotForDate === false) {
+  } else if (integrated && missingDays && missingDays.length > 0) {
+    items.push(
+      <Banner key="nosync" tone="warn" icon={<RefreshCcw className="h-3.5 w-3.5" aria-hidden />}>
+        {t('sync.noSyncDays', { days: missingDays.join(', ') })}
+      </Banner>
+    );
+  } else if (integrated && !missingDays && data.hasSnapshotForDate === false) {
     // `isLoadingExternalSlots` only means "snapshot older than the freshness window" — it turns
     // true a minute after every sync, so it can't drive the banner; the console's own refresh does.
     items.push(

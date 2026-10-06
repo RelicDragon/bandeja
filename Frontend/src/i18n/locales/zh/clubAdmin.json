@@ -293,6 +293,7 @@
       "updating": "正在从俱乐部系统更新预订…",
       "noSyncToday": "今天尚未同步俱乐部系统的预订。",
       "noSyncDay": "该日期的俱乐部系统预订暂不可用。",
+      "noSyncDays": "以下日期暂未获取到俱乐部系统的预订：{{days}}。",
       "lastSync": "俱乐部系统同步于 {{time}}",
       "unmapped_other": "预订系统中有 {{count}} 片场地未关联到此处的场地。",
       "manageCourts": "关联场地",
