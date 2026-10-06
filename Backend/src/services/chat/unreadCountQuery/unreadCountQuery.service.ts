@@ -60,6 +60,7 @@ async function getScopedGameTotals(
         AND m."deletedAt" IS NULL
         AND m."senderId" IS NOT NULL
         AND m."senderId" <> ${userId}
+        AND m."contextId" IN (SELECT gp."gameId" FROM "GameParticipant" gp WHERE gp."userId" = ${userId})
         AND ${sqlMessageNotReadByUser(userId)}
     `
   );
