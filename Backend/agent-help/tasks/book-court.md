@@ -24,7 +24,7 @@ To manage a game's courts, create the game yourself or ask its owner to make you
 ## Steps in the UI
 
 ### Connect your club account
-1. Profile → "Club bookings"{club.booktime.connectedClubsCardTitle} card → "Bookings" → "Integrations" tab, and connect the club. Or open the club page and tap "Connect account".
+1. Profile → "Club bookings"{club.booktime.connectedClubsCardTitle} card → "Bookings"{club.booktime.connectedClubsCardCta} → "Integrations" tab, and connect the club. Or open the club page and tap "Connect account".
 2. Follow the club's sign-in (code, password or saved phone).
 
 ### Reserve a court while creating a game
@@ -54,7 +54,7 @@ Open the club page and use "Court availability": pick a duration and a day, then
 Tap the game's time or "Change time"{courtReservation.move.title}. For a game with linked reservations or more than one court, a planner shows what happens to each court ("Keep reservation", "Move reservation", "Extend reservation", "Switch court", "Ask the club") and runs the steps. Anything left for you to do appears under "To do at the club".
 
 ### See your reservations
-Profile → "Club bookings"{club.booktime.connectedClubsCardTitle} card → "Bookings" → "Bookings" tab. Unlinked ones also show on the My tab under "Booked courts". On a reservation:
+Profile → "Club bookings"{club.booktime.connectedClubsCardTitle} card → "Bookings"{club.booktime.connectedClubsCardCta} → "Bookings"{club.booktime.tabBookings} tab. Unlinked ones also show on the My tab under "Booked courts". On a reservation:
 - "Link to game": attach it to one of your upcoming games (if the times differ the app offers "Update & link", which moves the game).
 - "Create"{club.booktime.createGameHere}: create a game on it.
 - "Cancel"{club.booktime.cancelBooking} → "Cancel booking?" → "Cancel booking"{club.booktime.cancelConfirmCta}. Not shown for Weltner.

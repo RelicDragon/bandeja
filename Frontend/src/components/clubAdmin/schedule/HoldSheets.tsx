@@ -189,7 +189,12 @@ export function HoldSheet({
       if (target.kind === 'edit') {
         await update.mutateAsync({ holdId: target.hold.holdId, patch: body(force) });
       } else {
-        await create.mutateAsync({ ...body(force), ...(isV2 && form.repeatWeeks > 1 ? { repeatWeeks: form.repeatWeeks } : {}) });
+        await create.mutateAsync({
+          ...body(force),
+          // Opt in to 409 holdOverlap (store builds keep the legacy always-create behaviour).
+          detectOverlap: true,
+          ...(isV2 && form.repeatWeeks > 1 ? { repeatWeeks: form.repeatWeeks } : {}),
+        });
       }
       setOverlap(null);
       onOpenChange(false);

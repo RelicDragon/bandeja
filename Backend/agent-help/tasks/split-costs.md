@@ -41,7 +41,7 @@ Saved defaults for new games: Profile → "Saved payment details".
 3. Each fixture priced "Not Known" now splits by the season's price and uses the season's payment details.
 
 ### Where the split shows
-On the game page, inside the "Participants"{games.participants} card. Your own card shows "Your share", the amount, its state ("Unpaid", "Marked paid" or "Settled"), and who to pay. Organizers also see each player's amount pill, the total and a line like 2 of 4 settled · €10 outstanding. After results are in (and on league fixtures) the card turns into a compact payment list.
+On the game page, inside the "Participants"{games.participants} card. Your own card shows "Your share", the amount, its state ("Unpaid"{cost.state.unpaid}, "Marked paid" or "Settled"), and who to pay. Organizers also see each player's amount pill, the total and a line like 2 of 4 settled · €10 outstanding. After results are in (and on league fixtures) the card turns into a compact payment list.
 
 ### Pay your share (player)
 1. On the game page, in your card in "Participants"{games.participants}, tap "I paid".
@@ -86,7 +86,7 @@ Tap "Remind unpaid" in the "Participants"{games.participants} card. Every player
 - **Can't untick a player who paid with coins**: coin payments are final.
 - **No coin option**: coins are not enabled on the platform, you don't have enough, or the share is already settled.
 - **Can't change who the payer is**: the app has no control for that; it is always the owner.
-- **A player says they paid but shows "Unpaid"**: they haven't tapped "I paid"; the organizer can still confirm them directly.
+- **A player says they paid but shows "Unpaid"{cost.state.unpaid}**: they haven't tapped "I paid"; the organizer can still confirm them directly.
 
 ## What the assistant can do
 

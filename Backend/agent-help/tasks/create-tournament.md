@@ -27,7 +27,7 @@ Set up a tournament: one event with 8 or more players who play several rounds (A
    - "Tournament Participants": pick the number of players (even numbers from 8; default 8).
    - "Singles" or "Doubles" when the sport allows both. For doubles choose "Rotating" or "Fixed Pairs".
    - The "Game Format" card: open it to choose scoring, sets or points, "Matchups" and ranking. Tournaments have no quick template picker; the format is always set here.
-4. Step 2 "Location & time"{createGame.steps.location}: "Select Club", optional court(s), "Date", "Duration" and start time. At clubs with online booking the app offers to reserve the court as part of creating (see topic `book-court`). A repeat row lets you repeat the tournament weekly or every 2 weeks.
+4. Step 2 "Location & time"{createGame.steps.location}: "Select Club", optional court(s), "Date", "Duration"{createGame.duration} and start time. At clubs with online booking the app offers to reserve the court as part of creating (see topic `book-court`). A repeat row lets you repeat the tournament weekly or every 2 weeks.
 5. Step 3 "Players"{createGame.steps.players}: set the "Tournament Player Level" range and use "Invite Players" to pick people; invitations are sent after the tournament is created.
 6. Step 4 "Settings & details": the "Tournament Settings" toggles, then description and "Price"{createGame.price}.
 7. Tap "Create Tournament"{createGame.createButtonTournament} at the bottom (the label changes when a court is reserved at the same time). The tournament is created at once with status ANNOUNCED; there is no draft or publish step.
