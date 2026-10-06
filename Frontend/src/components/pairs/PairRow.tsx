@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Swords } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { PairEntry } from '@/api/pairs';
+import { TeamAvatar } from '@/components/TeamAvatar';
+import { fixedTeamUserTeamTint, UT_ACCENT_TEXT } from '@/utils/fixedTeamUserTeam';
 import { ChemistryChip } from './ChemistryChip';
 import { PairAvatars } from './PairAvatars';
 import {
@@ -11,6 +13,7 @@ import {
   pairSummaryLine,
   usePairFormatters,
 } from './pairFormat';
+import { pairAvatarTeam } from './pairTeam';
 
 export interface PairRowProps {
   entry: PairEntry;
@@ -54,18 +57,23 @@ export const PairRow = memo(({
   const displayNames = pairDisplayName(nameA, nameB);
   const spokenNames = t('pairs.names.spoken', { first: nameA, second: nameB });
   const gamesLabel = t('pairs.gamesCount', { count: entry.games });
+  // A formalized team shows its own face, name and colour; the players move to the subline.
+  const avatarTeam = pairAvatarTeam(entry);
+  const teamName = avatarTeam ? entry.team?.name?.trim() || null : null;
+  const rowNames = teamName ? `${teamName}, ${spokenNames}` : spokenNames;
+  const summary = pairSummaryLine(gamesLabel, formatters.percent(entry.winRate));
 
   const ariaLabel =
     entry.chemistry === null
       ? t('pairs.aria.rowNoChemistry', {
           rank: formatters.count(entry.rank),
-          names: spokenNames,
+          names: rowNames,
           games: gamesLabel,
           winRate: formatters.percentNumber(entry.winRate),
         })
       : t('pairs.aria.row', {
           rank: formatters.count(entry.rank),
-          names: spokenNames,
+          names: rowNames,
           games: gamesLabel,
           winRate: formatters.percentNumber(entry.winRate),
           chemistry: formatters.signed(entry.chemistry),
@@ -89,6 +97,7 @@ export const PairRow = memo(({
         type="button"
         onClick={() => onOpen(entry)}
         aria-label={ariaLabel}
+        style={teamName ? fixedTeamUserTeamTint(entry.team?.color).vars : undefined}
         className="flex min-h-[3.5rem] min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 py-2 text-start transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-800/60"
       >
         <span
@@ -97,13 +106,28 @@ export const PairRow = memo(({
         >
           {formatters.count(entry.rank)}
         </span>
-        <PairAvatars userA={entry.userA} userB={entry.userB} size={40} overlap={24} />
+        {avatarTeam ? (
+          <TeamAvatar
+            team={avatarTeam}
+            size="tile"
+            showRing={false}
+            participantTip={false}
+            className="!h-10 !w-10 !rounded-xl"
+          />
+        ) : (
+          <PairAvatars userA={entry.userA} userB={entry.userB} size={40} overlap={24} />
+        )}
         <span className="flex min-w-0 flex-1 flex-col" aria-hidden>
-          <span className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-            {displayNames}
+          <span
+            className={`truncate text-sm font-semibold ${
+              teamName ? UT_ACCENT_TEXT : 'text-gray-900 dark:text-white'
+            }`}
+            data-testid="pair-row-title"
+          >
+            {teamName ?? displayNames}
           </span>
           <span className="truncate text-xs text-gray-500 dark:text-gray-400">
-            {pairSummaryLine(gamesLabel, formatters.percent(entry.winRate))}
+            {teamName ? `${displayNames} · ${summary}` : summary}
           </span>
         </span>
       </button>

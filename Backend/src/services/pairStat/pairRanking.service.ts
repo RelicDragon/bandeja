@@ -36,6 +36,7 @@ import {
   type PairPeriod,
   type PairSort,
 } from './pairRankingOrder';
+import type { FixedTeamUserTeam } from '../game/fixedTeamUserTeam';
 import { aggregatePairFacts, type PairStatAggregate } from './pairStatAggregate';
 import { collectRivalryMeetings, rankRivalries, type RivalryMeeting } from './pairRivalry';
 import { computePairStreak, type PairStreakGame } from './pairStreak';
@@ -89,6 +90,11 @@ export interface PairEntryDto {
   isViewerPair: boolean;
   /** Existing two-person `UserTeam`, when the pair already formalized one. */
   teamId: string | null;
+  /**
+   * That team's identity (name, colour, photo, split-face cut) so the board can
+   * show the team instead of two loose faces. Additive: older clients ignore it.
+   */
+  team: FixedTeamUserTeam | null;
 }
 
 export interface PairLeaderboardResult {
@@ -252,6 +258,17 @@ async function loadTeamIds(pairs: readonly PairIds[]): Promise<Map<string, strin
   return out;
 }
 
+/** Display fields for the teams `loadTeamIds` found, keyed by team id. */
+async function loadTeamCards(teamIds: Iterable<string>): Promise<Map<string, FixedTeamUserTeam>> {
+  const ids = [...new Set(teamIds)];
+  if (ids.length === 0) return new Map();
+  const rows = await prisma.userTeam.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true, avatar: true, cutAngle: true, color: true, ownerId: true },
+  });
+  return new Map(rows.map((row) => [row.id, row]));
+}
+
 function roundWinRate(wins: number, games: number): number {
   const rate = winRatePercent(wins, games) ?? 0;
   return Math.round(rate * 10) / 10;
@@ -273,6 +290,7 @@ async function hydratePairs(
     soloOverride ? Promise.resolve(soloOverride) : loadSoloCounts(userIds, sport),
     loadTeamIds(pairs),
   ]);
+  const teamCards = await loadTeamCards(teamIds.values());
 
   const fallbackMember = (id: string): PairMemberDto => ({
     id,
@@ -286,6 +304,7 @@ async function hydratePairs(
 
   return ranked.map((row) => {
     const key = pairKey(row.userAId, row.userBId);
+    const teamId = teamIds.get(key) ?? null;
     const { chemistry } = computeChemistry({
       pair: { games: row.games, wins: row.wins },
       soloA: solo.get(row.userAId) ?? { games: 0, wins: 0 },
@@ -304,7 +323,8 @@ async function hydratePairs(
       chemistry,
       lastPlayedAt: row.lastPlayedAt ? row.lastPlayedAt.toISOString() : null,
       isViewerPair: row.userAId === viewerId || row.userBId === viewerId,
-      teamId: teamIds.get(key) ?? null,
+      teamId,
+      team: teamId ? (teamCards.get(teamId) ?? null) : null,
     };
   });
 }
@@ -621,6 +641,7 @@ export async function getPairDetail(
     lastPlayedAt: entry.lastPlayedAt,
     isViewerPair: entry.isViewerPair,
     teamId: entry.teamId,
+    team: entry.team,
     recentGames,
     streak: extras.streak,
     rivalries: extras.rivalries,

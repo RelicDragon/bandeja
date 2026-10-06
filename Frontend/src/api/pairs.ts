@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, Sport } from '@/types';
+import type { ApiResponse, FixedTeamUserTeam, Sport } from '@/types';
 import type { PlayStreakView } from '@/types/playStreak';
 
 /** PRD 352 — the pair leaderboard, the pair sheet and Profile → Your partners. */
@@ -36,6 +36,8 @@ export interface PairEntry {
   isViewerPair: boolean;
   /** Existing two-person `UserTeam`, when the pair already formalized one. */
   teamId: string | null;
+  /** That team's name, colour and photo. Absent on older servers. */
+  team?: FixedTeamUserTeam | null;
 }
 
 export interface PairLeaderboardPage {

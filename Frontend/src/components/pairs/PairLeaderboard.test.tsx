@@ -282,6 +282,25 @@ describe('PairLeaderboard (PRD 352)', () => {
     expect(navigate).toHaveBeenCalledWith('/profile?pair=me%2Czz');
   });
 
+  it('shows a team row by its name and team face, with the players on the subline', () => {
+    const withTeam: PairEntry = {
+      ...entry(4, 'a4', 'b4'),
+      teamId: 'team-7',
+      team: { id: 'team-7', name: 'Net Ninjas', avatar: null, cutAngle: 45, color: 'violet', ownerId: 'a4' },
+    };
+    setQuery([page([...FIVE.slice(0, 3), withTeam, FIVE[4]!])]);
+    render();
+
+    const teamRow = container.querySelector<HTMLElement>('[data-pair-id="a4,b4"]')!;
+    expect(teamRow.querySelector('[data-testid="pair-row-title"]')!.textContent).toBe('Net Ninjas');
+    expect(teamRow.textContent).toContain('a4 & b4');
+    expect(teamRow.querySelector('[data-testid="pair-avatars"]')).toBeNull();
+
+    const plainRow = container.querySelector<HTMLElement>('[data-pair-id="me,zz"]')!;
+    expect(plainRow.querySelector('[data-testid="pair-row-title"]')!.textContent).toBe('me & zz');
+    expect(plainRow.querySelector('[data-testid="pair-avatars"]')).not.toBeNull();
+  });
+
   it('shows the empty state with the 5-game floor and a Find a game action', () => {
     setQuery([page([])]);
     render();

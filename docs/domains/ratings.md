@@ -78,6 +78,8 @@ A **Players · Pairs** mode switch sits under the filter header; changing mode n
 
 **Two read paths, one DTO.** `period=all` reads `PairStat` and sorts, pages and ranks in Postgres, so only one page is ever materialized in Node. `period=10|30` cannot come from `PairStat` (it stores all-time totals), so it re-derives the window from the games themselves, batch by batch, through the **same pure detection rules**, bounded by city × sport × window.
 
+**Team identity.** Each leaderboard entry carries `teamId` and, additively, `team: { id, name, avatar, cutAngle, color, ownerId } | null` (same shape as a fixed team's `userTeam`, `services/game/fixedTeamUserTeam.ts`) for a pair whose two ACCEPTED members form a two-person `UserTeam` (`loadTeamIds` + `loadTeamCards` in `pairRanking.service.ts`). The podium and rows draw that team with `TeamAvatar` (via `avatarTeamFromFixedTeam`), its name in the team colour and the players on the subline; older clients ignore `team`.
+
 **Cursor.** Opaque base64url of `[offset, fingerprint]` where the fingerprint is `cityId:sport:period:sort`. The list is a ranking, so an offset into a total order is the right cursor; the fingerprint means a client that changes sort or period mid-scroll gets `400 errors.pairs.invalidCursor` instead of two interleaved orderings. This deliberately does **not** copy `/rankings/user-context`, which returns the whole leaderboard unpaginated.
 
 ### Chemistry

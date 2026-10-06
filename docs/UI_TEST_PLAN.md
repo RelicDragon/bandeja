@@ -2609,7 +2609,8 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 | LB-PR-04 | Reduced motion | Reduce Motion on | Both switches happen instantly; no cross-fade, no podium rise. `@manual` |
 | LB-PR-05 | Keyboard | External keyboard on the control | One tab stop; arrow keys move between Players and Pairs. `@manual` |
 | LB-PR-06 | Themes + RTL | Light / Dark / Classic / Premium; then العربية | Legible in all four; the two segments mirror and the active pill still sits under the selected label |
-| LB-PR-10 | Podium | At least three ranked pairs, 375 px | Top three as cards above the list, **tallest first** (1st > 2nd > 3rd), no horizontal scroll |
+| LB-PR-10 | Podium | At least three ranked pairs, 375 px | Top three as cards above the list, **tallest first** (1st > 2nd > 3rd), no horizontal scroll. Each card shows its place number, both players' names on two single lines (long names end in "…", never cut off vertically), win rate and games |
+| LB-PR-10a | Team pairs on the board | A ranked pair that has a user team (with and without a team photo / colour), on the podium and in the list | The team's face (photo, or the split face in the team colour), the **team name** in the team colour, and the two players' names on the line under it; a podium team card also gets a light wash of the team colour. Pairs with no team keep the two overlapping faces and "A & B". Long team names end in "…" |
 | LB-PR-11 | Podium card content | Look at each card | Two overlapping avatars with a thin ring — gold, silver, bronze in that order — two lines of names, a large win rate and a small games count |
 | LB-PR-12 | Podium stagger | First paint; then scroll away and back | Cards rise one after another (~80 ms apart) on first paint only; already-mounted cards do not replay. `@manual` |
 | LB-PR-13 | Podium reduced motion | Reduce Motion on | All three in place on the first frame, no stagger. `@manual` |

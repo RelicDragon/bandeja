@@ -26,6 +26,12 @@ vi.mock('@/features/collection/useEquippedGoods', () => ({
   usePrefetchEquippedGoods: () => {},
 }));
 
+// `TeamAvatar` (team pairs) imports the participant tip, which pulls
+// `PlayerAvatar` → `api/axios` → `i18n/config`. The podium never shows the tip.
+vi.mock('@/components/TeamAvatarParticipantTipShell', () => ({
+  TeamAvatarParticipantTipShell: ({ children }: { children: unknown }) => children,
+}));
+
 import type { PairEntry, PairMember } from '@/api/pairs';
 import { PairPodium } from './PairPodium';
 
@@ -91,7 +97,9 @@ describe('PairPodium (PRD 352)', () => {
       'cara,dino',
     ]);
 
-    const heights = cards.map((card) => Number.parseInt(card.style.height, 10));
+    // Minimum heights: a card grows to fit its names instead of clipping them.
+    const heights = cards.map((card) => Number.parseInt(card.style.minHeight, 10));
+    expect(cards.every((card) => card.style.height === '')).toBe(true);
     expect(heights[0]).toBeGreaterThan(heights[1]!);
     expect(heights[1]).toBeGreaterThan(heights[2]!);
   });
@@ -110,6 +118,31 @@ describe('PairPodium (PRD 352)', () => {
     expect(label).toContain('"rank":"1"');
     expect(label).toContain('"winRate":"82"');
     expect(label).toContain('pairs.gamesCount');
+  });
+
+  it('shows both players on their own single-line, ellipsized rows', () => {
+    render(PAIRS);
+    const names = container.querySelector<HTMLElement>('[data-testid="pair-podium-names"]')!;
+    const lines = [...names.children] as HTMLElement[];
+    expect(lines.map((line) => line.textContent)).toEqual(['ana', 'marko']);
+    expect(lines.every((line) => line.className.includes('truncate'))).toBe(true);
+    expect(names.className).not.toContain('line-clamp');
+  });
+
+  it('shows the team name and face for a pair with a user team', () => {
+    const teamPair: PairEntry = {
+      ...entry(1, 'ana', 'marko', 82),
+      teamId: 'team-1',
+      team: { id: 'team-1', name: 'Smash Bros', avatar: null, cutAngle: 45, color: 'coral', ownerId: 'marko' },
+    };
+    render([teamPair, PAIRS[1]!, PAIRS[2]!]);
+    const [first, second] = [...container.querySelectorAll<HTMLElement>('[data-testid="pair-podium-card"]')];
+    const firstNames = first!.querySelector('[data-testid="pair-podium-names"]')!;
+    expect(firstNames.children[0]!.textContent).toBe('Smash Bros');
+    expect(firstNames.children[1]!.textContent).toBe('ana & marko');
+    expect(first!.querySelector('[data-testid="pair-avatars"]')).toBeNull();
+    expect(first!.getAttribute('aria-label')).toContain('Smash Bros');
+    expect(second!.querySelector('[data-testid="pair-avatars"]')).not.toBeNull();
   });
 
   it('renders nothing when there are no pairs', () => {
