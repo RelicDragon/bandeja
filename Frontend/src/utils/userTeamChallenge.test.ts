@@ -7,6 +7,8 @@ import {
   challengeStillIntact,
   challengerTeamsFor,
   isChallengeGameOption,
+  pairRowChallengeState,
+  viewerPendingPair,
 } from './userTeamChallenge';
 
 const user = (id: string) => ({ id, firstName: id, lastName: '' }) as UserTeam['owner'];
@@ -60,6 +62,54 @@ describe('challengerTeamsFor', () => {
 
   it('needs a signed-in viewer', () => {
     expect(challengerTeamsFor(undefined, [], [mine], ['a', 'b'])).toEqual([]);
+  });
+});
+
+describe('pairRowChallengeState', () => {
+  const mine = team('mine', [['me', 'ACCEPTED'], ['mate', 'ACCEPTED']]);
+  const row = (a: string, b: string, teamId: string | null, isViewerPair = false) => ({
+    teamId,
+    isViewerPair,
+    userA: { id: a },
+    userB: { id: b },
+  });
+
+  it('offers a challenge on someone else\'s team', () => {
+    expect(pairRowChallengeState('me', [mine], row('a', 'b', 't1'))).toBe('available');
+  });
+
+  it('explains an ad-hoc pair: no team to challenge', () => {
+    expect(pairRowChallengeState('me', [mine], row('a', 'b', null))).toBe('notTeam');
+  });
+
+  it('explains a team that shares the viewer\'s partner', () => {
+    expect(pairRowChallengeState('me', [mine], row('mate', 'b', 't1'))).toBe('sharesPlayer');
+  });
+
+  it('uses another complete pair of the viewer when one shares a player', () => {
+    const other = team('other', [['me', 'ACCEPTED'], ['x', 'ACCEPTED']]);
+    expect(pairRowChallengeState('me', [mine, other], row('mate', 'b', 't1'))).toBe('available');
+  });
+
+  it('shows nothing on the viewer\'s own pairs or without a complete pair', () => {
+    expect(pairRowChallengeState('me', [mine], row('me', 'mate', 'mine', true))).toBeNull();
+    expect(pairRowChallengeState('me', [mine], row('me', 'q', null))).toBeNull();
+    expect(pairRowChallengeState('me', [], row('a', 'b', 't1'))).toBeNull();
+    expect(pairRowChallengeState(undefined, [mine], row('a', 'b', 't1'))).toBeNull();
+  });
+});
+
+describe('viewerPendingPair', () => {
+  it('finds the viewer\'s pair still waiting for a partner, owned or joined', () => {
+    const half = team('half', [['me', 'ACCEPTED'], ['nobody', 'PENDING']]);
+    expect(viewerPendingPair('me', [], [half])?.id).toBe('half');
+    expect(viewerPendingPair('me', [membership(half, 'me')], [])?.id).toBe('half');
+  });
+
+  it('ignores complete pairs and pairs the viewer was only invited to', () => {
+    const full = team('full', [['me', 'ACCEPTED'], ['mate', 'ACCEPTED']]);
+    const invited = team('invited', [['owner', 'ACCEPTED'], ['me', 'PENDING']]);
+    expect(viewerPendingPair('me', [membership(invited, 'me')], [full])).toBeNull();
   });
 });
 

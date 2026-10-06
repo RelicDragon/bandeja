@@ -126,7 +126,14 @@
       "rowAria": "{{names}}に挑戦",
       "draftTitle": "{{challenger}} vs {{challenged}}",
       "draftHint": "クラブと時間を選んでください。試合作成後、両ペアに招待が届きます。",
-      "draftHintEdited": "メンバーを変更したため、通常の招待として送信されます。"
+      "draftHintEdited": "メンバーを変更したため、通常の招待として送信されます。",
+      "rowUnavailableAria": "{{names}}に挑戦できない理由",
+      "rowNotTeam": "{{names}}はまだチームを作っていません。挑戦できるのはチームだけです。",
+      "rowSharesPlayer": "あなたのチームには{{names}}と同じプレイヤーがいます。",
+      "boardHint": "挑戦はチーム対チームです。パートナーとチームを作って他のチームに挑戦しましょう。",
+      "boardHintPending": "パートナーが承認すると、{{name}}で他のチームに挑戦できます。",
+      "boardHintCreate": "チームを作成",
+      "boardHintOpen": "開く"
     }
   }
 }

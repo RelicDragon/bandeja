@@ -19,6 +19,11 @@ export interface PairRowProps {
   flashing?: boolean;
   /** Present only when the viewer can challenge this row's user team. */
   onChallenge?: (entry: PairEntry) => void;
+  /**
+   * Present when the viewer could challenge pairs but not this one (an ad-hoc
+   * pair, or one sharing their partner): a muted swords button that says why.
+   */
+  onChallengeUnavailable?: (entry: PairEntry) => void;
 }
 
 /**
@@ -31,7 +36,13 @@ export interface PairRowProps {
  * The viewer's own pairs get a soft sky **inline-start** border (`border-s`),
  * so `ar` puts it on the right edge where the row actually starts.
  */
-export const PairRow = memo(({ entry, onOpen, flashing = false, onChallenge }: PairRowProps) => {
+export const PairRow = memo(({
+  entry,
+  onOpen,
+  flashing = false,
+  onChallenge,
+  onChallengeUnavailable,
+}: PairRowProps) => {
   const { t } = useTranslation();
   const formatters = usePairFormatters();
   // "Find my pair" flashes the row. Reduced motion keeps the tint that says
@@ -103,6 +114,16 @@ export const PairRow = memo(({ entry, onOpen, flashing = false, onChallenge }: P
           onClick={() => onChallenge(entry)}
           aria-label={t('teams.challenge.rowAria', { names: spokenNames })}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/12 text-amber-600 transition-[background-color,scale] hover:bg-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 active:scale-95 dark:bg-amber-400/12 dark:text-amber-300"
+        >
+          <Swords size={17} strokeWidth={2.1} aria-hidden />
+        </button>
+      ) : onChallengeUnavailable ? (
+        <button
+          type="button"
+          data-testid="pair-row-challenge-unavailable"
+          onClick={() => onChallengeUnavailable(entry)}
+          aria-label={t('teams.challenge.rowUnavailableAria', { names: spokenNames })}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-300 transition-[background-color,scale] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 active:scale-95 dark:text-gray-600 dark:hover:bg-gray-800"
         >
           <Swords size={17} strokeWidth={2.1} aria-hidden />
         </button>

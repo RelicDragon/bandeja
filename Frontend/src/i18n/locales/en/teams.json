@@ -129,7 +129,14 @@
       "rowAria": "Challenge {{names}}",
       "draftTitle": "{{challenger}} vs {{challenged}}",
       "draftHint": "Pick a club and time. Both pairs are invited once the game is created.",
-      "draftHintEdited": "You changed the players, so this goes out as ordinary invites."
+      "draftHintEdited": "You changed the players, so this goes out as ordinary invites.",
+      "rowUnavailableAria": "Why {{names}} can't be challenged",
+      "rowNotTeam": "{{names}} haven't made a team yet — only teams can be challenged.",
+      "rowSharesPlayer": "Your team shares a player with {{names}}.",
+      "boardHint": "Challenges are team vs team. Make a team with your partner to challenge others.",
+      "boardHintPending": "{{name}} can challenge others once your partner accepts.",
+      "boardHintCreate": "Create team",
+      "boardHintOpen": "Open"
     }
   }
 }

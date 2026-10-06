@@ -8,7 +8,13 @@ import { pairsApi, type PairEntry, type PairPeriod, type PairSort } from '@/api/
 import { userTeamsApi } from '@/api/userTeams';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { ChallengeUserTeamSheet } from '@/components/userTeam/ChallengeUserTeamSheet';
-import { challengerTeamsFor } from '@/utils/userTeamChallenge';
+import {
+  challengerTeamsFor,
+  pairRowChallengeState,
+  viewerPendingPair,
+} from '@/utils/userTeamChallenge';
+import toast from 'react-hot-toast';
+import { PairChallengeHint } from './PairChallengeHint';
 import { toastApiError } from '@/utils/toastApiError';
 import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
@@ -28,7 +34,7 @@ import { PairPodium } from './PairPodium';
 import { PairRow } from './PairRow';
 import { PairSortChips, PairPeriodChips } from './PairSortChips';
 import { PairLeaderboardSkeleton } from './PairLeaderboardSkeleton';
-import { usePairFormatters } from './pairFormat';
+import { memberDisplayName, usePairFormatters } from './pairFormat';
 import type { PairLeaderboardFocusState } from '@/components/userTeam/UserTeamRankChip';
 
 /** Pairs ranked below this need at least this many games together (PRD 352). */
@@ -62,6 +68,7 @@ export const PairLeaderboard = () => {
   const teams = useUserTeamsStore((state) => state.teams);
   const memberships = useUserTeamsStore((state) => state.memberships);
   const refreshUserTeams = useUserTeamsStore((state) => state.refreshAll);
+  const userTeamsLoaded = useUserTeamsStore((state) => state.lastFetchedAt != null);
 
   useEffect(() => {
     void refreshUserTeams();
@@ -123,12 +130,35 @@ export const PairLeaderboard = () => {
 
   // Pair challenge from a row: only for a formal team that is not the viewer's
   // and only when the viewer has a complete pair sharing no player with it.
-  const canChallenge = useCallback(
-    (entry: PairEntry) =>
-      Boolean(entry.teamId) &&
-      !entry.isViewerPair &&
-      challengerTeamsFor(user?.id, memberships, teams, [entry.userA.id, entry.userB.id]).length > 0,
+  // Other rows get a muted swords button that says why (ad-hoc pair, shared
+  // partner); a viewer with no complete pair gets one hint above the board.
+  const viewerReadyPairs = useMemo(
+    () => challengerTeamsFor(user?.id, memberships, teams, []),
     [memberships, teams, user?.id],
+  );
+  const challengeStateOf = useCallback(
+    (entry: PairEntry) => pairRowChallengeState(user?.id, viewerReadyPairs, entry),
+    [user?.id, viewerReadyPairs],
+  );
+  // Said once, above the board, instead of a dead button on every row.
+  const showChallengeHint = Boolean(user?.id) && userTeamsLoaded && viewerReadyPairs.length === 0;
+  const pendingPair = useMemo(
+    () => (showChallengeHint ? viewerPendingPair(user?.id, memberships, teams) : null),
+    [memberships, showChallengeHint, teams, user?.id],
+  );
+  const explainUnavailable = useCallback(
+    (entry: PairEntry) => {
+      const names = t('pairs.names.spoken', {
+        first: memberDisplayName(entry.userA),
+        second: memberDisplayName(entry.userB),
+      });
+      const key =
+        challengeStateOf(entry) === 'sharesPlayer'
+          ? 'teams.challenge.rowSharesPlayer'
+          : 'teams.challenge.rowNotTeam';
+      toast(t(key, { names }), { id: 'pair-row-challenge-unavailable' });
+    },
+    [challengeStateOf, t],
   );
   const openChallenge = useCallback(
     async (entry: PairEntry) => {
@@ -264,18 +294,27 @@ export const PairLeaderboard = () => {
   return (
     <div ref={boardRef} className="relative space-y-3" data-testid="pair-leaderboard">
       {filters}
+      {showChallengeHint ? <PairChallengeHint pendingPair={pendingPair} /> : null}
       <PairPodium pairs={podium} onOpen={openPair} />
 
       <ul className="space-y-1" data-testid="pair-rows">
-        {rows.map((entry) => (
-          <PairRow
-            key={entry.pairId}
-            entry={entry}
-            onOpen={openPair}
-            flashing={flashingPairId === entry.pairId}
-            onChallenge={canChallenge(entry) ? handleChallenge : undefined}
-          />
-        ))}
+        {rows.map((entry) => {
+          const challengeState = challengeStateOf(entry);
+          return (
+            <PairRow
+              key={entry.pairId}
+              entry={entry}
+              onOpen={openPair}
+              flashing={flashingPairId === entry.pairId}
+              onChallenge={challengeState === 'available' ? handleChallenge : undefined}
+              onChallengeUnavailable={
+                challengeState === 'notTeam' || challengeState === 'sharesPlayer'
+                  ? explainUnavailable
+                  : undefined
+              }
+            />
+          );
+        })}
       </ul>
 
       {query.hasNextPage ? (

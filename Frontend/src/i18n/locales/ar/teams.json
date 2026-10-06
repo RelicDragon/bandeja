@@ -141,7 +141,14 @@
       "rowAria": "تحدَّ {{names}}",
       "draftTitle": "{{challenger}} ضد {{challenged}}",
       "draftHint": "اختر ناديًا ووقتًا. تُرسل الدعوة إلى الفريقين عند إنشاء المباراة.",
-      "draftHintEdited": "غيّرت اللاعبين، لذا ستُرسل دعوات عادية."
+      "draftHintEdited": "غيّرت اللاعبين، لذا ستُرسل دعوات عادية.",
+      "rowUnavailableAria": "لماذا لا يمكن تحدي {{names}}",
+      "rowNotTeam": "لم يُكوّن {{names}} فريقًا بعد — يمكن تحدي الفرق فقط.",
+      "rowSharesPlayer": "يشترك فريقك في لاعب مع {{names}}.",
+      "boardHint": "التحديات بين فريق وفريق. كوّن فريقًا مع شريكك لتتحدى الآخرين.",
+      "boardHintPending": "يمكن لـ {{name}} تحدي الآخرين بعد أن يقبل شريكك.",
+      "boardHintCreate": "إنشاء فريق",
+      "boardHintOpen": "فتح"
     }
   }
 }

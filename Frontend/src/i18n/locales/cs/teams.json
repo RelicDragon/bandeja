@@ -135,7 +135,14 @@
       "rowAria": "Vyzvat {{names}}",
       "draftTitle": "{{challenger}} proti {{challenged}}",
       "draftHint": "Vyberte klub a čas. Oba páry dostanou pozvánku po vytvoření zápasu.",
-      "draftHintEdited": "Změnili jste hráče, takže odejdou běžné pozvánky."
+      "draftHintEdited": "Změnili jste hráče, takže odejdou běžné pozvánky.",
+      "rowUnavailableAria": "Proč nelze vyzvat {{names}}",
+      "rowNotTeam": "{{names}} zatím nemají tým — vyzvat lze jen tým.",
+      "rowSharesPlayer": "Váš tým sdílí hráče s {{names}}.",
+      "boardHint": "Výzvy jsou tým proti týmu. Vytvořte tým s parťákem a vyzývejte ostatní.",
+      "boardHintPending": "{{name}} může vyzývat ostatní, jakmile parťák přijme.",
+      "boardHintCreate": "Vytvořit tým",
+      "boardHintOpen": "Otevřít"
     }
   }
 }

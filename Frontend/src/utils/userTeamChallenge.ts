@@ -42,6 +42,53 @@ export function challengerTeamsFor(
   });
 }
 
+/**
+ * What a pair-leaderboard row offers the viewer:
+ * - `available`: someone else's complete user team the viewer can challenge;
+ * - `notTeam`: an ad-hoc pair (no formal two-person team) — nothing to challenge;
+ * - `sharesPlayer`: every complete pair of the viewer's shares a player with it;
+ * - `null`: nothing to show (the viewer's own pair, or a viewer with no complete
+ *   pair — the board explains that once, not on every row).
+ */
+export type PairRowChallengeState = 'available' | 'notTeam' | 'sharesPlayer' | null;
+
+export function pairRowChallengeState(
+  viewerId: string | undefined,
+  viewerReadyPairs: readonly UserTeam[],
+  entry: { teamId: string | null; isViewerPair: boolean; userA: { id: string }; userB: { id: string } },
+): PairRowChallengeState {
+  if (!viewerId || entry.isViewerPair || viewerReadyPairs.length === 0) return null;
+  if (entry.userA.id === viewerId || entry.userB.id === viewerId) return null;
+  if (!entry.teamId) return 'notTeam';
+  const target = new Set([entry.userA.id, entry.userB.id]);
+  const free = viewerReadyPairs.some((team) => !acceptedMemberIds(team).some((id) => target.has(id)));
+  return free ? 'available' : 'sharesPlayer';
+}
+
+/**
+ * The viewer's two-person team that is still waiting for a partner (no complete
+ * pair yet) — the board hint links to it instead of offering to create another.
+ */
+export function viewerPendingPair(
+  viewerId: string | undefined,
+  memberships: UserTeamMembership[],
+  teams: UserTeam[],
+): UserTeam | null {
+  if (!viewerId) return null;
+  const candidates = [
+    ...teams,
+    ...memberships.filter((m) => m.userId === viewerId && m.status === 'ACCEPTED' && m.team).map((m) => m.team!),
+  ];
+  return (
+    candidates.find(
+      (team) =>
+        team.size === 2 &&
+        !isReady(team) &&
+        (team.members ?? []).some((m) => m.userId === viewerId && m.status === 'ACCEPTED'),
+    ) ?? null
+  );
+}
+
 /** Existing games where the challenge fits: a 2v2 GAME with no stranger seated. */
 export function isChallengeGameOption(game: UserTeamInvitableGame): boolean {
   if (!isChallengeableGame(game)) return false;

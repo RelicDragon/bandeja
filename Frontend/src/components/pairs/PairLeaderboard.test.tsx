@@ -63,12 +63,21 @@ vi.mock('@/store/authStore', () => ({
     selector({ user: { id: 'me', currentCity: { id: 'city-1' } } }),
 }));
 // The viewer's own user teams (pair challenge eligibility on rows).
-const teamsState = vi.hoisted(() => ({ teams: [] as unknown[], memberships: [] as unknown[] }));
+const teamsState = vi.hoisted(() => ({
+  teams: [] as unknown[],
+  memberships: [] as unknown[],
+  lastFetchedAt: null as number | null,
+}));
 vi.mock('@/store/userTeamsStore', () => ({
   useUserTeamsStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({ ...teamsState, refreshAll: async () => true }),
 }));
 vi.mock('@/components/userTeam/ChallengeUserTeamSheet', () => ({ ChallengeUserTeamSheet: () => null }));
+vi.mock('@/components/userTeam/CreateUserTeamExplainerSheet', () => ({
+  CreateUserTeamExplainerSheet: () => null,
+}));
+const toastMock = vi.hoisted(() => vi.fn());
+vi.mock('react-hot-toast', () => ({ default: Object.assign(toastMock, { error: vi.fn(), success: vi.fn() }) }));
 vi.mock('@/utils/profileSports', () => ({
   getViewerPrimarySport: () => 'PADEL',
   hasMultipleSportsEnabled: () => false,
@@ -155,6 +164,8 @@ beforeEach(() => {
   observed.targets = [];
   teamsState.teams = [];
   teamsState.memberships = [];
+  teamsState.lastFetchedAt = null;
+  toastMock.mockClear();
 });
 
 afterEach(() => {
@@ -299,5 +310,69 @@ describe('PairLeaderboard (PRD 352)', () => {
     render();
     const buttons = [...container.querySelectorAll<HTMLElement>('[data-testid="pair-row-challenge"]')];
     expect(buttons.map((b) => b.closest<HTMLElement>('[data-pair-id]')!.dataset.pairId)).toEqual(['a4,b4']);
+  });
+
+  it('says why a row cannot be challenged: ad-hoc pair, or one sharing the viewer\'s partner', () => {
+    const accepted = (userId: string) => ({ userId, status: 'ACCEPTED' });
+    teamsState.teams = [{ id: 'my-team', size: 2, members: [accepted('me'), accepted('zz')] }];
+    teamsState.lastFetchedAt = 1;
+    setQuery([
+      page([
+        ...FIVE.slice(0, 3),
+        { ...entry(4, 'a4', 'b4'), teamId: 'their-team' },
+        { ...entry(5, 'me', 'zz', true), teamId: 'my-team' },
+        { ...entry(6, 'zz', 'c6'), teamId: 'shares-my-partner' },
+        entry(7, 'a7', 'b7'),
+      ]),
+    ]);
+    render();
+
+    expect(container.querySelector('[data-testid="pair-challenge-hint"]')).toBeNull();
+    const muted = [
+      ...container.querySelectorAll<HTMLElement>('[data-testid="pair-row-challenge-unavailable"]'),
+    ];
+    expect(muted.map((b) => b.closest<HTMLElement>('[data-pair-id]')!.dataset.pairId)).toEqual([
+      'zz,c6',
+      'a7,b7',
+    ]);
+
+    act(() => muted[0]!.click());
+    expect(toastMock).toHaveBeenLastCalledWith(
+      expect.stringContaining('teams.challenge.rowSharesPlayer'),
+      expect.anything(),
+    );
+    act(() => muted[1]!.click());
+    expect(toastMock).toHaveBeenLastCalledWith(
+      expect.stringContaining('teams.challenge.rowNotTeam'),
+      expect.anything(),
+    );
+  });
+
+  it('tells a viewer with no complete pair once, above the board, instead of on every row', () => {
+    setQuery([page([...FIVE.slice(0, 3), { ...entry(4, 'a4', 'b4'), teamId: 't' }, entry(5, 'a5', 'b5')])]);
+    render();
+    // Teams not loaded yet: no flash of the hint.
+    expect(container.querySelector('[data-testid="pair-challenge-hint"]')).toBeNull();
+
+    act(() => root.unmount());
+    root = createRoot(container);
+    teamsState.lastFetchedAt = 1;
+    render();
+    const hint = container.querySelector<HTMLElement>('[data-testid="pair-challenge-hint"]')!;
+    expect(hint.textContent).toContain('teams.challenge.boardHint');
+    expect(container.querySelectorAll('[data-testid="pair-row-challenge"]')).toHaveLength(0);
+    expect(container.querySelectorAll('[data-testid="pair-row-challenge-unavailable"]')).toHaveLength(0);
+
+    // A pair waiting for the partner: the hint names it and opens it.
+    act(() => root.unmount());
+    root = createRoot(container);
+    teamsState.teams = [
+      { id: 'half', name: 'Half', size: 2, members: [{ userId: 'me', status: 'ACCEPTED' }, { userId: 'p', status: 'PENDING' }] },
+    ];
+    render();
+    const pending = container.querySelector<HTMLElement>('[data-testid="pair-challenge-hint"]')!;
+    expect(pending.textContent).toContain('teams.challenge.boardHintPending');
+    act(() => container.querySelector<HTMLElement>('[data-testid="pair-challenge-hint-action"]')!.click());
+    expect(navigate).toHaveBeenCalledWith('/user-team/half');
   });
 });

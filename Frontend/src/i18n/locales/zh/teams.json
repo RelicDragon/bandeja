@@ -126,7 +126,14 @@
       "rowAria": "挑战 {{names}}",
       "draftTitle": "{{challenger}} 对阵 {{challenged}}",
       "draftHint": "选择球馆和时间。比赛创建后两个组合都会收到邀请。",
-      "draftHintEdited": "你修改了球员，因此将发送普通邀请。"
+      "draftHintEdited": "你修改了球员，因此将发送普通邀请。",
+      "rowUnavailableAria": "为什么无法挑战 {{names}}",
+      "rowNotTeam": "{{names}} 还没有组队——只能挑战队伍。",
+      "rowSharesPlayer": "你的队伍与 {{names}} 有同一名球员。",
+      "boardHint": "挑战是队伍对队伍。和搭档组队后即可挑战其他队伍。",
+      "boardHintPending": "搭档接受后，{{name}} 即可挑战其他队伍。",
+      "boardHintCreate": "创建队伍",
+      "boardHintOpen": "打开"
     }
   }
 }

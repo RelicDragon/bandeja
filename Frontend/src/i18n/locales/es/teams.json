@@ -132,7 +132,14 @@
       "rowAria": "Desafiar a {{names}}",
       "draftTitle": "{{challenger}} vs {{challenged}}",
       "draftHint": "Elige club y hora. Ambas parejas reciben invitación al crear el partido.",
-      "draftHintEdited": "Cambiaste los jugadores, así que se enviarán invitaciones normales."
+      "draftHintEdited": "Cambiaste los jugadores, así que se enviarán invitaciones normales.",
+      "rowUnavailableAria": "Por qué no se puede desafiar a {{names}}",
+      "rowNotTeam": "{{names}} aún no han formado un equipo — solo se puede desafiar a equipos.",
+      "rowSharesPlayer": "Tu equipo comparte un jugador con {{names}}.",
+      "boardHint": "Los desafíos son de equipo contra equipo. Forma un equipo con tu pareja para desafiar a otros.",
+      "boardHintPending": "{{name}} podrá desafiar a otros cuando tu pareja acepte.",
+      "boardHintCreate": "Crear equipo",
+      "boardHintOpen": "Abrir"
     }
   }
 }
