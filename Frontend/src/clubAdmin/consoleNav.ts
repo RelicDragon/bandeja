@@ -75,6 +75,11 @@ export function sectionPath(clubId: string, section: ConsoleSectionId): string {
   return s && s.path ? `${consoleBase(clubId)}/${s.path}` : consoleBase(clubId);
 }
 
+/** Payments ledger (`billing.collect`); lives under the Bookings section. */
+export function paymentsPath(clubId: string): string {
+  return `${consoleBase(clubId)}/payments`;
+}
+
 /** Path segments after `/my-clubs/:clubId`. */
 export function consoleSubPath(pathname: string): string[] {
   const parts = pathname.split('/').filter(Boolean);
@@ -83,7 +88,7 @@ export function consoleSubPath(pathname: string): string[] {
 
 export function sectionFromPath(pathname: string): ConsoleSectionId {
   const first = consoleSubPath(pathname)[0] ?? '';
-  if (first === 'reservations') return 'bookings';
+  if (first === 'reservations' || first === 'payments') return 'bookings';
   if (first === 'courts' || first === 'settings') return 'club';
   const hit = CONSOLE_SECTIONS.find((s) => s.path === first);
   return hit ? hit.id : 'today';

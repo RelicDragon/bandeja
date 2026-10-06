@@ -18,6 +18,7 @@ import { ClubTodayPage } from '@/pages/clubAdmin/ClubTodayPage';
 import { ClubSchedulePage } from '@/pages/clubAdmin/ClubSchedulePage';
 import { ClubBookingsPage } from '@/pages/clubAdmin/ClubBookingsPage';
 import { ClubReportsPage } from '@/pages/clubAdmin/ClubReportsPage';
+import { ClubPaymentsPage } from '@/pages/clubAdmin/ClubPaymentsPage';
 import { ClubHubPage } from '@/pages/clubAdmin/ClubHubPage';
 import { ClubCourtsPage } from '@/pages/clubAdmin/ClubCourtsPage';
 import { ClubSettingsPage } from '@/pages/clubAdmin/ClubSettingsPage';
@@ -78,6 +79,14 @@ function ConsoleRoutes() {
             element={
               <RequireCapability anyOf={['reports.view']}>
                 <ClubReportsPage />
+              </RequireCapability>
+            }
+          />
+          <Route
+            path="payments"
+            element={
+              <RequireCapability anyOf={['billing.collect']}>
+                <ClubPaymentsPage />
               </RequireCapability>
             }
           />

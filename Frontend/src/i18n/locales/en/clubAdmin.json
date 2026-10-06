@@ -125,7 +125,85 @@
       "PARTIAL": "Partly paid",
       "WAIVED": "Waived",
       "VOID": "Void",
-      "NONE": "No charge"
+      "NONE": "No charge",
+      "amountInvalid": "Enter an amount, like 25 or 25.50.",
+      "method": {
+        "CASH": "Cash",
+        "CARD": "Card",
+        "TRANSFER": "Transfer",
+        "ONLINE": "Online",
+        "OTHER": "Other"
+      },
+      "section": {
+        "title": "Payment",
+        "price": "Price",
+        "noPrice": "No price set",
+        "noCharge": "Nothing has been charged for this booking yet.",
+        "createCharge": "Create charge",
+        "amount": "Charged",
+        "paid": "Paid",
+        "balance": "Still owed",
+        "payments": "Payments",
+        "by": "by {{name}}",
+        "takePayment": "Take payment",
+        "waive": "Waive the rest",
+        "voidCharge": "Void charge",
+        "voidPayment": "Void",
+        "voidPaymentAria": "Void the {{amount}} payment",
+        "collectAria": "Take payment for the booking at {{title}}"
+      },
+      "confirm": {
+        "waive": "Forgive the {{amount}} still owed? Payments already taken stay collected.",
+        "voidCharge": "Void this charge? The booking will show as not charged.",
+        "voidPayment": "Void the {{amount}} payment? It stays in the ledger marked as void."
+      },
+      "create": {
+        "title": "Create charge",
+        "amount": "Amount",
+        "fromQuote": "From the club's prices: {{amount}}",
+        "noQuote": "No price is set for this court and time — enter the amount.",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "e.g. Court rental",
+        "submit": "Create charge",
+        "submitAmount": "Charge {{amount}}"
+      },
+      "pay": {
+        "title": "Take payment",
+        "balance": "Still owed: {{amount}}",
+        "amount": "Amount received",
+        "method": "Method",
+        "payer": "Paid by (optional)",
+        "payerPlaceholder": "Name",
+        "note": "Note (optional)",
+        "submit": "Record payment",
+        "submitAmount": "Record {{amount}}",
+        "exceeds": "That's more than what's owed ({{balance}}).",
+        "exceedsServer": "That's more than what's owed now — someone may have just recorded a payment. Check the balance and try again."
+      },
+      "toast": {
+        "chargeCreated": "Charge created",
+        "paymentRecorded": "Payment recorded",
+        "paymentVoided": "Payment voided",
+        "waived": "Balance waived",
+        "chargeVoided": "Charge voided"
+      },
+      "ledger": {
+        "title": "Payments",
+        "open": "See payments",
+        "range": "Period",
+        "preset": {
+          "today": "Today",
+          "yesterday": "Yesterday",
+          "week": "Last 7 days",
+          "month": "Last 30 days"
+        },
+        "from": "From",
+        "to": "To",
+        "collected": "Collected",
+        "booking": "booking {{when}}",
+        "emptyTitle": "No payments",
+        "emptyBody": "Payments taken in this period show up here."
+      }
     },
     "today": {
       "kpi": {
@@ -337,7 +415,95 @@
     "reports": {
       "emptyTitle": "No report data yet",
       "emptyBody": "As bookings come in, occupancy, player and revenue trends for this club build up here.",
-      "openToday": "Go to Today"
+      "openToday": "Go to Today",
+      "emptyPeriodBody": "Nothing was booked or played in this period. Try a longer one.",
+      "timezoneNote": "Days and hours are in the club's time zone ({{zone}}).",
+      "period": {
+        "label": "Period",
+        "days_one": "{{count}} day",
+        "days_other": "{{count}} days",
+        "custom": "Custom",
+        "from": "From",
+        "to": "To",
+        "compare": "Compare",
+        "vs": "vs {{range}}",
+        "max_one": "up to {{count}} day",
+        "max_other": "up to {{count}} days"
+      },
+      "kpi": {
+        "occupancy": "Occupancy",
+        "games": "Games",
+        "players": "Players",
+        "newPlayers": "New players",
+        "collected": "Collected",
+        "rating": "Average rating",
+        "vsPrevious": "{{change}} vs previous",
+        "points": "{{value}} pts",
+        "cancelledNoShows": "{{cancelled}} cancelled · {{noShows}} no-shows",
+        "returning_one": "{{count}} returning",
+        "returning_other": "{{count}} returning",
+        "reviews_one": "{{count}} review",
+        "reviews_other": "{{count}} reviews"
+      },
+      "table": {
+        "day": "Day"
+      },
+      "trend": {
+        "title": "Daily trend",
+        "metric": "Metric",
+        "occupancy": "Occupancy",
+        "games": "Games",
+        "players": "Players",
+        "collected": "Collected"
+      },
+      "heatmap": {
+        "title": "Busiest hours",
+        "caption": "Occupancy by weekday and hour",
+        "hour": "Hour",
+        "cell": "{{day}} {{hour}}: {{pct}}",
+        "legend": "Occupancy"
+      },
+      "courts": {
+        "title": "Courts",
+        "none": "No active courts.",
+        "games_one": "{{count}} game",
+        "games_other": "{{count}} games"
+      },
+      "types": {
+        "title": "Games by type",
+        "none": "No games in this period."
+      },
+      "revenue": {
+        "title": "Revenue",
+        "ledger": "Payments",
+        "expected": "Expected",
+        "charged": "Charged",
+        "collected": "Collected",
+        "outstanding": "Outstanding",
+        "byMethod": "Collected by method",
+        "definitions": "Expected: prices of bookings in the period at today's prices. Charged and outstanding: charges for those bookings. Collected: payments taken in the period."
+      },
+      "regulars": {
+        "title": "Top regulars",
+        "none": "No regulars with a public profile yet.",
+        "games_one": "{{count}} game",
+        "games_other": "{{count}} games"
+      },
+      "rating": {
+        "title": "Rating trend",
+        "empty": "No reviews in this period.",
+        "week": "Week of {{date}}",
+        "none": "No reviews",
+        "value": "{{avg}} ★ ({{count}})"
+      },
+      "export": {
+        "title": "Export",
+        "body": "Download a CSV for {{range}}.",
+        "bookings": "Bookings",
+        "payments": "Payments",
+        "players": "Players",
+        "done": "Download started"
+      }
     },
     "club": {
       "settingsTitle": "Settings",

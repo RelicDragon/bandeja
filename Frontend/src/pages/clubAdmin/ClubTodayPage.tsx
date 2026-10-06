@@ -4,6 +4,7 @@
  * numbers are derived from today's schedule (no week chart in that mode).
  */
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -25,7 +26,7 @@ import {
 import type { ClubDashboard } from '@shared/clubAdmin/contract';
 import { useClubConsole } from '@/clubAdmin/clubConsoleContextValue';
 import { useConsoleHeader } from '@/clubAdmin/consoleChrome';
-import { sectionPath } from '@/clubAdmin/consoleNav';
+import { paymentsPath, sectionPath } from '@/clubAdmin/consoleNav';
 import { BookingRow } from '@/components/clubAdmin/console/BookingRow';
 import { ConsolePullToRefresh } from '@/components/clubAdmin/console/ConsolePullToRefresh';
 import { useConsoleFormat } from '@/components/clubAdmin/console/format';
@@ -137,12 +138,28 @@ export function ClubTodayPage() {
                       value={fmt.money(k.expectedRevenueCents ?? 0, k.currency)}
                     />
                     {k.collectedCents != null ? (
-                      <KpiTile
-                        icon={Wallet}
-                        label={t('today.kpi.collected')}
-                        tone="ok"
-                        value={fmt.money(k.collectedCents, k.currency)}
-                      />
+                      can('billing.collect') ? (
+                        <Link
+                          to={paymentsPath(clubId)}
+                          className="block rounded-2xl transition-opacity duration-150 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                          aria-label={`${t('today.kpi.collected')}: ${fmt.money(k.collectedCents, k.currency)} — ${t('billing.ledger.title')}`}
+                        >
+                          <KpiTile
+                            icon={Wallet}
+                            label={t('today.kpi.collected')}
+                            tone="ok"
+                            value={fmt.money(k.collectedCents, k.currency)}
+                            hint={t('billing.ledger.open')}
+                          />
+                        </Link>
+                      ) : (
+                        <KpiTile
+                          icon={Wallet}
+                          label={t('today.kpi.collected')}
+                          tone="ok"
+                          value={fmt.money(k.collectedCents, k.currency)}
+                        />
+                      )
                     ) : null}
                   </>
                 ) : null}

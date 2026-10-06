@@ -260,6 +260,7 @@ export function ClubSchedulePage() {
       nowMs={nowMs}
       canEdit={canEdit}
       deleting={deleteHold.isPending}
+      nestedSheets={!isLg}
       actions={{
         onOpenGame: (gameId) => navigate(`/games/${gameId}`),
         onMessageHost: (hostId) => void messageHost(hostId),

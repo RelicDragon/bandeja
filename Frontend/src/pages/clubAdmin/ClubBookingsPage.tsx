@@ -4,11 +4,11 @@
  * the legacy upcoming list with client-side filters (no Past, no payment filter).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ListChecks, Search } from 'lucide-react';
-import type { BookingKind, BookingScope, ChargeStatus } from '@shared/clubAdmin/contract';
+import { HandCoins, ListChecks, Search, Wallet } from 'lucide-react';
+import type { BookingItem, BookingKind, BookingScope, ChargeStatus } from '@shared/clubAdmin/contract';
 import { addDaysToDate } from '@shared/clubAdmin/clubTime';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { useClubAdminScrollContainer } from '@/components/clubAdmin/ClubAdminScrollContext';
@@ -18,10 +18,13 @@ import { ConsolePullToRefresh } from '@/components/clubAdmin/console/ConsolePull
 import { FilterChips, SegmentedControl, inputClass } from '@/components/clubAdmin/console/controls';
 import { useConsoleFormat } from '@/components/clubAdmin/console/format';
 import { EmptyState, ErrorState, RowList, SkeletonRows } from '@/components/clubAdmin/console/primitives';
-import { buttonClass, cx } from '@/components/clubAdmin/console/classes';
+import { buttonClass, cx, iconButtonClass } from '@/components/clubAdmin/console/classes';
 import { useClubConsole } from '@/clubAdmin/clubConsoleContextValue';
 import { useConsoleHeader } from '@/clubAdmin/consoleChrome';
-import { sectionPath } from '@/clubAdmin/consoleNav';
+import { HeaderActions } from '@/clubAdmin/HeaderActions';
+import { BookingPaymentSheet } from '@/components/clubAdmin/billing/BookingPayment';
+import { isCollectable } from '@/components/clubAdmin/billing/billingModel';
+import { paymentsPath, sectionPath } from '@/clubAdmin/consoleNav';
 import { clubAdminKeys, flattenBookings, useClubBookingsQuery, useClubScheduleQuery, type BookingsFilters } from '@/queries/clubAdmin';
 
 const KINDS: BookingKind[] = ['game', 'hold', 'external'];
@@ -39,6 +42,8 @@ export function ClubBookingsPage() {
   const scrollRef = useClubAdminScrollContainer();
   const [params, setParams] = useSearchParams();
   useConsoleHeader({ title: t('nav.bookings') });
+  const [payItem, setPayItem] = useState<BookingItem | null>(null);
+  const canCollect = can('billing.collect');
 
   const scope: BookingScope = params.get('scope') === 'past' ? 'past' : 'upcoming';
   const courtId = params.get('court');
@@ -110,6 +115,14 @@ export function ClubBookingsPage() {
 
   return (
     <ConsolePullToRefresh onRefresh={() => qc.invalidateQueries({ queryKey: clubAdminKeys.bookingsAll(clubId) })}>
+      {canCollect && !legacy ? (
+        <HeaderActions>
+          <Link to={paymentsPath(clubId)} className={iconButtonClass} aria-label={t('billing.ledger.title')} title={t('billing.ledger.title')}>
+            <Wallet className="h-5 w-5" aria-hidden />
+          </Link>
+        </HeaderActions>
+      ) : null}
+      <BookingPaymentSheet item={payItem} onOpenChange={(o) => !o && setPayItem(null)} fmt={fmt} />
       <div className="mx-auto w-full max-w-3xl space-y-3 p-4 pb-8 lg:p-6">
         <div className="flex flex-wrap items-center gap-2">
           {!legacy || scope === 'past' ? (
@@ -195,13 +208,26 @@ export function ClubBookingsPage() {
                 </h2>
                 <RowList>
                   {g.items.map((b) => (
-                    <BookingRow
-                      key={b.id}
-                      item={b}
-                      fmt={fmt}
-                      nowMs={nowMs}
-                      to={`${schedule}?date=${g.date}&focus=${encodeURIComponent(b.id)}`}
-                    />
+                    <div key={b.id} className="flex items-stretch">
+                      <div className="min-w-0 flex-1">
+                        <BookingRow
+                          item={b}
+                          fmt={fmt}
+                          nowMs={nowMs}
+                          to={`${schedule}?date=${g.date}&focus=${encodeURIComponent(b.id)}`}
+                        />
+                      </div>
+                      {canCollect && !legacy && isCollectable(b.billing) ? (
+                        <button
+                          type="button"
+                          className="flex w-12 shrink-0 items-center justify-center border-s border-border text-primary-600 transition-colors duration-150 hover:bg-muted/60 focus-visible:bg-muted focus-visible:outline-none dark:text-primary-400"
+                          onClick={() => setPayItem(b)}
+                          aria-label={t('billing.section.collectAria', { title: fmt.timeRange(b.startTime, b.endTime) })}
+                        >
+                          <HandCoins className="h-5 w-5" aria-hidden />
+                        </button>
+                      ) : null}
+                    </div>
                   ))}
                 </RowList>
               </section>

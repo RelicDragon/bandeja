@@ -13,6 +13,8 @@ import { BillingChip } from '../console/controls';
 import { VISUAL_CLASS, bookingVisual, personName, useBookingText } from '../console/bookingText';
 import type { ConsoleFormat } from '../console/format';
 import { buttonClass, cx } from '../console/classes';
+import { BookingPaymentSection } from '../billing/BookingPayment';
+import { chargeSourceOf } from '../billing/billingModel';
 import type { HoldDeleteScope } from '@shared/clubAdmin/contract';
 
 export interface BookingDetailActions {
@@ -40,6 +42,7 @@ export function BookingDetail({
   canEdit,
   actions,
   deleting,
+  nestedSheets,
 }: {
   slot: ScheduleSlotV2;
   courtName: string;
@@ -48,6 +51,8 @@ export function BookingDetail({
   canEdit: boolean;
   actions: BookingDetailActions;
   deleting?: boolean;
+  /** Rendered inside a sheet (phones): the payment sheets open nested. */
+  nestedSheets?: boolean;
 }) {
   const { t } = useTranslation('clubAdmin');
   const text = useBookingText();
@@ -55,6 +60,8 @@ export function BookingDetail({
   const visual = bookingVisual(slot);
   const past = Date.parse(slot.endTime) <= nowMs;
   const editable = canEdit && !past;
+  const chargeSource = chargeSourceOf(slot);
+  const billing = 'billing' in slot ? slot.billing : null;
 
   return (
     <div className="space-y-4">
@@ -121,6 +128,8 @@ export function BookingDetail({
         ) : null}
         {slot.type === 'external' ? <Row label={t('detail.source')}>{t('kind.externalHint')}</Row> : null}
       </dl>
+
+      {chargeSource && billing ? <BookingPaymentSection source={chargeSource} billing={billing} fmt={fmt} nested={nestedSheets} /> : null}
 
       {past ? <p className="text-sm text-muted-foreground">{t('detail.pastReadOnly')}</p> : null}
 
