@@ -52,6 +52,31 @@ function marketChannel(id: string, unread: number, role: 'buyer' | 'seller'): Ch
 }
 
 describe('deriveDisplayedChats', () => {
+  it('hides conversation rows with no messages, draft or unread', () => {
+    const game = (id: string, lastMessage: Game['lastMessage']): ChatItem => ({
+      type: 'game',
+      data: { id, name: id, updatedAt: '2026-07-09', status: 'ANNOUNCED', lastMessage } as Game,
+      lastMessageDate: new Date('2026-07-09'),
+      unreadCount: 0,
+    });
+    const threads = [
+      game('empty', null),
+      game('active', { preview: 'hi', updatedAt: '2026-07-09' } as Game['lastMessage']),
+      userThread('dm-unread', 1, '2026-07-01'),
+      userThread('dm-empty', 0, '2026-07-01'),
+    ];
+    const displayed = deriveDisplayedChats({
+      chatsFilter: 'users',
+      threads,
+      unreadFilterActive: false,
+      marketChatRole: 'buyer',
+      debouncedSearchQuery: '',
+      userId: 'me',
+      ...displayedChatsDefaults(),
+    });
+    expect(displayed.map((c) => (c.type === 'contact' ? '' : c.data.id))).toEqual(['active', 'dm-unread']);
+  });
+
   it('shows all unread market threads when unread filter overrides role filter', () => {
     const threads = [
       marketChannel('buyer-unread', 2, 'buyer'),

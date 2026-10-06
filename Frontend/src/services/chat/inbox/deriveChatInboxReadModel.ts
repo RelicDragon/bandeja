@@ -121,18 +121,25 @@ function deriveMarketUnreadChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
   return sorted.map((c) => withResolvedUnreadCount(c, unreadOpts)) as ChatItem[];
 }
 
+/** Conversation rows with no message and no draft ("No messages yet") stay out of the list until their first message lands. */
+export function hasThreadActivity(item: ChatItem): boolean {
+  if (item.type !== 'user' && item.type !== 'group' && item.type !== 'game') return true;
+  return !!item.data.lastMessage || !!item.draft || item.unreadCount > 0;
+}
+
 export function deriveDisplayedChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
   const { chatsFilter, threads, unreadFilterActive, unreadStoreWarm, displayedByContext } = opts;
   if (chatsFilter === 'market') {
     if (unreadFilterActive) return deriveMarketUnreadChats(opts);
     return deriveMarketFilteredByRoleAndSearch(opts);
   }
-  if (!unreadFilterActive) return threads;
+  const visible = threads.filter(hasThreadActivity);
+  if (!unreadFilterActive) return visible;
   const unreadOpts: UnreadFilterCountOpts = {
     unreadStoreWarm,
     displayedByContext,
   };
-  return threads.filter(
+  return visible.filter(
     (c) => isUnreadFilterableThread(c) && resolveThreadUnreadCountForFilter(c, unreadOpts) > 0
   );
 }

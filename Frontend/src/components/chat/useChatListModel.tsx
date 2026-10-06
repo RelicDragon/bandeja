@@ -18,6 +18,7 @@ import { CHAT_LIST_PULL_TRANSITION_S } from '@/components/chat/chatListMotion';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import type { ChatListViewModel } from '@/components/chat/chatListViewModel.types';
 import { useChatInbox } from '@/services/chat/inbox/useChatInbox';
+import { hasThreadActivity } from '@/services/chat/inbox/deriveChatInboxReadModel';
 import { useChatListSearchUrlSync } from '@/components/chat/useChatListSearchUrlSync';
 import { useChatListContactSections } from '@/components/chat/useChatListContactSections';
 import { useChatListSearchPresenter } from '@/components/chat/useChatListSearchPresenter';
@@ -303,7 +304,7 @@ export function useChatListModel({
   const showChatsEmpty =
     !contactsMode &&
     !isSearchMode &&
-    (chatsFilter === 'market' ? readModel.displayedChats.length === 0 : threads.length === 0) &&
+    (chatsFilter === 'market' ? readModel.displayedChats.length === 0 : !threads.some(hasThreadActivity)) &&
     !loading;
 
   return {
