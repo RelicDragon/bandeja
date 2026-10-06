@@ -2,26 +2,10 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ClubAdminService } from './clubAdmin.service';
 import { ClubAdminClubsListResponse } from './clubAdmin.types';
-import { parseClubSportsInput, assertClubSportsCoverCourtSports } from '../../shared/clubSports';
-
-const CLUB_ADMIN_PATCH_KEYS = [
-  'name',
-  'description',
-  'phone',
-  'email',
-  'website',
-  'address',
-  'openingTime',
-  'closingTime',
-  'amenities',
-  'latitude',
-  'longitude',
-  'defaultSlotMinutes',
-  'cancellationNoticeHours',
-  'policyText',
-  'photos',
-  'sports',
-] as const;
+import { buildClubPatchData } from './clubAdminClubPatch';
+import { clubAdminValidation } from './clubAdminErrors';
+import { clubDayWindowUtc, clubLocalDate } from '@bandeja/shared/clubAdmin/clubTime';
+import { gameBelongsToClubWhere } from './clubAdminGameScope';
 
 export class ClubAdminClubService {
   static async listClubs(
@@ -42,11 +26,6 @@ export class ClubAdminClubService {
       ...(q ? { name: { contains: q, mode: 'insensitive' as const } } : {}),
     };
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(todayStart);
-    todayEnd.setDate(todayEnd.getDate() + 1);
-
     const [total, clubs] = await Promise.all([
       prisma.club.count({ where }),
       prisma.club.findMany({
@@ -61,21 +40,22 @@ export class ClubAdminClubService {
       }),
     ]);
 
-    const pageClubIds = clubs.map((c) => c.id);
-    const bookingsToday =
-      pageClubIds.length === 0
-        ? []
-        : await prisma.game.groupBy({
-            by: ['clubId'],
-            where: {
-              clubId: { in: pageClubIds },
-              timeIsSet: true,
-              status: { in: ['ANNOUNCED', 'STARTED'] },
-              startTime: { gte: todayStart, lt: todayEnd },
-            },
-            _count: { id: true },
-          });
-    const countByClub = new Map(bookingsToday.map((b) => [b.clubId!, b._count.id]));
+    // "Today" is each club's own local day; every non-archived game at the club counts.
+    const now = new Date();
+    const counts = await Promise.all(
+      clubs.map((c) => {
+        const { start, end } = clubDayWindowUtc(clubLocalDate(now, c.city.timezone), c.city.timezone);
+        return prisma.game.count({
+          where: {
+            ...gameBelongsToClubWhere(c.id),
+            timeIsSet: true,
+            status: { not: 'ARCHIVED' },
+            startTime: { gte: start, lt: end },
+          },
+        });
+      })
+    );
+    const countByClub = new Map(clubs.map((c, i) => [c.id, counts[i]]));
 
     return {
       items: clubs.map((c) => ({
@@ -113,25 +93,9 @@ export class ClubAdminClubService {
 
   static async patchClub(userId: string, clubId: string, body: Record<string, unknown>) {
     await ClubAdminService.assertClubAdmin(userId, clubId);
-    const data: Record<string, unknown> = {};
-    for (const key of CLUB_ADMIN_PATCH_KEYS) {
-      if (body[key] !== undefined) data[key] = body[key];
-    }
+    const data = await buildClubPatchData(clubId, body ?? {});
     if (Object.keys(data).length === 0) {
-      throw new ApiError(400, 'No valid fields to update');
-    }
-
-    if (data.sports !== undefined) {
-      const sports = parseClubSportsInput(data.sports);
-      const courts = await prisma.court.findMany({
-        where: { clubId },
-        select: { sport: true },
-      });
-      assertClubSportsCoverCourtSports(
-        sports,
-        courts.map((c) => c.sport),
-      );
-      data.sports = sports;
+      throw clubAdminValidation('body', 'No valid fields to update');
     }
 
     return prisma.club.update({

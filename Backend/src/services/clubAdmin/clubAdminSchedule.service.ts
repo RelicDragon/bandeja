@@ -12,6 +12,16 @@ import {
   mapHoldBlockToScheduleSlot,
 } from '../game/courtOccupancy.service';
 import { ScheduleConflict, ScheduleSlot } from './clubAdmin.types';
+import { clubDayWindowUtc, clubLocalDate, isClubDate } from '@bandeja/shared/clubAdmin/clubTime';
+import { clubAdminNotFound, clubAdminValidation } from './clubAdminErrors';
+import { gameBelongsToClubWhere } from './clubAdminGameScope';
+
+/** Providers whose busy snapshots live in our tables (`Club*BusySnapshot`). */
+export const SNAPSHOT_INTEGRATIONS: ReadonlySet<ClubIntegrationType> = new Set([
+  ClubIntegrationType.BOOKTIME,
+  ClubIntegrationType.PADELOO,
+  ClubIntegrationType.KLIKTEREN,
+]);
 
 export { UNASSIGNED_COURT_KEY };
 
@@ -65,7 +75,7 @@ export function detectScheduleConflicts(slots: ScheduleSlot[]): ScheduleConflict
 export class ClubAdminScheduleService {
   static async buildDaySchedule(
     clubId: string,
-    dateStr: string,
+    dateInput: string | undefined,
     courtId?: string
   ): Promise<{
     slots: ScheduleSlot[];
@@ -75,20 +85,24 @@ export class ClubAdminScheduleService {
     snapshotFetchedAt: string | null;
     hasSnapshotForDate: boolean;
     unmappedExternalCourtCount: number;
+    date: string;
+    timezone: string;
   }> {
-    const dayStart = new Date(dateStr);
-    if (Number.isNaN(dayStart.getTime())) {
-      dayStart.setHours(0, 0, 0, 0);
-    } else {
-      dayStart.setUTCHours(0, 0, 0, 0);
-    }
-    const dayEnd = new Date(dayStart);
-    dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { integrationType: true, city: { select: { timezone: true } } },
+    });
+    if (!club) throw clubAdminNotFound('Club');
+    const timezone = club.city.timezone;
+    if (dateInput !== undefined && !isClubDate(dateInput)) throw clubAdminValidation('date', 'must be yyyy-MM-dd');
+    const dateStr = dateInput ?? clubLocalDate(new Date(), timezone);
+    // Club-local calendar day (23 h / 25 h on DST days) — games, holds and snapshots agree.
+    const { start: dayStart, end: dayEnd } = clubDayWindowUtc(dateStr, timezone);
 
     const gameWhere: Prisma.GameWhereInput = {
       timeIsSet: true,
       status: { in: [...ACTIVE_GAME_STATUSES] },
-      OR: [{ clubId }, { court: { clubId } }],
+      ...gameBelongsToClubWhere(clubId),
       startTime: { lt: dayEnd },
       endTime: { gt: dayStart },
     };
@@ -98,11 +112,8 @@ export class ClubAdminScheduleService {
       ];
     }
 
-    const club = await prisma.club.findUnique({
-      where: { id: clubId },
-      select: { integrationType: true },
-    });
-    const integrationType = club?.integrationType ?? ClubIntegrationType.BOOKTIME;
+    const integrationType = club.integrationType;
+    const hasSnapshots = integrationType != null && SNAPSHOT_INTEGRATIONS.has(integrationType);
 
     const [games, occupancyResult, dateMeta, unmappedCount] = await Promise.all([
       prisma.game.findMany({
@@ -129,8 +140,10 @@ export class ClubAdminScheduleService {
         gameCourtFilter: 'admin',
         sources: { games: false, holds: true, externals: true },
       }),
-      getSnapshotDateMeta(clubId, dateStr, integrationType ?? ClubIntegrationType.BOOKTIME),
-      countUnmappedExternalCourts(clubId, integrationType ?? ClubIntegrationType.BOOKTIME),
+      hasSnapshots
+        ? getSnapshotDateMeta(clubId, dateStr, integrationType)
+        : Promise.resolve({ snapshotFetchedAt: null, hasSnapshotForDate: false }),
+      hasSnapshots ? countUnmappedExternalCourts(clubId, integrationType) : Promise.resolve(0),
     ]);
 
     const slots: ScheduleSlot[] = [];
@@ -204,6 +217,8 @@ export class ClubAdminScheduleService {
       snapshotFetchedAt: dateMeta.snapshotFetchedAt?.toISOString() ?? null,
       hasSnapshotForDate: dateMeta.hasSnapshotForDate,
       unmappedExternalCourtCount: unmappedCount,
+      date: dateStr,
+      timezone,
     };
   }
 }

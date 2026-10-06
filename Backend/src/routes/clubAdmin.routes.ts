@@ -1,8 +1,6 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { authenticate, requireClubAdmin } from '../middleware/auth';
-import { validate } from '../middleware/validate';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 import * as clubAdminController from '../controllers/clubAdmin.controller';
 
@@ -53,9 +51,6 @@ router.get(
 router.post(
   '/clubs/:clubId/courts',
   requireClubAdmin('clubId'),
-  validate([
-    body('name').notEmpty().withMessage('Name is required'),
-  ]),
   clubAdminController.createClubAdminCourt
 );
 
@@ -63,12 +58,6 @@ router.post(
   '/clubs/:clubId/holds',
   clubAdminMutateLimiter,
   requireClubAdmin('clubId'),
-  validate([
-    body('courtId').notEmpty(),
-    body('startTime').notEmpty(),
-    body('endTime').notEmpty(),
-    body('label').notEmpty(),
-  ]),
   clubAdminController.createClubAdminHold
 );
 
@@ -76,7 +65,6 @@ router.post(
   '/clubs/:clubId/games/:gameId/cancel',
   clubAdminMutateLimiter,
   requireClubAdmin('clubId'),
-  validate([body('reason').notEmpty()]),
   clubAdminController.cancelClubAdminGame
 );
 
@@ -84,14 +72,13 @@ router.post(
   '/clubs/:clubId/games/:gameId/clear-court',
   clubAdminMutateLimiter,
   requireClubAdmin('clubId'),
-  validate([body('reason').notEmpty()]),
   clubAdminController.clearClubAdminGameCourt
 );
 
 router.patch('/courts/:courtId', clubAdminController.patchClubAdminCourtWithAuth);
 router.patch('/courts/:courtId/deactivate', clubAdminController.deactivateClubAdminCourtWithAuth);
 
-router.patch('/holds/:holdId', clubAdminController.patchClubAdminHold);
-router.delete('/holds/:holdId', clubAdminController.deleteClubAdminHold);
+router.patch('/holds/:holdId', clubAdminMutateLimiter, clubAdminController.patchClubAdminHold);
+router.delete('/holds/:holdId', clubAdminMutateLimiter, clubAdminController.deleteClubAdminHold);
 
 export default router;

@@ -19,6 +19,7 @@ import notificationService from '../notification.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import type { TimePolicy } from '../gameCourt/courtSlots.tx';
 import { assertNoCourtClashInTx } from '../gameCourt/courtClash.service';
+import { gameBelongsToClubWhere } from '../clubAdmin/clubAdminGameScope';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
 import { publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 import { resolvePaymentMethodWrite } from '../gameCost/paymentMethodsWrite';
@@ -179,7 +180,36 @@ export type GameUpdateOptions = {
     beforeSync?: (tx: Prisma.TransactionClient) => Promise<void>;
     afterSync?: (tx: Prisma.TransactionClient) => Promise<void>;
   };
+  /**
+   * Club admin console (`clear-court`): authorise as a club admin of `clubId` instead of
+   * game OWNER/ADMIN. Narrow on purpose — only `CLUB_ADMIN_SCOPED_UPDATE_KEYS` may change,
+   * the game must belong to the club (`gameBelongsToClubWhere`) and the actor must be its
+   * club admin (or a platform admin). Never pass `isAdmin = true` for this.
+   */
+  clubAdminScope?: { clubId: string };
 };
+
+/** Fields a club admin may change through `clubAdminScope` (court/time release only). */
+export const CLUB_ADMIN_SCOPED_UPDATE_KEYS = new Set(['courtId', 'timeIsSet']);
+
+async function assertClubAdminScopedUpdate(gameId: string, userId: string, clubId: string, data: Record<string, unknown>) {
+  const extra = Object.keys(data).filter((key) => data[key] !== undefined && !CLUB_ADMIN_SCOPED_UPDATE_KEYS.has(key));
+  if (extra.length > 0) {
+    throw new ApiError(403, 'Club admins can only release the court of a game', true, {
+      code: 'clubAdmin.forbidden',
+      fields: extra,
+    });
+  }
+  const [actor, membership, game] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true } }),
+    prisma.clubAdmin.findUnique({ where: { userId_clubId: { userId, clubId } }, select: { id: true } }),
+    prisma.game.findFirst({ where: { id: gameId, ...gameBelongsToClubWhere(clubId) }, select: { id: true } }),
+  ]);
+  if (!game) throw new ApiError(404, 'Game not found', true, { code: 'clubAdmin.notFound' });
+  if (!actor?.isAdmin && !membership) {
+    throw new ApiError(403, 'clubAdmin.forbidden', true, { code: 'clubAdmin.forbidden' });
+  }
+}
 
 export class GameUpdateService {
   static async updateGame(
@@ -213,7 +243,10 @@ export class GameUpdateService {
     const isOnlyResultsStatusUpdate = Object.keys(data).length === 1 && data.resultsStatus !== undefined;
     const formatOnlyUpdate = isGameFormatOnlyUpdate(data);
 
-    if (isOnlyResultsStatusUpdate || formatOnlyUpdate) {
+    if (options.clubAdminScope) {
+      if (isAdmin) throw new Error('clubAdminScope must not be combined with isAdmin');
+      await assertClubAdminScopedUpdate(id, userId, options.clubAdminScope.clubId, data);
+    } else if (isOnlyResultsStatusUpdate || formatOnlyUpdate) {
       await canModifyResults(id, userId, isAdmin);
     } else {
       // For non-resultsStatus updates, check game exists and OWNER/ADMIN permission

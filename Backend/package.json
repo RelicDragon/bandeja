@@ -117,6 +117,7 @@
     "test:chat-message-type": "ts-node --transpile-only src/services/chat/resolveOutgoingChatMessageType.test.ts",
     "test:chat-sync-pagination": "../scripts/run-heavy ts-node --transpile-only src/services/chat/gameChatSyncPagination.test.ts",
     "test:city-currency": "ts-node --transpile-only src/utils/currencyFromCountry.test.ts && ts-node --transpile-only src/services/user/initialCurrencyAssignment.test.ts",
+    "test:club-admin": "../scripts/run-heavy sh -c 'for f in src/services/clubAdmin/__tests__/*.test.ts; do ts-node -r dotenv/config --transpile-only \"$f\" || exit 1; done'",
     "test:club-page": "ts-node --transpile-only src/services/clubPublic/clubPublic.projection.test.ts",
     "test:cors-http-e2e": "JWT_SECRET='cors-e2e-reverify-secret-min-32-chars!!' NODE_ENV=production ts-node --transpile-only src/config/corsHttp.e2e.test.ts",
     "test:cost-split": "ts-node --transpile-only src/services/gameCost/paymentMethodsWrite.test.ts && ts-node --transpile-only src/services/gameCost/costReminderCopy.test.ts && ts-node --transpile-only src/services/gameCost/costReminderDedupe.test.ts && ts-node --transpile-only src/services/gameCost/costShareMath.test.ts && ts-node --transpile-only src/services/gameCost/costSharePermissions.test.ts && ts-node --transpile-only src/services/gameCost/costSummaryProjection.test.ts",

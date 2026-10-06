@@ -102,7 +102,7 @@ async function loadCountriesAndTimezones() {
             const currentValue = countrySelect.value;
             countrySelect.innerHTML = '<option value="">Select Country</option>' +
                 countriesResponse.data.map(country => 
-                    `<option value="${country}">${country}</option>`
+                    `<option value="${escapeHtmlAttr(country)}">${escapeHtml(country)}</option>`
                 ).join('');
             if (currentValue) countrySelect.value = currentValue;
         } else {
@@ -114,7 +114,7 @@ async function loadCountriesAndTimezones() {
             const currentValue = timezoneSelect.value;
             timezoneSelect.innerHTML = `<option value="">Default (${timezonesResponse.default})</option>` +
                 timezonesResponse.data.map(timezone => 
-                    `<option value="${timezone}">${timezone}</option>`
+                    `<option value="${escapeHtmlAttr(timezone)}">${escapeHtml(timezone)}</option>`
                 ).join('');
             if (currentValue) timezoneSelect.value = currentValue;
         } else {
@@ -375,7 +375,7 @@ async function loadCityOptions(selectedCityId) {
             const select = document.getElementById('centerCityId');
             select.innerHTML = '<option value="">Select City</option>' +
                 response.data.map(city => 
-                    `<option value="${city.id}">${city.name}</option>`
+                    `<option value="${escapeHtmlAttr(city.id)}">${escapeHtml(city.name)}</option>`
                 ).join('');
             if (selectedCityId) {
                 select.value = selectedCityId;
@@ -745,7 +745,7 @@ async function loadUserCityOptions(selectedCityId) {
             const select = document.getElementById('userCityId');
             select.innerHTML = '<option value="">No City</option>' +
                 response.data.map(city =>
-                    `<option value="${city.id}">${city.name}</option>`
+                    `<option value="${escapeHtmlAttr(city.id)}">${escapeHtml(city.name)}</option>`
                 ).join('');
             if (selectedCityId) select.value = selectedCityId;
         }
@@ -984,13 +984,13 @@ async function loadClubAdminsForCenter(clubId) {
                 const u = row.user;
                 const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.id;
                 return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                    <span>${name} <small>(${row.role})</small></span>
-                    <button type="button" class="btn-small btn-delete" onclick="removeClubAdminForCenter('${clubId}','${u.id}')">Remove</button>
+                    <span>${escapeHtml(name)} <small>(${escapeHtml(row.role)})</small></span>
+                    <button type="button" class="btn-small btn-delete" data-club-id="${escapeHtmlAttr(clubId)}" data-user-id="${escapeHtmlAttr(u.id)}" onclick="removeClubAdminForCenter(this.dataset.clubId, this.dataset.userId)">Remove</button>
                 </div>`;
             })
             .join('');
     } catch (e) {
-        list.innerHTML = `<span style="color:#c00">${e.message}</span>`;
+        list.innerHTML = `<span style="color:#c00">${escapeHtml(e.message)}</span>`;
     }
 }
 

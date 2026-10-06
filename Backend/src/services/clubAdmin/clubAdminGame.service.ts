@@ -1,11 +1,54 @@
-import { ParticipantRole } from '@prisma/client';
+import { EntityType, ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
-import { ApiError } from '../../utils/ApiError';
 import { buildClubAdminDmMessage } from '../../utils/clubAdminDmMessage';
 import { GameDeleteService } from '../game/delete.service';
 import { GameUpdateService } from '../game/update.service';
 import { ClubAdminNotificationService } from './clubAdminNotification.service';
 import { ClubAdminService } from './clubAdmin.service';
+import { applyLegacyHasBookedCourt } from '../gameCourt/courtSlots.tx';
+import { clubAdminError, clubAdminNotFound } from './clubAdminErrors';
+import { gameBelongsToClubWhere } from './clubAdminGameScope';
+
+/** League / tournament fixtures are owned by their competition — the club cannot cancel them. */
+export const CLUB_ADMIN_CANCEL_LOCKED_ENTITY_TYPES: ReadonlySet<EntityType> = new Set([
+  EntityType.LEAGUE,
+  EntityType.LEAGUE_SEASON,
+  EntityType.TOURNAMENT,
+]);
+
+const GAME_FOR_CLUB_ADMIN_INCLUDE = {
+  participants: {
+    where: { role: ParticipantRole.OWNER },
+    include: { user: { select: { id: true, firstName: true, lastName: true } } },
+  },
+} satisfies Prisma.GameInclude;
+
+async function loadClubGame(clubId: string, gameId: string) {
+  const game = await prisma.game.findFirst({
+    where: { id: gameId, ...gameBelongsToClubWhere(clubId) },
+    include: GAME_FOR_CLUB_ADMIN_INCLUDE,
+  });
+  if (!game) throw clubAdminNotFound('Game');
+  if (!game.timeIsSet) throw clubAdminError(400, 'clubAdmin.validation', 'Game has no scheduled court time');
+  if (game.startTime <= new Date()) throw clubAdminError(400, 'clubAdmin.validation', 'Cannot change past slots');
+  return game;
+}
+
+/** Host messages speak for the admin's club, in that club's time zone. */
+async function adminClubContext(clubId: string) {
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { name: true, city: { select: { timezone: true } } },
+  });
+  return { clubName: club?.name || 'the club', timezone: club?.city?.timezone };
+}
+
+export interface ClubAdminGameActionBody {
+  reason: string;
+  note?: string | null;
+  message?: string | null;
+  notifyHost?: boolean;
+}
 
 function formatClubDateTime(startTime: Date, timezone?: string): { date: string; time: string } {
   const optsDate: Intl.DateTimeFormatOptions = {
@@ -53,33 +96,23 @@ export class ClubAdminGameService {
     adminUserId: string,
     clubId: string,
     gameId: string,
-    body: { reason: string; note?: string; message?: string }
+    body: ClubAdminGameActionBody
   ) {
     await ClubAdminService.assertClubAdmin(adminUserId, clubId);
-    const game = await prisma.game.findFirst({
-      where: {
-        id: gameId,
-        OR: [{ clubId }, { court: { clubId } }],
-      },
-      include: {
-        club: { select: { name: true, city: { select: { timezone: true } } } },
-        participants: {
-          where: { role: ParticipantRole.OWNER },
-          include: { user: { select: { id: true, firstName: true, lastName: true } } },
-        },
-      },
-    });
-    if (!game) throw new ApiError(404, 'Game not found');
-    if (!game.timeIsSet) throw new ApiError(400, 'Game has no scheduled court time');
-    if (game.startTime <= new Date()) throw new ApiError(400, 'Cannot cancel past slots');
+    const game = await loadClubGame(clubId, gameId);
     if (game.resultsStatus !== 'NONE') {
-      throw new ApiError(400, 'Cannot cancel a game that has results');
+      throw clubAdminError(400, 'clubAdmin.resultsEntered', 'Cannot cancel a game that has results');
+    }
+    if (CLUB_ADMIN_CANCEL_LOCKED_ENTITY_TYPES.has(game.entityType)) {
+      throw clubAdminError(400, 'clubAdmin.entityTypeLocked', 'League and tournament fixtures cannot be cancelled by the club', {
+        entityType: game.entityType,
+      });
     }
 
     const hostId = await resolveHostUserId(gameId);
     const host = game.participants[0]?.user;
     const hostName = host?.firstName || 'there';
-    const tz = game.club?.city?.timezone;
+    const { clubName, timezone: tz } = await adminClubContext(clubId);
     const { date, time } = formatClubDateTime(game.startTime, tz);
     const hostLang = await resolveHostLanguage(hostId);
     const customMessage =
@@ -88,16 +121,16 @@ export class ClubAdminGameService {
         mode: 'cancel',
         lang: hostLang,
         hostName,
-        clubName: game.club?.name || 'the club',
+        clubName,
         date,
         time,
         reason: body.reason,
-        note: body.note,
+        note: body.note ?? undefined,
       });
 
     await GameDeleteService.deleteGame(gameId, adminUserId);
 
-    if (hostId) {
+    if (hostId && body.notifyHost !== false) {
       try {
         await ClubAdminNotificationService.sendCourtCancellationDm(
           adminUserId,
@@ -116,30 +149,15 @@ export class ClubAdminGameService {
     adminUserId: string,
     clubId: string,
     gameId: string,
-    body: { reason: string; note?: string; message?: string }
+    body: ClubAdminGameActionBody
   ) {
     await ClubAdminService.assertClubAdmin(adminUserId, clubId);
-    const game = await prisma.game.findFirst({
-      where: {
-        id: gameId,
-        OR: [{ clubId }, { court: { clubId } }],
-      },
-      include: {
-        club: { select: { name: true, city: { select: { timezone: true } } } },
-        participants: {
-          where: { role: ParticipantRole.OWNER },
-          include: { user: { select: { id: true, firstName: true } } },
-        },
-      },
-    });
-    if (!game) throw new ApiError(404, 'Game not found');
-    if (!game.timeIsSet) throw new ApiError(400, 'Game has no scheduled court time');
-    if (game.startTime <= new Date()) throw new ApiError(400, 'Cannot clear past slots');
+    const game = await loadClubGame(clubId, gameId);
 
     const hostId = await resolveHostUserId(gameId);
     const host = game.participants[0]?.user;
     const hostName = host?.firstName || 'there';
-    const tz = game.club?.city?.timezone;
+    const { clubName, timezone: tz } = await adminClubContext(clubId);
     const { date, time } = formatClubDateTime(game.startTime, tz);
     const hostLang = await resolveHostLanguage(hostId);
     const customMessage =
@@ -148,25 +166,30 @@ export class ClubAdminGameService {
         mode: 'clear',
         lang: hostLang,
         hostName,
-        clubName: game.club?.name || 'the club',
+        clubName,
         date,
         time,
         reason: body.reason,
-        note: body.note,
+        note: body.note ?? undefined,
       });
 
+    // Shared update path (time-change rules, booking sync, bracket slots) with a narrow
+    // club-admin authorisation — never the platform-admin bypass.
     await GameUpdateService.updateGame(
       gameId,
-      {
-        courtId: null,
-        timeIsSet: false,
-        hasBookedCourt: false,
-      },
+      { courtId: null, timeIsSet: false },
       adminUserId,
-      true
+      false,
+      {
+        clubAdminScope: { clubId },
+        timePolicy: 'explicit',
+        clashGuard: false,
+        slotsAuthoritative: true,
+        inTx: { beforeSync: (tx) => releaseClubCourtsInTx(tx, gameId, clubId, adminUserId) },
+      }
     );
 
-    if (hostId) {
+    if (hostId && body.notifyHost !== false) {
       try {
         await ClubAdminNotificationService.sendCourtCancellationDm(
           adminUserId,
@@ -180,4 +203,25 @@ export class ClubAdminGameService {
 
     return { success: true };
   }
+}
+
+/**
+ * Drop this club's court slots and the app's links to bookings on this club's courts.
+ * Upstream reservations are never cancelled — only the game ↔ booking link goes.
+ */
+export async function releaseClubCourtsInTx(
+  tx: Prisma.TransactionClient,
+  gameId: string,
+  clubId: string,
+  actorUserId: string
+): Promise<void> {
+  const game = await tx.game.findUnique({ where: { id: gameId }, select: { clubId: true } });
+  await tx.gameExternalBooking.deleteMany({
+    where: {
+      gameId,
+      OR: [{ court: { clubId } }, ...(game?.clubId === clubId ? [{ courtId: null }] : [])],
+    },
+  });
+  await tx.gameCourt.deleteMany({ where: { gameId, court: { clubId } } });
+  await applyLegacyHasBookedCourt(tx, gameId, false, actorUserId);
 }
