@@ -4,6 +4,7 @@ import { ClubAdminService } from './clubAdmin.service';
 import { ClubAdminClubsListResponse } from './clubAdmin.types';
 import { buildClubPatchData } from './clubAdminClubPatch';
 import { clubAdminValidation } from './clubAdminErrors';
+import { logClubActivity } from './clubAdminActivity.service';
 import { clubDayWindowUtc, clubLocalDate } from '@bandeja/shared/clubAdmin/clubTime';
 import { gameBelongsToClubWhere } from './clubAdminGameScope';
 
@@ -81,7 +82,7 @@ export class ClubAdminClubService {
       where: { id: clubId },
       include: {
         city: { select: { id: true, name: true, timezone: true } },
-        courts: { orderBy: { name: 'asc' } },
+        courts: { orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] },
       },
     });
     if (!club) throw new ApiError(404, 'Club not found');
@@ -98,12 +99,16 @@ export class ClubAdminClubService {
       throw clubAdminValidation('body', 'No valid fields to update');
     }
 
-    return prisma.club.update({
+    const updated = await prisma.club.update({
       where: { id: clubId },
       data,
       include: {
         city: { select: { id: true, name: true, timezone: true } },
       },
     });
+    await logClubActivity(clubId, userId, 'CLUB_UPDATED', {
+      fields: Object.keys(data).filter((k) => k !== 'normalizedName').join(','),
+    });
+    return updated;
   }
 }

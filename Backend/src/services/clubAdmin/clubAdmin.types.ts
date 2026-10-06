@@ -1,7 +1,14 @@
 import { CourtSlotHoldLabel, EntityType, GameStatus } from '@prisma/client';
+import type { BookingBillingSummary } from '@bandeja/shared/clubAdmin/contract';
+
+/** Console v2 additive fields on game slots (`ScheduleGameSlot` in the contract). */
+interface ScheduleGameSlotV2Fields {
+  maxParticipants?: number | null;
+  billing?: BookingBillingSummary | null;
+}
 
 export type ScheduleSlot =
-  | {
+  | ({
       type: 'game';
       gameId: string;
       courtId: string | null;
@@ -13,8 +20,8 @@ export type ScheduleSlot =
       name: string | null;
       host: { id: string; firstName: string | null; lastName: string | null; avatar: string | null };
       participantCount: number;
-    }
-  | {
+    } & ScheduleGameSlotV2Fields)
+  | ({
       type: 'game_court';
       gameId: string;
       courtId: string;
@@ -26,7 +33,7 @@ export type ScheduleSlot =
       name: string | null;
       host: { id: string; firstName: string | null; lastName: string | null; avatar: string | null };
       participantCount: number;
-    }
+    } & ScheduleGameSlotV2Fields)
   | {
       type: 'external';
       courtId: string;
@@ -42,6 +49,11 @@ export type ScheduleSlot =
       note: string | null;
       startTime: string;
       endTime: string;
+      /** Console v2 additive fields. */
+      seriesId?: string | null;
+      customerName?: string | null;
+      customerPhone?: string | null;
+      billing?: BookingBillingSummary | null;
     };
 
 export interface ScheduleConflict {

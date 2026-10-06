@@ -5,6 +5,21 @@ import { ClubAdminService } from './clubAdmin.service';
 import { syncClubSportsFromCourt } from '../../shared/clubSports';
 import { normalizeWebCameraUrl } from '../../utils/normalizeWebCameraUrl';
 import { clubAdminNotFound, clubAdminValidation } from './clubAdminErrors';
+import { logClubActivity } from './clubAdminActivity.service';
+import { gameBelongsToClubWhere } from './clubAdminGameScope';
+import type { CourtImpact } from '@bandeja/shared/clubAdmin/contract';
+
+type CourtRow = Prisma.CourtGetPayload<object>;
+
+/** Legacy raw row + console v2 fields (`ClubAdminCourt`): additive only. */
+export function withCourtV2Fields(court: CourtRow) {
+  return {
+    ...court,
+    pricePerHourCents: court.pricePerHour == null ? null : Math.round(court.pricePerHour * 100),
+  };
+}
+
+const COURT_ORDER = [{ sortOrder: 'asc' as const }, { name: 'asc' as const }];
 
 /**
  * Court fields a club admin may write. `clubId`, `externalCourtId` and `integrationCourtName`
@@ -70,10 +85,8 @@ export function parseCourtWrite(body: Record<string, unknown>, mode: 'create' | 
 export class ClubAdminCourtService {
   static async listCourts(userId: string, clubId: string) {
     await ClubAdminService.assertClubAdmin(userId, clubId);
-    return prisma.court.findMany({
-      where: { clubId },
-      orderBy: { name: 'asc' },
-    });
+    const courts = await prisma.court.findMany({ where: { clubId }, orderBy: COURT_ORDER });
+    return courts.map(withCourtV2Fields);
   }
 
   static async createCourt(userId: string, clubId: string, body: Record<string, unknown>) {
@@ -84,8 +97,10 @@ export class ClubAdminCourtService {
     const courtSport = write.sport ?? null;
     await syncClubSportsFromCourt(clubId, courtSport);
 
+    const last = await prisma.court.aggregate({ where: { clubId }, _max: { sortOrder: true } });
     const court = await prisma.court.create({
       data: {
+        sortOrder: (last._max.sortOrder ?? -1) + 1,
         name: write.name!,
         clubId,
         courtType: write.courtType ?? null,
@@ -98,7 +113,8 @@ export class ClubAdminCourtService {
       },
     });
     await refreshClubCourtsCount(clubId);
-    return court;
+    await logClubActivity(clubId, userId, 'COURT_CREATED', { court: court.name });
+    return withCourtV2Fields(court);
   }
 
   static async patchCourt(userId: string, courtId: string, body: Record<string, unknown>, clubId?: string) {
@@ -110,7 +126,52 @@ export class ClubAdminCourtService {
     if (write.sport !== undefined) await syncClubSportsFromCourt(court.clubId, write.sport);
     const updated = await prisma.court.update({ where: { id: courtId }, data: write satisfies Prisma.CourtUpdateInput });
     await refreshClubCourtsCount(court.clubId);
-    return updated;
+    await logClubActivity(court.clubId, userId, 'COURT_UPDATED', {
+      court: updated.name,
+      ...(write.isActive !== undefined ? { isActive: write.isActive } : {}),
+    });
+    return withCourtV2Fields(updated);
+  }
+
+  /** `POST /courts/reorder` — `courtIds` must list every court of the club exactly once. */
+  static async reorderCourts(userId: string, clubId: string, body: Record<string, unknown>) {
+    const ids = body?.courtIds;
+    if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string')) {
+      throw clubAdminValidation('courtIds', 'must be a list of court ids');
+    }
+    const courts = await prisma.court.findMany({ where: { clubId }, select: { id: true } });
+    const known = new Set(courts.map((c) => c.id));
+    const unique = new Set(ids as string[]);
+    if (unique.size !== ids.length || unique.size !== known.size || [...unique].some((id) => !known.has(id))) {
+      throw clubAdminValidation('courtIds', "must list each of the club's courts exactly once");
+    }
+    await prisma.$transaction(
+      (ids as string[]).map((id, index) => prisma.court.update({ where: { id }, data: { sortOrder: index } }))
+    );
+    await logClubActivity(clubId, userId, 'COURTS_REORDERED', { count: ids.length });
+    return this.listCourts(userId, clubId);
+  }
+
+  /** What deactivating a court would affect: future live games and holds on it. */
+  static async getCourtImpact(clubId: string, courtId: string, now: Date = new Date()): Promise<CourtImpact> {
+    const court = await prisma.court.findFirst({ where: { id: courtId, clubId }, select: { id: true } });
+    if (!court) throw clubAdminNotFound('Court');
+    const gameWhere: Prisma.GameWhereInput = {
+      AND: [
+        gameBelongsToClubWhere(clubId),
+        { timeIsSet: true, status: { in: ['ANNOUNCED', 'STARTED'] }, endTime: { gt: now } },
+        { OR: [{ courtId }, { gameCourts: { some: { courtId } } }] },
+      ],
+    };
+    const holdWhere: Prisma.CourtSlotHoldWhereInput = { clubId, courtId, deletedAt: null, endTime: { gt: now } };
+    const [futureGames, futureHolds, nextGame, nextHold] = await Promise.all([
+      prisma.game.count({ where: gameWhere }),
+      prisma.courtSlotHold.count({ where: holdWhere }),
+      prisma.game.findFirst({ where: gameWhere, orderBy: { startTime: 'asc' }, select: { startTime: true } }),
+      prisma.courtSlotHold.findFirst({ where: holdWhere, orderBy: { startTime: 'asc' }, select: { startTime: true } }),
+    ]);
+    const next = [nextGame?.startTime, nextHold?.startTime].filter((d): d is Date => Boolean(d)).sort((a, b) => a.getTime() - b.getTime())[0];
+    return { futureGames, futureHolds, nextBookingAt: next ? next.toISOString() : null };
   }
 
   static async deactivateCourt(userId: string, courtId: string) {

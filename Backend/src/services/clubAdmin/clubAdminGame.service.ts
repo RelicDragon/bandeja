@@ -8,6 +8,7 @@ import { ClubAdminService } from './clubAdmin.service';
 import { applyLegacyHasBookedCourt } from '../gameCourt/courtSlots.tx';
 import { clubAdminError, clubAdminNotFound } from './clubAdminErrors';
 import { gameBelongsToClubWhere } from './clubAdminGameScope';
+import { logClubActivity } from './clubAdminActivity.service';
 
 /** League / tournament fixtures are owned by their competition — the club cannot cancel them. */
 export const CLUB_ADMIN_CANCEL_LOCKED_ENTITY_TYPES: ReadonlySet<EntityType> = new Set([
@@ -129,6 +130,11 @@ export class ClubAdminGameService {
       });
 
     await GameDeleteService.deleteGame(gameId, adminUserId);
+    await logClubActivity(clubId, adminUserId, 'GAME_CANCELLED', {
+      game: game.name,
+      startTime: game.startTime.toISOString(),
+      reason: body.reason,
+    });
 
     if (hostId && body.notifyHost !== false) {
       try {
@@ -188,6 +194,11 @@ export class ClubAdminGameService {
         inTx: { beforeSync: (tx) => releaseClubCourtsInTx(tx, gameId, clubId, adminUserId) },
       }
     );
+    await logClubActivity(clubId, adminUserId, 'COURT_CLEARED', {
+      game: game.name,
+      startTime: game.startTime.toISOString(),
+      reason: body.reason,
+    });
 
     if (hostId && body.notifyHost !== false) {
       try {

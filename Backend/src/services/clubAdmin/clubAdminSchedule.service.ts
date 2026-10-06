@@ -15,6 +15,9 @@ import { ScheduleConflict, ScheduleSlot } from './clubAdmin.types';
 import { clubDayWindowUtc, clubLocalDate, isClubDate } from '@bandeja/shared/clubAdmin/clubTime';
 import { clubAdminNotFound, clubAdminValidation } from './clubAdminErrors';
 import { gameBelongsToClubWhere } from './clubAdminGameScope';
+import type { ClubAdminCourtRef, ClubDayHours } from '@bandeja/shared/clubAdmin/contract';
+import { loadClubHoursSource, resolveDayHours } from './clubAdminHours.service';
+import { loadBillingSummaries } from './clubAdminBillingSummary.service';
 
 /** Providers whose busy snapshots live in our tables (`Club*BusySnapshot`). */
 export const SNAPSHOT_INTEGRATIONS: ReadonlySet<ClubIntegrationType> = new Set([
@@ -87,10 +90,18 @@ export class ClubAdminScheduleService {
     unmappedExternalCourtCount: number;
     date: string;
     timezone: string;
+    hours: ClubDayHours | null;
+    slotMinutes: number;
+    courts: ClubAdminCourtRef[];
   }> {
     const club = await prisma.club.findUnique({
       where: { id: clubId },
-      select: { integrationType: true, city: { select: { timezone: true } } },
+      select: {
+        integrationType: true,
+        currency: true,
+        defaultSlotMinutes: true,
+        city: { select: { timezone: true } },
+      },
     });
     if (!club) throw clubAdminNotFound('Club');
     const timezone = club.city.timezone;
@@ -115,12 +126,12 @@ export class ClubAdminScheduleService {
     const integrationType = club.integrationType;
     const hasSnapshots = integrationType != null && SNAPSHOT_INTEGRATIONS.has(integrationType);
 
-    const [games, occupancyResult, dateMeta, unmappedCount] = await Promise.all([
+    const [games, occupancyResult, dateMeta, unmappedCount, hoursSource, courtRows] = await Promise.all([
       prisma.game.findMany({
         where: gameWhere,
         include: {
           court: { select: { id: true, name: true } },
-          gameCourts: { include: { court: { select: { id: true, name: true } } } },
+          gameCourts: { include: { court: { select: { id: true, name: true, clubId: true } } } },
           participants: {
             where: { role: { in: [ParticipantRole.OWNER, ParticipantRole.ADMIN] } },
             take: 1,
@@ -144,6 +155,12 @@ export class ClubAdminScheduleService {
         ? getSnapshotDateMeta(clubId, dateStr, integrationType)
         : Promise.resolve({ snapshotFetchedAt: null, hasSnapshotForDate: false }),
       hasSnapshots ? countUnmappedExternalCourts(clubId, integrationType) : Promise.resolve(0),
+      loadClubHoursSource(clubId, timezone, { fromDate: dateStr, toDate: dateStr }),
+      prisma.court.findMany({
+        where: { clubId },
+        select: { id: true, name: true, isIndoor: true, sport: true, isActive: true, sortOrder: true },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      }),
     ]);
 
     const slots: ScheduleSlot[] = [];
@@ -169,10 +186,13 @@ export class ClubAdminScheduleService {
         name: game.name,
         host,
         participantCount: game._count.participants,
+        maxParticipants: game.maxParticipants,
       };
 
-      if (game.gameCourts.length > 0) {
-        for (const gc of game.gameCourts) {
+      // Only this club's court slots go on this club's grid.
+      const clubSlots = game.gameCourts.filter((gc) => gc.court.clubId === clubId);
+      if (clubSlots.length > 0) {
+        for (const gc of clubSlots) {
           if (courtId && gc.courtId !== courtId) continue;
           slots.push({
             type: 'game_court',
@@ -209,6 +229,7 @@ export class ClubAdminScheduleService {
     }
 
     slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    await enrichScheduleSlots(clubId, club.currency, slots);
     return {
       slots,
       conflicts: detectScheduleConflicts(slots),
@@ -219,6 +240,49 @@ export class ClubAdminScheduleService {
       unmappedExternalCourtCount: unmappedCount,
       date: dateStr,
       timezone,
+      hours: resolveDayHours(hoursSource, dateStr),
+      slotMinutes: club.defaultSlotMinutes ?? DEFAULT_SLOT_MINUTES,
+      courts: courtRows.map((c) => ({ ...c, sport: c.sport ?? null })),
     };
+  }
+}
+
+export const DEFAULT_SLOT_MINUTES = 30;
+
+/**
+ * Console v2 additive fields: hold customer/series (never on occupancy blocks — those also
+ * feed player-facing availability) and billing summaries for games and holds.
+ */
+async function enrichScheduleSlots(clubId: string, currency: string, slots: ScheduleSlot[]): Promise<void> {
+  const holdIds = [...new Set(slots.flatMap((s) => (s.type === 'hold' ? [s.holdId] : [])))];
+  const holdRows = holdIds.length
+    ? await prisma.courtSlotHold.findMany({
+        where: { id: { in: holdIds } },
+        select: { id: true, seriesId: true, customerName: true, customerPhone: true },
+      })
+    : [];
+  const holdById = new Map(holdRows.map((h) => [h.id, h]));
+  const gameTargets = new Map<string, { gameId: string; courtId: string | null; startTime: Date; endTime: Date }>();
+  for (const s of slots) {
+    if ((s.type === 'game' || s.type === 'game_court') && !gameTargets.has(s.gameId)) {
+      gameTargets.set(s.gameId, { gameId: s.gameId, courtId: s.courtId, startTime: new Date(s.startTime), endTime: new Date(s.endTime) });
+    }
+  }
+  const summaries = await loadBillingSummaries(clubId, currency, {
+    games: [...gameTargets.values()],
+    holds: slots.flatMap((s) =>
+      s.type === 'hold' ? [{ holdId: s.holdId, courtId: s.courtId, startTime: new Date(s.startTime), endTime: new Date(s.endTime) }] : []
+    ),
+  });
+  for (const s of slots) {
+    if (s.type === 'hold') {
+      const row = holdById.get(s.holdId);
+      s.seriesId = row?.seriesId ?? null;
+      s.customerName = row?.customerName ?? null;
+      s.customerPhone = row?.customerPhone ?? null;
+      s.billing = summaries.hold.get(s.holdId) ?? null;
+    } else if (s.type === 'game' || s.type === 'game_court') {
+      s.billing = summaries.game.get(s.gameId) ?? null;
+    }
   }
 }

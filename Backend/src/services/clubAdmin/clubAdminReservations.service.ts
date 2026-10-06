@@ -2,6 +2,7 @@ import { ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { ClubAdminReservationItem, ClubAdminReservationsResponse } from './clubAdmin.types';
+import { gameBelongsToClubWhere } from './clubAdminGameScope';
 
 const ACTIVE_GAME_STATUSES = ['ANNOUNCED', 'STARTED'] as const;
 
@@ -19,8 +20,11 @@ export class ClubAdminReservationsService {
       timeIsSet: true,
       status: { in: [...ACTIVE_GAME_STATUSES] },
       endTime: { gt: now },
-      OR: [{ clubId }, { court: { clubId } }],
+      ...gameBelongsToClubWhere(clubId),
     };
+    // Legacy offset API, bounded: both sources are ordered by (startTime, id), so the first
+    // `offset + limit + 1` rows of each cover the merged page — never the whole history.
+    const take = safeOffset + safeLimit + 1;
 
     const [games, holds] = await Promise.all([
       prisma.game.findMany({
@@ -36,12 +40,14 @@ export class ClubAdminReservationsService {
           },
           _count: { select: { participants: true } },
         },
-        orderBy: { startTime: 'asc' },
+        orderBy: [{ startTime: 'asc' }, { id: 'asc' }],
+        take,
       }),
       prisma.courtSlotHold.findMany({
         where: { clubId, deletedAt: null, endTime: { gt: now } },
         include: { court: { select: { id: true, name: true } } },
-        orderBy: { startTime: 'asc' },
+        orderBy: [{ startTime: 'asc' }, { id: 'asc' }],
+        take,
       }),
     ]);
 
