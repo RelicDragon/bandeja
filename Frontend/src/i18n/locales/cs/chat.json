@@ -308,6 +308,7 @@
       "GAME_SPOT_OPENED": "Uvolnilo se místo ({{userName}} odešel)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} byl nasazen z fronty",
       "LEAGUE_GROUP_CHAT_CREATED": "Chat pro {{groupName}} byl vytvořen",
+      "GROUP_CREATED": "{{userName}} vytvořil(a) skupinu",
       "GAME_MOVED_INDOOR": "Přesunuto na {{courtName}} (kryté)"
     },
     "openChat": "Otevřít chat",

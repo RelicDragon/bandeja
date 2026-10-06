@@ -59,6 +59,27 @@ async function emitPrivateGroupUserLeftSystemMessage(
   );
 }
 
+/** First message of a user-created group; without one the group shows as an empty chat. */
+export async function postGroupCreatedSystemMessage(groupChannelId: string, ownerId: string): Promise<void> {
+  try {
+    const owner = await prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { firstName: true, lastName: true },
+    });
+    await SystemMessageService.createSystemMessageWithEmit(
+      groupChannelId,
+      {
+        type: SystemMessageType.GROUP_CREATED,
+        variables: { userName: getUserDisplayName(owner?.firstName, owner?.lastName) },
+      },
+      undefined,
+      ChatContextType.GROUP
+    );
+  } catch (error) {
+    console.error('Failed to post group created system message:', error);
+  }
+}
+
 export class GroupChannelService {
   static async getGroupChannelOwner(groupChannelId: string) {
     const owner = await prisma.groupChannelParticipant.findFirst({
@@ -134,18 +155,7 @@ export class GroupChannelService {
       }
     });
 
-    try {
-      await MessageService.createMessage({
-        chatContextType: ChatContextType.GROUP,
-        contextId: groupChannel.id,
-        senderId: data.ownerId,
-        content: 'Group created',
-        mediaUrls: [],
-        chatType: ChatType.PUBLIC
-      });
-    } catch (error) {
-      console.error('Failed to send "Group created" message:', error);
-    }
+    await postGroupCreatedSystemMessage(groupChannel.id, data.ownerId);
 
     return GroupChannelService.getGroupChannelById(groupChannel.id, data.ownerId);
   }

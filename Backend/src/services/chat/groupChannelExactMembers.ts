@@ -1,8 +1,7 @@
-import { ParticipantRole, ChatContextType, ChatType, Prisma } from '@prisma/client';
+import { ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { MessageService } from './message.service';
-import { GroupChannelService } from './groupChannel.service';
+import { GroupChannelService, postGroupCreatedSystemMessage } from './groupChannel.service';
 import {
   discussionGroupCandidateWhere,
   participantIdsMatch,
@@ -88,18 +87,7 @@ export async function findOrCreateExactMemberGroup(input: {
   });
 
   if (created) {
-    try {
-      await MessageService.createMessage({
-        chatContextType: ChatContextType.GROUP,
-        contextId: groupId,
-        senderId: input.ownerId,
-        content: 'Group created',
-        mediaUrls: [],
-        chatType: ChatType.PUBLIC,
-      });
-    } catch (error) {
-      console.error('Failed to send "Group created" message:', error);
-    }
+    await postGroupCreatedSystemMessage(groupId, input.ownerId);
   }
 
   return GroupChannelService.getGroupChannelById(groupId, input.ownerId);

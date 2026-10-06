@@ -318,6 +318,7 @@
       "GAME_SPOT_OPENED": "تحرر مكان (غادر {{userName}})",
       "GAME_SEAT_AUTO_FILLED": "تم إدخال {{userName}} من قائمة الانتظار",
       "LEAGUE_GROUP_CHAT_CREATED": "تم إنشاء محادثة {{groupName}}",
+      "GROUP_CREATED": "أنشأ {{userName}} المجموعة",
       "GAME_MOVED_INDOOR": "تم النقل إلى {{courtName}} (مغلق)"
     },
     "openChat": "فتح المحادثة",

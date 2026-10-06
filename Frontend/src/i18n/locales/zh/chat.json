@@ -310,6 +310,7 @@
       "GAME_SPOT_OPENED": "空出一个名额（{{userName}} 已退出）",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} 已从队列中入场",
       "LEAGUE_GROUP_CHAT_CREATED": "{{groupName}} 的聊天已创建",
+      "GROUP_CREATED": "{{userName}} 创建了群组",
       "GAME_MOVED_INDOOR": "已改到{{courtName}}（室内）"
     },
     "openChat": "打开聊天",

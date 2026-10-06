@@ -310,6 +310,7 @@
       "GAME_SPOT_OPENED": "A spot opened ({{userName}} left)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} was seated from the queue",
       "LEAGUE_GROUP_CHAT_CREATED": "Chat for {{groupName}} has been created",
+      "GROUP_CREATED": "{{userName}} created the group",
       "GAME_MOVED_INDOOR": "Moved to {{courtName}} (indoor)"
     },
     "openChat": "Open Chat",

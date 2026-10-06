@@ -308,6 +308,7 @@
       "GAME_SPOT_OPENED": "Se liberó una plaza ({{userName}} salió)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} entró desde la cola",
       "LEAGUE_GROUP_CHAT_CREATED": "Se ha creado el chat de {{groupName}}",
+      "GROUP_CREATED": "{{userName}} creó el grupo",
       "GAME_MOVED_INDOOR": "Movido a {{courtName}} (cubierta)"
     },
     "openChat": "Abrir Chat",

@@ -310,6 +310,7 @@
       "GAME_SPOT_OPENED": "空きが出ました（{{userName}} が退出）",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} が待機列から参加しました",
       "LEAGUE_GROUP_CHAT_CREATED": "{{groupName}}のチャットが作成されました",
+      "GROUP_CREATED": "{{userName}}がグループを作成しました",
       "GAME_MOVED_INDOOR": "{{courtName}}（屋内）に変更しました"
     },
     "openChat": "チャットを開く",

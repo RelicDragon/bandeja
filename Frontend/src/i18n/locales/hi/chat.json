@@ -310,6 +310,7 @@
       "GAME_SPOT_OPENED": "एक जगह खाली हुई ({{userName}} बाहर हुए)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} को कतार से शामिल किया गया",
       "LEAGUE_GROUP_CHAT_CREATED": "{{groupName}} के लिए चैट बनाई गई",
+      "GROUP_CREATED": "{{userName}} ने ग्रुप बनाया",
       "GAME_MOVED_INDOOR": "{{courtName}} (इनडोर) पर ले जाया गया"
     },
     "openChat": "चैट खोलें",

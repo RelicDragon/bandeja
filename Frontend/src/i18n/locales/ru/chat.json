@@ -314,6 +314,7 @@
       "GAME_SPOT_OPENED": "Освободилось место ({{userName}} вышел)",
       "GAME_SEAT_AUTO_FILLED": "{{userName}} занял место из очереди",
       "LEAGUE_GROUP_CHAT_CREATED": "Создан чат «{{groupName}}»",
+      "GROUP_CREATED": "{{userName}} создал(а) группу",
       "GAME_MOVED_INDOOR": "Перенесено на {{courtName}} (крытый)"
     },
     "openChat": "Открыть чат",

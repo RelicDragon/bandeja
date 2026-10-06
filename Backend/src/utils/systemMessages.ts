@@ -38,6 +38,8 @@ export enum SystemMessageType {
   GAME_SEAT_AUTO_FILLED = 'GAME_SEAT_AUTO_FILLED',
   /** Auto-managed league group chat was created (first message, so the chat surfaces in lists). */
   LEAGUE_GROUP_CHAT_CREATED = 'LEAGUE_GROUP_CHAT_CREATED',
+  /** First message of a user-created group, so it never sits empty in chat lists. */
+  GROUP_CREATED = 'GROUP_CREATED',
 }
 
 export interface SystemMessageTemplate {
@@ -211,6 +213,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.LEAGUE_GROUP_CHAT_CREATED,
     template: 'Chat for {{groupName}} has been created',
     variables: ['groupName'],
+  },
+  [SystemMessageType.GROUP_CREATED]: {
+    type: SystemMessageType.GROUP_CREATED,
+    template: '{{userName}} created the group',
+    variables: ['userName'],
   },
 };
 

@@ -39,6 +39,7 @@ export enum SystemMessageType {
   /** PRD 347 — auto-fill seated the first player in the queue. */
   GAME_SEAT_AUTO_FILLED = 'GAME_SEAT_AUTO_FILLED',
   LEAGUE_GROUP_CHAT_CREATED = 'LEAGUE_GROUP_CHAT_CREATED',
+  GROUP_CREATED = 'GROUP_CREATED',
 }
 
 export interface SystemMessageData {
@@ -79,6 +80,7 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.GAME_SPOT_OPENED]: 'A spot opened ({{userName}} left)',
   [SystemMessageType.GAME_SEAT_AUTO_FILLED]: '{{userName}} was seated from the queue',
   [SystemMessageType.LEAGUE_GROUP_CHAT_CREATED]: 'Chat for {{groupName}} has been created',
+  [SystemMessageType.GROUP_CREATED]: '{{userName}} created the group',
 };
 
 const interpolateTemplate = (template: string, variables: Record<string, string>): string => {
