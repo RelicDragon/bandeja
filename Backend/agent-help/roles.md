@@ -88,6 +88,8 @@ Flags are changed in the Admin panel (Users, edit user, checkboxes Admin, Traine
 
 Club staff can be made admins of a club by a platform admin. They get a "My clubs" button above the tab bar to manage their club. This is separate from the roles above.
 
+A club team has two roles. Admin can do everything for the club: settings, courts, opening hours and the team. Staff is the front desk: the schedule, bookings and taking payments, but not club settings, courts, hours, the team or reports. A platform admin adds the first club admin; after that, club Admins add or remove teammates themselves, and a club always keeps at least one Admin.
+
 ## What the assistant can do
 
 The assistant acts with the user's own permissions: it can never do more than the user could in the app. It tells the user which roles they have (trainer, tournament creator, league creator, admin). Role-related tools: `set_game_admin` and `set_trainer` (owner only), `remove_participant`, `accept_from_queue`, `decline_from_queue` (owner or game admin). `create_game` creates casual games, tournaments and trainings (trainings only for flagged trainers and admins); it cannot create leagues. Transferring ownership is only in the app.

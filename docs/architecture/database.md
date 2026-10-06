@@ -119,6 +119,26 @@ Migration `20260930120000_agent_chats`; feedback columns + `LlmUsageLog (userId,
 
 `Game.bookingStatus`: `NONE` \| `MANUAL` \| `EXTERNAL_PARTIAL` \| `EXTERNAL_FULL`, and `Game.hasBookedCourt`: legacy mirrors derived from court slots by `computeLegacyBookingFieldsFromSlots` (`Backend/src/shared/gameBooking/`, a thin adapter over shared `deriveCourtReservations`). `Game.reportedAnyCourtCount` (default 0): courts reported reserved without naming them. `Game.courtSlotCount` (nullable, 1..16): organizer-chosen number of court slots; null = default (assigned courts, else roster need) — migration `20261006000000_game_court_slot_count`, null for every existing game. Migration `20261005220000_game_court_slots` (columns + backfill: a slot for every `Game.courtId` and every linked booking's court, links placed on slots, `hasBookedCourt` without links → REPORTED slots or `reportedAnyCourtCount = 1`).
 
+### Club admin console
+
+Migration `20261006205721_club_admin_console_v2`. Domain: [club-admin.md](../domains/club-admin.md).
+
+| Model / field | Notes |
+|---------------|-------|
+| `ClubAdmin` | `userId` + `clubId` (unique), `role` (`ClubAdminRole` `ADMIN` \| `STAFF`). Capabilities per role live in the shared contract, enforced by `clubAdminContext` |
+| `Club.currency` | `PriceCurrency`, default `EUR` — console billing currency |
+| `Club.billableHoldLabels` | `CourtSlotHoldLabel[]`, default `WALK_IN, PHONE, ACADEMY, OTHER` (MAINTENANCE never billable) |
+| `Court.sortOrder` | Console column order (backfilled by name per club); index `(clubId, sortOrder)`. `Court.pricePerHour` stays a Float (legacy); the contract exposes `pricePerHourCents` |
+| `ClubWeeklyHours` | `clubId`, ISO `weekday` 1–7 (unique per club), `closed`, `openMinute`/`closeMinute` from club-local midnight; `close <= open` runs past midnight. Legacy `Club.openingTime/closingTime` mirror the first open weekday |
+| `ClubClosure` | `clubId`, club-local `date` `yyyy-MM-dd` (unique per club), `openMinute`/`closeMinute` (null = closed all day), `note` |
+| `ClubPriceRule` | `clubId`, optional `courtId` (null = every court), `label`, ISO `weekdays Int[]`, `[startMinute, endMinute)`, `pricePerHourCents` |
+| `CourtSlotHold` (added) | `seriesId` (weekly repeat group; index `(seriesId, startTime)`), `customerName`, `customerPhone`, soft delete `deletedAt` + `deletedById` → User (SetNull). **Every hold read filters `deletedAt: null`** (occupancy, schedule, bookings, lookups) |
+| `ClubCharge` | What the club expects to be paid: `clubId`, `sourceKind` (`ClubChargeSourceKind` GAME/HOLD/MANUAL), optional `gameId`/`holdId`/`courtId` (SetNull), `startTime`/`endTime`, `description`, `amountCents`, `currency`, `status` (`ChargeStatus` UNPAID/PARTIAL/PAID/WAIVED/VOID), `createdById` (SetNull). One non-VOID charge per (game, club) and per hold — enforced in the service, not an index. Indexes `(clubId, startTime)`, `(clubId, status)`, `(gameId, clubId)`, `holdId` |
+| `ClubPayment` | Money against a charge: `chargeId` (Cascade), `clubId` (ledger queries), `amountCents`, `method` (`ClubPaymentMethod` CASH/CARD/TRANSFER/ONLINE/OTHER), `paidAt`, `payerName`, `payerUserId`, `note`, `recordedById`, voided via `voidedAt`/`voidedById` (never deleted). Indexes `chargeId`, `(clubId, paidAt)` |
+| `ClubActivity` | Audit row per console mutation: `clubId`, `actorId` (SetNull), `action` (`ClubActivityAction`), short `meta` JSON. Index `(clubId, createdAt)` |
+| `CancelledGame.clubId` / `courtId` | Plain columns (no FK) written by `GameDeleteService`; index `(clubId, cancelledAt)` |
+| `ClubReview` | Added index `(clubId, createdAt)` |
+
 ### LinkToApp\*
 
 `LinkToAppAttribution`: landing attribution id, UTM fields, `convertedUserId`, `referrerUserId` (from `?ref=CODE`). `LinkToAppEvent`: `kind` hits/choices. User `attributionId` = first touch.

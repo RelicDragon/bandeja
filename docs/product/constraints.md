@@ -226,6 +226,14 @@ Decision for the i18n namespace migration (issues #71/#72). The ~70 JSON files p
 
 ---
 
+## Club admin console: roles server-side, club-local days, additive legacy shapes
+
+Club admin access is a `ClubAdmin` row (`role` `ADMIN` \| `STAFF`); a platform admin acts as `ADMIN`. Capabilities are the contract table `CLUB_ADMIN_ROLE_CAPABILITIES` (`Frontend/shared/clubAdmin/contract.ts`) — STAFF is the front desk: `schedule.view`, `schedule.edit`, `bookings.view`, `billing.collect`, nothing else. **Every** `/club-admin` club route runs `clubAdminContext` + `requireCapability` (`Backend/src/middleware/clubAdminContext.ts`, `routes/clubAdmin.routes.ts`), including the legacy routes shipped builds call — a hidden button is not a permission. Club admins never get platform-admin powers: `clear-court` goes through `GameUpdateService.updateGame` with the narrow `clubAdminScope` option (court/time release only), never `isAdmin = true`; courts' `clubId` / integration mapping and hard delete are platform-admin only.
+
+"Today", day windows and opening hours are **club-local** (`club.city.timezone`, `@bandeja/shared/clubAdmin/clubTime`), never the server's or the device's zone; a club day is 23 h / 25 h on DST days and opening windows may run past midnight. One resolver serves every surface (`services/clubAdmin/clubAdminHours.service.ts`). A game belongs to a club when its club, primary court or any court slot is there (`clubAdminGameScope.ts`) — one predicate for every club-scoped read and write.
+
+Legacy club-admin endpoints and response shapes keep working for store builds: fields are only **added** (e.g. `POST /holds` returns the hold row plus `holdIds/seriesId/skipped`). Hold deletes are soft (`CourtSlotHold.deletedAt`): every hold read filters `deletedAt: null`. Detail: [club-admin.md](../domains/club-admin.md).
+
 ## Novice rank never blocks routes (PRD 358)
 
 Novice mode hides **navigation entry points** only (bottom tabs, home sections, create menus, ads). It never blocks a route: deep links, push taps, invite links, DM and game-chat links must open at any rank. Gate with `hasNoviceFeature` from `@bandeja/shared/novice`, never in a route guard.
