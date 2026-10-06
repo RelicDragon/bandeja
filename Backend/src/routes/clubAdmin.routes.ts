@@ -5,6 +5,8 @@ import { clubAdminContext, clubAdminContextFrom, requireCapability } from '../mi
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 import prisma from '../config/database';
 import * as c from '../controllers/clubAdmin.controller';
+import * as billing from '../controllers/clubAdminBilling.controller';
+import * as reports from '../controllers/clubAdminReports.controller';
 
 /**
  * Club admin console (docs/domains/club-admin.md). Every club route resolves the caller's club
@@ -66,6 +68,29 @@ router.patch('/clubs/:clubId/courts/:courtId', clubAdminMutateLimiter, club, can
 router.post('/clubs/:clubId/holds', clubAdminMutateLimiter, club, can('schedule.edit'), c.createClubAdminHold);
 router.patch('/clubs/:clubId/holds/:holdId', clubAdminMutateLimiter, club, can('schedule.edit'), c.patchHoldV2);
 router.delete('/clubs/:clubId/holds/:holdId', clubAdminMutateLimiter, club, can('schedule.edit'), c.deleteClubAdminHold);
+
+/* --- pricing & billing ----------------------------------------------------------------------- */
+router.get('/clubs/:clubId/pricing', club, can('bookings.view'), billing.getPricing);
+router.put('/clubs/:clubId/pricing', clubAdminMutateLimiter, club, can('billing.configure'), billing.putPricing);
+router.get('/clubs/:clubId/pricing/quote', club, can('bookings.view'), billing.getQuote);
+router.post('/clubs/:clubId/charges', clubAdminMutateLimiter, club, can('billing.collect'), billing.postCharge);
+router.get('/clubs/:clubId/charges/:chargeId', club, can('bookings.view'), billing.getChargeById);
+router.patch('/clubs/:clubId/charges/:chargeId', clubAdminMutateLimiter, club, can('billing.collect'), billing.patchChargeById);
+router.post('/clubs/:clubId/charges/:chargeId/payments', clubAdminMutateLimiter, club, can('billing.collect'), billing.postPayment);
+router.delete(
+  '/clubs/:clubId/charges/:chargeId/payments/:paymentId',
+  clubAdminMutateLimiter,
+  club,
+  can('billing.collect'),
+  billing.deletePayment
+);
+router.get('/clubs/:clubId/payments', club, can('billing.collect'), billing.getPayments);
+
+/* --- reports, activity, reviews -------------------------------------------------------------- */
+router.get('/clubs/:clubId/reports', club, can('reports.view'), reports.getReport);
+router.get('/clubs/:clubId/reports/export.csv', clubAdminMutateLimiter, club, can('reports.view'), reports.exportReportCsv);
+router.get('/clubs/:clubId/activity', club, can('activity.view'), reports.getActivity);
+router.get('/clubs/:clubId/reviews', club, can('reviews.view'), reports.getReviews);
 
 /* --- games ----------------------------------------------------------------------------------- */
 router.post('/clubs/:clubId/games/:gameId/cancel', clubAdminMutateLimiter, club, can('schedule.edit'), c.cancelClubAdminGame);

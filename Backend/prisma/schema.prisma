@@ -882,7 +882,8 @@ enum ClubPaymentMethod {
 }
 
 /// What the club expects to be paid for a booking. At most one non-VOID charge per (club, game)
-/// and per hold — enforced in the billing service, not by a unique index (VOID rows stay).
+/// and per hold — partial unique indexes `ClubCharge_live_game_key` / `ClubCharge_live_hold_key`
+/// (migration SQL; Prisma cannot express them). VOID rows stay as history.
 model ClubCharge {
   id          String               @id @default(cuid())
   clubId      String

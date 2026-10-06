@@ -51,8 +51,22 @@ export async function startServer() {
     const text = await res.text();
     return { status: res.status, body: text ? JSON.parse(text) : {} };
   };
+  /** Raw response (non-JSON endpoints such as CSV exports). */
+  const callRaw = async (userId: string, path: string): Promise<{ status: number; text: string; contentType: string | null }> => {
+    ipCounter += 1;
+    const res = await fetch(`${baseUrl}${path}`, {
+      headers: {
+        authorization: `Bearer ${generateShortAccessToken({ userId })}`,
+        'x-forwarded-for': `10.${(ipCounter >> 16) & 255}.${(ipCounter >> 8) & 255}.${ipCounter & 255}`,
+      },
+    });
+    // Keep a leading BOM visible (Response.text() strips it).
+    const text = new TextDecoder('utf-8', { ignoreBOM: true }).decode(await res.arrayBuffer());
+    return { status: res.status, text, contentType: res.headers.get('content-type') };
+  };
   return {
     call,
+    callRaw,
     close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };
 }

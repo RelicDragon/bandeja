@@ -5,7 +5,8 @@ import prisma from '../../config/database';
  * Billing summaries for bookings shown in the console (schedule, bookings, dashboard).
  * The live charge (non-VOID) of a game at this club / of a hold, with its non-voided payments.
  *
- * `quoteCents` comes from {@link setBookingQuoteProvider}; until pricing is wired it is null.
+ * `quoteCents` comes from {@link setBookingQuoteProvider} (registered by `clubAdminBilling.service.ts`).
+ * Holds with a non-billable label and no charge get no summary (callers render `billing: null`).
  */
 export interface BookingQuoteRequest {
   key: string;
@@ -14,10 +15,17 @@ export interface BookingQuoteRequest {
   endTime: Date;
 }
 
-export type BookingQuoteProvider = (
-  clubId: string,
-  requests: BookingQuoteRequest[]
-) => Promise<Map<string, number | null>>;
+/** `billable: false` = a hold whose label the club does not bill (MAINTENANCE never is). */
+export interface BookingQuote {
+  quoteCents: number | null;
+  billable: boolean;
+}
+
+/**
+ * Keys are `game:<id>` / `hold:<id>`. The provider resolves a game's courts at this club itself
+ * (a multi-court game is quoted per court and summed) and a hold's label.
+ */
+export type BookingQuoteProvider = (clubId: string, requests: BookingQuoteRequest[]) => Promise<Map<string, BookingQuote>>;
 
 let quoteProvider: BookingQuoteProvider | null = null;
 
@@ -71,7 +79,7 @@ export async function loadBillingSummaries(
     ...games.map((g) => ({ key: `game:${g.gameId}`, courtId: g.courtId, startTime: g.startTime, endTime: g.endTime })),
     ...holds.map((h) => ({ key: `hold:${h.holdId}`, courtId: h.courtId, startTime: h.startTime, endTime: h.endTime })),
   ];
-  const quotes = quoteProvider ? await quoteProvider(clubId, quoteRequests) : new Map<string, number | null>();
+  const quotes = quoteProvider ? await quoteProvider(clubId, quoteRequests) : new Map<string, BookingQuote>();
 
   const chargeByGame = new Map<string, (typeof charges)[number]>();
   const chargeByHold = new Map<string, (typeof charges)[number]>();
@@ -80,7 +88,7 @@ export async function loadBillingSummaries(
     if (c.holdId && !chargeByHold.has(c.holdId)) chargeByHold.set(c.holdId, c);
   }
   const summarize = (key: string, charge: (typeof charges)[number] | undefined): BookingBillingSummary => ({
-    quoteCents: quotes.get(key) ?? null,
+    quoteCents: quotes.get(key)?.quoteCents ?? null,
     chargeId: charge?.id ?? null,
     status: (charge?.status as ChargeStatus | undefined) ?? null,
     amountCents: charge?.amountCents ?? null,
@@ -88,6 +96,11 @@ export async function loadBillingSummaries(
     currency: charge?.currency ?? currency,
   });
   for (const g of games) out.game.set(g.gameId, summarize(`game:${g.gameId}`, chargeByGame.get(g.gameId)));
-  for (const h of holds) out.hold.set(h.holdId, summarize(`hold:${h.holdId}`, chargeByHold.get(h.holdId)));
+  for (const h of holds) {
+    const charge = chargeByHold.get(h.holdId);
+    // A non-billable hold (e.g. MAINTENANCE) has no billing unless somebody charged it anyway.
+    if (!charge && quotes.get(`hold:${h.holdId}`)?.billable === false) continue;
+    out.hold.set(h.holdId, summarize(`hold:${h.holdId}`, charge));
+  }
   return out;
 }
