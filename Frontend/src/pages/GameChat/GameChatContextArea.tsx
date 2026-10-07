@@ -24,6 +24,8 @@ export const GameChatContextArea: React.FC = () => {
   const { loadMessages } = useThreadMessageActions();
 
   const refreshContext = () => id && loadContext({ force: true }).then(() => loadMessages());
+  /** Bug edits arrive as live system messages; reloading the page would drop older history and jump scroll. */
+  const refreshBugContext = () => id && loadContext({ force: true });
 
   return (
     <>
@@ -35,7 +37,7 @@ export const GameChatContextArea: React.FC = () => {
           marketItem={groupChannel?.marketItem}
           groupChannel={groupChannel}
           canEditBug={derived.canEditBug}
-          onUpdate={refreshContext}
+          onUpdate={bug ? refreshBugContext : refreshContext}
           onJoinChannel={handleJoinChannel}
         />
       )}

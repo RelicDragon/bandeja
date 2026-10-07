@@ -177,6 +177,7 @@ export class BugService {
     const existing = await prisma.bug.findUnique({
       where: { id },
       select: {
+        status: true,
         testingStartedAt: true,
         inProgressReachedAt: true,
       },
@@ -191,7 +192,8 @@ export class BugService {
       inProgressReachedAt?: Date;
     } = { ...data };
 
-    if (data.status !== undefined) {
+    // Re-sending the current status must not move finishedAt.
+    if (data.status !== undefined && data.status !== existing?.status) {
       if (data.status === 'FINISHED') {
         update.finishedAt = new Date();
       } else if (data.status !== 'ARCHIVED') {

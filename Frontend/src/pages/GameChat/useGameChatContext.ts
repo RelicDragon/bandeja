@@ -23,6 +23,8 @@ import {
 } from '@/utils/cancelledGameChatStub';
 import { hydrateThreadArchivedMemory, markThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
 import { useUnreadStore } from '@/store/unreadStore';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { withPatchedBug } from '@/services/chat/chatThreadIndex';
 import { resolveLoadedGameChatArchiveState } from './gameChatArchiveState';
 import { shouldInitializeGameChatContextLoading } from './gameChatRouteState';
 
@@ -296,6 +298,21 @@ export function useGameChatContext({
     }
     setGroupChannel((prev) => (prev?.id === id ? prev : initialGroupChannel));
   }, [id, initialGroupChannel, currentUserId]);
+
+  /** A bug chat opened from a list row paints that snapshot; refetch since it may predate edits made elsewhere. */
+  const openedFromBugSnapshot =
+    contextType === 'GROUP' && initialGroupChannel?.id === id && !!initialGroupChannel?.bug;
+  useEffect(() => {
+    if (openedFromBugSnapshot) void loadContext({ force: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per opened chat, not per loadContext identity
+  }, [id, openedFromBugSnapshot]);
+
+  const lastBugChannelPatch = useSocketEventsStore((s) => s.lastBugChannelPatch);
+  useEffect(() => {
+    if (!lastBugChannelPatch || contextType !== 'GROUP' || lastBugChannelPatch.groupChannelId !== id) return;
+    const { patch } = lastBugChannelPatch;
+    setGroupChannel((prev) => (prev?.id === id ? withPatchedBug(prev, patch) : prev));
+  }, [lastBugChannelPatch, contextType, id]);
 
   useEffect(() => {
     const g = groupChannel;

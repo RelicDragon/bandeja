@@ -135,7 +135,7 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   const contextId = groupChannel?.id ?? id;
   const chatContextType = groupChannel ? ChatContextType.GROUP : ChatContextType.BUG;
 
-  if (status && status !== existingBug.status) {
+  if (hasValidStatus && status !== existingBug.status) {
     await createSystemMessage(
       contextId,
       {
@@ -147,7 +147,7 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     );
   }
 
-  if (bugType && bugType !== existingBug.bugType) {
+  if (hasValidType && bugType !== existingBug.bugType) {
     await createSystemMessage(
       contextId,
       {
@@ -180,7 +180,7 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   }
 
   if (
-    status &&
+    hasValidStatus &&
     status !== existingBug.status &&
     (status === BugStatus.FINISHED || status === BugStatus.ARCHIVED)
   ) {

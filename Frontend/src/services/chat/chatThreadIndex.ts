@@ -371,10 +371,11 @@ export async function patchThreadIndexSetUnreadCount(
   }
 }
 
+/** Fields to apply to a bug channel's cached bug; without `id` it applies to whatever bug the channel holds. */
 export type ThreadIndexBugPatch = {
-  id: string;
-  status: string;
-  bugType: string;
+  id?: string;
+  status?: string;
+  bugType?: string;
   priority?: number;
   updatedAt?: string;
 };
@@ -409,18 +410,20 @@ export async function patchThreadIndexGroupChannelBug(
   }
 }
 
-/** Returns `channel` unchanged when it is not this bug's channel or already matches. */
+/** Returns `channel` unchanged when it holds a different bug or already matches. */
 export function withPatchedBug(channel: GroupChannel, bug: ThreadIndexBugPatch): GroupChannel {
   const cur = channel.bug;
-  if (!cur || cur.id !== bug.id) return channel;
+  if (!cur || (bug.id && cur.id !== bug.id)) return channel;
+  const status = bug.status ?? cur.status;
+  const bugType = bug.bugType ?? cur.bugType;
   const priority = bug.priority ?? cur.priority;
-  if (cur.status === bug.status && cur.bugType === bug.bugType && cur.priority === priority) return channel;
+  if (cur.status === status && cur.bugType === bugType && cur.priority === priority) return channel;
   return {
     ...channel,
     bug: {
       ...cur,
-      status: bug.status,
-      bugType: bug.bugType,
+      status,
+      bugType,
       priority,
       ...(bug.updatedAt ? { updatedAt: bug.updatedAt } : {}),
     },

@@ -19,6 +19,8 @@ import type { ChatMessage } from '@/api/chat';
 import { donateIncomingChatIntent } from '@/services/chat/chatIntentDonation';
 import { applyUnreadInvalidate, applyUnreadSocketDelta } from '@/services/chat/unreadStoreSocketBridge';
 import { notifyInboundMessageSeen } from '@/services/chat/unreadInboundMessage';
+import { bugPatchFromSystemMessage } from '@/utils/bugSystemMessagePatch';
+import type { ThreadIndexBugPatch } from '@/services/chat/chatThreadIndex';
 
 interface GameUpdateData {
   gameId: string;
@@ -326,6 +328,8 @@ interface SocketEventsState {
   lastGameCancelled: GameCancelledData | null;
   lastPollVote: PollVoteData | null;
   lastNewBug: NewBugData | null;
+  /** Bug fields changed in a bug channel (from BUG_* system messages; covers edits by other users). */
+  lastBugChannelPatch: { groupChannelId: string; patch: ThreadIndexBugPatch } | null;
   lastGamePhotoAdded: GamePhotoAddedData | null;
   lastGamePhotoDeleted: GamePhotoDeletedData | null;
   lastGamePhotoMainChanged: GamePhotoMainChangedData | null;
@@ -390,6 +394,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastGameCancelled: null,
     lastPollVote: null,
     lastNewBug: null,
+    lastBugChannelPatch: null,
     lastGamePhotoAdded: null,
     lastGamePhotoDeleted: null,
     lastGamePhotoMainChanged: null,
@@ -488,6 +493,14 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
               messageId: message.id,
               senderId: message.senderId,
             });
+          }
+          const bugPatch = data.contextType === 'GROUP' ? bugPatchFromSystemMessage(message.content) : null;
+          if (bugPatch) {
+            const groupChannelId = data.contextId;
+            set({ lastBugChannelPatch: { groupChannelId, patch: bugPatch } });
+            void import('@/components/chat/applyBugUpdateToChatList').then((m) =>
+              m.applyBugChannelPatchToChatList(groupChannelId, bugPatch)
+            );
           }
         }
         const rk = chatRoomKey(data.contextType, data.contextId);
@@ -978,6 +991,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastGameCancelled: null,
         lastPollVote: null,
         lastNewBug: null,
+        lastBugChannelPatch: null,
         lastGamePhotoAdded: null,
         lastGamePhotoDeleted: null,
         lastGamePhotoMainChanged: null,

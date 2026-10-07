@@ -69,3 +69,24 @@ describe('applyBugUpdateToChatList', () => {
     expect(patchThreadIndexGroupChannelBug).toHaveBeenCalledWith('c9', expect.objectContaining({ id: 'b9' }));
   });
 });
+
+describe('applyBugChannelPatchToChatList', () => {
+  beforeEach(() => {
+    useChatListFeedStore.getState().resetForTests();
+    patchThreadIndexGroupChannelBug.mockClear();
+  });
+
+  it('applies a partial patch from another user only to that channel', async () => {
+    const { applyBugChannelPatchToChatList } = await import('./applyBugUpdateToChatList');
+    const store = useChatListFeedStore.getState();
+    store.setActiveFilter('bugs');
+    store.commitFilterCache('bugs', { chats: [bugRow('c1', 'b1'), bugRow('c2', 'b2')] });
+
+    applyBugChannelPatchToChatList('c2', { status: 'TEST' });
+
+    const rows = useChatListFeedStore.getState().rows;
+    expect(bugOf(rows[0])?.status).toBe('CREATED');
+    expect(bugOf(rows[1])).toMatchObject({ status: 'TEST', bugType: 'BUG', priority: 0 });
+    expect(patchThreadIndexGroupChannelBug).toHaveBeenCalledWith('c2', { status: 'TEST' });
+  });
+});
