@@ -7,6 +7,8 @@ import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 export type PadelooReservationRow = {
   id: number;
   clubId: number;
+  /** Padeloo court id (Court.externalCourtId holds it as a string). */
+  courtId?: number | null;
   date: string;
   startTime: string;
   endTime: string;
@@ -32,7 +34,8 @@ export function reservationToBookingRecord(
     bookingEnd: booktimeIsoToUtcIso(endLocal, tz) ?? endLocal,
     price: row.price,
     status: row.status,
-    bookingResourceId: undefined,
+    // Without the court, lists show "unknown court" and the Courts card never offers "Use this booking".
+    bookingResourceId: row.courtId != null ? String(row.courtId) : undefined,
   };
 }
 

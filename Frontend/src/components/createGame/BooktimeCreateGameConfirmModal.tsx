@@ -352,7 +352,9 @@ export function BooktimeCreateGameConfirmModal({
       );
       setErrorDetail(detail || null);
 
-      if (isBookingAuthExpiredMessage(formatBooktimeErrorMessage(err))) {
+      // Courts already booked are always released: an error that merely mentions "session" /
+      // "401" (our own create or link call) must not leave them booked at the club.
+      if (bookedIdsRef.current.length === 0 && isBookingAuthExpiredMessage(formatBooktimeErrorMessage(err))) {
         setErrorKey('session');
         setPhase('error');
         toast.error(detail);
@@ -625,7 +627,7 @@ export function BooktimeCreateGameConfirmModal({
                   {displayedErrorMessage}
                 </p>
                 <div className="flex gap-2">
-                  {errorKey === 'slotTaken' ? (
+                  {errorKey === 'createFailedRollback' ? null : errorKey === 'slotTaken' ? (
                     <button
                       type="button"
                       onClick={() => {

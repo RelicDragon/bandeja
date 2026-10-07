@@ -275,9 +275,13 @@ async function sendReport(
       deps.storage.remove(attempt.actionId);
       return { kind: 'handled' };
     }
-    // 400 (report doesn't match the plan) / 404 (gone): retrying cannot help.
+    // 400 (report doesn't match the plan) / 404 (gone): retrying cannot help. Provider calls
+    // already ran for this attemptId, so keep it as abandoned: a "Try again" re-claim of the same
+    // attempt must stop (interrupted), never book the courts a second time. Resume drops it
+    // once the lease is over.
     if (status === 400 || status === 404) {
-      deps.storage.remove(attempt.actionId);
+      if (attempt.results.length > 0) deps.storage.put({ ...attempt, phase: 'abandoned' });
+      else deps.storage.remove(attempt.actionId);
       throw err;
     }
     return { kind: 'report_pending' };

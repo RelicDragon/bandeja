@@ -1318,7 +1318,10 @@ export const CreateGame = ({
     overrides?: CourtPlanBookingOverrides,
     options?: { skipNavigate?: boolean },
   ) => {
-    if (!user) return;
+    if (!user) {
+      if (options?.skipNavigate) throw new Error(t('createGame.booktime.createFailedAfterBook'));
+      return;
+    }
 
     const showCreateOverlay = !options?.skipNavigate;
     if (showCreateOverlay) setCreateOverlayPhase('creating');
@@ -1433,7 +1436,12 @@ export const CreateGame = ({
           },
         },
       );
-      if (!gameResponse) return;
+      if (!gameResponse) {
+        // Declined the overlap prompt. With courts already booked (booking flow) the confirm
+        // modal must roll them back, so this is a failure, not a quiet return.
+        if (options?.skipNavigate) throw new Error(t('createGame.booktime.createFailedAfterBook'));
+        return;
+      }
 
       if ((bookingFields.externalBookingIds?.length ?? 0) > 0) {
         invalidateBooktimeAllUpcomingCache();

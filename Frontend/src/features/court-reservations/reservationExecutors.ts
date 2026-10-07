@@ -196,7 +196,15 @@ export function createReservationExecutors(env: ReservationExecutorEnv, deps: Re
       const provider = await providerFor(minutesBetweenIso(step.start, step.end));
       if (!provider) throw new Error('not_connected');
       const upcoming = await provider.listUpcoming();
-      return upcoming.map(normalize).find(matches) ?? null;
+      // Same time is not enough: the organizer may hold another court then (another game, an
+      // agent booking). Adopting it would link the wrong court, and a rollback would cancel it.
+      const { externalCourtId } = bookParams(step);
+      const atTime = upcoming.filter((b) => matches(normalize(b)));
+      const sameCourt = atTime.filter((b) => b.externalCourtId != null && String(b.externalCourtId) === String(externalCourtId));
+      if (sameCourt.length > 0) return normalize(sameCourt[0]);
+      // Provider gave no court: only an unambiguous single booking at that time.
+      const courtless = atTime.filter((b) => b.externalCourtId == null);
+      return atTime.length === 1 && courtless.length === 1 ? normalize(courtless[0]) : null;
     },
 
     async cancelBooking(providerName, externalBookingId) {

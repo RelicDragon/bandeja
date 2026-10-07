@@ -136,6 +136,10 @@ export class PadelooClient {
       res.statusText;
 
     if (!res.ok) {
+      // Same as Klikteren: a dead token clears the session so the app asks to reconnect.
+      if (auth && (res.status === 401 || res.status === 403)) {
+        this.expireSession();
+      }
       throw Object.assign(new Error(message), { status: res.status, data });
     }
 

@@ -12,6 +12,7 @@ import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBookti
 import { mapAvailableSlotsToSnapshotCourts } from '@/integrations/booktime/slots';
 import { bookingProviderError } from '@shared/booking';
 import { refreshClubBookingLists } from '../clubBookingLists';
+import { bookingResourceExternalId } from '@/components/booktime/booktimeBookingUtils';
 import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import type {
   BookSlotContext,
@@ -84,6 +85,7 @@ export class BooktimeClubBookingProvider implements ClubBookingProvider {
       externalBookingId: booking.uuid,
       bookingStart: booking.bookingStart,
       bookingEnd: booking.bookingEnd,
+      externalCourtId: bookingResourceExternalId(booking),
     }));
   }
 

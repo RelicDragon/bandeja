@@ -137,6 +137,11 @@ export async function confirmPadelooBooking(
   const bookingStartLocal = `${pending.dateKey}T${pending.startTime}`;
   const bookingEndLocal = `${pending.dateKey}T${endTime}`;
 
+  // A 200 without an id is not a booking we can link or cancel: the club may have it.
+  if (reservation.id == null || String(reservation.id).trim() === '') {
+    throw new Error(BOOKING_ERROR_KEYS.outcomeUnknown);
+  }
+
   return {
     bookingId: String(reservation.id),
     bookingStart: booktimeIsoToUtcIso(bookingStartLocal, clubTimezone) ?? bookingStartLocal,

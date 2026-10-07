@@ -27,7 +27,8 @@ export async function loadWeltnerBookingsForClubs(
   period: 'upcoming' | 'past',
   now = Date.now(),
 ): Promise<AggregatedWeltnerBooking[]> {
-  const rows = await Promise.all(
+  // One club failing must not hide the other clubs' bookings.
+  const settled = await Promise.allSettled(
     clubs
       .filter((c) => c.integrationType === 'WELTNER' && c.connected)
       .map(async (club) => {
@@ -49,5 +50,9 @@ export async function loadWeltnerBookingsForClubs(
           }));
       }),
   );
-  return rows.flat();
+  return settled.flatMap((result) => {
+    if (result.status === 'fulfilled') return result.value;
+    console.error('Weltner bookings failed for a club', result.reason);
+    return [];
+  });
 }

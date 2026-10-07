@@ -1,4 +1,5 @@
 import { getKlikterenApiUrl } from './config';
+import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 
 export type KlikterenUser = {
   id: string;
@@ -440,7 +441,10 @@ export class KlikterenClient {
       body: payload,
     });
     const root = asRecord(data);
-    return normalizeBooking(root?.booking ?? root?.data ?? data);
+    const booking = normalizeBooking(root?.booking ?? root?.data ?? data);
+    // A 200 without an id is not a booking we can link or cancel: the club may have it.
+    if (!booking.id) throw new Error(BOOKING_ERROR_KEYS.outcomeUnknown);
+    return booking;
   }
 
   cancelBooking(bookingId: string): Promise<void> {

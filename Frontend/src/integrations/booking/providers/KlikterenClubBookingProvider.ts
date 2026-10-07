@@ -59,7 +59,8 @@ export class KlikterenClubBookingProvider implements ClubBookingProvider {
       if (err instanceof KlikterenSlotTakenError || isKlikterenSlotTakenError(err)) {
         throw bookingProviderError('SlotTaken', BOOKING_ERROR_KEYS.slotNoLongerAvailable);
       }
-      if (/session|expired|401/i.test(message) || message === BOOKING_ERROR_KEYS.sessionExpired) {
+      const status = (err as { status?: unknown })?.status;
+      if (status === 401 || status === 403 || /session|expired|401/i.test(message) || message === BOOKING_ERROR_KEYS.sessionExpired) {
         throw bookingProviderError('AuthExpired', BOOKING_ERROR_KEYS.sessionExpired);
       }
       throw new Error(message);
@@ -88,6 +89,7 @@ export class KlikterenClubBookingProvider implements ClubBookingProvider {
         bookingStart: `${row.date}T${row.startTime}`,
         bookingEnd: `${row.date}T${row.endTime}`,
         price: row.price,
+        externalCourtId: row.courtId != null ? String(row.courtId) : null,
       }));
   }
 

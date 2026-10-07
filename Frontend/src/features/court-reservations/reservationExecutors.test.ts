@@ -104,6 +104,23 @@ describe('createReservationExecutors', () => {
     expect(found?.externalBookingId).toBe('landed');
   });
 
+  it('never adopts a booking on another court at the same time (it would be linked, and rolled back)', async () => {
+    const other = { externalBookingId: 'agent-court-4', bookingStart: at('19:00'), bookingEnd: at('20:00'), externalCourtId: 'bt-4' };
+    const mine = { externalBookingId: 'landed', bookingStart: at('19:00'), bookingEnd: at('20:00'), externalCourtId: 'bt-1' };
+    let { deps } = fakeDeps({ listUpcoming: async () => [other] });
+    expect(await createReservationExecutors(env, deps).findExistingBooking!(step(), [])).toBeNull();
+    ({ deps } = fakeDeps({ listUpcoming: async () => [other, mine] }));
+    expect((await createReservationExecutors(env, deps).findExistingBooking!(step(), []))?.externalBookingId).toBe('landed');
+    // No court from the provider and two bookings at that time: ambiguous, adopt nothing.
+    ({ deps } = fakeDeps({
+      listUpcoming: async () => [
+        { ...other, externalCourtId: null },
+        { ...mine, externalCourtId: null },
+      ],
+    }));
+    expect(await createReservationExecutors(env, deps).findExistingBooking!(step(), [])).toBeNull();
+  });
+
   it('never calls the API to cancel a provider that cancels through the club', async () => {
     const { deps } = fakeDeps({ cancelBooking: async () => undefined });
     await expect(createReservationExecutors(env, deps).cancelBooking('WELTNER', 'w-1')).rejects.toThrow('cancel_via_club');

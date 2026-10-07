@@ -158,6 +158,17 @@ describe('runAgentClientAction', () => {
     expect(res.kind === 'reported' && res.action.result?.partial).toBe(true);
   });
 
+  it('report rejected (400) after booking: "Try again" within the lease never books again', async () => {
+    const { deps, provider } = setup(bookPlan(2));
+    (deps.report as ReturnType<typeof vi.fn>).mockRejectedValueOnce(apiError(400, 'bad_report'));
+    await expect(runAgentClientAction({ actionId: 'a1', chatId: 'chat-1' }, deps)).rejects.toBeTruthy();
+    expect(provider.bookSlot).toHaveBeenCalledTimes(2);
+    // The re-claim returns the same attempt: it must stop, not run the provider calls again.
+    const again = await runAgentClientAction({ actionId: 'a1', chatId: 'chat-1' }, deps);
+    expect(again).toEqual({ kind: 'interrupted' });
+    expect(provider.bookSlot).toHaveBeenCalledTimes(2);
+  });
+
   it('all failed (cancel): every booking is tried, all reported failed', async () => {
     const { deps, provider, reports } = setup(cancelPlan());
     provider.cancelBooking.mockRejectedValue(new Error('boom'));

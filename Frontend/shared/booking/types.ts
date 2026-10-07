@@ -20,6 +20,8 @@ export type ExternalBookingResult = {
   bookingStart: string;
   bookingEnd: string;
   price?: number;
+  /** The club's court id (provider side), when the provider reports it (upcoming lists). */
+  externalCourtId?: string | null;
 };
 
 export type BookingErrorCode = 'SlotTaken' | 'AuthExpired' | 'RollbackFailed';
