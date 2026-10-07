@@ -22,7 +22,8 @@ const EN_WORDS = new Set([
   'the', 'and', 'what', 'what\'s', 'is', 'are', 'was', 'my', 'me', 'you', 'your', 'for', 'that', 'this', 'with', 'will',
   'would', 'can', 'could', 'please', 'thanks', 'thank', 'when', 'where', 'who', 'how', 'do', 'does', 'did', 'have', 'has',
   'i', 'i\'m', 'it', 'it\'s', 'of', 'to', 'in', 'on', 'at', 'be', 'going', 'any', 'there', 'game', 'games', 'tomorrow',
-  'today', 'show', 'find', 'book', 'cancel', 'join', 'next', 'remember',
+  'today', 'show', 'find', 'book', 'cancel', 'join', 'next', 'remember', 'who\'s', 'where\'s', 'when\'s', 'how\'s',
+  'don\'t', 'can\'t', 'won\'t', 'isn\'t', 'i\'ll', 'i\'ve', 'still', 'missing', 'move', 'play', 'playing', 'league', 'leading',
 ]);
 
 /** Function words of the other Latin-script app languages (es, sr, cs, id): any hit = not plain English. */
