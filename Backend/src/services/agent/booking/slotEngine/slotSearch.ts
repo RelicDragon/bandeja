@@ -34,6 +34,10 @@ export type SlotSearchArgs = {
   durationMinutes: number;
   courts: number;
   sport?: Sport;
+  /** Only these courts of `clubId` (a court the user named). */
+  courtIds?: string[];
+  /** Only indoor (true) or only outdoor (false) courts. */
+  indoor?: boolean;
 };
 
 export type SlotSearchClub = SlotEngineClub & { cityName: string | null };
@@ -60,6 +64,7 @@ export async function loadSlotSearchClubs(principal: AgentPrincipal, args: SlotS
   if (!args.clubId && !cityId) {
     throw new ApiError(400, 'No home city set; pass cityId (see list_cities) or clubId');
   }
+  if (args.courtIds?.length && !args.clubId) throw new ApiError(400, 'courtIds needs clubId');
   const rows = await prisma.club.findMany({
     where: {
       isActive: true,
@@ -73,16 +78,23 @@ export async function loadSlotSearchClubs(principal: AgentPrincipal, args: SlotS
       openingTime: true,
       closingTime: true,
       integrationType: true,
+      sports: true,
       city: { select: { name: true, timezone: true } },
       courts: {
-        where: { isActive: true, ...(args.sport ? { OR: [{ sport: null }, { sport: args.sport }] } : {}) },
-        select: { id: true, name: true, externalCourtId: true },
+        where: {
+          isActive: true,
+          ...(args.sport ? { OR: [{ sport: null }, { sport: args.sport }] } : {}),
+          ...(args.courtIds?.length ? { id: { in: args.courtIds } } : {}),
+          ...(args.indoor != null ? { isIndoor: args.indoor } : {}),
+        },
+        select: { id: true, name: true, externalCourtId: true, isIndoor: true, sport: true },
         orderBy: { name: 'asc' },
       },
     },
     orderBy: { name: 'asc' },
   });
   if (args.clubId && rows.length === 0) throw new ApiError(404, 'Club not found');
+  if (!args.sport) assertSingleSport(rows);
 
   const favorites = new Set(
     args.clubId
@@ -103,7 +115,7 @@ export async function loadSlotSearchClubs(principal: AgentPrincipal, args: SlotS
       openingTime: row.openingTime,
       closingTime: row.closingTime,
       provider: (row.integrationType ?? 'NONE') as SlotProvider,
-      courts: row.courts,
+      courts: row.courts.map(({ sport: _sport, ...court }) => court),
     }))
     .sort(
       (a, b) =>
@@ -112,6 +124,25 @@ export async function loadSlotSearchClubs(principal: AgentPrincipal, args: SlotS
         a.name.localeCompare(b.name),
     )
     .slice(0, MAX_CLUBS_PER_CITY);
+}
+
+/**
+ * Without `sport`, a club with courts for several sports would offer whichever court sorts
+ * first (a tennis court for a padel game). The model must take the sport from the game or
+ * the conversation, or ask.
+ */
+export function assertSingleSport(clubs: Array<{ sports: Sport[]; courts: Array<{ sport: Sport | null }> }>): void {
+  const sports = new Set<Sport>();
+  for (const club of clubs) {
+    const courtSports = club.courts.map((court) => court.sport).filter((sport): sport is Sport => sport != null);
+    for (const sport of courtSports.length ? courtSports : club.sports) sports.add(sport);
+  }
+  if (sports.size > 1) {
+    throw new ApiError(
+      400,
+      `sport is required: these courts are for ${[...sports].join(', ')}. Use the sport of the game being booked (get_game "sport") or the one the conversation is about; if that is unclear, ask the user which sport, then call again with sport.`,
+    );
+  }
 }
 
 export function confidenceNote(result: Pick<ClubSlotsResult, 'confidence' | 'asOf' | 'snapshotMissing'>, timeZone: string, locale: string): string {
@@ -140,7 +171,9 @@ type SlotDto = {
   end: string;
   startIso: string;
   endIso: string;
-  courts: string[];
+  courts: Array<{ name: string; indoor: boolean }>;
+  /** Not in this slotRef; to book one of them, search again with courtIds. */
+  otherFreeCourts?: Array<{ name: string; indoor: boolean }>;
   softConflicts?: number;
 };
 
@@ -210,7 +243,8 @@ export async function findAvailableSlots(
     end: formatClockInZone(slot.end, slot.timeZone),
     startIso: slot.start.toISOString(),
     endIso: slot.end.toISOString(),
-    courts: slot.courtNames,
+    courts: slot.courtNames.map((name, index) => ({ name, indoor: slot.courtIndoor[index] ?? false })),
+    ...(slot.otherFreeCourts.length > 0 ? { otherFreeCourts: slot.otherFreeCourts } : {}),
     ...(slot.softConflicts > 0 ? { softConflicts: slot.softConflicts } : {}),
   });
 
@@ -273,7 +307,8 @@ export async function findAvailableSlots(
       window: hasWindow ? { from: args.timeFrom ?? null, to: args.timeTo ?? null, rule: 'slots that start inside the window' } : null,
       confidenceRules: SLOT_CONFIDENCE_RULES,
       timesAre: 'local wall clock of each club (timeZone); startIso/endIso are UTC instants',
-      bookingHint: 'Pass a slotRef unchanged to the booking tools; it expires in 15 minutes and only works for this user.',
+      bookingHint:
+        'Pass a slotRef unchanged to the booking tools; it expires in 15 minutes and only works for this user. A slotRef books exactly the courts in its "courts" list, all of them. otherFreeCourts are free too but not in the ref: to book one of them, call again with courtIds (court ids from get_club); never raise "courts" to reach a court.',
       ...(suggestion ? { suggestion, nearbyTimes: nearby.length > 0 } : {}),
       clubs: clubGroups,
     },

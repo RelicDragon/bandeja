@@ -44,7 +44,7 @@ import {
   type SlotProvider,
 } from './providerRules';
 
-export type SlotEngineCourt = { id: string; name: string; externalCourtId: string | null };
+export type SlotEngineCourt = { id: string; name: string; externalCourtId: string | null; isIndoor?: boolean };
 
 export type SlotEngineClub = {
   id: string;
@@ -83,6 +83,10 @@ export type CandidateSlot = {
   clubId: string;
   courtIds: string[];
   courtNames: string[];
+  /** Indoor flag of each chosen court (same order as `courtIds`). */
+  courtIndoor: boolean[];
+  /** Other courts free at the same start (not chosen), so a specific court can be asked for. */
+  otherFreeCourts: Array<{ name: string; indoor: boolean }>;
   start: Date;
   end: Date;
   timeZone: string;
@@ -279,13 +283,14 @@ export async function computeClubSlots(
         !hardBlocks.some((block) => block.courtId === court.id && overlaps(block, candidate.start, candidate.end)),
     );
     if (free.length < request.courts) continue;
-    // Prefer courts without soft conflicts, then by name (courts arrive name-sorted).
+    // Snapshot providers are booked by the app, which needs a mapped court: those first.
+    // Then courts without soft conflicts, then by name (courts arrive name-sorted).
     const softFor = (courtId: string) =>
       softBlocks.filter((block) => block.courtId === courtId && overlaps(block, candidate.start, candidate.end)).length;
-    const chosen = [...free]
-      .map((court, index) => ({ court, index, soft: softFor(court.id) }))
-      .sort((a, b) => a.soft - b.soft || a.index - b.index)
-      .slice(0, request.courts);
+    const ranked = [...free]
+      .map((court, index) => ({ court, index, soft: softFor(court.id), unmapped: kind === 'snapshot' && !court.externalCourtId ? 1 : 0 }))
+      .sort((a, b) => a.unmapped - b.unmapped || a.soft - b.soft || a.index - b.index);
+    const chosen = ranked.slice(0, request.courts);
     const unassignedSoft = softBlocks.filter((block) => block.courtId == null && overlaps(block, candidate.start, candidate.end)).length;
     const local = businessMinuteToLocal(request.date, candidate.startMinute);
     const distance = !window
@@ -297,6 +302,8 @@ export async function computeClubSlots(
       clubId: club.id,
       courtIds: chosen.map((row) => row.court.id),
       courtNames: chosen.map((row) => row.court.name),
+      courtIndoor: chosen.map((row) => Boolean(row.court.isIndoor)),
+      otherFreeCourts: ranked.slice(request.courts).map((row) => ({ name: row.court.name, indoor: Boolean(row.court.isIndoor) })),
       start: candidate.start,
       end: candidate.end,
       timeZone: club.timeZone,

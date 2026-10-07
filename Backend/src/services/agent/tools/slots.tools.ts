@@ -19,7 +19,7 @@ const CLOCK = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:mm');
 export const findAvailableSlotsTool = defineTool({
   name: 'find_available_slots',
   description:
-    'Find bookable court slots at one club (clubId) or at up to 8 clubs of a city (cityId, default home city) on a date. Times are the club\'s local time. Each slot has a confidence: live (checked with the club system now), snapshot (no known conflicts as of asOf, never say "free"), app_only (only app games checked). Returns slotRef values for booking. When the user asked to book or to create a game at a found time, go on and propose it (earliest matching slot unless they chose) instead of only listing the slots.',
+    'Find bookable court slots at one club (clubId) or at up to 8 clubs of a city (cityId, default home city) on a date. Times are the club\'s local time. Each slot has a confidence: live (checked with the club system now), snapshot (no known conflicts as of asOf, never say "free"), app_only (only app games checked). Returns slotRef values for booking. When the user asked to book or to create a game at a found time, go on and propose it (earliest matching slot unless they chose) instead of only listing the slots. Before proposing, check the slot\'s courts match what the user asked for (sport, indoor/outdoor, a named court).',
   kind: 'read',
   scope: 'user',
   // Live provider calls (Weltner 15s, Nspadel without its own deadline) for up to 8 clubs.
@@ -32,8 +32,24 @@ export const findAvailableSlotsTool = defineTool({
       timeFrom: CLOCK.optional().describe('Earliest start, HH:mm club time'),
       timeTo: CLOCK.optional().describe('Latest start, HH:mm club time'),
       durationMinutes: z.number().int().min(30).max(240).describe('Usually 60, 90 or 120'),
-      courts: z.number().int().min(1).max(4).default(1).describe('Courts needed at the same time'),
-      sport: z.enum(SPORTS).optional(),
+      courts: z
+        .number()
+        .int()
+        .min(1)
+        .max(4)
+        .default(1)
+        .describe('How many courts to BOOK together (one group playing on several courts). Keep 1 unless the user asked for more than one court; never raise it to see more courts: each slot already lists otherFreeCourts.'),
+      sport: z
+        .enum(SPORTS)
+        .optional()
+        .describe('Sport of the courts. Take it from the game being booked (get_game "sport") or the conversation; required when the club has courts for several sports. If unclear, ask the user.'),
+      courtIds: z
+        .array(z.string().min(1).max(64))
+        .min(1)
+        .max(8)
+        .optional()
+        .describe('Only these courts (ids from get_club), with clubId: when the user names a court'),
+      indoor: z.boolean().optional().describe('true = only indoor courts, false = only outdoor (the user asked for indoor / covered or outdoor)'),
     })
     .strict(),
   label: (_args, locale) => agentSlotsT(locale, 'label.findSlots'),

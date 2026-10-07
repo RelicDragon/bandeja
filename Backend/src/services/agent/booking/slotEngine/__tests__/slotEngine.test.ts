@@ -17,7 +17,7 @@ import {
   type SlotEngineSources,
   type WeltnerTuples,
 } from '../slotEngine';
-import { MAX_SLOTS, confidenceNote, findAvailableSlots, type SlotSearchClub } from '../slotSearch';
+import { MAX_SLOTS, assertSingleSport, confidenceNote, findAvailableSlots, type SlotSearchClub } from '../slotSearch';
 
 const TZ = 'Europe/Belgrade';
 const SECRET = 'test-slot-secret';
@@ -157,6 +157,44 @@ async function testMultiCourt() {
   const four = await computeClubSlots(club(), request({ courts: 4 }), sources());
   assert.equal(four.status, 'no_courts');
   console.log('  ok multi-court intersection');
+}
+
+/** Agent chat 2026-10-07: tennis court for a padel game, 4 courts booked, outdoor court for "indoor". */
+async function testCourtChoice() {
+  const ksc = club({
+    courts: [
+      { id: 'T', name: 'Betonski teren', externalCourtId: null, isIndoor: false },
+      { id: 'P1', name: 'Court 1', externalCourtId: null, isIndoor: false },
+      { id: 'P4', name: 'Court 4', externalCourtId: null, isIndoor: true },
+    ],
+  });
+  const result = await computeClubSlots(ksc, request({ timeFrom: '12:00', timeTo: '12:00' }), sources());
+  const noon = result.slots.find((slot) => slot.localTime === '12:00');
+  assert.deepEqual(noon?.courtIds, ['T'], 'one court per slotRef');
+  assert.deepEqual(noon?.courtIndoor, [false]);
+  assert.deepEqual(noon?.otherFreeCourts, [{ name: 'Court 1', indoor: false }, { name: 'Court 4', indoor: true }], 'the other free courts are visible without raising courts');
+
+  const search = await findAvailableSlots(
+    { principal: principal('u1'), locale: 'en', now: request().now },
+    { clubId: 'club-1', date: '2026-10-10', timeFrom: '12:00', timeTo: '12:00', durationMinutes: 60, courts: 1 },
+    { sources: sources(), loadClubs: async () => [{ ...ksc, cityName: 'Novi Sad' }] },
+  );
+  const slot = (search.data as { clubs: Array<{ slots: Array<{ courts: unknown; otherFreeCourts?: unknown }> }> }).clubs[0].slots[0];
+  assert.deepEqual(slot.courts, [{ name: 'Betonski teren', indoor: false }]);
+  assert.equal((slot.otherFreeCourts as unknown[]).length, 2);
+
+  assert.throws(
+    () => assertSingleSport([{ sports: ['PADEL', 'TENNIS'], courts: [{ sport: 'TENNIS' }, { sport: 'PADEL' }] }]),
+    /sport is required/,
+    'mixed padel/tennis club needs a sport',
+  );
+  assert.doesNotThrow(() => assertSingleSport([{ sports: ['PADEL', 'TENNIS'], courts: [{ sport: 'PADEL' }, { sport: null }] }]), 'courts decide, not club.sports');
+  assert.doesNotThrow(() => assertSingleSport([{ sports: ['PADEL'], courts: [] }]));
+  assert.throws(() => assertSingleSport([{ sports: ['PADEL'], courts: [] }, { sports: ['TENNIS'], courts: [] }]), /sport is required/, 'city search across sports');
+  const booktime = club({ provider: 'BOOKTIME', courts: [{ id: 'U', name: 'A unmapped', externalCourtId: null }, { id: 'M', name: 'B mapped', externalCourtId: 'ext-m' }] });
+  const snap = await computeClubSlots(booktime, request(), sources({ snapshotFetchedAt: async () => new Date('2026-10-01T09:00:00Z') }));
+  assert.deepEqual(snap.slots[0]?.courtIds, ['M'], 'snapshot providers offer a court the app can book first');
+  console.log('  ok court choice: sport guard, indoor flags, other free courts');
 }
 
 async function testSoftVsHard() {
@@ -353,6 +391,7 @@ async function main() {
   await testTimezoneAndDst();
   await testAfterMidnight();
   await testMultiCourt();
+  await testCourtChoice();
   await testSoftVsHard();
   await testSnapshotConfidence();
   await testWeltnerTuples();

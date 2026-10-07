@@ -41,6 +41,7 @@ import type { AgentActionPreview, AgentActionPreviewLine, AgentClientPlan, Agent
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
+import { computeRequiredCourtSlotCount } from '@bandeja/shared/gameBooking/courtReservations';
 import { canMutateGameBookings } from '../../../shared/gameBooking/bookingLinkAuthorization';
 import { upsertAgentBookedMirrorRows } from '../../bookingMirror/externalBookingMirror.service';
 import { linkBookingToGame } from '../../game/gameExternalBooking.service';
@@ -69,7 +70,7 @@ import {
   type AgentWriteContext,
   type AgentWriteOutcome,
 } from './registry';
-import { clip, gameEntityFor, line, loadGameForWrite, parsePlan } from './writeHelpers';
+import { clip, gameEntityFor, line, loadGameForWrite, parsePlan, type GameWriteRow } from './writeHelpers';
 
 /** Providers the backend books itself. */
 export const SERVER_PROVIDERS = [ClubIntegrationType.NSPADELSUPABASE, ClubIntegrationType.WELTNER] as const;
@@ -252,6 +253,21 @@ async function authorizeGame(principal: AgentPrincipal, gameId: string, clubId: 
   const game = await loadGameForWrite(gameId);
   if ((game.clubId ?? game.court?.clubId ?? null) !== clubId) {
     throw new ApiError(400, 'This slot is at a different club than the game; a game can only link bookings at its own club');
+  }
+  return game;
+}
+
+/**
+ * A slot with more courts than the game needs is refused: the model once booked a 4-court
+ * slot for a 4-player fixture. Several courts for a bigger game still pass.
+ */
+function assertCourtsFitGame<T extends Pick<GameWriteRow, 'maxParticipants' | 'playersPerMatch' | 'courtSlotCount'>>(game: T, courts: number): T {
+  const needed = computeRequiredCourtSlotCount(game, 0, game.courtSlotCount);
+  if (courts > needed) {
+    throw new ApiError(
+      400,
+      `This slot books ${courts} courts but the game needs ${needed}. Search again with courts: ${needed} (and courtIds for a specific court).`,
+    );
   }
   return game;
 }
@@ -725,7 +741,7 @@ async function proposeClientBooking(
 ): Promise<AgentToolResult> {
   const { principal, locale } = ctx;
   const provider = slot.club.provider as ClientProvider;
-  const game = args.gameId ? await authorizeGame(principal, args.gameId, slot.club.id) : null;
+  const game = args.gameId ? assertCourtsFitGame(await authorizeGame(principal, args.gameId, slot.club.id), slot.courts.length) : null;
   const refused = await clientBookingRefusal(principal, slot, locale, clubHandoff);
   if (refused) return refused;
 
@@ -770,7 +786,7 @@ export const bookCourtTool = defineTool({
     if (!isServerProvider(provider)) {
       return refusal('no_online_booking', agentBookingT(locale, 'refuse.noIntegration'), clubHandoff);
     }
-    const game = args.gameId ? await authorizeGame(principal, args.gameId, slot.club.id) : null;
+    const game = args.gameId ? assertCourtsFitGame(await authorizeGame(principal, args.gameId, slot.club.id), slot.courts.length) : null;
     const refused = await serverBookingRefusal(principal, provider, slot.club.id, locale);
     if (refused) return refused;
 

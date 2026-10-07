@@ -142,6 +142,7 @@ async function main(): Promise<void> {
         endTime: new Date(at('19:30')),
         timeIsSet: true,
         isPublic: true,
+        maxParticipants: 8, // two courts: the post-step books both
         participants: { create: [{ userId: booker.userId, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING }] },
       },
       select: { id: true },
@@ -251,6 +252,20 @@ async function main(): Promise<void> {
       tested += 3;
     }
     console.log('not connected: ok');
+
+    // --- more courts than the game needs (agent chat 2026-10-07: 4 courts for 4 players) --------
+    {
+      await prisma.game.update({ where: { id: game.id }, data: { maxParticipants: 4 } });
+      const result = await registry.executeTool(await ctxFor(booker, { caps: ['booking-v1'] }), 'book_court', {
+        slotRef: ref(booker.userId, btClub.id, [bt[0].id, bt[1].id], '18:00', 'BOOKTIME'),
+        gameId: game.id,
+      });
+      assert.equal(result.ok, false, 'two courts for a 4-player game are refused');
+      assert.match(String((result.data as ToolData).message), /needs 1/);
+      await prisma.game.update({ where: { id: game.id }, data: { maxParticipants: 8 } });
+      tested += 2;
+    }
+    console.log('courts beyond the game refused: ok');
 
     // --- post-step: link to game + mirror ------------------------------------------------------
     {

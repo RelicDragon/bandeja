@@ -28,6 +28,8 @@ export const GAME_WRITE_SELECT = {
   endTime: true,
   timeIsSet: true,
   maxParticipants: true,
+  playersPerMatch: true,
+  courtSlotCount: true,
   isPublic: true,
   allowDirectJoin: true,
   parentId: true,
