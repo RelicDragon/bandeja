@@ -103,7 +103,7 @@ export class GameCourtService {
   ) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { sport: true },
+      select: { sport: true, clubId: true },
     });
     if (!game) {
       throw new ApiError(404, 'Game not found');
@@ -117,6 +117,9 @@ export class GameCourtService {
         const court = await tx.court.findUnique({ where: { id: courtId } });
         if (!court) {
           throw new ApiError(404, `Court ${courtId} not found`);
+        }
+        if (game.clubId && court.clubId !== game.clubId) {
+          throw new ApiError(400, "Courts must belong to the game's club");
         }
         assertCourtMatchesGameSport(court.sport, game.sport);
       }
@@ -331,6 +334,13 @@ export class GameCourtService {
     if (!court) {
       throw new ApiError(404, 'Court not found');
     }
+    // Old-app endpoint: same club and sport rules as PUT court-slots.
+    const owner = await prisma.game.findUnique({ where: { id: gameId }, select: { clubId: true, sport: true } });
+    if (!owner) throw new ApiError(404, 'Game not found');
+    if (owner.clubId && court.clubId !== owner.clubId) {
+      throw new ApiError(400, "Courts must belong to the game's club");
+    }
+    assertCourtMatchesGameSport(court.sport, owner.sport);
 
     const maxOrder = await prisma.gameCourt.findFirst({
       where: { gameId },

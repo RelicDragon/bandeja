@@ -127,7 +127,10 @@ export async function replaceBooktimeSnapshot(
 ): Promise<BooktimeSnapshotResponse> {
   await assertBooktimeClub(clubId);
   parseDateParam(input.date);
-  const fetchedAt = parseFetchedAt(input.fetchedAt);
+  // Server clock caps the device's: a phone running ahead must not make its data look fresher
+  // (which also blocked everyone's non-forced refreshes with 429s).
+  const parsedFetchedAt = parseFetchedAt(input.fetchedAt);
+  const fetchedAt = parsedFetchedAt.getTime() > Date.now() ? new Date() : parsedFetchedAt;
   const dbCourts = await loadActiveClubCourts(clubId);
   const courts = prepareSnapshotCourtsForStorage(parseCourtsInput(input.courts), dbCourts);
   const force = input.force === true;
@@ -142,7 +145,7 @@ export async function replaceBooktimeSnapshot(
       (max, row) => (row.fetchedAt > max ? row.fetchedAt : max),
       existing[0].fetchedAt
     );
-    if (Date.now() - latest.getTime() < BOOKTIME_SNAPSHOT_PUT_COOLDOWN_MS) {
+    if (Date.now() - Math.min(latest.getTime(), Date.now()) < BOOKTIME_SNAPSHOT_PUT_COOLDOWN_MS) {
       throw new ApiError(429, 'Snapshot was refreshed recently; use force to override');
     }
   }
@@ -175,6 +178,14 @@ export async function replaceBooktimeSnapshot(
     await tx.$executeRaw(
       Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${snapshotLockKey}::text))`
     );
+    // Under the lock: a snapshot fetched earlier than the stored one never replaces it.
+    const stored = await tx.clubBooktimeBusySnapshot.aggregate({
+      where: { clubId, date: input.date },
+      _max: { fetchedAt: true },
+    });
+    // (A stored time in the future, from a device running ahead before the cap, counts as now.)
+    const storedAt = stored._max.fetchedAt ? Math.min(stored._max.fetchedAt.getTime(), Date.now()) : null;
+    if (storedAt != null && storedAt > fetchedAt.getTime()) return;
     await tx.clubBooktimeBusySnapshot.deleteMany({
       where: { clubId, date: input.date },
     });

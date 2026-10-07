@@ -21,6 +21,7 @@ import {
   type LinkBookingToGamePatch,
 } from '../../shared/gameBooking/contracts';
 import { canMutateGameBookings } from '../../shared/gameBooking/bookingLinkAuthorization';
+import { assertCourtMatchesGameSport } from '../../shared/clubSports';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
 import { computeLegacyBookingFieldsFromSlots } from '../../shared/gameBooking/computeLegacyBookingFieldsFromSlots';
 import {
@@ -253,6 +254,22 @@ function snapshotToRowData(
     courtId: snap?.courtId ?? null,
     bookingStart,
     bookingEnd,
+  };
+}
+
+/**
+ * Refresh of an existing link: only the fields the snapshot actually carries. A snapshot without
+ * a court or times (partial provider row) must not turn a known booking into "unknown court /
+ * unknown time" (which reads as a coverage gap).
+ */
+function snapshotToRowUpdate(
+  snap: BookingSnapshotInput,
+  timeZone: string,
+): Partial<Pick<Prisma.GameExternalBookingUpdateManyMutationInput, 'bookingStart' | 'bookingEnd'>> & { courtId?: string } {
+  const row = snapshotToRowData(snap, timeZone);
+  return {
+    ...(row.courtId ? { courtId: row.courtId } : {}),
+    ...(row.bookingStart && row.bookingEnd ? { bookingStart: row.bookingStart, bookingEnd: row.bookingEnd } : {}),
   };
 }
 
@@ -661,7 +678,7 @@ export async function putGameBookingSnapshots(
         data: {
           ...(snap.externalBookingId.startsWith('weltner:')
             ? await weltnerBookingLinkData(tx, { gameId, externalBookingId: snap.externalBookingId })
-            : snapshotToRowData(snap, timeZone)),
+            : snapshotToRowUpdate(snap, timeZone)),
           // The app just read the provider: any club-side drift is resolved.
           ...UPSTREAM_IN_SYNC,
           upstreamCheckedAt: new Date(),
@@ -825,11 +842,57 @@ export async function linkBookingToGame(
       throw new ApiError(400, BOOKING_ERROR_KEYS.alreadyLinked);
     }
 
+    const current = await tx.game.findUniqueOrThrow({
+      where: { id: gameId },
+      select: { clubId: true, sport: true, startTime: true, endTime: true, timeIsSet: true },
+    });
+    // Old apps (no explicit time policy): bookings drive the game's time from the earliest start
+    // to the latest end. A booking apart from the game (e.g. another day) would stretch the game
+    // over both; one that overlaps or touches its window (back-to-back hours) is fine.
+    if (options.timePolicy !== 'explicit' && !game.timeOverride && current.timeIsSet) {
+      const linkCount = await tx.gameExternalBooking.count({ where: { gameId } });
+      const { bookingStart, bookingEnd } = ingestBookingSnapshotTimes(
+        resolvedSnapshot.bookingStart,
+        resolvedSnapshot.bookingEnd,
+        timeZone,
+      );
+      if (
+        linkCount > 0 &&
+        bookingStart &&
+        bookingEnd &&
+        (bookingEnd.getTime() < current.startTime.getTime() || bookingStart.getTime() > current.endTime.getTime())
+      ) {
+        throw new ApiError(400, "This booking does not overlap the game's time");
+      }
+    }
+    const finalClubId = gamePatch?.clubId !== undefined ? gamePatch.clubId : current.clubId;
     if (gamePatch) {
       const patchData = linkGamePatchToUpdateData(gamePatch, timeZone);
+      if (gamePatch.clubId !== undefined && gamePatch.clubId !== current.clubId) {
+        // Same rule as clearing the club: bookings at the old club are released first.
+        if (current.clubId && (await tx.gameExternalBooking.count({ where: { gameId } })) > 0) {
+          throw new ApiError(400, BOOKING_ERROR_KEYS.removeBookingsBeforeClearing);
+        }
+        const club = gamePatch.clubId
+          ? await tx.club.findUnique({ where: { id: gamePatch.clubId }, select: { cityId: true } })
+          : null;
+        if (gamePatch.clubId && !club) throw new ApiError(404, 'Club not found');
+        if (club) patchData.cityId = club.cityId;
+        // Planned courts of the old club go with it (none has a booking: checked above).
+        await tx.gameCourt.deleteMany({
+          where: { gameId, ...(gamePatch.clubId ? { court: { clubId: { not: gamePatch.clubId } } } : {}) },
+        });
+      }
       if (Object.keys(patchData).length > 0) {
         await tx.game.update({ where: { id: gameId }, data: patchData });
       }
+    }
+    // The booking's court and the patched primary court must be courts of the game's club.
+    for (const courtId of new Set([resolvedSnapshot.courtId, gamePatch?.courtId].filter((id): id is string => Boolean(id)))) {
+      const court = await tx.court.findUnique({ where: { id: courtId }, select: { clubId: true, sport: true } });
+      if (!court) throw new ApiError(404, 'Court not found');
+      if (finalClubId && court.clubId !== finalClubId) throw new ApiError(400, "Courts must belong to the game's club");
+      assertCourtMatchesGameSport(court.sport, current.sport);
     }
 
     await createLinkInTx(tx, gameId, userId, { externalBookingId, snapshot: resolvedSnapshot, gameCourtId }, timeZone);

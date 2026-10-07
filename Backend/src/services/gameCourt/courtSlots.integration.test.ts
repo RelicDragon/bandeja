@@ -342,6 +342,23 @@ void (async () => {
       'no new court above the cap',
     );
 
+    // Link checks: the booking's court must be the game's club; old apps cannot stretch the game
+    // to a booking apart from its time; a snapshot without court/times keeps the stored ones.
+    await expectApiError(link(gReuse.id, 'foreign', { courtId: foreign.id }, { timePolicy: 'explicit' }), 400, "another club's court");
+    await expectApiError(
+      link(gReuse.id, 'next-day', {
+        courtId: c3.id,
+        bookingStart: new Date(start.getTime() + 24 * H).toISOString(),
+        bookingEnd: new Date(end.getTime() + 24 * H).toISOString(),
+      }),
+      400,
+      'legacy: a booking on another day',
+    );
+    await putGameBookingSnapshots(gReuse.id, owner.id, false, { snapshots: [{ externalBookingId: bookingId('reuse-3') }] }, { timePolicy: 'explicit' });
+    const kept = await prisma.gameExternalBooking.findFirstOrThrow({ where: { gameId: gReuse.id, externalBookingId: bookingId('reuse-3') } });
+    assert.equal(kept.courtId, c3.id, 'court kept on a partial snapshot');
+    assert.equal(kept.bookingStart?.getTime(), start.getTime(), 'times kept on a partial snapshot');
+
     // Reorder only accepts this game's own slots.
     const foreignSlots = await slotsOf(g2.id);
     await expectApiError(
