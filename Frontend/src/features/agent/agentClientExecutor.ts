@@ -82,6 +82,8 @@ export interface AgentClientExecutorDeps {
   storage: AgentClientAttemptStorage;
   clientKey(): string;
   now(): number;
+  /** The club's booking list changed (≥ 1 booking or cancel went through): drop cached lists. */
+  bookingsChanged?(): Promise<void>;
 }
 
 export interface RunAgentClientActionOptions {
@@ -490,6 +492,7 @@ export async function runAgentClientAction(
       deps.storage.put({ ...attempt, phase: 'abandoned' });
       return { kind: 'interrupted' };
     }
+    if (attempt.results.some((r) => r.ok)) await deps.bookingsChanged?.().catch(() => {});
     opts.onProgress?.({ kind: 'saving' });
     return await sendReport(deps, attempt, flags);
   } finally {
@@ -543,6 +546,7 @@ export async function resumeAgentClientAttempts(
         attempt.phase = 'ran';
         attempt.rollbackInFlight = null;
         deps.storage.put(attempt);
+        await deps.bookingsChanged?.().catch(() => {});
       }
       const result = await sendReport(deps, attempt, { notConnected: false, leaseExpired: false });
       if (result.kind !== 'report_pending') out.push({ chatId: attempt.chatId, result });
@@ -569,7 +573,16 @@ export function defaultAgentClientExecutorDeps(): AgentClientExecutorDeps {
     storage: createAgentClientAttemptStorage(),
     clientKey: () => getAgentClientKey(),
     now: () => Date.now(),
+    bookingsChanged: invalidateClubBookingLists,
   };
+}
+
+/** Same as the in-app book / cancel flows: the next Club bookings view refetches from the provider. */
+async function invalidateClubBookingLists(): Promise<void> {
+  (await import('@/integrations/padeloo/padelooAllUpcomingLoader')).invalidatePadelooUpcomingCache();
+  (await import('@/integrations/klikteren/klikterenAllUpcomingLoader')).invalidateKlikterenUpcomingCache();
+  // Last: also resets the shared list hooks, which reload on their next render.
+  (await import('@/integrations/booktime/booktimeAllUpcomingLoader')).invalidateBooktimeAllUpcomingCache();
 }
 
 /** Local provider session for the club (the same check Connected clubs uses). */

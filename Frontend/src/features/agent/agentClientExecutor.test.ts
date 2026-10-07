@@ -115,6 +115,7 @@ function setup(plan: AgentClientPlan, opts: { attemptId?: string | null; lease?:
     storage,
     clientKey: () => 'device-key-1',
     now: () => NOW,
+    bookingsChanged: vi.fn(async () => {}),
   };
   return { deps, provider, reports, storage };
 }
@@ -139,6 +140,7 @@ describe('runAgentClientAction', () => {
     expect(progress).toEqual(['claiming', 'rechecking', 'w1/2', 'w2/2', 'saving']);
     expect(res).toMatchObject({ kind: 'reported', runId: 'run-2', notConnected: false });
     expect(storage.list()).toEqual([]);
+    expect(deps.bookingsChanged).toHaveBeenCalledTimes(1);
   });
 
   it('partial: stops booking at the first failure and reports the rest as skipped', async () => {
@@ -166,6 +168,7 @@ describe('runAgentClientAction', () => {
       expect.objectContaining({ bookingRef: 'geb:2', externalBookingId: 'bk-2', ok: false, error: 'boom' }),
     ]);
     expect(res.kind === 'reported' && res.action.status).toBe('FAILED');
+    expect(deps.bookingsChanged).not.toHaveBeenCalled();
   });
 
   it('lease expired before start: no provider call, all reported failed', async () => {

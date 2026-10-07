@@ -104,7 +104,7 @@ const bookCourtInput = z
       .min(1)
       .max(64)
       .optional()
-      .describe('Game to link the booked court(s) to; the user must organise it (owner or admin) and it must be at the same club'),
+      .describe('Game (or league fixture) the court is for; pass it whenever there is one. The user must organise it (owner or admin) and it must be at the same club'),
   })
   .strict();
 
@@ -753,7 +753,7 @@ async function proposeClientBooking(
 export const bookCourtTool = defineTool({
   name: 'book_court',
   description:
-    'Prepare booking the court(s) of one slot from find_available_slots (pass its slotRef unchanged; a user message ending in a [slot:<ref>] token means that ref). Optionally link the booking to a game the user organises at the same club (gameId). If the user wants to play at the slot and has no game yet, use create_game_with_booking instead. Creates a confirmation card; nothing is booked until the user confirms. Some clubs are booked by the user\'s app on confirm (the card says so; on Telegram the user opens the app). NS Padel / Weltner bookings can only be cancelled via the club.',
+    'Prepare booking the court(s) of one slot from find_available_slots (pass its slotRef unchanged; a user message ending in a [slot:<ref>] token means that ref). When the court is for an existing game the user organises at the same club (e.g. a game or league fixture just moved or discussed in this chat), always pass its gameId so the booking is linked to it; omit gameId only for a court not meant for any game. If the user wants to play at the slot and has no game yet, use create_game_with_booking instead. Creates a confirmation card; nothing is booked until the user confirms. Some clubs are booked by the user\'s app on confirm (the card says so; on Telegram the user opens the app). NS Padel / Weltner bookings can only be cancelled via the club.',
   kind: 'write',
   riskTier: 'critical',
   scope: 'user',
