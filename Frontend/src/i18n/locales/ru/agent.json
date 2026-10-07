@@ -443,6 +443,18 @@
       "countdown": "Через {{duration}}",
       "composerPaused": "Пауза до {{time}}",
       "composerPausedNoTime": "Отправка пока приостановлена"
+    },
+    "suggestionsTitle": "Подсказки для вас",
+    "home": {
+      "greeting": {
+        "morning": "Доброе утро, {{name}}",
+        "afternoon": "Добрый день, {{name}}",
+        "evening": "Добрый вечер, {{name}}"
+      },
+      "subtitle": "Нажмите на шар, чтобы поговорить, или напишите ниже.",
+      "placeholder": "Спросите что угодно…",
+      "listeningTitle": "Слушаю",
+      "listeningHint": "Скажите, например, одно из этого — или нажмите:"
     }
   }
 }

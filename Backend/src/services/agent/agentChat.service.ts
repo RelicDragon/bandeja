@@ -169,6 +169,34 @@ export async function createAgentChat(userId: string): Promise<AgentChatDto> {
   return toAgentChatDto(chat);
 }
 
+/**
+ * The app's "New chat" (`POST /agent/chats`): reuses the newest untouched chat (no messages,
+ * no runs, untitled, not pinned / archived), so opening New chat and backing out never piles
+ * up empty rows. Bumped to the top of the list.
+ */
+export async function startAgentChat(userId: string): Promise<AgentChatDto> {
+  const empty = await prisma.agentChat.findFirst({
+    where: {
+      userId,
+      deletedAt: null,
+      archivedAt: null,
+      pinnedAt: null,
+      title: null,
+      messages: { none: {} },
+      runs: { none: {} },
+    },
+    orderBy: { updatedAt: 'desc' },
+    select: { id: true },
+  });
+  if (!empty) return createAgentChat(userId);
+  const chat = await prisma.agentChat.update({
+    where: { id: empty.id },
+    data: { updatedAt: new Date() },
+    include: CHAT_LIST_INCLUDE,
+  });
+  return toAgentChatDto(chat);
+}
+
 /** Owner-scoped, non-deleted chat (archived included) or 404. */
 export async function requireOwnedAgentChat(userId: string, chatId: string) {
   const chat = await prisma.agentChat.findFirst({ where: { id: chatId, userId, deletedAt: null } });

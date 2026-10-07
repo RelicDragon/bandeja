@@ -109,3 +109,13 @@ export function filterAgentChats<T extends Pick<AgentChatDto, 'title' | 'lastMes
     return words.every((w) => haystack.includes(w));
   });
 }
+
+/**
+ * A chat New chat opened that never got a message (the server hands it out again on the next
+ * New chat). The list hides it, except the one open in the split view.
+ */
+export function isUntouchedAgentChat(
+  chat: Pick<AgentChatDto, 'title' | 'lastMessagePreview' | 'activeRun' | 'pinnedAt'>,
+): boolean {
+  return !chat.title?.trim() && !chat.lastMessagePreview && !chat.activeRun && !chat.pinnedAt;
+}

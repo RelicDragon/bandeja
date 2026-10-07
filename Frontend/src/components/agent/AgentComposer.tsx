@@ -30,6 +30,10 @@ interface AgentComposerProps {
   disabled?: boolean;
   /** Why sending is paused (rate limit / daily budget): replaces the placeholder and disables input. */
   pausedReason?: string | null;
+  /** Outer padding (the AI home lines it up with its header). */
+  className?: string;
+  /** Overrides the default placeholder (the AI home's narrower card). */
+  placeholder?: string;
 }
 
 /**
@@ -46,6 +50,8 @@ export function AgentComposer({
   stopping,
   disabled: disabledProp,
   pausedReason,
+  className = 'p-3',
+  placeholder,
 }: AgentComposerProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -131,7 +137,7 @@ export function AgentComposer({
     'bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 text-white hover:scale-105 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800';
 
   return (
-    <div className="p-3 overflow-visible">
+    <div className={`${className} overflow-visible`}>
       <form ref={formRef} onSubmit={submit} className="relative mx-auto max-w-3xl overflow-visible">
         <div
           ref={inputContainerRef}
@@ -186,7 +192,8 @@ export function AgentComposer({
                 dir="auto"
                 disabled={disabled || transcribing}
                 placeholder={
-                  pausedReason ?? (transcribing ? t('agent.voice.dictation.transcribing') : t('agent.composer.placeholder'))
+                  pausedReason ??
+                  (transcribing ? t('agent.voice.dictation.transcribing') : (placeholder ?? t('agent.composer.placeholder')))
                 }
                 aria-label={t('agent.composer.placeholder')}
                 className="block w-full resize-none overflow-y-auto rounded-[24px] bg-transparent py-3 pe-[6.25rem] ps-5 text-[15px] text-gray-900 outline-none placeholder:text-gray-400 disabled:opacity-60 dark:text-gray-100 dark:placeholder:text-gray-500"

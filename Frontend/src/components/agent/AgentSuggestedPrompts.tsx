@@ -58,16 +58,19 @@ interface PromptCard {
 }
 
 /**
- * Empty-state prompts (chat list without chats, a new chat): personalized cards from data the
- * app already has, topped up with the generic examples to `AGENT_PERSONAL_PROMPT_MAX`. A
- * skeleton covers only this block while the queries load (capped, see the hook).
+ * Suggested prompts: personalized cards from data the app already has, topped up with the
+ * generic examples to `AGENT_PERSONAL_PROMPT_MAX`. A skeleton covers only this block while the
+ * queries load (capped, see the hook). `stack` = empty states (a new chat, the AI home without
+ * chats); `carousel` = one swipeable row on the AI home above the chat list.
  */
 export function AgentSuggestedPrompts({
   onPick,
   disabled = false,
+  layout = 'stack',
 }: {
   onPick: (prompt: string) => void;
   disabled?: boolean;
+  layout?: 'stack' | 'carousel';
 }) {
   const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
@@ -87,13 +90,20 @@ export function AgentSuggestedPrompts({
     return [...personal, ...generic];
   }, [prompts, t]);
 
+  const carousel = layout === 'carousel';
+  // Carousel: fixed-width cards that snap, bleeding to the screen edge (the row pads itself).
+  const rowClass = carousel
+    ? 'scrollbar-hide flex w-full snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-3 px-3 pb-1'
+    : 'flex w-full flex-col gap-2';
+  const cardSize = carousel ? 'w-[15.5rem] flex-shrink-0 snap-start min-h-[68px]' : 'w-full min-h-[60px]';
+
   if (loading) {
     return (
-      <div className="flex w-full flex-col gap-2" aria-busy="true" aria-label={t('agent.personal.loading')}>
-        {Array.from({ length: AGENT_PERSONAL_PROMPT_MAX }, (_, i) => (
+      <div className={rowClass} aria-busy="true" aria-label={t('agent.personal.loading')}>
+        {Array.from({ length: carousel ? 2 : AGENT_PERSONAL_PROMPT_MAX }, (_, i) => (
           <div
             key={i}
-            className="flex min-h-[60px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-900"
+            className={`flex ${cardSize} items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-900`}
           >
             <div className="h-9 w-9 flex-shrink-0 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700" />
             <div className="min-w-0 flex-1 space-y-2">
@@ -107,7 +117,7 @@ export function AgentSuggestedPrompts({
   }
 
   return (
-    <div className="flex w-full flex-col gap-2">
+    <div className={rowClass}>
       {cards.map((card, i) => {
         const Icon = card.tone.icon;
         return (
@@ -116,10 +126,10 @@ export function AgentSuggestedPrompts({
             type="button"
             disabled={disabled}
             onClick={() => onPick(card.text)}
-            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? false : carousel ? { opacity: 0, x: 12 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
             transition={{ duration: 0.28, delay: reduceMotion ? 0 : i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-            className="group flex min-h-[60px] w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2.5 text-start shadow-sm shadow-gray-900/[0.02] transition-colors hover:border-primary-300 active:scale-[0.99] active:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-primary-700 dark:active:bg-gray-800"
+            className={`group flex ${cardSize} items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2.5 text-start shadow-sm shadow-gray-900/[0.02] transition-colors hover:border-primary-300 active:scale-[0.99] active:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-primary-700 dark:active:bg-gray-800`}
           >
             <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${card.tone.tile}`} aria-hidden>
               <Icon size={18} />

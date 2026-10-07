@@ -1,23 +1,30 @@
-import { memo, useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { stripAgentRefTokens } from '@/features/agent/agentBookingCards';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
   Archive,
-  ArrowUp,
   Loader2,
   MessagesSquare,
   MoreHorizontal,
   Search,
   ShieldCheck,
   ShieldQuestion,
+  SquarePen,
   X,
 } from 'lucide-react';
-import { AGENT_MESSAGE_MAX_LENGTH, type AgentChatDto, type AgentRunStatus } from '@shared/agentContract';
+import type { AgentChatDto, AgentRunStatus } from '@shared/agentContract';
 import { ChatListSkeletonRows } from '@/components/chat/ChatListLoadingSkeleton';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import type { AgentChatListView } from '@/features/agent/agentChatOrder';
-import { agentChatMonthLabel, filterAgentChats, groupAgentChats, type AgentChatGroup } from '@/features/agent/agentChatGroups';
+import {
+  agentChatMonthLabel,
+  filterAgentChats,
+  groupAgentChats,
+  isUntouchedAgentChat,
+  type AgentChatGroup,
+} from '@/features/agent/agentChatGroups';
+import { discardPrimedAgentVoiceAudio, primeAgentVoiceAudio } from '@/features/agent/voice/voiceAudioEngine';
 import {
   useAgentChatsQuery,
   useCreateAgentChatMutation,
@@ -31,6 +38,7 @@ import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import { AgentChatMenuSheet, AgentDeleteChatDialog, AgentRenameDialog } from './AgentChatMenu';
+import { AgentHomeHero } from './AgentHomeHero';
 import { AgentGlyph } from './AgentGlyph';
 import { AgentSuggestedPrompts } from './AgentSuggestedPrompts';
 import { formatAgentChatTime } from './agentFormat';
@@ -40,9 +48,16 @@ const LONG_PRESS_MOVE_PX = 10;
 
 const previewText = (chat: AgentChatDto) => (chat.lastMessagePreview ? stripAgentRefTokens(chat.lastMessagePreview) : '');
 
+export interface AgentOpenChatOptions {
+  /** Sent by the chat view on arrival. */
+  initialPrompt?: string;
+  /** The chat view starts a voice conversation on arrival (audio unlocked in the tap here). */
+  startVoice?: boolean;
+}
+
 interface AgentChatListProps {
   selectedChatId?: string | null;
-  onOpenChat: (chatId: string, opts?: { initialPrompt?: string }) => void;
+  onOpenChat: (chatId: string, opts?: AgentOpenChatOptions) => void;
   /** Desktop split: fill the panel and scroll inside it. */
   fillHeight?: boolean;
 }
@@ -80,16 +95,32 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
-  /** Creates a chat and opens it; with a prompt the chat view sends it on arrival (one step). */
-  const startChat = (initialPrompt?: string, onStarted?: () => void) => {
+  const [draft, setDraft] = useState('');
+  const [voiceStarting, setVoiceStarting] = useState(false);
+
+  /**
+   * New chat (the server reuses an untouched one) and opens it: empty (suggestions + composer),
+   * with a first message the chat view sends on arrival, or straight into a voice conversation.
+   */
+  const startChat = (opts: AgentOpenChatOptions = {}, onStarted?: () => void) => {
     if (createMutation.isPending) return;
+    setVoiceStarting(Boolean(opts.startVoice));
     createMutation.mutate(undefined, {
       onSuccess: (chat) => {
         onStarted?.();
-        onOpenChat(chat.id, initialPrompt ? { initialPrompt } : undefined);
+        onOpenChat(chat.id, opts.initialPrompt || opts.startVoice ? opts : undefined);
       },
-      onError: (err) => toast.error(extractApiErrorMessage(err, t)),
+      onError: (err) => {
+        if (opts.startVoice) discardPrimedAgentVoiceAudio();
+        toast.error(extractApiErrorMessage(err, t));
+      },
     });
+  };
+  const startVoiceChat = () => {
+    if (createMutation.isPending) return;
+    // Inside the tap: iOS unlocks audio only here, the chat view takes the context over.
+    primeAgentVoiceAudio();
+    startChat({ startVoice: true });
   };
 
   const closeSearch = () => {
@@ -97,7 +128,11 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
     setQuery('');
   };
 
-  const chats = useMemo(() => chatsQuery.data?.chats ?? [], [chatsQuery.data]);
+  // Untouched New chats stay out of the list (the open one in the split view excepted).
+  const chats = useMemo(
+    () => (chatsQuery.data?.chats ?? []).filter((c) => c.id === selectedChatId || !isUntouchedAgentChat(c)),
+    [chatsQuery.data, selectedChatId],
+  );
   const groups = useMemo(() => groupAgentChats(chats, new Date(), { pinned: view === 'main' }), [chats, view]);
   const results = useMemo(() => {
     if (!searching) return [];
@@ -140,17 +175,22 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
     <div className={fillHeight ? 'flex h-full min-h-0 flex-col' : 'flex flex-col'}>
       <div className="px-4 pb-3 pt-4">
         <div className="flex items-center gap-1">
-          <div className="me-2 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-600 text-white shadow-lg shadow-violet-500/25 dark:shadow-violet-900/40">
-            <AgentGlyph size={24} />
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-violet-600 text-white shadow-md shadow-violet-500/25">
+              <AgentGlyph size={18} />
+            </span>
+            <h2 className="truncate text-lg font-bold tracking-tight text-gray-900 dark:text-white">{t('agent.listTitle')}</h2>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-400">
-              {t('agent.listTitle')}
-            </p>
-            <h2 className="truncate text-lg font-bold leading-tight tracking-tight text-gray-900 dark:text-white">
-              {t('agent.empty.listTitle')}
-            </h2>
-          </div>
+          <button
+            type="button"
+            onClick={() => startChat()}
+            disabled={createMutation.isPending}
+            aria-label={t('agent.newChat')}
+            title={t('agent.newChat')}
+            className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 active:bg-gray-200 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800 dark:active:bg-gray-700"
+          >
+            {createMutation.isPending ? <Loader2 size={20} className="animate-spin" aria-hidden /> : <SquarePen size={20} aria-hidden />}
+          </button>
           <button
             type="button"
             onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
@@ -183,7 +223,15 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
             onClose={closeSearch}
           />
         ) : (
-          <AgentListComposer pending={createMutation.isPending} onSubmit={(text, done) => startChat(text, done)} />
+          <AgentHomeHero
+            firstName={user?.firstName ?? null}
+            draft={draft}
+            onDraftChange={setDraft}
+            onSend={() => startChat({ initialPrompt: draft.trim() }, () => setDraft(''))}
+            onTalk={startVoiceChat}
+            pending={createMutation.isPending}
+            voicePending={createMutation.isPending && voiceStarting}
+          />
         )}
         {showViewSwitch ? (
           <SegmentedSwitch
@@ -234,7 +282,17 @@ export function AgentChatList({ selectedChatId = null, onOpenChat, fillHeight = 
               </div>
             ) : null}
             {isEmpty && view === 'main' ? (
-              <AgentListEmptyState disabled={createMutation.isPending} onPick={(prompt) => startChat(prompt)} />
+              <AgentListEmptyState disabled={createMutation.isPending} onPick={(prompt) => startChat({ initialPrompt: prompt })} />
+            ) : null}
+            {!isEmpty && chatsQuery.isSuccess && view === 'main' ? (
+              <section aria-label={t('agent.suggestionsTitle')} className="pb-1">
+                {sectionLabel(t('agent.suggestionsTitle'))}
+                <AgentSuggestedPrompts
+                  layout="carousel"
+                  disabled={createMutation.isPending}
+                  onPick={(prompt) => startChat({ initialPrompt: prompt })}
+                />
+              </section>
             ) : null}
             {isEmpty && view === 'archived' ? (
               <p className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">{t('agent.archivedEmpty')}</p>
@@ -462,52 +520,6 @@ function AgentListEmptyState({ onPick, disabled }: { onPick: (prompt: string) =>
       <AgentSuggestedPrompts onPick={onPick} disabled={disabled} />
       <p className="px-1 pt-3 text-center text-xs text-gray-400 dark:text-gray-500">{t('agent.disclaimer')}</p>
     </div>
-  );
-}
-
-/**
- * The list's composer: typing + send creates a chat and opens it with this text as the first
- * message (handed over as router state, sent by the chat view on arrival). Sits at the top of
- * the list, so the software keyboard never covers it.
- */
-function AgentListComposer({ pending, onSubmit }: { pending: boolean; onSubmit: (text: string, done: () => void) => void }) {
-  const { t } = useTranslation();
-  const [draft, setDraft] = useState('');
-  const text = draft.trim();
-  const canSend = text.length > 0 && !pending;
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!canSend) return;
-    onSubmit(text, () => setDraft(''));
-  };
-  return (
-    <form
-      onSubmit={submit}
-      className="mt-3 flex w-full items-center gap-2 rounded-2xl border border-gray-200 bg-white py-1.5 pe-1.5 ps-4 shadow-sm transition-colors focus-within:border-primary-400 dark:border-gray-700 dark:bg-gray-800/80 dark:focus-within:border-primary-600"
-    >
-      <input
-        type="text"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        maxLength={AGENT_MESSAGE_MAX_LENGTH}
-        placeholder={t('agent.composer.placeholder')}
-        aria-label={t('agent.newChat')}
-        enterKeyHint="send"
-        autoComplete="off"
-        dir="auto"
-        disabled={pending}
-        className="min-w-0 flex-1 bg-transparent py-1.5 text-[15px] text-gray-900 outline-none placeholder:text-gray-400 disabled:opacity-60 dark:text-gray-100 dark:placeholder:text-gray-500"
-      />
-      <button
-        type="submit"
-        disabled={!canSend}
-        aria-label={t('agent.composer.send')}
-        title={t('agent.composer.send')}
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white transition-[colors,opacity,transform] hover:bg-primary-700 active:scale-95 disabled:opacity-40 disabled:active:scale-100"
-      >
-        {pending ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <ArrowUp size={18} aria-hidden />}
-      </button>
-    </form>
   );
 }
 

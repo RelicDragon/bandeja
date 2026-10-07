@@ -15,7 +15,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import {
   countArchivedAgentChats,
-  createAgentChat,
+  startAgentChat,
   getAgentChatDetail,
   listAgentChats,
   removeAgentChat,
@@ -68,7 +68,7 @@ export const listChats = asyncHandler<AuthRequest>(async (req, res) => {
 });
 
 export const createChat = asyncHandler<AuthRequest>(async (req, res) => {
-  const chat: AgentChatDto = await createAgentChat(requireUserId(req));
+  const chat: AgentChatDto = await startAgentChat(requireUserId(req));
   res.status(201).json({ success: true, data: chat });
 });
 

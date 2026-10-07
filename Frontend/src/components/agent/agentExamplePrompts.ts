@@ -14,3 +14,11 @@ export function readAgentInitialPrompt(state: unknown): string | null {
   const value = (state as Record<string, unknown>)[AGENT_INITIAL_PROMPT_STATE_KEY];
   return typeof value === 'string' && value.trim() ? value : null;
 }
+
+/** Router state key for "start a voice conversation once the chat view opens" (AI home). */
+export const AGENT_START_VOICE_STATE_KEY = 'agentStartVoice';
+
+export function readAgentStartVoice(state: unknown): boolean {
+  if (!state || typeof state !== 'object') return false;
+  return (state as Record<string, unknown>)[AGENT_START_VOICE_STATE_KEY] === true;
+}

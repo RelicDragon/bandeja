@@ -1,0 +1,110 @@
+/* AI home + empty chat: the assistant orb and the hero's aurora (components/agent/AgentOrb.tsx,
+   AgentHomeHero.tsx). Colors follow the member theme (`--member-primary-*`), violet as accent. */
+
+.agent-aurora {
+  position: absolute;
+  inset: -40%;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 42% at 22% 30%, color-mix(in srgb, var(--member-primary-400, #38bdf8) 55%, transparent), transparent 70%),
+    radial-gradient(34% 40% at 78% 24%, rgba(139, 92, 246, 0.42), transparent 70%),
+    radial-gradient(40% 44% at 60% 82%, rgba(236, 72, 153, 0.22), transparent 70%);
+  filter: blur(28px);
+  opacity: 0.55;
+}
+.dark .agent-aurora {
+  opacity: 0.4;
+}
+
+.agent-orb-ring {
+  background: conic-gradient(
+    from 0deg,
+    var(--member-primary-400, #38bdf8),
+    #8b5cf6,
+    #ec4899,
+    var(--member-primary-300, #7dd3fc),
+    var(--member-primary-400, #38bdf8)
+  );
+}
+.agent-orb-core {
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55), transparent 42%),
+    linear-gradient(140deg, var(--member-primary-500, #0ea5e9), #7c3aed 85%);
+}
+.agent-orb-halo {
+  background: radial-gradient(circle, color-mix(in srgb, var(--member-primary-400, #38bdf8) 60%, #8b5cf6) 0%, transparent 68%);
+}
+
+.agent-gradient-text {
+  background-image: linear-gradient(
+    100deg,
+    var(--member-primary-600, #0284c7) 0%,
+    #7c3aed 35%,
+    #db2777 55%,
+    var(--member-primary-600, #0284c7) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark .agent-gradient-text {
+  background-image: linear-gradient(
+    100deg,
+    var(--member-primary-300, #7dd3fc) 0%,
+    #c4b5fd 35%,
+    #f9a8d4 55%,
+    var(--member-primary-300, #7dd3fc) 100%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .agent-aurora {
+    animation: agent-aurora-drift 18s ease-in-out infinite alternate;
+  }
+  .agent-orb-ring {
+    animation: agent-orb-spin 6s linear infinite;
+  }
+  .agent-orb-halo {
+    animation: agent-orb-breathe 3.2s ease-in-out infinite;
+  }
+  .agent-gradient-text {
+    animation: agent-text-shimmer 9s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes agent-aurora-drift {
+  0% {
+    transform: translate3d(-4%, -2%, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, 4%, 0) rotate(8deg) scale(1.06);
+  }
+  100% {
+    transform: translate3d(5%, -3%, 0) rotate(-6deg) scale(1.02);
+  }
+}
+@keyframes agent-orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes agent-orb-breathe {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.8;
+  }
+}
+@keyframes agent-text-shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}

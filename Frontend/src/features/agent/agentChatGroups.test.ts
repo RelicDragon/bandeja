@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentChatDto } from '@shared/agentContract';
-import { agentChatMonthLabel, filterAgentChats, groupAgentChats, normalizeAgentSearch } from './agentChatGroups';
+import {
+  agentChatMonthLabel,
+  filterAgentChats,
+  groupAgentChats,
+  isUntouchedAgentChat,
+  normalizeAgentSearch,
+} from './agentChatGroups';
 
 const NOW = new Date(2026, 9, 4, 15, 30); // 4 Oct 2026, local time
 
@@ -102,5 +108,19 @@ describe('agent chat search', () => {
   it('uses the given preview resolver', () => {
     const chats = [{ id: 'a', title: 'x', lastMessagePreview: '[booking:abc] Court booked' }];
     expect(filterAgentChats(chats, 'abc', (c) => c.lastMessagePreview.replace(/\[[^\]]+\]\s*/g, ''))).toEqual([]);
+  });
+});
+
+describe('isUntouchedAgentChat', () => {
+  const base = { title: null, lastMessagePreview: null, activeRun: null, pinnedAt: null };
+  it('is a chat with no title, message, run or pin', () => {
+    expect(isUntouchedAgentChat(base)).toBe(true);
+    expect(isUntouchedAgentChat({ ...base, title: '  ' })).toBe(true);
+  });
+  it('is anything the user touched', () => {
+    expect(isUntouchedAgentChat({ ...base, title: 'Plans' })).toBe(false);
+    expect(isUntouchedAgentChat({ ...base, lastMessagePreview: 'hi' })).toBe(false);
+    expect(isUntouchedAgentChat({ ...base, activeRun: { id: 'r', status: 'QUEUED' } })).toBe(false);
+    expect(isUntouchedAgentChat({ ...base, pinnedAt: '2026-10-01T00:00:00.000Z' })).toBe(false);
   });
 });

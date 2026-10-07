@@ -443,6 +443,18 @@
       "countdown": "Kembali dalam {{duration}}",
       "composerPaused": "Dijeda sampai {{time}}",
       "composerPausedNoTime": "Pengiriman dijeda untuk sementara"
+    },
+    "suggestionsTitle": "Saran untukmu",
+    "home": {
+      "greeting": {
+        "morning": "Selamat pagi, {{name}}",
+        "afternoon": "Selamat siang, {{name}}",
+        "evening": "Selamat malam, {{name}}"
+      },
+      "subtitle": "Ketuk bola untuk bicara, atau ketik di bawah.",
+      "placeholder": "Tanyakan apa saja…",
+      "listeningTitle": "Saya mendengarkan",
+      "listeningHint": "Coba ucapkan salah satunya, atau ketuk:"
     }
   }
 }

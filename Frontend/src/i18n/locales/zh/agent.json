@@ -443,6 +443,18 @@
       "countdown": "{{duration}} 后恢复",
       "composerPaused": "暂停至 {{time}}",
       "composerPausedNoTime": "暂时无法发送"
+    },
+    "suggestionsTitle": "为你推荐",
+    "home": {
+      "greeting": {
+        "morning": "早上好，{{name}}",
+        "afternoon": "下午好，{{name}}",
+        "evening": "晚上好，{{name}}"
+      },
+      "subtitle": "点按圆球开始对话，或在下方输入。",
+      "placeholder": "随便问点什么…",
+      "listeningTitle": "我在听",
+      "listeningHint": "试着说出下面一句，或直接点按："
     }
   }
 }

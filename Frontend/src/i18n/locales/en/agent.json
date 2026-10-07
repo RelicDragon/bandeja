@@ -443,6 +443,18 @@
       "countdown": "Back in {{duration}}",
       "composerPaused": "Paused until {{time}}",
       "composerPausedNoTime": "Sending is paused for now"
+    },
+    "suggestionsTitle": "Suggested for you",
+    "home": {
+      "greeting": {
+        "morning": "Good morning, {{name}}",
+        "afternoon": "Good afternoon, {{name}}",
+        "evening": "Good evening, {{name}}"
+      },
+      "subtitle": "Tap the orb to talk, or type below.",
+      "placeholder": "Ask anything…",
+      "listeningTitle": "I'm listening",
+      "listeningHint": "Try saying one of these, or tap it:"
     }
   }
 }

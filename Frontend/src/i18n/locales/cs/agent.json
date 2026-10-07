@@ -443,6 +443,18 @@
       "countdown": "Znovu za {{duration}}",
       "composerPaused": "Pozastaveno do {{time}}",
       "composerPausedNoTime": "Odesílání je zatím pozastaveno"
+    },
+    "suggestionsTitle": "Návrhy pro vás",
+    "home": {
+      "greeting": {
+        "morning": "Dobré ráno, {{name}}",
+        "afternoon": "Dobré odpoledne, {{name}}",
+        "evening": "Dobrý večer, {{name}}"
+      },
+      "subtitle": "Klepněte na kouli a mluvte, nebo pište níže.",
+      "placeholder": "Zeptejte se na cokoli…",
+      "listeningTitle": "Poslouchám",
+      "listeningHint": "Zkuste říct něco z tohoto, nebo klepněte:"
     }
   }
 }

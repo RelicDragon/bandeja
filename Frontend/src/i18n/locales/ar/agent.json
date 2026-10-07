@@ -443,6 +443,18 @@
       "countdown": "متاح بعد {{duration}}",
       "composerPaused": "متوقف حتى {{time}}",
       "composerPausedNoTime": "الإرسال متوقف حاليًا"
+    },
+    "suggestionsTitle": "اقتراحات لك",
+    "home": {
+      "greeting": {
+        "morning": "صباح الخير يا {{name}}",
+        "afternoon": "مساء الخير يا {{name}}",
+        "evening": "مساء الخير يا {{name}}"
+      },
+      "subtitle": "اضغط على الكرة للتحدث، أو اكتب في الأسفل.",
+      "placeholder": "اسأل عن أي شيء…",
+      "listeningTitle": "أنا أستمع",
+      "listeningHint": "جرّب أن تقول أحد هذه، أو اضغط عليه:"
     }
   }
 }

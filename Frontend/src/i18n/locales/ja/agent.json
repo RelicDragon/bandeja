@@ -443,6 +443,18 @@
       "countdown": "あと {{duration}}",
       "composerPaused": "{{time}} まで一時停止中",
       "composerPausedNoTime": "送信は一時停止中です"
+    },
+    "suggestionsTitle": "おすすめ",
+    "home": {
+      "greeting": {
+        "morning": "おはようございます、{{name}}さん",
+        "afternoon": "こんにちは、{{name}}さん",
+        "evening": "こんばんは、{{name}}さん"
+      },
+      "subtitle": "オーブをタップして話すか、下に入力してください。",
+      "placeholder": "何でも聞いてください…",
+      "listeningTitle": "聞いています",
+      "listeningHint": "例えばこう話しかけてください（タップでも送れます）:"
     }
   }
 }

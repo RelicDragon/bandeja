@@ -90,6 +90,52 @@ function setAudioSessionType(type: 'play-and-record' | 'auto'): void {
   }
 }
 
+function audioContextCtor(): typeof AudioContext | undefined {
+  if (typeof window === 'undefined') return undefined;
+  return window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+}
+
+/** How long an unlocked context waits for the chat that was opened to use it. */
+const PRIMED_TTL_MS = 15_000;
+let primed: { ctx: AudioContext; at: number } | null = null;
+
+/**
+ * Call inside a tap that starts a voice conversation in a chat that is not open yet (the AI
+ * home creates the chat, then the chat view starts voice). iOS only unlocks audio inside the
+ * gesture, so the context is created and resumed here and the next engine start takes it over.
+ */
+export function primeAgentVoiceAudio(): void {
+  const Ctx = audioContextCtor();
+  if (!Ctx) return;
+  discardPrimedAgentVoiceAudio();
+  try {
+    const ctx = new Ctx({ latencyHint: 'interactive' });
+    void ctx.resume().catch(() => {});
+    setAudioSessionType('play-and-record');
+    primed = { ctx, at: Date.now() };
+  } catch {
+    primed = null;
+  }
+}
+
+/** Closes an unlocked context nobody took (the chat failed to open). */
+export function discardPrimedAgentVoiceAudio(): void {
+  if (!primed) return;
+  void primed.ctx.close().catch(() => {});
+  primed = null;
+}
+
+function takePrimedAudioContext(): AudioContext | null {
+  const entry = primed;
+  primed = null;
+  if (!entry) return null;
+  if (Date.now() - entry.at > PRIMED_TTL_MS || entry.ctx.state === 'closed') {
+    void entry.ctx.close().catch(() => {});
+    return null;
+  }
+  return entry.ctx;
+}
+
 function dbToUnit(db: number): number {
   return Math.max(0, Math.min(1, (db + 60) / 50));
 }
@@ -124,11 +170,12 @@ export class BrowserVoiceEngine implements VoiceEngine {
     this.handlers = handlers;
     if (typeof window === 'undefined') throw new VoiceStartError('unsupported');
     if (!window.isSecureContext && window.location.hostname !== 'localhost') throw new VoiceStartError('insecure');
-    const Ctx = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const Ctx = audioContextCtor();
     if (!navigator.mediaDevices?.getUserMedia || !Ctx) throw new VoiceStartError('unsupported');
 
-    // Created and resumed before any await: iOS only unlocks audio inside the user's tap.
-    const ctx = new Ctx({ latencyHint: 'interactive' });
+    // Created and resumed before any await: iOS only unlocks audio inside the user's tap
+    // (or in the tap on the AI home that opened this chat, `primeAgentVoiceAudio`).
+    const ctx = takePrimedAudioContext() ?? new Ctx({ latencyHint: 'interactive' });
     this.ctx = ctx;
     void ctx.resume().catch(() => {});
     setAudioSessionType('play-and-record');

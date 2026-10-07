@@ -443,6 +443,18 @@
       "countdown": "Disponible en {{duration}}",
       "composerPaused": "En pausa hasta las {{time}}",
       "composerPausedNoTime": "El envío está en pausa por ahora"
+    },
+    "suggestionsTitle": "Sugerencias para ti",
+    "home": {
+      "greeting": {
+        "morning": "Buenos días, {{name}}",
+        "afternoon": "Buenas tardes, {{name}}",
+        "evening": "Buenas noches, {{name}}"
+      },
+      "subtitle": "Toca la esfera para hablar o escribe abajo.",
+      "placeholder": "Pregunta lo que quieras…",
+      "listeningTitle": "Te escucho",
+      "listeningHint": "Prueba a decir algo así, o tócalo:"
     }
   }
 }

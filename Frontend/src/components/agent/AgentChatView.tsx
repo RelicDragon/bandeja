@@ -50,7 +50,6 @@ import {
 } from '@/features/agent/agentImages';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import type { AgentErrorCode, AgentMessageFeedback, AgentWebImage } from '@shared/agentContract';
-import { AgentGlyph } from './AgentGlyph';
 import { AgentComposer } from './AgentComposer';
 import { AgentVoiceDock } from './AgentVoiceDock';
 import { useAgentVoiceConversation } from '@/features/agent/voice/useAgentVoiceConversation';
@@ -63,9 +62,11 @@ import { AgentChatMenuSheet, AgentDeleteChatDialog, AgentRenameDialog } from './
 import { AgentContextHint, AgentContextMeterButton, AgentContextSheet } from './AgentContextMeter';
 import {
   readAgentInitialPrompt,
+  readAgentStartVoice,
 } from './agentExamplePrompts';
 import { AgentFollowUpChips } from './AgentFollowUpChips';
 import { AgentSuggestedPrompts } from './AgentSuggestedPrompts';
+import { AgentOrb } from './AgentOrb';
 
 const STICK_THRESHOLD_PX = 80;
 const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -493,16 +494,20 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     });
   };
 
-  // Example prompt handed over from the chat list: send it once the chat is loaded.
+  // Handed over from the AI home: a first message to send, or a voice conversation to start
+  // (its audio was unlocked in the home's tap, `primeAgentVoiceAudio`). Once, after the load.
   const initialPromptSentRef = useRef(false);
+  const voiceSession = voice.session;
   useEffect(() => {
     if (initialPromptSentRef.current || !detailQuery.isSuccess) return;
     const prompt = readAgentInitialPrompt(location.state);
-    if (!prompt) return;
+    const startVoice = readAgentStartVoice(location.state);
+    if (!prompt && !startVoice) return;
     initialPromptSentRef.current = true;
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
-    void send(prompt);
-  }, [detailQuery.isSuccess, location.state, location.pathname, location.search, navigate, send]);
+    if (prompt) void send(prompt);
+    else void voiceSession.start();
+  }, [detailQuery.isSuccess, location.state, location.pathname, location.search, navigate, send, voiceSession]);
 
   const handleConfirm = (vars: ConfirmAgentActionVars) => {
     confirmMutation.mutate(vars, {
@@ -763,7 +768,14 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                 </button>
               </div>
             ) : null}
-            {isEmpty ? <EmptyThreadHint onPick={(text) => void send(text)} /> : null}
+            {isEmpty ? (
+              <EmptyThreadHint
+                listening={voiceActive}
+                onPick={(text) => void send(text, { voice: voiceActive }).catch(() => {})}
+                onTalk={() => void voice.session.start()}
+                disabled={!detail || sendPaused}
+              />
+            ) : null}
 
             {hiddenCount > 0 ? (
               <button
@@ -1070,18 +1082,35 @@ function ThreadSkeleton() {
   );
 }
 
-function EmptyThreadHint({ onPick }: { onPick: (text: string) => void }) {
+/** A new chat: the tap-to-talk orb and suggestions; while voice is on, the suggestions are things to say. */
+function EmptyThreadHint({
+  listening,
+  onPick,
+  onTalk,
+  disabled,
+}: {
+  listening: boolean;
+  onPick: (text: string) => void;
+  onTalk: () => void;
+  disabled: boolean;
+}) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center gap-4 py-10 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-violet-600 text-white shadow-lg shadow-violet-500/25 dark:shadow-violet-900/40">
-        <AgentGlyph size={28} />
+    <div className="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl py-8 text-center">
+      <div className="agent-aurora opacity-40" aria-hidden />
+      {/* While listening the orb lives in the voice dock. */}
+      {listening ? null : <AgentOrb size={84} onTalk={onTalk} label={t('agent.voice.start')} disabled={disabled} />}
+      <div className="relative">
+        <p className="agent-gradient-text text-2xl font-extrabold tracking-tight">
+          {t(listening ? 'agent.home.listeningTitle' : 'agent.empty.chatTitle')}
+        </p>
+        <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+          {t(listening ? 'agent.home.listeningHint' : 'agent.home.subtitle')}
+        </p>
       </div>
-      <div>
-        <p className="text-base font-semibold text-gray-900 dark:text-white">{t('agent.empty.chatTitle')}</p>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t('agent.empty.chatHint')}</p>
+      <div className="relative w-full">
+        <AgentSuggestedPrompts onPick={onPick} disabled={disabled} />
       </div>
-      <AgentSuggestedPrompts onPick={onPick} />
     </div>
   );
 }

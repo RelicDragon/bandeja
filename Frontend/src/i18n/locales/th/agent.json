@@ -443,6 +443,18 @@
       "countdown": "ใช้ได้อีกใน {{duration}}",
       "composerPaused": "หยุดชั่วคราวถึง {{time}}",
       "composerPausedNoTime": "หยุดการส่งชั่วคราว"
+    },
+    "suggestionsTitle": "คำแนะนำสำหรับคุณ",
+    "home": {
+      "greeting": {
+        "morning": "อรุณสวัสดิ์ {{name}}",
+        "afternoon": "สวัสดีตอนบ่าย {{name}}",
+        "evening": "สวัสดีตอนเย็น {{name}}"
+      },
+      "subtitle": "แตะลูกบอลเพื่อพูด หรือพิมพ์ด้านล่าง",
+      "placeholder": "ถามอะไรก็ได้…",
+      "listeningTitle": "กำลังฟังอยู่",
+      "listeningHint": "ลองพูดสักข้อ หรือแตะเลือก:"
     }
   }
 }

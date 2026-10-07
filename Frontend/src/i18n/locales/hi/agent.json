@@ -443,6 +443,18 @@
       "countdown": "{{duration}} में फिर उपलब्ध",
       "composerPaused": "{{time}} तक रुका हुआ",
       "composerPausedNoTime": "भेजना अभी रुका हुआ है"
+    },
+    "suggestionsTitle": "आपके लिए सुझाव",
+    "home": {
+      "greeting": {
+        "morning": "सुप्रभात, {{name}}",
+        "afternoon": "नमस्ते, {{name}}",
+        "evening": "शुभ संध्या, {{name}}"
+      },
+      "subtitle": "बात करने के लिए गोले पर टैप करें, या नीचे लिखें।",
+      "placeholder": "कुछ भी पूछें…",
+      "listeningTitle": "मैं सुन रहा हूँ",
+      "listeningHint": "इनमें से कुछ कहकर देखें, या टैप करें:"
     }
   }
 }

@@ -443,6 +443,18 @@
       "countdown": "Ponovo za {{duration}}",
       "composerPaused": "Pauzirano do {{time}}",
       "composerPausedNoTime": "Slanje je trenutno pauzirano"
+    },
+    "suggestionsTitle": "Predlozi za vas",
+    "home": {
+      "greeting": {
+        "morning": "Dobro jutro, {{name}}",
+        "afternoon": "Dobar dan, {{name}}",
+        "evening": "Dobro veče, {{name}}"
+      },
+      "subtitle": "Dodirnite kuglu da razgovarate ili pišite ispod.",
+      "placeholder": "Pitajte bilo šta…",
+      "listeningTitle": "Slušam",
+      "listeningHint": "Probajte da kažete nešto od ovoga, ili dodirnite:"
     }
   }
 }

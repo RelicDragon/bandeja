@@ -5,17 +5,23 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { SplitViewLeftPanel } from '@/components/SplitViewPanels';
 import { useShellNavStore } from '@/store/shellNavStore';
-import { AgentChatList } from './AgentChatList';
-import { AgentGlyph } from './AgentGlyph';
+import { AgentChatList, type AgentOpenChatOptions } from './AgentChatList';
+import { AgentOrb } from './AgentOrb';
 import { AgentChatView } from './AgentChatView';
 import { AgentPermissionsScreen } from './AgentPermissionsScreen';
-import { AGENT_INITIAL_PROMPT_STATE_KEY } from './agentExamplePrompts';
+import { AGENT_INITIAL_PROMPT_STATE_KEY, AGENT_START_VOICE_STATE_KEY } from './agentExamplePrompts';
 
 function useOpenAgentChat(selectedChatId: string | null) {
   const navigate = useNavigate();
   return useCallback(
-    (chatId: string, opts?: { initialPrompt?: string }) => {
-      const state = opts?.initialPrompt ? { [AGENT_INITIAL_PROMPT_STATE_KEY]: opts.initialPrompt } : undefined;
+    (chatId: string, opts?: AgentOpenChatOptions) => {
+      const state =
+        opts?.initialPrompt || opts?.startVoice
+          ? {
+              ...(opts.initialPrompt ? { [AGENT_INITIAL_PROMPT_STATE_KEY]: opts.initialPrompt } : {}),
+              ...(opts.startVoice ? { [AGENT_START_VOICE_STATE_KEY]: true } : {}),
+            }
+          : undefined;
       // Desktop switches chats in place; from the list (no selection) opening is a push so Back returns.
       navigate(`/ai/${encodeURIComponent(chatId)}`, { replace: selectedChatId != null, state });
     },
@@ -62,9 +68,10 @@ export function AgentTab({ selectedChatId = null }: { selectedChatId?: string | 
             {selectedChatId ? (
               <AgentChatView key={selectedChatId} chatId={selectedChatId} embedded />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
-                <AgentGlyph size={64} strokeWidth={1.25} className="opacity-30" />
-                <p className="text-lg font-medium">{t('agent.selectChat')}</p>
+              <div className="relative flex h-full flex-col items-center justify-center gap-5 overflow-hidden text-gray-500 dark:text-gray-400">
+                <div className="agent-aurora opacity-30" aria-hidden />
+                <AgentOrb size={88} />
+                <p className="relative text-lg font-medium">{t('agent.selectChat')}</p>
               </div>
             )}
           </div>

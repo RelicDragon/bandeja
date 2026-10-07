@@ -269,6 +269,9 @@ void (async () => {
     res = await call(owner.userId, 'POST', '/chats', {});
     const second = res.body.data as { id: string; updatedAt: string };
     chatIds.push(second.id);
+    res = await call(owner.userId, 'POST', '/chats', {});
+    assert.equal(res.status, 201);
+    assert.equal((res.body.data as { id: string }).id, second.id, 'New chat reuses the untouched empty chat');
     assert.deepEqual((await listOf('/chats')).chats.map((c) => c.id), [second.id, chat.id], 'newest first');
     assert.equal((await call(owner.userId, 'PATCH', `/chats/${chat.id}`, {})).status, 400, 'empty patch');
     assert.equal((await call(player.userId, 'PATCH', `/chats/${chat.id}`, { pinned: true })).status, 404);
