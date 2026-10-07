@@ -8,6 +8,7 @@ import {
   setBooktimeAllUpcomingDisplayCache,
 } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { subscribeBooktimeAllUpcomingCacheInvalidation } from '@/integrations/booktime/booktimeAllUpcomingCacheInvalidation';
+import { clearClubBookingListCaches } from '@/integrations/booking/clubBookingLists';
 import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { connectedClubRowToBooktimeRow } from '@/hooks/connectedBookingClubs';
 import type { PadelooMyClubRow } from '@/api/padeloo';
@@ -150,6 +151,8 @@ function runSharedLoad(
   }
 
   const loadPromise = (async () => {
+    // Reload / pull-to-refresh: refetch from the providers, not the 5-minute caches.
+    if (invalidate) await clearClubBookingListCaches();
     if (!invalidate) {
       const booktimeOnly = toBooktimeRows(clubs);
       const cachedBookings = await peekCachedBooktimeUpcoming(booktimeOnly, enabled);

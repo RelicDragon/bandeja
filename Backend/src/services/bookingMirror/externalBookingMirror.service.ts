@@ -75,7 +75,8 @@ export type ExternalBookingMirrorSyncResult = {
 /**
  * Replaces `userId`'s mirror for (provider, club): upserts every booking, deletes the user's rows
  * of that provider + club starting inside [rangeFrom, rangeTo] that the list no longer has, and
- * records the sync. Court ids that are not courts of the club are dropped (the name stays).
+ * records the sync. `rangeFrom` is when the app started fetching the list: rows written after
+ * that (agent book / cancel, a newer list) are never overwritten or deleted by it. Court ids that are not courts of the club are dropped (the name stays).
  */
 export async function syncExternalBookingMirror(
   userId: string,
@@ -110,17 +111,20 @@ export async function syncExternalBookingMirror(
         state: booking.state === 'CANCELLED' ? ExternalBookingMirrorState.CANCELLED : ExternalBookingMirrorState.CONFIRMED,
         syncedAt: now,
       };
-      await tx.externalBookingMirror.upsert({
-        where: {
-          userId_provider_externalBookingId: {
-            userId,
-            provider: body.provider,
-            externalBookingId: booking.externalBookingId,
-          },
-        },
-        create: { userId, provider: body.provider, externalBookingId: booking.externalBookingId, ...data },
-        update: data,
+      const key = { userId, provider: body.provider, externalBookingId: booking.externalBookingId };
+      // A row written after this list was fetched (the agent just booked / cancelled it, or a
+      // newer list landed first) is newer than the list: keep it.
+      const updated = await tx.externalBookingMirror.updateMany({
+        where: { ...key, syncedAt: { lte: body.rangeFrom } },
+        data,
       });
+      if (updated.count === 0) {
+        const exists = await tx.externalBookingMirror.findUnique({
+          where: { userId_provider_externalBookingId: key },
+          select: { id: true },
+        });
+        if (!exists) await tx.externalBookingMirror.create({ data: { ...key, ...data } });
+      }
     }
     const removed = await tx.externalBookingMirror.deleteMany({
       where: {
@@ -129,6 +133,7 @@ export async function syncExternalBookingMirror(
         clubId: club.id,
         bookingStart: { gte: body.rangeFrom, lte: body.rangeTo },
         externalBookingId: { notIn: [...byId.keys()] },
+        syncedAt: { lte: body.rangeFrom },
       },
     });
     const sync = { rangeFrom: body.rangeFrom, rangeTo: body.rangeTo, complete: body.complete, syncedAt: now };

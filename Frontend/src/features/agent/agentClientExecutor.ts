@@ -573,16 +573,8 @@ export function defaultAgentClientExecutorDeps(): AgentClientExecutorDeps {
     storage: createAgentClientAttemptStorage(),
     clientKey: () => getAgentClientKey(),
     now: () => Date.now(),
-    bookingsChanged: invalidateClubBookingLists,
+    bookingsChanged: async () => (await import('@/integrations/booking/clubBookingLists')).refreshClubBookingLists(),
   };
-}
-
-/** Same as the in-app book / cancel flows: the next Club bookings view refetches from the provider. */
-async function invalidateClubBookingLists(): Promise<void> {
-  (await import('@/integrations/padeloo/padelooAllUpcomingLoader')).invalidatePadelooUpcomingCache();
-  (await import('@/integrations/klikteren/klikterenAllUpcomingLoader')).invalidateKlikterenUpcomingCache();
-  // Last: also resets the shared list hooks, which reload on their next render.
-  (await import('@/integrations/booktime/booktimeAllUpcomingLoader')).invalidateBooktimeAllUpcomingCache();
 }
 
 /** Local provider session for the club (the same check Connected clubs uses). */

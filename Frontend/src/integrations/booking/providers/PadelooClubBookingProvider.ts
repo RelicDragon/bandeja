@@ -10,6 +10,7 @@ import {
 } from '@/integrations/padeloo/bookFlow';
 import { mapPadelooAvailableSlotsToSnapshotCourts } from '@/integrations/padeloo/slots';
 import { bookingProviderError } from '@shared/booking';
+import { refreshClubBookingLists } from '../clubBookingLists';
 import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import type {
   BookSlotContext,
@@ -46,6 +47,7 @@ export class PadelooClubBookingProvider implements ClubBookingProvider {
         pending,
         context,
       );
+      await refreshClubBookingLists();
       return {
         externalBookingId: result.bookingId,
         bookingStart: result.bookingStart,
@@ -69,6 +71,7 @@ export class PadelooClubBookingProvider implements ClubBookingProvider {
     refreshSnapshot: (options?: { force?: boolean }) => Promise<boolean>,
   ) {
     await cancelPadelooBooking(this.client, externalBookingId, refreshSnapshot);
+    await refreshClubBookingLists();
   }
 
   async listUpcoming() {

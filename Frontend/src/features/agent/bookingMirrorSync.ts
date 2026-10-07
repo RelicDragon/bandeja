@@ -5,8 +5,10 @@
  * Telegram can list and link those bookings (the backend never calls these providers).
  *
  * Fire-and-forget, no UI: debounced per (user, provider, club), and at most one send per key
- * every ~2 min. Only called with a list the provider actually returned (never for a failed or
- * signed-out fetch: an empty list here means "no bookings" and removes mirror rows).
+ * every ~2 min. A list loaded inside that window is not dropped: the latest one is sent when the
+ * window ends (a booking or cancel right after a sync must still reach the assistant).
+ * Only called with a list the provider actually returned (never for a failed or signed-out
+ * fetch: an empty list here means "no bookings" and removes mirror rows).
  */
 import api from '@/api/axios';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
@@ -123,7 +125,11 @@ export function createBookingMirrorSyncer(deps: SyncerDeps) {
     pending.delete(key);
     if (!entry) return;
     const last = lastSentAt.get(key);
-    if (last !== undefined && now() - last < minIntervalMs) return;
+    if (last !== undefined && now() - last < minIntervalMs) {
+      // Still inside the window: keep the latest list and send it when the window ends.
+      pending.set(key, { report: entry.report, timer: setTimeout(() => flush(key), last + minIntervalMs - now()) });
+      return;
+    }
     lastSentAt.set(key, now());
     deps.send(toBookingMirrorBody(entry.report)).catch(() => {
       // Best effort: a failed sync only leaves the assistant's list older. Retry on a later load.
@@ -137,10 +143,11 @@ export function createBookingMirrorSyncer(deps: SyncerDeps) {
       if (!userId || !report.clubId) return;
       const key = `${userId}:${report.provider}:${report.clubId}`;
       const last = lastSentAt.get(key);
-      if (last !== undefined && now() - last < minIntervalMs) return;
+      const wait =
+        last !== undefined && now() - last < minIntervalMs ? Math.max(debounceMs, last + minIntervalMs - now()) : debounceMs;
       const existing = pending.get(key);
       if (existing) clearTimeout(existing.timer);
-      pending.set(key, { report, timer: setTimeout(() => flush(key), debounceMs) });
+      pending.set(key, { report, timer: setTimeout(() => flush(key), wait) });
     },
     reset(): void {
       for (const entry of pending.values()) clearTimeout(entry.timer);

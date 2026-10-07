@@ -119,7 +119,7 @@ export class BooktimeClient {
   private onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
   private onSessionExpired?: () => void;
   private refreshInFlight: Promise<boolean> | null = null;
-  private upcomingInFlight: Promise<BooktimeBookingsPage> | null = null;
+  private upcomingInFlight: { key: string; page: Promise<BooktimeBookingsPage> } | null = null;
   private rateLimitConfig?: BooktimeRateLimitConfig;
   private sessionExpired = false;
 
@@ -471,17 +471,20 @@ export class BooktimeClient {
   }
 
   async getUpcomingBookings(index = 0, size = 20, options?: { fresh?: boolean }) {
-    if (!options?.fresh && this.upcomingInFlight) return this.upcomingInFlight;
+    // Only the same page is shared: a page 2 request must never get page 1.
+    const key = `${index}:${size}`;
+    if (!options?.fresh && this.upcomingInFlight?.key === key) return this.upcomingInFlight.page;
     const run = this.request<BooktimeBookingsPage>('/booking/get-upcoming', {
       method: 'POST',
       auth: true,
       body: { index, size },
     }).then((page) => this.normalizeBookingsPage(page));
     if (options?.fresh) return run;
-    this.upcomingInFlight = run.finally(() => {
-      this.upcomingInFlight = null;
+    const page = run.finally(() => {
+      if (this.upcomingInFlight?.page === page) this.upcomingInFlight = null;
     });
-    return this.upcomingInFlight;
+    this.upcomingInFlight = { key, page };
+    return page;
   }
 
   async getPreviousBookings(index = 0, size = 20) {

@@ -22,6 +22,9 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const clubUpcomingCache = new Map<string, { at: number; bookings: BooktimeBookingRecord[] }>();
 const clubUpcomingInFlight = new Map<string, Promise<BooktimeBookingRecord[]>>();
 
+/** Bumped on every clear: a fetch that started before must not write its (older) list back. */
+let generation = 0;
+
 function isFresh(at: number, now = Date.now()): boolean {
   return now - at < CACHE_TTL_MS;
 }
@@ -47,6 +50,7 @@ async function fetchUpcomingForPadelooClub(club: PadelooMyClubRow): Promise<Book
   const existing = clubUpcomingInFlight.get(cacheKey);
   if (existing) return existing;
 
+  const startedAt = generation;
   const promise = (async () => {
     await hydratePadelooSession(club.clubId, padelooClubId);
     const client = getPadelooClient(club.clubId, padelooClubId);
@@ -57,6 +61,7 @@ async function fetchUpcomingForPadelooClub(club: PadelooMyClubRow): Promise<Book
       .filter((row) => row.clubId === padelooClubId)
       .map((row) => reservationToClubBookingRecord(row, club))
       .filter((row) => isUpcomingPadelooBooking(row));
+    if (startedAt !== generation) return bookings;
     clubUpcomingCache.set(cacheKey, { at: Date.now(), bookings });
     reportBookingMirror({
       provider: 'PADELOO',
@@ -69,7 +74,8 @@ async function fetchUpcomingForPadelooClub(club: PadelooMyClubRow): Promise<Book
     });
     return bookings;
   })().finally(() => {
-    clubUpcomingInFlight.delete(cacheKey);
+    // A clear may already have started a newer fetch under this key.
+    if (clubUpcomingInFlight.get(cacheKey) === promise) clubUpcomingInFlight.delete(cacheKey);
   });
 
   clubUpcomingInFlight.set(cacheKey, promise);
@@ -106,6 +112,7 @@ export async function loadPadelooUpcomingForClubs(
 }
 
 export function invalidatePadelooUpcomingCache(): void {
+  generation++;
   clubUpcomingCache.clear();
   clubUpcomingInFlight.clear();
 }

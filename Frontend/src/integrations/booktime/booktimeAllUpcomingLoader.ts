@@ -31,6 +31,8 @@ const companyUpcomingCache = new Map<
 const companyUpcomingInFlight = new Map<string, Promise<BooktimeBookingRecord[]>>();
 
 let persistenceHydrated = false;
+/** Bumped on every clear: a fetch that started before must not write its (older) list back. */
+let generation = 0;
 let persistenceHydratePromise: Promise<void> | null = null;
 
 function connectedClubsKey(clubs: BooktimeMyClubRow[]): string {
@@ -114,6 +116,7 @@ async function fetchUpcomingForCompany(
   const existing = companyUpcomingInFlight.get(companyId);
   if (existing) return existing;
 
+  const startedAt = generation;
   const promise = (async () => {
     const clubTimeZone = resolveBooktimeMyClubTimezone(representativeClub);
     await hydrateBooktimeSession(
@@ -128,8 +131,10 @@ async function fetchUpcomingForCompany(
     );
     if (!client.isAuthenticated) return [];
     const fetchedFrom = new Date();
-    const res = await client.getUpcomingBookings(0, UPCOMING_PAGE_SIZE);
+    // fresh: never join a client request that started before a booking / cancel.
+    const res = await client.getUpcomingBookings(0, UPCOMING_PAGE_SIZE, { fresh: true });
     const bookings = res.bookings ?? [];
+    if (startedAt !== generation) return bookings;
     companyUpcomingCache.set(companyId, { at: Date.now(), bookings });
     persistCache();
     // Agent mirror (slice 7k): one sync per club of the company; a full page may be truncated.
@@ -148,7 +153,8 @@ async function fetchUpcomingForCompany(
     }
     return bookings;
   })().finally(() => {
-    companyUpcomingInFlight.delete(companyId);
+    // A clear may already have started a newer fetch under this key.
+    if (companyUpcomingInFlight.get(companyId) === promise) companyUpcomingInFlight.delete(companyId);
   });
 
   companyUpcomingInFlight.set(companyId, promise);
@@ -187,7 +193,9 @@ async function fetchAllBooktimeUpcoming(
   return all;
 }
 
-export function invalidateBooktimeAllUpcomingCache(): void {
+/** Loader caches only, no listeners (a reload that refetches right away). */
+export function clearBooktimeAllUpcomingCache(): void {
+  generation++;
   cached = null;
   inFlight = null;
   inFlightKey = '';
@@ -195,6 +203,10 @@ export function invalidateBooktimeAllUpcomingCache(): void {
   companyUpcomingInFlight.clear();
   persistenceHydrated = false;
   void clearBooktimeUpcomingPersistedCache();
+}
+
+export function invalidateBooktimeAllUpcomingCache(): void {
+  clearBooktimeAllUpcomingCache();
   notifyBooktimeAllUpcomingCacheInvalidation();
 }
 
@@ -220,7 +232,8 @@ export function setBooktimeAllUpcomingDisplayCache(
   if (connectedClubs.length === 0) return;
 
   const key = connectedClubsKey(connectedClubs);
-  cached = { key, bookings, at: Date.now() };
+  // Keep the fetch time: showing (or trimming) the list must not make old data look fresh.
+  cached = { key, bookings, at: cached && cached.key === key ? cached.at : Date.now() };
   companyUpcomingCache.clear();
   persistCache();
 }
@@ -266,8 +279,10 @@ export async function loadAllBooktimeUpcoming(
   }
 
   inFlightKey = key;
+  const startedAt = generation;
   inFlight = fetchAllBooktimeUpcoming(connectedClubs)
     .then((bookings) => {
+      if (startedAt !== generation) return bookings;
       cached = { key, bookings, at: Date.now() };
       persistCache();
       return bookings;

@@ -22,6 +22,9 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const clubUpcomingCache = new Map<string, { at: number; bookings: BooktimeBookingRecord[] }>();
 const clubUpcomingInFlight = new Map<string, Promise<BooktimeBookingRecord[]>>();
 
+/** Bumped on every clear: a fetch that started before must not write its (older) list back. */
+let generation = 0;
+
 function isFresh(at: number, now = Date.now()): boolean {
   return now - at < CACHE_TTL_MS;
 }
@@ -40,6 +43,7 @@ async function fetchUpcomingForKlikterenClub(club: KlikterenMyClubRow): Promise<
   const existing = clubUpcomingInFlight.get(cacheKey);
   if (existing) return existing;
 
+  const startedAt = generation;
   const promise = (async () => {
     await hydrateKlikterenSession(club.clubId, klikterenVenueId);
     const client = getKlikterenClient(club.clubId, klikterenVenueId);
@@ -50,6 +54,7 @@ async function fetchUpcomingForKlikterenClub(club: KlikterenMyClubRow): Promise<
       .filter((row) => !row.venueId || row.venueId === klikterenVenueId)
       .map((row) => bookingToBookingRecord(row, club, klikterenVenueId))
       .filter((row) => isUpcomingKlikterenBooking(row));
+    if (startedAt !== generation) return mapped;
     clubUpcomingCache.set(cacheKey, { at: Date.now(), bookings: mapped });
     reportBookingMirror({
       provider: 'KLIKTEREN',
@@ -62,7 +67,8 @@ async function fetchUpcomingForKlikterenClub(club: KlikterenMyClubRow): Promise<
     });
     return mapped;
   })().finally(() => {
-    clubUpcomingInFlight.delete(cacheKey);
+    // A clear may already have started a newer fetch under this key.
+    if (clubUpcomingInFlight.get(cacheKey) === promise) clubUpcomingInFlight.delete(cacheKey);
   });
 
   clubUpcomingInFlight.set(cacheKey, promise);
@@ -99,6 +105,7 @@ export async function loadKlikterenUpcomingForClubs(
 }
 
 export function invalidateKlikterenUpcomingCache(): void {
+  generation++;
   clubUpcomingCache.clear();
   clubUpcomingInFlight.clear();
 }

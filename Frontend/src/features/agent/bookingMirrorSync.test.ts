@@ -107,6 +107,22 @@ describe('createBookingMirrorSyncer', () => {
     expect(sent).toHaveLength(2);
   });
 
+  it('a list loaded inside the window is sent when it ends (not dropped)', () => {
+    const syncer = make();
+    syncer.report(report());
+    vi.advanceTimersByTime(BOOKING_MIRROR_DEBOUNCE_MS);
+    expect(sent).toHaveLength(1);
+    // The user cancels 30s later; the refetched list (now empty) must reach the mirror.
+    clock += 30_000;
+    syncer.report(report({ bookings: [] }));
+    vi.advanceTimersByTime(BOOKING_MIRROR_DEBOUNCE_MS);
+    expect(sent).toHaveLength(1);
+    clock += BOOKING_MIRROR_MIN_INTERVAL_MS - 30_000;
+    vi.advanceTimersByTime(BOOKING_MIRROR_MIN_INTERVAL_MS);
+    expect(sent).toHaveLength(2);
+    expect(sent[1].bookings).toHaveLength(0);
+  });
+
   it('keys by user: another account syncs right away; signed out sends nothing', () => {
     const syncer = make();
     syncer.report(report());

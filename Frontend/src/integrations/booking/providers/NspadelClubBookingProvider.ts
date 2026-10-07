@@ -3,6 +3,7 @@ import { NspadelClient, isNspadelClubNotConfiguredError } from '@/integrations/n
 import { mapNspadelAvailabilityToSnapshotCourts } from '@/integrations/nspadel/slots';
 import { buildNspadelEndTime } from '@/integrations/nspadel/slots';
 import { bookingProviderError } from '@shared/booking';
+import { refreshClubBookingLists } from '../clubBookingLists';
 import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import type {
   BookSlotContext,
@@ -25,6 +26,7 @@ export class NspadelClubBookingProvider implements ClubBookingProvider {
         startTime: params.startTime,
         endTime: buildNspadelEndTime(params.startTime, params.durationMinutes),
       });
+      await refreshClubBookingLists();
       return {
         externalBookingId: booking.id,
         bookingStart: `${booking.date}T${booking.startTime}`,
@@ -57,6 +59,7 @@ export class NspadelClubBookingProvider implements ClubBookingProvider {
     _refreshSnapshot: (options?: { force?: boolean }) => Promise<boolean>,
   ) {
     await this.client.cancelBooking(externalBookingId);
+    await refreshClubBookingLists();
   }
 
   async listUpcoming() {

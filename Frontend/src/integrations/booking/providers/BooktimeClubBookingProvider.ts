@@ -11,6 +11,7 @@ import {
 import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBooktimeErrorMessage';
 import { mapAvailableSlotsToSnapshotCourts } from '@/integrations/booktime/slots';
 import { bookingProviderError } from '@shared/booking';
+import { refreshClubBookingLists } from '../clubBookingLists';
 import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import type {
   BookSlotContext,
@@ -50,6 +51,7 @@ export class BooktimeClubBookingProvider implements ClubBookingProvider {
         selectedDate,
         context,
       );
+      await refreshClubBookingLists();
       return {
         externalBookingId: result.bookingId,
         bookingStart: result.bookingStart,
@@ -73,6 +75,7 @@ export class BooktimeClubBookingProvider implements ClubBookingProvider {
     refreshSnapshot: (options?: { force?: boolean }) => Promise<boolean>,
   ) {
     await cancelBooktimeBooking(this.client, externalBookingId, refreshSnapshot);
+    await refreshClubBookingLists();
   }
 
   async listUpcoming(index = 0, size = 20) {

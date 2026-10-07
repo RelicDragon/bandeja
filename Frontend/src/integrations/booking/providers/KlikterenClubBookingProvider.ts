@@ -10,6 +10,7 @@ import {
 } from '@/integrations/klikteren/bookFlow';
 import { mapKlikterenAvailabilityToSnapshotCourts } from '@/integrations/klikteren/slots';
 import { bookingProviderError } from '@shared/booking';
+import { refreshClubBookingLists } from '../clubBookingLists';
 import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import type {
   BookSlotContext,
@@ -46,6 +47,7 @@ export class KlikterenClubBookingProvider implements ClubBookingProvider {
         pending,
         context,
       );
+      await refreshClubBookingLists();
       return {
         externalBookingId: result.bookingId,
         bookingStart: result.bookingStart,
@@ -69,6 +71,7 @@ export class KlikterenClubBookingProvider implements ClubBookingProvider {
     refreshSnapshot: (options?: { force?: boolean }) => Promise<boolean>,
   ) {
     await cancelKlikterenBooking(this.client, externalBookingId, refreshSnapshot);
+    await refreshClubBookingLists();
   }
 
   async listUpcoming() {

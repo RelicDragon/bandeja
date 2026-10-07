@@ -108,7 +108,8 @@ async function main(): Promise<void> {
     const body = (bookings: unknown[], extra: Record<string, unknown> = {}) => ({
       provider: 'BOOKTIME',
       clubId: club.id,
-      rangeFrom: iso(now),
+      // When the app started fetching this list: each sync is a newer list than the last.
+      rangeFrom: iso(Date.now()),
       rangeTo: iso(now + 60 * 24 * HOUR),
       bookings,
       ...extra,
@@ -170,6 +171,29 @@ async function main(): Promise<void> {
     assert.equal(await prisma.externalBookingMirror.count({ where: { userId: owner.userId, clubId: club.id } }), 3, "the player's syncs never touch the owner's rows");
     assert.equal(await prisma.externalBookingMirror.count({ where: { userId: player.userId, clubId: club.id } }), 0);
     tested += 2;
+    // --- an older list never undoes newer rows (agent booked / cancelled after the fetch began) ---
+    {
+      const fetchStarted = Date.now() - 60_000;
+      const lateKey = { userId: owner.userId, provider: ClubIntegrationType.BOOKTIME, clubId: club.id, courts: [] };
+      await prisma.externalBookingMirror.createMany({
+        data: [
+          { ...lateKey, externalBookingId: `late-${s}`, bookingStart: new Date(startA + 96 * HOUR), bookingEnd: new Date(startA + 97 * HOUR), syncedAt: new Date() },
+          { ...lateKey, externalBookingId: `latecx-${s}`, bookingStart: new Date(startA + 98 * HOUR), bookingEnd: new Date(startA + 99 * HOUR), state: 'CANCELLED', syncedAt: new Date() },
+        ],
+      });
+      const stale = await put(owner.userId, body(
+        [booking('a', startA), booking('d', startA + 72 * HOUR), booking('latecx', startA + 98 * HOUR)],
+        { rangeFrom: iso(fetchStarted) },
+      ));
+      assert.equal(stale.status, 200);
+      const late = await prisma.externalBookingMirror.findMany({
+        where: { userId: owner.userId, externalBookingId: { in: [`late-${s}`, `latecx-${s}`] } },
+        orderBy: { externalBookingId: 'asc' },
+      });
+      assert.deepEqual(late.map((r) => [r.externalBookingId, r.state]), [[`late-${s}`, 'CONFIRMED'], [`latecx-${s}`, 'CANCELLED']], 'kept as written after the fetch began');
+      await prisma.externalBookingMirror.deleteMany({ where: { id: { in: late.map((r) => r.id) } } });
+      tested += 1;
+    }
     console.log('mirror sync: ok');
 
     // --- agent list ---
