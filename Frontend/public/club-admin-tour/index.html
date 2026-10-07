@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bandeja — консоль клуба</title>
+<meta name="description" content="Управляйте клубом прямо в приложении Bandeja: расписание кортов, брони, оплаты, отчёты и настройки клуба.">
+<meta property="og:title" content="Bandeja — консоль клуба">
+<meta property="og:description" content="Расписание, брони, оплаты и отчёты клуба — в одном приложении.">
+<meta property="og:image" content="/bandeja2-blue-horizontal.png">
+<link rel="icon" href="/bandeja2-blue-45-icon.png">
+<style>
+  :root { --bg:#f7f5f0; --card:#fff; --ink:#1c1b19; --muted:#6b6760; --line:#e7e2d8; --accent:#76542a; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif; }
+  header { max-width:1180px; margin:0 auto; padding:40px 24px 32px; display:grid; grid-template-columns:1fr minmax(260px, 440px); gap:32px; align-items:center; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; font-size:14px; color:var(--accent); }
+  header h1 { font-size:46px; line-height:1.08; margin:14px 0 16px; letter-spacing:-.02em; }
+  header p { color:var(--muted); font-size:17px; margin:0; max-width:620px; }
+  header img.tiger { width:100%; height:auto; display:block; }
+  @media (max-width:760px) { header { grid-template-columns:1fr; padding-top:24px; } header img.tiger { max-width:360px; margin:0 auto; order:-1; } header h1 { font-size:34px; } }
+  nav { position:sticky; top:0; z-index:5; background:rgba(247,245,240,.92); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  nav div { max-width:1180px; margin:0 auto; padding:10px 24px; display:flex; gap:6px; overflow-x:auto; }
+  nav a { color:var(--ink); text-decoration:none; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:500; white-space:nowrap; }
+  nav a:hover { background:#ece6da; }
+  main { max-width:1180px; margin:0 auto; padding:8px 24px 72px; }
+  section { padding:56px 0 8px; scroll-margin-top:48px; }
+  h2 { font-size:28px; letter-spacing:-.01em; margin:0 0 6px; }
+  .lead { color:var(--muted); max-width:760px; margin:0 0 28px; }
+  .row { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:28px; align-items:start; }
+  figure { margin:0; }
+  .phone { background:#111; border-radius:38px; padding:10px; box-shadow:0 18px 40px -18px rgba(60,40,10,.35); }
+  .phone img { display:block; width:100%; height:auto; border-radius:29px; }
+  .desk { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:0 18px 40px -22px rgba(60,40,10,.35); }
+  .desk .bar { height:28px; background:#efebe3; display:flex; align-items:center; gap:6px; padding:0 12px; }
+  .desk .bar i { width:10px; height:10px; border-radius:50%; background:#d9d2c4; display:block; }
+  .desk img { display:block; width:100%; height:auto; }
+  figcaption { margin-top:12px; font-size:13.5px; color:var(--muted); }
+  figcaption b { color:var(--ink); display:block; font-size:14.5px; margin-bottom:2px; }
+  .wide { grid-column:1 / -1; }
+  .steps { counter-reset:s; list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:16px; }
+  .steps li { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; counter-increment:s; }
+  .steps li::before { content:counter(s); display:inline-grid; place-items:center; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; font-weight:700; font-size:13px; margin-bottom:10px; }
+  .steps b { display:block; margin-bottom:4px; }
+  .steps span { color:var(--muted); font-size:14px; }
+  .roles { width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); }
+  .roles th, .roles td { text-align:left; padding:12px 16px; border-top:1px solid var(--line); font-size:14px; }
+  .roles th { background:#f1ece2; border-top:0; }
+  .yes { color:#2f6d4a; font-weight:600; } .no { color:#a1998b; }
+  .howto { width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); }
+  .howto td { padding:12px 16px; border-top:1px solid var(--line); font-size:14px; vertical-align:top; }
+  .howto tr:first-child td { border-top:0; }
+  .howto td:first-child { font-weight:600; width:34%; }
+  .howto td:nth-child(2) { color:var(--accent); white-space:nowrap; }
+  @media (max-width:640px) { .howto td:nth-child(2) { white-space:normal; } }
+  .end { text-align:center; padding:72px 0 24px; }
+  .end img { width:120px; height:auto; opacity:.9; }
+  .end p { color:var(--muted); margin:8px 0 0; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">Bandeja · консоль клуба</div>
+    <h1>Управляйте клубом прямо из приложения</h1>
+    <p>Расписание кортов, брони, оплаты, отчёты и настройки клуба — в одном месте. Владелец и администраторы на ресепшене работают с телефона или компьютера, а игроки видят актуальную информацию о клубе в Bandeja.</p>
+  </div>
+  <img class="tiger" src="/bandeja2-white-tr.png" alt="Bandeja">
+</header>
+<nav><div>
+  <a href="#start">С чего начать</a><a href="#today">Сегодня</a><a href="#schedule">Расписание</a><a href="#bookings">Брони</a><a href="#reports">Отчёты</a><a href="#club">Клуб</a><a href="#desktop">На компьютере</a><a href="#roles">Роли</a><a href="#howto">Как сделать</a>
+</div></nav>
+<main>
+
+<section id="start">
+  <h2>С чего начать</h2>
+  <p class="lead">Откройте «Мои клубы» в приложении или нажмите «Управлять» на странице своего клуба. Клуб готов к работе, когда пройдены пять шагов настройки — консоль сама показывает, что осталось.</p>
+  <ol class="steps">
+    <li><b>Добавьте корты</b><span>Название, вид спорта, крытый или открытый, покрытие, базовая цена за час.</span></li>
+    <li><b>Укажите часы работы</b><span>По дням недели, плюс праздники и особые дни.</span></li>
+    <li><b>Задайте цены</b><span>Базовая цена корта и правила для пиковых и тихих часов.</span></li>
+    <li><b>Добавьте логотип и фото</b><span>Первое фото становится обложкой клуба.</span></li>
+    <li><b>Оставьте контакты</b><span>Телефон, почта или сайт — чтобы игроки могли связаться.</span></li>
+  </ol>
+</section>
+
+<section id="today">
+  <h2>Сегодня</h2>
+  <p class="lead">Весь день клуба на одном экране: загрузка кортов, забронированные часы, игры и игроки. Ниже — что требует внимания и ближайшие брони.</p>
+  <div class="row">
+    <figure><div class="phone"><img src="/club-admin-tour/shots/01-today.jpg" alt="Экран «Сегодня»" loading="lazy"></div>
+      <figcaption><b>Показатели, внимание, ближайшие брони</b>Загрузка 26%, занято 54 ч из 208 открытых. Всё, что требует действия, — отдельной строкой, по нажатию.</figcaption></figure>
+  </div>
+</section>
+
+<section id="schedule">
+  <h2>Расписание</h2>
+  <p class="lead">Сетка «корты × время» с шагом в полчаса. Типы броней различаются и цветом, и узором, так что их легко отличить с первого взгляда. Нажмите на свободную ячейку, чтобы занять корт, или на бронь — чтобы открыть подробности и принять оплату.</p>
+  <div class="row">
+    <figure><div class="phone"><img src="/club-admin-tour/shots/02-schedule-day.jpg" alt="Расписание на день" loading="lazy"></div>
+      <figcaption><b>День</b>Брони из системы бронирования клуба подтягиваются автоматически и отмечены точками.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/05-schedule-week.jpg" alt="Расписание на неделю" loading="lazy"></div>
+      <figcaption><b>Неделя</b>Один корт на семь дней вперёд — удобно планировать регулярные занятия.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/03-block-court.jpg" alt="Занять корт" loading="lazy"></div>
+      <figcaption><b>Занять корт</b>Корт и время уже подставлены. Длительность, причина, имя и телефон клиента, повтор каждую неделю — до 26 недель.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/04-booking-detail.jpg" alt="Подробности брони" loading="lazy"></div>
+      <figcaption><b>Подробности брони</b>Открыть игру, написать организатору, освободить корт, отменить игру или принять оплату.</figcaption></figure>
+  </div>
+</section>
+
+<section id="bookings">
+  <h2>Брони</h2>
+  <p class="lead">Все брони одним списком, по дням. Поиск по имени, телефону или заметке, фильтры по типу, корту и статусу оплаты. Значок кошелька открывает журнал платежей.</p>
+  <div class="row">
+    <figure><div class="phone"><img src="/club-admin-tour/shots/06-bookings.jpg" alt="Список броней" loading="lazy"></div>
+      <figcaption><b>Предстоящие и прошедшие</b>Фильтры оплаты: не оплачено, частично, оплачено, без счёта.</figcaption></figure>
+  </div>
+</section>
+
+<section id="reports">
+  <h2>Отчёты</h2>
+  <p class="lead">За 7, 30 или 90 дней либо за любой период — с возможностью сравнить с предыдущим. Загрузка, игры, игроки, выручка, самые загруженные часы и постоянные игроки.</p>
+  <div class="row">
+    <figure><div class="phone"><img src="/club-admin-tour/shots/07-reports.jpg" alt="Отчёты: показатели" loading="lazy"></div>
+      <figcaption><b>Период и показатели</b>Загрузка, игры, игроки, новые и вернувшиеся, собрано денег, средняя оценка.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/08-reports-heatmap.jpg" alt="Отчёты: загруженные часы" loading="lazy"></div>
+      <figcaption><b>Загруженные часы и корты</b>Тепловая карта по дням недели и часам, загрузка каждого корта.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/09-reports-revenue.jpg" alt="Отчёты: выручка" loading="lazy"></div>
+      <figcaption><b>Выручка и постоянные игроки</b>Ожидается, выставлено, собрано, долг — каждая цифра с понятным пояснением.</figcaption></figure>
+  </div>
+</section>
+
+<section id="club">
+  <h2>Клуб</h2>
+  <p class="lead">Профиль, часы работы, корты, цены и команда. Изменения сохраняются одной кнопкой, а если уйти, не сохранив, приложение переспросит.</p>
+  <div class="row">
+    <figure><div class="phone"><img src="/club-admin-tour/shots/10-club-hub.jpg" alt="Раздел «Клуб»" loading="lazy"></div>
+      <figcaption><b>Настройка клуба</b>Прогресс «4 из 5» и короткое описание каждого раздела.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/11-pricing.jpg" alt="Цены" loading="lazy"></div>
+      <figcaption><b>Цены</b>Валюта, базовая цена корта, правила по дням и часам, предпросмотр недели и проверка цены.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/12-hours.jpg" alt="Часы работы" loading="lazy"></div>
+      <figcaption><b>Часы работы</b>Расписание на неделю, «Скопировать понедельник на все дни», праздники и особые дни.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/13-courts.jpg" alt="Корты" loading="lazy"></div>
+      <figcaption><b>Корты</b>Крытые и открытые, вид спорта, порядок на расписании и странице клуба.</figcaption></figure>
+    <figure><div class="phone"><img src="/club-admin-tour/shots/14-team.jpg" alt="Команда" loading="lazy"></div>
+      <figcaption><b>Команда</b>Добавьте администраторов и сотрудников ресепшена из игроков Bandeja.</figcaption></figure>
+  </div>
+</section>
+
+<section id="desktop">
+  <h2>На компьютере</h2>
+  <p class="lead">На большом экране — боковое меню с переключением клубов и широкие страницы в несколько колонок.</p>
+  <div class="row">
+    <figure class="wide"><div class="desk"><div class="bar"><i></i><i></i><i></i></div><img src="/club-admin-tour/shots/20-desktop-today.jpg" alt="«Сегодня» на компьютере" loading="lazy"></div>
+      <figcaption><b>Сегодня</b>Справа — загрузка на 7 дней вперёд и шаги настройки.</figcaption></figure>
+    <figure class="wide"><div class="desk"><div class="bar"><i></i><i></i><i></i></div><img src="/club-admin-tour/shots/21-desktop-schedule.jpg" alt="Расписание на компьютере" loading="lazy"></div>
+      <figcaption><b>Расписание</b>Подробности брони — в боковой панели. Протяните мышью по колонке корта, чтобы занять длинный промежуток.</figcaption></figure>
+    <figure class="wide"><div class="desk"><div class="bar"><i></i><i></i><i></i></div><img src="/club-admin-tour/shots/22-desktop-reports.jpg" alt="Отчёты на компьютере" loading="lazy"></div>
+      <figcaption><b>Отчёты</b>Все показатели в одну строку, динамика по дням и загрузка по часам.</figcaption></figure>
+  </div>
+</section>
+
+<section id="roles">
+  <h2>Роли</h2>
+  <p class="lead">Администратор управляет всем. Сотрудник работает на ресепшене: расписание, брони и приём оплаты.</p>
+  <table class="roles">
+    <tr><th>Раздел</th><th>Администратор</th><th>Сотрудник</th></tr>
+    <tr><td>Сегодня</td><td class="yes">Да, с выручкой</td><td class="yes">Да, без выручки</td></tr>
+    <tr><td>Расписание, занять корт</td><td class="yes">Да</td><td class="yes">Да</td></tr>
+    <tr><td>Брони, приём оплаты, журнал платежей</td><td class="yes">Да</td><td class="yes">Да</td></tr>
+    <tr><td>Отчёты, выручка, выгрузка CSV</td><td class="yes">Да</td><td class="no">Нет</td></tr>
+    <tr><td>Профиль, часы работы, корты, цены</td><td class="yes">Да</td><td class="no">Нет</td></tr>
+    <tr><td>Команда, журнал действий, отзывы</td><td class="yes">Да</td><td class="no">Нет</td></tr>
+  </table>
+</section>
+
+<section id="howto">
+  <h2>Как сделать</h2>
+  <p class="lead">Самые частые задачи — в одно-два касания.</p>
+  <table class="howto">
+    <tr><td>Посмотреть, как идёт день</td><td>Сегодня</td><td>Показатели сверху, важное — в блоке «Требует внимания».</td></tr>
+    <tr><td>Занять корт для звонка или гостя</td><td>Расписание</td><td>Нажмите свободную ячейку, выберите длительность и причину, «Занять корт».</td></tr>
+    <tr><td>Регулярная бронь каждую неделю</td><td>Расписание</td><td>При бронировании включите «Повторять каждую неделю» и укажите число недель.</td></tr>
+    <tr><td>Перенести или удалить бронь</td><td>Расписание</td><td>Нажмите на бронь — «Изменить» или «Удалить».</td></tr>
+    <tr><td>Отменить игру или освободить корт</td><td>Расписание</td><td>Откройте игру и выберите причину. Организатор получит сообщение на своём языке.</td></tr>
+    <tr><td>Принять оплату</td><td>Расписание или Брони</td><td>Откройте бронь, «Принять оплату», сумма и способ: наличные, карта, перевод.</td></tr>
+    <tr><td>Найти неоплаченные брони</td><td>Брони</td><td>«Прошедшие» и фильтр «Не оплачено».</td></tr>
+    <tr><td>Узнать выручку за сегодня</td><td>Брони → кошелёк</td><td>Журнал платежей с итогами по способам оплаты.</td></tr>
+    <tr><td>Сделать пиковые цены</td><td>Клуб → Цены</td><td>Добавьте правило: корты, дни, время, цена — и проверьте неделю в предпросмотре.</td></tr>
+    <tr><td>Закрыться на праздник</td><td>Клуб → Часы работы</td><td>Добавьте особый день: закрыто весь день или другие часы.</td></tr>
+    <tr><td>Дать доступ ресепшену</td><td>Клуб → Команда</td><td>Добавьте человека и выберите роль «Сотрудник».</td></tr>
+    <tr><td>Посмотреть клуб глазами игрока</td><td>Клуб</td><td>«Посмотреть как игрок».</td></tr>
+  </table>
+</section>
+
+<div class="end">
+  <img src="/bandeja2-white-tr.png" alt="Bandeja">
+  <p>Bandeja — играйте больше, управляйте проще.</p>
+</div>
+
+</main>
+</body>
+</html>

@@ -42,6 +42,7 @@ const STATIC_LANDING_PATHS: Record<string, string> = {
   '/ad-test': 'ad-test/index.html',
   '/LizaBirthday2026': 'LizaBirthday2026/index.html',
   '/LizaBirthday2026Wishes': 'LizaBirthday2026Wishes/index.html',
+  '/club-admin-tour': 'club-admin-tour/index.html',
 }
 
 const serveStaticLandings = () => {
