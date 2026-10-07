@@ -19,7 +19,6 @@
     "Assistant settings": "agent.settings.title",
     "At the club?": "createGame.courtPlan.atClub.title",
     "Auto-fill from queue": "spots.settings.autoFillTitle",
-    "Bar": "chat.linkPreview.badge.bar",
     "Book again": "courtReservation.drift.reserveAgain",
     "Booked courts": "club.booktime.myTabUnlinkedTitle",
     "Booking sign-in expired": "club.booktime.sessionExpiredReconnectTitle",
@@ -46,10 +45,10 @@
     "Create groups first": "gameDetails.fixtureFullRrDisabledNoGroups",
     "Create Playoff": "gameDetails.createPlayoff",
     "Create Round": "gameDetails.createRound",
-    "Currency": "createGame.priceCurrency",
+    "Currency": "clubAdmin.club.profile.currency",
     "Current City": "profile.city",
     "Customize format": "createGame.intent.customizeFormat",
-    "Date": "createGame.date",
+    "Date": "clubAdmin.club.hours.closureDate",
     "Decline invite?": "invites.declineModal.title",
     "Delete Account": "profile.deleteUser",
     "Delete existing regular season rounds first": "gameDetails.fixtureFullRrDisabledExisting",
@@ -206,7 +205,6 @@
     "Transfer Ownership": "games.transferOwnership",
     "Undo Training": "training.undoTraining",
     "Unsynced Changes Detected": "gameResults.unsyncedChangesTitle",
-    "Until": "series.until",
     "Update & link": "club.booktime.linkGameRescheduleConfirm",
     "Waiting List": "games.joinQueue",
     "Wants to join": "games.wantsToJoin",
@@ -414,19 +412,6 @@
       "hi": "समूह",
       "th": "กลุ่ม",
       "ja": "グループ"
-    },
-    "chat.linkPreview.badge.bar": {
-      "en": "Bar",
-      "ru": "Бар",
-      "sr": "Bar",
-      "es": "Bar",
-      "cs": "Bar",
-      "ar": "بار",
-      "zh": "酒吧",
-      "id": "Batang",
-      "hi": "बार",
-      "th": "บาร์",
-      "ja": "バー"
     },
     "chats.bugs": {
       "en": "Bugs",
@@ -687,6 +672,32 @@
       "hi": "एकीकरण",
       "th": "บูรณาการ",
       "ja": "連携"
+    },
+    "clubAdmin.club.hours.closureDate": {
+      "en": "Date",
+      "ru": "Дата",
+      "sr": "Datum",
+      "es": "Fecha",
+      "cs": "Datum",
+      "ar": "التاريخ",
+      "zh": "日期",
+      "id": "Tanggal",
+      "hi": "तारीख",
+      "th": "วันที่",
+      "ja": "日付"
+    },
+    "clubAdmin.club.profile.currency": {
+      "en": "Currency",
+      "ru": "Валюта",
+      "sr": "Valuta",
+      "es": "Moneda",
+      "cs": "Měna",
+      "ar": "العملة",
+      "zh": "货币",
+      "id": "Mata uang",
+      "hi": "मुद्रा",
+      "th": "สกุลเงิน",
+      "ja": "通貨"
     },
     "clubAdmin.myClubs": {
       "en": "My clubs",
@@ -1676,19 +1687,6 @@
       "th": "สร้างเซสชันการฝึกอบรม",
       "ja": "トレーニングセッションの作成"
     },
-    "createGame.date": {
-      "en": "Date",
-      "ru": "Дата",
-      "sr": "Datum",
-      "es": "Fecha",
-      "cs": "Datum",
-      "ar": "التاريخ",
-      "zh": "日期",
-      "id": "Tanggal",
-      "hi": "तारीख",
-      "th": "วันที่",
-      "ja": "日付"
-    },
     "createGame.duration": {
       "en": "Duration",
       "ru": "Продолжительность",
@@ -2052,19 +2050,6 @@
       "hi": "मूल्य",
       "th": "ราคา",
       "ja": "価格"
-    },
-    "createGame.priceCurrency": {
-      "en": "Currency",
-      "ru": "Валюта",
-      "sr": "Valuta",
-      "es": "Moneda",
-      "cs": "Měna",
-      "ar": "العملة",
-      "zh": "货币",
-      "id": "Mata uang",
-      "hi": "मुद्रा",
-      "th": "สกุลเงิน",
-      "ja": "通貨"
     },
     "createGame.priceNotSet": {
       "en": "Price not set",

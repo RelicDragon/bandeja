@@ -28,7 +28,7 @@ A trainer creates a training session at a club (time, courts, group size, price)
 1. On the home screen tap the + button ("Create"{games.create}), then "Training"{games.entityTypes.TRAINING}. The page "Create Training Session"{createGame.createTraining} opens.
 2. Choose the sport if asked. There is no format or rating to pick for a training.
 3. **Location & time:** pick the club, date, courts and time, and answer "At the club?" with "Reserve now"{createGame.courtPlan.atClub.reserveNow}, "Already reserved" or "Not yet", exactly as for a game (see `create-game` and `book-court`).
-4. If the "Repeat" row appears, choose "Weekly" or "Every 2 weeks" (optionally "Until" a date) to create a recurring training. The trainer carries over to each new session.
+4. If the "Repeat" row appears, choose "Weekly" or "Every 2 weeks" (optionally "Until"{series.until} a date) to create a recurring training. The trainer carries over to each new session.
 5. **Players:** pick the group size under "Number of Participants" (1 to 24).
 6. Decide "I want to play"{createGame.iWantToPlay}. It is on by default. Turn it **off** to coach without playing: you become the trainer, you do not use a seat and you owe no share of the price. If you leave it on, you are still the trainer but you also take one of the seats.
 7. Optionally use "Invite Players" to invite your group; invites are sent after creation.

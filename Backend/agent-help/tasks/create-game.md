@@ -9,7 +9,7 @@ verified_against: [docs/domains/create.md, docs/domains/games.md, docs/domains/n
 
 ## Goal
 
-Create a casual game at a club: pick the sport and format, the club, date, time and courts, how many players, the level range, who can see and join it, and the price. The same create page also makes a bar meetup (entity "Bar"), a training (see `create-training`) and a tournament (see `create-tournament`).
+Create a casual game at a club: pick the sport and format, the club, date, time and courts, how many players, the level range, who can see and join it, and the price. The same create page also makes a bar meetup (entity "Bar"{games.entityTypes.BAR}), a training (see `create-training`) and a tournament (see `create-tournament`).
 
 ## Who can do this
 
@@ -34,7 +34,7 @@ Create a casual game at a club: pick the sport and format, the club, date, time 
    - "Already reserved": link reservations you already have, or just mark the courts as reserved.
    - "Not yet": plan the game without a court reservation. You can reserve later (see `book-court`).
    Then pick the start time and duration. Times taken at the club cannot be picked.
-5. If the "Repeat" row appears after you pick a time, you can make it a recurring series: "Once", "Weekly" or "Every 2 weeks", optionally "Until" a date.
+5. If the "Repeat" row appears after you pick a time, you can make it a recurring series: "Once", "Weekly" or "Every 2 weeks", optionally "Until"{series.until} a date.
 6. **Players.** Set the "Player Level"{createGame.playerLevel} range. You are in the game as a player by default; remove yourself from your seat to organize without playing, and tap "Join the game" to take a seat again. Use "Invite Players" to pick people; they get the invite after the game is created.
 7. **Settings & details.** Set the toggles under "Settings"{createGame.settings} (see below). Optionally add a name and photo ("Name & photo"), a description, and the price under "Price"{createGame.price}.
 8. Tap the create button at the bottom. It reads "Create Game" (or "Create Bar Event"), or says it will reserve courts and create when "Reserve now"{createGame.courtPlan.atClub.reserveNow} is chosen.
