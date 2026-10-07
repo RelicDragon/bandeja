@@ -216,6 +216,12 @@ export const GameInfo = ({
     : game.participants?.find(p => p.role === 'OWNER');
   const owner = organizerParticipant?.user;
 
+  const priceText = game.priceType === 'FREE'
+    ? t('createGame.priceTypeFree')
+    : game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined && game.priceTotal !== null
+    ? `${game.priceTotal} ${game.priceCurrency || resolveUserCurrency(user?.defaultCurrency)} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
+    : '';
+
   const calendarEvent: CalendarEventInput | null = game.timeIsSet === true
     ? (() => {
         const start = new Date(game.startTime);
@@ -243,6 +249,7 @@ export const GameInfo = ({
           displayName?.trim() ? displayName.trim() : null,
           entityTypeLabel,
           ownerName ? `${t('games.organizerFull')}: ${ownerName}` : null,
+          priceText ? `${t('createGame.price')}: ${priceText}` : null,
           displayDescription?.trim() ? displayDescription.trim() : null,
         ].filter(Boolean) as string[];
 
@@ -1202,19 +1209,11 @@ export const GameInfo = ({
                     onClick={() => onOpenEditGameInfo?.('price')}
                     className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
-                    {game.priceType === 'FREE'
-                      ? t('createGame.priceTypeFree')
-                      : game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
-                      ? `${game.priceTotal} ${game.priceCurrency || resolveUserCurrency(user?.defaultCurrency)} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
-                      : t('createGame.priceNotSet')}
+                    {priceText || t('createGame.priceNotSet')}
                   </button>
                 ) : (
                   <span>
-                    {game.priceType === 'FREE'
-                      ? t('createGame.priceTypeFree')
-                      : game.priceType && game.priceType !== 'NOT_KNOWN' && game.priceTotal !== undefined
-                      ? `${game.priceTotal} ${game.priceCurrency || resolveUserCurrency(user?.defaultCurrency)} (${t(`createGame.priceType${game.priceType === 'PER_PERSON' ? 'PerPerson' : game.priceType === 'PER_TEAM' ? 'PerTeam' : 'Total'}`)})`
-                      : ''}
+                    {priceText}
                   </span>
                 )}
               </div>
