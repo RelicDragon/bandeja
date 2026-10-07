@@ -1,21 +1,14 @@
-import { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
-import type { Bug, BugStatus, BugType, BugPriority } from '@/types';
-import { bugsApi } from '@/api/bugs';
+import type { Bug } from '@/types';
 import { BugTypeSelector } from '@/components/chat/BugTypeSelector';
 import { BugStatusSelector } from '@/components/chat/BugStatusSelector';
 import { BugPrioritySelector } from '@/components/chat/BugPrioritySelector';
 import { BugStarRating } from '@/components/bugs/BugStarRating';
-import {
-  defaultStarsWhenSwitchingToReview,
-  isReviewBugType,
-  isValidReviewStars,
-  type BugStars,
-} from '@/components/bugs/reviewStars';
+import { isReviewBugType, isValidReviewStars } from '@/components/bugs/reviewStars';
+import { useBugEditor } from '@/components/chat/useBugEditor';
 
 interface BugContextPanelProps {
   bug: Bug;
+  groupChannelId?: string;
   canEdit?: boolean;
   onUpdate?: () => void;
   onCollapse?: () => void;
@@ -23,87 +16,19 @@ interface BugContextPanelProps {
 
 export const BugContextPanel = ({
   bug,
+  groupChannelId,
   canEdit = false,
   onUpdate,
   onCollapse,
 }: BugContextPanelProps) => {
-  const { t } = useTranslation();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [bugData, setBugData] = useState(bug);
-
-  const handleStatusChange = useCallback(async (newStatus: BugStatus) => {
-    if (!canEdit || isUpdating || !bugData) return;
-    onCollapse?.();
-    setIsUpdating(true);
-    try {
-      const response = await bugsApi.updateBug(bugData.id, { status: newStatus });
-      setBugData(response.data);
-      toast.success(t('bug.statusUpdated', { defaultValue: 'Bug status updated' }));
-      onUpdate?.();
-    } catch (error) {
-      console.error('Failed to update bug status:', error);
-      toast.error(t('bug.updateFailed', { defaultValue: 'Failed to update bug' }));
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [bugData, canEdit, isUpdating, t, onUpdate, onCollapse]);
-
-  const handleTypeChange = useCallback(async (newType: BugType) => {
-    if (!canEdit || isUpdating || !bugData) return;
-    onCollapse?.();
-    setIsUpdating(true);
-    try {
-      const payload: { bugType: BugType; priority?: number } = { bugType: newType };
-      if (isReviewBugType(newType)) {
-        payload.priority = defaultStarsWhenSwitchingToReview();
-      } else if (isReviewBugType(bugData.bugType)) {
-        payload.priority = 0;
-      }
-      const response = await bugsApi.updateBug(bugData.id, payload);
-      setBugData(response.data);
-      toast.success(t('bug.typeUpdated', { defaultValue: 'Bug type updated' }));
-      onUpdate?.();
-    } catch (error) {
-      console.error('Failed to update bug type:', error);
-      toast.error(t('bug.updateFailed', { defaultValue: 'Failed to update bug' }));
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [bugData, canEdit, isUpdating, t, onUpdate, onCollapse]);
-
-  const handleRatingChange = useCallback(async (stars: BugStars) => {
-    if (!canEdit || isUpdating || !bugData) return;
-    onCollapse?.();
-    setIsUpdating(true);
-    try {
-      const response = await bugsApi.updateBug(bugData.id, { priority: stars });
-      setBugData(response.data);
-      toast.success(t('bug.ratingUpdated', { defaultValue: 'Rating updated' }));
-      onUpdate?.();
-    } catch (error) {
-      console.error('Failed to update bug rating:', error);
-      toast.error(t('bug.updateFailed', { defaultValue: 'Failed to update bug' }));
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [bugData, canEdit, isUpdating, t, onUpdate, onCollapse]);
-
-  const handlePriorityChange = useCallback(async (newPriority: BugPriority) => {
-    if (!canEdit || isUpdating || !bugData) return;
-    onCollapse?.();
-    setIsUpdating(true);
-    try {
-      const response = await bugsApi.updateBug(bugData.id, { priority: newPriority });
-      setBugData(response.data);
-      toast.success(t('bug.priorityUpdated', { defaultValue: 'Bug priority updated' }));
-      onUpdate?.();
-    } catch (error) {
-      console.error('Failed to update bug priority:', error);
-      toast.error(t('bug.updateFailed', { defaultValue: 'Failed to update bug' }));
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [bugData, canEdit, isUpdating, t, onUpdate, onCollapse]);
+  const {
+    bugData,
+    isUpdating,
+    changeStatus: handleStatusChange,
+    changeType: handleTypeChange,
+    changePriority: handlePriorityChange,
+    changeRating: handleRatingChange,
+  } = useBugEditor({ bug, canEdit, groupChannelId, onUpdate, onBeforeChange: onCollapse });
 
   const isReview = isReviewBugType(bugData.bugType);
 

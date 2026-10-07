@@ -31,7 +31,7 @@ export const ChatContextPanel = ({
   contextType,
   bug,
   marketItem,
-  groupChannel: _groupChannel,
+  groupChannel,
   canEditBug = false,
   onUpdate,
   onJoinChannel,
@@ -57,7 +57,9 @@ export const ChatContextPanel = ({
     if (isBugChat && bug) {
       return (
         <BugContextPanel
+          key={bug.id}
           bug={bug}
+          groupChannelId={groupChannel?.id}
           canEdit={canEditBug}
           onUpdate={onUpdate}
           onCollapse={() => setIsExpanded(false)}

@@ -47,7 +47,9 @@ export const ChannelContextPanel = ({
   if (isBugChat && groupChannel.bug) {
     return (
       <BugInfoPanel
+        key={groupChannel.bug.id}
         bug={groupChannel.bug as import('@/types').Bug}
+        groupChannelId={groupChannel.id}
         canEdit={canEditBug}
         onUpdate={onUpdate}
       />

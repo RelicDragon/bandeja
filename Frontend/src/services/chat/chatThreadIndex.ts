@@ -371,6 +371,62 @@ export async function patchThreadIndexSetUnreadCount(
   }
 }
 
+export type ThreadIndexBugPatch = {
+  id: string;
+  status: string;
+  bugType: string;
+  priority?: number;
+  updatedAt?: string;
+};
+
+/** Keep the cached bug on a bug channel's thread row in step with edits (list merges read Dexie over network rows). */
+export async function patchThreadIndexGroupChannelBug(
+  groupChannelId: string,
+  bug: ThreadIndexBugPatch
+): Promise<void> {
+  const initial = await chatLocalDb.threadIndex
+    .where('[contextType+contextId]')
+    .equals(['GROUP', groupChannelId])
+    .toArray();
+  const rowKeys = [...new Set(initial.map((r) => r.rowKey))];
+  for (const rowKey of rowKeys) {
+    for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
+      const latest = await chatLocalDb.threadIndex.get(rowKey);
+      if (!latest) break;
+      const item = parseItem(latest.itemJson);
+      if (!item || (item.type !== 'group' && item.type !== 'channel')) break;
+      const nextData = withPatchedBug(item.data, bug);
+      if (nextData === item.data) break;
+      const next = { ...item, data: nextData } as ChatItem;
+      const applied = await putThreadRowIfUnchanged(rowKey, latest.updatedAt, {
+        ...rowToPutBase(latest),
+        sortAt: latest.sortAt,
+        itemJson: stringifyItem(next),
+        updatedAt: Date.now(),
+      });
+      if (applied) break;
+    }
+  }
+}
+
+/** Returns `channel` unchanged when it is not this bug's channel or already matches. */
+export function withPatchedBug(channel: GroupChannel, bug: ThreadIndexBugPatch): GroupChannel {
+  const cur = channel.bug;
+  if (!cur || cur.id !== bug.id) return channel;
+  const priority = bug.priority ?? cur.priority;
+  if (cur.status === bug.status && cur.bugType === bug.bugType && cur.priority === priority) return channel;
+  return {
+    ...channel,
+    bug: {
+      ...cur,
+      status: bug.status,
+      bugType: bug.bugType,
+      priority,
+      ...(bug.updatedAt ? { updatedAt: bug.updatedAt } : {}),
+    },
+  };
+}
+
 export async function patchThreadIndexClearUnread(
   contextType: ChatContextType,
   contextId: string
