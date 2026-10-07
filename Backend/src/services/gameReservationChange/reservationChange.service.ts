@@ -25,6 +25,7 @@ import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 import { resolveBooktimeTimezoneForGame } from '../../shared/booktime/resolveClubTimezone';
 import { assertNoCourtClashInTx } from '../gameCourt/courtClash.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
+import { pruneEmptySlotsAboveCap } from '../gameCourt/courtSlots.tx';
 import {
   createLinkInTx,
   gameExternalBookingSelect,
@@ -537,6 +538,7 @@ export async function saveGameForReservationChange(
               const link = await createLinkInTx(tx, gameId, userId, add, timeZone);
               result.addedLinkIds.push(link.id);
             }
+            if (result.removedLinks > 0) await pruneEmptySlotsAboveCap(tx, gameId);
           },
           afterSync: async (tx) => {
             const windowMoved =

@@ -8,6 +8,8 @@
  * here, so both sides can use these without a cycle.
  */
 import { GameCourtReservation, Prisma } from '@prisma/client';
+import { defaultCourtSlotCount } from '@bandeja/shared/gameBooking/courtReservations';
+import { playersPerMatchOf } from '../../shared/matchFormat';
 
 type Tx = Prisma.TransactionClient;
 
@@ -115,6 +117,49 @@ export async function ensurePrimaryCourtSlot(tx: Tx, gameId: string, courtId: st
 }
 
 /**
+ * Courts the game may hold: the roster need (a 4-player 2v2 needs one), or the
+ * organizer's explicit `courtSlotCount` when higher. Null when the game is gone.
+ */
+export async function courtCapOf(tx: Tx, gameId: string): Promise<number | null> {
+  const game = await tx.game.findUnique({
+    where: { id: gameId },
+    select: { maxParticipants: true, playersPerMatch: true, sport: true, courtSlotCount: true },
+  });
+  if (!game) return null;
+  const rosterNeed = defaultCourtSlotCount({
+    maxParticipants: game.maxParticipants,
+    playersPerMatch: playersPerMatchOf(game),
+  });
+  return Math.max(rosterNeed, game.courtSlotCount ?? 0);
+}
+
+/** Slots nothing holds: no linked booking and not reported by the organizer (last first). */
+async function emptySlots(tx: Tx, gameId: string): Promise<Array<{ id: string; courtId: string; order: number }>> {
+  return tx.gameCourt.findMany({
+    where: { gameId, reservation: GameCourtReservation.NONE, externalBookings: { none: {} } },
+    orderBy: { order: 'desc' },
+    select: { id: true, courtId: true, order: true },
+  });
+}
+
+/**
+ * Drop empty slots while the game holds more courts than it may (a link that added a
+ * court was removed, a booking moved court at the club). Never the last slot.
+ * Returns true when it removed any.
+ */
+export async function pruneEmptySlotsAboveCap(tx: Tx, gameId: string): Promise<boolean> {
+  const cap = await courtCapOf(tx, gameId);
+  if (cap == null) return false;
+  const total = await tx.gameCourt.count({ where: { gameId } });
+  const excess = total - Math.max(cap, 1);
+  if (excess <= 0) return false;
+  const removable = (await emptySlots(tx, gameId)).slice(0, excess).map((slot) => slot.id);
+  if (removable.length === 0) return false;
+  await tx.gameCourt.deleteMany({ where: { id: { in: removable } } });
+  return true;
+}
+
+/**
  * Put every linked booking on the slot of its court. Links whose slot no longer
  * matches their court are re-placed. With `appendMissing`, a booking on a court
  * the game does not list gets a new slot appended for it (link/snapshot writes);
@@ -139,11 +184,21 @@ export async function placeLinksOnSlots(
     if (link.gameCourtId && slotCourtById.get(link.gameCourtId) === link.courtId) continue;
     let slotId = slotByCourt.get(link.courtId);
     if (!slotId && options.appendMissing) {
-      const created = await tx.gameCourt.create({
-        data: { gameId, courtId: link.courtId, order: await nextSlotOrder(tx, gameId) },
-        select: { id: true },
-      });
-      slotId = created.id;
+      // At the court cap, the booking takes over an empty slot (the court the organizer
+      // planned but booked elsewhere) instead of growing the game past what it needs.
+      const cap = await courtCapOf(tx, gameId);
+      const reusable = cap != null && slotByCourt.size >= cap ? (await emptySlots(tx, gameId))[0] : undefined;
+      if (reusable) {
+        await tx.gameCourt.update({ where: { id: reusable.id }, data: { courtId: link.courtId } });
+        slotByCourt.delete(reusable.courtId);
+        slotId = reusable.id;
+      } else {
+        const created = await tx.gameCourt.create({
+          data: { gameId, courtId: link.courtId, order: await nextSlotOrder(tx, gameId) },
+          select: { id: true },
+        });
+        slotId = created.id;
+      }
       slotByCourt.set(link.courtId, slotId);
       slotCourtById.set(slotId, link.courtId);
     }

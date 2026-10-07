@@ -6,6 +6,8 @@
  *     REPORTED stamps, Game.courtId = first slot, legacy hasBookedCourt/bookingStatus,
  *     one booking-status chat notice per real change, refusing to drop a linked slot;
  *   · link placement: explicit gameCourtId, by court, appended slot for a new court;
+ *   · extra courts: an unlink drops the empty court it added, an empty planned court is reused
+ *     at the cap, the primary court follows the first slot, no new court above the cap;
  *   · old-app setGameCourts keeps reservations of courts that stay and re-places links;
  *   · `timePolicy=explicit` never moves the game's time (link / snapshots / unlink / PATCH);
  *   · old-app `hasBookedCourt` PATCH ↔ REPORTED slots / reportedAnyCourtCount;
@@ -289,6 +291,64 @@ void (async () => {
     slots = await slotsOf(g2.id);
     assert.equal(slots.at(-1)?.courtId, c3.id);
     assert.equal(b3After.gameCourtId, slots.at(-1)?.id);
+
+    /* --- extra courts on a game that needs one (prod 2026-10-07) ---------------- */
+    // 4-player game: in-app link on C1, then a second link on C2 (agent) appends a court.
+    const gInc = await makeGame({ courtId: null, maxParticipants: 4 });
+    await link(gInc.id, 'inc-1', { courtId: c1.id }, { timePolicy: 'explicit' });
+    await linkBookingToGame(
+      gInc.id,
+      owner.id,
+      false,
+      {
+        externalBookingId: bookingId('inc-2'),
+        snapshot: { externalBookingId: bookingId('inc-2'), courtId: c2.id, bookingStart: start.toISOString(), bookingEnd: end.toISOString() },
+        gamePatch: { courtId: c2.id },
+      },
+      { timePolicy: 'explicit' },
+    );
+    slots = await slotsOf(gInc.id);
+    assert.deepEqual(slots.map((s) => s.courtId), [c1.id, c2.id], 'both linked courts are kept');
+    assert.equal((await gameRow(gInc.id)).courtId, c1.id, 'primary court stays the first slot despite the link patch');
+    // Removing one booking drops the court it added (no "1 of 2 booked").
+    await patchGameBookings(gInc.id, owner.id, false, { remove: [bookingId('inc-1')] }, { timePolicy: 'explicit' });
+    slots = await slotsOf(gInc.id);
+    assert.deepEqual(slots.map((s) => s.courtId), [c2.id], 'empty extra court pruned');
+    let incRow = await gameRow(gInc.id);
+    assert.equal(incRow.courtId, c2.id, 'primary follows the remaining court');
+    assert.equal(incRow.bookingStatus, 'EXTERNAL_FULL');
+
+    // At the cap, a booking on another court takes over the empty planned court.
+    const gReuse = await makeGame({ courtId: c1.id, maxParticipants: 4 });
+    await GameCourtService.setCourtSlots(gReuse.id, owner.id, { slots: [{ courtId: c1.id }] });
+    await link(gReuse.id, 'reuse-3', { courtId: c3.id }, { timePolicy: 'explicit' });
+    slots = await slotsOf(gReuse.id);
+    assert.deepEqual(slots.map((s) => s.courtId), [c3.id], 'empty planned court reused, not appended');
+    incRow = await gameRow(gReuse.id);
+    assert.equal(incRow.courtId, c3.id);
+    assert.equal(incRow.bookingStatus, 'EXTERNAL_FULL');
+
+    // Above the cap (older data) a game may keep its courts but not swap in a new one.
+    const gOld = await makeGame({ courtId: c1.id, maxParticipants: 4 });
+    await prisma.gameCourt.createMany({
+      data: [
+        { gameId: gOld.id, courtId: c1.id, order: 1 },
+        { gameId: gOld.id, courtId: c2.id, order: 2 },
+      ],
+    });
+    await expectApiError(
+      GameCourtService.setCourtSlots(gOld.id, owner.id, { slots: [{ courtId: c1.id }, { courtId: c3.id }] }),
+      400,
+      'no new court above the cap',
+    );
+
+    // Reorder only accepts this game's own slots.
+    const foreignSlots = await slotsOf(g2.id);
+    await expectApiError(
+      GameCourtService.reorderGameCourts(gOld.id, foreignSlots.slice(0, 2).map((s) => s.id)),
+      400,
+      'reorder with another game\'s slots',
+    );
 
     /* --- gaps ------------------------------------------------------------------ */
     const g3 = await makeGame({ courtId: c1.id });

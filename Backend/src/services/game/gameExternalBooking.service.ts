@@ -27,6 +27,8 @@ import {
   applyLegacyHasBookedCourt,
   ensurePrimaryCourtSlot,
   placeLinksOnSlots,
+  pruneEmptySlotsAboveCap,
+  syncPrimaryCourtFromSlots,
   type TimePolicy,
 } from '../gameCourt/courtSlots.tx';
 import {
@@ -517,6 +519,8 @@ async function syncGameBookingState(
   patch.hasBookedCourt = computed.hasBookedCourt;
 
   await tx.game.update({ where: { id: gameId }, data: patch });
+  // `Game.courtId` follows the first slot, also after a link patch named another court.
+  if (game.entityType !== EntityType.EVENT) await syncPrimaryCourtFromSlots(tx, gameId);
 
   return { previousBookingStatus, bookingStatus };
 }
@@ -587,6 +591,8 @@ export async function patchGameBookings(
       await tx.gameExternalBooking.deleteMany({
         where: { gameId, externalBookingId: { in: remove } },
       });
+      // The court a removed link added must not stay behind as an empty extra court.
+      await pruneEmptySlotsAboveCap(tx, gameId);
     }
 
     if (add.length > 0) {
@@ -687,6 +693,8 @@ export async function putGameBookingSnapshots(
       appendMissing: true,
       onlyLinkIds: updatedLinks.map((row) => row.id),
     });
+    // A booking the club moved to another court leaves its old court empty.
+    await pruneEmptySlotsAboveCap(tx, gameId);
 
     const synced = await syncGameBookingState(tx, gameId, {
       timePolicy: options.timePolicy,

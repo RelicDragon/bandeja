@@ -222,8 +222,16 @@ export class GameCourtService {
       maxParticipants: game.maxParticipants,
       playersPerMatch: playersPerMatchOf(game),
     });
-    const courtCap = Math.max(rosterNeed, before.length, game.courtSlotCount ?? 0);
-    if (courtIds.length > courtCap || (typeof input.courtSlotCount === 'number' && input.courtSlotCount > courtCap)) {
+    const allowed = Math.max(rosterNeed, game.courtSlotCount ?? 0);
+    const courtCap = Math.max(allowed, before.length);
+    // Above the cap (older data, an extra linked court) the game may keep or drop courts, not add new ones.
+    const addsCourtAboveCap =
+      courtIds.length > allowed && courtIds.some((courtId) => !beforeByCourt.has(courtId));
+    if (
+      courtIds.length > courtCap ||
+      addsCourtAboveCap ||
+      (typeof input.courtSlotCount === 'number' && input.courtSlotCount > courtCap)
+    ) {
       throw new ApiError(400, `This game needs at most ${rosterNeed} court${rosterNeed === 1 ? '' : 's'}`);
     }
     const keep = new Set(courtIds);
@@ -399,7 +407,13 @@ export class GameCourtService {
       where: { gameId },
     });
 
-    if (existingGameCourts.length !== gameCourtIds.length) {
+    // Exactly this game's slots: ids from another game must never be reordered through this one.
+    const own = new Set(existingGameCourts.map((row) => row.id));
+    if (
+      existingGameCourts.length !== gameCourtIds.length ||
+      new Set(gameCourtIds).size !== gameCourtIds.length ||
+      gameCourtIds.some((id) => !own.has(id))
+    ) {
       throw new ApiError(400, 'Invalid number of game courts');
     }
 
