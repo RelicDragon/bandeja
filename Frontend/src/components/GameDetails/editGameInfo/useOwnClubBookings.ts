@@ -34,7 +34,10 @@ export function useOwnClubBookings({
   const unknownCourt = t('club.booktime.unknownCourt');
 
   return useMemo(() => {
-    if (!enabled || !club || !reservations.connected || !reservations.bookingsLoaded) return null;
+    // A failed lookup is "can't tell", never "none of yours" (that pushed booking another court).
+    if (!enabled || !club || !reservations.connected || !reservations.bookingsLoaded || reservations.bookingsError) {
+      return null;
+    }
     const clubRow = clubToBooktimeRow(club);
     const timeZone = club.city?.timezone ?? game.city?.timezone ?? null;
     const linked = new Set((game.linkedBookings ?? []).map((l) => l.externalBookingId));
@@ -62,5 +65,14 @@ export function useOwnClubBookings({
       }
     }
     return out;
-  }, [enabled, club, game, reservations.connected, reservations.bookingsLoaded, reservations.dateBookings, unknownCourt]);
+  }, [
+    enabled,
+    club,
+    game,
+    reservations.connected,
+    reservations.bookingsLoaded,
+    reservations.bookingsError,
+    reservations.dateBookings,
+    unknownCourt,
+  ]);
 }

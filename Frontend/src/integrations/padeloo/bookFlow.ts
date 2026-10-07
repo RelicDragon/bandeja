@@ -166,7 +166,8 @@ export async function cancelPadelooBooking(
 ): Promise<void> {
   const linkedGameIds = await fetchLinkedGameIdsForBooking(bookingId).catch((error) => {
     console.error('Failed to resolve linked games before booking cancel', { bookingId, error });
-    return [];
+    // Unknown, not "none": look them up again after the cancel instead of leaving links behind.
+    return undefined;
   });
 
   await client.cancelReservation(bookingId);

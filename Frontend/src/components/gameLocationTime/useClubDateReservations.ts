@@ -23,7 +23,12 @@ export function useClubDateReservations({
   const active = enabled && club != null && clubHasBookingIntegration(club);
   const { status: auth, loading: authLoading } = useClubBookingAuth(club, active);
   const connected = Boolean(auth?.connected);
-  const { bookings, loading: bookingsLoading, loaded: bookingsLoaded } = useClubUpcomingBookings(
+  const {
+    bookings,
+    loading: bookingsLoading,
+    loaded: bookingsLoaded,
+    error: bookingsError,
+  } = useClubUpcomingBookings(
     club,
     connected,
     active,
@@ -44,6 +49,8 @@ export function useClubDateReservations({
     dateBookings,
     bookingsLoading,
     bookingsLoaded,
+    /** The provider list could not be read: "no bookings" is unknown, not empty. */
+    bookingsError,
     clubTimezone,
   };
 }

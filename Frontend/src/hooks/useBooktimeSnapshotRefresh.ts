@@ -27,7 +27,7 @@ export function useBooktimeSnapshotRefresh(
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [banner, setBanner] = useState<BooktimeSnapshotBanner>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null);
-  const inFlightRef = useRef<Promise<boolean> | null>(null);
+  const inFlightRef = useRef<{ run: Promise<boolean>; force: boolean } | null>(null);
   const refreshEpochRef = useRef(0);
   const { apiEnabled: liveApiEnabled, loading: liveApiLoading } = useBooktimeLiveApiEnabled(
     club?.id,
@@ -43,8 +43,16 @@ export function useBooktimeSnapshotRefresh(
       if (!companyId) return false;
       if (liveApiLoading) return false;
 
+      // A forced refresh (right after a booking / cancel) must read the club again: an
+      // unforced one already in flight may have started before the change.
+      while (inFlightRef.current) {
+        const current = inFlightRef.current;
+        if (!options.force || current.force) return current.run;
+        await current.run.catch(() => false);
+        if (inFlightRef.current === current) inFlightRef.current = null;
+      }
       const epoch = refreshEpochRef.current;
-      if (inFlightRef.current) return inFlightRef.current;
+      const entry: { run: Promise<boolean>; force: boolean } = { run: Promise.resolve(false), force: options.force === true };
 
       const run = (async () => {
         const dateKey = formatClubDateKey(selectedDate, club);
@@ -96,12 +104,13 @@ export function useBooktimeSnapshotRefresh(
         } finally {
           if (!isStale()) {
             setIsRefreshing(false);
-            inFlightRef.current = null;
+            if (inFlightRef.current === entry) inFlightRef.current = null;
           }
         }
       })();
 
-      inFlightRef.current = run;
+      entry.run = run;
+      inFlightRef.current = entry;
       return run;
     },
     [club, enabled, liveApiLoading, selectedDate]

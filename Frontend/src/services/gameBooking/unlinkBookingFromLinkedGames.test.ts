@@ -55,15 +55,25 @@ describe('unlinkBookingFromLinkedGames', () => {
     expect(apiMocks.invalidateQueriesMock).toHaveBeenCalledOnce();
   });
 
-  it('returns only successfully unlinked games when one patch fails', async () => {
+  it('returns only successfully unlinked games when one patch keeps failing', async () => {
     apiMocks.patchBookingsMock
       .mockResolvedValueOnce({ data: {} })
+      .mockRejectedValueOnce(new Error('forbidden'))
       .mockRejectedValueOnce(new Error('forbidden'));
 
     const gameIds = await unlinkBookingFromLinkedGames('booking-1', ['game-1', 'game-2']);
 
     expect(gameIds).toEqual(['game-1']);
     expect(apiMocks.invalidateQueriesMock).toHaveBeenCalledOnce();
+  });
+
+  it('retries a failed unlink once (a link to a cancelled booking reads as booked)', async () => {
+    apiMocks.patchBookingsMock.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ data: {} });
+
+    const gameIds = await unlinkBookingFromLinkedGames('booking-1', ['game-1']);
+
+    expect(gameIds).toEqual(['game-1']);
+    expect(apiMocks.patchBookingsMock).toHaveBeenCalledTimes(2);
   });
 
   it('returns an empty list when no games are linked', async () => {

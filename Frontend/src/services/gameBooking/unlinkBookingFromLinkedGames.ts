@@ -15,8 +15,10 @@ export async function unlinkBookingFromLinkedGames(
   const targetGameIds = gameIds ?? (await fetchLinkedGameIdsForBooking(externalBookingId));
   if (targetGameIds.length === 0) return [];
 
+  const unlink = (gameId: string) => gamesApi.patchBookings(gameId, { remove: [externalBookingId] });
+  // One retry: a link left on a booking that no longer exists shows as booked on the game.
   const results = await Promise.allSettled(
-    targetGameIds.map((gameId) => gamesApi.patchBookings(gameId, { remove: [externalBookingId] })),
+    targetGameIds.map((gameId) => unlink(gameId).catch(() => unlink(gameId))),
   );
 
   const failed = results
