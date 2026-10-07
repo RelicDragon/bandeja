@@ -9,6 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { canMutateGameRoster } from '@shared/gameMutationLock';
 
+// The creator gets the new bet twice: from the create response and from the
+// `bet:created` socket event broadcast to the game room.
+const prependBetOnce = (bets: Bet[], bet: Bet): Bet[] =>
+  bets.some(b => b.id === bet.id) ? bets : [bet, ...bets];
+
 interface BetSectionProps {
   game: Game;
   onGameUpdate?: (game: Game) => void;
@@ -49,7 +54,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
 
   useEffect(() => {
     if (!lastBetCreated || lastBetCreated.gameId !== game.id) return;
-    setBets(prev => [lastBetCreated.bet, ...prev]);
+    setBets(prev => prependBetOnce(prev, lastBetCreated.bet));
     clearLastBetCreated();
   }, [lastBetCreated, game.id, clearLastBetCreated]);
 
@@ -75,7 +80,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
 
   const handleCloseModal = useCallback(() => setShowCreateModal(false), []);
   const handleBetCreated = useCallback((createdBet: Bet) => {
-    setBets(prev => [createdBet, ...prev]);
+    setBets(prev => prependBetOnce(prev, createdBet));
     setShowCreateModal(false);
   }, []);
 
