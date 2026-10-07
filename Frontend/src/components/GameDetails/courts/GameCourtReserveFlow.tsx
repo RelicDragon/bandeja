@@ -82,9 +82,17 @@ export function GameCourtReserveFlow({
 
   const linkBookings = async (snapshots: BookingSnapshotInput[], externalBookingIds: string[]) => {
     const remaining = [...entries];
+    // A retry after a partial failure (Weltner / NS Padel return the same receipts): links that
+    // already went through are kept, the rest are linked now.
+    const alreadyLinked = new Set((game.linkedBookings ?? []).map((link) => link.externalBookingId));
     for (const [index, externalBookingId] of externalBookingIds.entries()) {
       const snapshot = snapshots.find((s) => s.externalBookingId === externalBookingId) ?? snapshots[index];
       if (!snapshot) continue;
+      if (alreadyLinked.has(externalBookingId)) {
+        const linkedIndex = remaining.findIndex((e) => e.courtId === snapshot.courtId);
+        if (linkedIndex >= 0) remaining.splice(linkedIndex, 1);
+        continue;
+      }
       const entryIndex = remaining.findIndex((e) => e.courtId === snapshot.courtId);
       const entry = entryIndex >= 0 ? remaining.splice(entryIndex, 1)[0] : undefined;
       await courtSlotsApi.linkBooking(game.id, {

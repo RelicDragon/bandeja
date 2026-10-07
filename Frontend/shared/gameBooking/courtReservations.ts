@@ -132,6 +132,12 @@ export type CourtReservationsResult = {
   legacy: LegacyBookingFields;
   /** Links that found no slot (more link groups than free any-court slots). */
   unplacedLinks: CourtSlotLink[];
+  /**
+   * Courts held by a linked booking beyond what the game needs (roster need, or the organizer's
+   * `courtSlotCount`): e.g. two courts booked for a 4-player game. Display only; the legacy
+   * status is unchanged.
+   */
+  extraCourts: number;
 };
 
 /** Courts the roster needs (`computeBookingSelectionLimits(...).min`), at least 1. */
@@ -327,11 +333,15 @@ export function deriveCourtReservations(input: DeriveCourtReservationsInput): Co
       ? 'MANUAL'
       : 'NONE';
 
+  const needed = Math.max(defaultCourtSlotCount(game), normalizeCourtSlotCount(input.courtSlotCount) ?? 0);
+  const linkedCourts = slots.filter((s) => s.state === 'linked').length;
+
   return {
     slots,
     summary,
     legacy: { bookingStatus, hasBookedCourt: summary.reserved > 0 },
     unplacedLinks,
+    extraCourts: Math.max(0, linkedCourts - needed),
   };
 }
 

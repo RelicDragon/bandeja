@@ -53,6 +53,33 @@ export function buildCourtsById(club: Club | undefined, game: Game): Record<stri
  * Players who get the one time-change notice: PLAYING participants except the
  * editor (the backend never notifies the person making the change).
  */
+/**
+ * Before booking `targets`: an own reservation at this time on another court that is not linked
+ * here and not already offered for a slot. Booking one more court would leave the organizer
+ * holding two (prod 2026-10-07: Court 1 booked in the app while Court 4 was already theirs).
+ */
+export function findOwnBookingElsewhere<B extends { externalBookingId: string; courtId: string; start: string; end: string }>(input: {
+  own: readonly B[] | null;
+  window: IsoInterval | null;
+  offeredIds: ReadonlySet<string>;
+  targets: readonly Pick<CourtSlotView, 'effectiveCourtId'>[];
+}): B | null {
+  const { own, window, offeredIds, targets } = input;
+  if (!own || !window) return null;
+  const ws = parseInstantMs(window.start) ?? 0;
+  const we = parseInstantMs(window.end) ?? 0;
+  const targetCourts = new Set(targets.map((s) => s.effectiveCourtId).filter(Boolean));
+  return (
+    own.find(
+      (b) =>
+        !offeredIds.has(b.externalBookingId) &&
+        !targetCourts.has(b.courtId) &&
+        Date.parse(b.start) < we &&
+        Date.parse(b.end) > ws,
+    ) ?? null
+  );
+}
+
 export function timeChangeNoticeCount(
   game: Pick<Game, 'participants'>,
   editorUserId: string | null | undefined,

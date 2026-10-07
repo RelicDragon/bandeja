@@ -100,6 +100,7 @@ import {
   planSlotReservations,
   providerCanVerify,
   resolveGameClub,
+  findOwnBookingElsewhere,
   timeChangeNoticeCount,
   type ReserveEntry,
 } from './gameCourtsModel';
@@ -240,6 +241,12 @@ function OrganizerCourts({
   const [linkSlot, setLinkSlot] = useState<CourtSlotView | null>(null);
   const [reserve, setReserve] = useState<ReserveRequest | null>(null);
   const [gapConfirm, setGapConfirm] = useState<{ entries: ReserveEntry[]; result: GapFillResult } | null>(null);
+  /** About to book while the organizer already holds another court at this time (not linked here). */
+  const [ownElsewhere, setOwnElsewhere] = useState<{
+    targets: CourtSlotView[];
+    opts: { pickedCourtId?: string | null };
+    booking: OwnClubBooking;
+  } | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [cancelLink, setCancelLink] = useState<LinkedBookingPayload | null>(null);
   const [confirmUnlink, setConfirmUnlink] = useState<{ slot: CourtSlotView; link: LinkedBookingPayload } | null>(null);
@@ -455,6 +462,47 @@ function OrganizerCourts({
     [reservations.slots, window, club.integrationType, clubCourts, occupancy.blocks, t, openSheet],
   );
 
+  /**
+   * An own reservation at this time on another court, not linked here and not already offered
+   * for a slot: booking one more court would leave the organizer holding two.
+   */
+  const ownBookingElsewhere = useCallback(
+    (targets: readonly CourtSlotView[]): OwnClubBooking | null =>
+      findOwnBookingElsewhere({
+        own: ownClubBookings,
+        window,
+        offeredIds: new Set(Object.values(ownBySlot).map((b) => b.externalBookingId)),
+        targets,
+      }),
+    [ownClubBookings, window, ownBySlot],
+  );
+
+  const reserveUnlessOwnElsewhere = useCallback(
+    (targets: CourtSlotView[], opts: { pickedCourtId?: string | null } = {}) => {
+      const booking = ownBookingElsewhere(targets);
+      if (booking) {
+        openSheet(null);
+        setOwnElsewhere({ targets, opts, booking });
+        return;
+      }
+      startReserve(targets, opts);
+    },
+    [ownBookingElsewhere, openSheet, startReserve],
+  );
+
+  const linkOwnElsewhere = useCallback(async () => {
+    if (!ownElsewhere) return;
+    const { targets, opts, booking } = ownElsewhere;
+    // No gameCourtId: the server puts it on its court, taking over the planned empty court.
+    const outcome = await mutations.linkBooking({ gameCourtId: null }, booking.body);
+    setOwnElsewhere(null);
+    if (!outcome.ok) {
+      showError(outcome.error);
+      return;
+    }
+    if (targets.length > 1) startReserve(targets.slice(1), opts);
+  }, [ownElsewhere, mutations, showError, startReserve]);
+
   /** "Fill the gap": the shared planner decides what to book (provider lengths, blocks, own booking). */
   const startGapFill = useCallback(
     (slot: CourtSlotView) => {
@@ -502,9 +550,9 @@ function OrganizerCourts({
         startGapFill(targets[0]);
         return;
       }
-      startReserve(targets);
+      reserveUnlessOwnElsewhere(targets);
     },
-    [reservations.slots, canBookHere, startReserve, startGapFill, openSheet, linkOwnBooking, showError],
+    [reservations.slots, canBookHere, reserveUnlessOwnElsewhere, startGapFill, openSheet, linkOwnBooking, showError],
   );
 
   const onPickLink = useCallback(
@@ -631,7 +679,7 @@ function OrganizerCourts({
           if (action.courtId) await assignCourt(slot, action.courtId);
           return;
         case 'reserve':
-          startReserve([slot], { pickedCourtId: action.courtId });
+          reserveUnlessOwnElsewhere([slot], { pickedCourtId: action.courtId });
           return;
         case 'link':
           openSheet(null);
@@ -664,7 +712,7 @@ function OrganizerCourts({
         }
       }
     },
-    [startReserve, mutations, linkById, verifyLink, assignCourt, openSheet, errorMessage, linkOwnBooking],
+    [reserveUnlessOwnElsewhere, mutations, linkById, verifyLink, assignCourt, openSheet, errorMessage, linkOwnBooking],
   );
 
   const removeFromGame = useCallback(async () => {
@@ -830,8 +878,17 @@ function OrganizerCourts({
         providerName={providerName}
         slotNotices={slotNotices}
         notices={
-          (unfinished && journal) || drifts.length > 0 ? (
+          (unfinished && journal) || drifts.length > 0 || reservations.extraCourts > 0 ? (
             <>
+              {reservations.extraCourts > 0 ? (
+                <p
+                  role="status"
+                  data-testid="extra-courts-notice"
+                  className="cr-enter rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-50"
+                >
+                  {t('gameDetails.courts.extraCourts', { count: reservations.extraCourts })}
+                </p>
+              ) : null}
               {unfinished && journal ? (
                 <UnfinishedChangesBanner
                   journal={journal}
@@ -921,6 +978,42 @@ function OrganizerCourts({
         confirmText={t('gameDetails.courts.gapContinue')}
         cancelText={t('common.cancel')}
       />
+
+      <ConfirmationModal
+        isOpen={ownElsewhere != null}
+        tone="info"
+        onClose={() => mutations.pending !== 'link' && setOwnElsewhere(null)}
+        onConfirm={() => void linkOwnElsewhere()}
+        title={t('gameDetails.courts.ownElsewhereTitle')}
+        message={
+          ownElsewhere
+            ? t('gameDetails.courts.ownElsewhereMessage', {
+                court: courtsById[ownElsewhere.booking.courtId]?.name ?? t('gameDetails.courts.theCourt'),
+                range: clock.range(ownElsewhere.booking.start, ownElsewhere.booking.end),
+              })
+            : ''
+        }
+        confirmText={t('gameDetails.courts.ownElsewhereUse', {
+          court: ownElsewhere ? courtsById[ownElsewhere.booking.courtId]?.name ?? t('gameDetails.courts.theCourt') : '',
+        })}
+        cancelText={t('common.cancel')}
+        isLoading={mutations.pending === 'link'}
+        closeOnConfirm={false}
+      >
+        <button
+          type="button"
+          className="mt-2 w-full text-center text-sm font-medium text-gray-500 underline-offset-2 hover:underline dark:text-gray-400"
+          disabled={mutations.pending === 'link'}
+          onClick={() => {
+            if (!ownElsewhere) return;
+            const { targets, opts } = ownElsewhere;
+            setOwnElsewhere(null);
+            startReserve(targets, opts);
+          }}
+        >
+          {t('gameDetails.courts.ownElsewhereBookAnyway')}
+        </button>
+      </ConfirmationModal>
 
       <ConfirmationModal
         isOpen={confirmUnlink != null}

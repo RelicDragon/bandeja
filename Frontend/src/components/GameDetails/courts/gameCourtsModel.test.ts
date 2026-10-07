@@ -5,6 +5,7 @@ import {
   buildSharedWith,
   courtClashDetails,
   describeCourtClash,
+  findOwnBookingElsewhere,
   freeCourtsForWindow,
   gapExtraLines,
   gapFillEntries,
@@ -232,5 +233,24 @@ describe('timeChangeNoticeCount', () => {
     ]);
     expect(timeChangeNoticeCount({ participants: p }, 'me')).toBe(2);
     expect(timeChangeNoticeCount({ participants: p }, null)).toBe(3);
+  });
+});
+
+describe('findOwnBookingElsewhere', () => {
+  const window = { start: '2026-10-10T10:00:00.000Z', end: '2026-10-10T11:00:00.000Z' };
+  const court4 = { externalBookingId: 'bt-4', courtId: 'c4', start: '2026-10-10T10:00:00.000Z', end: '2026-10-10T11:00:00.000Z' };
+
+  it('booking Court 1 while Court 4 at the same time is already yours (prod 2026-10-07)', () => {
+    expect(findOwnBookingElsewhere({ own: [court4], window, offeredIds: new Set(), targets: [{ effectiveCourtId: 'c1' }] })).toBe(court4);
+  });
+
+  it('ignores bookings on the target court, already offered for a slot, at another time, or not loaded', () => {
+    const base = { window, offeredIds: new Set<string>(), targets: [{ effectiveCourtId: 'c1' }] };
+    expect(findOwnBookingElsewhere({ ...base, own: [court4], targets: [{ effectiveCourtId: 'c4' }] })).toBeNull();
+    expect(findOwnBookingElsewhere({ ...base, own: [court4], offeredIds: new Set(['bt-4']) })).toBeNull();
+    expect(
+      findOwnBookingElsewhere({ ...base, own: [{ ...court4, start: '2026-10-10T11:00:00.000Z', end: '2026-10-10T12:00:00.000Z' }] }),
+    ).toBeNull();
+    expect(findOwnBookingElsewhere({ ...base, own: null })).toBeNull();
   });
 });

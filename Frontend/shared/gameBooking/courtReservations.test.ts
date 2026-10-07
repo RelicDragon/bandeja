@@ -114,6 +114,33 @@ describe('deriveCourtReservations — slot count', () => {
   });
 });
 
+describe('deriveCourtReservations — extra courts', () => {
+  it('two linked courts for a 4-player game → one extra (prod 2026-10-07)', () => {
+    const r = derive({
+      game: { ...game, maxParticipants: 4 },
+      gameCourts: [gc('g1', 'c1', 0), gc('g4', 'c4', 1)],
+      links: [link('a', { courtId: 'c1' }), link('b', { courtId: 'c4' })],
+    });
+    expect(r.extraCourts).toBe(1);
+    expect(r.legacy.bookingStatus).toBe('EXTERNAL_FULL');
+  });
+
+  it('an empty extra court and courts the organizer asked for are not extra', () => {
+    expect(
+      derive({ game: { ...game, maxParticipants: 4 }, gameCourts: [gc('g1', 'c1', 0), gc('g2', 'c2', 1)], links: [link('a', { courtId: 'c1' })] })
+        .extraCourts,
+    ).toBe(0);
+    expect(
+      derive({
+        game: { ...game, maxParticipants: 4 },
+        gameCourts: [gc('g1', 'c1', 0), gc('g2', 'c2', 1)],
+        links: [link('a', { courtId: 'c1' }), link('b', { courtId: 'c2' })],
+        courtSlotCount: 2,
+      }).extraCourts,
+    ).toBe(0);
+  });
+});
+
 describe('deriveCourtReservations — slots', () => {
   it('a fresh game is one planned any-court slot', () => {
     const r = derive({});
