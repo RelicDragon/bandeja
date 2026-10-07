@@ -121,6 +121,7 @@
     "cannotRemoveLastSet": "最後のセットは削除できません",
     "booking": {
       "slotNoLongerAvailable": "この枠はもう利用できません。",
+      "outcomeUnknown": "クラブでこの予約を確認できませんでした。もう一度予約する前にクラブに確認してください。",
       "sessionExpired": "クラブ予約のサインイン期限が切れました。再度サインインしてください。",
       "courtNotConfigured": "このコートではオンライン予約が設定されていません。",
       "clubNotConfigured": "このクラブはオンライン予約に対応していません。",

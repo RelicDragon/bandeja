@@ -121,6 +121,7 @@
     "cannotRemoveLastSet": "Poslední set nelze odebrat",
     "booking": {
       "slotNoLongerAvailable": "Tento termín už není k dispozici.",
+      "outcomeUnknown": "Rezervaci se nepodařilo v klubu potvrdit. Než budete rezervovat znovu, ověřte si to v klubu.",
       "sessionExpired": "Přihlášení k rezervacím klubu vypršelo. Přihlaste se znovu.",
       "courtNotConfigured": "Online rezervace není pro tento kurt nastavena.",
       "clubNotConfigured": "Tento klub není nastaven pro online rezervace.",

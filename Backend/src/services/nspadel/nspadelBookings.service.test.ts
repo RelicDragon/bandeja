@@ -67,6 +67,20 @@ const todayRanges = computeFreeRanges({
 assert.ok(todayRanges.length > 0);
 assert.ok(todayRanges.every((range) => range.start > 10 * 60 + 15));
 
+// "Today" and "now" are the club's: 08:15 UTC is 10:15 in Belgrade (summer), so 09:00–10:00 is past.
+const belgradeRanges = computeFreeRanges({
+  openingTime: '08:00:00',
+  closingTime: '23:00:00',
+  intervalMinutes: 30,
+  durationMinutes: 60,
+  occupied: [],
+  date: '2030-05-05',
+  now: new Date('2030-05-05T08:15:00Z'),
+  timeZone: 'Europe/Belgrade',
+});
+assert.ok(belgradeRanges.length > 0);
+assert.ok(belgradeRanges.every((range) => range.start > 10 * 60 + 15), 'club-local now, not server UTC');
+
 assert.strictEqual(
   buildNspadelExternalBookingId('court-uuid', '2030-01-06', '10:00'),
   'nspadel:court-uuid:2030-01-06:10:00',

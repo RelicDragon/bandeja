@@ -1,5 +1,5 @@
 import { ClubIntegrationType, NspadelBookingState, Prisma, type NspadelBooking } from '@prisma/client';
-import { fromZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
@@ -65,6 +65,15 @@ async function resolveClubSupabase(clubId: string): Promise<string> {
   return config.supabaseUrl;
 }
 
+const DEFAULT_CLUB_TIME_ZONE = 'Europe/Belgrade';
+/** Below the app's 15s request timeout, so the server settles the receipt before the app gives up. */
+const UPSTREAM_TIMEOUT_MS = 12_000;
+
+async function clubTimeZone(clubId: string): Promise<string> {
+  const club = await prisma.club.findUnique({ where: { id: clubId }, select: { city: { select: { timezone: true } } } });
+  return club?.city?.timezone || DEFAULT_CLUB_TIME_ZONE;
+}
+
 async function upstreamFetch(
   supabaseUrl: string,
   pathWithQuery: string,
@@ -86,6 +95,7 @@ async function upstreamFetch(
     method,
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
   const text = await res.text();
   let body: unknown = null;
@@ -139,6 +149,8 @@ export type FreeSlotInput = {
   occupied: Array<{ start_time: string; end_time: string }>;
   date: string;
   now?: Date;
+  /** Club timezone: "today" and "now" are the club's, not the server's (prod runs in UTC). */
+  timeZone?: string;
 };
 
 /**
@@ -162,9 +174,10 @@ export function computeFreeRanges(input: FreeSlotInput): Array<{ start: number; 
       e: parseTimeToMinutes(String(row.end_time ?? '').slice(0, 5)),
     }))
     .filter((row): row is { s: number; e: number } => row.s != null && row.e != null && row.e > row.s);
-  const now = input.now ?? new Date();
-  // Local calendar day on both sides (the club site mixes UTC date with local
-  // hours; local/local is the consistent choice for a server-side port).
+  const instant = input.now ?? new Date();
+  // Club-local calendar day and clock on both sides (the club site mixes UTC date with
+  // local hours; local/local is the consistent choice for a server-side port).
+  const now = input.timeZone ? toZonedTime(instant, input.timeZone) : instant;
   const pad = (n: number): string => String(n).padStart(2, '0');
   const todayKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   const isToday = input.date === todayKey;
@@ -228,6 +241,7 @@ export async function getNspadelAvailability(
   assertBookingDate(date);
   assertDuration(durationMinutes);
   const supabaseUrl = await resolveClubSupabase(clubId);
+  const timeZone = await clubTimeZone(clubId);
   const courts = await fetchUpstreamCourts(supabaseUrl);
   const slots: NspadelFreeSlot[] = [];
   for (const court of courts) {
@@ -239,6 +253,7 @@ export async function getNspadelAvailability(
       durationMinutes,
       occupied,
       date,
+      timeZone,
     });
     for (const range of ranges) {
       slots.push({
@@ -392,9 +407,12 @@ export async function createNspadelBooking(input: NspadelBookingInput): Promise<
     prisma.club.findUnique({ where: { id: input.clubId }, select: { city: { select: { timezone: true } } } }),
     prisma.court.findFirst({ where: { clubId: input.clubId, externalCourtId: court.id }, select: { id: true } }),
   ]);
-  const timeZone = club?.city?.timezone || 'Europe/Belgrade';
+  const timeZone = club?.city?.timezone || DEFAULT_CLUB_TIME_ZONE;
   const bookingStart = fromZonedTime(`${input.date}T${startLabel}:00`, timeZone);
   const bookingEnd = new Date(bookingStart.getTime() + durationMinutes * 60_000);
+  if (bookingStart.getTime() <= Date.now()) {
+    throw new ApiError(409, BOOKING_ERROR_KEYS.slotNoLongerAvailable);
+  }
   const idempotencyKey = nspadelIdempotencyKey({
     userId: input.userId,
     clubId: input.clubId,
@@ -479,7 +497,9 @@ export async function createNspadelBooking(input: NspadelBookingInput): Promise<
       data: { state: rejected ? NspadelBookingState.REJECTED : NspadelBookingState.UNKNOWN },
     });
     if (rejected) throw new ApiError(409, BOOKING_ERROR_KEYS.slotNoLongerAvailable);
-    throw error;
+    // Timeout / 5xx / network: the club may have it. The app says "check with the club".
+    console.error('[nspadel] reservation insert outcome unknown', { bookingId: attempt.id, error });
+    throw bookingUnknown();
   }
 
   const confirmed = await prisma.nspadelBooking.update({

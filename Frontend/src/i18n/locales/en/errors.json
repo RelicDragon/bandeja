@@ -121,6 +121,7 @@
     "cannotRemoveLastSet": "Cannot remove the last set",
     "booking": {
       "slotNoLongerAvailable": "This slot is no longer available.",
+      "outcomeUnknown": "We couldn't confirm this booking with the club. Check with the club before booking again.",
       "sessionExpired": "Your club booking sign-in expired. Please sign in again.",
       "courtNotConfigured": "Online booking is not set up for this court.",
       "clubNotConfigured": "This club is not set up for online booking.",

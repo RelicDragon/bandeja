@@ -121,6 +121,7 @@
     "cannotRemoveLastSet": "Ne možete ukloniti poslednji set",
     "booking": {
       "slotNoLongerAvailable": "Ovaj termin više nije dostupan.",
+      "outcomeUnknown": "Nismo uspeli da potvrdimo rezervaciju u klubu. Proverite sa klubom pre nove rezervacije.",
       "sessionExpired": "Prijava za rezervacije kluba je istekla. Prijavi se ponovo.",
       "courtNotConfigured": "Online rezervacija nije podešena za ovaj teren.",
       "clubNotConfigured": "Ovaj klub nije podešen za online rezervacije.",

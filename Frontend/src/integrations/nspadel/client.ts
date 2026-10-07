@@ -139,6 +139,9 @@ export class NspadelClient {
     options: { method?: string; body?: Record<string, unknown>; auth?: boolean } = {},
   ): Promise<T> {
     const method = options.method ?? 'GET';
+    // Booking needs the signed-in Bandeja user: go through the app's API client (token,
+    // refresh on 401, client headers). A bare fetch had no token, so every booking was a 401.
+    if (options.auth && !this.accessToken) return this.requestAsAppUser<T>(path, method, options.body);
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (options.body) headers['Content-Type'] = 'application/json';
     if (options.auth && this.accessToken) {
@@ -181,6 +184,31 @@ export class NspadelClient {
       throw Object.assign(new Error(message), { status: res.status, data });
     }
     return data as T;
+  }
+
+  private async requestAsAppUser<T>(path: string, method: string, body?: Record<string, unknown>): Promise<T> {
+    const { default: api } = await import('@/api/axios');
+    const url = `/nspadel${path}${path.includes('?') ? '&' : '?'}clubId=${encodeURIComponent(this.clubId)}`;
+    try {
+      const res = await api.request<T>({ url, method, data: body, timeout: REQUEST_TIMEOUT_MS });
+      return res.data;
+    } catch (err) {
+      const e = err as { code?: string; message?: string; response?: { status?: number; statusText?: string; data?: unknown } };
+      if (!e.response) {
+        if (e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT') {
+          throw Object.assign(new Error('Request timed out'), { status: 408 });
+        }
+        throw err;
+      }
+      const data = e.response.data as { message?: string; error?: string } | null | undefined;
+      const message =
+        (typeof data?.message === 'string' && data.message) ||
+        (typeof data?.error === 'string' && data.error) ||
+        e.response.statusText ||
+        e.message ||
+        'Request failed';
+      throw Object.assign(new Error(message), { status: e.response.status, data: e.response.data });
+    }
   }
 
   async getAvailability(dateKey: string, durationMinutes?: number): Promise<NspadelAvailabilityResponse> {

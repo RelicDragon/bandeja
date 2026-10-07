@@ -1,5 +1,7 @@
 export const BOOKING_ERROR_KEYS = {
   slotNoLongerAvailable: 'errors.booking.slotNoLongerAvailable',
+  /** The club may or may not have the booking (timeout / unknown upstream result). */
+  outcomeUnknown: 'errors.booking.outcomeUnknown',
   sessionExpired: 'errors.booking.sessionExpired',
   courtNotConfigured: 'errors.booking.courtNotConfigured',
   clubNotConfigured: 'errors.booking.clubNotConfigured',

@@ -121,6 +121,7 @@
     "cannotRemoveLastSet": "不能移除最后一盘",
     "booking": {
       "slotNoLongerAvailable": "此时段已不可用。",
+      "outcomeUnknown": "无法与俱乐部确认此预订。再次预订前请先与俱乐部核实。",
       "sessionExpired": "俱乐部预订登录已过期，请重新登录。",
       "courtNotConfigured": "此场地未开通在线预订。",
       "clubNotConfigured": "此俱乐部未开通在线预订。",

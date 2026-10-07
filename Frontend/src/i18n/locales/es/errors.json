@@ -121,6 +121,7 @@
     "cannotRemoveLastSet": "No se puede eliminar el último set",
     "booking": {
       "slotNoLongerAvailable": "Ese horario ya no está disponible.",
+      "outcomeUnknown": "No pudimos confirmar esta reserva con el club. Consulta con el club antes de volver a reservar.",
       "sessionExpired": "Tu sesión de reservas del club expiró. Inicia sesión de nuevo.",
       "courtNotConfigured": "La reserva online no está configurada para esta pista.",
       "clubNotConfigured": "Este club no está configurado para reservas online.",

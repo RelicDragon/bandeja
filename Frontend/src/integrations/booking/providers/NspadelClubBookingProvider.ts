@@ -37,6 +37,11 @@ export class NspadelClubBookingProvider implements ClubBookingProvider {
       }
       const message = err instanceof Error ? err.message : BOOKING_ERROR_KEYS.slotNoLongerAvailable;
       const status = (err as { status?: unknown })?.status;
+      const code = (err as { data?: { code?: unknown } })?.data?.code;
+      // The club may have the reservation (earlier attempt timed out): never "slot taken".
+      if (status === 408 || (status === 409 && code === 'NSPADEL_BOOKING_UNKNOWN')) {
+        throw new Error(BOOKING_ERROR_KEYS.outcomeUnknown);
+      }
       if (status === 409) {
         throw bookingProviderError('SlotTaken', BOOKING_ERROR_KEYS.slotNoLongerAvailable);
       }

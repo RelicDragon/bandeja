@@ -121,6 +121,7 @@
     "cannotRemoveLastSet": "Tidak dapat menghapus set terakhir",
     "booking": {
       "slotNoLongerAvailable": "Slot ini tidak lagi tersedia.",
+      "outcomeUnknown": "Kami tidak dapat mengonfirmasi pemesanan ini dengan klub. Tanyakan ke klub sebelum memesan lagi.",
       "sessionExpired": "Masuk pemesanan klub Anda kedaluwarsa. Silakan masuk lagi.",
       "courtNotConfigured": "Pemesanan online belum diatur untuk lapangan ini.",
       "clubNotConfigured": "Klub ini belum diatur untuk pemesanan online.",
