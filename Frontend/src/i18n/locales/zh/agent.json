@@ -397,7 +397,10 @@
         "unavailable": "语音功能暂时不可用。",
         "budget": "你已达到今天的助手使用上限，请明天再试。",
         "rateLimited": "语音请求过多，请稍候。",
-        "idle": "安静一分钟后，语音对话已结束。"
+        "idle": "安静一分钟后，语音对话已结束。",
+        "chatBusy": "助手在此对话中仍在忙。请稍后再试。",
+        "maxDuration": "语音对话已结束：已达到时间上限。",
+        "replaced": "语音对话已在另一台设备上继续。"
       },
       "dictation": {
         "start": "语音输入",
@@ -408,7 +411,16 @@
         "tooShort": "太短了，请多说一会儿。"
       },
       "confirmPrompt": "{{title}}。请在屏幕上点击确认。",
-      "confirmFallbackTitle": "我已准备好更改"
+      "confirmFallbackTitle": "我已准备好更改",
+      "typeInstead": "改为打字",
+      "confirmCallout": "请使用上方的卡片",
+      "confirmCalloutHint": "语音永远不会确认更改",
+      "liveCaptionLabel": "你正在说的话",
+      "captionsLabel": "实时字幕",
+      "connection": {
+        "fallback": "基础语音",
+        "reconnecting": "正在重新连接…"
+      }
     },
     "markdown": {
       "code": "代码",

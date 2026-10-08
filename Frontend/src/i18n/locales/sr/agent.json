@@ -397,7 +397,10 @@
         "unavailable": "Glas trenutno nije dostupan.",
         "budget": "Dostigao si današnji limit asistenta. Pokušaj sutra.",
         "rateLimited": "Previše glasovnih zahteva. Sačekaj malo.",
-        "idle": "Glasovni razgovor je završen posle minuta tišine."
+        "idle": "Glasovni razgovor je završen posle minuta tišine.",
+        "chatBusy": "Asistent je još zauzet u ovom četu. Pokušaj ponovo za trenutak.",
+        "maxDuration": "Glasovni razgovor je završen: dostignuto je vremensko ograničenje.",
+        "replaced": "Glasovni razgovor se nastavio na drugom uređaju."
       },
       "dictation": {
         "start": "Diktiraj",
@@ -408,7 +411,16 @@
         "tooShort": "Prekratko. Pričaj malo duže."
       },
       "confirmPrompt": "{{title}}. Dodirni Potvrdi na ekranu.",
-      "confirmFallbackTitle": "Pripremio sam izmenu"
+      "confirmFallbackTitle": "Pripremio sam izmenu",
+      "typeInstead": "Kucaj umesto toga",
+      "confirmCallout": "Odgovori na kartici iznad",
+      "confirmCalloutHint": "Glasom se izmene nikad ne potvrđuju",
+      "liveCaptionLabel": "Šta govoriš",
+      "captionsLabel": "Titlovi uživo",
+      "connection": {
+        "fallback": "Osnovni glas",
+        "reconnecting": "Ponovno povezivanje…"
+      }
     },
     "markdown": {
       "code": "Kod",

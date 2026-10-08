@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, type FormEvent, type KeyboardEvent } from 'react';
+import { useCallback, useLayoutEffect, useRef, type FormEvent, type KeyboardEvent, type MutableRefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Capacitor } from '@capacitor/core';
@@ -34,6 +34,8 @@ interface AgentComposerProps {
   className?: string;
   /** Overrides the default placeholder (the AI home's narrower card). */
   placeholder?: string;
+  /** The text field, for focusing it from outside (voice mode's "Type instead"). */
+  inputRef?: MutableRefObject<HTMLTextAreaElement | null>;
 }
 
 /**
@@ -52,6 +54,7 @@ export function AgentComposer({
   pausedReason,
   className = 'p-3',
   placeholder,
+  inputRef,
 }: AgentComposerProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -183,7 +186,10 @@ export function AgentComposer({
           ) : (
             <>
               <textarea
-                ref={textareaRef}
+                ref={(el) => {
+                  textareaRef.current = el;
+                  if (inputRef) inputRef.current = el;
+                }}
                 value={value}
                 onChange={(e) => onChange(e.target.value.slice(0, AGENT_MESSAGE_MAX_LENGTH))}
                 onKeyDown={handleKeyDown}

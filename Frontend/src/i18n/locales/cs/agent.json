@@ -397,7 +397,10 @@
         "unavailable": "Hlas teď není k dispozici.",
         "budget": "Dosáhli jste dnešního limitu asistenta. Zkuste to zítra.",
         "rateLimited": "Příliš mnoho hlasových požadavků. Chvíli počkejte.",
-        "idle": "Hlasový rozhovor skončil po minutě ticha."
+        "idle": "Hlasový rozhovor skončil po minutě ticha.",
+        "chatBusy": "Asistent je v tomto chatu ještě zaneprázdněn. Zkuste to za chvíli.",
+        "maxDuration": "Hlasový rozhovor skončil: dosáhl časového limitu.",
+        "replaced": "Hlasový rozhovor pokračuje na jiném zařízení."
       },
       "dictation": {
         "start": "Diktovat",
@@ -408,7 +411,16 @@
         "tooShort": "Příliš krátké. Mluvte o něco déle."
       },
       "confirmPrompt": "{{title}}. Klepněte na obrazovce na Potvrdit.",
-      "confirmFallbackTitle": "Připravil jsem změnu"
+      "confirmFallbackTitle": "Připravil jsem změnu",
+      "typeInstead": "Raději psát",
+      "confirmCallout": "Odpovězte na kartě výše",
+      "confirmCalloutHint": "Hlasem se změny nikdy nepotvrzují",
+      "liveCaptionLabel": "Co říkáte",
+      "captionsLabel": "Živé titulky",
+      "connection": {
+        "fallback": "Základní hlas",
+        "reconnecting": "Znovu se připojuji…"
+      }
     },
     "markdown": {
       "code": "Kód",

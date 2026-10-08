@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -24,6 +26,8 @@ import {
   useSetAgentMessageFeedbackMutation,
 } from '@/queries/agent/useAgentQueries';
 import { useAgentStream } from '@/features/agent/useAgentStream';
+import { expirePendingActions, patchAgentChatDetail } from '@/features/agent/agentCache';
+import { queryKeys } from '@/queries/queryKeys';
 import { agentRunIdToAttach } from '@/features/agent/agentRunAttach';
 import { useAgentRun } from '@/features/agent/agentRunStore';
 import { isTerminalPhase } from '@/features/agent/agentRunReducer';
@@ -52,6 +56,7 @@ import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import type { AgentErrorCode, AgentMessageFeedback, AgentWebImage } from '@shared/agentContract';
 import { AgentComposer } from './AgentComposer';
 import { AgentVoiceDock } from './AgentVoiceDock';
+import { AgentVoiceGhostBubble } from './AgentVoiceCaptions';
 import { useAgentVoiceConversation } from '@/features/agent/voice/useAgentVoiceConversation';
 import type { AgentVoiceCloseReason, AgentVoiceNotice } from '@/features/agent/voice/agentVoiceSession';
 import { AgentTimelineItem, UserBubble, type AgentTimelineHandlers } from './AgentTimelineItem';
@@ -79,6 +84,8 @@ const WINDOW_THRESHOLD = 80;
 const WINDOW_SIZE = 60;
 const WINDOW_STEP = 40;
 const REPLY_FINISHED_CLEAR_MS = 4000;
+/** Composer ↔ voice stage hand-over: the leaving one plays its exit first (`agent-voice.css`). */
+const FOOTER_EXIT_MS = 170;
 
 interface PendingSend {
   localId: string;
@@ -454,7 +461,35 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     },
     [t],
   );
+  // Realtime voice: the server stored the user's words and started the run. Attach it now
+  // (the SSE stream brings cards / Confirm) and fetch the stored message for the bubble.
+  const queryClient = useQueryClient();
+  const handleVoiceTurn = useCallback(
+    ({ runId }: { runId: string }) => {
+      stickToBottom();
+      patchAgentChatDetail(queryClient, chatId, (d) => ({
+        ...expirePendingActions(d),
+        activeRun: { id: runId, status: 'QUEUED' },
+        archivedAt: null,
+      }));
+      void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chat(chatId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chats() });
+    },
+    [queryClient, chatId, stickToBottom],
+  );
+  // A cut reply is truncated server-side after the cancel ended its stream: refetch twice.
+  const replyCutTimersRef = useRef<number[]>([]);
+  const handleReplyCut = useCallback(() => {
+    for (const timer of replyCutTimersRef.current) window.clearTimeout(timer);
+    replyCutTimersRef.current = [1000, 3000].map((ms) =>
+      window.setTimeout(() => void queryClient.invalidateQueries({ queryKey: queryKeys.agent.chat(chatId) }), ms),
+    );
+  }, [queryClient, chatId]);
+  useEffect(() => () => replyCutTimersRef.current.forEach((timer) => window.clearTimeout(timer)), []);
   const voice = useAgentVoiceConversation({
+    chatId,
+    onTurn: handleVoiceTurn,
+    onReplyCut: handleReplyCut,
     serverRunId,
     running,
     pendingAction: hasPendingAction,
@@ -470,6 +505,55 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     confirmPrompt: (title) => t('agent.voice.confirmPrompt', { title: title ?? t('agent.voice.confirmFallbackTitle') }),
   });
   const voiceActive = voice.active;
+
+  // The user's words while the server hears them (realtime voice): a ghost bubble until the
+  // stored message of that turn's run is in the chat — or the newest own message already says
+  // it (the server merges a turn the user kept talking through into the first message).
+  const liveCaption = voice.state.liveCaption;
+  const ghostLanded = useMemo(() => {
+    if (!liveCaption || !detail) return false;
+    if (liveCaption.runId != null && detail.messages.some((m) => m.role === 'USER' && m.runId === liveCaption.runId)) return true;
+    const lastUser = lastUserItem ? stripAgentRefTokens(lastUserItem.text).trim() : '';
+    return liveCaption.final && lastUser !== '' && lastUser === liveCaption.text.trim();
+  }, [liveCaption, detail, lastUserItem]);
+  const ghost = voiceActive && liveCaption && liveCaption.text.trim() && !ghostLanded ? liveCaption : null;
+
+  // ---- footer: composer ↔ voice stage, the leaving one animates out first ----
+  const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [footerView, setFooterView] = useState<'composer' | 'voice'>(voiceActive ? 'voice' : 'composer');
+  const [footerClosing, setFooterClosing] = useState(false);
+  useEffect(() => {
+    const want = voiceActive ? 'voice' : 'composer';
+    if (want === footerView) {
+      setFooterClosing(false);
+      return;
+    }
+    if (voiceActive) {
+      // Voice mode shows no input: put the keyboard away.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && footerRef.current?.contains(active)) active.blur();
+    }
+    if (reducedMotion) {
+      setFooterView(want);
+      return;
+    }
+    setFooterClosing(true);
+    const timer = window.setTimeout(() => {
+      setFooterView(want);
+      setFooterClosing(false);
+    }, FOOTER_EXIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [voiceActive, footerView, reducedMotion]);
+
+  // "Type instead": swap synchronously and focus inside the tap, so iOS opens the keyboard.
+  const typeInstead = () => {
+    flushSync(() => {
+      voice.session.stop('user');
+      setFooterView('composer');
+      setFooterClosing(false);
+    });
+    composerInputRef.current?.focus({ preventScroll: true });
+  };
 
   // Slot / booking cards send through the chat (hidden ref tokens, docs/domains/agent.md).
   const sendingNow = pending.some((p) => !p.failed);
@@ -665,6 +749,21 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
     return () => cancelAnimationFrame(raf);
   }, [timeline]);
 
+  // Voice mode waiting on a card: bring the card (its Confirm button) into view.
+  const showPendingCard = useCallback(() => {
+    const buttons = contentRef.current?.querySelectorAll<HTMLElement>('[data-agent-primary]');
+    const target = buttons?.[buttons.length - 1];
+    if (!target) return;
+    stickRef.current = false;
+    target.scrollIntoView({ block: 'center', behavior: reducedMotion ? 'auto' : 'smooth' });
+  }, [reducedMotion]);
+  const voicePhase = voice.state.phase;
+  useEffect(() => {
+    if (voicePhase !== 'confirm') return;
+    const raf = requestAnimationFrame(showPendingCard);
+    return () => cancelAnimationFrame(raf);
+  }, [voicePhase, showPendingCard]);
+
   // Screen readers: streamed text is `aria-busy` (not read per character); one short
   // "Reply finished" status when a run ends with an answer.
   const [replyAnnouncement, setReplyAnnouncement] = useState('');
@@ -744,7 +843,8 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
           onWheel={stopFollowing}
           onTouchStart={stopFollowing}
           className="thread-message-scroll h-full overflow-y-auto overscroll-contain"
-          style={{ paddingBottom: footerHeight + 12 }}
+          // Voice mode: a little more room, the stage's scrim fades the content it overlaps.
+          style={{ paddingBottom: footerHeight + (footerView === 'voice' ? 28 : 12) }}
         >
           <div
             ref={contentRef}
@@ -856,6 +956,19 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
                       ) : null}
                     </motion.div>
                   ))}
+                  {ghost ? (
+                    <motion.div
+                      key={`voice-ghost-${ghost.turnId}`}
+                      layout="position"
+                      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                      transition={ITEM_ENTER}
+                      style={{ transformOrigin: '100% 100%' }}
+                    >
+                      <AgentVoiceGhostBubble text={ghost.text} final={ghost.final} />
+                    </motion.div>
+                  ) : null}
                 </AnimatePresence>
               </AgentImagesContext.Provider>
             </AgentSendContext.Provider>
@@ -928,39 +1041,31 @@ export function AgentChatView({ chatId, embedded = false }: AgentChatViewProps) 
       >
         <AgentJumpToBottom visible={showJump} unread={unseenBelow || (showJump && running)} onJump={jumpToBottom} />
         <AgentContextHint usage={usage} onNewChat={startNewChat} creating={createChatMutation.isPending} />
-        <AnimatePresence mode="wait" initial={false}>
-          {voiceActive ? (
-            <motion.div
-              key="voice"
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, transition: { duration: 0.15 } }}
-              transition={ITEM_ENTER}
-            >
-              <AgentVoiceDock state={voice.state} session={voice.session} onEnd={() => voice.session.stop('user')} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="composer"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, transition: { duration: 0.12 } }}
-              transition={ITEM_ENTER}
-            >
-              <AgentComposer
-                value={draft}
-                onChange={setDraft}
-                onSend={handleSend}
-                onStop={handleStop}
-                onStartVoice={() => void voice.session.start()}
-                running={running}
-                stopping={cancelMutation.isPending}
-                disabled={!detail}
-                pausedReason={composerPausedReason}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {footerView === 'voice' ? (
+          <AgentVoiceDock
+            state={voice.state}
+            session={voice.session}
+            onEnd={() => voice.session.stop('user')}
+            onTypeInstead={typeInstead}
+            onShowCard={showPendingCard}
+            dataState={footerClosing ? 'closed' : 'open'}
+          />
+        ) : (
+          <div className="agent-composer-presence" data-state={footerClosing ? 'closed' : 'open'}>
+            <AgentComposer
+              value={draft}
+              onChange={setDraft}
+              onSend={handleSend}
+              onStop={handleStop}
+              onStartVoice={() => void voice.session.start()}
+              running={running}
+              stopping={cancelMutation.isPending}
+              disabled={!detail}
+              pausedReason={composerPausedReason}
+              inputRef={composerInputRef}
+            />
+          </div>
+        )}
       </footer>
 
       <AgentChatMenuSheet

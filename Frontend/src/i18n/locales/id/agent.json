@@ -397,7 +397,10 @@
         "unavailable": "Suara sedang tidak tersedia.",
         "budget": "Anda telah mencapai batas asisten hari ini. Coba lagi besok.",
         "rateLimited": "Terlalu banyak permintaan suara. Tunggu sebentar.",
-        "idle": "Percakapan suara berakhir setelah satu menit hening."
+        "idle": "Percakapan suara berakhir setelah satu menit hening.",
+        "chatBusy": "Asisten masih sibuk di obrolan ini. Coba lagi sebentar lagi.",
+        "maxDuration": "Percakapan suara berakhir: batas waktu tercapai.",
+        "replaced": "Percakapan suara dilanjutkan di perangkat lain."
       },
       "dictation": {
         "start": "Dikte",
@@ -408,7 +411,16 @@
         "tooShort": "Terlalu singkat. Bicara sedikit lebih lama."
       },
       "confirmPrompt": "{{title}}. Ketuk Konfirmasi di layar.",
-      "confirmFallbackTitle": "Saya sudah menyiapkan perubahannya"
+      "confirmFallbackTitle": "Saya sudah menyiapkan perubahannya",
+      "typeInstead": "Ketik saja",
+      "confirmCallout": "Gunakan kartu di atas",
+      "confirmCalloutHint": "Suara tidak pernah mengonfirmasi perubahan",
+      "liveCaptionLabel": "Yang Anda ucapkan",
+      "captionsLabel": "Teks langsung",
+      "connection": {
+        "fallback": "Suara dasar",
+        "reconnecting": "Menyambungkan ulang…"
+      }
     },
     "markdown": {
       "code": "Kode",

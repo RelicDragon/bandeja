@@ -397,7 +397,10 @@
         "unavailable": "現在、音声は利用できません。",
         "budget": "本日のアシスタント利用上限に達しました。明日もう一度お試しください。",
         "rateLimited": "音声リクエストが多すぎます。少しお待ちください。",
-        "idle": "1分間無音だったため、音声会話を終了しました。"
+        "idle": "1分間無音だったため、音声会話を終了しました。",
+        "chatBusy": "アシスタントはこのチャットでまだ処理中です。少し待ってからもう一度お試しください。",
+        "maxDuration": "時間の上限に達したため、音声会話を終了しました。",
+        "replaced": "音声会話は別のデバイスで続いています。"
       },
       "dictation": {
         "start": "音声入力",
@@ -408,7 +411,16 @@
         "tooShort": "短すぎます。もう少し長く話してください。"
       },
       "confirmPrompt": "{{title}}。画面で「確認」をタップしてください。",
-      "confirmFallbackTitle": "変更を準備しました"
+      "confirmFallbackTitle": "変更を準備しました",
+      "typeInstead": "入力に切り替え",
+      "confirmCallout": "上のカードで操作してください",
+      "confirmCalloutHint": "音声で変更が確定されることはありません",
+      "liveCaptionLabel": "話している内容",
+      "captionsLabel": "ライブ字幕",
+      "connection": {
+        "fallback": "基本音声",
+        "reconnecting": "再接続中…"
+      }
     },
     "markdown": {
       "code": "コード",

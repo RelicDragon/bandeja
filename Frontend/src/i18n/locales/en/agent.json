@@ -397,7 +397,10 @@
         "unavailable": "Voice isn't available right now.",
         "budget": "You have reached today's assistant limit. Try again tomorrow.",
         "rateLimited": "Too many voice requests. Wait a moment.",
-        "idle": "Voice conversation ended after a quiet minute."
+        "idle": "Voice conversation ended after a quiet minute.",
+        "chatBusy": "The assistant is still busy in this chat. Try again in a moment.",
+        "maxDuration": "Voice conversation ended: it reached the time limit.",
+        "replaced": "Voice conversation continued on another device."
       },
       "dictation": {
         "start": "Dictate",
@@ -408,7 +411,16 @@
         "tooShort": "That was too short. Hold on a bit longer."
       },
       "confirmPrompt": "{{title}}. Tap Confirm on the screen.",
-      "confirmFallbackTitle": "I've prepared the change"
+      "confirmFallbackTitle": "I've prepared the change",
+      "typeInstead": "Type instead",
+      "confirmCallout": "Use the card above",
+      "confirmCalloutHint": "Voice never confirms changes",
+      "liveCaptionLabel": "What you're saying",
+      "captionsLabel": "Live captions",
+      "connection": {
+        "fallback": "Basic voice",
+        "reconnecting": "Reconnecting…"
+      }
     },
     "markdown": {
       "code": "Code",

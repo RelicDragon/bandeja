@@ -397,7 +397,10 @@
         "unavailable": "La voz no está disponible ahora.",
         "budget": "Has alcanzado el límite diario del asistente. Inténtalo mañana.",
         "rateLimited": "Demasiadas solicitudes de voz. Espera un momento.",
-        "idle": "La conversación por voz terminó tras un minuto en silencio."
+        "idle": "La conversación por voz terminó tras un minuto en silencio.",
+        "chatBusy": "El asistente sigue ocupado en este chat. Inténtalo de nuevo en un momento.",
+        "maxDuration": "La conversación por voz terminó: alcanzó el límite de tiempo.",
+        "replaced": "La conversación por voz continuó en otro dispositivo."
       },
       "dictation": {
         "start": "Dictar",
@@ -408,7 +411,16 @@
         "tooShort": "Ha sido muy corto. Habla un poco más."
       },
       "confirmPrompt": "{{title}}. Toca Confirmar en la pantalla.",
-      "confirmFallbackTitle": "He preparado el cambio"
+      "confirmFallbackTitle": "He preparado el cambio",
+      "typeInstead": "Escribir en su lugar",
+      "confirmCallout": "Responde en la tarjeta de arriba",
+      "confirmCalloutHint": "La voz nunca confirma cambios",
+      "liveCaptionLabel": "Lo que estás diciendo",
+      "captionsLabel": "Subtítulos en directo",
+      "connection": {
+        "fallback": "Voz básica",
+        "reconnecting": "Reconectando…"
+      }
     },
     "markdown": {
       "code": "Código",
