@@ -3,8 +3,7 @@
  *
  * Built only from what the `gameCost` services return (already projected per viewer by
  * `projectCostSummary`). Amounts stay integer minor units plus a server-formatted string;
- * currencies are never added together or converted. Payment methods are reduced to their
- * ids (`BIZUM`, `CASH`, …): no handles (IBAN, phone, tag), no `paymentHint` (§10.7 Q1).
+ * currencies are never added together or converted.
  */
 import type { EntityType, PriceCurrency, PriceType } from '@prisma/client';
 import type { BasicUser } from '../../../types/user.types';
@@ -74,11 +73,7 @@ export function agentEffectivePrice(game: AgentPriceGame): PriceFields & { price
     priceType: game.priceType,
     priceTotal: game.priceTotal,
     priceCurrency: game.priceCurrency,
-    paymentHint: null,
-    paymentMethods: null,
-    parent: game.parent
-      ? { ...game.parent, paymentHint: null, paymentMethods: null, participants: [] }
-      : null,
+    parent: game.parent ? { ...game.parent, participants: [] } : null,
   });
   const fromSeason =
     game.entityType === 'LEAGUE' && game.parent?.entityType === 'LEAGUE_SEASON' && game.priceType === 'NOT_KNOWN';

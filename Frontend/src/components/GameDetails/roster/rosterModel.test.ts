@@ -40,7 +40,7 @@ function share(userId: string, state: CostShare['state'] = 'UNPAID', isPayer = f
 function cost(overrides: Partial<GameCostSummary> = {}): GameCostSummary {
   return {
     gameId: 'g1', available: true, totalMinor: 4000, currency: 'EUR', payerUserId: 'owner', payer: null,
-    paymentHint: null, paymentMethods: [], countryIso2: null, frozenAt: null, estimated: true,
+    frozenAt: null, estimated: true,
     shares: [share('owner', 'SETTLED', true), share('ana'), share('ivo', 'MARKED_PAID'), share('lea', 'SETTLED')],
     settledCount: 2, shareCount: 4, outstandingMinor: 2000, viewerShare: share('ana'),
     canManage: false, canConfirm: false, canRemind: false, coinsPerCurrencyUnit: null,

@@ -116,8 +116,8 @@ export class ParticipantMessageHelper {
    * only rides along so a client can tell its own action from someone else's.
    *
    * What must never be reintroduced here is projecting for a *more*-entitled
-   * viewer to "fix" a missing field: that would hand `Game.paymentHint` to the
-   * whole room.
+   * viewer to "fix" a missing field: that would hand one viewer's private
+   * fields (e.g. `userNote`) to the whole room.
    */
   static async emitGameUpdate(gameId: string, senderId: string) {
     try {

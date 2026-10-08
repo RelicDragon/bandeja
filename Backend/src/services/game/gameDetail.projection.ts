@@ -2,10 +2,9 @@
  * Whitelist projection for `GET /api/games/:id` (`GameReadService.getGameById`).
  *
  * The endpoint sits on `optionalAuth` and used to run a top-level Prisma
- * `include`, which loads **every** `Game` scalar — so PRD 348's free-text
- * `Game.paymentHint` (an IBAN, a Revolut handle, a phone number) was returned to
- * a caller holding nothing but a game id and no `Authorization` header at all.
- * The nested `club: true` / `court: { include: { club: true } }` relations shipped
+ * `include`, which loads **every** `Game` scalar — so any private column was
+ * returned to a caller holding nothing but a game id and no `Authorization`
+ * header at all. The nested `club: true` / `court: { include: { club: true } }` relations shipped
  * `Club.integrationConfig` and `Club.ptMeta` the same way, and every nested user
  * carried `bio` / `verbalStatus` / `weeklyAvailability` / `socialLevel`.
  *
@@ -21,12 +20,6 @@
  *   the roster bios the player card renders.
  * - **Guest.** Same game shape, minus every field on the forbidden lists below.
  *
- * `paymentHint` is in **neither** select. It is read by its own query
- * ({@link GAME_PAYMENT_HINT_SELECT}) only after {@link isEntitledToGamePaymentHint}
- * has answered against the loaded roster — the same roster / organizer /
- * platform-admin test `GET /games/:id/cost` applies
- * (`gameCost/costSharePermissions.ts` `canViewCostShares`).
- *
  * Adding a scalar here is a deliberate act: a new `Game` column does **not**
  * reach these endpoints until someone writes it down.
  */
@@ -41,14 +34,6 @@ import { MAIN_PHOTO_RELATION_SELECT } from './gamePrismaIncludes';
 /* ------------------------------------------------------------------ *
  * Forbidden lists — the machine-readable half of the contract.
  * ------------------------------------------------------------------ */
-
-/**
- * `Game` scalars that must never reach a caller without cost-ledger entitlement.
- *
- * `paymentMethods` is the structured form of the same secret — a phone number
- * for Bizum or IPS Prenesi, an IBAN, a Pix key — so it is gated identically.
- */
-export const GAME_DETAIL_ENTITLED_GAME_KEYS = ['paymentHint', 'paymentMethods'] as const;
 
 /**
  * Fields `getGameById` computes **for the viewer who asked**, not for the game.
@@ -83,12 +68,7 @@ export const GAME_DETAIL_GUEST_FORBIDDEN_USER_KEYS = [
  * Scalars
  * ------------------------------------------------------------------ */
 
-/**
- * Every `Game` scalar the detail payload is allowed to carry.
- *
- * `paymentHint` is deliberately absent — it is merged in by
- * {@link getGameDetailSelect} only for entitled viewers.
- */
+/** Every `Game` scalar the detail payload is allowed to carry. */
 export const GAME_DETAIL_GAME_SCALAR_SELECT = {
   id: true,
   entityType: true,
@@ -335,19 +315,6 @@ export type GameDetailSelectOptions = {
   viewerIsAuthenticated: boolean;
 };
 
-/**
- * The entitled read, deliberately kept out of {@link getGameDetailSelect}.
- *
- * `paymentHint` is fetched by its own `findUnique` **after**
- * {@link isEntitledToGamePaymentHint} has answered against the loaded roster,
- * so the value never enters the process for a caller who may not have it. One
- * extra primary-key lookup of a `VarChar(120)`, and only for entitled viewers.
- */
-export const GAME_PAYMENT_HINT_SELECT = {
-  paymentHint: true,
-  paymentMethods: true,
-} as const satisfies Prisma.GameSelect;
-
 function detailRelationSelect(viewerIsAuthenticated: boolean): Prisma.GameSelect {
   const userSelect: Prisma.UserSelect = viewerIsAuthenticated
     ? USER_SELECT_WITH_SPORT_PROFILES
@@ -499,11 +466,6 @@ function detailRelationSelect(viewerIsAuthenticated: boolean): Prisma.GameSelect
         },
       },
     },
-    /**
-     * The parent is a league season / tournament `Game` row, so it carries its
-     * own `paymentHint`. It is never merged in here — the ledger for a parent is
-     * read through the parent's own endpoints.
-     */
     parent: {
       select: {
         ...GAME_DETAIL_GAME_SCALAR_SELECT,
@@ -518,10 +480,7 @@ function detailRelationSelect(viewerIsAuthenticated: boolean): Prisma.GameSelect
   };
 }
 
-/**
- * Prisma `select` for the game-detail payload — never an `include`, and never
- * carrying `paymentHint` (see {@link GAME_PAYMENT_HINT_SELECT}).
- */
+/** Prisma `select` for the game-detail payload — never an `include`. */
 export function getGameDetailSelect(options: GameDetailSelectOptions): Prisma.GameSelect {
   return {
     ...GAME_DETAIL_GAME_SCALAR_SELECT,
@@ -533,9 +492,8 @@ export function getGameDetailSelect(options: GameDetailSelectOptions): Prisma.Ga
  * `GET /api/games` — the filtered list, also on `optionalAuth`.
  *
  * Byte-identical leak to the detail route: a top-level `include` shipped every
- * `Game` scalar for **every** row a filter matched. The list has no surface
- * that reads `paymentHint`, so there is no entitled variant here — it is simply
- * never selected.
+ * `Game` scalar for **every** row a filter matched; it now carries the same
+ * whitelisted scalars as the detail payload.
  *
  * Same relations the list always had: no rounds, no outcomes, no per-game
  * courts and no external bookings.
@@ -559,35 +517,6 @@ export function getGameListSelect(options: GameDetailSelectOptions): Prisma.Game
 }
 
 /* ------------------------------------------------------------------ *
- * Entitlement
- * ------------------------------------------------------------------ */
-
-export type PaymentHintViewer = {
-  userId?: string | null;
-  isPlatformAdmin?: boolean;
-};
-
-/**
- * Who may see `Game.paymentHint` on the detail payload.
- *
- * Mirrors `canViewCostShares` (`gameCost/costSharePermissions.ts`): platform
- * staff, the organizers and anyone holding a roster row in any
- * `ParticipantStatus`. Share holders are always roster members — shares are
- * materialised from the roster — so no extra branch is needed.
- *
- * Fails closed: no viewer id, no hint.
- */
-export function isEntitledToGamePaymentHint(
-  roster: ReadonlyArray<{ userId: string | null }>,
-  viewer: PaymentHintViewer,
-): boolean {
-  if (viewer.isPlatformAdmin === true) return true;
-  const userId = viewer.userId;
-  if (!userId) return false;
-  return roster.some((p) => p.userId === userId);
-}
-
-/* ------------------------------------------------------------------ *
  * Broadcast projection
  * ------------------------------------------------------------------ */
 
@@ -603,17 +532,13 @@ export function isEntitledToGamePaymentHint(
  * broadcast path.
  *
  * So the payload is projected for the *least*-entitled member of the room:
- * entitlement-gated scalars ({@link GAME_DETAIL_ENTITLED_GAME_KEYS}) and
  * viewer-scoped fields ({@link GAME_DETAIL_VIEWER_SCOPED_KEYS}) are dropped.
- * Entitled clients read them from `GET /api/games/:id`, where the entitlement
- * is evaluated per caller, and keep the value they already hold in the
+ * Clients read them from `GET /api/games/:id`, where they are computed per
+ * caller, and keep the value they already hold in the
  * meantime — a socket payload that omits a key means "not transmitted", never
  * "cleared".
  */
-export const GAME_BROADCAST_STRIPPED_KEYS = [
-  ...GAME_DETAIL_ENTITLED_GAME_KEYS,
-  ...GAME_DETAIL_VIEWER_SCOPED_KEYS,
-] as const;
+export const GAME_BROADCAST_STRIPPED_KEYS = [...GAME_DETAIL_VIEWER_SCOPED_KEYS] as const;
 
 const BROADCAST_STRIPPED_KEY_SET: ReadonlySet<string> = new Set(GAME_BROADCAST_STRIPPED_KEYS);
 
@@ -686,12 +611,6 @@ export function collectGameDetailGuestContractIssues(
   }
   const game = payload as Record<string, unknown>;
 
-  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
-    if (key in game) {
-      issues.push({ path: key, reason: `${key} must not reach an unentitled viewer` });
-    }
-  }
-
   collectClubIssues(game.club, 'club', issues);
   collectClubIssues((game.court as Record<string, unknown> | null)?.club, 'court.club', issues);
 
@@ -710,15 +629,6 @@ export function collectGameDetailGuestContractIssues(
       issues,
     );
   });
-
-  const parent = game.parent as Record<string, unknown> | null | undefined;
-  if (parent) {
-    for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
-      if (key in parent) {
-        issues.push({ path: `parent.${key}`, reason: `${key} must not reach any detail payload` });
-      }
-    }
-  }
 
   return issues;
 }

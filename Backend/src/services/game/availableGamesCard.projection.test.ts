@@ -12,16 +12,13 @@ import {
 } from './availableGamesCard.projection';
 import {
   GAME_BROADCAST_STRIPPED_KEYS,
-  GAME_DETAIL_ENTITLED_GAME_KEYS,
   GAME_DETAIL_GAME_SCALAR_SELECT,
   GAME_DETAIL_VIEWER_SCOPED_KEYS,
-  GAME_PAYMENT_HINT_SELECT,
   GAME_DETAIL_GUEST_USER_SELECT,
   assertGameDetailGuestContract,
   collectGameDetailGuestContractIssues,
   getGameDetailSelect,
   getGameListSelect,
-  isEntitledToGamePaymentHint,
   projectGameForBroadcast,
 } from './gameDetail.projection';
 import { readFileSync } from 'node:fs';
@@ -216,23 +213,14 @@ function run() {
 }
 
 /**
- * `GET /api/games/:id` — the whitelist projection and the `paymentHint`
- * entitlement.
+ * `GET /api/games/:id` — the whitelist projection.
  *
  * Would have failed before `gameDetail.projection.ts` existed: the endpoint ran
  * `include: gameWithRoundsAndOutcomes`, a **top-level include**, so every
- * `Game` scalar — PRD 348's `Game.paymentHint`, an IBAN or a Revolut handle —
- * was returned to a caller on `optionalAuth` with no token at all.
+ * `Game` scalar was returned to a caller on `optionalAuth` with no token at all.
  */
 function runGameDetail() {
-  // 1. the scalar whitelist never carries the entitled column.
-  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
-    assert.equal(
-      key in GAME_DETAIL_GAME_SCALAR_SELECT,
-      false,
-      `${key} is never part of the base scalar whitelist`,
-    );
-  }
+  // 1. the scalar whitelist.
   assert.equal(GAME_DETAIL_GAME_SCALAR_SELECT.id, true);
   // Fields the detail screen genuinely reads must survive the switch to select.
   for (const key of [
@@ -264,9 +252,8 @@ function runGameDetail() {
     );
   }
 
-  // 2. guest vs entitled select.
+  // 2. guest vs signed-in select.
   const guest = getGameDetailSelect({ viewerIsAuthenticated: false });
-  assert.equal('paymentHint' in guest, false, 'a guest select never names paymentHint');
   const guestClub = (guest.club as unknown as { select: Record<string, unknown> }).select;
   assert.equal('integrationConfig' in guestClub, false, 'guest club omits integrationConfig');
   assert.equal('ptMeta' in guestClub, false, 'guest club omits ptMeta');
@@ -292,38 +279,16 @@ function runGameDetail() {
     'guest user omits socialLevel',
   );
 
-  const entitled = getGameDetailSelect({ viewerIsAuthenticated: true });
-  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
-    assert.equal(
-      key in entitled,
-      false,
-      `even the signed-in select never names ${key} — it is a separate, authorised read`,
-    );
-  }
-  assert.equal(GAME_PAYMENT_HINT_SELECT.paymentHint, true);
-  assert.equal(GAME_PAYMENT_HINT_SELECT.paymentMethods, true);
-  const memberClub = (entitled.club as unknown as { select: Record<string, unknown> }).select;
+  const signedIn = getGameDetailSelect({ viewerIsAuthenticated: true });
+  const memberClub = (signedIn.club as unknown as { select: Record<string, unknown> }).select;
   assert.equal(
     memberClub.integrationConfig,
     true,
     'a signed-in viewer keeps the booking integration config the linked-bookings card parses',
   );
 
-  // The parent is another Game row with its own paymentHint column.
-  const parentSelect = (entitled.parent as unknown as { select: Record<string, unknown> }).select;
-  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
-    assert.equal(
-      key in parentSelect,
-      false,
-      `a parent league/tournament row never carries ${key}`,
-    );
-  }
-
   // 2b. `GET /api/games` is the same `optionalAuth` route shape.
   const list = getGameListSelect({ viewerIsAuthenticated: false });
-  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
-    assert.equal(key in list, false, `the list never carries ${key}`);
-  }
   assert.equal('rounds' in list, false, 'the list stays slim — no rounds');
   assert.equal('outcomes' in list, false, 'the list stays slim — no outcomes');
   assert.equal('gameCourts' in list, false, 'the list stays slim — no per-game courts');
@@ -337,19 +302,7 @@ function runGameDetail() {
     'a guest list omits integrationConfig too',
   );
 
-  // 3. the entitlement itself — roster, organizers, platform staff, nobody else.
-  const roster = [{ userId: 'member-1' }, { userId: 'owner-1' }];
-  assert.equal(isEntitledToGamePaymentHint(roster, { userId: undefined }), false);
-  assert.equal(isEntitledToGamePaymentHint(roster, { userId: null }), false);
-  assert.equal(isEntitledToGamePaymentHint(roster, { userId: 'stranger' }), false);
-  assert.equal(isEntitledToGamePaymentHint(roster, { userId: 'member-1' }), true);
-  assert.equal(
-    isEntitledToGamePaymentHint(roster, { userId: 'stranger', isPlatformAdmin: true }),
-    true,
-  );
-  assert.equal(isEntitledToGamePaymentHint([], { userId: 'stranger' }), false);
-
-  // 4. the contract asserter catches a regression in any of the three places.
+  // 3. the contract asserter catches a regression in the club or user projections.
   const cleanPayload = {
     id: 'g1',
     club: { id: 'c1', name: 'Club' },
@@ -361,14 +314,6 @@ function runGameDetail() {
   assert.deepEqual(collectGameDetailGuestContractIssues(cleanPayload), []);
   assertGameDetailGuestContract(cleanPayload);
 
-  assert.deepEqual(
-    collectGameDetailGuestContractIssues({
-      ...cleanPayload,
-      paymentHint: 'IBAN RS35 1234',
-    }).map((i) => i.path),
-    ['paymentHint'],
-    'the leaked column is named exactly',
-  );
   assert.ok(
     collectGameDetailGuestContractIssues({
       ...cleanPayload,
@@ -381,21 +326,6 @@ function runGameDetail() {
       participants: [{ userId: 'u1', user: { id: 'u1', bio: 'secret' } }],
     }).some((i) => i.path.endsWith('.bio')),
   );
-  assert.ok(
-    collectGameDetailGuestContractIssues({
-      ...cleanPayload,
-      parent: { id: 'p1', paymentHint: 'Revolut @x' },
-    }).some((i) => i.path === 'parent.paymentHint'),
-  );
-  assert.ok(
-    collectGameDetailGuestContractIssues({
-      ...cleanPayload,
-      parent: { id: 'p1', paymentMethods: [{ method: 'BIZUM', handle: '+34600112233' }] },
-    }).some((i) => i.path === 'parent.paymentMethods'),
-  );
-  // PRD 348 — the structured list is the same secret as the free-text hint
-  // (a Bizum phone number, an IBAN, a Pix key) and is gated identically.
-  assert.deepEqual([...GAME_DETAIL_ENTITLED_GAME_KEYS], ['paymentHint', 'paymentMethods']);
 
   console.log('gameDetail.projection contract: ok');
 }
@@ -403,48 +333,33 @@ function runGameDetail() {
 /**
  * The socket `game-updated` payload.
  *
- * Fails on the pre-fix code: `SocketService.emitGameUpdate` broadcast whatever
- * game object its caller handed it — one projected for the **actor**. An
- * organizer saving an edit (`update.service.ts`) is entitled to
- * `Game.paymentHint`, so her IBAN went to every socket in `game-${id}`,
- * including a league-season player who is not on that fixture's roster and whom
- * `GET /api/games/:id` correctly refuses.
+ * `SocketService.emitGameUpdate` used to broadcast whatever game object its
+ * caller handed it — one projected for the **actor**, carrying that actor's
+ * private note and favourite flag to every socket in `game-${id}`.
  *
- * The rule: one payload, many entitlements → project for the least-entitled
+ * The rule: one payload, many viewers → project for the least-entitled
  * member of the room.
  */
 function runBroadcastProjection() {
   assert.deepEqual(
     [...GAME_BROADCAST_STRIPPED_KEYS],
-    ['paymentHint', 'paymentMethods', 'userNote', 'isClubFavorite', 'pendingClubFollowUps'],
-    'the broadcast strips both entitled columns and every viewer-scoped field',
+    ['userNote', 'isClubFavorite', 'pendingClubFollowUps'],
+    'the broadcast strips every viewer-scoped field',
   );
   assert.deepEqual([...GAME_DETAIL_VIEWER_SCOPED_KEYS], ['userNote', 'isClubFavorite', 'pendingClubFollowUps']);
 
-  const entitledPayload = {
+  const actorPayload = {
     id: 'g1',
     name: 'Friday doubles',
     priceType: 'FIXED',
     priceTotal: 40,
     priceCurrency: 'EUR',
-    paymentHint: 'IPS Prenesi +381601112233',
-    paymentMethods: [{ method: 'IPS_PRENESI', handle: '+381601112233' }],
     userNote: 'bring the pink balls',
     isClubFavorite: true,
     participants: [{ userId: 'u1' }],
   };
 
-  const broadcast = projectGameForBroadcast(entitledPayload);
-  assert.equal(
-    'paymentHint' in broadcast,
-    false,
-    'a broadcast never carries the organizer payment handle',
-  );
-  assert.equal(
-    'paymentMethods' in broadcast,
-    false,
-    'nor the structured list the handle now lives in',
-  );
+  const broadcast = projectGameForBroadcast(actorPayload);
   assert.equal('userNote' in broadcast, false, 'a broadcast never carries the actor private note');
   assert.equal('isClubFavorite' in broadcast, false, 'nor the actor favourite flag');
 
@@ -455,16 +370,14 @@ function runBroadcastProjection() {
   assert.equal(broadcast.priceTotal, 40);
   assert.equal(broadcast.priceCurrency, 'EUR');
   assert.deepEqual(broadcast.participants, [{ userId: 'u1' }]);
-  assert.notEqual(broadcast, entitledPayload, 'the caller copy is not mutated');
-  assert.equal(entitledPayload.paymentHint, 'IPS Prenesi +381601112233');
-  assert.equal(entitledPayload.paymentMethods.length, 1);
+  assert.notEqual(broadcast, actorPayload, 'the caller copy is not mutated');
+  assert.equal(actorPayload.userNote, 'bring the pink balls');
 
   // A payload that never had the keys is unchanged.
   assert.deepEqual(projectGameForBroadcast({ id: 'g2', name: 'n' }), { id: 'g2', name: 'n' });
 
-  // An explicit null is still a value, and still stripped: `paymentHint: null`
-  // is exactly what wiped the organizer's IBAN once the client wrote it back.
-  assert.equal('paymentHint' in projectGameForBroadcast({ id: 'g3', paymentHint: null }), false);
+  // An explicit null is still a value, and still stripped.
+  assert.equal('userNote' in projectGameForBroadcast({ id: 'g3', userNote: null }), false);
 
   // Both `game-updated` emits must use the projected copy, not the caller's.
   const socketSource = readFileSync(

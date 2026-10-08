@@ -36,8 +36,6 @@ import {
 import { canUnlinkAuthMethod } from '@/utils/accountAuthMethods';
 import { Gender, User, type GameCardRosterMode } from '@/types';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
-import { PayoutMethodsSettings } from '@/components/payments/PayoutMethodsSettings';
-import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import type { OAuthLinkResponseData } from '@/utils/oauthAccountLink';
 import {
   Moon,
@@ -103,7 +101,6 @@ export const ProfileContent = () => {
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday' | 'saturday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
-  const payoutCountryIso2 = useCityCountryQuery(user?.currentCityId);
   const [isSavingMainTheme, setIsSavingMainTheme] = useState(false);
   const [isSavingPremiumStatus, setIsSavingPremiumStatus] = useState(false);
   const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
@@ -1478,13 +1475,6 @@ export const ProfileContent = () => {
                 onChange={handleChangeCurrency}
               />
             </div>
-
-            {/* PRD 348 — prefilled into every game this user creates. */}
-            <PayoutMethodsSettings
-              savedMethods={user?.payoutMethods}
-              onSave={(payoutMethods) => updateProfile({ payoutMethods })}
-              countryIso2={payoutCountryIso2}
-            />
 
             {/* PRD 355 — owned cosmetics; tapping a tile equips it. */}
             <CollectionSection />

@@ -18,14 +18,8 @@ import {
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
 import {
-  resolvePaymentMethods,
-  type PaymentMethodEntry,
-} from '@bandeja/shared/payments/paymentMethodSelection';
-import {
-  GAME_PAYMENT_HINT_SELECT,
   getGameDetailSelect,
   getGameListSelect,
-  isEntitledToGamePaymentHint,
 } from './gameDetail.projection';
 import { fetchAvailableGamesPage } from './availableGamesQuery';
 import { calendarDateBounds, InvalidCalendarDateError } from './calendarDateBounds';
@@ -282,10 +276,7 @@ export class GameReadService {
    *
    * Uses an explicit whitelist `select` (`gameDetail.projection.ts`), never a
    * top-level `include`: this route is `optionalAuth`, and an `include` returns
-   * every `Game` scalar — which is how PRD 348's `Game.paymentHint` (an IBAN, a
-   * Revolut handle) reached callers with no token at all. `paymentHint` is now
-   * fetched in a second, deliberate query that only runs once the server has
-   * authorised the viewer against the roster.
+   * every `Game` scalar to callers with no token at all.
    */
   static async getGameById(id: string, userId?: string, skipRestrictions: boolean = false) {
     const game = await prisma.game.findUnique({
@@ -395,35 +386,6 @@ export class GameReadService {
       userNote = note?.content || null;
     }
 
-    /*
-     * PRD 348 — `Game.paymentHint` holds an IBAN / payment handle. It is read
-     * in a second query, and only after the roster answered, so an
-     * unauthenticated or non-roster caller can never receive it. Same
-     * entitlement as `GET /games/:id/cost` (`canViewCostShares`).
-     */
-    let paymentHint: string | null | undefined;
-    let paymentMethods: PaymentMethodEntry[] | undefined;
-    if (
-      isEntitledToGamePaymentHint([
-        ...game.participants,
-        // Season owner/admins organize (and may price) every LEAGUE fixture.
-        ...(game.entityType === EntityType.LEAGUE
-          ? ((game as { parent?: { participants?: { userId: string; role: string }[] } | null })
-              .parent?.participants ?? []).filter((p) => p.role === 'OWNER' || p.role === 'ADMIN')
-          : []),
-      ], {
-        userId,
-        isPlatformAdmin: viewerIsAdmin,
-      })
-    ) {
-      const hintRow = await prisma.game.findUnique({
-        where: { id },
-        select: GAME_PAYMENT_HINT_SELECT,
-      });
-      paymentHint = hintRow?.paymentHint ?? null;
-      paymentMethods = resolvePaymentMethods(hintRow?.paymentMethods ?? null, paymentHint);
-    }
-
     const photoViewer = buildPhotoViewer(userId, viewerIsAdmin);
     // `as never`: the row comes from a `Prisma.GameSelect`-typed projection, so
     // its inferred shape carries no implicit index signature. Same cast the
@@ -443,8 +405,6 @@ export class GameReadService {
     );
     const base = {
       ...gameWithSportLevels,
-      ...(paymentHint !== undefined ? { paymentHint } : {}),
-      ...(paymentMethods !== undefined ? { paymentMethods } : {}),
       ...(pendingClubFollowUps !== undefined ? { pendingClubFollowUps } : {}),
       isClubFavorite,
       userNote,
@@ -540,8 +500,7 @@ export class GameReadService {
     const offset = filters.offset ? parseInt(filters.offset) : undefined;
 
     // Whitelist `select`, not an `include`: this route is `optionalAuth` too, and
-    // an `include` returns every `Game` scalar — `paymentHint` among them — for
-    // every row the filter matches.
+    // an `include` returns every `Game` scalar for every row the filter matches.
     const gamesRaw = await prisma.game.findMany({
       where,
       select: getGameListSelect({ viewerIsAuthenticated: Boolean(userId) }),

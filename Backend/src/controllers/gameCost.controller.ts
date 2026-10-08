@@ -11,7 +11,6 @@ import {
   updateGameCostShares,
   type MarkPaidMethod,
 } from '../services/gameCost/gameCost.service';
-import { parsePaymentMethodsOrThrow } from '../services/gameCost/paymentMethodsWrite';
 import {
   getRemindAvailableAt,
   remindUnpaidShares,
@@ -63,25 +62,8 @@ function parseUpdateInput(body: unknown): UpdateCostSharesInput {
     input.payerUserId = value;
   }
 
-  // Pre-catalogue clients still send free text. The length and shape checks
-  // live in the service, so both paths answer with the same issue codes.
-  if ('paymentHint' in raw) {
-    const value = raw.paymentHint;
-    if (value !== null && typeof value !== 'string') {
-      throw new ApiError(400, 'errors.cost.invalidPayload');
-    }
-    input.paymentHint = value;
-  }
-
-  if ('paymentMethods' in raw) {
-    const value = raw.paymentMethods;
-    if (value !== null && !Array.isArray(value)) {
-      throw new ApiError(400, 'errors.cost.invalidPayload');
-    }
-    // Contents are checked against the catalogue in the service, so the picker
-    // and the API agree on what a valid entry is.
-    input.paymentMethods = value === null ? null : parsePaymentMethodsOrThrow(value);
-  }
+  // Shipped app builds may still send the removed payment-method keys; unknown
+  // keys are ignored, never a 400.
 
   if ('overrides' in raw) {
     const value = raw.overrides;

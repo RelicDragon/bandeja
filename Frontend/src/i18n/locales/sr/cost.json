@@ -31,9 +31,6 @@
     "sheet": {
       "title": "Kako ste platili?",
       "subtitle": "{{amount}} za {{name}}",
-      "hintLabel": "Kako platiti: {{name}}",
-      "copy": "Kopiraj",
-      "copied": "Kopirano",
       "outside": "Izvan aplikacije",
       "outsideHint": "Gotovina, bankovni prenos ili aplikacija za plaćanje",
       "coins": "Pošalji novčiće: {{coins}}",
@@ -71,75 +68,10 @@
       "settleFailed": "Nije uspelo čuvanje. Pokušajte ponovo.",
       "confirmFailed": "Nije uspelo ažuriranje reda. Pokušajte ponovo.",
       "remindFailed": "Trenutno nije moguće poslati podsetnik.",
-      "updateFailed": "Nije uspelo čuvanje udela. Pokušajte ponovo.",
-      "copyFailed": "Kopiranje nije uspelo."
+      "updateFailed": "Nije uspelo čuvanje udela. Pokušajte ponovo."
     },
     "loading": "Učitavamo podelu troškova…",
     "loadFailed": "Nismo uspeli da učitamo podelu troškova.",
-    "payment": {
-      "title": "Kako da ti plate",
-      "help": "Igrači ovo vide kada poravnavaju račun.",
-      "add": "Dodaj još jedan način",
-      "addFirst": "Dodaj način plaćanja",
-      "remove": "Ukloni {{method}}",
-      "maxReached": "Možeš navesti najviše {{max}} načina plaćanja.",
-      "noHandleNeeded": "Nema šta da se unese.",
-      "open": "Otvori",
-      "everywhere": "Radi svuda",
-      "pickerTitle": "Kako igrači treba da ti plate?",
-      "pickerSubtitle": "Načini koji se koriste tamo gde se igra.",
-      "pickerSearch": "Pretraga",
-      "pickerEmpty": "Nema rezultata.",
-      "pickerCustomHint": "Nema ga na spisku? Izaberi „Nešto drugo“ i upiši sam.",
-      "profileTitle": "Sačuvani podaci za plaćanje",
-      "profileHelp": "Automatski se upisuju u igre koje kreiraš.",
-      "method": {
-        "custom": "Nešto drugo",
-        "cash": "Gotovina",
-        "bankTransfer": "Bankovni prenos",
-        "iban": "IBAN",
-        "cardTransfer": "Prenos na karticu",
-        "ukBank": "Bankovni prenos",
-        "rsAccount": "Tekući račun",
-        "huInstant": "Instant prenos",
-        "clabe": "CLABE",
-        "cbuAlias": "Alias ili CBU"
-      },
-      "handle": {
-        "NONE": {
-          "label": "Nisu potrebni podaci"
-        },
-        "TEXT": {
-          "label": "Podaci",
-          "placeholder": "Gotovina u klubu, IBAN, bilo šta"
-        },
-        "PHONE": {
-          "label": "Broj telefona"
-        },
-        "EMAIL": {
-          "label": "Imejl"
-        },
-        "PHONE_OR_EMAIL": {
-          "label": "Telefon ili imejl"
-        },
-        "TAG": {
-          "label": "Korisničko ime"
-        },
-        "IBAN": {
-          "label": "IBAN"
-        },
-        "ACCOUNT": {
-          "label": "Broj računa"
-        },
-        "CARD": {
-          "label": "Broj kartice"
-        },
-        "ALIAS": {
-          "label": "Ključ ili ID",
-          "placeholder": "Telefon, imejl ili ID"
-        }
-      }
-    },
     "roster": {
       "yourShare": "Tvoj deo"
     }

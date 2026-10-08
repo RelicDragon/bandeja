@@ -2,9 +2,8 @@
  * Whitelist projection for `GET /api/results/game/:gameId` and its spectator twin.
  *
  * The endpoint used to run a top-level Prisma `include`, which loads **every**
- * `Game` scalar — so PRD 348's free-text `Game.paymentHint` (an IBAN, a Revolut
- * handle, a phone number) went out with the scoreboard, together with
- * `description`, `metadata`-adjacent summary text, `mediaUrls`, `externalUrl`,
+ * `Game` scalar — so the cost-split columns (`costPayerId`, the price) went out
+ * with the scoreboard, together with `description`, `metadata`-adjacent summary text, `mediaUrls`, `externalUrl`,
  * `priceTotal` and every player's `bio` / `weeklyAvailability` / `socialLevel`.
  *
  * The house pattern is `availableGamesCard.projection.ts`: an explicit `select`
@@ -267,8 +266,6 @@ export function getGameResultsSelect() {
 
 /** `Game` scalars that must never reach a results response. */
 export const RESULTS_FORBIDDEN_GAME_KEYS = [
-  'paymentHint',
-  'paymentMethods',
   'costPayerId',
   'priceTotal',
   'priceType',

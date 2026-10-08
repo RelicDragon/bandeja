@@ -292,7 +292,7 @@ const myTabListClubSelect = {
  * This is an `include`, not a `select`: **every** `Game` scalar is returned, so
  * the PRD 345–357 columns (`seriesId`, `lastSeatOpenedAt`, `showOnLiveRail`,
  * `autoFillFromQueue`, `priceType`/`priceTotal`/`priceCurrency`, `costPayerId`,
- * `paymentHint`, `costFrozenAt`, `weatherAlertState`) already reach My Tab
+ * `costFrozenAt`, `weatherAlertState`) already reach My Tab
  * cards without an edit here. Find is the surface that needs the explicit
  * `FIND_CARD_GAME_SELECT` entry (CONTRACT §5.6); enrichment-derived fields
  * reach both because `getMyGames` runs `enrichAvailableGamesSafe` too.

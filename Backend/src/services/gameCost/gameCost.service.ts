@@ -1,12 +1,7 @@
 import type { Prisma, PriceCurrency, PriceType, ParticipantRole } from '@prisma/client';
-import {
-  resolvePaymentMethods,
-  type PaymentMethodEntry,
-} from '@bandeja/shared/payments/paymentMethodSelection';
 import prisma from '../../config/database';
 import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
-import { iso2FromCityCountry } from '../../utils/currencyFromCountry';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { projectEmbeddedUserByPrimarySport } from '../user/projectEmbeddedBasicUsers';
 import { emitGameCostUpdated } from '../socketEmitFacade';
@@ -23,7 +18,6 @@ import {
   selectSplitParticipantIds,
   type CoinSettleRefusal,
 } from './costShareMath';
-import { resolvePaymentMethodWrite } from './paymentMethodsWrite';
 import { projectCostSummary } from './costSummaryProjection';
 import {
   canConfirmCostShare,
@@ -85,9 +79,6 @@ export type GameCostRow = {
   priceTotal: number | null;
   priceCurrency: PriceCurrency | null;
   costPayerId: string | null;
-  paymentHint: string | null;
-  paymentMethods: Prisma.JsonValue | null;
-  city: { country: string | null } | null;
   costFrozenAt: Date | null;
   resultsStatus: 'NONE' | 'IN_PROGRESS' | 'FINAL';
   participants: {
@@ -102,8 +93,6 @@ export type GameCostRow = {
     priceType: PriceType;
     priceTotal: number | null;
     priceCurrency: PriceCurrency | null;
-    paymentHint: string | null;
-    paymentMethods: Prisma.JsonValue | null;
     participants: { userId: string; role: string }[];
   } | null;
 };
@@ -128,10 +117,6 @@ export const GAME_COST_SELECT = {
   priceTotal: true,
   priceCurrency: true,
   costPayerId: true,
-  paymentHint: true,
-  paymentMethods: true,
-  // PRD 348 — the picker offers the rails that exist where the game is played.
-  city: { select: { country: true } },
   costFrozenAt: true,
   resultsStatus: true,
   participants: {
@@ -143,8 +128,6 @@ export const GAME_COST_SELECT = {
       priceType: true,
       priceTotal: true,
       priceCurrency: true,
-      paymentHint: true,
-      paymentMethods: true,
       participants: {
         where: { role: { in: ['OWNER', 'ADMIN'] as ParticipantRole[] } },
         select: { userId: true, role: true },
@@ -152,18 +135,6 @@ export const GAME_COST_SELECT = {
     },
   },
 } as const;
-
-/**
- * PRD 348 — the structured list, falling back to the pre-catalogue free-text
- * hint read as a single `CUSTOM` entry.
- */
-function gamePaymentMethods(game: GameCostRow): PaymentMethodEntry[] {
-  return resolvePaymentMethods(game.paymentMethods, game.paymentHint);
-}
-
-function gameCountryIso2(game: GameCostRow): string | null {
-  return iso2FromCityCountry(game.city?.country) ?? null;
-}
 
 /** A LEAGUE fixture is organized by its season's owner/admins, not its own roster. */
 function seasonOrganizers(game: GameCostRow): { userId: string; role: string }[] {
@@ -186,12 +157,12 @@ export function effectivePayerId(game: GameCostRow): string | null {
 
 /**
  * League seasons carry the price (e.g. PER_PERSON per fixture) while fixtures are
- * created `NOT_KNOWN`. Such a fixture splits by its season's price and offers the
- * season's payment methods; a fixture priced on its own keeps its own.
+ * created `NOT_KNOWN`. Such a fixture splits by its season's price; a fixture
+ * priced on its own keeps its own.
  */
 export function applySeasonCostPricing<T extends Pick<
   GameCostRow,
-  'entityType' | 'priceType' | 'priceTotal' | 'priceCurrency' | 'paymentHint' | 'paymentMethods' | 'parent'
+  'entityType' | 'priceType' | 'priceTotal' | 'priceCurrency' | 'parent'
 >>(game: T): T {
   const season = game.parent;
   if (game.entityType !== 'LEAGUE' || season?.entityType !== 'LEAGUE_SEASON') return game;
@@ -199,10 +170,6 @@ export function applySeasonCostPricing<T extends Pick<
     game.priceType = season.priceType;
     game.priceTotal = season.priceTotal;
     game.priceCurrency = season.priceCurrency;
-  }
-  if (game.paymentMethods == null && !game.paymentHint) {
-    game.paymentMethods = season.paymentMethods;
-    game.paymentHint = season.paymentHint;
   }
   return game;
 }
@@ -478,9 +445,6 @@ function unavailableSummary(gameId: string): GameCostSummaryDto {
     currency: null,
     payerUserId: null,
     payer: null,
-    paymentHint: null,
-    paymentMethods: [],
-    countryIso2: null,
     frozenAt: null,
     estimated: true,
     shares: [],
@@ -525,14 +489,7 @@ async function buildSummary(
 ): Promise<GameCostSummaryDto> {
   const currency = game.priceCurrency;
   if (currency == null || shares.length === 0) {
-    const empty = unavailableSummary(game.id);
-    return {
-      ...empty,
-      available: false,
-      paymentHint: game.paymentHint,
-      paymentMethods: gamePaymentMethods(game),
-      countryIso2: gameCountryIso2(game),
-    };
+    return unavailableSummary(game.id);
   }
 
   const payerId = effectivePayerId(game);
@@ -582,9 +539,6 @@ async function buildSummary(
     currency,
     payerUserId: payerId,
     payer: payerId ? userMap.get(payerId) ?? null : null,
-    paymentHint: game.paymentHint,
-    paymentMethods: gamePaymentMethods(game),
-    countryIso2: gameCountryIso2(game),
     frozenAt: game.costFrozenAt ? game.costFrozenAt.toISOString() : null,
     estimated: game.costFrozenAt == null,
     shares: dtos,
@@ -635,7 +589,7 @@ export async function getGameCostSummary(
   return buildSummary(game, shares, actor, remindAvailableAt);
 }
 
-/** Owner / game admin / platform staff: payer, payment hint and per-player overrides. */
+/** Owner / game admin / platform staff: payer and per-player overrides. */
 export async function updateGameCostShares(
   gameId: string,
   actorId: string,
@@ -659,12 +613,6 @@ export async function updateGameCostShares(
       if (!onRoster) throw new ApiError(400, 'errors.cost.payerNotOnRoster');
       gameUpdate.costPayer = { connect: { id: input.payerUserId } };
     }
-  }
-
-  const paymentWrite = resolvePaymentMethodWrite(input);
-  if (paymentWrite) {
-    gameUpdate.paymentMethods = paymentWrite.paymentMethods;
-    gameUpdate.paymentHint = paymentWrite.paymentHint;
   }
 
   if (Object.keys(gameUpdate).length > 0) {

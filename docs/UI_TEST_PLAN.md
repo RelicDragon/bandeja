@@ -1063,15 +1063,13 @@ One boolean the organizer sets; everything here is read-only display. The tag is
 | C-74 | Looking nudge in Players step | Pick club, date, time where OPEN intents fit | Inline "{n} players are looking for this time" + Invite above the roster; Invite adds them (up to free seats) and the row hides; created invites link their intents |
 | C-63 | No looking chrome | Wallet / team / trainer picker | No Search \| Looking switch |
 
-#### 8.3b Price — per-head preview and payment hint
+#### 8.3b Price — per-head preview
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | C-CS-01 | Live per-head preview | Price `Total 40 €` → change seats from 4 to 8 | Preview updates live from "≈ 10,00 € each for 4 players" to "≈ 5,00 € each for 8 players" |
-| C-CS-02 | Hidden without a price | Price type `Not known` or `Free` | No preview line and no payment-hint field |
-| C-CS-03 | Hint saved on create | Enter "IBAN RS35 …" and create | The hint appears in the settle sheet for participants (`GD-CS-14`) |
-| C-CS-04 | Hint length | Type more than 120 characters | Input stops at 120; the remaining-characters counter reaches 0; the API rejects a longer forged value |
-| C-CS-05 | Hint edited later | Edit game → Price → change the hint → Save | New hint in the sheet; clearing it removes the copyable field |
+| C-CS-02 | Hidden without a price | Price type `Not known` or `Free` | No preview line |
+| C-CS-03 | No payment instructions | Create / edit a paid game; Profile; open the settle sheet as a participant | Price is type, total and currency only: no "How to pay you" field, no payment-method picker, no saved payment details in Profile, no "How to pay …" block in the settle sheet |
 
 ### 8.4 Create league (`/create-league`)
 
@@ -1301,7 +1299,6 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-11 | Coins hidden when unaffordable | Rate set so the share costs more coins than you hold | Coin button absent (not merely disabled) |
 | GD-CS-12 | Settle with coins | Tap **Send N coins** | Coins move to the payer via the normal P2P transfer; toast "N coins sent · settled"; the row turns **Settled** and tints green for ~600 ms; the Wallet shows "Game share · &lt;game&gt;" |
 | GD-CS-13 | Insufficient coins is clean | Spend the balance down in another tab, then settle | Error toast; the share is **not** marked paid; retrying after topping up works and does not double-charge. The share row is claimed before the transfer and handed back untouched on failure |
-| GD-CS-14 | Payment hint copyable | Payer sets "How to pay you"; participant opens the sheet | Hint at the top with a copy button; copying shows "Copied" |
 | GD-CS-15 | Received toggle | Payer taps a player's money pill | That row turns **Settled** for both users within a second (socket `game-cost-updated`); the summary strip counts up. `@two-user` |
 | GD-CS-16 | Participant cannot self-confirm | Participant inspects their own row | Their pill is not a toggle; the API rejects a forged request with 403 |
 | GD-CS-17 | Summary strip | Organizer view with 3 of 4 settled | Tray: "3 of 4 settled · 10,00 € outstanding" plus **Remind unpaid** |
@@ -1323,7 +1320,6 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-33 | Reduced motion | Reduce motion on → change a chip state | Chip switches instantly; the green settle flash is skipped; the deep-link scroll jumps rather than smooth-scrolls |
 | GD-CS-34 | Themes | Light / Dark / Classic / Premium | Chips, the green settle tint and the lock chip stay legible |
 | GD-CS-35 | RTL | App language العربية | Rows, chips, the amount column and the sheets mirror; nothing overlaps |
-| GD-CS-36 | Profile payment defaults draft | Profile → payment defaults: add a method, wait, type a handle, then Save; repeat with Cancel or a failed save | Blank input stays visible while typing; only Save sends the validated list; Cancel restores saved defaults; failed saves and profile refreshes preserve the draft |
 | GD-CS-37 | Tracker viewer access | Open a priced game as PLAYING, non-playing OWNER/ADMIN, and platform admin; repeat as queue member, invitee, GUEST, ordinary NON_PLAYING, stranger and signed-out user | Only the first three groups see the tracker. Excluded viewers make no cost request and see no loading/error card. Authenticated excluded users receive 403 from direct cost endpoints, even with an old share |
 | GD-CS-38 | League season excluded | Open a priced LEAGUE_SEASON as owner and platform admin, including via `?section=cost&settle=1`; then open its priced LEAGUE fixture as a playing participant | Season has no tracker or cost request; direct season cost endpoints return 404, sync creates no shares, and existing season records do not appear in Wallet or reminders. Fixture tracker works normally |
 | GD-CS-39 | Access after leaving | Open a priced game as PLAYING, then move to a non-playing status without an organizer role, including after shares freeze | Tracker disappears; old share does not grant access through the API or Wallet cost entries |
@@ -1333,7 +1329,7 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-41 | Legacy frozen payer row | Open a frozen ledger containing four player shares plus a non-playing payer share | Extra payer row is absent and counts use four shares. Stored finalized amounts and completed transfers remain unchanged |
 | GD-CS-42 | Count without a personal share | An eligible PLAYING viewer has no share in a frozen ledger | Tracker still shows “X of 4 settled”; no row, price total or **I paid** button |
 
-Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in §7.4b. Create/edit: `C-CS-01`–`C-CS-05` in §8.3b.
+Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in §7.4b. Create/edit: `C-CS-01`–`C-CS-03` in §8.3b.
 
 ### 9.3 Edit game (owner/admin)
 

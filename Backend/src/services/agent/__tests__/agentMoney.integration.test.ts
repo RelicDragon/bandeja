@@ -92,7 +92,6 @@ const registry = getAgentToolRegistry();
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 const MONEY_READS = ['list_my_cost_balances', 'get_game_cost', 'get_my_wallet', 'list_cost_shares'] as const;
-const PHONE_HANDLE = '+34600111222';
 
 type Json = Record<string, unknown>;
 type HttpShare = { userId: string; amountMinor: number; state: string; method: string; isPayer: boolean; isOverridden: boolean };
@@ -108,7 +107,6 @@ type HttpSummary = {
   settledCount: number;
   shareCount: number;
   viewerShare: HttpShare | null;
-  paymentMethods: { method: string; handle: string | null }[];
   canManage: boolean;
   canConfirm: boolean;
   canRemind: boolean;
@@ -131,7 +129,6 @@ type AgentCost = {
   settledCount?: number;
   shareCount?: number;
   myShare?: AgentShare | null;
-  paymentMethodIds?: string[];
   myActions?: Json;
   appLink?: string;
 };
@@ -178,11 +175,6 @@ async function main(): Promise<void> {
       return { status: res.status, data: json?.data };
     };
     const shareRows = (gameId: string) => prisma.gameCostShare.count({ where: { gameId } });
-    const assertNoHandles = (data: unknown, label: string) => {
-      const text = JSON.stringify(data);
-      assert.ok(!text.includes(PHONE_HANDLE.slice(3)), `${label}: no payment handle`);
-      assert.ok(!/"handle"|"paymentHint"|"paymentMethods"/.test(text), `${label}: no payment fields`);
-    };
 
     type Roster = [AgentMatrixActor, ParticipantRole, ParticipantStatus][];
     const STANDARD: Roster = [
@@ -224,7 +216,6 @@ async function main(): Promise<void> {
       priceType: 'TOTAL',
       priceTotal: 40,
       priceCurrency: 'EUR',
-      paymentMethods: [{ method: 'BIZUM', handle: PHONE_HANDLE }, { method: 'CASH', handle: null }],
     } as const satisfies Partial<Prisma.GameUncheckedCreateInput>;
 
     // --- authorization before sync -------------------------------------------------------
@@ -280,7 +271,6 @@ async function main(): Promise<void> {
       assert.equal(agent.settledCount, dto.settledCount, `${label}: settledCount`);
       assert.equal(agent.shareCount, dto.shareCount, `${label}: shareCount`);
       assert.deepEqual(agent.myShare ? fromAgentShare(agent.myShare) : null, dto.viewerShare ? toAgentShape(dto.viewerShare) : null, `${label}: myShare`);
-      assert.deepEqual(agent.paymentMethodIds, dto.paymentMethods.map((m) => m.method), `${label}: method ids`);
       const actions = agent.myActions!;
       assert.equal(actions.canConfirm, dto.canConfirm, `${label}: canConfirm`);
       assert.equal(actions.canRemind, dto.canRemind, `${label}: canRemind`);
@@ -296,7 +286,6 @@ async function main(): Promise<void> {
       private: 'N F F A A A N A',
     };
     const ACTORS: AgentMatrixActor[] = ['stranger', 'invited', 'queued', 'player', 'gameAdmin', 'owner', 'leagueOwner', 'globalAdmin'];
-    let sawHandleOverHttp = false;
     for (const key of ['public', 'private'] as const) {
       const letters = MATRIX[key].split(' ');
       for (const [index, actor] of ACTORS.entries()) {
@@ -311,8 +300,6 @@ async function main(): Promise<void> {
           const agent = result.data as AgentCost;
           const dto = res.data as HttpSummary;
           assertCostParity(agent, dto, label);
-          assertNoHandles(result.data, label);
-          if (dto.paymentMethods.some((m) => m.handle?.includes(PHONE_HANDLE.slice(3)))) sawHandleOverHttp = true;
           const isPlayerOnly = actor === 'player';
           assert.equal(agent.total == null, isPlayerOnly, `${label}: total hidden only for a plain player`);
           assert.equal(agent.shares!.length, isPlayerOnly ? 1 : 3, `${label}: projected rows`);
@@ -327,7 +314,6 @@ async function main(): Promise<void> {
         }
       }
     }
-    assert.ok(sawHandleOverHttp, 'the HTTP DTO carries the handle, so the no-handle check is meaningful');
     {
       const asPlayer = (await call('get_game_cost', P.player, { gameId: G.public })).data as AgentCost;
       assert.equal(asPlayer.myShare?.amountMinor, 1333, 'player share 40 € / 3, floored');
@@ -490,7 +476,6 @@ async function main(): Promise<void> {
         `${actor}: server-summed totals`,
       );
       assert.equal(data.owed.truncated, false);
-      assertNoHandles(result.data, `${actor} balances`);
     }
     {
       const player = (await call('list_my_cost_balances', P.player)).data as { owed: { rows: OwedRow[] }; owedToMe: { rows: OwedRow[] } };
@@ -1599,7 +1584,6 @@ async function main(): Promise<void> {
       const list = async (principal: AgentPrincipal, args: Json) => {
         const result = await call('list_cost_shares', principal, args);
         assert.equal(result.ok, true, `list_cost_shares ${JSON.stringify(args)}: ${JSON.stringify(result.data)}`);
-        assertNoHandles(result.data, 'list_cost_shares');
         return result;
       };
       const rowsOf = (data: Listing) =>

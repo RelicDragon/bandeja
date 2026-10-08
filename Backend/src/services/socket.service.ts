@@ -1181,7 +1181,7 @@ class SocketService {
    * game they loaded for themselves (or none, in which case one is loaded for
    * the actor), but the payload goes to a whole room, so it is re-projected for
    * the least-entitled recipient by {@link projectGameForBroadcast} — no
-   * `paymentHint`, no viewer-scoped field. Entitled clients read those from
+   * viewer-scoped field. Clients read those from
    * `GET /api/games/:id`; an omitted key means "not transmitted", not "cleared".
    *
    * This is the single chokepoint: every `game-updated` emit in the codebase

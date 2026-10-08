@@ -491,9 +491,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       if (!prevGame) return broadcastGame;
 
       // A broadcast is projected for the least-entitled member of the room, so
-      // it omits `paymentHint` and the viewer-scoped fields. Absent means "not
-      // transmitted": carry over what this viewer already holds from HTTP,
-      // rather than replacing a saved IBAN with nothing.
+      // it omits the viewer-scoped fields. Absent means "not transmitted":
+      // carry over what this viewer already holds from HTTP.
       const updatedGame = preserveUntransmittedGameFields(prevGame, broadcastGame);
 
       const mergeArtifactsOnSelf = () => mergeGamePhotoRefresh(prevGame, updatedGame);

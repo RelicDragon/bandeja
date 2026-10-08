@@ -62,13 +62,6 @@ import {
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
 import { clubHasBookingIntegration } from '@shared/clubIntegration';
-import {
-  parsePaymentMethods,
-  resolvePaymentMethods,
-  type PaymentMethodEntry,
-} from '@shared/payments/paymentMethodSelection';
-import { cleanPaymentMethods } from '@/features/cost/gameEditPricePayload';
-import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
@@ -376,17 +369,6 @@ export const CreateGame = ({
   const [gameName, setGameName] = useState<string>(initialAuthored.name);
   const [comments, setComments] = useState<string>(initialAuthored.description);
   const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal ?? undefined);
-  /**
-   * PRD 348 — how to pay the organizer back. Seeded from the user's saved
-   * payout defaults so a Bizum or IPS Prenesi number is typed once, not every
-   * Tuesday; a duplicated game keeps whatever that game had.
-   */
-  const paymentCountryIso2 = useCityCountryQuery(locationCityId);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodEntry[]>(() =>
-    initialGameData
-      ? resolvePaymentMethods(initialGameData.paymentMethods, initialGameData.paymentHint)
-      : parsePaymentMethods(user?.payoutMethods),
-  );
   const [priceType, setPriceType] = useState<PriceType>(initialGameData?.priceType || 'NOT_KNOWN');
   const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(initialGameData?.priceCurrency ?? undefined);
   const [storedInitialDate] = useState<Date>(() => {
@@ -1369,7 +1351,6 @@ export const CreateGame = ({
         priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
         priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? (priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)) : undefined,
-        paymentMethods: cleanPaymentMethods(paymentMethods),
         parentId: initialGameData?.parentId,
       };
 
@@ -2094,9 +2075,6 @@ export const CreateGame = ({
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}
           maxParticipants={maxParticipants}
-          paymentMethods={paymentMethods}
-          onPaymentMethodsChange={setPaymentMethods}
-          paymentCountryIso2={paymentCountryIso2}
           priceSectionRef={summarySectionRefs.price}
         />
         </div>

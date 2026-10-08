@@ -145,16 +145,6 @@
       "integrationTypeMustBeOnlineBooking": "クラブ連携はオンライン予約である必要があります。",
       "rollbackFailed": "予約キャンセルの確認ができませんでした。",
       "removeBookingsBeforeClearing": "先にコートの予約を外すかキャンセルしてください。"
-    },
-    "cost": {
-      "paymentMethod": {
-        "tooMany": "支払い方法は 3 件までです。",
-        "unknownMethod": "その支払い方法は利用できません。",
-        "duplicateMethod": "その支払い方法はすでに追加されています。",
-        "handleRequired": "送金先の情報を入力してください。",
-        "handleTooLong": "長すぎます。",
-        "handleInvalid": "内容が正しくないようです。確認してください。"
-      }
     }
   },
   "leagues": {

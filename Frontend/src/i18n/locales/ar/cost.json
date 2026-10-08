@@ -31,9 +31,6 @@
     "sheet": {
       "title": "كيف دفعت؟",
       "subtitle": "{{amount}} إلى {{name}}",
-      "hintLabel": "طريقة الدفع إلى {{name}}",
-      "copy": "نسخ",
-      "copied": "تم النسخ",
       "outside": "خارج التطبيق",
       "outsideHint": "نقدًا أو تحويلًا بنكيًا أو عبر تطبيق دفع",
       "coins": "إرسال {{coins}} عملة",
@@ -74,75 +71,10 @@
       "settleFailed": "تعذّر التسجيل. حاول مرة أخرى.",
       "confirmFailed": "تعذّر تحديث هذا الصف. حاول مرة أخرى.",
       "remindFailed": "تعذّر إرسال التذكير الآن.",
-      "updateFailed": "تعذّر حفظ الحصة. حاول مرة أخرى.",
-      "copyFailed": "تعذّر النسخ."
+      "updateFailed": "تعذّر حفظ الحصة. حاول مرة أخرى."
     },
     "loading": "جارٍ تحميل تقسيم التكلفة…",
     "loadFailed": "تعذّر تحميل تقسيم التكلفة.",
-    "payment": {
-      "title": "كيف يدفعون لك",
-      "help": "يراه اللاعبون عند تسوية حصتهم.",
-      "add": "أضف طريقة أخرى",
-      "addFirst": "أضف طريقة للدفع",
-      "remove": "إزالة {{method}}",
-      "maxReached": "يمكنك إضافة حتى {{max}} طرق للدفع.",
-      "noHandleNeeded": "لا شيء لإدخاله.",
-      "open": "فتح",
-      "everywhere": "تعمل في كل مكان",
-      "pickerTitle": "كيف تريد أن يدفع لك اللاعبون؟",
-      "pickerSubtitle": "الطرق المستخدمة في البلد الذي تُقام فيه المباراة.",
-      "pickerSearch": "بحث",
-      "pickerEmpty": "لا توجد نتائج.",
-      "pickerCustomHint": "غير موجودة؟ اختر «شيء آخر» واكتبها بنفسك.",
-      "profileTitle": "بيانات الدفع المحفوظة",
-      "profileHelp": "تُضاف تلقائيًا إلى المباريات التي تنشئها.",
-      "method": {
-        "custom": "شيء آخر",
-        "cash": "نقدًا",
-        "bankTransfer": "تحويل بنكي",
-        "iban": "IBAN",
-        "cardTransfer": "تحويل على البطاقة",
-        "ukBank": "تحويل بنكي",
-        "rsAccount": "حساب بنكي",
-        "huInstant": "تحويل فوري",
-        "clabe": "CLABE",
-        "cbuAlias": "الاسم المستعار أو CBU"
-      },
-      "handle": {
-        "NONE": {
-          "label": "لا حاجة إلى بيانات"
-        },
-        "TEXT": {
-          "label": "التفاصيل",
-          "placeholder": "نقدًا في النادي، IBAN، أي شيء"
-        },
-        "PHONE": {
-          "label": "رقم الهاتف"
-        },
-        "EMAIL": {
-          "label": "البريد الإلكتروني"
-        },
-        "PHONE_OR_EMAIL": {
-          "label": "الهاتف أو البريد الإلكتروني"
-        },
-        "TAG": {
-          "label": "اسم المستخدم"
-        },
-        "IBAN": {
-          "label": "IBAN"
-        },
-        "ACCOUNT": {
-          "label": "رقم الحساب"
-        },
-        "CARD": {
-          "label": "رقم البطاقة"
-        },
-        "ALIAS": {
-          "label": "المفتاح أو المعرّف",
-          "placeholder": "هاتف أو بريد أو معرّف"
-        }
-      }
-    },
     "roster": {
       "yourShare": "حصتك"
     }

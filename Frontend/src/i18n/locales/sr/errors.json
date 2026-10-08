@@ -145,16 +145,6 @@
       "integrationTypeMustBeOnlineBooking": "Integracija kluba mora biti online rezervacija.",
       "rollbackFailed": "Nismo mogli da potvrdimo da je rezervacija otkazana.",
       "removeBookingsBeforeClearing": "Prvo uklonite ili otkažite rezervacije terena."
-    },
-    "cost": {
-      "paymentMethod": {
-        "tooMany": "Možeš navesti najviše 3 načina plaćanja.",
-        "unknownMethod": "Taj način plaćanja nije dostupan.",
-        "duplicateMethod": "Taj način plaćanja je već na spisku.",
-        "handleRequired": "Unesi podatke na koje treba da ti pošalju novac.",
-        "handleTooLong": "Predugačko je.",
-        "handleInvalid": "Ovo ne izgleda ispravno — proveri."
-      }
     }
   },
   "leagues": {

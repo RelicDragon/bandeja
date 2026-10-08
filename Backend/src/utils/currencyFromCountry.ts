@@ -67,8 +67,7 @@ export function currencyFromCountryIso2OrUndefined(country: string | undefined):
  * `City.country` (a display name in production) → ISO-3166 alpha-2.
  *
  * The name map is shared with the frontend (`@bandeja/shared/geo/countryIso2`)
- * so the two sides can never disagree about which country a game is in —
- * PRD 348's payment-method catalogue is scoped by exactly this value.
+ * so the two sides can never disagree about which country a game is in.
  *
  * A 2-letter value is passed through as a code unless it is a known alias
  * ("UK" means GB), so this keeps working if the column is ever migrated.

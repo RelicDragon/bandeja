@@ -142,16 +142,6 @@
       "integrationTypeMustBeOnlineBooking": "Integrace klubu musí být online rezervace.",
       "rollbackFailed": "Nepodařilo se potvrdit zrušení rezervace.",
       "removeBookingsBeforeClearing": "Nejdřív odeberte nebo zrušte rezervace kurtů."
-    },
-    "cost": {
-      "paymentMethod": {
-        "tooMany": "Můžeš uvést nejvýše 3 způsoby platby.",
-        "unknownMethod": "Tento způsob platby není dostupný.",
-        "duplicateMethod": "Tento způsob platby už v seznamu je.",
-        "handleRequired": "Doplň údaje, kam ti mají peníze poslat.",
-        "handleTooLong": "Je to příliš dlouhé.",
-        "handleInvalid": "Tohle nevypadá správně — zkontroluj to."
-      }
     }
   },
   "leagues": {

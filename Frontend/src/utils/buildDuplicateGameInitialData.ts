@@ -98,8 +98,6 @@ export const REMATCH_EXCLUDED_KEYS = [
   'trainerId',
   'autoFillFromQueue',
   'showOnLiveRail',
-  'paymentHint',
-  'paymentMethods',
   'costPayerId',
   'costFrozenAt',
   'participants',

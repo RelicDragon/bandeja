@@ -1,7 +1,6 @@
 {
   "bare": {
     "+ Extra (stats only)": "gameResults.addExtraSet",
-    "Add a way to pay": "cost.payment.addFirst",
     "Add Game": "gameDetails.addGame",
     "Add group": "gameDetails.addGroup",
     "Add participant": "gameDetails.addParticipant",
@@ -80,7 +79,6 @@
     "Game setup": "createGame.steps.setup",
     "Have available slots": "games.haveAvailableSlots",
     "How did you pay?": "cost.sheet.title",
-    "How to pay you": "cost.payment.title",
     "I know my way around — show me everything": "novice.shell.unlockAll.link",
     "I paid": "cost.iPaid",
     "Integrations": "club.booktime.tabIntegrations",
@@ -164,7 +162,6 @@
     "Revoke Admin": "games.revokeAdmin",
     "Rotating": "createGame.fixedTeams.optionOff",
     "Save and next": "gameResults.saveAndNext",
-    "Saved payment details": "cost.payment.profileTitle",
     "Season Avatar": "createLeague.seasonAvatar",
     "Season Name": "createLeague.seasonName",
     "Select City": "createLeague.selectCity",
@@ -182,7 +179,6 @@
     "Show private games": "games.showPrivateGames",
     "Signed-in devices": "profile.sessionsTitle",
     "Singles": "sport.matchSingles",
-    "Something else": "cost.payment.method.custom",
     "Split remainder evenly": "cost.splitRemainder",
     "Start Date": "createLeague.startDate",
     "Start Results Entry": "gameResults.startResultsEntry",
@@ -803,58 +799,6 @@
       "th": "ฉันจ่ายแล้ว",
       "ja": "支払いました"
     },
-    "cost.payment.addFirst": {
-      "en": "Add a way to pay",
-      "ru": "Добавить способ оплаты",
-      "sr": "Dodaj način plaćanja",
-      "es": "Añadir una forma de pago",
-      "cs": "Přidat způsob platby",
-      "ar": "أضف طريقة للدفع",
-      "zh": "添加付款方式",
-      "id": "Tambah cara pembayaran",
-      "hi": "भुगतान का तरीका जोड़ें",
-      "th": "เพิ่มวิธีชำระเงิน",
-      "ja": "支払い方法を追加"
-    },
-    "cost.payment.method.custom": {
-      "en": "Something else",
-      "ru": "Другое",
-      "sr": "Nešto drugo",
-      "es": "Otra cosa",
-      "cs": "Něco jiného",
-      "ar": "شيء آخر",
-      "zh": "其他",
-      "id": "Lainnya",
-      "hi": "कुछ और",
-      "th": "อื่น ๆ",
-      "ja": "その他"
-    },
-    "cost.payment.profileTitle": {
-      "en": "Saved payment details",
-      "ru": "Сохранённые реквизиты",
-      "sr": "Sačuvani podaci za plaćanje",
-      "es": "Datos de pago guardados",
-      "cs": "Uložené platební údaje",
-      "ar": "بيانات الدفع المحفوظة",
-      "zh": "已保存的收款方式",
-      "id": "Detail pembayaran tersimpan",
-      "hi": "सहेजी गई भुगतान जानकारी",
-      "th": "ข้อมูลการรับเงินที่บันทึกไว้",
-      "ja": "保存した支払い情報"
-    },
-    "cost.payment.title": {
-      "en": "How to pay you",
-      "ru": "Как тебе платить",
-      "sr": "Kako da ti plate",
-      "es": "Cómo pagarte",
-      "cs": "Jak ti zaplatit",
-      "ar": "كيف يدفعون لك",
-      "zh": "怎么付款给你",
-      "id": "Cara membayar kamu",
-      "hi": "आपको पैसे कैसे भेजें",
-      "th": "วิธีจ่ายเงินให้คุณ",
-      "ja": "支払い方法"
-    },
     "cost.remindCooldown": {
       "en": "You can nudge again in about {{hours}} h",
       "ru": "Следующее напоминание примерно через {{hours}} ч",
@@ -919,19 +863,6 @@
       "hi": "निपट गया",
       "th": "เคลียร์แล้ว",
       "ja": "精算済み"
-    },
-    "cost.sheet.copy": {
-      "en": "Copy",
-      "ru": "Копировать",
-      "sr": "Kopiraj",
-      "es": "Copiar",
-      "cs": "Kopírovat",
-      "ar": "نسخ",
-      "zh": "复制",
-      "id": "Salin",
-      "hi": "कॉपी करें",
-      "th": "คัดลอก",
-      "ja": "コピー"
     },
     "cost.sheet.outside": {
       "en": "Outside the app",

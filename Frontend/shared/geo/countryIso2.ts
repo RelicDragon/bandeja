@@ -3,10 +3,9 @@
  *
  * The column holds a **display name**, not a code: every row in production
  * reads "Spain", "United Kingdom", "Bosnia and Herzegovina". Anything that
- * needs to reason about the country — the currency guess, PRD 348's
- * country-scoped payment methods — has to go through a name map, and there
- * must be exactly one of those or the two sides quietly disagree about where
- * a game is.
+ * needs to reason about the country — the currency guess — has to go
+ * through a name map, and there must be exactly one of those or the two sides
+ * quietly disagree about where a game is.
  *
  * A value that is already a 2-letter code is passed through uppercased, so a
  * future migration of the column to real ISO-2 needs no change here.

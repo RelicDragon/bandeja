@@ -32,8 +32,7 @@
  * Slice 10h, read: `list_cost_shares` (`costShares.tools.ts`), the organizer's cross-game view.
  *
  * Amounts come only from the services (minor units + a server-formatted string); currencies
- * are never added together. Payment methods are method ids only, never handles (IBAN, phone,
- * tag) or `paymentHint`: the model names the method and links the game's cost section.
+ * are never added together.
  */
 import { EntityType, ParticipantRole, ParticipantStatus, type PriceCurrency, type PriceType } from '@prisma/client';
 import { z } from 'zod/v4';
@@ -181,9 +180,7 @@ export function costUnavailableReason(row: CostReasonRow, now: Date): AgentCostU
     priceType: row.priceType,
     priceTotal: row.priceTotal,
     priceCurrency: row.priceCurrency,
-    paymentHint: null,
-    paymentMethods: null,
-    parent: row.parent ? { ...row.parent, paymentHint: null, paymentMethods: null, participants: [] } : null,
+    parent: row.parent ? { ...row.parent, participants: [] } : null,
   });
   if (priced.priceType === 'PER_TEAM') return 'per_team';
   if (priced.priceType === 'FREE') return 'free';
@@ -229,15 +226,10 @@ async function loadCostGame(gameId: string) {
   return row;
 }
 
-/** Method ids only (`BIZUM`, `CASH`, `CUSTOM`, …): the handles stay in the app. */
-function paymentMethodIds(summary: GameCostSummaryDto): string[] {
-  return summary.paymentMethods.map((entry) => entry.method);
-}
-
 export const getGameCostTool = defineTool({
   name: 'get_game_cost',
   description:
-    "A game's cost split (who owes the payer how much, and who has paid), as the user may see it in the app: players see only their own share and the paid count; organizers and the payer see every share. Also what the user can do about it. Payment details are never included: name the methods and point to the app.",
+    "A game's cost split (who owes the payer how much, and who has paid), as the user may see it in the app: players see only their own share and the paid count; organizers and the payer see every share. Also what the user can do about it. The app stores no payment details (account, phone or tag); point to the app (appLink) to mark paid or pay with coins.",
   kind: 'read',
   scope: 'user',
   input: z.object({ gameId: z.string().min(1).max(64) }).strict(),
@@ -306,7 +298,6 @@ export const getGameCostTool = defineTool({
         settledCount: summary.settledCount,
         shareCount: summary.shareCount,
         myShare: myShare ? agentCostShare(myShare, locale) : null,
-        paymentMethodIds: paymentMethodIds(summary),
         myActions: {
           canMarkPaid: myShare != null && !myShare.isPayer && myShare.state === 'UNPAID',
           canPayWithCoins,
@@ -318,7 +309,7 @@ export const getGameCostTool = defineTool({
           canManage: summary.canManage,
         },
         appLink: handoff.url,
-        note: `${AMOUNTS_NOTE}. total / outstanding are null when the user may only see their own share. paymentMethodIds are method names only; the payment details (account, phone, tag) are in the app: send the user to appLink. estimated = amounts can still change until the game's results are final. ${USER_DATA_NOTE}`,
+        note: `${AMOUNTS_NOTE}. total / outstanding are null when the user may only see their own share. estimated = amounts can still change until the game's results are final. ${USER_DATA_NOTE}`,
       },
       summary: agentMoneyT(locale, 'summary.gameCost', {
         game: title,

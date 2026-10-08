@@ -21,12 +21,6 @@ import {
   assertClubSupportsSport,
   assertCourtMatchesGameSport,
 } from '../../shared/clubSports';
-import {
-  paymentMethodColumns,
-  resolvePaymentMethodWrite,
-  shouldPrefillPayoutMethods,
-} from '../gameCost/paymentMethodsWrite';
-import { loadUserPayoutMethods } from '../gameCost/payoutMethods.service';
 import { WeatherForecastService } from '../weatherForecast.service';
 import {
   assertNoLegacyExternalBookingId,
@@ -227,15 +221,6 @@ export class GameCreateService {
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
     }
-
-    /**
-     * PRD 348 — how to pay the organiser back. The client sends the structured
-     * list; a pre-catalogue client sends only `paymentHint` and gets the single
-     * `CUSTOM` entry it always meant. Validated here so a bad entry is a 400
-     * before any row is written; the prefill fallback needs `priceType` and so
-     * waits until below.
-     */
-    const explicitPaymentWrite = resolvePaymentMethodWrite(data);
 
     if (data.mainPhotoId !== undefined && data.mainPhotoId !== null) {
       throw new ApiError(400, 'mainPhotoId cannot be set when creating a game');
@@ -446,23 +431,6 @@ export class GameCreateService {
       }
     }
     
-    /**
-     * PRD 348 — copy the organiser's saved payout methods onto the game, so a
-     * Bizum or IPS Prenesi number is typed once rather than every Tuesday.
-     *
-     * Only when the game can actually have a cost split. Without this gate a
-     * public EVENT listing — a tournament announcement whose "price" is a
-     * ticket paid through an external registration URL — would silently carry
-     * the organiser's personal bank details to everyone on its roster, and so
-     * would every free game. The prefill is a convenience, never a reason for
-     * those details to exist somewhere the organiser did not put them.
-     */
-    const paymentWrite =
-      explicitPaymentWrite ??
-      (shouldPrefillPayoutMethods({ entityType, priceType })
-        ? paymentMethodColumns(await loadUserPayoutMethods(userId))
-        : paymentMethodColumns([]));
-
     const gameType = isTraining || isEventEntity ? 'CLASSIC' : data.gameType;
 
     let trainerId: string | null = null;
@@ -676,8 +644,6 @@ export class GameCreateService {
         priceTotal: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : priceTotal,
         priceType: priceType,
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
-        paymentHint: paymentWrite.paymentHint,
-        paymentMethods: paymentWrite.paymentMethods,
         metadata: data.metadata,
         timeIsSet: isEventEntity ? true : (data.timeIsSet ?? false),
         status: 'ANNOUNCED',

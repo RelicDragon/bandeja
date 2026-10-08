@@ -13,11 +13,10 @@
  *   · the share points at the one transaction that actually moved coins;
  *   · un-ticking "Received" cannot release a COINS claim that is still
  *     in flight (the claim is stamped before the transfer returns);
- *   · `Game.paymentHint` — an IBAN or a payment handle — reaches the roster
- *     through `GET /games/:id` and nobody else, guests included;
- *   · and it survives the leave → broadcast → edit chain: no socket payload
- *     carries it whatever the actor's entitlement, and an update body that does
- *     not name the column leaves the saved value alone.
+ *   · `GET /games/:id` holds the guest whitelist contract, and a broadcast
+ *     copy never carries the actor's viewer-scoped fields;
+ *   · an update body from a shipped app build that still names the removed
+ *     payment-method keys is accepted and the rest of it applied.
  *
  * Safe to run against `padelpulse_dev`: every row is namespaced with a run
  * suffix and removed in `finally`. Outbound notifications are suppressed.
@@ -284,7 +283,6 @@ void (async () => {
         priceType: PriceType.PER_PERSON,
         priceTotal: 3,
         priceCurrency: PriceCurrency.EUR,
-        paymentMethods: [{ method: 'CASH' }],
       },
     });
     const unpricedFixture = await makeGame(player.id, extraPlayers[0].id);
@@ -303,7 +301,6 @@ void (async () => {
     assert.equal(inherited.currency, 'EUR');
     assert.equal(inherited.totalMinor, 600, '€3 per person, two players');
     assert.deepEqual(inherited.shares.map((share) => share.amountMinor), [300, 300]);
-    assert.deepEqual(inherited.paymentMethods.map((entry) => entry.method), ['CASH'], 'season payment methods');
     assert.equal((await getGameCostSummary(unpricedFixture.id, player.id)).viewerShare?.amountMinor, 300);
     await prisma.game.update({
       where: { id: unpricedFixture.id },
@@ -539,176 +536,56 @@ void (async () => {
     );
 
     // -----------------------------------------------------------------------
-    // `Game.paymentHint` on `GET /games/:id`
-    //
-    // The route is `optionalAuth` and used to run a top-level Prisma `include`,
-    // so every `Game` scalar — the organizer's IBAN among them — was returned
-    // to a caller with no `Authorization` header at all.
+    // `GET /games/:id` guest contract and the broadcast projection
     // -----------------------------------------------------------------------
-    const hintPayer = await makeUser('hintpayer', 0);
-    const hintPlayer = await makeUser('hintplayer', 0);
-    const outsider = await makeUser('hintoutsider', 0);
-    const hintGame = await makeGame(hintPayer.id, hintPlayer.id);
-    const prenesiHandle = `+381-${suffix}`;
-    const hintValue = `IPS Prenesi ${prenesiHandle}`;
-    await prisma.game.update({
-      where: { id: hintGame.id },
-      data: {
-        paymentHint: hintValue,
-        paymentMethods: [{ method: 'IPS_PRENESI', handle: prenesiHandle }],
-      },
-    });
+    const detailPayer = await makeUser('detailpayer', 0);
+    const detailPlayer = await makeUser('detailplayer', 0);
+    const detailGame = await makeGame(detailPayer.id, detailPlayer.id);
 
-    const guestView = (await GameReadService.getGameById(hintGame.id)) as Record<string, unknown>;
-    assert.equal(
-      'paymentHint' in guestView,
-      false,
-      'an unauthenticated caller never receives the payment handle',
-    );
-    assert.equal(
-      'paymentMethods' in guestView,
-      false,
-      'nor the structured list the handle now lives in',
-    );
+    const guestView = (await GameReadService.getGameById(detailGame.id)) as Record<string, unknown>;
     assert.deepEqual(
       collectGameDetailGuestContractIssues(guestView),
       [],
-      'and the rest of the guest payload holds the whitelist contract',
-    );
-
-    const outsiderView = (await GameReadService.getGameById(
-      hintGame.id,
-      outsider.id,
-    )) as Record<string, unknown>;
-    assert.equal(
-      'paymentHint' in outsiderView,
-      false,
-      'a signed-in stranger is not entitled to the cost ledger either',
-    );
-    assert.equal('paymentMethods' in outsiderView, false);
-
-    const memberView = (await GameReadService.getGameById(
-      hintGame.id,
-      hintPlayer.id,
-    )) as Record<string, unknown>;
-    assert.equal(
-      memberView.paymentHint,
-      hintValue,
-      'a roster member still gets the handle they have to pay to',
-    );
-    assert.deepEqual(
-      memberView.paymentMethods,
-      [{ method: 'IPS_PRENESI', handle: prenesiHandle }],
-      'and the structured list the settle sheet renders',
+      'the guest payload holds the whitelist contract',
     );
 
     const payerView = (await GameReadService.getGameById(
-      hintGame.id,
-      hintPayer.id,
+      detailGame.id,
+      detailPayer.id,
     )) as Record<string, unknown>;
-    assert.equal(payerView.paymentHint, hintValue, 'and so does the organizer who typed it');
-
-    // -----------------------------------------------------------------------
-    // A player leaves → the broadcast → the organizer's next save
-    //
-    // The regression this covers: `leaveGame` deletes the leaver's roster row
-    // and *then* emits `game-updated` with a game projected for that same
-    // (now unrostered) actor, so the payload had no `paymentHint`; the room —
-    // organizer included — replaced its game object with it; and the edit modal
-    // wrote the missing field back as `null`, deleting the IBAN from the
-    // database on an unrelated save.
-    // -----------------------------------------------------------------------
-    await prisma.gameParticipant.deleteMany({
-      where: { gameId: hintGame.id, userId: hintPlayer.id },
-    });
-
-    // 1. The payload `ParticipantMessageHelper.emitGameUpdate` builds for the
-    //    leaver indeed has no hint — that half of the chain is intact and
-    //    correct: he is no longer entitled.
-    const leaverView = (await GameReadService.getGameById(
-      hintGame.id,
-      hintPlayer.id,
-    )) as Record<string, unknown>;
-    assert.equal(
-      'paymentHint' in leaverView,
-      false,
-      'the leaver is unrostered the instant his row is gone, so he gets no handle',
-    );
-
-    // 2. Whoever the actor is, the broadcast copy carries no hint. Projected
-    //    from the *organizer's* entitled view — the `update.service.ts` shape,
-    //    which really did put the IBAN on the wire for the whole room.
     const organizerBroadcast = projectGameForBroadcast(payerView);
-    assert.equal(
-      'paymentHint' in organizerBroadcast,
-      false,
-      'no socket recipient ever receives the payment handle, however entitled the actor',
-    );
-    assert.equal('paymentMethods' in organizerBroadcast, false, 'nor the structured list');
     assert.equal(
       'userNote' in organizerBroadcast || 'isClubFavorite' in organizerBroadcast,
       false,
-      'nor the actor viewer-scoped fields',
+      'no socket recipient receives the actor viewer-scoped fields',
     );
-    assert.equal(organizerBroadcast.id, hintGame.id, 'it is still the whole game otherwise');
+    assert.equal(organizerBroadcast.id, detailGame.id, 'it is still the whole game otherwise');
 
-    // 3. The organizer edits something unrelated. Her client no longer sends
-    //    `paymentHint` (it was never transmitted), and an update body that does
-    //    not name the column leaves it alone.
+    // -----------------------------------------------------------------------
+    // Shipped app builds still send the removed payment-method keys
+    // -----------------------------------------------------------------------
     await GameUpdateService.updateGame(
-      hintGame.id,
-      { priceType: PriceType.TOTAL, priceTotal: 6, priceCurrency: PriceCurrency.EUR },
-      hintPayer.id,
+      detailGame.id,
+      {
+        priceType: PriceType.TOTAL,
+        priceTotal: 6,
+        priceCurrency: PriceCurrency.EUR,
+        paymentHint: 'Bizum +34600000000',
+        paymentMethods: [{ method: 'BIZUM', handle: '+34600000000' }],
+      },
+      detailPayer.id,
       false,
     );
     assert.equal(
       (
         await prisma.game.findUniqueOrThrow({
-          where: { id: hintGame.id },
-          select: { paymentHint: true, priceTotal: true },
+          where: { id: detailGame.id },
+          select: { priceTotal: true },
         })
-      ).paymentHint,
-      hintValue,
-      'an edit that does not touch the field preserves the saved details',
+      ).priceTotal,
+      6,
+      'the legacy keys are ignored and the rest of the body is applied',
     );
-
-    // 4. …and the write path is still live, so (3) is not vacuous: an explicit
-    //    clear from the organizer does clear it.
-    // 4a. A structured write replaces both columns at once — the legacy mirror
-    //     can never be left describing details the organizer already changed.
-    const bizumHandle = `+34600${String(Date.now()).slice(-6)}`;
-    await GameUpdateService.updateGame(
-      hintGame.id,
-      { paymentMethods: [{ method: 'BIZUM', handle: bizumHandle }] },
-      hintPayer.id,
-      false,
-    );
-    const afterStructured = await prisma.game.findUniqueOrThrow({
-      where: { id: hintGame.id },
-      select: { paymentHint: true, paymentMethods: true },
-    });
-    assert.deepEqual(afterStructured.paymentMethods, [
-      { method: 'BIZUM', handle: bizumHandle },
-    ]);
-    assert.equal(
-      afterStructured.paymentHint,
-      `Bizum ${bizumHandle}`,
-      'the legacy one-line mirror is rewritten with the list, never left stale',
-    );
-
-    // 4b. …and the clear path is still live, so (3) is not vacuous.
-    await GameUpdateService.updateGame(
-      hintGame.id,
-      { paymentMethods: null },
-      hintPayer.id,
-      false,
-    );
-    const afterClear = await prisma.game.findUniqueOrThrow({
-      where: { id: hintGame.id },
-      select: { paymentHint: true, paymentMethods: true },
-    });
-    assert.equal(afterClear.paymentHint, null, 'an explicit clear empties the mirror');
-    assert.equal(afterClear.paymentMethods, null, 'and the list');
 
     console.log('gameCostSettle.integration.test.ts: ok');
   } finally {

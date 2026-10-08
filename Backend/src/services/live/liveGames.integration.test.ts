@@ -5,7 +5,7 @@
  *  2. `listLiveGames` never returns a game the gate would refuse;
  *  3. the follower live push is deduped by `LiveGameNotifyDelivery`, so a
  *     second `IN_PROGRESS` transition sends nothing;
- *  4. the results payload is a whitelist — no `paymentHint`, no player `bio`
+ *  4. the results payload is a whitelist — no price, no player `bio`
  *     or `weeklyAvailability` — and a private game is unreadable without a
  *     roster row;
  *  5. a spectator token stops working the moment the game leaves the live gate.
@@ -215,15 +215,13 @@ void (async () => {
 
     /*
      * `GET /api/results/game/:gameId` is `optionalAuth` and used to run a
-     * top-level Prisma `include`, so one unauthenticated request returned PRD
-     * 348's `Game.paymentHint` (an IBAN / Revolut handle) plus every player's
+     * top-level Prisma `include`, so one unauthenticated request returned every
+     * `Game` scalar (description, price) plus every player's
      * `bio` and `weeklyAvailability` — for private games too.
      */
     await prisma.game.update({
       where: { id: watchable.id },
       data: {
-        paymentHint: `Revolut @qa-${suffix}`,
-        paymentMethods: [{ method: 'IPS_PRENESI', handle: `+381-${suffix}` }],
         description: 'internal notes',
         priceTotal: 4000,
       },
@@ -242,12 +240,6 @@ void (async () => {
       [],
       'no forbidden Game scalar or user field may reach a results response',
     );
-    assert.equal('paymentHint' in publicResults, false, 'paymentHint never ships with results');
-    assert.equal(
-      'paymentMethods' in publicResults,
-      false,
-      'the structured payment list never ships with results either',
-    );
     assert.equal('description' in publicResults, false);
     assert.equal('priceTotal' in publicResults, false);
     const serialized = JSON.stringify(publicResults);
@@ -256,8 +248,6 @@ void (async () => {
       false,
       'a player bio must not appear anywhere in the payload',
     );
-    assert.equal(serialized.includes(`Revolut @qa-${suffix}`), false);
-    assert.equal(serialized.includes(`+381-${suffix}`), false);
     assert.ok(Array.isArray(publicResults.rounds), 'the scoreboard itself still ships');
 
     /* ---- 6. authorization: public yes, private only for the roster ---- */

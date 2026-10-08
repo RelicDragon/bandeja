@@ -145,16 +145,6 @@
       "integrationTypeMustBeOnlineBooking": "Integrasi klub harus berupa pemesanan online.",
       "rollbackFailed": "Tidak dapat mengonfirmasi bahwa reservasi dibatalkan.",
       "removeBookingsBeforeClearing": "Hapus atau batalkan dulu pesanan lapangannya."
-    },
-    "cost": {
-      "paymentMethod": {
-        "tooMany": "Kamu bisa mencantumkan maksimal 3 cara pembayaran.",
-        "unknownMethod": "Cara pembayaran itu tidak tersedia.",
-        "duplicateMethod": "Cara pembayaran itu sudah ada di daftar.",
-        "handleRequired": "Isi detail tujuan pengiriman uangnya.",
-        "handleTooLong": "Terlalu panjang.",
-        "handleInvalid": "Sepertinya kurang tepat — coba periksa lagi."
-      }
     }
   },
   "leagues": {

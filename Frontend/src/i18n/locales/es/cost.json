@@ -31,9 +31,6 @@
     "sheet": {
       "title": "¿Cómo has pagado?",
       "subtitle": "{{amount}} para {{name}}",
-      "hintLabel": "Cómo pagar a {{name}}",
-      "copy": "Copiar",
-      "copied": "Copiado",
       "outside": "Fuera de la app",
       "outsideHint": "Efectivo, transferencia o una app de pagos",
       "coins": "Enviar {{coins}} monedas",
@@ -71,75 +68,10 @@
       "settleFailed": "No se ha podido registrar. Inténtalo otra vez.",
       "confirmFailed": "No se ha podido actualizar esa fila. Inténtalo otra vez.",
       "remindFailed": "Ahora mismo no se puede enviar el recordatorio.",
-      "updateFailed": "No se ha podido guardar la parte. Inténtalo otra vez.",
-      "copyFailed": "No se ha podido copiar."
+      "updateFailed": "No se ha podido guardar la parte. Inténtalo otra vez."
     },
     "loading": "Cargando el reparto de gastos…",
     "loadFailed": "No pudimos cargar el reparto de gastos.",
-    "payment": {
-      "title": "Cómo pagarte",
-      "help": "Los jugadores lo ven al saldar su parte.",
-      "add": "Añadir otra forma",
-      "addFirst": "Añadir una forma de pago",
-      "remove": "Quitar {{method}}",
-      "maxReached": "Puedes indicar hasta {{max}} formas de pago.",
-      "noHandleNeeded": "No hace falta nada.",
-      "open": "Abrir",
-      "everywhere": "Funciona en cualquier sitio",
-      "pickerTitle": "¿Cómo quieres que te paguen?",
-      "pickerSubtitle": "Las formas que se usan donde se juega el partido.",
-      "pickerSearch": "Buscar",
-      "pickerEmpty": "No hay coincidencias.",
-      "pickerCustomHint": "¿No está? Elige «Otra cosa» y escríbelo tú.",
-      "profileTitle": "Datos de pago guardados",
-      "profileHelp": "Se rellenan en los partidos que crees.",
-      "method": {
-        "custom": "Otra cosa",
-        "cash": "Efectivo",
-        "bankTransfer": "Transferencia",
-        "iban": "IBAN",
-        "cardTransfer": "Tarjeta a tarjeta",
-        "ukBank": "Transferencia",
-        "rsAccount": "Cuenta bancaria",
-        "huInstant": "Transferencia instantánea",
-        "clabe": "CLABE",
-        "cbuAlias": "Alias o CBU"
-      },
-      "handle": {
-        "NONE": {
-          "label": "No hacen falta datos"
-        },
-        "TEXT": {
-          "label": "Datos",
-          "placeholder": "Efectivo en el club, un IBAN, lo que sea"
-        },
-        "PHONE": {
-          "label": "Teléfono"
-        },
-        "EMAIL": {
-          "label": "Correo"
-        },
-        "PHONE_OR_EMAIL": {
-          "label": "Teléfono o correo"
-        },
-        "TAG": {
-          "label": "Usuario"
-        },
-        "IBAN": {
-          "label": "IBAN"
-        },
-        "ACCOUNT": {
-          "label": "Número de cuenta"
-        },
-        "CARD": {
-          "label": "Número de tarjeta"
-        },
-        "ALIAS": {
-          "label": "Clave o ID",
-          "placeholder": "Teléfono, correo o ID"
-        }
-      }
-    },
     "roster": {
       "yourShare": "Tu parte"
     }

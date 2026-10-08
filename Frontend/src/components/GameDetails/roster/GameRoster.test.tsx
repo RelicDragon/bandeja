@@ -74,7 +74,7 @@ const shares: CostShare[] = NAMES.map((name, index) => ({
 function summary(overrides: Partial<GameCostSummary> = {}): GameCostSummary {
   return {
     gameId: 'g1', available: true, totalMinor: 4000, currency: 'EUR', payerUserId: 'Marko',
-    payer: shares[0].user, paymentHint: null, paymentMethods: [], countryIso2: null, frozenAt: null,
+    payer: shares[0].user, frozenAt: null,
     estimated: true, shares, settledCount: 2, shareCount: 4, outstandingMinor: 2000,
     viewerShare: shares[1], canManage: false, canConfirm: false, canRemind: false,
     coinsPerCurrencyUnit: null, viewerCoinCost: null, viewerCoinBalance: 0, remindAvailableAt: null,

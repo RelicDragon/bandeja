@@ -5,7 +5,7 @@
  * token — people with no account at all — so the two things this pins are:
  *
  *  1. the Prisma shape is a `select`, never an `include` (an `include` loads
- *     *every* `Game` scalar, `paymentHint` among them);
+ *     *every* `Game` scalar, `costPayerId` and the price among them);
  *  2. the forbidden lists are actually enforced by the contract helper.
  *
  * Pure: no database, no `.env`.
@@ -81,19 +81,9 @@ const clean = {
 assert.deepEqual(collectGameResultsContractIssues(clean), []);
 
 assert.deepEqual(
-  collectGameResultsContractIssues({ ...clean, paymentHint: 'Revolut @x' }).map((i) => i.path),
-  ['paymentHint'],
-  'a leaked payment handle is reported',
-);
-
-// PRD 348 — the structured list carries the same handle, so it is forbidden too.
-assert.deepEqual(
-  collectGameResultsContractIssues({
-    ...clean,
-    paymentMethods: [{ method: 'IPS_PRENESI', handle: '+381601112233' }],
-  }).map((i) => i.path),
-  ['paymentMethods'],
-  'a leaked payment method list is reported',
+  collectGameResultsContractIssues({ ...clean, costPayerId: 'u1' }).map((i) => i.path),
+  ['costPayerId'],
+  'a leaked cost-split column is reported',
 );
 
 const leakedBio = JSON.parse(JSON.stringify(clean)) as typeof clean & {

@@ -98,7 +98,6 @@ describe('buildRematchGameInitialData', () => {
     trainerId: 'coach',
     autoFillFromQueue: true,
     showOnLiveRail: false,
-    paymentHint: 'Revolut @me',
     minLevel: 3.2,
     maxLevel: 4.6,
     genderTeams: 'MIX_PAIRS',

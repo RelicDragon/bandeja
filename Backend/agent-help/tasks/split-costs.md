@@ -30,22 +30,21 @@ To get organizer rights, create the game yourself or ask its owner to make you a
 1. When creating: in the "Settings & details" step, find the "Price"{createGame.price} section. On an existing game: open the game, tap the price line in the info card (it reads "Price not set"{createGame.priceNotSet} when empty) to open "Edit details" on the "Price"{gameDetails.editTab.price} tab.
 2. Pick the "Price Type": "Total"{createGame.priceTypeTotal}, "Per Person", "Per Team", "Free"{createGame.priceTypeFree} or "Not Known".
 3. Enter the "Price Amount" and pick the "Currency".
-4. Under "How to pay you", tap "Add a way to pay" and choose a method (Bizum, bank transfer, cash, "Something else" and so on), then fill its details. Up to 3 ways. Players see these when they settle.
-5. Save. The split appears on the game page as soon as at least one player is playing.
+4. Save. The split appears on the game page as soon as at least one player is playing.
 
-Saved defaults for new games: Profile → "Saved payment details".
+The app does not store how players should pay you (no bank or payment-app details): tell the players yourself, for example in the game chat.
 
 ### League season price (season owner or admin)
 1. Open the league season page, "General"{gameDetails.general} tab.
 2. Tap the price line in the info card → "Edit details" → "Price"{gameDetails.editTab.price} tab, set the price type, amount and currency, and save.
-3. Each fixture priced "Not Known" now splits by the season's price and uses the season's payment details.
+3. Each fixture priced "Not Known" now splits by the season's price.
 
 ### Where the split shows
 On the game page, inside the "Participants"{games.participants} card. Your own card shows "Your share", the amount, its state ("Unpaid"{cost.state.unpaid}, "Marked paid" or "Settled"), and who to pay. Organizers also see each player's amount pill, the total and a line like 2 of 4 settled · €10 outstanding. After results are in (and on league fixtures) the card turns into a compact payment list.
 
 ### Pay your share (player)
 1. On the game page, in your card in "Participants"{games.participants}, tap "I paid".
-2. The sheet "How did you pay?" shows the amount, who to pay and their payment details ("Copy"{cost.sheet.copy} copies one).
+2. The sheet "How did you pay?" shows the amount and who to pay. Arrange the payment method with them directly; the app holds no payment details.
 3. Tap "Outside the app" if you paid by cash, transfer or an app. Your share becomes "Marked paid" until the organizer confirms.
 4. If shown, tap the coins option to send coins instead: the share is settled at once.
 
@@ -100,4 +99,4 @@ Tap "Remind unpaid" in the "Participants"{games.participants} card. Every player
 - `set_game_price`: set or change the price of a casual game, tournament, training or bar event. Never a league fixture or season.
 - `remind_unpaid_shares`: nudge unpaid players (24-hour limit applies).
 
-Only in the app: league season and league fixture prices, payment methods and their details, editing one player's amount, changing the payer. The assistant never sees payment details such as IBANs or phone numbers; it links the user to the game's cost section instead.
+Only in the app: league season and league fixture prices, editing one player's amount, changing the payer. The app stores no payment details (IBANs, phone numbers, payment-app handles); the assistant links the user to the game's cost section to mark a share paid or pay with coins.

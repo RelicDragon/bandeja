@@ -1,6 +1,6 @@
 /**
  * Agent-facing game shapes. Whitelisted Prisma selects:
- * no `paymentHint` / `paymentMethods`, no cost shares, no chat, no booking provider data.
+ * no cost shares, no chat, no booking provider data.
  * Game `name` / `description` are user-written text and reach the model as DATA only.
  */
 import { ParticipantStatus, type Prisma } from '@prisma/client';

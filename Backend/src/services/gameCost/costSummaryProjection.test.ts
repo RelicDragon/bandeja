@@ -11,8 +11,7 @@ const shares: CostShareDto[] = ['a', 'b', 'c', 'd'].map((userId, index) => ({
 }));
 const summary: GameCostSummaryDto = {
   gameId: 'game', available: true, totalMinor: 4000, currency: 'EUR',
-  payerUserId: 'owner', payer: null, paymentHint: null, paymentMethods: [],
-  countryIso2: null, frozenAt: null, estimated: true, shares,
+  payerUserId: 'owner', payer: null, frozenAt: null, estimated: true, shares,
   settledCount: 2, shareCount: 4, outstandingMinor: 2000, viewerShare: shares[2],
   canManage: false, canConfirm: false, canRemind: false, coinsPerCurrencyUnit: null,
   viewerCoinCost: null, viewerCoinBalance: 0, remindAvailableAt: null,

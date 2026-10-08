@@ -31,9 +31,6 @@
     "sheet": {
       "title": "Jak jste zaplatili?",
       "subtitle": "{{amount}} pro {{name}}",
-      "hintLabel": "Jak zaplatit hráči {{name}}",
-      "copy": "Kopírovat",
-      "copied": "Zkopírováno",
       "outside": "Mimo aplikaci",
       "outsideHint": "Hotově, převodem nebo platební aplikací",
       "coins": "Poslat mince: {{coins}}",
@@ -72,75 +69,10 @@
       "settleFailed": "Nepodařilo se to uložit. Zkuste to znovu.",
       "confirmFailed": "Řádek se nepodařilo aktualizovat. Zkuste to znovu.",
       "remindFailed": "Připomenutí teď nelze odeslat.",
-      "updateFailed": "Podíl se nepodařilo uložit. Zkuste to znovu.",
-      "copyFailed": "Nepodařilo se zkopírovat."
+      "updateFailed": "Podíl se nepodařilo uložit. Zkuste to znovu."
     },
     "loading": "Načítáme rozdělení nákladů…",
     "loadFailed": "Rozdělení nákladů se nepodařilo načíst.",
-    "payment": {
-      "title": "Jak ti zaplatit",
-      "help": "Hráči to uvidí při vyrovnání.",
-      "add": "Přidat další způsob",
-      "addFirst": "Přidat způsob platby",
-      "remove": "Odebrat {{method}}",
-      "maxReached": "Můžeš uvést až {{max}} způsoby platby.",
-      "noHandleNeeded": "Není co vyplňovat.",
-      "open": "Otevřít",
-      "everywhere": "Funguje všude",
-      "pickerTitle": "Jak ti mají hráči zaplatit?",
-      "pickerSubtitle": "Způsoby, které se používají tam, kde se hraje.",
-      "pickerSearch": "Hledat",
-      "pickerEmpty": "Nic nenalezeno.",
-      "pickerCustomHint": "Není tu? Vyber „Něco jiného“ a napiš to sám.",
-      "profileTitle": "Uložené platební údaje",
-      "profileHelp": "Předvyplní se do her, které vytvoříš.",
-      "method": {
-        "custom": "Něco jiného",
-        "cash": "Hotovost",
-        "bankTransfer": "Bankovní převod",
-        "iban": "IBAN",
-        "cardTransfer": "Převod na kartu",
-        "ukBank": "Bankovní převod",
-        "rsAccount": "Bankovní účet",
-        "huInstant": "Okamžitý převod",
-        "clabe": "CLABE",
-        "cbuAlias": "Alias nebo CBU"
-      },
-      "handle": {
-        "NONE": {
-          "label": "Údaje nejsou potřeba"
-        },
-        "TEXT": {
-          "label": "Údaje",
-          "placeholder": "Hotovost v klubu, IBAN, cokoli"
-        },
-        "PHONE": {
-          "label": "Telefonní číslo"
-        },
-        "EMAIL": {
-          "label": "E-mail"
-        },
-        "PHONE_OR_EMAIL": {
-          "label": "Telefon nebo e-mail"
-        },
-        "TAG": {
-          "label": "Uživatelské jméno"
-        },
-        "IBAN": {
-          "label": "IBAN"
-        },
-        "ACCOUNT": {
-          "label": "Číslo účtu"
-        },
-        "CARD": {
-          "label": "Číslo karty"
-        },
-        "ALIAS": {
-          "label": "Klíč nebo ID",
-          "placeholder": "Telefon, e-mail nebo ID"
-        }
-      }
-    },
     "roster": {
       "yourShare": "Váš podíl"
     }

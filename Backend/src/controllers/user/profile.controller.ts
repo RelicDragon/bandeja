@@ -14,7 +14,6 @@ import {
   isOurAvatarOriginalUrl,
 } from '../../utils/userAvatarTiny';
 import { PROFILE_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
-import { parsePaymentMethodsOrThrow } from '../../services/gameCost/paymentMethodsWrite';
 import { config } from '../../config/env';
 import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
 import { Prisma } from '@prisma/client';
@@ -120,19 +119,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, gameCardRosterMode, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries, payoutMethods } = req.body;
-
-  /**
-   * PRD 348 — the organiser's saved "how to pay me" list, copied onto the games
-   * they create. Validated against the catalogue here so a bad entry is a 400
-   * rather than a game nobody can pay.
-   */
-  const normalizedPayoutMethods =
-    payoutMethods === undefined
-      ? undefined
-      : payoutMethods === null
-        ? []
-        : parsePaymentMethodsOrThrow(payoutMethods);
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, gameCardRosterMode, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
 
   let normalizedWeeklyAvailability =
     weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
@@ -286,12 +273,6 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(timeFormat !== undefined && { timeFormat }),
         ...(weekStart !== undefined && { weekStart }),
         ...(defaultCurrency !== undefined && { defaultCurrency }),
-        ...(normalizedPayoutMethods !== undefined && {
-          payoutMethods:
-            normalizedPayoutMethods.length === 0
-              ? Prisma.DbNull
-              : (normalizedPayoutMethods as unknown as Prisma.InputJsonValue),
-        }),
         ...(gender !== undefined && { gender }),
         ...(finalGenderIsSet !== undefined && { genderIsSet: finalGenderIsSet }),
         ...(!resolvedNames && nameIsSet !== undefined && { nameIsSet }),

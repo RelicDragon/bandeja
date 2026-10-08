@@ -295,9 +295,6 @@ export const PROFILE_SELECT_FIELDS = {
   timeFormat: true,
   weekStart: true,
   defaultCurrency: true,
-  // PRD 348 — the owner's own payout defaults. Own-profile payloads only; this
-  // select is never used to read another user.
-  payoutMethods: true,
   allowMessagesFromNonContacts: true,
   showOnlineStatus: true,
   alwaysShowUserNames: true,

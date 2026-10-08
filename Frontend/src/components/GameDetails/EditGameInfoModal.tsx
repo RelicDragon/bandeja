@@ -15,13 +15,7 @@ import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { GeneralTab, type GeneralTabState } from './editGameInfo/GeneralTab';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
-import { resolvePaymentMethods } from '@shared/payments/paymentMethodSelection';
-import {
-  buildGameEditPricePayload,
-  cleanPaymentMethods,
-  isPaidPriceType,
-} from '@/features/cost/gameEditPricePayload';
-import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
+import { buildGameEditPricePayload, isPaidPriceType } from '@/features/cost/gameEditPricePayload';
 import { GameSettings } from './GameSettings';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
@@ -65,9 +59,6 @@ function getInitialPriceState(game: Game, userCurrency: PriceCurrency): PriceTab
     priceTotal: game.priceTotal,
     priceCurrency: game.priceCurrency ?? userCurrency,
     inputValue: game.priceTotal != null ? String(game.priceTotal) : '',
-    // PRD 348 — falls back to the legacy free-text hint for a game written
-    // before the catalogue, so opening Edit never silently clears it.
-    paymentMethods: resolvePaymentMethods(game.paymentMethods, game.paymentHint),
   };
 }
 
@@ -89,10 +80,7 @@ export const EditGameInfoModal = ({
   /** PRD 345 — non-null while the "Apply to" sheet is open after a save. */
   const [seriesScopePatch, setSeriesScopePatch] = useState<Record<string, unknown> | null>(null);
   const [general, setGeneral] = useState<GeneralTabState>(() => getInitialGeneralState(game));
-  const venueCityId = game.city?.id || game.club?.cityId || '';
   const [price, setPrice] = useState<PriceTabState>(() => getInitialPriceState(game, userCurrency));
-  // PRD 348 — the picker offers the rails that exist where the game is played.
-  const paymentCountryIso2 = useCityCountryQuery(venueCityId);
   const [isSaving, setIsSaving] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [participantsDirty, setParticipantsDirty] = useState(false);
@@ -172,9 +160,7 @@ export const EditGameInfoModal = ({
     price.priceType !== initialPrice.priceType ||
     (priceIsPaid &&
       ((price.priceTotal ?? null) !== (initialPrice.priceTotal ?? null) ||
-        (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null) ||
-        JSON.stringify(cleanPaymentMethods(price.paymentMethods)) !==
-          JSON.stringify(cleanPaymentMethods(initialPrice.paymentMethods))));
+        (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null)));
   const isDirty = generalDirty || priceDirty || participantsDirty;
 
   const handleRequestClose = useCallback(() => {
@@ -221,10 +207,7 @@ export const EditGameInfoModal = ({
       const updateData: Partial<Game> = {
         name: general.name.trim() || null,
         description: general.description.trim() || null,
-        // PRD 348 — `paymentMethods` is sent only when the organizer changed it:
-        // the seed can be missing from a game object the socket delivered, and
-        // writing it back unconditionally deleted saved IBANs.
-        ...buildGameEditPricePayload(price, initialPrice),
+        ...buildGameEditPricePayload(price),
       };
 
       if (general.removeAvatar) {
@@ -317,7 +300,6 @@ export const EditGameInfoModal = ({
               state={price}
               onChange={(patch) => setPrice((s) => ({ ...s, ...patch }))}
               maxParticipants={game.maxParticipants}
-              countryIso2={paymentCountryIso2}
             />
           )}
           {canEditParticipants ? (

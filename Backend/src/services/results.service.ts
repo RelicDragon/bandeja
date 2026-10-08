@@ -42,7 +42,7 @@ const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
  * Authorization lives in `results/gameResultsAccess.ts` and is applied by the
  * controller before this runs — a private game must never reach a stranger.
  * The projection is an explicit whitelist `select` (not `include`, which loads
- * every `Game` scalar, `Game.paymentHint` included) — see
+ * every `Game` scalar) — see
  * `results/gameResults.projection.ts`.
  */
 export async function getGameResults(gameId: string) {
