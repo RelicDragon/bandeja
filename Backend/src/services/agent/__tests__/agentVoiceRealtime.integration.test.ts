@@ -364,7 +364,7 @@ void (async () => {
 
     // --- barge-in: cancel + cut the stored reply to what was heard ------------------------------
     const first = 'First part is here.';
-    // Two lines, so the run's narration hold releases the text while the model still writes.
+    // Voice runs skip the narration hold: the text streams while the model still writes.
     llm.scripts.push({ pieces: [`${first}\n`, 'And the second part of this answer is quite a lot longer than the first. '], gapMs: 30, hang: true });
     stt.events!.speechStarted();
     stt.events!.delta('i2', 'And');

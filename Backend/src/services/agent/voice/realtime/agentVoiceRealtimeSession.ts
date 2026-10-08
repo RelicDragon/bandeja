@@ -9,8 +9,10 @@
  * - Mic PCM streams into a transcription session (realtime, or the batch fallback); its
  *   end-of-turn + final transcript become a voice run (`sendAgentUserMessage`, `voice: true`).
  * - The run's events are followed from the event store: `text.delta` → `SpeechChunker` →
- *   streaming TTS (two sentences in flight, audio sent strictly in order). A tool that starts
- *   while nothing has been said yet gets one short spoken filler (its localized label).
+ *   streaming TTS (two sentences in flight, audio sent strictly in order). Voice runs skip the
+ *   narration hold, so a short line before a tool call ("Let me check.") is spoken (flushed at
+ *   `tool.started`); a tool that starts while nothing has been said yet gets one short spoken
+ *   filler (its localized label).
  * - Barge-in: transcription keeps running while thinking / speaking. Speech that lasts
  *   (a caption delta, or ≥ 300 ms) or `voice:interrupt` stops playback, cancels the run and cuts
  *   the stored reply to what was heard.
@@ -670,6 +672,9 @@ export class AgentVoiceRealtimeSession {
         break;
       }
       case 'tool.started':
+        // Text before a tool call is complete ("Let me check."; voice runs stream it unheld):
+        // say it now. Once it is queued the wait is covered and no filler follows.
+        for (const piece of turn.chunker.flushPieces()) this.enqueueReply(turn, piece);
         turn.openTools.set(event.callId, event.label);
         this.scheduleFiller(turn);
         break;

@@ -410,6 +410,33 @@ async function fillerAndFailures(): Promise<void> {
   h.session.end('user');
 }
 
+/** Voice runs stream a short line before a tool call unheld: it is spoken at `tool.started`, no filler. */
+async function spokenNarrationCoversTheWait(): Promise<void> {
+  const h = harness();
+  await h.session.start();
+  await speak(h, 'What games do I have');
+  await waitFor(() => h.runs.followed.has('run-1'), 'follow');
+  const run = h.runs.run('run-1');
+  run.onEvent({ type: 'run.started', runId: 'run-1', chatId: 'chat-1' });
+  // No trailing space: the chunker alone would wait for more text.
+  run.onEvent({ type: 'text.delta', text: 'Let me check your games.' });
+  assert.equal(h.of('voice:speech-text').length, 0, 'held by the chunker until the sentence is complete');
+  run.onEvent({ type: 'tool.started', callId: 'c1', name: 'list_my_games', label: 'Looking up your games' });
+  await waitFor(() => h.of('voice:speech-text').length === 1, 'narration spoken');
+  assert.deepEqual(
+    { kind: h.of('voice:speech-text')[0].payload.kind, text: h.of('voice:speech-text')[0].payload.text },
+    { kind: 'reply', text: 'Let me check your games.' },
+  );
+  await sleep(150);
+  assert.equal(h.of('voice:speech-text').length, 1, 'no filler once the narration was said');
+  run.onEvent({ type: 'tool.finished', callId: 'c1', name: 'list_my_games', ok: true, summary: 'x', label: 'x' } as unknown as AgentStreamEvent);
+  run.onEvent({ type: 'text.delta', text: 'You have one game on Sunday.' });
+  run.onEvent({ type: 'run.completed', status: 'COMPLETED', usage: { inputTokens: 1, outputTokens: 1 } });
+  await waitFor(() => h.of('voice:audio-end').length === 1, 'audio-end');
+  assert.deepEqual(h.tts.calls, ['Let me check your games.', 'You have one game on Sunday.']);
+  h.session.end('user');
+}
+
 async function confirmFlow(): Promise<void> {
   const h = harness();
   await h.session.start();
@@ -646,6 +673,7 @@ void (async () => {
     pureCases();
     await turnAndOrderedSpeech();
     await fillerAndFailures();
+    await spokenNarrationCoversTheWait();
     await confirmFlow();
     await bargeIn();
     await continuationBusyBudgetIdle();

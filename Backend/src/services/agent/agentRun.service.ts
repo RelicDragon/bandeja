@@ -15,7 +15,8 @@
  *
  * Loop, per step (≤ `AGENT_MAX_STEPS`; the last step gets no tools so it must answer):
  *   stream completion → `text.delta` (a short first line is held: dropped as narration when
- *   the step ends with read-only tool calls, `isAgentNarrationHeld`) → if tool calls: save ASSISTANT message (text +
+ *   the step ends with read-only tool calls, `isAgentNarrationHeld`; voice runs are never held —
+ *   their text streams at once and is saved) → if tool calls: save ASSISTANT message (text +
  *   tool_call blocks) → `message.saved` → every call of the step: `tool.started` /
  *   registry.executeTool / `tool.finished` (consecutive reads run concurrently; writes and
  *   memory tools one at a time, in order) → save TOOL message → `message.saved` → next step.
@@ -1084,8 +1085,10 @@ export class AgentRunService {
         let stepCachedTokens: number | null = null;
         // Narration hold (`isAgentNarrationHeld`): the start of a step's text is held back until
         // it is clearly an answer; a short line followed by read-only tool calls is dropped.
+        // Voice runs stream at once (a spoken reply is one short line; holding it would delay
+        // the first audio), so their text is never narration: it was heard, it is saved.
         let heldText = '';
-        let streaming = false;
+        let streaming = run.voice === true;
         const releaseHeld = async () => {
           streaming = true;
           if (!heldText) return;

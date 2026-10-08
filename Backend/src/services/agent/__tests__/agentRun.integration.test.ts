@@ -277,6 +277,38 @@ void (async () => {
       console.log('happy path: ok');
     }
 
+    // 1a. voice runs skip the narration hold; typed runs still drop it -----------------------
+    {
+      const narration = "I'll look for that game.";
+      const steps = () => [narratedToolCallStep(narration, 'get_game', { gameId: fixture.games.public }), textStep('You have one game.')];
+      const deltas = async (events: InMemoryAgentEventStore, runId: string) =>
+        (await eventsOf(events, runId)).filter((e) => e.type === 'text.delta').map((e) => (e as { text: string }).text);
+
+      // Voice: the short line streams before the tool call (it is spoken) and is saved with it.
+      const voiceLlm = new ScriptedLlm(steps());
+      const voice = makeService(voiceLlm);
+      const voiceChat = await newChat(owner.userId);
+      const voiceRun = await voice.service.enqueueRun({ userId: owner.userId, chatId: voiceChat, text: 'What is my next game?', voice: true });
+      assert.equal((await voice.service.waitForRun(voiceRun.runId)).status, AgentRunStatus.COMPLETED);
+      const voiceTypes = (await typesOf(voice.events, voiceRun.runId)).filter((t) => t !== 'run.queued');
+      assert.deepEqual(voiceTypes.slice(0, 3), ['run.started', 'text.delta', 'message.saved'], 'streamed before the step ends');
+      assert.equal(voiceTypes.indexOf('text.delta') < voiceTypes.indexOf('tool.started'), true);
+      assert.equal((await deltas(voice.events, voiceRun.runId)).join(''), `${narration}You have one game.`);
+      const voiceDetail = await getAgentChatDetail(owner.userId, voiceChat);
+      assert.deepEqual(voiceDetail.messages[1].blocks[0], { type: 'text', text: narration }, 'saved next to the call');
+      assert.equal(voiceDetail.messages[1].blocks[1]?.type, 'tool_call');
+      assert.equal((voiceLlm.calls[1].messages.at(-2) as { content: string | null }).content, narration, 'replayed as said');
+
+      // Typed: unchanged (held and dropped).
+      const typed = makeService(new ScriptedLlm(steps()));
+      const typedChat = await newChat(owner.userId);
+      const typedRun = await typed.service.enqueueRun({ userId: owner.userId, chatId: typedChat, text: 'What is my next game?' });
+      await typed.service.waitForRun(typedRun.runId);
+      assert.equal((await deltas(typed.events, typedRun.runId)).join(''), 'You have one game.');
+      assert.equal((await getAgentChatDetail(owner.userId, typedChat)).messages[1].blocks.length, 1, 'typed: no narration block');
+      console.log('voice skips the narration hold: ok');
+    }
+
     // 1b. edit a user message: rewind to it, drop later turns, re-title, resend --------------
     {
       const llm = new ScriptedLlm([textStep('First answer.')]);
