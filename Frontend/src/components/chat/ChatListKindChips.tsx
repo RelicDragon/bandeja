@@ -8,6 +8,8 @@ type Props = {
   unreadActive: boolean;
   onUnreadToggle: () => void;
   invitationCount: number;
+  /** Kinds with nothing to show get no chip. */
+  availableKinds: Record<ChatListKind, boolean>;
   disabled?: boolean;
 };
 
@@ -25,14 +27,16 @@ export function ChatListKindChips({
   unreadActive,
   onUnreadToggle,
   invitationCount,
+  availableKinds,
   disabled = false,
 }: Props) {
   const { t } = useTranslation();
-  const kinds: Array<{ id: ChatListKind; label: string }> = [
+  const allKinds: Array<{ id: ChatListKind; label: string }> = [
     { id: 'all', label: t('chat.list.filterAll', { defaultValue: 'All' }) },
     { id: 'games', label: t('chat.list.filterGames', { defaultValue: 'Games' }) },
     { id: 'groups', label: t('chat.list.filterGroups', { defaultValue: 'Groups' }) },
   ];
+  const kinds = allKinds.filter(({ id }) => availableKinds[id]);
 
   return (
     <div

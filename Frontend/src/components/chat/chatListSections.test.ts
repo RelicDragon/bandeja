@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Game } from '@/types';
 import type { ChatItem } from './chatListTypes';
-import { buildChatListEntries, countChatListInvitations, isChatListPastGame } from './chatListSections';
+import { availableChatListKinds, buildChatListEntries, countChatListInvitations, isChatListPastGame } from './chatListSections';
 
 const ME = 'me';
 const NOW = Date.parse('2026-10-08T12:00:00Z');
@@ -154,5 +154,24 @@ describe('helpers', () => {
     const g = game('a', { start: NOW - 3 * H }).data as Game;
     expect(isChatListPastGame(g, NOW)).toBe(true);
     expect(isChatListPastGame({ ...g, status: 'STARTED' }, NOW)).toBe(false);
+  });
+});
+
+describe('availableChatListKinds', () => {
+  const withMessage = (c: ChatItem): ChatItem =>
+    ({ ...c, data: { ...(c.data as object), lastMessage: { preview: 'hi', updatedAt: '2026-10-08' } } }) as ChatItem;
+
+  it('offers Games and Groups only when such chats would show', () => {
+    expect(availableChatListKinds([withMessage(user('u1'))], ME)).toEqual({ all: true, games: false, groups: false });
+    expect(availableChatListKinds([withMessage(group('g1')), withMessage(game('x', { start: NOW + H }))], ME)).toEqual({
+      all: true,
+      games: true,
+      groups: true,
+    });
+  });
+
+  it('ignores silent game chats but counts a pending invitation', () => {
+    expect(availableChatListKinds([game('quiet', { start: NOW + H, mine: 'PLAYING' })], ME).games).toBe(false);
+    expect(availableChatListKinds([game('inv', { start: NOW + H, mine: 'INVITED' })], ME).games).toBe(true);
   });
 });

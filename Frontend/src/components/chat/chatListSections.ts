@@ -1,6 +1,7 @@
 import type { Game } from '@/types';
 import { getChatKey } from '@/utils/chatListHelpers';
 import { isChatListInvitation } from '@/utils/chatListInvitation';
+import { hasThreadActivity } from '@/services/chat/inbox/deriveChatInboxReadModel';
 import type { ChatItem } from './chatListTypes';
 
 /** Quick filter chips above the Chats feed (`chatsFilter === 'users'`). */
@@ -79,6 +80,25 @@ function header(section: ChatListSectionId): ChatListEntry {
 
 function row(chat: ChatItem, past?: boolean): ChatListEntry {
   return past ? { kind: 'chat', key: getChatKey(chat), chat, past } : { kind: 'chat', key: getChatKey(chat), chat };
+}
+
+/**
+ * Which kind chips have anything to show. Reads the whole feed (not the unread
+ * slice) and the same visibility rule as the list, so a chip never opens empty.
+ */
+export function availableChatListKinds(
+  chats: readonly ChatItem[],
+  userId: string | undefined
+): Record<ChatListKind, boolean> {
+  let games = false;
+  let groups = false;
+  for (const c of chats) {
+    if (!hasThreadActivity(c, userId)) continue;
+    if (c.type === 'game') games = true;
+    else if (c.type === 'group' || c.type === 'channel') groups = true;
+    if (games && groups) break;
+  }
+  return { all: true, games, groups };
 }
 
 export function countChatListInvitations(chats: readonly ChatItem[], userId: string | undefined): number {

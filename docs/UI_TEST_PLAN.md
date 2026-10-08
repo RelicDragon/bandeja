@@ -2043,6 +2043,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-164 | Invitations from the list | Get invited to an announced game (no messages yet) | Row appears under "Invitations" even with no messages; Join runs name/gender/overlap gates then the row leaves Invitations; Decline opens the reason sheet and removes the row |
 | CH-171 | Invitation cap | Have 3 pending invitations | Only the soonest shows, then "Show 2 more"; tap → all listed + "Show less"; same in the Games view |
 | CH-172 | Full invitation | Invited to a game whose PLAYING seats are all taken | Red "Full" pill next to Invited; button reads "Join queue"; accepting adds you to the queue |
+| CH-173 | Empty kind chips hidden | Account with no game chats (or no groups) | Games (or Groups) chip absent; if it empties while selected, the list falls back to All |
 | CH-165 | Games chip view | Tap Games | Invitations, Upcoming (by start time), Past (dimmed, most recent first), then "Find a game" → `/find`; DMs and groups hidden |
 | CH-166 | Groups chip view | Tap Groups | Only group chats and channels, no section headers; empty → "No group chats yet" |
 | CH-167 | Game row layout | Game chat with long name, private, novice-friendly | One status pill (seat beats role), small icons for type/private/novice/results, venue line; name truncates before the time; no time shown when the chat has no activity |

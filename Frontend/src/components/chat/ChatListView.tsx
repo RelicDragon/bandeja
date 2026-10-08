@@ -23,7 +23,7 @@ import { DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } from '@/utils/chatListConstants';
 import { useMemo } from 'react';
 import { ChatListKindChips } from './ChatListKindChips';
 import { useChatListKindStore } from './chatListKindStore';
-import { countChatListInvitations } from './chatListSections';
+import { availableChatListKinds, countChatListInvitations } from './chatListSections';
 
 export type { ChatListViewModel };
 
@@ -88,9 +88,12 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
   } = actions;
   const { showBugModal, setShowBugModal, handleBugCreated, bugsFilterPanelOpen, setBugsFilterPanelOpen } = modals;
   const { selectedChatId, selectedChatType } = selection;
-  const chatListKind = useChatListKindStore((s) => s.kind);
+  const storedChatListKind = useChatListKindStore((s) => s.kind);
   const setChatListKind = useChatListKindStore((s) => s.setKind);
   const allChats = feed.chats;
+  const availableKinds = useMemo(() => availableChatListKinds(allChats, user?.id), [allChats, user?.id]);
+  /** A chip that just emptied (e.g. the last game chat left) falls back to All. */
+  const chatListKind = availableKinds[storedChatListKind] ? storedChatListKind : 'all';
   const invitationCount = useMemo(
     () => (chatsFilter === 'users' ? countChatListInvitations(allChats, user?.id) : 0),
     [chatsFilter, allChats, user?.id]
@@ -171,6 +174,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               unreadActive={unreadFilterActive}
               onUnreadToggle={toggleUnreadFilter}
               invitationCount={invitationCount}
+              availableKinds={availableKinds}
               disabled={showListSkeleton}
             />
           </div>
