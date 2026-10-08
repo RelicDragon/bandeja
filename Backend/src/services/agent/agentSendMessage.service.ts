@@ -24,8 +24,9 @@ export type SendAgentUserMessageInput = {
   /** Voice-conversation turn (app only): the reply is written to be read aloud. Stored on the run. */
   voice?: boolean;
   /**
-   * `'consume'`: count this message against the quota here. `'counted'`: the HTTP route's
-   * `express-rate-limit` middleware already counted it in the same store.
+   * `'consume'`: count this message against the quota here. `'counted'`: already counted in
+   * the same store — by the HTTP route's `express-rate-limit` middleware, or (voice v2) as the
+   * stopped turn this merged re-send replaces. Never taken from a client.
    */
   quota: 'consume' | 'counted';
 };

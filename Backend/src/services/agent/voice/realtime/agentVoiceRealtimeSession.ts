@@ -594,6 +594,8 @@ export class AgentVoiceRealtimeSession {
           locale: this.deps.locale,
           clientCaps: this.deps.clientCaps,
           editMessageId: continuation?.messageId ?? null,
+          // Over the stopped turn's message, which already counted against the message quota.
+          merged: Boolean(continuation?.messageId),
         });
       } catch (error) {
         const classified = this.deps.classifyError(error);

@@ -118,7 +118,7 @@ class FakeTts {
 type Followed = { runId: string; onEvent: (event: AgentStreamEvent) => void; onEnd: () => void; closed: boolean };
 
 class FakeRuns implements AgentVoiceRunPort {
-  readonly sends: { text: string; editMessageId: string | null; locale: string | null }[] = [];
+  readonly sends: { text: string; editMessageId: string | null; locale: string | null; merged: boolean }[] = [];
   readonly cancels: string[] = [];
   readonly truncations: { runId: string; streamedText: string; heardOffset: number }[] = [];
   readonly followed = new Map<string, Followed>();
@@ -129,7 +129,7 @@ class FakeRuns implements AgentVoiceRunPort {
     const error = this.sendErrors.shift();
     if (error) throw error;
     this.seq += 1;
-    this.sends.push({ text: input.text, editMessageId: input.editMessageId ?? null, locale: input.locale });
+    this.sends.push({ text: input.text, editMessageId: input.editMessageId ?? null, locale: input.locale, merged: input.merged === true });
     return { runId: `run-${this.seq}`, messageId: `msg-${this.seq}` };
   }
   async cancel(_userId: string, runId: string) {
@@ -341,7 +341,7 @@ async function turnAndOrderedSpeech(): Promise<void> {
   const final = h.of('voice:caption').find((e) => e.payload.final === true);
   assert.equal(final?.payload.text, 'Find me a game tomorrow');
   await waitFor(() => h.of('voice:turn').length === 1, 'voice:turn');
-  assert.deepEqual(h.runs.sends, [{ text: 'Find me a game tomorrow', editMessageId: null, locale: 'en' }]);
+  assert.deepEqual(h.runs.sends, [{ text: 'Find me a game tomorrow', editMessageId: null, locale: 'en', merged: false }]);
   const turnId = h.of('voice:turn')[0].payload.turnId as string;
   assert.equal(h.of('voice:turn')[0].payload.runId, 'run-1');
   assert.ok(h.usage.some((u) => u.kind === 'realtime_transcription' && u.amount > 0), 'transcription usage flushed at the turn');
@@ -570,6 +570,7 @@ async function bargeIn(): Promise<void> {
   await waitFor(() => h.runs.sends.length === 2, 'second send');
   assert.equal(h.runs.sends[1].text, 'Wait, only Sunday');
   assert.equal(h.runs.sends[1].editMessageId, null, 'a reply was spoken: a new turn, not a continuation');
+  assert.equal(h.runs.sends[1].merged, false, 'a new turn counts');
 
   // Client-side interrupt (orb tap) while thinking: cancel, listening.
   await waitFor(() => h.runs.followed.has('run-2'), 'follow 2');
@@ -588,7 +589,11 @@ async function continuationBusyBudgetIdle(): Promise<void> {
   await waitFor(() => h.runs.followed.has('run-1'), 'follow');
   await speak(h, 'on Sunday evening', 'c2');
   await waitFor(() => h.runs.sends.length === 2, 'continuation');
-  assert.deepEqual(h.runs.sends[1], { text: 'Find a game on Sunday evening', editMessageId: 'msg-1', locale: 'en' });
+  assert.deepEqual(
+    h.runs.sends[1],
+    { text: 'Find a game on Sunday evening', editMessageId: 'msg-1', locale: 'en', merged: true },
+    'merged over the first message: not charged to the message quota again',
+  );
   assert.deepEqual(h.runs.cancels, ['run-1']);
   h.session.end('user');
 

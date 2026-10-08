@@ -22,6 +22,11 @@ export interface AgentVoiceRunPort {
     clientCaps: readonly string[] | null;
     /** Re-send: rewind the chat to this USER message (a turn the user kept talking in). */
     editMessageId?: string | null;
+    /**
+     * The stopped turn's words + the new ones, re-sent over its `editMessageId`: that message
+     * already counted against the per-user message quota, so this send doesn't count again.
+     */
+    merged?: boolean;
   }): Promise<{ runId: string; messageId: string }>;
   cancel(userId: string, runId: string): Promise<void>;
   /** Follows a run of the user's chat; null when it isn't theirs. */
@@ -72,9 +77,11 @@ function plainAssistantText(message: { content: Prisma.JsonValue; llmMessages: P
 
 export const defaultAgentVoiceRunPort: AgentVoiceRunPort = {
   async send(input) {
+    // Server-side only (a voice session's own continuation): HTTP sends always count.
+    const quota = input.merged === true && Boolean(input.editMessageId) ? 'counted' : 'consume';
     if (serviceOverride) {
       // Tests: same checks as `sendAgentUserMessage`, on the scripted service.
-      await consumeAgentMessageQuota(input.user.id);
+      if (quota === 'consume') await consumeAgentMessageQuota(input.user.id);
       const { message, runId } = await serviceOverride.enqueueRun({
         userId: input.user.id,
         chatId: input.chatId,
@@ -94,7 +101,7 @@ export const defaultAgentVoiceRunPort: AgentVoiceRunPort = {
       locale: input.locale,
       clientCaps: input.clientCaps,
       voice: true,
-      quota: 'consume',
+      quota,
     });
     return { runId, messageId: message.id };
   },

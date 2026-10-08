@@ -8,7 +8,9 @@
  * - usage rows `agent_voice_realtime_transcription` (20 per started second sent) and
  *   `agent_voice_speech` (1 per spoken char), no transcript / text in them;
  * - barge-in: the run is cancelled and the stored reply cut to what was heard (+ "…");
- * - a second session of the same user ends the first (`reason: 'replaced'`).
+ * - a second session of the same user ends the first (`reason: 'replaced'`);
+ * - a merged re-send (`merged` over the stopped turn's message) isn't counted against the
+ *   per-user message quota again.
  *
  * Stop the backend dev server first: its queue worker would claim these runs.
  */
@@ -28,6 +30,7 @@ import { createAgentPermissionFixture } from '../access/__tests__/agentPermissio
 import { createAgentChat } from '../agentChat.service';
 import { InMemoryAgentEventStore } from '../agentEvents';
 import { AGENT_VOICE_USAGE_REASONS } from '../agentGuards';
+import { agentMessageRateStore } from '../agentMessageRateLimit';
 import { createAgentRunService } from '../agentRun.service';
 import type { AgentLlmClient, AgentLlmStreamChunk, AgentLlmStreamParams } from '../llm/deepseekStream';
 import { AGENT_TOOL_DEFINITIONS } from '../tools';
@@ -38,7 +41,7 @@ import {
   type AgentVoiceSttEvents,
   type AgentVoiceSttOptions,
 } from '../voice/realtime/agentVoiceRealtimeProviders';
-import { setAgentVoiceRunServiceForTests } from '../voice/realtime/agentVoiceRuns';
+import { defaultAgentVoiceRunPort, setAgentVoiceRunServiceForTests } from '../voice/realtime/agentVoiceRuns';
 
 type Json = Record<string, unknown>;
 
@@ -399,6 +402,29 @@ void (async () => {
     await waitFor(() => c1.of('voice:state').some((p) => p.phase === 'ended' && p.reason === 'replaced'), 'replaced');
     c2.emit('voice:end', {});
     await waitFor(() => c2.of('voice:state').some((p) => p.phase === 'ended' && p.reason === 'user'), 'ended by the user');
+
+    // --- message quota: a merged re-send over the stopped turn's message doesn't count again ---
+    {
+      const quotaChat = await createAgentChat(owner.userId);
+      chatIds.push(quotaChat.id);
+      // Probe = one more hit; the difference between two probes minus one = what the sends counted.
+      const probe = async () => (await agentMessageRateStore.increment(owner.userId)).totalHits;
+      const send = (extra: { editMessageId?: string; merged?: boolean }) =>
+        defaultAgentVoiceRunPort.send({ user: { id: owner.userId, isAdmin: false }, chatId: quotaChat.id, text: 'Quota turn', locale: 'en', clientCaps: null, ...extra });
+      const before = await probe();
+      const first = await send({});
+      await service.waitForRun(first.runId);
+      const afterFirst = await probe();
+      assert.equal(afterFirst - before - 1, 1, 'a voice turn counts once');
+      const mergedSend = await send({ editMessageId: first.messageId, merged: true });
+      await service.waitForRun(mergedSend.runId);
+      const afterMerged = await probe();
+      assert.equal(afterMerged - afterFirst - 1, 0, 'the merged re-send is not counted again');
+      const plainEdit = await send({ editMessageId: mergedSend.messageId });
+      await service.waitForRun(plainEdit.runId);
+      assert.equal((await probe()) - afterMerged - 1, 1, 'without the flag an edit counts');
+      await agentMessageRateStore.resetKey(owner.userId);
+    }
 
     console.log('agentVoiceRealtime.integration: ok');
   } catch (error) {
