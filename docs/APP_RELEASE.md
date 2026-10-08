@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.65 |
-| **Build** | 247 |
-| **Commit** | `5a112449849c48a65291da55358870ebfedb8d24` |
-| **Short** | `5a1124498` |
-| **Date** | 2026-10-06 |
-| **Message** | Bump app release to 0.97.65 (build 247) |
+| **Version** | 0.97.67 |
+| **Build** | 249 |
+| **Commit** | `849f5c2a8ae8a1a5bcab09126329e0a2212a160a` |
+| **Short** | `849f5c2a8` |
+| **Date** | 2026-10-08 |
+| **Message** | fix(chat-list): removed row no longer leaves a gap when the page isn't painting |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -28,21 +28,6 @@ Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after 
 Version/build are proposed from the latest uploaded Google Play and App Store Connect builds (not from git). Override interactively, or set `APP_RELEASE_VERSION` + `APP_RELEASE_BUILD`. Store lookup overrides: `APP_RELEASE_ANDROID_STORE_VERSION`/`_BUILD`, `APP_RELEASE_IOS_STORE_VERSION`/`_BUILD`. iOS can upload **TestFlight Internal** or **TestFlight Beta** without attaching the build to an App Store version or disturbing an in-progress App Review.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
-
-### Localized What's New
-
-Every store release ships What's New in **English, Russian, Serbian (Latin) and Spanish**. You pick/write the English notes; when you continue, the CLI translates them with the LLM and shows the translations for approval (saved in the session as `notes.translations`).
-
-| Language | Google Play | App Store Connect |
-|---|---|---|
-| English | `en-US` | `en-US` |
-| Russian | `ru-RU` | `ru` |
-| Serbian (Latin) | `sr` | `hr` — Apple has no Serbian; Croatian is the closest Latin-script locale |
-| Spanish | `es-ES` | `es-ES` (an existing `es-MX` gets the same text) |
-
-Any other App Store locale gets the same-language notes, else English, because Apple requires What's New on every localization of an update. TestFlight "What to Test" stays English.
-
-Before upload, the CLI checks which listing languages each store has (`fastlane android|ios listing_state`). A missing one gets a listing translated from en-US (Play: title + short/full description; App Store: name, subtitle, description, keywords, promotional text, URLs copied), uploaded with the release. Verification checks the notes in every language.
 
 ### Headless scripts
 
@@ -63,8 +48,6 @@ Generate **What's new** (LLM summarizes commits since baseline):
    ```bash
    ./scripts/app-release-whats-new.sh --save release-notes.txt
    ```
-
-   Prints English plus Russian, Serbian (Latin) and Spanish translations; `--en-only` skips them.
 
    Requires `AI_PROVIDER` + `OPENAI_API_KEY` or `DEEPSEEK_API_KEY` in `Backend/.env`.
 
@@ -87,6 +70,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.67 | 249 | `849f5c2a8` | 2026-10-08 |
 | 0.97.65 | 247 | `5a1124498` | 2026-10-06 |
 | 0.97.64 | 246 | `447e62ffa` | 2026-10-06 |
 | 0.97.63 | 245 | `93d139c0` | 2026-10-05 |
