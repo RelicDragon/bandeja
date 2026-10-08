@@ -940,7 +940,9 @@
       "someCourt": "คอร์ต",
       "theClub": "คลับ",
       "releaseTitleClub_other": "เมื่อไม่มีคลับ การจองนี้ ({{count}}) อยู่ในเกมต่อไม่ได้",
-      "releaseTitleTime_other": "เมื่อไม่มีเวลา การจองนี้ ({{count}}) อยู่ในเกมต่อไม่ได้"
+      "releaseTitleTime_other": "เมื่อไม่มีเวลา การจองนี้ ({{count}}) อยู่ในเกมต่อไม่ได้",
+      "bookings": "การจอง",
+      "bookAfterSave": "บันทึกก่อน แล้วจองคอร์ตที่นี่หรือในหน้าเกม"
     }
   }
 }

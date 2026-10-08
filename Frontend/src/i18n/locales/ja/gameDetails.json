@@ -940,7 +940,9 @@
       "someCourt": "コート",
       "theClub": "クラブ",
       "releaseTitleClub_other": "クラブがないと、この予約（{{count}}件）はゲームに残せません。",
-      "releaseTitleTime_other": "時間がないと、この予約（{{count}}件）はゲームに残せません。"
+      "releaseTitleTime_other": "時間がないと、この予約（{{count}}件）はゲームに残せません。",
+      "bookings": "予約",
+      "bookAfterSave": "先に保存してから、ここかゲームページでコートを予約してください。"
     }
   }
 }

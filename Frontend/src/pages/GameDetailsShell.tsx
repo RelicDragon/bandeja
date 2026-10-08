@@ -59,9 +59,7 @@ import { TrainingResultsSection } from '@/components/GameDetails/TrainingResults
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
 import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
-import { GameCourtsSection } from '@/components/GameDetails/courts/GameCourtsSection';
-import { gameShowsCourtsSection } from '@/components/GameDetails/courts/gameCourtsModel';
-import { GameScheduleSheet } from '@/components/GameDetails/schedule/GameScheduleSheet';
+import { GameCourtsProvider } from '@/components/GameDetails/courts/GameCourtsProvider';
 import type { ScheduleFocus } from '@/features/court-reservations/CourtsCard';
 import { GameRoster } from '@/components/GameDetails/roster/GameRoster';
 import { canViewGameCost } from '@/features/cost/costViewModel';
@@ -222,7 +220,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoInitialTabId>('general');
   /** The "When and where" editor (club, date, time, courts) and the part it opens on. */
-  const [schedule, setSchedule] = useState<{ open: boolean; focus?: ScheduleFocus }>({ open: false });
+  /** "When and where": the part that was tapped; `key` re-applies it while the dialog is open. */
+  const [editFocus, setEditFocus] = useState<{ focus?: ScheduleFocus; key: number }>({ key: 0 });
   const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
   // The switch reacts to `activeTab` at once; the tab body follows as an
   // interruptible render, so a heavy General tab never holds the tap hostage.
@@ -850,18 +849,16 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const canViewSettings = canMutateRoster && canEdit;
 
   /**
-   * Every "change time / club / court" entry opens the one "When and where"
-   * editor (docs/domains/booking.md); what a change does to bookings is shown
-   * inside it. `focus` scrolls to the tapped part.
+   * Every "change time / club / court" entry opens the Edit dialog on "When
+   * and where" (docs/domains/booking.md); what a change does to bookings is
+   * shown there. `focus` scrolls to the tapped part.
    */
   const openSchedule = useCallback((focus?: ScheduleFocus) => {
-    setIsEditGameInfoModalOpen(false);
-    setSchedule({ open: true, focus });
+    setEditGameInfoInitialTab('whenWhere');
+    setEditFocus((prev) => ({ focus, key: prev.key + 1 }));
+    setIsEditGameInfoModalOpen(true);
   }, []);
   const openChangeTime = () => openSchedule('time');
-  const onScheduleOpenChange = useCallback((open: boolean, focus?: ScheduleFocus) => {
-    setSchedule(open ? { open: true, focus } : { open: false });
-  }, []);
 
   // PRD 346 — attendance. Only fetched once the game actually has a time and is
   // still upcoming, or while an organizer can still note a no-show afterwards.
@@ -1692,7 +1689,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               onEditCourt={() => openSchedule('courts')}
               onEditClub={() => openSchedule('club')}
               onOpenEditGameInfo={(tab) => {
-                setEditGameInfoInitialTab(tab ?? 'general');
+                setEditGameInfoInitialTab(tab ?? 'whenWhere');
+                setEditFocus((prev) => ({ key: prev.key + 1 }));
                 setIsEditGameInfoModalOpen(true);
               }}
               onChangeTime={openChangeTime}
@@ -1758,22 +1756,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 setIsEditGameInfoModalOpen(true);
               }}
               onShowAttendanceLegend={() => setShowAttendanceLegend(true)}
-            />
-          </div>
-
-          {/* Courts: slots + reservations (everyone reads; organizers act). */}
-          <div key="courts" className="contents">
-            <GameCourtsSection
-              game={game}
-              courts={courts}
-              clubs={clubs}
-              canEdit={Boolean(user) && canViewSettings}
-              onGameUpdate={setGame}
-              scheduleOpen={schedule.open}
-              scheduleFocus={schedule.focus}
-              onScheduleOpenChange={onScheduleOpenChange}
-              onCourtsChange={handleCourtsChange}
-              onClubsChange={setClubs}
             />
           </div>
 
@@ -2122,7 +2104,15 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   return (
     <SportLevelProvider sport={shellLevelSport}>
-    <>
+    <GameCourtsProvider
+      game={game}
+      courts={courts}
+      clubs={clubs}
+      canEdit={Boolean(user) && canViewSettings}
+      onGameUpdate={setGame}
+      onEdit={openSchedule}
+      editorOpen={isEditGameInfoModalOpen}
+    >
       <RefreshIndicator
         isRefreshing={isRefreshing}
         pullDistance={pullDistance}
@@ -2232,26 +2222,16 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           onClose={() => setIsEditGameInfoModalOpen(false)}
           game={game}
           initialTab={editGameInfoInitialTab}
+          focus={editFocus.focus}
+          focusKey={editFocus.key}
           canEditSettings={canViewSettings}
           onGameUpdate={setGame}
-        />
-      )}
-
-      {/* Games without a Court(s) card (bars, other kinds) get the same editor from here. */}
-      {schedule.open && game && canViewSettings && !gameShowsCourtsSection(game) ? (
-        <GameScheduleSheet
-          open
-          onClose={() => setSchedule({ open: false })}
-          focus={schedule.focus}
-          game={game}
           clubs={clubs}
           courts={courts}
-          canClear
-          onGameUpdate={setGame}
           onCourtsChange={handleCourtsChange}
           onClubsChange={setClubs}
         />
-      ) : null}
+      )}
 
       <ConfirmationModal
         isOpen={showLeaveConfirmation}
@@ -2340,7 +2320,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       </div>
 
       {declineInviteModal}
-    </>
+    </GameCourtsProvider>
     </SportLevelProvider>
   );
 };

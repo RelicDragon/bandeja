@@ -1,6 +1,8 @@
 /**
- * "Court" / "Courts" on the game page — when, where and whether each court is
- * booked, in one card (docs/domains/booking.md "Game page").
+ * A game's courts — when, where and whether each court is booked
+ * (docs/domains/booking.md "Game page"). On the game page it is `embedded` in
+ * Game info's "where" row and in the Edit dialog's "When and where" tab; the
+ * stand-alone card (header, "Change") remains for previews.
  *
  * Header: title, the summary pill (several courts) and, for organizers, the
  * one "Change" button that opens the "When and where" editor. One context
@@ -63,6 +65,14 @@ export type CourtsCardProps = {
   slotNotices?: Readonly<Record<string, string>>;
   /** Card-level notices (an unfinished change), above the rows. */
   notices?: ReactNode;
+  /**
+   * Inside another card (the game page's Game info, the "When and where" tab):
+   * just the notices, rows, follow-ups and the main button — the host already
+   * shows when and where, and editing lives in its editor.
+   */
+  embedded?: boolean;
+  /** Off while the host shows a better answer (a court the club shows taken, in the editor). */
+  showAction?: boolean;
   className?: string;
 };
 
@@ -159,6 +169,8 @@ export function CourtsCard({
   providerName = '',
   slotNotices,
   notices,
+  embedded = false,
+  showAction = true,
   className,
 }: CourtsCardProps) {
   const text = useCourtReservationText(timeZone);
@@ -183,6 +195,73 @@ export function CourtsCard({
     else if (a.kind === 'choose_courts') onChange?.('courts');
     else onAction?.(a);
   };
+
+  const content = (
+    <>
+      {notices ? <div className="mt-2 flex flex-col gap-2">{notices}</div> : null}
+
+      {!hasClub ? (
+        embedded ? (
+          <p className="pt-1 text-sm italic text-gray-500 dark:text-gray-400">{t('card.noClub')}</p>
+        ) : <p className="mt-2 flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
+          <MapPinOff size={16} aria-hidden className="shrink-0" />
+          {t('card.noClub')}
+        </p>
+      ) : (
+        <ul className={`mt-1.5 flex flex-col ${embedded ? '-mx-2.5' : ''}`}>
+          {slots.map((slot) => (
+            <SlotRow
+              key={slot.key}
+              slot={slot}
+              window={window}
+              courtsById={courtsById}
+              text={text}
+              interactive={interactive}
+              notice={slotNotices?.[slot.key]}
+              onPress={onSlotPress}
+            />
+          ))}
+        </ul>
+      )}
+
+      {tooMany ? (
+        <p className={`mt-1 flex items-start gap-2 text-xs ${embedded ? '' : 'px-2.5'} leading-snug text-amber-700 dark:text-amber-300`} data-testid="courts-card-too-many">
+          <TriangleAlert size={14} aria-hidden className="mt-px shrink-0" />
+          {t('card.tooMany', { players: playerCount, count: courtNeed })}
+        </p>
+      ) : null}
+
+      {visibleFollowUps.length > 0 ? (
+        <ul className="mt-2 flex flex-col gap-1.5" aria-label={t('followUp.title')}>
+          {visibleFollowUps.map((f) => (
+            <ClubFollowUpRow key={f.id} followUp={f} text={text} courtsById={courtsById} onDone={onFollowUpDone} />
+          ))}
+        </ul>
+      ) : null}
+
+      {action && showAction ? (
+        <div key={action.kind} className="cr-enter">
+          <button
+            type="button"
+            disabled={primaryBusy}
+            onClick={() => runAction(action)}
+            data-primary-action={action.kind}
+            className={`mt-2 flex min-h-[48px] w-full items-center justify-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white shadow-xs transition-[background-color,transform] duration-150 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 enabled:active:scale-[0.98] dark:focus-visible:ring-offset-gray-900 ${pressScaleGuard}`}
+          >
+            {cardActionLabel(action, text, { courtsById, slots, providerName })}
+          </button>
+        </div>
+      ) : null}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className={className} data-testid="courts-card" data-embedded="">
+        {content}
+      </div>
+    );
+  }
 
   return (
     <Card className={`p-3 ${className ?? ''}`} role="region" aria-labelledby={headingId} data-testid="courts-card">
@@ -215,58 +294,7 @@ export function CourtsCard({
         {context}
       </p>
 
-      {notices ? <div className="mt-2 flex flex-col gap-2">{notices}</div> : null}
-
-      {!hasClub ? (
-        <p className="mt-2 flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
-          <MapPinOff size={16} aria-hidden className="shrink-0" />
-          {t('card.noClub')}
-        </p>
-      ) : (
-        <ul className="mt-1.5 flex flex-col">
-          {slots.map((slot) => (
-            <SlotRow
-              key={slot.key}
-              slot={slot}
-              window={window}
-              courtsById={courtsById}
-              text={text}
-              interactive={interactive}
-              notice={slotNotices?.[slot.key]}
-              onPress={onSlotPress}
-            />
-          ))}
-        </ul>
-      )}
-
-      {tooMany ? (
-        <p className="mt-1 flex items-start gap-2 px-2.5 text-xs leading-snug text-amber-700 dark:text-amber-300" data-testid="courts-card-too-many">
-          <TriangleAlert size={14} aria-hidden className="mt-px shrink-0" />
-          {t('card.tooMany', { players: playerCount, count: courtNeed })}
-        </p>
-      ) : null}
-
-      {visibleFollowUps.length > 0 ? (
-        <ul className="mt-2 flex flex-col gap-1.5" aria-label={t('followUp.title')}>
-          {visibleFollowUps.map((f) => (
-            <ClubFollowUpRow key={f.id} followUp={f} text={text} courtsById={courtsById} onDone={onFollowUpDone} />
-          ))}
-        </ul>
-      ) : null}
-
-      {action ? (
-        <div key={action.kind} className="cr-enter">
-          <button
-            type="button"
-            disabled={primaryBusy}
-            onClick={() => runAction(action)}
-            data-primary-action={action.kind}
-            className={`mt-2 flex min-h-[48px] w-full items-center justify-center rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white shadow-xs transition-[background-color,transform] duration-150 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-60 enabled:active:scale-[0.98] dark:focus-visible:ring-offset-gray-900 ${pressScaleGuard}`}
-          >
-            {cardActionLabel(action, text, { courtsById, slots, providerName })}
-          </button>
-        </div>
-      ) : null}
+      {content}
     </Card>
   );
 }

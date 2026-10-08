@@ -1,12 +1,11 @@
 /**
- * The body of the "When and where" editor (`GameScheduleSheet`): club, date,
- * time, duration and courts. Nothing else.
- *
- * Bookings are not made here — they live on the game page's court card and
- * its sheets. What the editor does show, right where it happens:
+ * The body of the Edit dialog's "When and where" tab (`useWhenWhereEditor`),
+ * top to bottom: club, date, courts, time and duration, then the courts'
+ * bookings. Right where it happens:
  *  - a court the club shows taken at the new time (`claimSection`);
- *  - what happens to each linked booking when the time moves (`bookingsSection`);
- *  - what happens to linked bookings when the club or time is removed.
+ *  - the bookings (`bookingsSection`): live booking rows while nothing changed,
+ *    what happens to each linked booking when the time moves, or what happens
+ *    to them when the club or time is removed.
  * Courts: which ones, never how many — the roster decides the count.
  * Owners and admins can remove the club or the date and time (`onClearClub`,
  * `onClearTime`); a club with linked bookings can't be swapped for another.
@@ -131,6 +130,10 @@ export function LocationTimeTab({
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [pendingClubSchedule, setPendingClubSchedule] = useState<ClubScheduleSelection | null>(null);
   const selectedCourt = selectedCourtIds[0] ?? 'notBooked';
+  const savedDuration =
+    game.timeIsSet !== false && game.startTime && game.endTime
+      ? (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (60 * 60 * 1000)
+      : undefined;
 
   const getDurationLabel = useCallback((dur: number) => formatGameDurationLabel(dur, t), [t]);
 
@@ -266,6 +269,7 @@ export function LocationTimeTab({
             entityType={entityType}
             dateInputRef={dateInputRef}
             panelMode="edit"
+            keepDuration={savedDuration}
             compact
             hideDateSection
             excludeGameId={game.id}

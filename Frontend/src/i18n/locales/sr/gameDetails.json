@@ -948,7 +948,9 @@
       "releaseTitleClub_other": "Bez kluba ove rezervacije ({{count}}) ne mogu da ostanu na igri.",
       "releaseTitleTime_one": "Bez vremena ova rezervacija ne može da ostane na igri.",
       "releaseTitleTime_few": "Bez vremena ove rezervacije ({{count}}) ne mogu da ostanu na igri.",
-      "releaseTitleTime_other": "Bez vremena ove rezervacije ({{count}}) ne mogu da ostanu na igri."
+      "releaseTitleTime_other": "Bez vremena ove rezervacije ({{count}}) ne mogu da ostanu na igri.",
+      "bookings": "Rezervacije",
+      "bookAfterSave": "Prvo sačuvaj, pa rezerviši terene ovde ili na stranici igre."
     }
   }
 }

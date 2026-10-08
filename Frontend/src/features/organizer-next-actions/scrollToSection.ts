@@ -8,7 +8,7 @@
 export const ORGANIZER_SECTION_SELECTORS = {
   /** The join-queue list inside `GameRoster`. */
   queue: '#game-join-queue',
-  /** The Courts card (`GameCourtsSection`, id `GAME_COURTS_SECTION_ID`): slots, reservations and their actions. */
+  /** The courts in Game info's "where" row (id `GAME_COURTS_SECTION_ID`): slots, bookings and their actions. */
   courts: '#game-courts',
   /** `GameRoster` tags its root while a cost ledger is shown. */
   cost: '[data-cost-card]',

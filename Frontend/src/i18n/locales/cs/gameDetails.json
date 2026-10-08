@@ -947,7 +947,9 @@
       "releaseTitleTime_one": "Bez času nemůže tato rezervace zůstat u hry.",
       "releaseTitleTime_few": "Bez času nemůžou tyto rezervace ({{count}}) zůstat u hry.",
       "releaseTitleTime_many": "Bez času nemůžou tyto rezervace ({{count}}) zůstat u hry.",
-      "releaseTitleTime_other": "Bez času nemůžou tyto rezervace ({{count}}) zůstat u hry."
+      "releaseTitleTime_other": "Bez času nemůžou tyto rezervace ({{count}}) zůstat u hry.",
+      "bookings": "Rezervace",
+      "bookAfterSave": "Nejprve uložte, pak zarezervujte kurty tady nebo na stránce hry."
     }
   }
 }

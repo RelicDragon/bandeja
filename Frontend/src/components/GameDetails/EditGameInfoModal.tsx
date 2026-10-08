@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, Banknote, Loader2, Settings, Users } from 'lucide-react';
-import { Game, PriceType, PriceCurrency } from '@/types';
+import { Save, Edit3, Banknote, CalendarClock, Loader2, Settings, Users } from 'lucide-react';
+import type { Club, Court, Game, PriceType, PriceCurrency } from '@/types';
 import { gamesApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
@@ -23,20 +23,39 @@ import { SeriesScopeSheet } from '@/features/game-series/SeriesScopeSheet';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
-export type EditGameInfoTabId = 'general' | 'price' | 'participants' | 'settings';
+import type { ScheduleFocus } from '@/features/court-reservations/CourtsCard';
+import { useWhenWhereEditor } from './schedule/useWhenWhereEditor';
+export type EditGameInfoTabId = 'whenWhere' | 'general' | 'price' | 'participants' | 'settings';
 export type EditGameInfoInitialTabId = EditGameInfoTabId;
 
+/**
+ * The game's one Edit dialog: When and where (club, date, time, courts and
+ * their bookings), General, Price, Participants, Settings. Save saves every
+ * tab with changes (Participants saves on its own; Settings auto-saves).
+ */
 interface EditGameInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
   game: Game;
   initialTab?: EditGameInfoInitialTabId;
+  /** "When and where": the part that was tapped. */
+  focus?: ScheduleFocus;
+  /** Bumped by the page to re-apply `initialTab` / `focus` while the dialog is open. */
+  focusKey?: number;
   /** Owner/admin with results still open — mirrors shell `canViewSettings`. */
   canEditSettings?: boolean;
   onGameUpdate?: (game: Game) => void;
+  clubs?: Club[];
+  courts?: Court[];
+  onCourtsChange?: (courts: Court[]) => void;
+  onClubsChange?: (clubs: Club[]) => void;
 }
 
+const NO_CLUBS: Club[] = [];
+const NO_COURTS: Court[] = [];
+
 const TABS = [
+  { id: 'whenWhere' as const, icon: CalendarClock },
   { id: 'general' as const, icon: Edit3 },
   { id: 'price' as const, icon: Banknote },
   { id: 'participants' as const, icon: Users },
@@ -66,9 +85,15 @@ export const EditGameInfoModal = ({
   isOpen,
   onClose,
   game,
-  initialTab = 'general',
+  initialTab = 'whenWhere',
+  focus,
+  focusKey = 0,
   canEditSettings = true,
   onGameUpdate,
+  clubs = NO_CLUBS,
+  courts = NO_COURTS,
+  onCourtsChange,
+  onClubsChange,
 }: EditGameInfoModalProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -97,7 +122,11 @@ export const EditGameInfoModal = ({
       if (tab.id === 'participants') return canEditParticipants;
       return true;
     });
-    return tabs.map((tab) => ({ id: tab.id, label: t(`gameDetails.editTab.${tab.id}`), icon: tab.icon }));
+    return tabs.map((tab) => ({
+      id: tab.id,
+      label: tab.id === 'whenWhere' ? t('gameDetails.whenWhere.title') : t(`gameDetails.editTab.${tab.id}`),
+      icon: tab.icon,
+    }));
   }, [canEditParticipants, canEditSettings, onGameUpdate, t]);
 
   const handleSettingsGameUpdate = useCallback(
@@ -134,9 +163,35 @@ export const EditGameInfoModal = ({
     prevIsOpenRef.current = isOpen;
   }, [isOpen, canEditParticipants, canEditSettings, onGameUpdate]);
 
+  // The page asked for a tab / part while the dialog is already open (a court sheet's "Set date and time").
+  const lastFocusKey = useRef(focusKey);
+  useEffect(() => {
+    if (!isOpen || focusKey === lastFocusKey.current) return;
+    lastFocusKey.current = focusKey;
+    setActiveTab(initialTab);
+  }, [isOpen, focusKey, initialTab]);
+
   useEffect(() => {
     contentScrollRef.current?.scrollTo({ top: 0 });
   }, [activeTab]);
+
+  const handleWhenWhereUpdate = useCallback((updated: Game) => onGameUpdate?.(updated), [onGameUpdate]);
+  const whenWhere = useWhenWhereEditor({
+    open: isOpen,
+    active: activeTab === 'whenWhere',
+    focus: activeTab === 'whenWhere' ? focus : undefined,
+    focusKey,
+    scrollRef: contentScrollRef,
+    onActivate: () => setActiveTab('whenWhere'),
+    onClose,
+    game,
+    clubs,
+    courts,
+    canClear: canEditSettings,
+    onGameUpdate: handleWhenWhereUpdate,
+    onCourtsChange,
+    onClubsChange,
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -161,16 +216,18 @@ export const EditGameInfoModal = ({
     (priceIsPaid &&
       ((price.priceTotal ?? null) !== (initialPrice.priceTotal ?? null) ||
         (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null)));
-  const isDirty = generalDirty || priceDirty || participantsDirty;
+  const infoDirty = generalDirty || priceDirty;
+  const isDirty = infoDirty || participantsDirty || (whenWhere.isDirty && !whenWhere.showRun);
+  const saving = isSaving || whenWhere.isSaving;
 
   const handleRequestClose = useCallback(() => {
-    if (isSaving || participantsSaving) return;
+    if (isSaving || participantsSaving || whenWhere.isSaving || whenWhere.locked) return;
     if (isDirty) {
       setShowDiscardConfirm(true);
       return;
     }
     onClose();
-  }, [isSaving, participantsSaving, isDirty, onClose]);
+  }, [isSaving, participantsSaving, whenWhere.isSaving, whenWhere.locked, isDirty, onClose]);
 
   useBackButtonModal(isOpen, handleRequestClose, 'edit-game-info-modal');
 
@@ -182,22 +239,41 @@ export const EditGameInfoModal = ({
   };
 
   const handleSave = async () => {
-    if (!game.id) return;
+    if (!game.id || saving) return;
     if (participantsDirty) {
       setActiveTab('participants');
       toast(t('gameDetails.editModal.saveParticipantsFirst'));
       return;
     }
-    if (!validatePrice()) {
+    if (infoDirty && !validatePrice()) {
+      setActiveTab('price');
       toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
       return;
     }
 
-    await executeSave();
+    let infoPatch: Record<string, unknown> | null = null;
+    if (infoDirty) {
+      infoPatch = await saveInfo();
+      if (!infoPatch) return;
+    }
+    if (whenWhere.isDirty) {
+      // Stopped (a busy court to answer), running (club changes on screen) or failed: stay open.
+      const result = await whenWhere.save();
+      if (result !== 'saved') return;
+    }
+    toast.success(t('gameDetails.settingsUpdated'));
+    // PRD 345 — an occurrence of a series asks where the name / price edit
+    // applies before it closes. The edit itself is already saved on THIS game;
+    // the sheet only offers to push the same fields onto future occurrences.
+    if (infoPatch && isGameSeriesEnabled() && game.seriesId) {
+      setSeriesScopePatch(infoPatch);
+      return;
+    }
+    onClose();
   };
 
-  const executeSave = async () => {
-    if (!game.id) return;
+  /** General + Price → `PUT /games/:id`. The patch on success, `null` on failure. */
+  const saveInfo = async (): Promise<Record<string, unknown> | null> => {
     setIsSaving(true);
     try {
       if (general.pendingAvatar) {
@@ -219,15 +295,9 @@ export const EditGameInfoModal = ({
 
       const response = await gamesApi.getById(game.id);
       onGameUpdate?.(response.data);
-      toast.success(t('gameDetails.settingsUpdated'));
-      // PRD 345 — an occurrence of a series asks where the edit applies before
-      // it closes. The edit itself is already saved on THIS game; the sheet only
-      // offers to push the same fields onto future occurrences.
-      if (isGameSeriesEnabled() && game.seriesId) {
-        setSeriesScopePatch({ ...updateData } as Record<string, unknown>);
-        return;
-      }
-      onClose();
+      setGeneral(getInitialGeneralState(response.data));
+      setPrice(getInitialPriceState(response.data, userCurrency));
+      return { ...updateData } as Record<string, unknown>;
     } catch (err: unknown) {
       const axiosErr = err as {
         response?: { data?: { message?: string; externalBookingId?: string } };
@@ -239,6 +309,7 @@ export const EditGameInfoModal = ({
           ? { externalBookingId: data.externalBookingId.trim() }
           : undefined;
       toast.error(t(msg, { ...interpolation, defaultValue: msg }));
+      return null;
     } finally {
       setIsSaving(false);
     }
@@ -253,6 +324,7 @@ export const EditGameInfoModal = ({
       onOpenChange={(open) => {
         if (!open) handleRequestClose();
       }}
+      dismissible={!whenWhere.locked}
     >
       <DrawerContent
         className="!mt-10 !max-h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex-col overflow-hidden bg-white dark:bg-gray-900"
@@ -264,9 +336,9 @@ export const EditGameInfoModal = ({
             id="edit-game-info-modal-title"
             className="min-w-0 flex-1 text-start text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
           >
-            {t('gameDetails.editModal.title')}
+            {whenWhere.runTitle ?? t('gameDetails.editModal.title')}
           </h2>
-          <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />
+          {whenWhere.locked ? null : <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />}
         </div>
         <div className="flex shrink-0 justify-center px-4 pb-3">
           <SegmentedSwitch
@@ -276,7 +348,7 @@ export const EditGameInfoModal = ({
             showOnlyActiveTabText={true}
             activeLabelMaxWidth={200}
             layoutId="edit-game-info-tabs"
-            disabled={isSaving || participantsSaving}
+            disabled={saving || participantsSaving || whenWhere.showRun}
           />
         </div>
         <div
@@ -287,6 +359,7 @@ export const EditGameInfoModal = ({
               : 'overflow-y-auto'
           }`}
         >
+          {activeTab === 'whenWhere' && whenWhere.body}
           {activeTab === 'general' && (
             <GeneralTab
               game={game}
@@ -334,12 +407,16 @@ export const EditGameInfoModal = ({
             />
           )}
         </div>
-        {activeTab !== 'settings' && activeTab !== 'participants' ? (
+        {activeTab === 'whenWhere' && whenWhere.showRun ? (
+          <div className="mt-auto shrink-0 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800">
+            {whenWhere.runFooter}
+          </div>
+        ) : activeTab !== 'settings' && activeTab !== 'participants' ? (
         <div className="mt-auto flex shrink-0 items-center gap-3 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800">
           <span
             aria-live="polite"
             className={`flex-1 min-w-0 truncate text-xs transition-opacity duration-200 ${
-              isDirty && !isSaving
+              isDirty && !saving
                 ? 'text-amber-600 dark:text-amber-400 opacity-100'
                 : 'opacity-0'
             }`}
@@ -349,24 +426,27 @@ export const EditGameInfoModal = ({
           <button
             type="button"
             onClick={handleRequestClose}
-            disabled={isSaving}
+            disabled={saving}
             className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-50"
           >
             {t('common.cancel')}
           </button>
           <button
             type="button"
-            onClick={handleSave}
-            disabled={isSaving || !isDirty}
-            aria-busy={isSaving}
-            className="flex items-center justify-center gap-2 min-w-[6.5rem] px-5 py-2.5 text-sm font-semibold bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={() => void handleSave()}
+            disabled={saving || !isDirty || (whenWhere.isDirty && !whenWhere.canSave)}
+            aria-busy={saving}
+            data-testid="edit-game-save"
+            className="flex items-center justify-center gap-2 min-w-[6.5rem] max-w-[60%] px-5 py-2.5 text-sm font-semibold bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {isSaving ? (
+            {saving ? (
               <Loader2 size={18} className="animate-spin shrink-0" aria-hidden />
             ) : (
               <Save size={18} className="shrink-0" aria-hidden />
             )}
-            {isSaving ? t('common.saving') : t('common.save')}
+            <span className="truncate">
+              {saving ? t('common.saving') : (whenWhere.isDirty && whenWhere.saveLabel) || t('common.save')}
+            </span>
           </button>
         </div>
         ) : activeTab === 'settings' ? (
@@ -385,6 +465,8 @@ export const EditGameInfoModal = ({
         ) : null}
       </DrawerContent>
     </Drawer>
+
+    {whenWhere.dialogs}
 
     <ConfirmationModal
       isOpen={showDiscardConfirm}

@@ -1,28 +1,27 @@
 /**
- * Court(s) on the game page — the one place a game's courts, their bookings
- * and the "When and where" editor live (docs/domains/booking.md "Game page").
- * Everyone sees the `CourtsCard`; organizers also get:
- *  - "Change" (and every change-time / club / court entry of the page) →
- *    `GameScheduleSheet`, which also runs the club changes when a game with
- *    bookings moves (the runner lives here, so the card's "unfinished
- *    changes" notice and the editor share one run);
- *  - row tap → `CourtSlotSheet` (use my booking found at the club, book now,
- *    use a booking I already made, I booked it another way, link the real
- *    booking, not booked after all, remove from game, cancel at the club,
- *    check again);
- *  - the card's one main button (pick a club, set a time, choose the courts
- *    to keep, use my booking, book, fill a gap);
- *  - club-side drift, an unfinished change and "to do at the club"
- *    follow-ups, inside the card.
+ * A game's courts and their bookings — one source for the game page
+ * (docs/domains/booking.md "Game page"). There is no separate Courts card:
+ *  - Game info shows the courts inside its "where" row (`useGameCourts().card`,
+ *    rendered as an embedded `CourtsCard`): one row per court in one of three
+ *    states — Booked · <provider>, Booked by organizer, Not booked yet ("No
+ *    time yet" without a time) — notices, and one main button;
+ *  - the Edit dialog's "When and where" tab gets the same rows (live, while
+ *    its draft matches the saved game), the reschedule planner and its
+ *    runner (`useGameCourts().planner`).
+ * Organizers tap a row for the court sheet (`CourtSlotSheet`: use my booking
+ * found at the club, book now, use a booking I already made, I booked it
+ * another way, link the real booking, not booked after all, remove from game,
+ * cancel at the club, check again). Everything that edits the club, time or
+ * courts goes to the "When and where" tab (`onEdit`). The sheets live here
+ * and stack over the Edit dialog when opened from it.
+ *
  * Removing a booking from the game and cancelling it at the club both ask
  * first. Every write goes through `@/api/courtSlots` (`?timePolicy=explicit`);
  * its response is applied to the game at once (`applyCourtSlotsWrite`) and
- * the full game is re-fetched in the background. Only one sheet is open at a
- * time. A game without a club shows the card (organizers only) with "Pick a
- * club". Domain: docs/domains/booking.md (Court slots, Clash guard,
- * Club-side drift, Reschedule journal).
+ * the full game is re-fetched in the background. Domain: docs/domains/booking.md
+ * (Court slots, Clash guard, Club-side drift, Reschedule journal).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import type { Club, Court, Game } from '@/types';
@@ -43,7 +42,6 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useOwnClubBookings } from '@/components/GameDetails/editGameInfo/useOwnClubBookings';
 import type { OwnClubBooking } from '@/components/GameDetails/editGameInfo/clubBookingClaims';
 import { providerDisplayName } from '@shared/gameBooking/reservationCopy';
-import { GameScheduleSheet } from '@/components/GameDetails/schedule/GameScheduleSheet';
 import type { SchedulePlanner } from '@/components/GameDetails/schedule/schedulePlanner';
 import { createHydratedClubBookingProvider } from '@/integrations/booking/createClubBookingProvider';
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
@@ -51,7 +49,6 @@ import { buildCourtReservationsInput } from '@/utils/courtReservationView';
 import { getClubTimezone } from '@/utils/gameTimeDisplay';
 import {
   CourtSlotSheet,
-  CourtsCard,
   applyCourtSlotsWrite,
   mergeAcceptUpstreamIntoGame,
   mergeLinkedBookingsIntoGame,
@@ -91,7 +88,6 @@ import {
   courtClashDetails,
   describeCourtClash,
   freeCourtsForWindow,
-  GAME_COURTS_SECTION_ID,
   gapExtraLines,
   gapFillEntries,
   gapFillUnavailableMessage,
@@ -104,11 +100,12 @@ import {
   timeChangeNoticeCount,
   type ReserveEntry,
 } from './gameCourtsModel';
+import { EMPTY_GAME_COURTS as EMPTY, GameCourtsContext, type GameCourtsValue } from './gameCourtsContext';
 import { gameCourtsQueryKeys, useGameCourtOccupancy, useGameSharedWith } from './useGameCourtsData';
 import { GameCourtReserveFlow } from './GameCourtReserveFlow';
 import { GameCourtLinkSheet } from './GameCourtLinkSheet';
 
-export type GameCourtsSectionProps = {
+export type GameCourtsProviderProps = {
   game: Game;
   /** The club's courts (shell list, sport-filtered). */
   courts: Court[];
@@ -116,12 +113,11 @@ export type GameCourtsSectionProps = {
   /** Owner/admin while the game is still open. */
   canEdit: boolean;
   onGameUpdate: (game: Game) => void;
-  /** The "When and where" editor (organizers; ignored for read-only viewers). */
-  scheduleOpen?: boolean;
-  scheduleFocus?: ScheduleFocus;
-  onScheduleOpenChange?: (open: boolean, focus?: ScheduleFocus) => void;
-  onCourtsChange?: (courts: Court[]) => void;
-  onClubsChange?: (clubs: Club[]) => void;
+  /** Open the Edit dialog on "When and where" (organizers). */
+  onEdit?: (focus?: ScheduleFocus) => void;
+  /** The Edit dialog is open (sheets opened from it stack over it). */
+  editorOpen?: boolean;
+  children?: ReactNode;
 };
 
 /** Courts the roster needs (players ÷ players per court), at least one. */
@@ -133,83 +129,63 @@ function courtRefs(courts: readonly Court[]): CourtRef[] {
   return courts.map((c) => ({ id: c.id, name: c.name, externalCourtId: c.externalCourtId ?? null, isIndoor: c.isIndoor }));
 }
 
-export function GameCourtsSection(props: GameCourtsSectionProps) {
-  const { game, clubs, courts, canEdit } = props;
+export function GameCourtsProvider(props: GameCourtsProviderProps) {
+  const { game, clubs, courts, canEdit, children } = props;
   const club = useMemo(() => resolveGameClub(game, clubs, courts), [game, clubs, courts]);
-  if (!gameShowsCourtsSection(game)) return null;
-  // No club yet: only organizers get the card ("Pick a club").
-  if (!club && !canEdit) return null;
-  return (
-    <div id={GAME_COURTS_SECTION_ID} className="flex scroll-mt-24 flex-col gap-2">
-      {canEdit && club ? (
-        <OrganizerCourts {...props} club={club} />
-      ) : canEdit ? (
-        <OrganizerNoClub {...props} />
-      ) : (
-        <ReadOnlyCourts game={game} club={club} />
-      )}
-    </div>
-  );
+  if (!gameShowsCourtsSection(game) || (!club && !canEdit)) {
+    return <GameCourtsContext.Provider value={EMPTY}>{children}</GameCourtsContext.Provider>;
+  }
+  if (canEdit && club) return <OrganizerCourts {...props} club={club} />;
+  if (canEdit) return <OrganizerNoClub {...props} />;
+  return <ReadOnlyCourts game={game} club={club}>{children}</ReadOnlyCourts>;
 }
 
-function OrganizerNoClub({
-  game,
-  courts,
-  clubs,
-  onGameUpdate,
-  scheduleOpen = false,
-  scheduleFocus,
-  onScheduleOpenChange,
-  onCourtsChange,
-  onClubsChange,
-}: GameCourtsSectionProps) {
+function OrganizerNoClub({ game, onEdit, children }: GameCourtsProviderProps) {
   const reservations = useMemo(() => deriveGameCourtReservations(game), [game]);
   const timeZone = getClubTimezone(game) ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return (
-    <>
-      <CourtsCard
-        reservations={reservations}
-        window={gameWindow(game)}
-        courtsById={{}}
-        timeZone={timeZone}
-        courtNeed={courtNeedOf(game)}
-        playerCount={game.maxParticipants}
-        hasClub={false}
-        canEdit
-        onChange={(focus) => onScheduleOpenChange?.(true, focus ?? 'club')}
-      />
-      <GameScheduleSheet
-        open={scheduleOpen}
-        onClose={() => onScheduleOpenChange?.(false)}
-        focus={scheduleFocus}
-        game={game}
-        clubs={clubs}
-        courts={courts}
-        canClear
-        onGameUpdate={onGameUpdate}
-        onCourtsChange={onCourtsChange}
-        onClubsChange={onClubsChange}
-      />
-    </>
+  const value = useMemo<GameCourtsValue>(
+    () => ({
+      card: {
+        reservations,
+        window: gameWindow(game),
+        courtsById: {},
+        timeZone,
+        courtNeed: courtNeedOf(game),
+        playerCount: game.maxParticipants,
+        hasClub: false,
+        canEdit: true,
+        onChange: (focus) => onEdit?.(focus ?? 'club'),
+      },
+      planner: null,
+      openSlot: null,
+    }),
+    [reservations, game, timeZone, onEdit],
   );
+  return <GameCourtsContext.Provider value={value}>{children}</GameCourtsContext.Provider>;
 }
 
-function ReadOnlyCourts({ game, club }: { game: Game; club: Club | undefined }) {
+function ReadOnlyCourts({ game, club, children }: { game: Game; club: Club | undefined; children?: ReactNode }) {
   const reservations = useMemo(() => deriveGameCourtReservations(game), [game]);
   const courtsById = useMemo(() => buildCourtsById(club, game), [club, game]);
-  return (
-    <CourtsCard
-      reservations={reservations}
-      window={gameWindow(game)}
-      courtsById={courtsById}
-      timeZone={getClubTimezone(game) ?? club?.city?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone}
-      courtNeed={courtNeedOf(game)}
-      playerCount={game.maxParticipants}
-      clubName={club?.name ?? null}
-      hasClub={Boolean(club)}
-      canEdit={false}
-    />
+  const value = useMemo<GameCourtsValue>(
+    () => ({
+      card: {
+        reservations,
+        window: gameWindow(game),
+        courtsById,
+        timeZone: getClubTimezone(game) ?? club?.city?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+        courtNeed: courtNeedOf(game),
+        playerCount: game.maxParticipants,
+        clubName: club?.name ?? null,
+        hasClub: Boolean(club),
+        canEdit: false,
+      },
+      planner: null,
+      openSlot: null,
+    }),
+    [reservations, game, courtsById, club],
   );
+  return <GameCourtsContext.Provider value={value}>{children}</GameCourtsContext.Provider>;
 }
 
 type ReserveRequest = { entries: ReserveEntry[]; replace?: string[] };
@@ -217,15 +193,12 @@ type ReserveRequest = { entries: ReserveEntry[]; replace?: string[] };
 function OrganizerCourts({
   game,
   courts,
-  clubs,
   club,
   onGameUpdate,
-  scheduleOpen = false,
-  scheduleFocus,
-  onScheduleOpenChange,
-  onCourtsChange,
-  onClubsChange,
-}: GameCourtsSectionProps & { club: Club }) {
+  onEdit,
+  editorOpen = false,
+  children,
+}: GameCourtsProviderProps & { club: Club }) {
   const { t } = useTranslation();
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const timeZone = getClubTimezone(game) ?? club.city?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -310,9 +283,9 @@ function OrganizerCourts({
     (focus?: ScheduleFocus) => {
       setOpenSlotKey(null);
       setLinkSlot(null);
-      onScheduleOpenChange?.(true, focus);
+      onEdit?.(focus);
     },
-    [onScheduleOpenChange],
+    [onEdit],
   );
 
   /* ---------------- the organizer's own club bookings ---------------- */
@@ -406,21 +379,13 @@ function OrganizerCourts({
   });
   const { journal, unfinished, busy: runnerBusy, dismiss: dismissRun } = runner;
 
-  // One sheet at a time: the editor replaces the slot / link sheets.
+  // A fresh edit never opens on the last finished run's checklist.
+  const wasEditorOpen = useRef(false);
   useEffect(() => {
-    if (!scheduleOpen) return;
-    setOpenSlotKey(null);
-    setLinkSlot(null);
-    setSheetError(null);
-  }, [scheduleOpen]);
-
-  // A fresh "change" never opens on the last finished run's checklist.
-  const wasScheduleOpen = useRef(false);
-  useEffect(() => {
-    const opened = scheduleOpen && !wasScheduleOpen.current;
-    wasScheduleOpen.current = scheduleOpen;
+    const opened = editorOpen && !wasEditorOpen.current;
+    wasEditorOpen.current = editorOpen;
     if (opened && journal && !unfinished && !runnerBusy && journal.phase !== 'running') dismissRun();
-  }, [scheduleOpen, journal, unfinished, runnerBusy, dismissRun]);
+  }, [editorOpen, journal, unfinished, runnerBusy, dismissRun]);
 
   const linkTimes = useMemo(() => {
     const out: Record<string, { start?: string | null; end?: string | null; courtId?: string | null }> = {};
@@ -856,62 +821,69 @@ function OrganizerCourts({
     ? t('gameDetails.courts.cancelPolicy', { hours: club.cancellationNoticeHours })
     : '';
 
+  const notices =
+    (unfinished && journal) || drifts.length > 0 || reservations.extraCourts > 0 ? (
+      <>
+        {reservations.extraCourts > 0 ? (
+          <p
+            role="status"
+            data-testid="extra-courts-notice"
+            className="cr-enter rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-50"
+          >
+            {t('gameDetails.courts.extraCourts', { count: reservations.extraCourts })}
+          </p>
+        ) : null}
+        {unfinished && journal ? (
+          <UnfinishedChangesBanner
+            journal={journal}
+            timeZone={timeZone}
+            busy={runnerBusy}
+            onFinish={() => {
+              openSchedule('time');
+              void runner.resume();
+            }}
+            onUndo={() => void runner.undo()}
+          />
+        ) : null}
+        <ReservationDriftBanner
+          drifts={drifts}
+          courtsById={courtsById}
+          timeZone={timeZone}
+          pending={pendingDrift}
+          onAction={(drift, kind) => void onDriftAction(drift, kind)}
+        />
+      </>
+    ) : null;
+
+  const value: GameCourtsValue = {
+    card: {
+      reservations,
+      window,
+      courtsById,
+      timeZone,
+      courtNeed: courtNeedOf(game),
+      playerCount: game.maxParticipants,
+      clubName: club.name,
+      hasClub: true,
+      canEdit: true,
+      onChange: openSchedule,
+      followUps,
+      onSlotPress: (slot) => openSheet(slot.key),
+      onAction: onCardAction,
+      onFollowUpDone,
+      primaryBusy: mutations.pending != null || reserve != null,
+      ownBookingSlotKeys,
+      providerName,
+      slotNotices,
+      notices,
+    },
+    planner,
+    openSlot: openSheet,
+  };
+
   return (
-    <>
-      <CourtsCard
-        reservations={reservations}
-        window={window}
-        courtsById={courtsById}
-        timeZone={timeZone}
-        courtNeed={courtNeedOf(game)}
-        playerCount={game.maxParticipants}
-        clubName={club.name}
-        hasClub
-        canEdit
-        onChange={openSchedule}
-        followUps={followUps}
-        onSlotPress={(slot) => openSheet(slot.key)}
-        onAction={onCardAction}
-        onFollowUpDone={onFollowUpDone}
-        primaryBusy={mutations.pending != null || reserve != null}
-        ownBookingSlotKeys={ownBookingSlotKeys}
-        providerName={providerName}
-        slotNotices={slotNotices}
-        notices={
-          (unfinished && journal) || drifts.length > 0 || reservations.extraCourts > 0 ? (
-            <>
-              {reservations.extraCourts > 0 ? (
-                <p
-                  role="status"
-                  data-testid="extra-courts-notice"
-                  className="cr-enter rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-50"
-                >
-                  {t('gameDetails.courts.extraCourts', { count: reservations.extraCourts })}
-                </p>
-              ) : null}
-              {unfinished && journal ? (
-                <UnfinishedChangesBanner
-                  journal={journal}
-                  timeZone={timeZone}
-                  busy={runnerBusy}
-                  onFinish={() => {
-                    openSchedule();
-                    void runner.resume();
-                  }}
-                  onUndo={() => void runner.undo()}
-                />
-              ) : null}
-              <ReservationDriftBanner
-                drifts={drifts}
-                courtsById={courtsById}
-                timeZone={timeZone}
-                pending={pendingDrift}
-                onAction={(drift, kind) => void onDriftAction(drift, kind)}
-              />
-            </>
-          ) : null
-        }
-      />
+    <GameCourtsContext.Provider value={value}>
+      {children}
 
       <CourtSlotSheet
         open={openSlot != null}
@@ -1055,22 +1027,6 @@ function OrganizerCourts({
         closeOnConfirm={false}
       />
 
-      <GameScheduleSheet
-        open={scheduleOpen}
-        onClose={() => {
-          onScheduleOpenChange?.(false);
-          if (journal && journal.phase !== 'running' && !unfinished) dismissRun();
-        }}
-        focus={scheduleFocus}
-        game={game}
-        clubs={clubs}
-        courts={courts}
-        canClear
-        onGameUpdate={onGameUpdate}
-        onCourtsChange={onCourtsChange}
-        onClubsChange={onClubsChange}
-        planner={planner}
-      />
-    </>
+    </GameCourtsContext.Provider>
   );
 }

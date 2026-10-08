@@ -79,6 +79,8 @@ interface GameStartSectionProps {
   snapshotLoading?: boolean;
   snapshotBannerState?: ClubSnapshotBanner;
   panelMode?: 'create' | 'edit';
+  /** Edit: the game's saved length stays offered even when the club doesn't sell it (opening never changes it). */
+  keepDuration?: number;
   clubs?: Club[];
   courts?: Court[];
   preferredSport?: Sport | null;
@@ -140,6 +142,7 @@ export const GameStartSection = ({
   snapshotLoading = false,
   snapshotBannerState = null,
   panelMode = 'create',
+  keepDuration,
   clubs,
   courts,
   preferredSport,
@@ -155,10 +158,17 @@ export const GameStartSection = ({
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
-  const { durationOptions } = useClubIntegrationDurations(club, entityType, {
+  const { durationOptions: clubDurationOptions } = useClubIntegrationDurations(club, entityType, {
     selectedCourtId: selectedCourt,
     courts,
   });
+  const durationOptions = useMemo(
+    () =>
+      keepDuration && clubDurationOptions.length > 0 && !clubDurationOptions.includes(keepDuration)
+        ? [...clubDurationOptions, keepDuration].sort((a, b) => a - b)
+        : clubDurationOptions,
+    [clubDurationOptions, keepDuration],
+  );
 
   useEffect(() => {
     if (entityType === 'BAR' || durationOptions.length === 0) return;

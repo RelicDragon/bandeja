@@ -66,7 +66,6 @@ vi.mock('@/components/GameDetails/LeagueSeasonPointsSection', () => ({ LeagueSea
 vi.mock('@/components/GameDetails/FaqTab', () => ({ FaqTab: () => null }));
 vi.mock('@/components/GameDetails/FaqEdit', () => ({ FaqEdit: () => null }));
 vi.mock('@/components/GameDetails/EditGameInfoModal', () => ({ EditGameInfoModal: () => null }));
-vi.mock('@/components/GameDetails/schedule/GameScheduleSheet', () => ({ GameScheduleSheet: () => null }));
 vi.mock('@/components/weather/WeatherRiskBanner', () => ({ WeatherRiskBanner: () => null }));
 vi.mock('@/components/GameDetails/GameResultsEntryEmbedded', () => ({ GameResultsEntryEmbedded: () => null }));
 vi.mock('@/components/GameDetails/LiveWatchBlock', () => ({ LiveWatchBlock: () => null }));
@@ -77,7 +76,9 @@ vi.mock('@/components/GameDetails/TrainingResultsSection', () => ({ TrainingResu
 vi.mock('@/components/GameDetails/PublicGamePrompt', () => ({ PublicGamePrompt: () => null }));
 vi.mock('@/components/GameDetails/BetSection', () => ({ BetSection: () => null }));
 vi.mock('@/components/GameDetails/ParticipantsOnlyChatSection', () => ({ ParticipantsOnlyChatSection: () => null }));
-vi.mock('@/components/GameDetails/courts/GameCourtsSection', () => ({ GameCourtsSection: () => null }));
+vi.mock('@/components/GameDetails/courts/GameCourtsProvider', () => ({
+  GameCourtsProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
 vi.mock('@/components/GameDetails/courts/gameCourtsModel', () => ({ rescheduleNeeded: () => false }));
 vi.mock('@/components/GameDetails/roster/GameRoster', () => ({ GameRoster: () => null }));
 vi.mock('@/features/game-series/SeriesGameSection', () => ({ SeriesGameSection: () => null }));

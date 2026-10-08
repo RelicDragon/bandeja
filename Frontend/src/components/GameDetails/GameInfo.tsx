@@ -24,7 +24,9 @@ import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
 import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
 import { ReservationSummaryPill } from '@/components/GameDetails/ReservationSummaryPill';
-import { gameShowsCourtsSection } from '@/components/GameDetails/courts/gameCourtsModel';
+import { GAME_COURTS_SECTION_ID } from '@/components/GameDetails/courts/gameCourtsModel';
+import { useGameCourts } from '@/components/GameDetails/courts/gameCourtsContext';
+import { CourtsCard } from '@/features/court-reservations/CourtsCard';
 import {
   gameShowsCourtReservation,
   reservationTimeFormatter,
@@ -81,15 +83,12 @@ interface GameInfoProps {
   courts: any[];
   canEdit: boolean;
   onToggleFavorite: () => void;
-  /** Opens the "When and where" editor on the courts (bar halls included). */
+  /** Edit → "When and where", on the courts (bar halls included). */
   onEditCourt: () => void;
-  /** Opens the "When and where" editor on the club. */
+  /** Edit → "When and where", on the club. */
   onEditClub?: () => void;
   onOpenEditGameInfo?: (initialTab?: EditGameInfoInitialTabId) => void;
-  /**
-   * Date/time taps. The page routes games with reservations or several courts
-   * to the reschedule planner; without it the edit drawer opens on Location & time.
-   */
+  /** Date/time taps: Edit → "When and where", on the time. */
   onChangeTime?: () => void;
   collapsedByDefault?: boolean;
   onInviteTrainer?: () => void;
@@ -125,6 +124,8 @@ export const GameInfo = ({
   const displayDescription = localized.description;
   const hasAuthoredDescription = Boolean(game.description?.trim() || displayDescription?.trim());
   const clubTz = getClubTimezone(game);
+  // The game's courts and their bookings live in the "where" row (no separate Courts card).
+  const courtsBlock = useGameCourts().card;
   const handleChangeTime = () => {
     onChangeTime?.();
   };
@@ -1003,8 +1004,19 @@ export const GameInfo = ({
               </span>
             </div>
           )}
+          {courtsBlock && !(game.court?.club || game.club) ? (
+            <div id={GAME_COURTS_SECTION_ID} className="flex scroll-mt-24 items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+              <InfoIconChip>
+                <MapPin size={18} />
+              </InfoIconChip>
+              <CourtsCard {...courtsBlock} embedded className="min-w-0 flex-1 pe-14" />
+            </div>
+          ) : null}
           {(game.court?.club || game.club) && (
-            <div className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+            <div
+              id={courtsBlock ? GAME_COURTS_SECTION_ID : undefined}
+              className="flex scroll-mt-24 items-start gap-3 text-sm text-gray-700 dark:text-gray-300"
+            >
               <InfoIconChip>
                 <MapPin size={18} />
               </InfoIconChip>
@@ -1044,7 +1056,11 @@ export const GameInfo = ({
                     />
                   </button>
                 </div>
-                {game.court && !(game.entityType === 'BAR' && courts.length === 1) && (
+                {courtsBlock ? (
+                  // Clear of the floating Edit / Share / Calendar / Map buttons.
+                  <CourtsCard {...courtsBlock} embedded className="pe-14" />
+                ) : null}
+                {!courtsBlock && game.court && !(game.entityType === 'BAR' && courts.length === 1) && (
                   <CourtDisplayName
                     name={game.court.name}
                     integrationName={game.court.integrationCourtName}
@@ -1052,12 +1068,12 @@ export const GameInfo = ({
                     secondaryClassName="text-[10px] text-gray-500 dark:text-gray-500"
                   />
                 )}
-                {!game.court && game.club && (
+                {!courtsBlock && !game.court && game.club && (
                   <p className="text-xs text-gray-600 dark:text-gray-400">
                     {t(game.entityType === 'BAR' ? 'createGame.hallNotSelected' : 'createGame.courtNotSelected')}
                   </p>
                 )}
-                {reservationView && !gameShowsCourtsSection(game) ? (
+                {reservationView && !courtsBlock ? (
                   <div className="mt-1">
                     <ReservationSummaryPill
                       view={reservationView}

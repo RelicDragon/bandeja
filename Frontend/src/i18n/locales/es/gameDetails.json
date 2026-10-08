@@ -940,7 +940,9 @@
       "releaseTitleClub_other": "Sin club, estas {{count}} reservas no pueden seguir en el partido.",
       "releaseTitleTime_one": "Sin hora, esta reserva no puede seguir en el partido.",
       "releaseTitleTime_many": "Sin hora, estas {{count}} reservas no pueden seguir en el partido.",
-      "releaseTitleTime_other": "Sin hora, estas {{count}} reservas no pueden seguir en el partido."
+      "releaseTitleTime_other": "Sin hora, estas {{count}} reservas no pueden seguir en el partido.",
+      "bookings": "Reservas",
+      "bookAfterSave": "Guarda primero y luego reserva las pistas aquí o en la página del partido."
     }
   }
 }

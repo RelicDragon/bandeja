@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /**
- * Game page Courts card wiring: who sees it, the organizer-next-steps anchor,
- * and the read-only variant for players (no buttons, same information).
+ * The game's courts as Game info reads them (`useGameCourts().card`): who
+ * sees them, and the read-only variant for players (no buttons, same
+ * information). The organizer-next-steps anchor sits on Game info's row.
  */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -26,8 +27,21 @@ vi.mock('@/hooks/useBackButtonModal', () => ({ useBackButtonModal: () => undefin
 vi.mock('@/api/games', () => ({ gamesApi: {} }));
 vi.mock('@/api/axios', () => ({ default: {} }));
 
-const { GameCourtsSection } = await import('./GameCourtsSection');
-const { gameShowsCourtsSection } = await import('./gameCourtsModel');
+const { GameCourtsProvider } = await import('./GameCourtsProvider');
+const { useGameCourts } = await import('./gameCourtsContext');
+const { CourtsCard } = await import('@/features/court-reservations/CourtsCard');
+const { gameShowsCourtsSection, GAME_COURTS_SECTION_ID } = await import('./gameCourtsModel');
+
+/** What Game info renders in its "where" row. */
+function Probe() {
+  const { card, planner } = useGameCourts();
+  if (!card) return null;
+  return (
+    <div id={GAME_COURTS_SECTION_ID} data-planner={planner ? 'yes' : 'no'}>
+      <CourtsCard {...card} embedded />
+    </div>
+  );
+}
 const { ORGANIZER_SECTION_SELECTORS } = await import('@/features/organizer-next-actions/scrollToSection');
 
 const club: Club = {
@@ -65,34 +79,33 @@ function game(patch: Partial<Game> = {}): Game {
   } as unknown as Game;
 }
 
-function render(g: Game) {
+function render(g: Game, courts = club.courts!, clubs = [club]) {
   return renderToStaticMarkup(
-    <GameCourtsSection game={g} courts={club.courts!} clubs={[club]} canEdit={false} onGameUpdate={() => undefined} />,
+    <GameCourtsProvider game={g} courts={courts} clubs={clubs} canEdit={false} onGameUpdate={() => undefined}>
+      <Probe />
+    </GameCourtsProvider>,
   );
 }
 
-describe('GameCourtsSection', () => {
+describe('GameCourtsProvider', () => {
   it('shows every slot read-only for players under the organizer anchor', () => {
     const html = render(game());
     expect(ORGANIZER_SECTION_SELECTORS.courts).toBe('#game-courts');
     expect(html).toContain('id="game-courts"');
     expect(html).toContain('data-testid="courts-card"');
+    expect(html).toContain('data-planner="no"');
     expect(html).toContain('Court 1');
     // Two courts chosen, one assigned: the second is still "Any court".
     expect(html).toContain('card.anyCourt');
     expect(html).not.toContain('<button');
   });
 
-  it('stays off the page for bars, events and finished games; without a club only organizers see it', () => {
+  it('gives Game info no courts for bars, events and finished games; without a club only organizers see it', () => {
     expect(gameShowsCourtsSection(game({ entityType: 'BAR' }))).toBe(false);
     expect(gameShowsCourtsSection(game({ entityType: 'EVENT' } as Partial<Game>))).toBe(false);
     // No club yet: the organizer's card asks for one; players see nothing.
     expect(gameShowsCourtsSection(game({ clubId: undefined, club: undefined }))).toBe(true);
-    expect(
-      renderToStaticMarkup(
-        <GameCourtsSection game={game({ clubId: undefined, club: undefined })} courts={[]} clubs={[]} canEdit={false} onGameUpdate={() => undefined} />,
-      ),
-    ).toBe('');
+    expect(render(game({ clubId: undefined, club: undefined }), [], [])).toBe('');
     expect(gameShowsCourtsSection(game({ status: 'FINISHED' }))).toBe(false);
     expect(gameShowsCourtsSection(game({ resultsStatus: 'FINAL' }))).toBe(false);
     expect(render(game({ entityType: 'BAR' }))).toBe('');

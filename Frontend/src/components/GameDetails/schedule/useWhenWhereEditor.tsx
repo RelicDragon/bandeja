@@ -1,10 +1,15 @@
 /**
- * "When and where" — the one editor for a game's club, date, time, duration
- * and courts (docs/domains/booking.md "When and where editor"). Every "change
- * time / club / court" entry on the game page opens it; `focus` scrolls to
- * the part that was tapped.
+ * "When and where" — the Edit dialog's tab for a game's club, date, time,
+ * duration, courts and their bookings (docs/domains/booking.md "When and
+ * where"). Every "change time / club / court" tap on the game page opens the
+ * dialog here; `focus` scrolls to the part that was tapped. The state lives in
+ * this hook (owned by the dialog), so switching tabs keeps the draft.
  *
- * What a change does to bookings is shown right where it happens, before Save:
+ * Bookings, in the same tab:
+ *  - while the draft matches the saved game, the courts' booking rows are live
+ *    (`useGameCourts`): tap a court to book it, use a booking already made,
+ *    mark it booked another way, link, remove or cancel — the court sheet
+ *    opens over the dialog;
  *  - a court the club shows taken at the new time: checked against the
  *    organizer's club account — "Use my booking" (linked on save), someone
  *    else's (free courts offered as chips), or "I booked it another way";
@@ -12,26 +17,24 @@
  *    court with what happens to it (keep / move / switch court …, from the
  *    reschedule planner); Save runs those club changes as a checklist here;
  *  - removing the club or the date and time while bookings are linked: per
- *    booking, keep it at the club (removed from the game) or cancel it there.
+ *    booking, keep it at the club (removed from the game) or cancel it there;
+ *  - any other change: the courts are booked after saving.
  * Courts are picked, never counted: the roster decides how many.
  *
  * Saving without the club changes: `PUT /games/:id?timePolicy=explicit` then
  * `PUT /games/:id/court-slots` (`saveEditLocationTime`). A "Game only" game
- * becomes a club-booking game on its next schedule save (the mode is gone
- * from the editor; "I booked it another way" covers it per court).
+ * becomes a club-booking game on its next schedule save.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { addHours } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Save, TriangleAlert } from 'lucide-react';
+import { CalendarCheck, TriangleAlert } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Club, Court, Game } from '@/types';
 import { clubsApi, courtsApi, gamesApi } from '@/api';
 import { courtSlotsApi } from '@/api/courtSlots';
-import { Drawer, DrawerCloseButton, DrawerContent } from '@/components/ui/Drawer';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { identityKey, useStableIdentity } from '@/hooks/useStableIdentity';
 import { useAuthStore } from '@/store/authStore';
 import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
@@ -76,18 +79,28 @@ import { useCourtReservationText } from '@/features/court-reservations/useCourtR
 import { useReschedulePlan, type ReschedulePlanSource } from '@/features/court-reservations/useReschedulePlan';
 import { RescheduleOutcomeList } from '@/features/court-reservations/RescheduleOutcomeRows';
 import { rescheduleFooterLabel, runIsShown, scheduleRunTitle } from '@/features/court-reservations/scheduleEditorModel';
+import { CourtsCard } from '@/features/court-reservations/CourtsCard';
+import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
+import { useGameCourts } from '@/components/GameDetails/courts/gameCourtsContext';
 import { ScheduleRunBody, ScheduleRunFooter } from '@/features/court-reservations/ScheduleRunPanel';
-import { pressScaleGuard } from '@/components/motion/pressScale';
 import type { ScheduleFocus } from '@/features/court-reservations/CourtsCard';
-import type { SchedulePlanner } from './schedulePlanner';
 import { ReleaseBookingsSection, type ReleaseChoice } from './ReleaseBookingsSection';
 import '@/features/court-reservations/courtReservations.css';
 
-export type GameScheduleSheetProps = {
+export type WhenWhereEditorOptions = {
+  /** The dialog is open (state resets on open). */
   open: boolean;
-  onClose: () => void;
-  /** The part that was tapped (scrolled into view on open). */
+  /** The tab is showing (the part that was tapped scrolls into view). */
+  active: boolean;
   focus?: ScheduleFocus;
+  /** Changes when the page asks for `focus` again while the dialog is open. */
+  focusKey?: number;
+  /** The dialog's scroll container. */
+  scrollRef: RefObject<HTMLDivElement | null>;
+  /** Move the dialog to this tab (a stopped save, a run starting). */
+  onActivate: () => void;
+  /** Close the dialog (a finished run's "Close"). */
+  onClose: () => void;
   game: Game;
   clubs: Club[];
   courts: Court[];
@@ -96,8 +109,28 @@ export type GameScheduleSheetProps = {
   onGameUpdate: (game: Game) => void;
   onCourtsChange?: (courts: Court[]) => void;
   onClubsChange?: (clubs: Club[]) => void;
-  /** Linked bookings, the reschedule planner and its runner (court-slot games at a club). */
-  planner?: SchedulePlanner | null;
+};
+
+/** How a save went: done (close), stopped (answer something first), running (club changes on screen), failed. */
+export type WhenWhereSaveResult = 'saved' | 'stopped' | 'running' | 'failed';
+
+export type WhenWhereEditor = {
+  body: ReactNode;
+  /** Its own confirmations (rendered next to the dialog). */
+  dialogs: ReactNode;
+  isDirty: boolean;
+  isSaving: boolean;
+  /** Save is meaningful now (dirty, or a ready reschedule plan). */
+  canSave: boolean;
+  /** The Save button's label on this tab ("Move game and 2 bookings" …). */
+  saveLabel: string | null;
+  save: () => Promise<WhenWhereSaveResult>;
+  /** Club changes of a time move are on screen (the dialog shows `runFooter`, tabs locked). */
+  showRun: boolean;
+  runTitle: string | null;
+  runFooter: ReactNode;
+  /** A run is going: the dialog can't close. */
+  locked: boolean;
 };
 
 function initialWhere(game: Game): WhereTabState {
@@ -117,10 +150,14 @@ function initialWhen(game: Game) {
 
 const EMPTY_WINDOW: IsoInterval = { start: new Date(0).toISOString(), end: new Date(90 * MINUTE_MS).toISOString() };
 
-export function GameScheduleSheet({
+export function useWhenWhereEditor({
   open,
-  onClose,
+  active,
   focus,
+  focusKey = 0,
+  scrollRef,
+  onActivate,
+  onClose,
   game,
   clubs: clubsProp,
   courts,
@@ -128,9 +165,10 @@ export function GameScheduleSheet({
   onGameUpdate,
   onCourtsChange,
   onClubsChange,
-  planner = null,
-}: GameScheduleSheetProps) {
+}: WhenWhereEditorOptions): WhenWhereEditor {
   const { t } = useTranslation();
+  const gameCourts = useGameCourts();
+  const planner = gameCourts.planner;
   const clubs = useStableIdentity(clubsProp);
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
@@ -153,13 +191,11 @@ export function GameScheduleSheet({
   const [releaseChoices, setReleaseChoices] = useState<Record<string, ReleaseChoice>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [softOverlap, setSoftOverlap] = useState<'soft' | 'reserved' | null>(null);
-  const [showDiscard, setShowDiscard] = useState(false);
   const [claimPulse, setClaimPulse] = useState(0);
   const courtsRef = useRef(courts);
   courtsRef.current = courts;
   const clubsRef = useRef(clubs);
   clubsRef.current = clubs;
-  const scrollRef = useRef<HTMLDivElement>(null);
   const claimRef = useRef<HTMLDivElement>(null);
   const prevOpen = useRef(false);
 
@@ -197,7 +233,6 @@ export function GameScheduleSheet({
       setLinkChoices({});
       setTimeCleared(false);
       setReleaseChoices({});
-      setShowDiscard(false);
       setSoftOverlap(null);
       window.setTimeout(() => setDisableAutoAdjust(false), 200);
     }
@@ -213,16 +248,25 @@ export function GameScheduleSheet({
     }
   }, [disableAutoAdjust, hookDate, hookTime, hookDuration]);
 
-  // Scroll to the tapped part once the panel is laid out.
-  useEffect(() => {
-    // The club is the first thing in the sheet: only courts / time need a scroll.
-    if (!open || !focus || focus === 'club') return;
-    const id = window.setTimeout(() => {
-      const selector = focus === 'courts' ? '[data-testid="edit-court-slots-picker"]' : '[data-testid="schedule-time-anchor"]';
+  const scrollTo = useCallback(
+    (part: ScheduleFocus) => {
+      // The club is the first thing in the tab.
+      if (part === 'club') {
+        scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      const selector = part === 'courts' ? '[data-testid="edit-court-slots-picker"]' : '[data-testid="schedule-time-anchor"]';
       scrollRef.current?.querySelector(selector)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    }, 260);
+    },
+    [scrollRef],
+  );
+
+  // Scroll to the tapped part once the tab is laid out.
+  useEffect(() => {
+    if (!open || !active || !focus || focus === 'club') return;
+    const id = window.setTimeout(() => scrollTo(focus), 260);
     return () => window.clearTimeout(id);
-  }, [open, focus]);
+  }, [open, active, focus, focusKey, scrollTo]);
 
   // The venue city's clubs (a club picked in another city).
   useEffect(() => {
@@ -463,16 +507,7 @@ export function GameScheduleSheet({
     timeDirty ||
     countDirty;
 
-  const requestClose = useCallback(() => {
-    if (isSaving || run?.phase === 'running') return;
-    if (isDirty && !showRun) {
-      setShowDiscard(true);
-      return;
-    }
-    if (showRun) planner?.dismissRun();
-    onClose();
-  }, [isSaving, run, isDirty, showRun, planner, onClose]);
-  useBackButtonModal(open, requestClose, 'game-schedule-sheet');
+
 
   /* ---------------- save ---------------- */
 
@@ -527,7 +562,7 @@ export function GameScheduleSheet({
     return true;
   };
 
-  const executeSave = async () => {
+  const executeSave = async (): Promise<WhenWhereSaveResult> => {
     setIsSaving(true);
     try {
       if (releaseMode && planner) {
@@ -536,9 +571,10 @@ export function GameScheduleSheet({
         );
       }
       if (plannerMode && planner) {
-        // The runner saves the time and does the club changes; the sheet shows the checklist.
+        // The runner saves the time and does the club changes; the tab shows the checklist.
         planner.start(plan.effective, currentWindow, plan.newWindow);
-        return;
+        onActivate();
+        return 'running';
       }
       const ownLinks = [...linkSet]
         .map((courtId) => linkChoices[courtId])
@@ -562,22 +598,26 @@ export function GameScheduleSheet({
         }),
       );
       await refreshGame();
-      toast.success(t('gameDetails.settingsUpdated'));
-      onClose();
+      return 'saved';
     } catch (err) {
       showSaveError(err);
       void refreshGame().catch(() => undefined);
+      return 'failed';
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleSave = async () => {
-    if (isSaving) return;
+  const save = async (): Promise<WhenWhereSaveResult> => {
+    if (isSaving) return 'failed';
     setIsSaving(true);
     const ok = await gate().catch(() => true);
     setIsSaving(false);
-    if (ok) await executeSave();
+    if (!ok) {
+      onActivate();
+      return 'stopped';
+    }
+    return executeSave();
   };
 
   /* ---------------- render ---------------- */
@@ -590,13 +630,9 @@ export function GameScheduleSheet({
     game.entityType !== 'BAR' &&
     Boolean(selectedClub) &&
     Boolean(selectedClub?.policyText?.trim() || selectedClub?.cancellationNoticeHours);
-  const title = showRun && run ? scheduleRunTitle(run, crText) : t('gameDetails.whenWhere.title');
-  const saveLabel = plannerMode
-    ? rescheduleFooterLabel(plan.effective, crText)
-    : isSaving
-      ? t('common.saving')
-      : t('common.save');
-  const saveDisabled = isSaving || (!isDirty && !plannerMode) || (plannerMode && !plannerReady);
+  const runTitle = showRun && run ? scheduleRunTitle(run, crText) : null;
+  const saveLabel = plannerMode ? rescheduleFooterLabel(plan.effective, crText) : null;
+  const canSave = !isSaving && (plannerMode ? plannerReady : isDirty);
 
   const linkTimes = useMemo(() => {
     const out: Record<string, { start?: string | null; end?: string | null; courtId?: string | null }> = {};
@@ -604,45 +640,68 @@ export function GameScheduleSheet({
     return out;
   }, [links]);
 
-  if (!open) return null;
+  /*
+   * The courts' bookings. Live while the draft is the saved game (club, time
+   * and courts unchanged): the same rows as on the game page, a tap opens the
+   * court sheet over the dialog. Otherwise what the change does to them.
+   */
+  const scheduleUnchanged = !clubChanged && !timeDirty && selectedCourtIds.join(',') === initialCourtKey;
+  const liveCard = gameCourts.card && gameCourts.card.hasClub && scheduleUnchanged && !countDirty ? gameCourts.card : null;
+  const bookingsBody = releaseMode ? (
+    <ReleaseBookingsSection
+      links={links}
+      courtName={courtNameOf}
+      formatRange={clubClock.range}
+      clubName={selectedClub?.name ?? game.club?.name ?? ''}
+      reason={clubCleared ? 'club' : 'time'}
+      choices={releaseChoices}
+      onChange={(id, choice) => setReleaseChoices((prev) => ({ ...prev, [id]: choice }))}
+    />
+  ) : plannerMode && planner ? (
+    <RescheduleOutcomeList
+      planner={plan}
+      slots={planner.slots}
+      courtsById={planner.courtsById}
+      sharedWith={planner.sharedWith}
+      providerCapabilities={planner.providerCapabilities}
+      playerCount={planner.playerCount}
+      text={crText}
+    />
+  ) : liveCard ? (
+    <CourtsCard
+      {...liveCard}
+      embedded
+      showAction={openConflicts.length === 0}
+      onChange={(part) => scrollTo(part ?? 'club')}
+    />
+  ) : slotModel && editedWindow && isDirty ? (
+    <p className="text-sm text-gray-600 dark:text-gray-300" data-testid="schedule-book-after-save">
+      {t('gameDetails.whenWhere.bookAfterSave')}
+    </p>
+  ) : null;
+  const bookingsSection = bookingsBody ? (
+    <section className="space-y-2" data-testid="schedule-bookings">
+      <LocationTimeStepHeader icon={CalendarCheck} title={t('gameDetails.whenWhere.bookings')} />
+      {bookingsBody}
+    </section>
+  ) : null;
 
-  return (
-    <>
-      <Drawer
-        open={open}
-        onOpenChange={(next) => {
-          if (!next) requestClose();
-        }}
-        dismissible={run?.phase !== 'running'}
-      >
-        <DrawerContent
-          className="!mt-10 !max-h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex-col overflow-hidden bg-white dark:bg-gray-900"
-          aria-labelledby="game-schedule-title"
-        >
-          <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" aria-hidden />
-          <div data-overlay-chrome="" className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
-            <h2 id="game-schedule-title" className="min-w-0 flex-1 text-start text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
-              {title}
-            </h2>
-            {run?.phase !== 'running' ? <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" /> : null}
-          </div>
-
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3" data-testid="game-schedule-sheet">
-            {showRun && run && planner ? (
-              <ScheduleRunBody
-                run={run}
-                courtsById={planner.courtsById}
-                text={crText}
-                linkTimes={linkTimes}
-                playerCount={planner.playerCount}
-                currentUserId={user?.id ?? null}
-                canResumeOther={Boolean(planner.resumeOther)}
-                onRetry={planner.retry}
-                busy={planner.busy}
-              />
-            ) : (
-              <div className="space-y-4">
-                <LocationTimeTab
+  const body =
+    showRun && run && planner ? (
+      <ScheduleRunBody
+        run={run}
+        courtsById={planner.courtsById}
+        text={crText}
+        linkTimes={linkTimes}
+        playerCount={planner.playerCount}
+        currentUserId={user?.id ?? null}
+        canResumeOther={Boolean(planner.resumeOther)}
+        onRetry={planner.retry}
+        busy={planner.busy}
+      />
+    ) : (
+      <div className="space-y-4" data-testid="game-schedule-sheet">
+        <LocationTimeTab
                   game={game}
                   entityType={game.entityType}
                   clubs={clubs}
@@ -714,29 +773,7 @@ export function GameScheduleSheet({
                       </div>
                     ) : null
                   }
-                  bookingsSection={
-                    releaseMode ? (
-                      <ReleaseBookingsSection
-                        links={links}
-                        courtName={courtNameOf}
-                        formatRange={clubClock.range}
-                        clubName={selectedClub?.name ?? game.club?.name ?? ''}
-                        reason={clubCleared ? 'club' : 'time'}
-                        choices={releaseChoices}
-                        onChange={(id, choice) => setReleaseChoices((prev) => ({ ...prev, [id]: choice }))}
-                      />
-                    ) : plannerMode && planner ? (
-                      <RescheduleOutcomeList
-                        planner={plan}
-                        slots={planner.slots}
-                        courtsById={planner.courtsById}
-                        sharedWith={planner.sharedWith}
-                        providerCapabilities={planner.providerCapabilities}
-                        playerCount={planner.playerCount}
-                        text={crText}
-                      />
-                    ) : null
-                  }
+                  bookingsSection={bookingsSection}
                   selectedDate={whenDate}
                   selectedTime={whenTime}
                   duration={whenDuration}
@@ -779,86 +816,54 @@ export function GameScheduleSheet({
                     hour12={displaySettings.hour12}
                   />
                 ) : null}
-              </div>
-            )}
-          </div>
+      </div>
+    );
 
-          <div className="mt-auto shrink-0 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800">
-            {showRun && run && planner ? (
-              <ScheduleRunFooter
-                run={run}
-                text={crText}
-                busy={planner.busy}
-                currentUserId={user?.id ?? null}
-                onRetry={planner.retry}
-                onDismiss={planner.dismissRun}
-                onClose={onClose}
-                onResumeOther={planner.resumeOther}
-              />
-            ) : (
-              <div className="flex items-center gap-3">
-                <span
-                  aria-live="polite"
-                  className={`min-w-0 flex-1 truncate text-xs transition-opacity duration-200 ${
-                    isDirty && !isSaving ? 'text-amber-600 opacity-100 dark:text-amber-400' : 'opacity-0'
-                  }`}
-                >
-                  {t('gameDetails.editModal.unsavedChanges')}
-                </span>
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  disabled={isSaving}
-                  className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleSave()}
-                  disabled={saveDisabled}
-                  aria-busy={isSaving}
-                  data-testid="schedule-save"
-                  className={`flex min-w-[6.5rem] items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40 ${pressScaleGuard}`}
-                >
-                  {isSaving ? <Loader2 size={18} className="shrink-0 animate-spin" aria-hidden /> : <Save size={18} className="shrink-0" aria-hidden />}
-                  {saveLabel}
-                </button>
-              </div>
-            )}
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      <ConfirmationModal
-        isOpen={showDiscard}
-        onClose={() => setShowDiscard(false)}
-        onConfirm={() => {
-          setShowDiscard(false);
-          onClose();
-        }}
-        title={t('gameDetails.editModal.discardTitle')}
-        message={t('gameDetails.editModal.discardMessage')}
-        confirmText={t('gameDetails.editModal.discardConfirm')}
-        cancelText={t('gameDetails.editModal.keepEditing')}
-        confirmVariant="danger"
+  const runFooter =
+    showRun && run && planner ? (
+      <ScheduleRunFooter
+        run={run}
+        text={crText}
+        busy={planner.busy}
+        currentUserId={user?.id ?? null}
+        onRetry={planner.retry}
+        onDismiss={planner.dismissRun}
+        onClose={onClose}
+        onResumeOther={planner.resumeOther}
       />
+    ) : null;
 
-      <ConfirmationModal
-        isOpen={softOverlap != null}
-        tone="warning"
-        title={t('createGame.overlapSoftTitle')}
-        message={t(softOverlap === 'reserved' ? 'gameDetails.courts.overlapReserved' : 'createGame.overlapSoftMessage')}
-        confirmText={t('createGame.overlapSoftProceed')}
-        cancelText={t('common.cancel')}
-        onConfirm={() => {
-          setSoftOverlap(null);
-          void executeSave();
-        }}
-        onClose={() => setSoftOverlap(null)}
-      />
-    </>
+  const dialogs = (
+    <ConfirmationModal
+      isOpen={softOverlap != null}
+      tone="warning"
+      title={t('createGame.overlapSoftTitle')}
+      message={t(softOverlap === 'reserved' ? 'gameDetails.courts.overlapReserved' : 'createGame.overlapSoftMessage')}
+      confirmText={t('createGame.overlapSoftProceed')}
+      cancelText={t('common.cancel')}
+      onConfirm={() => {
+        setSoftOverlap(null);
+        void executeSave().then((result) => {
+          if (result === 'saved') onClose();
+        });
+      }}
+      onClose={() => setSoftOverlap(null)}
+    />
   );
+
+  return {
+    body,
+    dialogs,
+    isDirty,
+    isSaving,
+    canSave,
+    saveLabel,
+    save,
+    showRun,
+    runTitle,
+    runFooter,
+    locked: run?.phase === 'running',
+  };
 }
 
 /** The club whose clock the picked wall time is in (the game's club when none is picked yet). */

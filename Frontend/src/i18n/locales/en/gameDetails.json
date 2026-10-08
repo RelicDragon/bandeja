@@ -945,7 +945,9 @@
       "releaseTitleClub_one": "Without a club, this booking can't stay on the game.",
       "releaseTitleClub_other": "Without a club, these {{count}} bookings can't stay on the game.",
       "releaseTitleTime_one": "Without a time, this booking can't stay on the game.",
-      "releaseTitleTime_other": "Without a time, these {{count}} bookings can't stay on the game."
+      "releaseTitleTime_other": "Without a time, these {{count}} bookings can't stay on the game.",
+      "bookings": "Bookings",
+      "bookAfterSave": "Save first, then book the courts here or on the game page."
     }
   }
 }

@@ -207,6 +207,7 @@
     "Week Start": "profile.weekStart",
     "Weekly": "series.cadenceWeekly",
     "What kind of game?": "createGame.intent.title",
+    "When and where": "gameDetails.whenWhere.title",
     "Yes, Continue": "gameResults.confirmAnnouncedGame.confirm",
     "You can nudge again in about {{hours}} h": "cost.remindCooldown",
     "You're in the queue. The organizer seats players for this game.": "spots.queue.waitForOrganizer",
@@ -747,6 +748,19 @@
       "th": "ออกจาก",
       "ja": "退出"
     },
+    "common.save": {
+      "en": "Save",
+      "ru": "Сохранить",
+      "sr": "Sačuvaj",
+      "es": "Guardar",
+      "cs": "Uložit",
+      "ar": "حفظ",
+      "zh": "保存",
+      "id": "Simpan",
+      "hi": "सेव करें",
+      "th": "บันทึก",
+      "ja": "保存"
+    },
     "cost.amountLabel": {
       "en": "Amount",
       "ru": "Сумма",
@@ -1006,32 +1020,6 @@
       "hi": "क्लब चुनें",
       "th": "เลือกคลับ",
       "ja": "クラブを選ぶ"
-    },
-    "courtReservation.card.change": {
-      "en": "Change",
-      "ru": "Изменить",
-      "sr": "Izmeni",
-      "es": "Cambiar",
-      "cs": "Změnit",
-      "ar": "تغيير",
-      "zh": "更改",
-      "id": "Ubah",
-      "hi": "बदलें",
-      "th": "เปลี่ยน",
-      "ja": "変更"
-    },
-    "courtReservation.card.titleMany": {
-      "en": "Courts",
-      "ru": "Корты",
-      "sr": "Tereni",
-      "es": "Pistas",
-      "cs": "Kurty",
-      "ar": "الملاعب",
-      "zh": "场地",
-      "id": "Lapangan",
-      "hi": "कोर्ट",
-      "th": "คอร์ต",
-      "ja": "コート"
     },
     "courtReservation.card.titleOne": {
       "en": "Court",
@@ -3086,6 +3074,19 @@
       "hi": "टूल",
       "th": "เครื่องมือ",
       "ja": "ツール"
+    },
+    "gameDetails.whenWhere.bookings": {
+      "en": "Bookings",
+      "ru": "Бронирования",
+      "sr": "Rezervacije",
+      "es": "Reservas",
+      "cs": "Rezervace",
+      "ar": "الحجوزات",
+      "zh": "预订",
+      "id": "Pemesanan",
+      "hi": "बुकिंग",
+      "th": "การจอง",
+      "ja": "予約"
     },
     "gameDetails.whenWhere.removeClub": {
       "en": "Remove club",

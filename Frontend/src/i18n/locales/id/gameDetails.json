@@ -940,7 +940,9 @@
       "someCourt": "Lapangan",
       "theClub": "klub",
       "releaseTitleClub_other": "Tanpa klub, {{count}} pesanan ini tidak bisa tetap di permainan.",
-      "releaseTitleTime_other": "Tanpa waktu, {{count}} pesanan ini tidak bisa tetap di permainan."
+      "releaseTitleTime_other": "Tanpa waktu, {{count}} pesanan ini tidak bisa tetap di permainan.",
+      "bookings": "Pemesanan",
+      "bookAfterSave": "Simpan dulu, lalu pesan lapangan di sini atau di halaman permainan."
     }
   }
 }

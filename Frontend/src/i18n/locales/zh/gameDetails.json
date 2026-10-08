@@ -940,7 +940,9 @@
       "someCourt": "场地",
       "theClub": "俱乐部",
       "releaseTitleClub_other": "没有俱乐部，这 {{count}} 个预订无法留在比赛中。",
-      "releaseTitleTime_other": "没有时间，这 {{count}} 个预订无法留在比赛中。"
+      "releaseTitleTime_other": "没有时间，这 {{count}} 个预订无法留在比赛中。",
+      "bookings": "预订",
+      "bookAfterSave": "请先保存，然后在这里或比赛页面预订场地。"
     }
   }
 }

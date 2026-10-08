@@ -945,7 +945,9 @@
       "releaseTitleClub_one": "बिना क्लब के यह बुकिंग गेम में नहीं रह सकती।",
       "releaseTitleClub_other": "बिना क्लब के ये {{count}} बुकिंग गेम में नहीं रह सकतीं।",
       "releaseTitleTime_one": "बिना समय के यह बुकिंग गेम में नहीं रह सकती।",
-      "releaseTitleTime_other": "बिना समय के ये {{count}} बुकिंग गेम में नहीं रह सकतीं।"
+      "releaseTitleTime_other": "बिना समय के ये {{count}} बुकिंग गेम में नहीं रह सकतीं।",
+      "bookings": "बुकिंग",
+      "bookAfterSave": "पहले सेव करें, फिर कोर्ट यहीं या गेम पेज पर बुक करें।"
     }
   }
 }

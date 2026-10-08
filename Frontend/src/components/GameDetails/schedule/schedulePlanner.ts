@@ -1,9 +1,9 @@
 /**
- * What the "When and where" editor needs from the game page's court section
- * for a game at a club: its court slots and linked bookings, the reschedule
- * planner's inputs, and the runner that does the club changes when a game
- * with bookings moves (owned by `GameCourtsSection`, so the card's
- * "unfinished changes" notice and the editor share one run).
+ * What the "When and where" tab needs from the game's courts for a game at a
+ * club: its court slots and linked bookings, the reschedule planner's inputs,
+ * and the runner that does the club changes when a game with bookings moves
+ * (owned by `GameCourtsProvider`, so Game info's "unfinished changes" notice
+ * and the tab share one run).
  */
 import type { CourtSlotView } from '@shared/gameBooking/courtReservations';
 import type { IsoInterval } from '@shared/gameBooking/coverageIntervals';
