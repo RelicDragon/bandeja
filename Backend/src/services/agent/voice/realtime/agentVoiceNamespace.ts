@@ -7,6 +7,11 @@
  * - `voice:start` → checks (v2 available, per-user start limit shared via Redis, chat ownership,
  *   daily budget) then one `AgentVoiceRealtimeSession` per socket. One session per user: a start elsewhere
  *   (this process, or another one via Redis pub/sub) ends the old one with `reason: 'replaced'`.
+ * - A dropped socket (not `voice:end`) suspends its session for `AGENT_VOICE_REALTIME_RESUME_GRACE_MS`;
+ *   a `voice:start {resumeSessionId}` of the same user and chat within it resumes the session on the
+ *   new socket (not charged against the start limit), else it ends with `reason: 'disconnected'`.
+ *   Across processes a Redis marker (`pp:agent-voice:resumable:<sessionId>`) lets the reconnect
+ *   start a fresh session elsewhere without a start-limit charge.
  * - Optional handshake extension `auth.clientCaps` (same format as `X-Agent-Client-Caps`); without
  *   it the chat's latest run's caps are reused.
  * - Nothing of the audio is stored; usage rows hold durations and character counts only.
@@ -60,10 +65,13 @@ const startSchema = z
     locale: z.string().max(16).optional(),
     inputSampleRate: z.literal(AGENT_VOICE_INPUT_SAMPLE_RATE),
     muted: z.boolean().optional(),
+    resumeSessionId: z.string().min(1).max(64).optional(),
   })
   .strip();
 
 const sessions = new Map<string, AgentVoiceRealtimeSession>();
+/** Per session: the socket it talks to (moves on a resume), its chat, the grace timer while suspended. */
+const links = new Map<string, { socket: VoiceSocket; chatId: string; graceTimer: NodeJS.Timeout | null }>();
 const sessionsByUser = new Map<string, Set<string>>();
 let runPort: AgentVoiceRunPort = defaultAgentVoiceRunPort;
 
@@ -78,6 +86,10 @@ export function agentVoiceActiveSessionCount(): number {
 }
 
 function forget(session: AgentVoiceRealtimeSession): void {
+  const link = links.get(session.id);
+  if (link?.graceTimer) clearTimeout(link.graceTimer);
+  links.delete(session.id);
+  void clearResumable(session.id);
   sessions.delete(session.id);
   const ids = sessionsByUser.get(session.userId);
   ids?.delete(session.id);
@@ -126,7 +138,92 @@ export function createAgentVoiceStartLimiter(
   };
 }
 
-const startLimiter = createAgentVoiceStartLimiter(nodeRedisAgentRatePort());
+type AgentVoiceStartLimiter = Pick<ReturnType<typeof createAgentVoiceStartLimiter>, 'consume'>;
+const defaultStartLimiter = createAgentVoiceStartLimiter(nodeRedisAgentRatePort());
+let startLimiter: AgentVoiceStartLimiter = defaultStartLimiter;
+
+/** Tests: a fake start limiter (null = the real one). */
+export function setAgentVoiceStartLimiterForTests(limiter: AgentVoiceStartLimiter | null): void {
+  startLimiter = limiter ?? defaultStartLimiter;
+}
+
+// --- resume across processes ---------------------------------------------------------------------
+
+/** `<userId> <chatId>` while a session is live or suspended (TTL = what's left of it). */
+export const AGENT_VOICE_RESUMABLE_PREFIX = 'pp:agent-voice:resumable:';
+
+async function markResumable(sessionId: string, userId: string, chatId: string, ttlMs: number): Promise<void> {
+  const redis = await getRedisClient();
+  if (!redis) return;
+  await redis.set(`${AGENT_VOICE_RESUMABLE_PREFIX}${sessionId}`, `${userId} ${chatId}`, { PX: Math.max(1, ttlMs) }).catch(() => {});
+}
+
+async function expireResumable(sessionId: string, ttlMs: number): Promise<void> {
+  const redis = await getRedisClient();
+  if (!redis) return;
+  await redis.pExpire(`${AGENT_VOICE_RESUMABLE_PREFIX}${sessionId}`, Math.max(1, ttlMs)).catch(() => {});
+}
+
+async function clearResumable(sessionId: string): Promise<void> {
+  const redis = await getRedisClient();
+  if (!redis) return;
+  await redis.del(`${AGENT_VOICE_RESUMABLE_PREFIX}${sessionId}`).catch(() => {});
+}
+
+/**
+ * A session of this user and chat is live or within its grace on another process: the
+ * reconnect starts fresh here without a start-limit charge (single use; the old session ends as
+ * `replaced`).
+ */
+async function takeResumable(sessionId: string, userId: string, chatId: string): Promise<boolean> {
+  const redis = await getRedisClient();
+  if (!redis) return false;
+  try {
+    const key = `${AGENT_VOICE_RESUMABLE_PREFIX}${sessionId}`;
+    const value = await redis.get(key);
+    if (value !== `${userId} ${chatId}`) return false;
+    await redis.del(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Resume a session of this process on `socket` (suspended, or one whose old socket hasn't dropped yet). */
+function resumeLocal(socket: VoiceSocket, userId: string, chatId: string, sessionId: string): AgentVoiceStartAck | null {
+  const session = sessions.get(sessionId);
+  const link = links.get(sessionId);
+  if (!session || session.isEnded || !link || session.userId !== userId || link.chatId !== chatId) return null;
+  if (!socket.connected) return { ok: false, code: 'BAD_REQUEST', message: 'Disconnected' };
+  if (link.graceTimer) clearTimeout(link.graceTimer);
+  link.graceTimer = null;
+  const previousId = socket.data.voiceSessionId;
+  if (previousId && previousId !== sessionId) sessions.get(previousId)?.end('replaced');
+  // The old socket may not have dropped yet (ping timeout): it stops being this session's.
+  session.suspend();
+  link.socket = socket;
+  socket.data.voiceSessionId = sessionId;
+  const voiceConfig = config.agentVoice;
+  void markResumable(sessionId, userId, chatId, voiceConfig.realtime.maxSessionMs + voiceConfig.realtime.resumeGraceMs);
+  console.info(`[agent-voice] session resume id=${sessionId} user=${userId}`);
+  return { ok: true, sessionId, outputSampleRate: AGENT_VOICE_OUTPUT_SAMPLE_RATE, maxSessionMs: voiceConfig.realtime.maxSessionMs, resumed: true };
+}
+
+/** The socket dropped: hold its session for the grace period, then end it as `disconnected`. */
+function suspendOnDisconnect(session: AgentVoiceRealtimeSession): void {
+  const link = links.get(session.id);
+  if (!link) return;
+  const graceMs = config.agentVoice.realtime.resumeGraceMs;
+  if (graceMs <= 0) {
+    session.end('disconnected');
+    return;
+  }
+  session.suspend();
+  if (link.graceTimer) clearTimeout(link.graceTimer);
+  link.graceTimer = setTimeout(() => session.end('disconnected'), graceMs);
+  link.graceTimer.unref?.();
+  void expireResumable(session.id, graceMs);
+}
 
 export function classifyAgentVoiceError(error: unknown): AgentVoiceDepError {
   if (error instanceof ApiError) {
@@ -192,11 +289,20 @@ async function startSession(socket: VoiceSocket, payload: unknown): Promise<Agen
   if (!userId) return { ok: false, code: 'BAD_REQUEST', message: 'Not authenticated' };
   const parsed = startSchema.safeParse(payload);
   if (!parsed.success) return { ok: false, code: 'BAD_REQUEST', message: 'Invalid voice:start payload' };
+  const resumeId = parsed.data.resumeSessionId;
+  if (resumeId) {
+    const resumed = resumeLocal(socket, userId, parsed.data.chatId, resumeId);
+    if (resumed) return resumed;
+  }
   const providers = resolveAgentVoiceRealtimeProviders();
   if (!providers) return { ok: false, code: 'VOICE_V2_UNAVAILABLE', message: 'Realtime voice is not available' };
-  const limit = await startLimiter.consume(userId);
-  if (!limit.ok) {
-    return { ok: false, code: 'RATE_LIMITED', message: 'Too many voice sessions. Try again in a few minutes.', ...(limit.retryAt ? { retryAt: limit.retryAt } : {}) };
+  // A reconnect within the grace of a session held by another process isn't a new start.
+  const reconnect = resumeId ? await takeResumable(resumeId, userId, parsed.data.chatId) : false;
+  if (!reconnect) {
+    const limit = await startLimiter.consume(userId);
+    if (!limit.ok) {
+      return { ok: false, code: 'RATE_LIMITED', message: 'Too many voice sessions. Try again in a few minutes.', ...(limit.retryAt ? { retryAt: limit.retryAt } : {}) };
+    }
   }
   const chat = await prisma.agentChat.findFirst({ where: { id: parsed.data.chatId, userId, deletedAt: null }, select: { id: true } });
   if (!chat) return { ok: false, code: 'NOT_FOUND', message: 'Chat not found' };
@@ -227,7 +333,9 @@ async function startSession(socket: VoiceSocket, payload: unknown): Promise<Agen
     providers,
     runs: runPort,
     emit: (event, data) => {
-      (socket.emit as (event: string, data: unknown) => boolean)(event, data);
+      // The session's current socket (a resume moves it); a dropped one just discards.
+      const target = links.get(sessionId)?.socket ?? socket;
+      (target.emit as (event: string, data: unknown) => boolean)(event, data);
     },
     vocabulary: () => vocabularyFor(userId),
     checkBudget: () => budgetError(userId, isAdmin),
@@ -239,12 +347,14 @@ async function startSession(socket: VoiceSocket, payload: unknown): Promise<Agen
     },
   });
   sessions.set(sessionId, session);
+  links.set(sessionId, { socket, chatId: chat.id, graceTimer: null });
+  void markResumable(sessionId, userId, chat.id, voiceConfig.realtime.maxSessionMs + voiceConfig.realtime.resumeGraceMs);
   if (!sessionsByUser.has(userId)) sessionsByUser.set(userId, new Set());
   sessionsByUser.get(userId)!.add(sessionId);
   socket.data.voiceSessionId = sessionId;
   endOtherSessions(userId, sessionId);
   void publishReplace(userId, sessionId);
-  console.info(`[agent-voice] session start id=${sessionId} user=${userId} chat=${chat.id}`);
+  console.info(`[agent-voice] session start id=${sessionId} user=${userId} chat=${chat.id}${reconnect ? ' reconnect' : ''}`);
   return { ok: true, sessionId, outputSampleRate: AGENT_VOICE_OUTPUT_SAMPLE_RATE, maxSessionMs: voiceConfig.realtime.maxSessionMs };
 }
 
@@ -275,10 +385,12 @@ async function subscribeReplace(): Promise<void> {
   }
 }
 
+/** The live session of `socket` (not one a resume moved to another socket). */
 function sessionOf(socket: VoiceSocket): AgentVoiceRealtimeSession | null {
   const id = socket.data.voiceSessionId;
   const session = id ? sessions.get(id) : undefined;
-  return session && !session.isEnded ? session : null;
+  if (!session || session.isEnded || links.get(session.id)?.socket !== socket) return null;
+  return session;
 }
 
 function asRecord(payload: unknown): Record<string, unknown> {
@@ -314,7 +426,10 @@ export function registerAgentVoiceNamespace(io: SocketIOServer): Namespace {
       startSession(socket, payload)
         .then((res) => {
           ack(res);
-          if (res.ok) void sessions.get(res.sessionId)?.start();
+          if (!res.ok) return;
+          const session = sessions.get(res.sessionId);
+          if (res.resumed) session?.resumeTransport();
+          else void session?.start();
         })
         .catch((error) => {
           const classified = classifyAgentVoiceError(error);
@@ -354,7 +469,10 @@ export function registerAgentVoiceNamespace(io: SocketIOServer): Namespace {
       }
     });
     socket.on('voice:end', () => sessionOf(socket)?.end('user'));
-    socket.on('disconnect', () => sessionOf(socket)?.end('user'));
+    socket.on('disconnect', () => {
+      const session = sessionOf(socket);
+      if (session) suspendOnDisconnect(session);
+    });
   });
 
   void subscribeReplace();

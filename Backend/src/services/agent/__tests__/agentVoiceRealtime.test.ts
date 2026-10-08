@@ -6,7 +6,8 @@
  *   fake run port: a turn → voice run, ordered audio with two sentences in flight, fillers,
  *   confirm (mic ignored, follow-run, resume), barge-in (cancel + cut to what was heard), echo
  *   ignored, client interrupt (a stale turn id ignored), CHAT_BUSY retry, continuation re-send,
- *   budget, idle, the batch fallback (energy-VAD segmentation + WAV), usage records.
+ *   budget, idle, suspend / resume after a dropped link, the batch fallback (energy-VAD
+ *   segmentation + WAV), usage records.
  */
 import assert from 'node:assert/strict';
 import { SpeechChunker } from '@bandeja/shared/agentVoiceSpeech';
@@ -668,6 +669,52 @@ async function continuationBusyBudgetIdle(): Promise<void> {
   h.session.end('user');
 }
 
+async function suspendAndResume(): Promise<void> {
+  const h = harness({ config: (c) => ({ ...c, realtime: { ...c.realtime, idleMs: 120 } }) });
+  await h.session.start();
+  h.session.audio(pcm(100, 3000));
+  const sent = h.stt.appendedBytes;
+  // The link drops mid-speech: the capture is dropped, STT cleared and billed up to here.
+  h.stt.events!.speechStarted();
+  assert.equal(h.lastPhase(), 'hearing');
+  h.session.suspend();
+  assert.ok(h.session.isSuspended);
+  assert.ok(h.stt.clears >= 1, 'STT input cleared');
+  assert.equal(h.lastPhase(), 'listening');
+  assert.ok(h.usage.some((u) => u.kind === 'realtime_transcription' && u.amount === 100), 'usage flushed at the drop');
+  h.session.audio(pcm(100, 3000));
+  await sleep(300);
+  assert.equal(h.stt.appendedBytes, sent, 'nothing streamed or padded while suspended');
+  assert.deepEqual(h.ended, [], 'no idle end while suspended');
+
+  // Resumed: the current phase is re-sent, audio flows again, the idle clock is back.
+  const states = h.of('voice:state').length;
+  h.session.resumeTransport();
+  assert.equal(h.of('voice:state').length, states + 1);
+  assert.equal(h.lastPhase(), 'listening');
+  h.session.audio(pcm(100, 3000));
+  assert.equal(h.stt.appendedBytes, sent + 4800);
+  await waitFor(() => h.ended.length === 1, 'idle after the resume');
+  assert.deepEqual(h.ended, ['idle']);
+
+  // A drop while the run is live keeps the turn: the run isn't cancelled, its phase comes back.
+  const t = harness();
+  await t.session.start();
+  await speak(t, 'Find me a game');
+  await waitFor(() => t.runs.followed.has('run-1'), 'follow');
+  t.session.suspend();
+  t.runs.run('run-1').onEvent({ type: 'text.delta', text: 'You have one game. ' });
+  t.runs.run('run-1').onEvent({ type: 'run.completed', status: 'COMPLETED', usage: { inputTokens: 1, outputTokens: 1 } });
+  await waitFor(() => t.lastPhase() === 'speaking', 'speaking while suspended');
+  t.session.resumeTransport();
+  const last = t.of('voice:state').at(-1)!.payload;
+  assert.equal(last.phase, 'speaking');
+  assert.equal(last.turnId, t.of('voice:turn')[0].payload.turnId);
+  assert.deepEqual(t.runs.cancels, []);
+  t.session.end('disconnected');
+  assert.equal(t.of('voice:state').at(-1)?.payload.reason, 'disconnected');
+}
+
 async function batchFallback(): Promise<void> {
   const wavs: Buffer[] = [];
   const h = harness({
@@ -726,6 +773,7 @@ void (async () => {
     await confirmFlow();
     await bargeIn();
     await continuationBusyBudgetIdle();
+    await suspendAndResume();
     await batchFallback();
     console.log('agentVoiceRealtime.test: ok');
   } catch (error) {

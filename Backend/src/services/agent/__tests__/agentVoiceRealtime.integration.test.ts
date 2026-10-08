@@ -9,6 +9,9 @@
  *   `agent_voice_speech` (1 per spoken char), no transcript / text in them;
  * - barge-in: the run is cancelled and the stored reply cut to what was heard (+ "…");
  * - a second session of the same user ends the first (`reason: 'replaced'`);
+ * - a dropped socket: `voice:start {resumeSessionId}` within the grace resumes the same session
+ *   (not charged against the start limit, also while the old socket hasn't dropped yet); after
+ *   the grace the session is gone and a reconnect starts (and is charged) fresh;
  * - a merged re-send (`merged` over the stopped turn's message) isn't counted against the
  *   per-user message quota again.
  *
@@ -35,7 +38,11 @@ import { createAgentRunService } from '../agentRun.service';
 import type { AgentLlmClient, AgentLlmStreamChunk, AgentLlmStreamParams } from '../llm/deepseekStream';
 import { AGENT_TOOL_DEFINITIONS } from '../tools';
 import { AgentToolRegistry } from '../tools/registry';
-import { registerAgentVoiceNamespace } from '../voice/realtime/agentVoiceNamespace';
+import {
+  agentVoiceActiveSessionCount,
+  registerAgentVoiceNamespace,
+  setAgentVoiceStartLimiterForTests,
+} from '../voice/realtime/agentVoiceNamespace';
 import {
   setAgentVoiceRealtimeProvidersForTests,
   type AgentVoiceSttEvents,
@@ -403,6 +410,59 @@ void (async () => {
     c2.emit('voice:end', {});
     await waitFor(() => c2.of('voice:state').some((p) => p.phase === 'ended' && p.reason === 'user'), 'ended by the user');
 
+    // --- resume after a dropped socket --------------------------------------------------------
+    {
+      let starts = 0;
+      setAgentVoiceStartLimiterForTests({
+        consume: async () => {
+          starts += 1;
+          return { ok: true };
+        },
+      });
+      process.env.AGENT_VOICE_REALTIME_RESUME_GRACE_MS = '400';
+      const a = await client(owner.userId);
+      const first = await a.request('voice:start', start);
+      assert.equal(first.ok, true);
+      assert.equal(starts, 1);
+      await waitFor(() => a.phases().includes('listening'), 'listening (resume test)');
+      a.close();
+      await waitFor(() => agentVoiceActiveSessionCount() === 1, 'held during the grace');
+      await sleep(50);
+      const b = await client(owner.userId);
+      const resumed = await b.request('voice:start', { ...start, resumeSessionId: first.sessionId });
+      assert.equal(resumed.ok, true, JSON.stringify(resumed));
+      assert.equal(resumed.sessionId, first.sessionId, 'same session');
+      assert.equal(resumed.resumed, true);
+      assert.equal(starts, 1, 'a resume is not a new start');
+      await waitFor(() => b.of('voice:state').some((p) => p.phase === 'listening'), 'state re-sent on the new socket');
+      const appended = stt.appended;
+      b.emitBinary('voice:audio', Buffer.alloc(960, 1));
+      await waitFor(() => stt.appended === appended + 960, 'audio after the resume');
+
+      // The old socket hasn't dropped yet (ping timeout): the resume takes the session over.
+      const c = await client(owner.userId);
+      assert.equal((await c.request('voice:start', { ...start, resumeSessionId: first.sessionId })).resumed, true);
+      assert.equal(starts, 1);
+      b.close();
+      await sleep(600);
+      assert.equal(agentVoiceActiveSessionCount(), 1, "the old socket's drop doesn't touch the moved session");
+
+      // After the grace: ended, and a reconnect starts fresh (and counts).
+      c.close();
+      await sleep(600);
+      assert.equal(agentVoiceActiveSessionCount(), 0, 'ended after the grace');
+      const d = await client(owner.userId);
+      const fresh = await d.request('voice:start', { ...start, resumeSessionId: first.sessionId });
+      assert.equal(fresh.ok, true);
+      assert.notEqual(fresh.sessionId, first.sessionId);
+      assert.ok(!fresh.resumed);
+      assert.equal(starts, 2, 'a start after the grace counts');
+      d.emit('voice:end', {});
+      await waitFor(() => agentVoiceActiveSessionCount() === 0, 'ended');
+      delete process.env.AGENT_VOICE_REALTIME_RESUME_GRACE_MS;
+      setAgentVoiceStartLimiterForTests(null);
+    }
+
     // --- message quota: a merged re-send over the stopped turn's message doesn't count again ---
     {
       const quotaChat = await createAgentChat(owner.userId);
@@ -434,6 +494,8 @@ void (async () => {
     if (savedBudget === undefined) delete process.env.AGENT_DAILY_TOKEN_BUDGET;
     else process.env.AGENT_DAILY_TOKEN_BUDGET = savedBudget;
     delete process.env.AGENT_VOICE_REALTIME_ENABLED;
+    delete process.env.AGENT_VOICE_REALTIME_RESUME_GRACE_MS;
+    setAgentVoiceStartLimiterForTests(null);
     setAgentVoiceRealtimeProvidersForTests(undefined);
     setAgentVoiceRunServiceForTests(null);
     for (const c of clients) c.close();

@@ -74,10 +74,23 @@ export interface AgentVoiceStartPayload {
   inputSampleRate: typeof AGENT_VOICE_INPUT_SAMPLE_RATE;
   /** Start muted (mic frames ignored until `voice:mute {muted:false}`). */
   muted?: boolean;
+  /**
+   * Reconnect after a dropped link: the session this client had. Within the server's grace
+   * period the same session resumes (ack `resumed: true`, same `sessionId`, not charged against
+   * the start limit); otherwise a fresh one starts (still not charged within the grace).
+   */
+  resumeSessionId?: string;
 }
 
 export type AgentVoiceStartAck =
-  | { ok: true; sessionId: string; outputSampleRate: number; maxSessionMs: number }
+  | {
+      ok: true;
+      sessionId: string;
+      outputSampleRate: number;
+      maxSessionMs: number;
+      /** `resumeSessionId` was honoured: the server kept the turn state and re-sends `voice:state`. */
+      resumed?: boolean;
+    }
   | { ok: false; code: AgentVoiceErrorCode; message?: string; retryAt?: string };
 
 export interface AgentVoiceMutePayload {
@@ -133,8 +146,8 @@ export interface AgentVoiceStatePayload {
   runId?: string;
   /** phase `confirm`: the pending card's server-rendered title. */
   confirmTitle?: string;
-  /** phase `ended`: why. */
-  reason?: 'user' | 'idle' | 'max_duration' | 'error' | 'replaced';
+  /** phase `ended`: why (`disconnected`: the link dropped and no reconnect came within the grace). */
+  reason?: 'user' | 'idle' | 'max_duration' | 'error' | 'replaced' | 'disconnected';
 }
 
 /** Live caption of the user's speech. `final` once the transcript is committed for the turn. */

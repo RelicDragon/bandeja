@@ -291,8 +291,34 @@ describe('AgentVoiceController — v2 start and v1 fallback', () => {
     ctx.transport.setConnection('reconnecting');
     ctx.transport.setConnection('connected');
     await flush();
-    expect(ctx.transport.starts[1]).toMatchObject({ chatId: 'chat-1', muted: true });
+    expect(ctx.transport.starts[1]).toMatchObject({ chatId: 'chat-1', muted: true, resumeSessionId: 's-1' });
     expect(ctx.voice.getState()).toMatchObject({ reconnecting: false, transport: 'v2' });
+    // A fresh session (grace over): the next reconnect resumes that one.
+    ctx.transport.ack = { ok: true, sessionId: 's-2', outputSampleRate: 24_000, maxSessionMs: 600_000 };
+    ctx.transport.setConnection('reconnecting');
+    ctx.transport.setConnection('connected');
+    await flush();
+    ctx.transport.setConnection('reconnecting');
+    ctx.transport.setConnection('connected');
+    await flush();
+    expect(ctx.transport.starts[3]).toMatchObject({ resumeSessionId: 's-2' });
+  });
+
+  it('a resumed session keeps the turn: the playing reply is reported played out, the server re-sends its phase', async () => {
+    const ctx = setup();
+    await startV2(ctx);
+    ctx.transport.server('voice:state', { phase: 'speaking', turnId: 't1', runId: 'r1' });
+    ctx.transport.server('voice:audio-out', { turnId: 't1', seq: 0, pcm: pcm(300) });
+    expect(ctx.voice.getState().phase).toBe('speaking');
+    ctx.transport.acks.push({ ok: true, sessionId: 's-1', outputSampleRate: 24_000, maxSessionMs: 600_000, resumed: true });
+    ctx.transport.setConnection('reconnecting');
+    ctx.transport.setConnection('connected');
+    await flush();
+    expect(ctx.transport.starts[1]).toMatchObject({ resumeSessionId: 's-1' });
+    expect(ctx.transport.sent('voice:playback').at(-1)).toMatchObject({ turnId: 't1', done: true });
+    expect(ctx.voice.getState()).toMatchObject({ reconnecting: false, transport: 'v2', phase: 'speaking' });
+    ctx.transport.server('voice:state', { phase: 'listening' });
+    expect(ctx.voice.getState().phase).toBe('listening');
   });
 });
 

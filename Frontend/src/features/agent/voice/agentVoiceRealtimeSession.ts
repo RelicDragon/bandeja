@@ -42,6 +42,8 @@ import { VoiceUploadGate } from './voiceUploadGate';
  * - Local barge-in: the engine's strict barge-in VAD while speaking, or the orb → flush +
  *   `voice:interrupt {turnId, playedMs}`.
  * - Cards and Confirm still come from the chat's SSE attachment; ending never cancels a run.
+ * - Reconnect: `voice:start {resumeSessionId}`; the server keeps the session for a short grace
+ *   (ack `resumed`: same session, it re-sends `voice:state`), else this is a fresh session.
  * - `onFallback`: v2 can't continue (refused after a reconnect, gave up): the controller
  *   carries on with the v1 loop on the same, still running engine.
  */
@@ -107,6 +109,8 @@ export class AgentVoiceRealtimeSession {
   /** Latest phase the server sent (the local phase stays `speaking` while audio still plays). */
   private serverPhase: ServerVoicePhase = 'listening';
   private turnId: string | null = null;
+  /** The server session (sent as `resumeSessionId` after a reconnect). */
+  private sessionId: string | null = null;
   private confirmRunId: string | null = null;
   private readonly knownRuns = new Set<string>();
   private reportTimer: unknown = null;
@@ -142,8 +146,9 @@ export class AgentVoiceRealtimeSession {
   }
 
   /** The controller got `{ok: true}`: take over the engine and listen. */
-  activate(outputSampleRate: number = AGENT_VOICE_OUTPUT_SAMPLE_RATE): void {
+  activate(outputSampleRate: number = AGENT_VOICE_OUTPUT_SAMPLE_RATE, sessionId?: string): void {
     if (this.closed) return;
+    this.sessionId = sessionId ?? null;
     if (outputSampleRate !== this.player.sampleRate && this.player.turnId == null) {
       this.player = new PcmStreamPlayer(this.deps.engine, outputSampleRate);
     }
@@ -472,13 +477,26 @@ export class AgentVoiceRealtimeSession {
       this.fallback();
       return;
     }
-    // Back online: the server's session is gone, start a new one on the same socket.
+    // Back online: resume the server's session (held for a short grace), else a new one.
     const ack = await this.deps.transport.start(
-      this.deps.startPayload(this.state.muted),
+      { ...this.deps.startPayload(this.state.muted), ...(this.sessionId ? { resumeSessionId: this.sessionId } : {}) },
       this.deps.restartTimeoutMs ?? DEFAULT_RESTART_TIMEOUT_MS,
     );
     if (this.closed) return;
+    if (ack.ok && ack.resumed) {
+      // Same session and turn; reply audio sent while offline is gone, so the playing turn
+      // stops here (reported as played out). The server re-sends its phase.
+      const playingTurn = this.player.turnId;
+      if (playingTurn && !this.reportedDone.has(playingTurn)) {
+        this.deps.transport.emit('voice:playback', { turnId: playingTurn, playedMs: this.player.playedMs(), done: true });
+        this.reportedDone.add(playingTurn);
+      }
+      this.player.flush();
+      this.set({ reconnecting: false, agentCaption: null });
+      return;
+    }
     if (ack.ok) {
+      this.sessionId = ack.sessionId;
       this.player.flush();
       this.serverPhase = 'listening';
       this.set({ reconnecting: false, phase: this.state.phase === 'confirm' ? 'confirm' : 'listening', progress: null, agentCaption: null });

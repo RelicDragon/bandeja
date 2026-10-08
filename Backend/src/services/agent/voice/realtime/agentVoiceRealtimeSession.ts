@@ -19,6 +19,8 @@
  * - A spoken "yes" never confirms: a run ending AWAITING_CONFIRMATION parks the session in
  *   `confirm` (mic ignored) until `voice:follow-run` / `voice:resume`.
  * - Ending the session never cancels a run: the reply still lands in the chat.
+ * - A dropped socket `suspend`s the session (no audio / STT metering, no idle end) until the
+ *   namespace resumes it on a new socket (`resumeTransport`) or its grace runs out.
  */
 import {
   AGENT_VOICE_INPUT_SAMPLE_RATE,
@@ -166,8 +168,12 @@ const STT_USAGE_FLUSH_MS = 60_000;
 
 export class AgentVoiceRealtimeSession {
   private phase: AgentVoicePhase = 'listening';
+  /** The last `voice:state` (re-sent when a reconnect resumes the session). */
+  private lastState: AgentVoiceStatePayload = { phase: 'listening' };
   private muted: boolean;
   private ended = false;
+  /** The socket dropped: held for a reconnect (no audio, no STT streaming / metering, no idle end). */
+  private suspended = false;
   private stt: AgentVoiceSttSession | null = null;
   private connectBuffer: Buffer[] = [];
   private connectBufferBytes = 0;
@@ -217,6 +223,10 @@ export class AgentVoiceRealtimeSession {
 
   get isEnded(): boolean {
     return this.ended;
+  }
+
+  get isSuspended(): boolean {
+    return this.suspended;
   }
 
   // --- lifecycle -------------------------------------------------------------------------------
@@ -288,10 +298,42 @@ export class AgentVoiceRealtimeSession {
     this.deps.onEnded(reason);
   }
 
+  /**
+   * The socket dropped (not `voice:end`): keep the run / turn state for a reconnect. Speech being
+   * captured is dropped, STT gets no audio (so nothing is metered) and the idle clock stops; a
+   * live run goes on and its reply still lands in the chat.
+   */
+  suspend(): void {
+    if (this.ended || this.suspended) return;
+    this.suspended = true;
+    this.flushSttUsage();
+    this.stt?.clear();
+    this.connectBuffer = [];
+    this.connectBufferBytes = 0;
+    this.speechActive = false;
+    if (this.bargeTimer) clearTimeout(this.bargeTimer);
+    this.bargeTimer = null;
+    this.clearIdle();
+    if (this.phase === 'hearing' && !this.turn?.runId) {
+      this.capture = null;
+      this.toListening();
+    }
+  }
+
+  /** A reconnect resumed the session: re-send the current phase, listen again. */
+  resumeTransport(): void {
+    if (this.ended || !this.suspended) return;
+    this.suspended = false;
+    this.sttBilledSince = this.now();
+    this.lastFrameAt = 0;
+    this.deps.emit('voice:state', { ...this.lastState });
+    if (this.phase === 'listening') this.armIdle();
+  }
+
   // --- client → session ------------------------------------------------------------------------
 
   audio(pcm: Buffer): void {
-    if (this.ended || this.muted || this.phase === 'confirm') return;
+    if (this.ended || this.suspended || this.muted || this.phase === 'confirm') return;
     this.lastFrameAt = this.now();
     this.gapFilledMs = 0;
     if (this.capture && this.capture.marks.firstAudioReceived == null) this.capture.marks.firstAudioReceived = this.lastFrameAt;
@@ -945,7 +987,7 @@ export class AgentVoiceRealtimeSession {
 
   /** The client stops streaming in silence: mid-utterance, pad silence so the turn can end. */
   private fillGap(): void {
-    if (this.ended || !this.stt || !this.speechActive || this.muted || this.phase === 'confirm') return;
+    if (this.ended || this.suspended || !this.stt || !this.speechActive || this.muted || this.phase === 'confirm') return;
     const quietMs = this.now() - this.lastFrameAt;
     if (quietMs < GAP_FILL_AFTER_MS || this.gapFilledMs >= GAP_FILL_MAX_MS) return;
     this.gapFilledMs += GAP_FILL_TICK_MS;
@@ -961,6 +1003,8 @@ export class AgentVoiceRealtimeSession {
 
   private armIdle(): void {
     this.clearIdle();
+    // Suspended: the namespace's grace timer decides; `resumeTransport` re-arms.
+    if (this.suspended) return;
     this.idleTimer = setTimeout(() => {
       this.idleTimer = null;
       if (this.phase === 'listening') this.end('idle');
@@ -978,7 +1022,10 @@ export class AgentVoiceRealtimeSession {
     const changed = phase !== this.phase;
     this.phase = phase;
     if (phase !== 'listening') this.clearIdle();
-    if (changed || extra.turnId || extra.runId) this.deps.emit('voice:state', { phase, ...extra });
+    if (changed || extra.turnId || extra.runId) {
+      this.lastState = { phase, ...extra };
+      this.deps.emit('voice:state', { phase, ...extra });
+    }
   }
 
   private error(error: AgentVoiceDepError, fatal: boolean): void {

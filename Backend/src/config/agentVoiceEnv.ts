@@ -57,6 +57,11 @@ export type AgentVoiceRealtimeEnvConfig = {
   fillerDelayMs: number;
   /** `voice:start` per user per `AGENT_VOICE_RATE_LIMIT_WINDOW_MS`. */
   startRateLimitMax: number;
+  /**
+   * A dropped socket keeps its session this long (STT paused); a `voice:start` with
+   * `resumeSessionId` within it resumes it. After it: `reason: 'disconnected'`. 0 = end at once.
+   */
+  resumeGraceMs: number;
 };
 
 export const AGENT_VOICE_DEFAULT_REALTIME_STT_MODEL = 'gpt-4o-transcribe';
@@ -108,5 +113,6 @@ function resolveAgentVoiceRealtimeEnvConfig(env: NodeJS.ProcessEnv): AgentVoiceR
     idleMs: intInRange(env.AGENT_VOICE_REALTIME_IDLE_MS, 60_000, 5_000, 30 * 60 * 1000),
     fillerDelayMs: intInRange(env.AGENT_VOICE_REALTIME_FILLER_DELAY_MS, 700, 0, 10_000),
     startRateLimitMax: intInRange(env.AGENT_VOICE_REALTIME_START_RATE_LIMIT_MAX, 30, 1, 10_000),
+    resumeGraceMs: intInRange(env.AGENT_VOICE_REALTIME_RESUME_GRACE_MS, 15_000, 0, 120_000),
   };
 }
