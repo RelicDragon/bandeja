@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { createInstance } from 'i18next';
 import { beforeAll, describe, expect, it } from 'vitest';
-import appI18n, { APP_UI_LANGUAGES } from './config';
+import { APP_UI_LANGUAGES } from './config';
+import { buildI18nResources, type FeatureNamespaceBundles } from './namespaces';
+
+// `config` bundles English only and lazy-loads the rest, so load every locale here.
+type LocaleModule = { default: Record<string, unknown>; featureNamespaces: FeatureNamespaceBundles };
+const localeModules = import.meta.glob<LocaleModule>('./locales/*/index.ts');
 
 const bookingKeys = [
   'verifyBooking', 'verifyingBooking', 'stillBookedTitle', 'stillBookedBody', 'verifyFailed',
@@ -14,8 +19,14 @@ const commonKeys = ['ok', 'cancel', 'continue', 'close', 'deleting'].map((key) =
 const i18n = createInstance();
 
 beforeAll(async () => {
+  const locales: Record<string, { translation: Record<string, unknown>; featureNamespaces: FeatureNamespaceBundles }> = {};
+  for (const [path, load] of Object.entries(localeModules)) {
+    const lng = path.split('/')[2];
+    const mod = await load();
+    locales[lng] = { translation: mod.default, featureNamespaces: mod.featureNamespaces };
+  }
   await i18n.init({
-    resources: appI18n.options.resources,
+    resources: buildI18nResources(locales),
     lng: 'en', fallbackLng: false,
     interpolation: { escapeValue: false },
   });
