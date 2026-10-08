@@ -19,6 +19,8 @@ export const LLM_REASON = {
   /** Agent voice (dictation / conversation): audit + budget rows; `inputTokens` = token-equivalent charge. */
   AGENT_VOICE_TRANSCRIPTION: 'agent_voice_transcription',
   AGENT_VOICE_SPEECH: 'agent_voice_speech',
+  /** Agent voice v2: streaming (Realtime) transcription, charged per started second of audio sent. */
+  AGENT_VOICE_REALTIME_TRANSCRIPTION: 'agent_voice_realtime_transcription',
 } as const;
 
 export type LlmReason = (typeof LLM_REASON)[keyof typeof LLM_REASON];

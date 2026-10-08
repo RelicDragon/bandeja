@@ -32,7 +32,11 @@ export function agentApiError(
 export const AGENT_WEB_USAGE_REASONS = [LLM_REASON.AGENT_WEB_SEARCH, LLM_REASON.AGENT_WEB_FETCH];
 
 /** Reasons whose `LlmUsageLog.inputTokens` are voice charges (transcription seconds, spoken characters). */
-export const AGENT_VOICE_USAGE_REASONS = [LLM_REASON.AGENT_VOICE_TRANSCRIPTION, LLM_REASON.AGENT_VOICE_SPEECH];
+export const AGENT_VOICE_USAGE_REASONS = [
+  LLM_REASON.AGENT_VOICE_TRANSCRIPTION,
+  LLM_REASON.AGENT_VOICE_SPEECH,
+  LLM_REASON.AGENT_VOICE_REALTIME_TRANSCRIPTION,
+];
 
 /** Every token-equivalent charge row that counts toward the daily budget. */
 export const AGENT_METERED_USAGE_REASONS = [...AGENT_WEB_USAGE_REASONS, ...AGENT_VOICE_USAGE_REASONS];

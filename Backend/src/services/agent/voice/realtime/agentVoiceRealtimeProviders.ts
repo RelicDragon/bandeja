@@ -1,0 +1,464 @@
+/**
+ * Providers of agent voice v2 (`/agent-voice`, docs/domains/agent.md § Voice):
+ *
+ * - **Streaming transcription**: an OpenAI Realtime transcription session over WebSocket
+ *   (`session.update` with `session.type: 'transcription'`, PCM16 24 kHz `input_audio_buffer.append`,
+ *   `semantic_vad` / `server_vad` turn detection, `…input_audio_transcription.delta/completed`).
+ *   With `turnDetection: 'none'` (VAD-less models) a server-side energy VAD commits each turn.
+ * - **Fallback**: when the realtime connection fails (or drops), a server-side energy VAD
+ *   segments the PCM and each utterance goes to the v1 batch transcription as WAV. The socket
+ *   contract does not change; there are just no partial captions.
+ * - **Streaming speech**: OpenAI `audio.speech` with `response_format: 'pcm'` (24 kHz), read as
+ *   it arrives.
+ *
+ * Tests swap all of them with `setAgentVoiceRealtimeProvidersForTests`.
+ */
+import OpenAI from 'openai';
+import { WebSocket } from 'undici';
+import { AGENT_VOICE_INPUT_SAMPLE_RATE } from '@bandeja/shared/agentVoiceRealtime';
+import { config } from '../../../../config/env';
+import type { AgentVoiceRealtimeEagerness, AgentVoiceRealtimeTurnDetection } from '../../../../config/agentVoiceEnv';
+import { resolveProvider } from '../agentVoice.service';
+import { EnergyVad } from './agentVoiceEnergyVad';
+import { pcmBytesPerMs, pcmDurationMs, pcmLevelDb, pcmToWav } from './agentVoicePcm';
+
+// ---------------------------------------------------------------- transcription
+
+export interface AgentVoiceSttEvents {
+  /** The user started talking (provider VAD or the server energy VAD). */
+  speechStarted(): void;
+  /** End of the user's turn (the final transcript follows). */
+  speechStopped(): void;
+  /** Partial transcript text of one turn (`itemId`), appended to what came before. */
+  delta(itemId: string, text: string): void;
+  /** Final transcript of one turn ('' = nothing usable / transcription failed). */
+  completed(itemId: string, transcript: string): void;
+  /** The provider is gone (connection closed or broken). The session falls back or ends. */
+  failed(error: Error): void;
+}
+
+export interface AgentVoiceSttSession {
+  /** `realtime`: streaming session (billed as `agent_voice_realtime_transcription`); `batch`: v1 fallback. */
+  readonly kind: 'realtime' | 'batch';
+  readonly model: string;
+  readonly provider: string;
+  /** PCM16 mono at `AGENT_VOICE_INPUT_SAMPLE_RATE`. */
+  append(pcm: Buffer): void;
+  /** Drop the audio of a turn in progress (mic closed for a confirmation card, muted). */
+  clear(): void;
+  /** Audio ms billed since the last call (realtime: everything sent; batch: utterances transcribed). */
+  takeBilledMs(): number;
+  close(): void;
+}
+
+export type AgentVoiceSttOptions = {
+  model: string;
+  url: string;
+  /** Vocabulary prompt (`buildAgentVoiceVocabulary`). */
+  prompt: string;
+  turnDetection: AgentVoiceRealtimeTurnDetection;
+  eagerness: AgentVoiceRealtimeEagerness;
+  silenceMs: number;
+  timeoutMs: number;
+};
+
+export interface AgentVoiceRealtimeSttProvider {
+  readonly name: string;
+  /** Resolves once the session is configured; rejects when the provider can't be reached. */
+  open(options: AgentVoiceSttOptions, events: AgentVoiceSttEvents): Promise<AgentVoiceSttSession>;
+}
+
+/** Batch transcription of one WAV utterance (the v1 provider). */
+export type AgentVoiceBatchTranscribe = (input: { wav: Buffer; prompt: string; signal: AbortSignal }) => Promise<string>;
+
+// ---------------------------------------------------------------- speech
+
+export interface AgentVoiceSpeechStreamProvider {
+  readonly name: string;
+  /** PCM16 mono at `AGENT_VOICE_OUTPUT_SAMPLE_RATE`, as it arrives. */
+  stream(input: { text: string; model: string; voice: string; instructions: string; signal: AbortSignal }): AsyncIterable<Buffer>;
+}
+
+export type AgentVoiceRealtimeProviders = {
+  stt: AgentVoiceRealtimeSttProvider;
+  tts: AgentVoiceSpeechStreamProvider;
+  /** Fallback transcriber; null = no fallback (the session ends when realtime STT fails). */
+  batch: { name: string; model: string; transcribe: AgentVoiceBatchTranscribe } | null;
+};
+
+// ---------------------------------------------------------------- energy-VAD segmenter
+
+/** Pre-roll kept before the VAD's start so the first syllable is not lost. */
+const PRE_ROLL_MS = 300;
+
+type SegmentSink = {
+  /** Speech started: `preRoll` is the audio just before it. */
+  start(preRoll: Buffer): void;
+  frame(pcm: Buffer): void;
+  end(): void;
+  discard(): void;
+};
+
+/** Feeds frames through an `EnergyVad` and tells the sink where utterances start and end. */
+class EnergySegmenter {
+  private readonly vad: EnergyVad;
+  private preRoll: Buffer[] = [];
+  private preRollBytes = 0;
+
+  constructor(
+    private readonly sink: SegmentSink,
+    silenceMs: number,
+  ) {
+    this.vad = new EnergyVad({ endSilenceMs: silenceMs });
+  }
+
+  get speaking(): boolean {
+    return this.vad.speaking;
+  }
+
+  push(pcm: Buffer): void {
+    const ms = pcmDurationMs(pcm.length, AGENT_VOICE_INPUT_SAMPLE_RATE);
+    const event = this.vad.process(pcmLevelDb(pcm), ms);
+    if (this.vad.speaking && event !== 'start') {
+      this.sink.frame(pcm);
+      return;
+    }
+    if (event === 'start') {
+      this.sink.start(Buffer.concat(this.preRoll));
+      this.preRoll = [];
+      this.preRollBytes = 0;
+      this.sink.frame(pcm);
+      return;
+    }
+    if (event === 'end') this.sink.end();
+    else if (event === 'discard') this.sink.discard();
+    this.preRoll.push(pcm);
+    this.preRollBytes += pcm.length;
+    const max = PRE_ROLL_MS * pcmBytesPerMs(AGENT_VOICE_INPUT_SAMPLE_RATE);
+    while (this.preRollBytes > max && this.preRoll.length > 1) this.preRollBytes -= this.preRoll.shift()!.length;
+  }
+
+  reset(): void {
+    this.vad.reset();
+    this.preRoll = [];
+    this.preRollBytes = 0;
+  }
+}
+
+/**
+ * Fallback transcription: energy-VAD utterances → WAV → batch transcription (v1 provider).
+ * Turns are serialised (a transcript completes before the next one's).
+ */
+export function createBatchSttSession(input: {
+  batch: NonNullable<AgentVoiceRealtimeProviders['batch']>;
+  prompt: string;
+  silenceMs: number;
+  timeoutMs: number;
+  events: AgentVoiceSttEvents;
+}): AgentVoiceSttSession {
+  const { events } = input;
+  const bytesPerMs = pcmBytesPerMs(AGENT_VOICE_INPUT_SAMPLE_RATE);
+  const maxBytes = 30_000 * bytesPerMs;
+  let utterance: Buffer[] = [];
+  let utteranceBytes = 0;
+  let billedMs = 0;
+  let seq = 0;
+  let closed = false;
+  let chain: Promise<void> = Promise.resolve();
+  const abort = new AbortController();
+  const segmenter = new EnergySegmenter(
+    {
+      start(preRoll) {
+        utterance = preRoll.length ? [preRoll] : [];
+        utteranceBytes = preRoll.length;
+        events.speechStarted();
+      },
+      frame(pcm) {
+        if (utteranceBytes >= maxBytes) return;
+        utterance.push(pcm);
+        utteranceBytes += pcm.length;
+      },
+      end() {
+        const pcm = Buffer.concat(utterance);
+        utterance = [];
+        utteranceBytes = 0;
+        const itemId = `batch-${(seq += 1)}`;
+        events.speechStopped();
+        billedMs += pcmDurationMs(pcm.length, AGENT_VOICE_INPUT_SAMPLE_RATE);
+        chain = chain.then(async () => {
+          let text = '';
+          try {
+            text = await input.batch.transcribe({
+              wav: pcmToWav(pcm, AGENT_VOICE_INPUT_SAMPLE_RATE),
+              prompt: input.prompt,
+              signal: AbortSignal.any([abort.signal, AbortSignal.timeout(input.timeoutMs)]),
+            });
+          } catch (error) {
+            if (closed) return;
+            console.error('[agent-voice] batch transcription failed', { error: error instanceof Error ? error.message : 'unknown' });
+          }
+          if (!closed) events.completed(itemId, text);
+        });
+      },
+      discard() {
+        utterance = [];
+        utteranceBytes = 0;
+        events.completed(`batch-${(seq += 1)}`, '');
+      },
+    },
+    input.silenceMs + 150,
+  );
+  return {
+    kind: 'batch',
+    model: input.batch.model,
+    provider: input.batch.name,
+    append(pcm) {
+      if (!closed) segmenter.push(pcm);
+    },
+    clear() {
+      segmenter.reset();
+      utterance = [];
+      utteranceBytes = 0;
+    },
+    takeBilledMs() {
+      const ms = billedMs;
+      billedMs = 0;
+      return ms;
+    },
+    close() {
+      closed = true;
+      abort.abort();
+    },
+  };
+}
+
+// ---------------------------------------------------------------- OpenAI
+
+type RealtimeServerEvent = {
+  type?: string;
+  item_id?: string;
+  delta?: string;
+  transcript?: string;
+  error?: { message?: string; code?: string; type?: string };
+};
+
+function turnDetectionConfig(options: AgentVoiceSttOptions): Record<string, unknown> | null {
+  if (options.turnDetection === 'none') return null;
+  if (options.turnDetection === 'server_vad') {
+    return { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: options.silenceMs };
+  }
+  return { type: 'semantic_vad', eagerness: options.eagerness };
+}
+
+export function openAiTranscriptionSessionUpdate(options: AgentVoiceSttOptions): Record<string, unknown> {
+  return {
+    type: 'session.update',
+    session: {
+      type: 'transcription',
+      audio: {
+        input: {
+          format: { type: 'audio/pcm', rate: AGENT_VOICE_INPUT_SAMPLE_RATE },
+          transcription: { model: options.model, ...(options.prompt ? { prompt: options.prompt } : {}) },
+          turn_detection: turnDetectionConfig(options),
+          noise_reduction: { type: 'near_field' },
+        },
+      },
+    },
+  };
+}
+
+function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttProvider {
+  return {
+    name: 'openai',
+    open(options, events) {
+      return new Promise<AgentVoiceSttSession>((resolve, reject) => {
+        const socket = new WebSocket(options.url, { headers: { Authorization: `Bearer ${apiKey}` } });
+        let ready = false;
+        let closed = false;
+        let billedBytes = 0;
+        const send = (event: Record<string, unknown>) => {
+          if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(event));
+        };
+        // VAD-less models: the server energy VAD decides turns and commits them.
+        const segmenter =
+          options.turnDetection === 'none'
+            ? new EnergySegmenter(
+                {
+                  start(preRoll) {
+                    events.speechStarted();
+                    if (preRoll.length) appendRaw(preRoll);
+                  },
+                  frame: (pcm) => appendRaw(pcm),
+                  end() {
+                    events.speechStopped();
+                    send({ type: 'input_audio_buffer.commit' });
+                  },
+                  discard: () => send({ type: 'input_audio_buffer.clear' }),
+                },
+                options.silenceMs,
+              )
+            : null;
+        function appendRaw(pcm: Buffer): void {
+          billedBytes += pcm.length;
+          send({ type: 'input_audio_buffer.append', audio: pcm.toString('base64') });
+        }
+        const timer = setTimeout(() => fail(new Error('realtime transcription: session not ready in time')), options.timeoutMs);
+        timer.unref?.();
+        const fail = (error: Error) => {
+          clearTimeout(timer);
+          if (closed) return;
+          closed = true;
+          try {
+            socket.close();
+          } catch {
+            // already closing
+          }
+          if (ready) events.failed(error);
+          else reject(error);
+        };
+        const session: AgentVoiceSttSession = {
+          kind: 'realtime',
+          model: options.model,
+          provider: 'openai',
+          append(pcm) {
+            if (closed) return;
+            if (segmenter) segmenter.push(pcm);
+            else appendRaw(pcm);
+          },
+          clear() {
+            segmenter?.reset();
+            send({ type: 'input_audio_buffer.clear' });
+          },
+          takeBilledMs() {
+            const ms = pcmDurationMs(billedBytes, AGENT_VOICE_INPUT_SAMPLE_RATE);
+            billedBytes = 0;
+            return ms;
+          },
+          close() {
+            clearTimeout(timer);
+            if (closed) return;
+            closed = true;
+            try {
+              socket.close();
+            } catch {
+              // already closing
+            }
+          },
+        };
+        socket.addEventListener('open', () => send(openAiTranscriptionSessionUpdate(options)));
+        socket.addEventListener('message', (message) => {
+          let event: RealtimeServerEvent;
+          try {
+            event = JSON.parse(typeof message.data === 'string' ? message.data : Buffer.from(message.data as ArrayBuffer).toString());
+          } catch {
+            return;
+          }
+          switch (event.type) {
+            case 'session.updated':
+            case 'transcription_session.updated':
+              if (!ready) {
+                ready = true;
+                clearTimeout(timer);
+                resolve(session);
+              }
+              break;
+            case 'input_audio_buffer.speech_started':
+              if (!segmenter) events.speechStarted();
+              break;
+            case 'input_audio_buffer.speech_stopped':
+              if (!segmenter) events.speechStopped();
+              break;
+            case 'conversation.item.input_audio_transcription.delta':
+              if (event.item_id && event.delta) events.delta(event.item_id, event.delta);
+              break;
+            case 'conversation.item.input_audio_transcription.completed':
+              if (event.item_id) events.completed(event.item_id, event.transcript ?? '');
+              break;
+            case 'conversation.item.input_audio_transcription.failed':
+              console.error('[agent-voice] realtime transcription item failed', { code: event.error?.code, message: event.error?.message });
+              if (event.item_id) events.completed(event.item_id, '');
+              break;
+            case 'error':
+              console.error('[agent-voice] realtime transcription error', { code: event.error?.code, message: event.error?.message });
+              // Before the session is configured an error means the config was refused: fall back.
+              if (!ready) fail(new Error(`realtime transcription: ${event.error?.message ?? 'error'}`));
+              break;
+            default:
+              break;
+          }
+        });
+        socket.addEventListener('error', () => fail(new Error('realtime transcription: connection error')));
+        socket.addEventListener('close', (event) => fail(new Error(`realtime transcription: closed (${event.code})`)));
+      });
+    },
+  };
+}
+
+function createOpenAiSpeechStreamProvider(apiKey: string): AgentVoiceSpeechStreamProvider {
+  const client = new OpenAI({ apiKey, maxRetries: 1 });
+  return {
+    name: 'openai',
+    async *stream({ text, model, voice, instructions, signal }) {
+      const res = await client.audio.speech.create(
+        {
+          model,
+          voice,
+          input: text,
+          response_format: 'pcm',
+          // Only the gpt-4o TTS models take style instructions; tts-1 rejects the field.
+          ...(model.startsWith('gpt-') ? { instructions } : {}),
+        },
+        { signal },
+      );
+      if (!res.body) return;
+      for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) yield Buffer.from(chunk);
+    },
+  };
+}
+
+/** The v1 batch provider, resolved per call (live config, v1 test override). */
+const v1Batch: NonNullable<AgentVoiceRealtimeProviders['batch']> = {
+  name: 'openai',
+  get model() {
+    return config.agentVoice.sttModel;
+  },
+  transcribe: ({ wav, prompt, signal }) => {
+    const voiceConfig = config.agentVoice;
+    return resolveProvider(voiceConfig).transcribe({
+      audio: wav,
+      mimeType: 'audio/wav',
+      filename: 'speech.wav',
+      prompt,
+      model: voiceConfig.sttModel,
+      signal,
+    });
+  },
+};
+
+// ---------------------------------------------------------------- resolution
+
+let override: AgentVoiceRealtimeProviders | null | undefined;
+
+/** Tests: fakes, `null` = "not configured", `undefined` = OpenAI again. */
+export function setAgentVoiceRealtimeProvidersForTests(providers: AgentVoiceRealtimeProviders | null | undefined): void {
+  override = providers;
+}
+
+let cached: { apiKey: string; providers: AgentVoiceRealtimeProviders } | null = null;
+
+/** v2 providers, or null when v2 is unavailable (flag off, voice off, no OpenAI key). */
+export function resolveAgentVoiceRealtimeProviders(): AgentVoiceRealtimeProviders | null {
+  const voiceConfig = config.agentVoice;
+  if (!voiceConfig.enabled || !voiceConfig.realtime.enabled) return null;
+  if (override !== undefined) return override;
+  const apiKey = config.openai.apiKey;
+  if (!apiKey) return null;
+  if (cached?.apiKey !== apiKey) {
+    cached = {
+      apiKey,
+      providers: { stt: createOpenAiRealtimeSttProvider(apiKey), tts: createOpenAiSpeechStreamProvider(apiKey), batch: v1Batch },
+    };
+  }
+  return cached.providers;
+}
+

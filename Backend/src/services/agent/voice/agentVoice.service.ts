@@ -94,7 +94,8 @@ function openAiProvider(apiKey: string): AgentVoiceProvider {
   return cachedOpenAi.provider;
 }
 
-function resolveProvider(voiceConfig: AgentVoiceEnvConfig): AgentVoiceProvider {
+/** The batch provider (also the v2 fallback transcriber); 503 `VOICE_UNAVAILABLE` when off / unconfigured. */
+export function resolveProvider(voiceConfig: AgentVoiceEnvConfig): AgentVoiceProvider {
   if (!voiceConfig.enabled) throw agentVoiceError(503, 'VOICE_UNAVAILABLE', 'Voice is turned off');
   const provider = providerOverride !== undefined ? providerOverride : config.openai.apiKey ? openAiProvider(config.openai.apiKey) : null;
   if (!provider) throw agentVoiceError(503, 'VOICE_UNAVAILABLE', 'Voice is not configured');
@@ -111,7 +112,7 @@ async function parseDurationMs(audio: Buffer, mimeType: string): Promise<number 
   }
 }
 
-async function recordVoiceUsage(entry: {
+export async function recordVoiceUsage(entry: {
   reason: string;
   userId: string;
   provider: string;
@@ -146,7 +147,8 @@ function providerFailure(kind: 'transcribe' | 'speak', userId: string, error: un
   return agentVoiceError(503, 'VOICE_UNAVAILABLE', 'Voice is temporarily unavailable. Please try again.');
 }
 
-async function vocabularyFor(userId: string): Promise<string> {
+/** Transcription vocabulary prompt for a user (also the v2 realtime session's prompt). */
+export async function vocabularyFor(userId: string): Promise<string> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, currentCityId: true } });
   const clubs = user?.currentCityId
     ? await prisma.club.findMany({

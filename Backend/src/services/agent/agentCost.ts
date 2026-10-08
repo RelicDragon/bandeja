@@ -21,7 +21,8 @@ export type AgentPriceSource = 'setting' | 'env' | 'default';
 /**
  * Estimates (2026-10). DeepSeek chat models: miss 0.28 / hit 0.028 / out 0.42 per 1M. Metered
  * rows at the default charges: web search 1000 equiv. ≈ $0.008 per live search, fetch 300 ≈
- * $0.0015, transcription 20 / s ≈ $0.003 per minute, speech 1 / char ≈ $0.015 per 1000 chars.
+ * $0.0015, transcription 20 / s ≈ $0.003 per minute, realtime transcription (gpt-4o-transcribe)
+ * 20 / s ≈ $0.006 per minute, speech 1 / char ≈ $0.015 per 1000 chars.
  */
 export const AGENT_DEFAULT_PRICES: AgentPriceTable = {
   'deepseek-*': { input: 0.28, cachedInput: 0.028, output: 0.42 },
@@ -29,6 +30,7 @@ export const AGENT_DEFAULT_PRICES: AgentPriceTable = {
   agent_web_fetch: { input: 5 },
   agent_voice_transcription: { input: 2.5 },
   agent_voice_speech: { input: 15 },
+  agent_voice_realtime_transcription: { input: 5 },
 };
 
 function price(value: unknown): number | undefined {

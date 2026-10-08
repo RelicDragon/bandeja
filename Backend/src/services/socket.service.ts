@@ -35,6 +35,7 @@ import {
   PLAY_INTENT_INVALIDATE_EVENT,
   type PlayIntentInvalidation,
 } from './playIntent/playIntentRealtime';
+import { registerAgentVoiceNamespace } from './agent/voice/realtime/agentVoiceNamespace';
 import {
   GAME_TEXT_INVALIDATE_EVENT,
   type GameTextInvalidation,
@@ -109,6 +110,8 @@ class SocketService {
 
     this.setupMiddleware();
     this.setupEventHandlers();
+    // AI agent voice v2 (`/agent-voice`): own JWT handshake, sessions in `services/agent/voice/realtime/`.
+    registerAgentVoiceNamespace(this.io);
     presenceService.setNotifier((userId, online) => {
       this.notifyPresenceChange(userId, online).catch((err) => console.error('[SocketService] notifyPresenceChange', err));
     });

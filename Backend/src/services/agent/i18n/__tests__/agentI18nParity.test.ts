@@ -19,6 +19,7 @@ import { AGENT_RESULTS_I18N_EN, AGENT_RESULTS_I18N_TRANSLATIONS } from '../agent
 import { AGENT_ROSTER_I18N_EN, AGENT_ROSTER_I18N_TRANSLATIONS } from '../agentRosterI18n';
 import { AGENT_SLOTS_I18N_EN, AGENT_SLOTS_I18N_TRANSLATIONS } from '../agentSlotsI18n';
 import { AGENT_TOOL_PERMISSION_I18N_EN, AGENT_TOOL_PERMISSION_I18N_TRANSLATIONS } from '../agentToolPermissionI18n';
+import { AGENT_VOICE_I18N_EN, AGENT_VOICE_I18N_TRANSLATIONS } from '../agentVoiceI18n';
 import { AGENT_WEATHER_I18N_EN, AGENT_WEATHER_I18N_TRANSLATIONS } from '../agentWeatherI18n';
 import { AGENT_WEB_I18N_EN, AGENT_WEB_I18N_TRANSLATIONS } from '../agentWebI18n';
 
@@ -40,6 +41,7 @@ const DICTIONARIES: Record<string, Dictionaries> = {
   agentRosterI18n: { en: AGENT_ROSTER_I18N_EN, translations: AGENT_ROSTER_I18N_TRANSLATIONS },
   agentSlotsI18n: { en: AGENT_SLOTS_I18N_EN, translations: AGENT_SLOTS_I18N_TRANSLATIONS },
   agentToolPermissionI18n: { en: AGENT_TOOL_PERMISSION_I18N_EN, translations: AGENT_TOOL_PERMISSION_I18N_TRANSLATIONS },
+  agentVoiceI18n: { en: AGENT_VOICE_I18N_EN, translations: AGENT_VOICE_I18N_TRANSLATIONS },
   agentWeatherI18n: { en: AGENT_WEATHER_I18N_EN, translations: AGENT_WEATHER_I18N_TRANSLATIONS },
   agentWebI18n: { en: AGENT_WEB_I18N_EN, translations: AGENT_WEB_I18N_TRANSLATIONS },
 };
