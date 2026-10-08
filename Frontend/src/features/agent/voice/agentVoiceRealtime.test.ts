@@ -340,14 +340,34 @@ describe('AgentVoiceRealtimeSession', () => {
     expect(ctx.transport.audio.length).toBe(after);
   });
 
-  it('always streams while hearing / thinking (the server detects the end and barge-in)', async () => {
+  it('always streams while hearing (the server ends the turn)', async () => {
     const ctx = setup();
     await startV2(ctx);
-    ctx.transport.server('voice:state', { phase: 'thinking', turnId: 't1' });
+    ctx.transport.server('voice:state', { phase: 'hearing', turnId: 't1' });
     const before = ctx.transport.audio.length;
     ctx.engine.frames(-70, 30);
     // The pre-roll ring (20 frames) goes first, then every frame, 3 per emit.
     expect(ctx.transport.audio.length).toBe(before + Math.floor((20 + 30) / 3));
+  });
+
+  it('while thinking / speaking streams only voice (pre-roll + a short tail), not silence', async () => {
+    const ctx = setup();
+    await startV2(ctx);
+    const sentFrames = () => ctx.transport.audio.reduce((n, b) => n + b.byteLength / 960, 0);
+    for (const phase of ['thinking', 'speaking'] as const) {
+      ctx.transport.server('voice:state', { phase, turnId: 't1' });
+      ctx.engine.frames(-70, 100); // 2 s of silence: nothing billed
+      const quiet = sentFrames();
+      ctx.engine.frames(-70, 50);
+      expect(sentFrames()).toBe(quiet);
+      ctx.engine.frames(-20, 10); // the user talks over the reply
+      const voiced = sentFrames();
+      expect(voiced - quiet).toBeGreaterThanOrEqual(27); // pre-roll + the voice, in batches of 3
+      ctx.engine.frames(-70, 50);
+      const tail = sentFrames() - voiced;
+      expect(tail).toBeGreaterThan(0);
+      expect(tail).toBeLessThanOrEqual(30); // ~300 ms tail (+ the VAD's own release), not 1.5 s
+    }
   });
 
   it('shows partial and final captions, then the turn (run id, onTurn)', async () => {

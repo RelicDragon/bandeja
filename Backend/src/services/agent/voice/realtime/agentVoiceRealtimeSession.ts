@@ -157,7 +157,12 @@ const SECOND_FILLER_AFTER_MS = 4_000;
 const MAX_FILLERS_PER_TURN = 2;
 /** After `voice:audio-end`, wait at most the audio left + this for the client's `done`. */
 const PLAYBACK_GRACE_MS = 2_500;
-/** The client stopped streaming mid-utterance: pad silence so the provider can end the turn. */
+/**
+ * The app streams silence only while `hearing` (thinking / speaking: voice + a 300 ms tail; listening:
+ * a 1.5 s hangover). Silence is padded only while the provider has speech open (mid-utterance,
+ * including a barge-in or echo during the reply), so it can end that turn; otherwise none is
+ * sent or billed.
+ */
 const GAP_FILL_AFTER_MS = 200;
 const GAP_FILL_TICK_MS = 100;
 const GAP_FILL_MAX_MS = 3_000;
@@ -985,7 +990,7 @@ export class AgentVoiceRealtimeSession {
 
   // --- gaps, idle, state -----------------------------------------------------------------------
 
-  /** The client stops streaming in silence: mid-utterance, pad silence so the turn can end. */
+  /** The client stopped streaming while the provider has speech open: pad silence so the turn can end. */
   private fillGap(): void {
     if (this.ended || this.suspended || !this.stt || !this.speechActive || this.muted || this.phase === 'confirm') return;
     const quietMs = this.now() - this.lastFrameAt;

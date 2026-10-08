@@ -6,8 +6,8 @@
  *   fake run port: a turn → voice run, ordered audio with two sentences in flight, fillers,
  *   confirm (mic ignored, follow-run, resume), barge-in (cancel + cut to what was heard), echo
  *   ignored, client interrupt (a stale turn id ignored), CHAT_BUSY retry, continuation re-send,
- *   budget, idle, suspend / resume after a dropped link, the batch fallback (energy-VAD
- *   segmentation + WAV), usage records.
+ *   budget, idle, silence padded only mid-speech (billed seconds), suspend / resume after a
+ *   dropped link, the batch fallback (energy-VAD segmentation + WAV), usage records.
  */
 import assert from 'node:assert/strict';
 import { SpeechChunker } from '@bandeja/shared/agentVoiceSpeech';
@@ -669,6 +669,30 @@ async function continuationBusyBudgetIdle(): Promise<void> {
   h.session.end('user');
 }
 
+async function gapFillOnlyMidSpeech(): Promise<void> {
+  const h = harness();
+  await h.session.start();
+  const bytesPerMs = 48;
+  // The gated app sends a burst, then nothing. No speech open at the provider: nothing is padded.
+  h.session.audio(pcm(200, 3000));
+  await sleep(400);
+  assert.equal(h.stt.appendedBytes, 200 * bytesPerMs, 'no padding without open speech');
+  // Speech open (the stream stopped mid-utterance): silence is padded so the turn can end…
+  h.stt.events!.speechStarted();
+  await sleep(500);
+  const padded = h.stt.appendedBytes - 200 * bytesPerMs;
+  assert.ok(padded > 0 && padded <= 500 * bytesPerMs, `padded ${padded / bytesPerMs} ms`);
+  // …and stops once the provider ends it.
+  h.stt.events!.speechStopped();
+  const sent = h.stt.appendedBytes;
+  await sleep(300);
+  assert.equal(h.stt.appendedBytes, sent, 'no padding after the speech stopped');
+  // Billed seconds = audio sent + padding, nothing for the quiet stretches.
+  h.session.end('user');
+  const billed = h.usage.filter((u) => u.kind === 'realtime_transcription').reduce((n, u) => n + u.amount, 0);
+  assert.equal(billed, sent / bytesPerMs);
+}
+
 async function suspendAndResume(): Promise<void> {
   const h = harness({ config: (c) => ({ ...c, realtime: { ...c.realtime, idleMs: 120 } }) });
   await h.session.start();
@@ -773,6 +797,7 @@ void (async () => {
     await confirmFlow();
     await bargeIn();
     await continuationBusyBudgetIdle();
+    await gapFillOnlyMidSpeech();
     await suspendAndResume();
     await batchFallback();
     console.log('agentVoiceRealtime.test: ok');

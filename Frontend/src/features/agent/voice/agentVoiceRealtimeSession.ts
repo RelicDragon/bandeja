@@ -37,7 +37,8 @@ import { VoiceUploadGate } from './voiceUploadGate';
  *       └──────────── Confirm (follow-run) / Reject / orb (resume) ◀─ confirm
  *
  * - Upload: 24 kHz PCM16 in 20 ms frames, gated by a lenient local VAD (`VoiceUploadGate`);
- *   always on while hearing / thinking / speaking so the server hears the barge-in.
+ *   always on while hearing (the server ends the turn); while thinking / speaking only voice
+ *   (pre-roll + a short tail), enough for the server's barge-in without paying for silence.
  * - Playback: `PcmStreamPlayer`, gapless and in order per turn; progress reported every 250 ms.
  * - Local barge-in: the engine's strict barge-in VAD while speaking, or the orb → flush +
  *   `voice:interrupt {turnId, playedMs}`.
@@ -290,9 +291,10 @@ export class AgentVoiceRealtimeSession {
     if (!this.resampler || this.resampler.inRate !== sampleRate) {
       this.resampler = new StreamResampler(sampleRate, AGENT_VOICE_INPUT_SAMPLE_RATE);
     }
-    const force = phase === 'hearing' || phase === 'thinking' || phase === 'speaking';
+    const force = phase === 'hearing';
+    const replyTail = phase === 'thinking' || phase === 'speaking';
     for (const out of this.framer.push(floatToPcm16(this.resampler.process(frame)))) {
-      const { chunks, voiceStarted } = this.gate.push(out, db, force);
+      const { chunks, voiceStarted } = this.gate.push(out, db, force, replyTail);
       if (voiceStarted && this.state.phase === 'listening') {
         this.clientMarks = { speechStart: this.now() };
         this.awaitingFirstAudio = true;

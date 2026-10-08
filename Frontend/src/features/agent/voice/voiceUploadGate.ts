@@ -6,9 +6,9 @@ import { concatPcm16 } from './pcm16';
  * streaming silence costs money, so a lenient local VAD gates the upload:
  * - voice likely → send, including the last `prerollMs` (the onset the VAD needed to fire);
  * - after the last voiced frame keep sending for `hangoverMs` (the server needs that silence to
- *   end the turn);
- * - `force` (phase hearing / thinking / speaking) always sends, so the server can hear the end
- *   of the turn and the user barging in.
+ *   end the turn); a push may pass a shorter tail (`replyTailMs` while the reply is on: the
+ *   server only needs the user's speech then, and pads silence itself to close it);
+ * - `force` (phase hearing) always sends, so the server hears the end of the turn.
  * Frames leave in batches of `batchFrames` (fewer emits); closing the gate flushes the batch.
  */
 
@@ -16,6 +16,8 @@ export interface VoiceUploadGateOptions {
   frameMs: number;
   prerollMs: number;
   hangoverMs: number;
+  /** Tail after the last voiced frame while thinking / speaking (barge-in detection only). */
+  replyTailMs: number;
   batchFrames: number;
 }
 
@@ -23,6 +25,7 @@ export const DEFAULT_UPLOAD_GATE_OPTIONS: VoiceUploadGateOptions = {
   frameMs: 20,
   prerollMs: 400,
   hangoverMs: 1500,
+  replyTailMs: 300,
   batchFrames: 3,
 };
 
@@ -59,12 +62,17 @@ export class VoiceUploadGate {
     return this.open;
   }
 
-  push(frame: Int16Array, db: number, force: boolean): VoiceUploadGateResult {
+  /**
+   * `force`: send regardless (hearing). `replyTail`: the reply is on (thinking / speaking): send
+   * only voice, with the pre-roll and the short `replyTailMs` tail.
+   */
+  push(frame: Int16Array, db: number, force: boolean, replyTail = false): VoiceUploadGateResult {
     const chunks: ArrayBuffer[] = [];
     const event = this.vad.process(db, this.opts.frameMs);
     const voice = this.vad.speaking;
     this.sinceVoiceMs = voice ? 0 : this.sinceVoiceMs + this.opts.frameMs;
-    const send = force || voice || (this.open && this.sinceVoiceMs < this.opts.hangoverMs);
+    const tailMs = replyTail ? this.opts.replyTailMs : this.opts.hangoverMs;
+    const send = force || voice || (this.open && this.sinceVoiceMs < tailMs);
 
     if (send) {
       if (!this.open) {

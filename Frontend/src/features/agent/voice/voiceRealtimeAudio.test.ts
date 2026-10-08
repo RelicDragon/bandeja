@@ -99,6 +99,21 @@ describe('VoiceUploadGate', () => {
     expect(frames).toBe(closed);
   });
 
+  it('with the reply tail, closes ~300 ms after the voice instead of 1.5 s', () => {
+    const gate = new VoiceUploadGate();
+    calibrate(gate);
+    for (let i = 0; i < 3; i++) gate.push(frame(), -20, false, true);
+    expect(gate.sending).toBe(true);
+    let open = 0;
+    for (let i = 0; i < 75; i++) {
+      gate.push(frame(), -70, false, true);
+      if (gate.sending) open++;
+    }
+    expect(open).toBeGreaterThan(0);
+    expect(open).toBeLessThan(40); // well under the 1.5 s hangover (75 frames)
+    expect(gate.sending).toBe(false);
+  });
+
   it('force streams silence too', () => {
     const gate = new VoiceUploadGate();
     calibrate(gate);
