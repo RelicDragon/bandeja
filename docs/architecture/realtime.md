@@ -123,3 +123,7 @@ Join/leave acks listed under Rooms.
 ## Client → server
 
 `join-game-room` / `leave-game-room`, `join-bug-room` / `leave-bug-room`, `join-user-chat-room` / `leave-user-chat-room`, `join-chat-room` / `leave-chat-room`, `join-market-item-room` / `leave-market-item-room`, `subscribe-play-intent-pool` / `unsubscribe-play-intent-pool`, `subscribe-presence`, `typing-indicator`, `chat:message-ack`, `sync-messages`, `ping`.
+
+## Namespace `/agent-voice` (AI voice v2)
+
+A separate namespace on the same server and path, registered by `socket.service.ts` → `services/agent/voice/realtime/agentVoiceNamespace.ts`. Own JWT handshake (`auth.token` / `Authorization`, active users), optional `auth.clientCaps`; no rooms, no main-namespace events. One voice session per user across processes (Redis pub/sub `pp:agent-voice:replace`). Client: `Frontend/src/features/agent/voice/agentVoiceRealtimeTransport.ts` (websocket only, own connection). Events and behavior: `Frontend/shared/agentVoiceRealtime.ts` and `docs/domains/agent.md` § Voice.
