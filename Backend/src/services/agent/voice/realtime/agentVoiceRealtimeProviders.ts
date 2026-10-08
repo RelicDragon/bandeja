@@ -24,6 +24,9 @@ import { pcmBytesPerMs, pcmDurationMs, pcmLevelDb, pcmToWav } from './agentVoice
 
 // ---------------------------------------------------------------- transcription
 
+/** Audio of one transcribed turn: its length and (when still kept) its PCM, for checks and a re-transcription. */
+export type AgentVoiceTurnAudio = { ms: number; pcm: Buffer | null };
+
 export interface AgentVoiceSttEvents {
   /** The user started talking (provider VAD or the server energy VAD). */
   speechStarted(): void;
@@ -31,8 +34,8 @@ export interface AgentVoiceSttEvents {
   speechStopped(): void;
   /** Partial transcript text of one turn (`itemId`), appended to what came before. */
   delta(itemId: string, text: string): void;
-  /** Final transcript of one turn ('' = nothing usable / transcription failed). */
-  completed(itemId: string, transcript: string): void;
+  /** Final transcript of one turn ('' = nothing usable / transcription failed); `audio` when known. */
+  completed(itemId: string, transcript: string, audio?: AgentVoiceTurnAudio): void;
   /** The provider is gone (connection closed or broken). The session falls back or ends. */
   failed(error: Error): void;
 }
@@ -197,7 +200,7 @@ export function createBatchSttSession(input: {
             if (closed) return;
             console.error('[agent-voice] batch transcription failed', { error: error instanceof Error ? error.message : 'unknown' });
           }
-          if (!closed) events.completed(itemId, text);
+          if (!closed) events.completed(itemId, text, { ms: pcmDurationMs(pcm.length, AGENT_VOICE_INPUT_SAMPLE_RATE), pcm });
         });
       },
       discard() {
@@ -237,10 +240,50 @@ export function createBatchSttSession(input: {
 type RealtimeServerEvent = {
   type?: string;
   item_id?: string;
+  /** Speech start / end, in ms of all audio appended this session (`input_audio_buffer.clear` does not reset it). */
+  audio_start_ms?: number;
+  audio_end_ms?: number;
   delta?: string;
   transcript?: string;
   error?: { message?: string; code?: string; type?: string };
 };
+
+/** Audio kept to re-transcribe a turn without the prompt (`AgentVoiceTurnAudio.pcm`). */
+const TURN_AUDIO_HISTORY_MS = 30_000;
+
+/** The last `TURN_AUDIO_HISTORY_MS` of appended PCM, addressed by ms since the first append. */
+export class PcmHistory {
+  private chunks: Buffer[] = [];
+  private keptBytes = 0;
+  /** Byte offset (since the first append) of `chunks[0]`. */
+  private startByte = 0;
+  private readonly bytesPerMs = pcmBytesPerMs(AGENT_VOICE_INPUT_SAMPLE_RATE);
+
+  /** Ms of audio appended so far. */
+  get totalMs(): number {
+    return (this.startByte + this.keptBytes) / this.bytesPerMs;
+  }
+
+  push(pcm: Buffer): void {
+    this.chunks.push(pcm);
+    this.keptBytes += pcm.length;
+    const max = TURN_AUDIO_HISTORY_MS * this.bytesPerMs;
+    while (this.keptBytes - this.chunks[0].length >= max) {
+      const dropped = this.chunks.shift()!;
+      this.keptBytes -= dropped.length;
+      this.startByte += dropped.length;
+    }
+  }
+
+  /** PCM between two ms marks, or null when its start is no longer kept. */
+  slice(fromMs: number, toMs: number): Buffer | null {
+    const align = (ms: number) => Math.floor((ms * this.bytesPerMs) / 2) * 2;
+    const from = align(Math.max(0, fromMs)) - this.startByte;
+    const to = Math.min(align(toMs) - this.startByte, this.keptBytes);
+    if (from < 0 || to <= from) return null;
+    return Buffer.concat(this.chunks).subarray(from, to);
+  }
+}
 
 function turnDetectionConfig(options: AgentVoiceSttOptions): Record<string, unknown> | null {
   if (options.turnDetection === 'none') return null;
@@ -276,6 +319,12 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
         let ready = false;
         let closed = false;
         let billedBytes = 0;
+        const history = new PcmHistory();
+        /** Speech span per item (ms marks of `history`). */
+        const spans = new Map<string, { startMs: number; endMs: number | null }>();
+        /** Energy-VAD turns committed, waiting for the provider's `committed` item id. */
+        const committing: { startMs: number; endMs: number }[] = [];
+        let segmentStartMs = 0;
         const send = (event: Record<string, unknown>) => {
           if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(event));
         };
@@ -286,11 +335,13 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
                 {
                   start(preRoll) {
                     events.speechStarted();
+                    segmentStartMs = history.totalMs;
                     if (preRoll.length) appendRaw(preRoll);
                   },
                   frame: (pcm) => appendRaw(pcm),
                   end() {
                     events.speechStopped();
+                    committing.push({ startMs: segmentStartMs, endMs: history.totalMs });
                     send({ type: 'input_audio_buffer.commit' });
                   },
                   discard: () => send({ type: 'input_audio_buffer.clear' }),
@@ -300,6 +351,7 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
             : null;
         function appendRaw(pcm: Buffer): void {
           billedBytes += pcm.length;
+          history.push(pcm);
           send({ type: 'input_audio_buffer.append', audio: pcm.toString('base64') });
         }
         const timer = setTimeout(() => fail(new Error('realtime transcription: session not ready in time')), options.timeoutMs);
@@ -363,20 +415,43 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
               }
               break;
             case 'input_audio_buffer.speech_started':
-              if (!segmenter) events.speechStarted();
+              if (segmenter) break;
+              if (event.item_id && typeof event.audio_start_ms === 'number') spans.set(event.item_id, { startMs: event.audio_start_ms, endMs: null });
+              events.speechStarted();
               break;
             case 'input_audio_buffer.speech_stopped':
-              if (!segmenter) events.speechStopped();
+              if (segmenter) break;
+              if (event.item_id && typeof event.audio_end_ms === 'number') {
+                const span = spans.get(event.item_id);
+                if (span) span.endMs = event.audio_end_ms;
+              }
+              events.speechStopped();
               break;
+            case 'input_audio_buffer.committed': {
+              const span = segmenter ? committing.shift() : undefined;
+              if (span && event.item_id) spans.set(event.item_id, span);
+              break;
+            }
             case 'conversation.item.input_audio_transcription.delta':
               if (event.item_id && event.delta) events.delta(event.item_id, event.delta);
               break;
-            case 'conversation.item.input_audio_transcription.completed':
-              if (event.item_id) events.completed(event.item_id, event.transcript ?? '');
+            case 'conversation.item.input_audio_transcription.completed': {
+              if (!event.item_id) break;
+              const span = spans.get(event.item_id);
+              spans.delete(event.item_id);
+              const audio =
+                span?.endMs != null && span.endMs > span.startMs
+                  ? { ms: span.endMs - span.startMs, pcm: history.slice(span.startMs - PRE_ROLL_MS, span.endMs) }
+                  : undefined;
+              events.completed(event.item_id, event.transcript ?? '', audio);
               break;
+            }
             case 'conversation.item.input_audio_transcription.failed':
               console.error('[agent-voice] realtime transcription item failed', { code: event.error?.code, message: event.error?.message });
-              if (event.item_id) events.completed(event.item_id, '');
+              if (event.item_id) {
+                spans.delete(event.item_id);
+                events.completed(event.item_id, '');
+              }
               break;
             case 'error':
               console.error('[agent-voice] realtime transcription error', { code: event.error?.code, message: event.error?.message });

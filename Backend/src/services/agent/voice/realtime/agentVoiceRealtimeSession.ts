@@ -14,8 +14,11 @@
  *   `tool.started`); a tool that starts while nothing has been said yet gets one short spoken
  *   filler (its localized label).
  * - Barge-in: transcription keeps running while thinking / speaking. Speech that lasts
- *   (a caption delta, or ≥ 300 ms) or `voice:interrupt` stops playback, cancels the run and cuts
- *   the stored reply to what was heard.
+ *   (≥ 300 ms, or a caption delta while it is still going on), a final transcript of a shorter
+ *   sound, or `voice:interrupt` stops playback, cancels the run and cuts the stored reply to
+ *   what was heard. A final transcript that is the reply itself (speaker echo) is dropped.
+ * - Transcript guard: a transcript longer than its audio could hold (the model answered the
+ *   request instead of transcribing it) is re-transcribed once without the prompt, or dropped.
  * - A spoken "yes" never confirms: a run ending AWAITING_CONFIRMATION parks the session in
  *   `confirm` (mic ignored) until `voice:follow-run` / `voice:resume`.
  * - Ending the session never cancels a run: the reply still lands in the chat.
@@ -36,14 +39,15 @@ import { SpeechChunker, type SpeechPiece } from '@bandeja/shared/agentVoiceSpeec
 import type { AgentStreamEvent } from '@bandeja/shared/agentContract';
 import type { AgentVoiceEnvConfig } from '../../../../config/agentVoiceEnv';
 import { agentVoiceConfirmPrompt } from '../../i18n/agentVoiceI18n';
-import { cleanAgentVoiceTranscript, normalizeAgentSpeechText } from '../agentVoiceText';
+import { cleanAgentVoiceTranscript, isAgentVoiceEcho, isImplausibleAgentVoiceTranscript, normalizeAgentSpeechText } from '../agentVoiceText';
 import { heardReplyOffset, type AgentVoiceSpokenItem } from './agentVoiceHeard';
-import { PcmRechunker, pcmBytesPerMs, pcmDurationMs } from './agentVoicePcm';
+import { PcmRechunker, pcmBytesPerMs, pcmDurationMs, pcmToWav } from './agentVoicePcm';
 import {
   createBatchSttSession,
   type AgentVoiceRealtimeProviders,
   type AgentVoiceSttEvents,
   type AgentVoiceSttSession,
+  type AgentVoiceTurnAudio,
 } from './agentVoiceRealtimeProviders';
 import type { AgentVoiceRunPort } from './agentVoiceRuns';
 
@@ -432,7 +436,7 @@ export class AgentVoiceRealtimeSession {
       speechStarted: () => this.onSpeechStarted(),
       speechStopped: () => this.onSpeechStopped(),
       delta: (itemId, text) => this.onDelta(itemId, text),
-      completed: (itemId, transcript) => void this.onCompleted(itemId, transcript),
+      completed: (itemId, transcript, audio) => void this.onCompleted(itemId, transcript, audio),
       failed: (error) => this.onSttFailed(error),
     };
   }
@@ -511,8 +515,17 @@ export class AgentVoiceRealtimeSession {
   private onDelta(itemId: string, text: string): void {
     if (this.ended || this.muted || this.phase === 'confirm') return;
     const capture = this.ensureCapture();
-    if (this.bargeTimer || ((this.phase === 'thinking' || this.phase === 'speaking') && this.turn && !this.turn.stopped)) {
-      if (this.bargeTimer) clearTimeout(this.bargeTimer);
+    const replyLive = (this.phase === 'thinking' || this.phase === 'speaking') && this.turn && !this.turn.stopped;
+    if (replyLive) {
+      if (!this.bargeTimer) {
+        // Words of a sound that already ended under the barge-in threshold (speaker echo, a
+        // click): keep them off the screen; the final transcript is judged in `onCompleted`.
+        if (!capture.captions.has(itemId)) capture.order.push(itemId);
+        capture.captions.set(itemId, (capture.captions.get(itemId) ?? '') + text);
+        return;
+      }
+      // Still talking over the reply: the words confirm the barge-in early.
+      clearTimeout(this.bargeTimer);
       this.bargeTimer = null;
       this.confirmBargeIn();
     }
@@ -526,10 +539,16 @@ export class AgentVoiceRealtimeSession {
     if (caption) this.deps.emit('voice:caption', { turnId: capture.turnId, text: caption, final: false });
   }
 
-  private async onCompleted(itemId: string, raw: string): Promise<void> {
+  private async onCompleted(itemId: string, raw: string, audio?: AgentVoiceTurnAudio): Promise<void> {
     if (this.ended) return;
-    const text = cleanAgentVoiceTranscript(raw);
+    let text = cleanAgentVoiceTranscript(raw);
     const capture = this.capture;
+    const live = this.turn && !this.turn.stopped && !this.turn.closed ? this.turn : null;
+    if (text && live && (this.phase === 'thinking' || this.phase === 'speaking') && isAgentVoiceEcho(text, this.spokenText(live))) {
+      // The reply is still playing, no barge-in fired, and the "words" are the reply itself.
+      this.log(`[agent-voice] echo transcript dropped turn=${live.id} chars=${text.length}`);
+      text = '';
+    }
     if (!text) {
       if (capture) {
         capture.captions.delete(itemId);
@@ -550,11 +569,56 @@ export class AgentVoiceRealtimeSession {
     this.capture = null;
     current.marks.endOfTurn ??= this.now();
     current.marks.transcriptFinal = this.now();
-    const next = this.turnChain.then(() => this.beginTurn(current, text));
+    const next = this.turnChain.then(async () => {
+      let heard = text;
+      if (audio && isImplausibleAgentVoiceTranscript(heard, audio.ms)) heard = await this.retranscribe(heard, audio);
+      if (this.ended) return;
+      if (!heard) {
+        if (!this.capture && (this.phase === 'hearing' || (this.phase === 'thinking' && (!this.turn || this.turn.closed)))) this.toListening();
+        return;
+      }
+      current.marks.transcriptFinal = this.now();
+      await this.beginTurn(current, heard);
+    });
     this.turnChain = next.catch((error) =>
       console.error('[agent-voice] turn failed', { sessionId: this.id, error: error instanceof Error ? error.message : 'unknown' }),
     );
     await this.turnChain;
+  }
+
+  /** What the turn has said so far (sentences whose text went out). */
+  private spokenText(turn: Turn): string {
+    return turn.items
+      .filter((item) => item.textSent)
+      .map((item) => item.text)
+      .join(' ');
+  }
+
+  /**
+   * The transcript is longer than its audio could hold: the model answered the request instead
+   * of transcribing it (prompt-induced). Once more through the batch transcriber, without the
+   * prompt. '' = no usable transcript.
+   */
+  private async retranscribe(text: string, audio: AgentVoiceTurnAudio): Promise<string> {
+    const { providers, config } = this.deps;
+    console.warn('[agent-voice] implausible transcript, retrying without prompt', { sessionId: this.id, chars: text.length, audioMs: Math.round(audio.ms) });
+    const batch = providers.batch;
+    if (!batch || !audio.pcm?.length) return '';
+    try {
+      const raw = await batch.transcribe({
+        wav: pcmToWav(audio.pcm, AGENT_VOICE_INPUT_SAMPLE_RATE),
+        prompt: '',
+        signal: AbortSignal.timeout(config.timeoutMs),
+      });
+      void this.deps
+        .recordUsage({ kind: 'batch_transcription', provider: batch.name, model: batch.model, amount: pcmDurationMs(audio.pcm.length, AGENT_VOICE_INPUT_SAMPLE_RATE) })
+        .catch(() => {});
+      const retried = cleanAgentVoiceTranscript(raw);
+      return isImplausibleAgentVoiceTranscript(retried, audio.ms) ? '' : retried;
+    } catch (error) {
+      console.error('[agent-voice] re-transcription failed', { sessionId: this.id, error: error instanceof Error ? error.message : 'unknown' });
+      return '';
+    }
   }
 
   private confirmBargeIn(): void {

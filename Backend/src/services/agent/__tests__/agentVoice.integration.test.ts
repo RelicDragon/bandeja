@@ -35,6 +35,8 @@ import {
   agentVoiceTranscriptionCharge,
   buildAgentVoiceVocabulary,
   cleanAgentVoiceTranscript,
+  isAgentVoiceEcho,
+  isImplausibleAgentVoiceTranscript,
   normalizeAgentSpeechText,
 } from '../voice/agentVoiceText';
 
@@ -65,13 +67,15 @@ function wav(ms: number): Buffer {
 class StubVoice implements AgentVoiceProvider {
   readonly name = 'stub';
   transcript = 'Find me a game tomorrow evening';
+  /** What the model writes when it is given a prompt (an answer instead of the transcript); null = `transcript`. */
+  promptedTranscript: string | null = null;
   fail = false;
   readonly transcribeCalls: { mimeType: string; filename: string; prompt: string; model: string; bytes: number }[] = [];
   readonly speakCalls: { text: string; model: string; voice: string }[] = [];
   async transcribe(input: Parameters<AgentVoiceProvider['transcribe']>[0]) {
     if (this.fail) throw Object.assign(new Error('upstream down'), { status: 500 });
     this.transcribeCalls.push({ mimeType: input.mimeType, filename: input.filename, prompt: input.prompt, model: input.model, bytes: input.audio.length });
-    return this.transcript;
+    return input.prompt && this.promptedTranscript != null ? this.promptedTranscript : this.transcript;
   }
   async speak(input: Parameters<AgentVoiceProvider['speak']>[0]) {
     if (this.fail) throw new Error('upstream down');
@@ -123,9 +127,29 @@ function pureCases(): void {
   assert.equal(agentVoiceTranscriptionCharge(1500, 20), 40);
   assert.equal(agentVoiceSpeechCharge('hello', 2), 10);
 
-  // Vocabulary: names only, deduped, capped.
-  assert.equal(buildAgentVoiceVocabulary({ firstName: 'Ilya', clubNames: ['Padel Arena', 'padel arena', ' X  Club '] }), 'Bandeja, padel, pickleball, Ilya, Padel Arena, X Club');
-  assert.ok(buildAgentVoiceVocabulary({ firstName: null, clubNames: Array.from({ length: 200 }, (_, i) => `Club number ${i}`) }).length <= 700);
+  // Vocabulary: a "transcribe, never answer" instruction (a bare word list made the model answer
+  // spoken requests: "Tell me about padel rules…" came back as an answer), then the words, deduped, capped.
+  const vocabulary = buildAgentVoiceVocabulary({ firstName: 'Ilya', clubNames: ['Padel Arena', 'padel arena', ' X  Club '] });
+  assert.ok(/^Verbatim transcript\b.*never answer it\./.test(vocabulary), vocabulary);
+  assert.ok(vocabulary.endsWith(': Bandeja, padel, pickleball, Ilya, Padel Arena, X Club.'), vocabulary);
+  const long = buildAgentVoiceVocabulary({ firstName: null, clubNames: Array.from({ length: 200 }, (_, i) => `Club number ${i}`) });
+  assert.ok(long.slice(long.indexOf(': ') + 2).length <= 701, 'word list capped');
+
+  // A transcript longer than its audio could hold is the model answering, not transcribing.
+  const answer =
+    'The rules of padel are designed to allow for fair play and competitive matches. A standard padel match is played by two teams of two players each.';
+  assert.equal(isImplausibleAgentVoiceTranscript(answer, 3900), true);
+  assert.equal(isImplausibleAgentVoiceTranscript('Tell me about padel rules in a few sentences.', 3900), false);
+  assert.equal(isImplausibleAgentVoiceTranscript('Расскажи мне о правилах падела в нескольких предложениях.', 3100), false);
+  assert.equal(isImplausibleAgentVoiceTranscript('Yes', 200), false, 'short words in short audio');
+  assert.equal(isImplausibleAgentVoiceTranscript(answer, null), false, 'unknown duration: no judgement');
+
+  // Speaker echo: the transcript is the reply being spoken; a user quoting two words is not.
+  const spoken = 'You have three games this week. The first one is on Monday evening at Royal Padel Club.';
+  assert.equal(isAgentVoiceEcho('the first one is on Monday evening', spoken), true);
+  assert.equal(isAgentVoiceEcho('Wait, only Monday', spoken), false);
+  assert.equal(isAgentVoiceEcho('No, cancel the one on Sunday please', spoken), false);
+  assert.equal(isAgentVoiceEcho('stop', spoken), false, 'too short to judge');
 
   assert.equal(agentVoiceFileExtension('audio/webm;codecs=opus'), 'webm');
   assert.equal(agentVoiceFileExtension('audio/mp4'), 'mp4');
@@ -179,7 +203,7 @@ void (async () => {
     assert.equal(stub.transcribeCalls.at(-1)?.filename, 'speech.wav');
     assert.equal(stub.transcribeCalls.at(-1)?.mimeType, 'audio/wav');
     assert.equal(stub.transcribeCalls.at(-1)?.model, 'gpt-4o-mini-transcribe');
-    assert.ok(stub.transcribeCalls.at(-1)?.prompt.startsWith('Bandeja, padel'), 'vocabulary prompt sent');
+    assert.ok(stub.transcribeCalls.at(-1)?.prompt.includes('never answer it. Words that may come up: Bandeja, padel'), 'vocabulary prompt sent');
 
     const sttRows = await prisma.llmUsageLog.findMany({ where: { userId: owner.userId, reason: LLM_REASON.AGENT_VOICE_TRANSCRIPTION } });
     assert.equal(sttRows.length, 1);
@@ -193,6 +217,27 @@ void (async () => {
     assert.deepEqual(res.body.data, { text: '', durationMs: 3200 }, 'silence hallucination → empty transcript');
     assert.equal(stub.transcribeCalls.at(-1)?.filename, 'speech.webm');
     stub.transcript = 'Find me a game tomorrow evening';
+
+    // The model answered the spoken request (far more text than 1.5 s holds): retried without the prompt.
+    stub.promptedTranscript =
+      'Padel is a racket sport that combines elements of tennis and squash. It is typically played in doubles on an enclosed court.';
+    let calls = stub.transcribeCalls.length;
+    res = await transcribe(owner.userId, wav(1500), 'audio/wav');
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    assert.equal((res.body.data as Json).text, 'Find me a game tomorrow evening', 'the transcript, not the answer');
+    assert.deepEqual(
+      stub.transcribeCalls.slice(calls).map((c) => Boolean(c.prompt)),
+      [true, false],
+      'second call without the prompt',
+    );
+    // Still an answer without the prompt: nothing usable.
+    stub.transcript = stub.promptedTranscript;
+    calls = stub.transcribeCalls.length;
+    res = await transcribe(owner.userId, wav(1500), 'audio/wav');
+    assert.equal((res.body.data as Json).text, '');
+    assert.equal(stub.transcribeCalls.length - calls, 2);
+    stub.transcript = 'Find me a game tomorrow evening';
+    stub.promptedTranscript = null;
 
     res = await transcribe(owner.userId, wav(1500), 'video/webm');
     assert.equal(res.status, 400, 'non-audio content type never reaches the service as audio');

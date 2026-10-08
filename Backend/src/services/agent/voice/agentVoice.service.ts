@@ -26,6 +26,7 @@ import {
   agentVoiceTranscriptionCharge,
   buildAgentVoiceVocabulary,
   cleanAgentVoiceTranscript,
+  isImplausibleAgentVoiceTranscript,
   normalizeAgentSpeechText,
 } from './agentVoiceText';
 
@@ -186,16 +187,26 @@ export async function transcribeAgentVoice(input: {
   await assertAgentBudget(input.userId, config.agent, now);
 
   const prompt = await vocabularyFor(input.userId);
-  let raw: string;
-  try {
-    raw = await provider.transcribe({
+  const run = (withPrompt: string) =>
+    provider.transcribe({
       audio: input.audio,
       mimeType,
       filename: `speech.${extension}`,
-      prompt,
+      prompt: withPrompt,
       model: voiceConfig.sttModel,
       signal: AbortSignal.timeout(voiceConfig.timeoutMs),
     });
+  // Real audio length only (the bitrate estimate is too rough to judge a transcript by).
+  const audioMs = parsedMs ?? input.clientDurationMs;
+  let raw: string;
+  try {
+    raw = await run(prompt);
+    // The model wrote more than the audio holds (it answered the request): once more without the prompt.
+    if (isImplausibleAgentVoiceTranscript(raw, audioMs)) {
+      console.warn('[agent-voice] implausible transcript, retrying without prompt', { userId: input.userId, chars: raw.length, audioMs });
+      raw = await run('');
+      if (isImplausibleAgentVoiceTranscript(raw, audioMs)) raw = '';
+    }
   } catch (error) {
     throw providerFailure('transcribe', input.userId, error);
   }

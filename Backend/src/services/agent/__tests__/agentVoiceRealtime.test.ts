@@ -7,7 +7,9 @@
  *   confirm (mic ignored, follow-run, resume), barge-in (cancel + cut to what was heard), echo
  *   ignored, client interrupt (a stale turn id ignored), CHAT_BUSY retry, continuation re-send,
  *   budget, idle, silence padded only mid-speech (billed seconds), suspend / resume after a
- *   dropped link, the batch fallback (energy-VAD segmentation + WAV), usage records.
+ *   dropped link, the batch fallback (energy-VAD
+ *   segmentation + WAV), usage records; transcript guards (an answer-length "transcript" is
+ *   re-transcribed without the prompt, speaker echo of the reply is dropped).
  */
 import assert from 'node:assert/strict';
 import { SpeechChunker } from '@bandeja/shared/agentVoiceSpeech';
@@ -21,6 +23,7 @@ import type { AgentRateRedisPort } from '../agentMessageRateLimit';
 import { AGENT_VOICE_START_RATE_PREFIX, classifyAgentVoiceError, createAgentVoiceStartLimiter } from '../voice/realtime/agentVoiceNamespace';
 import { PcmRechunker, pcmLevelDb, pcmToWav } from '../voice/realtime/agentVoicePcm';
 import {
+  PcmHistory,
   openAiTranscriptionSessionUpdate,
   type AgentVoiceRealtimeProviders,
   type AgentVoiceSttEvents,
@@ -786,6 +789,107 @@ async function batchFallback(): Promise<void> {
   drop.session.end('user');
 }
 
+/**
+ * Regression (voice turn 5f4e2818-1): the vocabulary prompt made gpt-4o-transcribe ANSWER the
+ * spoken "Tell me about padel rules in a few sentences." and the answer became the USER message.
+ */
+async function transcriptGuards(): Promise<void> {
+  // Turn audio history: ms-addressed slices, old audio forgotten.
+  const history = new PcmHistory();
+  history.push(pcm(1000, 1000));
+  history.push(pcm(500));
+  assert.equal(history.totalMs, 1500);
+  assert.equal(history.slice(900, 1200)?.length, 300 * 48);
+  assert.equal(history.slice(1400, 9000)?.length, 100 * 48, 'clamped to what was appended');
+  for (let i = 0; i < 40; i += 1) history.push(pcm(1000));
+  assert.equal(history.slice(0, 1000), null, 'older than the kept window');
+  assert.equal(history.slice(history.totalMs - 1000, history.totalMs)?.length, 1000 * 48);
+
+  const question = 'Tell me about padel rules in a few sentences.';
+  const answer =
+    'The rules of padel are designed to allow for fair play and competitive matches. A standard padel match is played by two teams of two players each. ' +
+    'The game is scored similarly to tennis, with points awarded for winning rallies.';
+  const batchCalls: { prompt: string; bytes: number }[] = [];
+  const h = harness({
+    batch: {
+      name: 'fake-batch',
+      model: 'gpt-4o-mini-transcribe',
+      transcribe: async ({ wav, prompt }) => {
+        batchCalls.push({ prompt, bytes: wav.length });
+        return question;
+      },
+    },
+  });
+  await h.session.start();
+  const events = h.stt.events!;
+  events.speechStarted();
+  events.delta('q1', 'The rules of padel');
+  events.speechStopped();
+  events.completed('q1', answer, { ms: 4400, pcm: pcm(4400, 2000) });
+  await waitFor(() => h.runs.sends.length === 1, 'send after the re-transcription');
+  assert.equal(h.runs.sends[0].text, question, 'the stored USER message is the transcript, not the answer');
+  assert.deepEqual(batchCalls.map((c) => c.prompt), [''], 're-transcribed once, without the prompt');
+  assert.equal(batchCalls[0].bytes, 44 + 4400 * 48, 'the turn audio as WAV');
+  const final = h.of('voice:caption').filter((e) => e.payload.final === true);
+  assert.deepEqual(final.map((e) => e.payload.text), [question]);
+  assert.ok(h.usage.some((u) => u.kind === 'batch_transcription' && u.amount === 4400), 're-transcription metered');
+  h.session.end('user');
+
+  // A plausible transcript is used as is (no second call); unknown audio length isn't judged.
+  const ok = harness({ batch: { name: 'b', model: 'm', transcribe: async () => assert.fail('no re-transcription') } });
+  await ok.session.start();
+  ok.stt.events!.speechStarted();
+  ok.stt.events!.speechStopped();
+  ok.stt.events!.completed('q2', question, { ms: 4400, pcm: pcm(4400) });
+  await waitFor(() => ok.runs.sends.length === 1, 'plausible send');
+  assert.equal(ok.runs.sends[0].text, question);
+  ok.session.end('user');
+
+  // No fallback transcriber (or no audio kept): nothing is sent, back to listening.
+  const none = harness();
+  await none.session.start();
+  none.stt.events!.speechStarted();
+  none.stt.events!.speechStopped();
+  none.stt.events!.completed('q3', answer, { ms: 4400, pcm: null });
+  await waitFor(() => none.lastPhase() === 'listening', 'listening again');
+  await sleep(20);
+  assert.equal(none.runs.sends.length, 0, 'an answer never becomes the USER message');
+  none.session.end('user');
+
+  // Speaker echo while the reply plays: a short sound (no barge-in) whose words are the reply.
+  const e = harness();
+  await e.session.start();
+  await speak(e, 'Tell me about my games');
+  await waitFor(() => e.runs.followed.has('run-1'), 'follow');
+  const reply = 'You have three games this week. The first one is on Monday evening at the club near your home.';
+  e.runs.run('run-1').onEvent({ type: 'text.delta', text: `${reply} And the rest` });
+  await waitFor(() => e.of('voice:speech-text').length === 2 && e.lastPhase() === 'speaking', 'speaking');
+  const captions = e.of('voice:caption').length;
+  e.stt.events!.speechStarted();
+  await sleep(40);
+  e.stt.events!.speechStopped();
+  e.stt.events!.delta('echo-1', 'The first one is');
+  assert.equal(e.of('voice:caption').length, captions, 'echo words are not shown as a caption');
+  assert.equal(e.of('voice:stop-playback').length, 0, 'a caption of a short sound is no barge-in');
+  e.stt.events!.completed('echo-1', 'The first one is on Monday evening');
+  await sleep(30);
+  assert.equal(e.runs.sends.length, 1, 'echo never sent as the user');
+  assert.equal(e.lastPhase(), 'speaking', 'the reply keeps playing');
+  assert.deepEqual(e.runs.cancels, []);
+  assert.ok(e.logs.some((line) => line.includes('echo transcript dropped')));
+
+  // Real words over the reply (even short ones) still interrupt it at the final transcript.
+  e.stt.events!.speechStarted();
+  await sleep(40);
+  e.stt.events!.speechStopped();
+  e.stt.events!.completed('u-1', 'Only Sunday ones');
+  await waitFor(() => e.runs.sends.length === 2, 'new turn');
+  assert.equal(e.runs.sends[1].text, 'Only Sunday ones');
+  assert.equal(e.of('voice:stop-playback').length, 1);
+  assert.deepEqual(e.runs.cancels, ['run-1']);
+  e.session.end('user');
+}
+
 void (async () => {
   let exitCode = 0;
   try {
@@ -800,6 +904,7 @@ void (async () => {
     await gapFillOnlyMidSpeech();
     await suspendAndResume();
     await batchFallback();
+    await transcriptGuards();
     console.log('agentVoiceRealtime.test: ok');
   } catch (error) {
     console.error(error);
