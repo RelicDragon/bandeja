@@ -17,11 +17,19 @@ npm -v
 
 cd "$BACKEND"
 npm ci
-"$RUN_HEAVY" npx prisma migrate deploy
+# Build against the new schema before touching the DB: the running process still
+# uses the old Prisma client, so a migration that drops or renames a column breaks
+# live requests until `pm2 restart`. Migrating last keeps that window to the seeds
+# + restart instead of the whole compile.
 # Client must exist before seed (ts-node typechecks / uses Prisma models).
 "$RUN_HEAVY" npx prisma generate
 # ts-node seed loads env.ts → @bandeja/app-locale (and other workspace packages).
 "$RUN_HEAVY" npm run prebuild
+# The full compiler uses more than the ~2 GB heap Node selects on this host.
+# Scope the larger budget to compilation; do not pass it to the PM2 restart.
+NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=${BACKEND_BUILD_HEAP_MB:-4096}" \
+  "$RUN_HEAVY" npm run build
+"$RUN_HEAVY" npx prisma migrate deploy
 # Official sticker packs (idempotent upsert + S3 when AWS configured).
 # Without this, tray stays empty after STICKER migrations.
 npm run seed:sticker-packs
@@ -29,8 +37,4 @@ npm run seed:sticker-packs
 # missing). Without this, fresh dev/prod deploys get no club for the
 # NSPADELSUPABASE integration.
 npm run seed:nspadel-centar
-# The full compiler uses more than the ~2 GB heap Node selects on this host.
-# Scope the larger budget to compilation; do not pass it to the PM2 restart.
-NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=${BACKEND_BUILD_HEAP_MB:-4096}" \
-  "$RUN_HEAVY" npm run build
 pm2 restart backend

@@ -71,3 +71,17 @@ test('backend deploy accepts an explicit compiler heap budget', () => {
   // V8 also includes its young generation in heap_size_limit.
   assert.ok(build.heapLimitMb >= 3072 && build.heapLimitMb < 4096);
 });
+
+test('backend deploy compiles before migrating so the live process keeps its columns', () => {
+  const commands = runDeploy().map(({ command, args }) => `${command} ${args.join(' ')}`);
+  const at = (line) => {
+    const index = commands.indexOf(line);
+    assert.notEqual(index, -1, `missing ${line}`);
+    return index;
+  };
+  const migrate = at('npx prisma migrate deploy');
+  assert.ok(at('npx prisma generate') < migrate);
+  assert.ok(at('npm run build') < migrate);
+  assert.ok(migrate < at('npm run seed:sticker-packs'));
+  assert.ok(migrate < at('pm2 restart backend'));
+});

@@ -130,15 +130,15 @@ On `back.bandeja.com`:
 ```bash
 cd Backend
 npm ci
-npx prisma migrate deploy
 npx prisma generate
 npm run prebuild             # chat-contract, unread-contract, app-locale, shared
-npm run seed:sticker-packs   # official reactions + padel packs (idempotent)
 npm run build
+npx prisma migrate deploy    # after build: the old process keeps serving until restart
+npm run seed:sticker-packs   # official reactions + padel packs (idempotent)
 pm2 restart backend
 ```
 
-Migrations run as part of every backend deploy. Sticker seed upserts catalog rows and uploads/reuses assets under `uploads/stickers/packs/…` when AWS/S3 is configured. Safe to re-run.
+Migrations run as part of every backend deploy, after the compile, so a migration that drops a column the running build still selects only breaks requests between `migrate deploy` and `pm2 restart` (seconds), not for the whole build. That window is not zero: for a column read on hot paths (`User`, `Game`), ship the code that stops reading it first and drop the column in a later deploy. Sticker seed upserts catalog rows and uploads/reuses assets under `uploads/stickers/packs/…` when AWS/S3 is configured. Safe to re-run.
 
 Backend compilation receives a 4096 MiB Node heap through a command-scoped `NODE_OPTIONS`; `BACKEND_BUILD_HEAP_MB` overrides that budget. Existing Node options are preserved, and the build budget does not change the PM2 runtime environment. The full TypeScript build currently needs about 2.4 GiB: Node's approximately 2 GiB default on the production host caused deployment to abort with `JavaScript heap out of memory` even after the CI build passed. Prisma operations and builds use `scripts/run-heavy` to serialize backend work. CI exercises the deployment script with stubbed external commands and verifies the compiler's effective heap and the unchanged restart environment.
 
