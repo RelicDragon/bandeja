@@ -331,8 +331,11 @@ export function registerAgentVoiceNamespace(io: SocketIOServer): Namespace {
       if (typeof muted === 'boolean') sessionOf(socket)?.setMuted(muted);
     });
     socket.on('voice:interrupt', (payload) => {
-      const { playedMs } = asRecord(payload);
-      sessionOf(socket)?.interrupt(typeof playedMs === 'number' ? playedMs : undefined);
+      const { playedMs, turnId } = asRecord(payload);
+      sessionOf(socket)?.interrupt(
+        typeof playedMs === 'number' ? playedMs : undefined,
+        typeof turnId === 'string' && turnId.length <= 64 ? turnId : undefined,
+      );
     });
     socket.on('voice:playback', (payload) => {
       const { turnId, playedMs, done } = asRecord(payload);

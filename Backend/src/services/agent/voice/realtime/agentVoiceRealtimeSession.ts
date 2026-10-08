@@ -321,9 +321,14 @@ export class AgentVoiceRealtimeSession {
     }
   }
 
-  /** Orb tap / client-side barge-in: stop speech, cancel the run, listen. */
-  interrupt(playedMs: number | undefined): void {
+  /**
+   * Orb tap / client-side barge-in: stop speech, cancel the run, listen. With a `turnId` that is
+   * neither the current turn nor the speech being captured, the interrupt is stale (sent for an
+   * older turn) and ignored, so it never cancels a newer one.
+   */
+  interrupt(playedMs: number | undefined, turnId?: string): void {
     if (this.ended) return;
+    if (turnId !== undefined && turnId !== this.turn?.id && turnId !== this.capture?.turnId) return;
     const turn = this.turn;
     if (turn && !turn.closed) {
       if (typeof playedMs === 'number' && Number.isFinite(playedMs)) turn.playedMs = Math.max(turn.playedMs, playedMs);

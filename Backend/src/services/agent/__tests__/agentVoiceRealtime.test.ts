@@ -5,8 +5,8 @@
  * - `AgentVoiceRealtimeSession` with a fake transcription provider, a fake streaming TTS and a
  *   fake run port: a turn → voice run, ordered audio with two sentences in flight, fillers,
  *   confirm (mic ignored, follow-run, resume), barge-in (cancel + cut to what was heard), echo
- *   ignored, client interrupt, CHAT_BUSY retry, continuation re-send, budget, idle, the batch
- *   fallback (energy-VAD segmentation + WAV), usage records.
+ *   ignored, client interrupt (a stale turn id ignored), CHAT_BUSY retry, continuation re-send,
+ *   budget, idle, the batch fallback (energy-VAD segmentation + WAV), usage records.
  */
 import assert from 'node:assert/strict';
 import { SpeechChunker } from '@bandeja/shared/agentVoiceSpeech';
@@ -572,9 +572,17 @@ async function bargeIn(): Promise<void> {
   assert.equal(h.runs.sends[1].editMessageId, null, 'a reply was spoken: a new turn, not a continuation');
   assert.equal(h.runs.sends[1].merged, false, 'a new turn counts');
 
-  // Client-side interrupt (orb tap) while thinking: cancel, listening.
+  // A stale interrupt (an older turn's id) never cancels the newer turn.
   await waitFor(() => h.runs.followed.has('run-2'), 'follow 2');
-  h.session.interrupt(0);
+  const secondTurnId = h.of('voice:turn')[1].payload.turnId as string;
+  assert.notEqual(secondTurnId, turnId);
+  h.session.interrupt(0, turnId);
+  await sleep(30);
+  assert.equal(h.runs.cancels.length, 1, 'stale interrupt ignored');
+  assert.equal(h.lastPhase(), 'thinking');
+
+  // Client-side interrupt (orb tap) while thinking: cancel, listening.
+  h.session.interrupt(0, secondTurnId);
   await waitFor(() => h.runs.cancels.length === 2, 'cancel 2');
   assert.equal(h.runs.cancels[1], 'run-2');
   assert.equal(h.lastPhase(), 'listening');
