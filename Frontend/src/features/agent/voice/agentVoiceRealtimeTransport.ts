@@ -42,6 +42,26 @@ export function voiceV2Unavailable(message: string): AgentVoiceStartAck {
   return { ok: false, code: 'VOICE_V2_UNAVAILABLE', message };
 }
 
+const AUTH_REJECTED_PREFIX = 'auth: ';
+
+/**
+ * The handshake was refused for the token (`Authentication error: …` from the namespace
+ * middleware, like the main socket's): worth one token refresh + retry before falling back.
+ */
+export function voiceAuthRejected(message: string): AgentVoiceStartAck {
+  return voiceV2Unavailable(`${AUTH_REJECTED_PREFIX}${message}`);
+}
+
+export function isVoiceAuthRejectedAck(ack: AgentVoiceStartAck): boolean {
+  return !ack.ok && ack.code === 'VOICE_V2_UNAVAILABLE' && (ack.message ?? '').startsWith(AUTH_REJECTED_PREFIX);
+}
+
+/** Same test as `socketService`'s connect_error handler. */
+function isAuthConnectError(error: Error): boolean {
+  const message = (error?.message ?? '').toLowerCase();
+  return message.includes('auth') || (error as Error & { data?: { status?: number } }).data?.status === 401;
+}
+
 /** Same server as the main socket (`socketService.connect`). */
 function voiceSocketUrl(): string {
   const base = isCapacitor() ? 'https://bandeja.me' : import.meta.env.VITE_SOCKET_URL || window.location.origin;
@@ -59,32 +79,42 @@ export class SocketAgentVoiceTransport implements AgentVoiceTransport {
   start(payload: AgentVoiceStartPayload, timeoutMs: number): Promise<AgentVoiceStartAck> {
     return new Promise((resolve) => {
       let settled = false;
+      let socket: VoiceSocket | null = null;
       const finish = (ack: AgentVoiceStartAck) => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
         socket?.off('connect_error', onConnectError);
+        // Gave up before connecting: a later connect (a retry's) must not send this start too.
+        socket?.off('connect', send);
         resolve(ack);
       };
+      let send: () => void = () => {};
       const timer = setTimeout(() => finish(voiceV2Unavailable('timeout')), timeoutMs);
       const onConnectError = (error: Error) => {
         // Only the first connect decides v2 vs v1; later drops are `reconnecting`.
-        if (!this.wasConnected) finish(voiceV2Unavailable(error.message || 'connect_error'));
+        if (this.wasConnected) return;
+        const message = error.message || 'connect_error';
+        finish(isAuthConnectError(error) ? voiceAuthRejected(message) : voiceV2Unavailable(message));
       };
       if (this.closed) {
         finish(voiceV2Unavailable('closed'));
         return;
       }
-      const socket = this.socket ?? this.connect();
-      if (!socket) {
+      const live = this.socket ?? this.connect();
+      if (!live) {
         finish(voiceV2Unavailable('no token'));
         return;
       }
-      const send = () => socket.emit('voice:start', payload, (ack) => finish(ack));
-      if (socket.connected) send();
+      socket = live;
+      send = () => live.emit('voice:start', payload, (ack) => finish(ack));
+      if (live.connected) send();
       else {
-        socket.once('connect', send);
-        socket.on('connect_error', onConnectError);
+        live.once('connect', send);
+        live.on('connect_error', onConnectError);
+        // A refused handshake leaves the socket inactive: a retry (after a token refresh)
+        // connects again, and the `auth` callback reads the fresh token.
+        if (!live.active) live.connect();
       }
     });
   }

@@ -13,7 +13,7 @@ import {
   isFallbackAck,
   type AgentVoiceRealtimeSessionDeps,
 } from './agentVoiceRealtimeSession';
-import { voiceV2Unavailable, type AgentVoiceTransport } from './agentVoiceRealtimeTransport';
+import { isVoiceAuthRejectedAck, voiceV2Unavailable, type AgentVoiceTransport } from './agentVoiceRealtimeTransport';
 import {
   INITIAL_VOICE_VIEW_STATE,
   type AgentVoicePlaybackPosition,
@@ -47,6 +47,11 @@ export interface AgentVoiceControllerDeps {
   onClose: (reason: AgentVoiceCloseReason, notice: AgentVoiceNotice | null) => void;
   onTurn?: (turn: AgentVoiceTurnPayload) => void;
   onReplyCut?: () => void;
+  /**
+   * The voice socket refused the token: refresh it the way the app's REST client / main socket do.
+   * Resolves true when a new token is in place (→ one retry of `voice:start`), false → v1.
+   */
+  refreshAuth?: () => Promise<boolean>;
   startTimeoutMs?: number;
   /** Test hooks for the realtime session (timers, clock, idle). */
   realtime?: Pick<AgentVoiceRealtimeSessionDeps, 'now' | 'setTimer' | 'clearTimer' | 'idleTimeoutMs' | 'restartTimeoutMs'>;
@@ -133,9 +138,7 @@ export class AgentVoiceController {
     const engineStart = engine.start(NOOP_HANDLERS);
     const transport = this.deps.createTransport();
     const session = transport ? this.createRealtime(transport, engine) : null;
-    const ackPromise = transport
-      ? transport.start(this.deps.startPayload(false), this.deps.startTimeoutMs ?? DEFAULT_START_TIMEOUT_MS)
-      : Promise.resolve(voiceV2Unavailable('off'));
+    const ackPromise = transport ? this.startTransport(transport, gen) : Promise.resolve(voiceV2Unavailable('off'));
 
     try {
       await engineStart;
@@ -209,6 +212,18 @@ export class AgentVoiceController {
   }
 
   // --- internals -------------------------------------------------------------------------------
+
+  /** `voice:start`; an expired / invalid token gets one refresh and one retry (else v1). */
+  private async startTransport(transport: AgentVoiceTransport, gen: number) {
+    const timeoutMs = this.deps.startTimeoutMs ?? DEFAULT_START_TIMEOUT_MS;
+    const payload = this.deps.startPayload(false);
+    const ack = await transport.start(payload, timeoutMs);
+    const { refreshAuth } = this.deps;
+    if (!isVoiceAuthRejectedAck(ack) || !refreshAuth) return ack;
+    const refreshed = await refreshAuth().catch(() => false);
+    if (!refreshed || gen !== this.startGen) return ack;
+    return transport.start(payload, timeoutMs);
+  }
 
   private createRealtime(transport: AgentVoiceTransport, engine: RealtimeVoiceEngine): AgentVoiceRealtimeSession {
     const session: AgentVoiceRealtimeSession = new AgentVoiceRealtimeSession({

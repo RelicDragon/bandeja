@@ -6,7 +6,7 @@ import type {
   AgentVoiceStartPayload,
 } from '@shared/agentVoiceRealtime';
 import { AgentVoiceController, type AgentVoiceControllerDeps } from './agentVoiceController';
-import type { AgentVoiceConnection, AgentVoiceTransport } from './agentVoiceRealtimeTransport';
+import { voiceAuthRejected, type AgentVoiceConnection, type AgentVoiceTransport } from './agentVoiceRealtimeTransport';
 import type { ScheduledPcm } from './pcmStreamPlayer';
 import type { RealtimeVoiceEngine, VoiceEngineHandlers, VoiceFrameSink, VoiceListenMode } from './voiceAudioEngine';
 
@@ -21,9 +21,12 @@ class FakeTransport implements AgentVoiceTransport {
   closed = false;
   private connection: ((c: AgentVoiceConnection) => void) | null = null;
 
+  /** Acks for the next starts, in order (then `ack`). */
+  acks: AgentVoiceStartAck[] = [];
+
   async start(payload: AgentVoiceStartPayload) {
     this.starts.push(payload);
-    return this.ack;
+    return this.acks.shift() ?? this.ack;
   }
   on<E extends ServerEvent>(event: E, handler: AgentVoiceServerToClientEvents[E]) {
     this.handlers.set(event, handler as (payload: unknown) => void);
@@ -185,6 +188,45 @@ describe('AgentVoiceController — v2 start and v1 fallback', () => {
     expect(ctx.voice.getState()).toMatchObject({ phase: 'listening', transport: 'v2' });
     expect(ctx.engine.sink).not.toBeNull();
     expect(ctx.engine.mode).toBe('normal');
+  });
+
+  it('refreshes the token once and retries when the handshake is refused for auth', async () => {
+    const refreshAuth = vi.fn(async () => true);
+    const ctx = setup({ refreshAuth });
+    ctx.transport.acks = [voiceAuthRejected('Authentication error: Invalid token')];
+    await ctx.voice.start();
+    expect(refreshAuth).toHaveBeenCalledTimes(1);
+    expect(ctx.transport.starts).toHaveLength(2);
+    expect(ctx.transport.closed).toBe(false);
+    expect(ctx.voice.getState()).toMatchObject({ phase: 'listening', transport: 'v2' });
+  });
+
+  it('falls back to v1 when the refresh yields no new token, or the retry is refused again', async () => {
+    const noToken = setup({ refreshAuth: vi.fn(async () => false) });
+    noToken.transport.acks = [voiceAuthRejected('Authentication error: Invalid token')];
+    await noToken.voice.start();
+    await flush();
+    expect(noToken.transport.starts).toHaveLength(1);
+    expect(noToken.voice.getState()).toMatchObject({ transport: 'v1' });
+
+    const refusedAgain = setup({ refreshAuth: vi.fn(async () => true) });
+    const rejected = voiceAuthRejected('Authentication error: Invalid token');
+    refusedAgain.transport.acks = [rejected, rejected, rejected];
+    await refusedAgain.voice.start();
+    await flush();
+    expect(refusedAgain.deps.refreshAuth).toHaveBeenCalledTimes(1);
+    expect(refusedAgain.transport.starts).toHaveLength(2);
+    expect(refusedAgain.voice.getState()).toMatchObject({ transport: 'v1' });
+  });
+
+  it('does not refresh the token for other start failures', async () => {
+    const refreshAuth = vi.fn(async () => true);
+    const ctx = setup({ refreshAuth });
+    ctx.transport.ack = { ok: false, code: 'VOICE_V2_UNAVAILABLE', message: 'timeout' };
+    await ctx.voice.start();
+    await flush();
+    expect(refreshAuth).not.toHaveBeenCalled();
+    expect(ctx.voice.getState()).toMatchObject({ transport: 'v1' });
   });
 
   it('falls back to v1 on VOICE_V2_UNAVAILABLE, on the same engine (no second gesture)', async () => {

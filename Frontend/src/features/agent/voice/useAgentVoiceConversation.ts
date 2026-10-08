@@ -5,6 +5,7 @@ import { AGENT_VOICE_INPUT_SAMPLE_RATE, type AgentVoiceTurnPayload } from '@shar
 import { agentApi } from '@/api/agent';
 import { useWakeScreenForLiveScoring } from '@/hooks/useWakeScreenForLiveScoring';
 import { isCapacitor } from '@/utils/capacitor';
+import { useAuthStore } from '@/store/authStore';
 import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 import { agentRunEventBacklog, subscribeAgentRunEvents } from './agentRunEventBus';
 import { AgentVoiceController } from './agentVoiceController';
@@ -21,6 +22,16 @@ function realtimeVoiceEnabled(): boolean {
   } catch {
     return true;
   }
+}
+
+/** The voice socket refused the token: refresh it like `socketService`'s connect_error does. */
+async function refreshAuth(): Promise<boolean> {
+  const current = useAuthStore.getState().token;
+  if (!current) return false;
+  const { invalidateCachedAccessToken, refreshAccessTokenSingleFlight } = await import('@/api/authRefresh');
+  invalidateCachedAccessToken(current);
+  const token = await refreshAccessTokenSingleFlight();
+  return !!token && token !== current && useAuthStore.getState().token === token;
 }
 
 export interface AgentVoiceConversationOptions {
@@ -69,6 +80,7 @@ export function useAgentVoiceConversation(options: AgentVoiceConversationOptions
         }),
         onTurn: (turn) => optionsRef.current.onTurn(turn),
         onReplyCut: () => optionsRef.current.onReplyCut(),
+        refreshAuth,
         onClose: (reason, notice) => optionsRef.current.onClose(reason, notice),
         v1: {
           transcribe: async (audio, durationMs, signal) => (await agentApi.transcribeVoice(audio, durationMs, signal)).text,
