@@ -1,0 +1,242 @@
+/* Member theme finishing pass (docs/domains/premium-appearance.md → "Common surfaces").
+   Shared surfaces follow the active member theme by reading tokens only — no per-theme art here.
+   Everything is scoped to html.premium-theme, so Classic is untouched. Rules are unlayered, so they
+   win over Tailwind utilities without !important (inline styles excepted: toasts). */
+
+/* ── Semantic UI tokens (bg-muted, border-border, text-foreground, …) ────────
+   Classic's values are exactly gray-100/200/500/900 (light) and gray-800/700/400/50 (dark), so a
+   member theme derives them from its own gray ramp instead of leaking Classic slate. */
+html.premium-theme {
+  --ui-foreground: var(--color-gray-900);
+  --ui-border: var(--color-gray-200);
+  --ui-muted: var(--color-gray-100);
+  --ui-muted-foreground: var(--color-gray-500);
+  --ui-scrollbar-thumb: color-mix(in srgb, var(--color-gray-400) 50%, transparent);
+  --ui-scrollbar-thumb-hover: color-mix(in srgb, var(--color-gray-400) 70%, transparent);
+}
+html.premium-theme.dark {
+  --ui-foreground: var(--color-gray-50);
+  --ui-border: var(--color-gray-700);
+  --ui-muted: var(--color-gray-800);
+  --ui-muted-foreground: var(--color-gray-400);
+  --ui-scrollbar-thumb: color-mix(in srgb, var(--color-gray-600) 50%, transparent);
+  --ui-scrollbar-thumb-hover: color-mix(in srgb, var(--color-gray-600) 70%, transparent);
+}
+
+/* ── Accent hooks ─────────────────────────────────────────────────────────────
+   A component whose brand accent is a hard-coded Tailwind palette (e.g. the emerald "I want to
+   play" hero) carries data-member-accent="<palette …>". Inside a member theme those palettes
+   resolve to the member primary ramp, so every utility (opacity modifiers and gradients included)
+   follows the theme. Semantic colours (success/error/warning, teams, levels, sports) never get it. */
+html.premium-theme [data-member-accent~='emerald'] {
+  --color-emerald-50: var(--member-primary-50);
+  --color-emerald-100: var(--member-primary-100);
+  --color-emerald-200: var(--member-primary-200);
+  --color-emerald-300: var(--member-primary-300);
+  --color-emerald-400: var(--member-primary-400);
+  --color-emerald-500: var(--member-primary-500);
+  --color-emerald-600: var(--member-primary-600);
+  --color-emerald-700: var(--member-primary-700);
+  --color-emerald-800: var(--member-primary-800);
+  --color-emerald-900: var(--member-primary-900);
+  --color-emerald-950: var(--member-primary-950);
+}
+html.premium-theme [data-member-accent~='green'] {
+  --color-green-50: var(--member-primary-50);
+  --color-green-100: var(--member-primary-100);
+  --color-green-200: var(--member-primary-200);
+  --color-green-300: var(--member-primary-300);
+  --color-green-400: var(--member-primary-400);
+  --color-green-500: var(--member-primary-500);
+  --color-green-600: var(--member-primary-600);
+  --color-green-700: var(--member-primary-700);
+  --color-green-800: var(--member-primary-800);
+  --color-green-900: var(--member-primary-900);
+  --color-green-950: var(--member-primary-950);
+}
+html.premium-theme [data-member-accent~='sky'] {
+  --color-sky-50: var(--member-primary-50);
+  --color-sky-100: var(--member-primary-100);
+  --color-sky-200: var(--member-primary-200);
+  --color-sky-300: var(--member-primary-300);
+  --color-sky-400: var(--member-primary-400);
+  --color-sky-500: var(--member-primary-500);
+  --color-sky-600: var(--member-primary-600);
+  --color-sky-700: var(--member-primary-700);
+  --color-sky-800: var(--member-primary-800);
+  --color-sky-900: var(--member-primary-900);
+  --color-sky-950: var(--member-primary-950);
+}
+html.premium-theme [data-member-accent~='cyan'] {
+  --color-cyan-50: var(--member-primary-50);
+  --color-cyan-100: var(--member-primary-100);
+  --color-cyan-200: var(--member-primary-200);
+  --color-cyan-300: var(--member-primary-300);
+  --color-cyan-400: var(--member-primary-400);
+  --color-cyan-500: var(--member-primary-500);
+  --color-cyan-600: var(--member-primary-600);
+  --color-cyan-700: var(--member-primary-700);
+  --color-cyan-800: var(--member-primary-800);
+  --color-cyan-900: var(--member-primary-900);
+  --color-cyan-950: var(--member-primary-950);
+}
+html.premium-theme [data-member-accent~='lime'] {
+  --color-lime-50: var(--member-primary-50);
+  --color-lime-100: var(--member-primary-100);
+  --color-lime-200: var(--member-primary-200);
+  --color-lime-300: var(--member-primary-300);
+  --color-lime-400: var(--member-primary-400);
+  --color-lime-500: var(--member-primary-500);
+  --color-lime-600: var(--member-primary-600);
+  --color-lime-700: var(--member-primary-700);
+  --color-lime-800: var(--member-primary-800);
+  --color-lime-900: var(--member-primary-900);
+  --color-lime-950: var(--member-primary-950);
+}
+html.premium-theme [data-member-accent~='teal'] {
+  --color-teal-50: var(--member-primary-50);
+  --color-teal-100: var(--member-primary-100);
+  --color-teal-200: var(--member-primary-200);
+  --color-teal-300: var(--member-primary-300);
+  --color-teal-400: var(--member-primary-400);
+  --color-teal-500: var(--member-primary-500);
+  --color-teal-600: var(--member-primary-600);
+  --color-teal-700: var(--member-primary-700);
+  --color-teal-800: var(--member-primary-800);
+  --color-teal-900: var(--member-primary-900);
+  --color-teal-950: var(--member-primary-950);
+}
+html.premium-theme [data-member-accent~='blue'] {
+  --color-blue-50: var(--member-primary-50);
+  --color-blue-100: var(--member-primary-100);
+  --color-blue-200: var(--member-primary-200);
+  --color-blue-300: var(--member-primary-300);
+  --color-blue-400: var(--member-primary-400);
+  --color-blue-500: var(--member-primary-500);
+  --color-blue-600: var(--member-primary-600);
+  --color-blue-700: var(--member-primary-700);
+  --color-blue-800: var(--member-primary-800);
+  --color-blue-900: var(--member-primary-900);
+  --color-blue-950: var(--member-primary-950);
+}
+
+/* ── Text selection, caret, native controls ──────────────────────────────── */
+html.premium-theme {
+  accent-color: var(--member-primary-500);
+}
+html.premium-theme ::selection {
+  background-color: color-mix(in srgb, var(--member-primary-400) 34%, transparent);
+}
+html.premium-theme :is(input, textarea, [contenteditable='true']) {
+  caret-color: var(--member-primary-600);
+}
+html.premium-theme.dark :is(input, textarea, [contenteditable='true']) {
+  caret-color: var(--member-primary-300);
+}
+
+/* ── Focus rings ─────────────────────────────────────────────────────────────
+   Primitives already use ring-primary-*; this catches the UA ring and the remaining
+   hard-coded blue/sky focus utilities. */
+html.premium-theme :focus-visible {
+  outline-color: var(--member-primary-500);
+}
+html.premium-theme
+  :is([class*='focus:ring-blue-'], [class*='focus:ring-sky-'], [class*='focus-visible:ring-blue-'], [class*='focus-visible:ring-sky-']):focus {
+  --tw-ring-color: color-mix(in srgb, var(--member-primary-500) 70%, transparent);
+}
+html.premium-theme :is([class*='focus:border-blue-'], [class*='focus:border-sky-']):focus {
+  border-color: var(--member-primary-500);
+}
+
+/* ── Skeletons ───────────────────────────────────────────────────────────────
+   Blocks already sit on the theme gray ramp; the sweep gets a faint primary sheen. */
+html.premium-theme .skeleton-shimmer::after {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--member-primary-100) 55%, #ffffff8c),
+    transparent
+  );
+}
+html.premium-theme.dark .skeleton-shimmer::after {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--member-primary-400) 16%, transparent),
+    transparent
+  );
+}
+
+/* ── Toasts (react-hot-toast; options are inline styles, hence !important) ───
+   Neutral toasts become a theme surface with an accent edge; loading toasts use the primary.
+   Success / error keep their semantic fills. */
+html.premium-theme .app-toast--neutral {
+  color: var(--color-gray-900) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--color-gray-200) !important;
+  box-shadow:
+    inset 3px 0 0 var(--member-primary-500),
+    0 18px 40px -16px color-mix(in srgb, var(--color-gray-900) 45%, transparent) !important;
+}
+html.premium-theme.dark .app-toast--neutral {
+  color: var(--color-gray-50) !important;
+  border-color: var(--color-gray-700) !important;
+  box-shadow:
+    inset 3px 0 0 var(--member-primary-400),
+    0 18px 40px -16px #000c !important;
+}
+html.premium-theme[dir='rtl'] .app-toast--neutral {
+  box-shadow:
+    inset -3px 0 0 var(--member-primary-500),
+    0 18px 40px -16px color-mix(in srgb, var(--color-gray-900) 45%, transparent) !important;
+}
+html.premium-theme.dark[dir='rtl'] .app-toast--neutral {
+  box-shadow:
+    inset -3px 0 0 var(--member-primary-400),
+    0 18px 40px -16px #000c !important;
+}
+html.premium-theme .app-toast--loading {
+  background: color-mix(in srgb, var(--member-primary-600) 95%, transparent) !important;
+  border-color: color-mix(in srgb, var(--member-primary-300) 35%, transparent) !important;
+  box-shadow: 0 25px 50px -12px color-mix(in srgb, var(--member-primary-700) 40%, transparent) !important;
+}
+
+/* The spinner's ring otherwise keeps the Classic blue from iconTheme. */
+html.premium-theme .app-toast--loading > div:first-child div {
+  border-color: color-mix(in srgb, #ffffff 35%, transparent) !important;
+  border-right-color: #ffffff !important;
+}
+
+/* ── Bottom sheets and dialogs ───────────────────────────────────────────────
+   Surface tokens instead of pure white, a primary-tinted grabber and a hairline accent along
+   the top edge. Bespoke sheets that paint their own surface keep it (only bg-white is swapped). */
+html.premium-theme:not(.dark) :is([data-vaul-drawer], [role='dialog'], [role='alertdialog'])[class~='bg-white'] {
+  background-color: var(--ui-surface);
+}
+html.premium-theme [data-vaul-drawer][data-vaul-drawer-direction='bottom'] {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--member-primary-400) 45%, transparent),
+    0 -18px 48px -20px color-mix(in srgb, var(--color-gray-900) 40%, transparent);
+}
+html.premium-theme.dark [data-vaul-drawer][data-vaul-drawer-direction='bottom'] {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--member-primary-300) 30%, transparent),
+    0 -18px 48px -20px #000;
+}
+html.premium-theme .dialog-content-animate {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--member-primary-400) 40%, transparent),
+    0 24px 60px -18px color-mix(in srgb, var(--color-gray-900) 55%, transparent);
+}
+html.premium-theme.dark .dialog-content-animate {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--member-primary-300) 26%, transparent),
+    0 24px 60px -18px #000;
+}
+html.premium-theme :is([data-vaul-handle], [data-vaul-drawer] > div.rounded-full:is(.h-1, .h-1\.5)) {
+  background: color-mix(in srgb, var(--member-primary-400) 55%, var(--color-gray-300));
+  opacity: 1;
+}
+html.premium-theme.dark :is([data-vaul-handle], [data-vaul-drawer] > div.rounded-full:is(.h-1, .h-1\.5)) {
+  background: color-mix(in srgb, var(--member-primary-400) 45%, var(--color-gray-600));
+}

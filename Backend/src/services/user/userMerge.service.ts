@@ -66,6 +66,8 @@ const survivorSelect = {
   canCreateLeague: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   mainTheme: true,
   premiumOnboardingCompletedAt: true,
   gender: true,
@@ -554,6 +556,9 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
     lastName: nameResolved.lastName ?? null,
     avatar: pickStr(survivor.avatar, source.avatar),
     originalAvatar: pickStr(survivor.originalAvatar, source.originalAvatar),
+    // The animated loop belongs to the still it was cut from: follow whichever `avatar` survives.
+    avatarAnimated:
+      survivor.avatar != null && survivor.avatar !== '' ? survivor.avatarAnimated : source.avatarAnimated,
     passwordHash: nn(survivor.passwordHash, source.passwordHash) ?? null,
     isActive: survivor.isActive || source.isActive,
     socialLevel: Math.max(survivor.socialLevel, source.socialLevel),
@@ -581,6 +586,11 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
     showPremiumStatus: survivor.showPremiumStatus && source.showPremiumStatus,
     premiumOnboardingCompletedAt: survivor.premiumOnboardingCompletedAt ?? source.premiumOnboardingCompletedAt,
     mainTheme: survivor.isPremium ? survivor.mainTheme : source.isPremium ? source.mainTheme : survivor.mainTheme,
+    premiumNameStyle: survivor.isPremium
+      ? survivor.premiumNameStyle
+      : source.isPremium
+        ? source.premiumNameStyle
+        : survivor.premiumNameStyle,
     gender: survivor.gender !== 'PREFER_NOT_TO_SAY' ? survivor.gender : source.gender,
     genderIsSet: survivor.genderIsSet || source.genderIsSet,
     nameIsSet: nameResolved.nameIsSet,

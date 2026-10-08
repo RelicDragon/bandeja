@@ -1,8 +1,8 @@
 import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import type { GameParticipant } from '@/types';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
 
 interface GameCardTrainerBadgeProps {
   trainer: GameParticipant;
@@ -24,7 +24,7 @@ export const GameCardTrainerBadge = ({ trainer, className = '' }: GameCardTraine
       <span className="relative h-5 w-5 shrink-0 rounded-full ring-1 ring-emerald-500/40">
         <PlayerAvatarFace
           avatar={trainerUser?.avatar}
-          tinyUrl={userAvatarTinyUrlFromStandard(trainerUser?.avatar)}
+          tinyUrl={userFaceTinySrc(trainerUser)}
           initials={initials}
           alt=""
           textClassName="text-[8px]"

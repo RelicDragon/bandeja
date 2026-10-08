@@ -201,6 +201,8 @@ export const USER_SELECT_FIELDS = {
   bio: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   trainerRating: true,
   trainerReviewCount: true,
   weeklyAvailability: true,
@@ -251,6 +253,8 @@ export const USER_STATS_TARGET_SELECT = {
   telegramUsername: true,
   approvedById: true,
   approvedWhen: true,
+  /** Player card backdrop only; nulled by `publicMemberTheme` unless the status is shown. */
+  mainTheme: true,
 } as const;
 
 export const PROFILE_SELECT_FIELDS = {

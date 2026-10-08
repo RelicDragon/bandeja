@@ -23,6 +23,8 @@ export const FIND_CARD_USER_SELECT = {
   approvedLevel: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   isTrainer: true,
   primarySport: true,
   sportsEnabled: true,

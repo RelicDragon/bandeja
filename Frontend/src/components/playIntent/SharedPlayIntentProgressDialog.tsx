@@ -19,6 +19,7 @@ export function SharedPlayIntentProgressDialog({ mode }: Props) {
     <Dialog open modalId="shared-play-intent-progress">
       <DialogContent
         showCloseButton={false}
+        data-member-accent="emerald"
         closeOnInteractOutside={false}
         aria-describedby="shared-play-intent-progress-description"
         className="max-w-sm p-6"

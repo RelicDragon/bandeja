@@ -11,6 +11,18 @@ import {
   isOurCircularAvatarUrl,
   isOurAvatarOriginalUrl,
 } from '../utils/userAvatarTiny';
+import {
+  ANIMATED_AVATAR_MAX_UPLOAD_BYTES,
+  AVATAR_FRAMES_MAX,
+  AVATAR_FRAMES_MAX_TOTAL_BYTES,
+  AnimatedAvatarError,
+  RenderedAnimatedAvatar,
+  assembleAnimatedAvatarFromFrames,
+  inspectAnimatedAvatarSource,
+  parseAnimatedAvatarCrop,
+  parseAvatarFramesFps,
+  renderAnimatedAvatar,
+} from '../utils/animatedAvatar';
 import prisma from '../config/database';
 import { MessageService } from '../services/chat/message.service';
 import { GameChatViewerAccessService } from '../services/chat/gameChatViewerAccess.service';
@@ -134,6 +146,34 @@ export const uploadAvatarFiles = multer({
   { name: 'original', maxCount: 1 }
 ]);
 
+const ANIMATED_AVATAR_MIMES = ['image/gif', 'image/webp'];
+
+/** Premium animated avatar: one raw GIF/WebP plus a square crop in source pixels. */
+export const uploadAnimatedAvatarFile = multer({
+  storage: storage,
+  fileFilter: (req: any, file: any, cb: FileFilterCallback) => {
+    if (file.fieldname === 'animated' && ANIMATED_AVATAR_MIMES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new ApiError(400, `Invalid animated avatar file: ${file.mimetype}`));
+    }
+  },
+  limits: { fileSize: ANIMATED_AVATAR_MAX_UPLOAD_BYTES, files: 1 },
+}).single('animated');
+
+/** Premium video avatar: frames cut client-side from a trimmed video (never the raw video). */
+export const uploadAvatarFramesFiles = multer({
+  storage: storage,
+  fileFilter: (req: any, file: any, cb: FileFilterCallback) => {
+    if (file.fieldname === 'frames' && (file.mimetype === 'image/jpeg' || file.mimetype === 'image/webp')) {
+      cb(null, true);
+    } else {
+      cb(new ApiError(400, `Invalid avatar frame: ${file.mimetype}`));
+    }
+  },
+  limits: { fileSize: AVATAR_FRAMES_MAX_TOTAL_BYTES, files: AVATAR_FRAMES_MAX },
+}).array('frames', AVATAR_FRAMES_MAX);
+
 type AvatarEntityType = 'user' | 'game' | 'groupChannel' | 'userTeam' | 'club';
 
 interface AvatarEntity {
@@ -141,8 +181,11 @@ interface AvatarEntity {
   originalAvatar: string | null;
 }
 
+type AvatarSourceFile = Pick<Express.Multer.File, 'buffer' | 'originalname'>;
+
 type AvatarUploadResult = {
   avatarPath: string;
+  avatarAnimatedPath?: string | null;
   originalPath: string;
   avatarSize: { width: number; height: number };
   originalSize: { width: number; height: number };
@@ -179,6 +222,7 @@ function sendAvatarUploadJson(res: Response, result: AvatarUploadResult, message
       originalAvatarUrl: result.originalPath,
       avatarSize: result.avatarSize,
       originalSize: result.originalSize,
+      ...(result.avatarAnimatedPath !== undefined && { avatarAnimatedUrl: result.avatarAnimatedPath }),
     },
   });
 }
@@ -186,18 +230,24 @@ function sendAvatarUploadJson(res: Response, result: AvatarUploadResult, message
 async function uploadAvatarForEntity(
   entityType: AvatarEntityType,
   entityId: string,
-  originalFile: Express.Multer.File,
-  avatarFile?: Express.Multer.File
+  originalFile: AvatarSourceFile,
+  avatarFile?: AvatarSourceFile,
+  /** User only: the new animated avatar URL; a still upload passes nothing and clears it. */
+  avatarAnimated: string | null = null
 ): Promise<AvatarUploadResult> {
   let entity: AvatarEntity | null = null;
+  let previousAnimated: string | null = null;
 
   switch (entityType) {
-    case 'user':
-      entity = await prisma.user.findUnique({
+    case 'user': {
+      const user = await prisma.user.findUnique({
         where: { id: entityId },
-        select: { avatar: true, originalAvatar: true }
+        select: { avatar: true, originalAvatar: true, avatarAnimated: true }
       });
+      entity = user;
+      previousAnimated = user?.avatarAnimated ?? null;
       break;
+    }
     case 'game':
       entity = await prisma.game.findUnique({
         where: { id: entityId },
@@ -254,7 +304,7 @@ async function uploadAvatarForEntity(
     case 'user':
       await prisma.user.update({
         where: { id: entityId },
-        data: { avatar: result.avatarPath, originalAvatar: result.originalPath }
+        data: { avatar: result.avatarPath, originalAvatar: result.originalPath, avatarAnimated }
       });
       break;
     case 'game':
@@ -306,9 +356,13 @@ async function uploadAvatarForEntity(
   ) {
     await ImageProcessor.deleteFile(previousOriginal);
   }
+  if (previousAnimated && previousAnimated !== avatarAnimated) {
+    await ImageProcessor.deleteAnimatedAvatar(previousAnimated);
+  }
 
   return {
     avatarPath: result.avatarPath,
+    ...(entityType === 'user' && { avatarAnimatedPath: avatarAnimated }),
     originalPath: result.originalPath,
     avatarSize: result.avatarSize,
     originalSize: result.originalSize
@@ -320,6 +374,71 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response)
   const { avatarFile, originalFile } = requireAvatarFiles(req);
   const result = await uploadAvatarForEntity('user', userId, originalFile, avatarFile);
   sendAvatarUploadJson(res, result, 'Avatar uploaded successfully');
+});
+
+async function requirePremiumUploader(req: AuthRequest): Promise<string> {
+  const userId = requireAuthUserId(req);
+  const me = await prisma.user.findUnique({ where: { id: userId }, select: { isPremium: true } });
+  if (!me?.isPremium) {
+    throw new ApiError(403, 'Animated avatars are a Premium feature', true, {
+      code: 'media.animatedAvatarPremiumOnly',
+    });
+  }
+  return userId;
+}
+
+async function renderOrBadRequest(render: () => Promise<RenderedAnimatedAvatar>): Promise<RenderedAnimatedAvatar> {
+  try {
+    return await render();
+  } catch (error) {
+    if (error instanceof AnimatedAvatarError) {
+      throw new ApiError(400, error.message, true, { code: `media.animatedAvatar.${error.code}` });
+    }
+    throw error;
+  }
+}
+
+/** Shared tail of the GIF and video routes: store the WebP, run the still pipeline, swap rows. */
+async function storeAnimatedUserAvatar(userId: string, rendered: RenderedAnimatedAvatar): Promise<AvatarUploadResult> {
+  const animatedUrl = await ImageProcessor.uploadAnimatedAvatar(rendered.animatedWebp, rendered.animatedTinyWebp);
+  try {
+    return await uploadAvatarForEntity(
+      'user',
+      userId,
+      { buffer: rendered.stillOriginal, originalname: 'animated-still.jpg' },
+      { buffer: rendered.stillCrop, originalname: 'animated-still.jpg' },
+      animatedUrl
+    );
+  } catch (error) {
+    await ImageProcessor.deleteAnimatedAvatar(animatedUrl);
+    throw error;
+  }
+}
+
+export const uploadAnimatedAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = await requirePremiumUploader(req);
+  const file = req.file;
+  if (!file) {
+    throw new ApiError(400, 'Animated image file is required');
+  }
+  const rendered = await renderOrBadRequest(async () => {
+    const info = await inspectAnimatedAvatarSource(file.buffer);
+    const crop = parseAnimatedAvatarCrop({ x: req.body?.x, y: req.body?.y, size: req.body?.size }, info);
+    return renderAnimatedAvatar(file.buffer, info, crop);
+  });
+  const result = await storeAnimatedUserAvatar(userId, rendered);
+  sendAvatarUploadJson(res, result, 'Animated avatar uploaded successfully');
+});
+
+export const uploadAvatarFrames = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = await requirePremiumUploader(req);
+  const files = Array.isArray(req.files) ? req.files : [];
+  const rendered = await renderOrBadRequest(async () => {
+    const fps = parseAvatarFramesFps(req.body?.fps);
+    return assembleAnimatedAvatarFromFrames(files.map((f) => f.buffer), fps);
+  });
+  const result = await storeAnimatedUserAvatar(userId, rendered);
+  sendAvatarUploadJson(res, result, 'Animated avatar uploaded successfully');
 });
 
 export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {

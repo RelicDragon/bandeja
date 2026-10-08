@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { MemberSpinner, useMemberTheme } from '@/features/memberEffects';
 
 type BlockingLoadingOverlayProps = {
   open: boolean;
@@ -9,6 +10,7 @@ type BlockingLoadingOverlayProps = {
 
 /** Full-screen backdrop + spinner card that blocks input while a slow state switch runs. */
 export function BlockingLoadingOverlay({ open, label }: BlockingLoadingOverlayProps) {
+  const memberTheme = useMemberTheme();
   if (typeof document === 'undefined') return null;
 
   return createPortal(
@@ -33,7 +35,11 @@ export function BlockingLoadingOverlay({ open, label }: BlockingLoadingOverlayPr
             className="mx-6 flex w-full max-w-sm items-center gap-3 rounded-2xl border border-gray-200/80 bg-white/95 p-6 shadow-xl dark:border-gray-700/80 dark:bg-gray-900/95"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 ring-2 ring-primary-400/40 dark:bg-primary-900/40">
-              <Loader2 size={18} className="animate-spin" />
+              {memberTheme ? (
+                <MemberSpinner theme={memberTheme} className="h-[18px] w-[18px]" />
+              ) : (
+                <Loader2 size={18} className="animate-spin" />
+              )}
             </div>
             <p className="text-base font-semibold text-gray-900 dark:text-white">{label}</p>
           </motion.div>

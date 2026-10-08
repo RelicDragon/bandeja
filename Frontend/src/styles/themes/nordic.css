@@ -1,0 +1,553 @@
+/* Nordic Frost — light snowfield chrome (pine band, slow snow, faint aurora);
+   dark appearance is polar night where the aurora becomes the hero.
+   Tokens are scoped to the attribute so the theme picker can preview them. */
+
+[data-member-theme='nordic'] {
+  --ui-page-background: #f6f9fb;
+  --ui-background: #f6f9fb;
+  --ui-surface: #ffffff;
+
+  /* Cool snow neutrals; 500+ stay AA on white. */
+  --color-gray-50: #f6f9fb;
+  --color-gray-100: #edf2f6;
+  --color-gray-200: #dbe3ea;
+  --color-gray-300: #bfcbd5;
+  --color-gray-400: #94a3b0;
+  --color-gray-500: #657583;
+  --color-gray-600: #4e5c68;
+  --color-gray-700: #35404a;
+  --color-gray-800: #212931;
+  --color-gray-900: #131920;
+  --color-gray-950: #0a0e13;
+
+  /* Glacier blue; 600+ AA on white. */
+  --member-primary-default: #24658f;
+  --member-primary-50: #eef6fb;
+  --member-primary-100: #d7eaf5;
+  --member-primary-200: #b0d4ea;
+  --member-primary-300: #7fb8da;
+  --member-primary-400: #4f98c4;
+  --member-primary-500: #2f7aab;
+  --member-primary-600: #24658f;
+  --member-primary-700: #1f5274;
+  --member-primary-800: #1c435e;
+  --member-primary-900: #1a384e;
+  --member-primary-950: #0f2232;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 20% -20%, #d9ecf7a0, transparent 55%),
+    linear-gradient(180deg, #f5f9fc, #e9f1f7);
+  --mt-chrome-text: #15302a;
+  --mt-chrome-muted: #546670;
+  --mt-chrome-border: #7fa7c04d;
+  --mt-chrome-accent: #24658f;
+  --mt-chrome-accent-soft: #4f98c41f;
+  --mt-chrome-hairline: linear-gradient(90deg, #4f98c410, #4f98c4b3 30%, #1f3a32a6 64%, #4f98c41a);
+  --mt-chrome-shadow: 0 6px 22px #1c3a5214;
+  --mt-chrome-button-bg: #ffffffa6;
+  --mt-chrome-edges: #eef4f980;
+  --mt-cta-bg: linear-gradient(135deg, #2f7aab, #1f5274 75%);
+  --mt-cta-text: #ffffff;
+  --mt-cta-border: #1a384e59;
+  --mt-badge-bg: #1f3a32;
+  --mt-badge-text: #ffffff;
+
+  --mt-brand-fill: linear-gradient(170deg, #4f98c4 10%, #24658f 48%, #15302a 56%, #2f7aab 92%);
+  --mt-brand-font: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+  --mt-brand-tier-text: #3e5866;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #ffffffd0);
+  --mt-brand-plate: #ffffffe0;
+
+  --chat-paper: #f7fafc;
+  --chat-panel: #ffffff;
+  --chat-line: #7fa7c03d;
+  --chat-selection: #4f98c414;
+  --chat-selection-edge: #24658f;
+  --mt-bubble-own: linear-gradient(145deg, #2a6f9c, #1f5274 85%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #245f86, #1a3f59 85%);
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #b0d4ea2e, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #d7eaf540, transparent 55%);
+
+  --mt-preview-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 136 40'%3E%3Cpath fill='%231f3a32' d='M12 6L16 22H8ZM12 13L18.2 31H5.8ZM12 22L20 40H4ZM40 16L43 28H37ZM40 21L44.7 34H35.3ZM40 27L46 40H34ZM64 2L68.5 20H59.5ZM64 10L71 30H57ZM64 19L73 40H55ZM94 12L97.5 25H90.5ZM94 18L99.5 33H88.5ZM94 25L101 40H87ZM122 20L124.8 30H119.2ZM122 24L126.3 35H117.7ZM122 29L127.5 40H116.5Z'/%3E%3C/svg%3E") 0 100% / 54px 16px repeat-x,
+    radial-gradient(circle at 30% 30%, #fff 0 1px, transparent 1.6px),
+    radial-gradient(circle at 70% 46%, #fff 0 1px, transparent 1.6px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23c2d5e3' d='M0 100V62L38 40L66 52L112 16L150 48L192 30L238 58L290 20L332 46L372 32L400 44V100Z'/%3E%3Cpath fill='%23f4f8fb' d='M112 16L100 27L108 25L114 30L120 24L126 26ZM290 20L278 31L286 29L292 34L298 28L304 30ZM192 30L184 37L190 36L196 40L202 36Z'/%3E%3C/svg%3E") 0 100% / 100% 60% no-repeat,
+    linear-gradient(170deg, transparent 30%, #7fe0c21f 45%, #a99cf01a 55%, transparent 70%),
+    linear-gradient(180deg, #eef5fa, #dde9f2);
+}
+
+.dark[data-member-theme='nordic'],
+.dark [data-member-theme='nordic'] {
+  --ui-page-background: #0f141c;
+  --ui-background: #0a0e14;
+  --ui-surface: #1a212b;
+
+  --member-primary-default: #7fb8da;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 30% -30%, #2bd4a014, transparent 55%),
+    linear-gradient(175deg, #0d1424, #081020 60%, #0b0f1c);
+  --mt-chrome-text: #e8f1f7;
+  --mt-chrome-muted: #9fb2c2;
+  --mt-chrome-border: #7fb8da2e;
+  --mt-chrome-accent: #9ed2ef;
+  --mt-chrome-accent-soft: #9ed2ef1c;
+  --mt-chrome-hairline: linear-gradient(90deg, #5ee3b310, #5ee3b399 30%, #a48cf080 66%, #7fb8da18);
+  --mt-chrome-shadow: 0 8px 26px #0008;
+  --mt-chrome-button-bg: #ffffff0d;
+  --mt-chrome-edges: #091122a6;
+  --mt-cta-bg: linear-gradient(135deg, #c7e6f6, #7fb8da 75%);
+  --mt-cta-text: #0f2232;
+  --mt-cta-border: #d7eaf566;
+  --mt-badge-bg: #8ef0cc;
+  --mt-badge-text: #06221a;
+
+  --mt-brand-fill: linear-gradient(170deg, #ffffff 10%, #d7eaf5 45%, #7fb8da 58%, #e9f5fc 92%);
+  --mt-brand-tier-text: #b5c8d6;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #000a);
+  --mt-brand-plate: #0b1426d9;
+
+  --chat-paper: #10151d;
+  --chat-panel: #1b222c;
+  --chat-line: #7fb8da29;
+  --chat-selection: #9ed2ef12;
+  --chat-selection-edge: #9ed2ef;
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #5ee3b30c, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #a48cf00a, transparent 60%);
+
+  --mt-preview-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 136 40'%3E%3Cpath fill='%23040810' d='M12 6L16 22H8ZM12 13L18.2 31H5.8ZM12 22L20 40H4ZM40 16L43 28H37ZM40 21L44.7 34H35.3ZM40 27L46 40H34ZM64 2L68.5 20H59.5ZM64 10L71 30H57ZM64 19L73 40H55ZM94 12L97.5 25H90.5ZM94 18L99.5 33H88.5ZM94 25L101 40H87ZM122 20L124.8 30H119.2ZM122 24L126.3 35H117.7ZM122 29L127.5 40H116.5Z'/%3E%3C/svg%3E") 0 100% / 54px 16px repeat-x,
+    linear-gradient(168deg, transparent 22%, #3ee6a659 40%, #8b6cf040 56%, transparent 72%),
+    radial-gradient(circle at 18% 22%, #fff 0 .8px, transparent 1.3px),
+    radial-gradient(circle at 58% 14%, #fff 0 .8px, transparent 1.3px),
+    radial-gradient(circle at 86% 30%, #fff 0 .8px, transparent 1.3px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%2316243c' d='M0 100V62L38 40L66 52L112 16L150 48L192 30L238 58L290 20L332 46L372 32L400 44V100Z'/%3E%3Cpath fill='%238fa6c2' d='M112 16L100 27L108 25L114 30L120 24L126 26ZM290 20L278 31L286 29L292 34L298 28L304 30ZM192 30L184 37L190 36L196 40L202 36Z'/%3E%3C/svg%3E") 0 100% / 100% 60% no-repeat,
+    linear-gradient(175deg, #0d1424, #081020 60%, #0b0f1c);
+}
+
+/* Fine-tuning tokens, set explicitly so a picker tile never inherits another theme's values. */
+[data-member-theme='nordic'] {
+  --mt-chrome-button-text: #1f3a32;
+  --mt-chrome-button-hover: #4f98c41a;
+  --mt-chrome-focus: #24658f;
+  --mt-chrome-focus-halo: #ffffff;
+  --mt-chrome-tab-text: #546670;
+  --mt-chrome-tab-active: #1f5274;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #4f98c459, inset 0 1px 0 #ffffffc0;
+  --mt-chrome-profile: #24658f;
+  --mt-chrome-profile-ring: 0 0 0 1px #4f98c499, 0 0 0 4px #4f98c412;
+  --mt-chrome-controls-bg: linear-gradient(#ffffff40, #ffffff80);
+  --mt-chrome-controls-border: #7fa7c040;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #ffffffb0;
+  --mt-cta-shadow: inset 0 1px 0 #ffffff40, 0 2px 6px #1c3a5233;
+  --mt-tabbar-border: #7fa7c066;
+  --mt-tabbar-shadow: inset 0 1px 0 #ffffffd0, 0 8px 26px #1c3a521f;
+  --mt-tabbar-hover: #15302a;
+  --mt-tabbar-icon-glow: none;
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #4f98c42b, transparent 80%), linear-gradient(#ffffff80, #ffffff1a);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #ffffffc0;
+  --mt-badge-ring: 0 0 0 2px #f1f6fa;
+  --mt-brand-dash: #7fa7c0;
+
+  --mt-chat-header-bg: radial-gradient(ellipse at 20% -30%, #d9ecf7a0, transparent 60%), linear-gradient(180deg, #f5f9fc, #e9f1f7);
+  --mt-chat-header-shadow: inset 0 -1px 0 #7fa7c040, 0 4px 16px #1c3a5212;
+  --mt-chat-header-text: #15302a;
+  --mt-chat-header-muted: #546670;
+  --mt-chat-header-subtle: #4f5f8a;
+  --mt-chat-header-hover: #4f98c41a;
+  --mt-chat-header-focus: #24658f;
+  --mt-chat-cta-bg: linear-gradient(135deg, #2f7aab, #1f5274 75%);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff40, 0 2px 6px #1c3a522e;
+  --mt-chat-meta: #657583;
+  --mt-chat-meta-dark: #a3b3c0;
+  --mt-chat-input-shadow: inset 0 1px 0 #ffffff, 0 4px 20px #1c3a5212;
+  --mt-chat-scroll-ring: #4f98c480;
+}
+
+.dark[data-member-theme='nordic'],
+.dark [data-member-theme='nordic'] {
+  --mt-chrome-button-text: #dfeaf2;
+  --mt-chrome-button-hover: #9ed2ef14;
+  --mt-chrome-focus: #9ed2ef;
+  --mt-chrome-focus-halo: #081020;
+  --mt-chrome-tab-text: #9fb2c2;
+  --mt-chrome-tab-active: #c7e6f6;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #9ed2ef47, inset 0 1px 0 #ffffff10;
+  --mt-chrome-profile: #c7e6f6;
+  --mt-chrome-profile-ring: 0 0 0 1px #9ed2ef8c, 0 0 0 4px #5ee3b30d;
+  --mt-chrome-controls-bg: #050a1440;
+  --mt-chrome-controls-border: #7fb8da24;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #ffffff0a;
+  --mt-cta-shadow: inset 0 1px 0 #ffffff70, 0 2px 6px #0007;
+  --mt-tabbar-border: #7fb8da33;
+  --mt-tabbar-shadow: inset 0 1px 0 #ffffff10, 0 8px 28px #0007;
+  --mt-tabbar-hover: #e8f1f7;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #5ee3b333);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #5ee3b31f, transparent 80%), linear-gradient(#9ed2ef0d, #9ed2ef03);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #ffffff10;
+  --mt-badge-ring: 0 0 0 2px #0b1222;
+  --mt-brand-dash: #7fb8da99;
+
+  --mt-chat-header-bg: radial-gradient(ellipse at 30% -40%, #2bd4a01a, transparent 60%), linear-gradient(175deg, #0d1424, #081020 70%);
+  --mt-chat-header-shadow: inset 0 1px 0 #ffffff0a, 0 4px 16px #0006;
+  --mt-chat-header-text: #e8f1f7;
+  --mt-chat-header-muted: #9fb2c2;
+  --mt-chat-header-subtle: #b9a8f2;
+  --mt-chat-header-hover: #9ed2ef14;
+  --mt-chat-header-focus: #9ed2ef;
+  --mt-chat-cta-bg: linear-gradient(135deg, #c7e6f6, #7fb8da 75%);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff70, 0 2px 6px #0006;
+  --mt-chat-meta: #657583;
+  --mt-chat-meta-dark: #a3b3c0;
+  --mt-chat-input-shadow: inset 0 1px 0 #ffffff08, 0 4px 20px #0005;
+  --mt-chat-scroll-ring: #9ed2ef80;
+}
+
+[data-member-theme='nordic'] .premium-chat,
+[data-member-theme='nordic'].premium-chat {
+  --color-blue-50: #eef6fb;
+  --color-blue-100: #d7eaf5;
+  --color-blue-200: #b0d4ea;
+  --color-blue-300: #7fb8da;
+  --color-blue-400: #4f98c4;
+  --color-blue-500: #2f7aab;
+  --color-blue-600: #24658f;
+  --color-blue-700: #1f5274;
+  --color-blue-800: #1c435e;
+  --color-blue-900: #1a384e;
+  --color-blue-950: #0f2232;
+}
+
+/* ── Header art ─────────────────────────────────────────────────────────────
+   Signature (light): snow falling in three depths over a pine-forest band.
+   Signature (polar night): the aurora ribbon waves across a starfield, snow thins out.
+   Arrival (one-shot, 1.4s): a frost glint sweeps the header; at night the aurora unfurls.
+   All of it stops under reduced motion. */
+
+[data-member-theme='nordic'] .premium-header-stone {
+  background:
+    radial-gradient(ellipse 80% 120% at 20% -20%, #e2f0f9c0, transparent 60%),
+    linear-gradient(180deg, #e8f1f8, #dbe8f2);
+}
+.dark [data-member-theme='nordic'] .premium-header-stone,
+.dark[data-member-theme='nordic'] .premium-header-stone {
+  /* Polar night: a few fixed stars over navy-black. */
+  background:
+    radial-gradient(circle at 12% 18%, #ffffffb0 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 34% 9%, #ffffff80 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 51% 30%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 67% 12%, #ffffffc0 0 .8px, transparent 1.4px),
+    radial-gradient(circle at 81% 36%, #ffffff70 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 93% 16%, #ffffffa0 0 .7px, transparent 1.3px),
+    linear-gradient(178deg, #0b1222, #070d1b 55%, #0c1424);
+}
+
+/* Aurora: barely there by day, the hero by night. */
+[data-member-theme='nordic'] .premium-header-stone::before {
+  content: '';
+  position: absolute;
+  inset: -40% -30%;
+  background:
+    linear-gradient(166deg, transparent 34%, #7fe0c21f 44%, #a99cf01a 52%, transparent 62%),
+    linear-gradient(172deg, transparent 46%, #9fd8f01f 54%, transparent 64%);
+  opacity: .9;
+  animation: nordic-aurora-drift 20s ease-in-out infinite alternate;
+}
+.dark [data-member-theme='nordic'] .premium-header-stone::before,
+.dark[data-member-theme='nordic'] .premium-header-stone::before {
+  inset: -30% -40%;
+  background:
+    radial-gradient(ellipse 34% 22% at 58% 46%, #3ee6a666, transparent 70%),
+    linear-gradient(162deg, transparent 33%, #3ee6a666 41%, #2bc9a04d 46%, #8b6cf052 54%, transparent 64%),
+    linear-gradient(170deg, transparent 45%, #6ef0c238 51%, #b28cf540 58%, transparent 67%);
+  transform-origin: 50% 40%;
+  animation:
+    nordic-aurora-unfurl 1.4s cubic-bezier(.2, .7, .2, 1) both,
+    nordic-aurora-night 12s 1.4s ease-in-out infinite alternate;
+}
+
+/* Layered pine-forest band at the bottom of the art area, kept faint under the brand. */
+[data-member-theme='nordic'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 22px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 136 40'%3E%3Cpath fill='%231f3a32' d='M12 6L16 22H8ZM12 13L18.2 31H5.8ZM12 22L20 40H4ZM40 16L43 28H37ZM40 21L44.7 34H35.3ZM40 27L46 40H34ZM64 2L68.5 20H59.5ZM64 10L71 30H57ZM64 19L73 40H55ZM94 12L97.5 25H90.5ZM94 18L99.5 33H88.5ZM94 25L101 40H87ZM122 20L124.8 30H119.2ZM122 24L126.3 35H117.7ZM122 29L127.5 40H116.5Z'/%3E%3C/svg%3E") 0 100% / 75px 22px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 40'%3E%3Cpath fill='%23a9bfcd' d='M8 14L11 26H5ZM8 20L12.7 33H3.3ZM8 26L14 40H2ZM26 20L28.5 30H23.5ZM26 24L29.9 35H22.1ZM26 29L31 40H21ZM44 8L47.5 23H40.5ZM44 15L49.5 32H38.5ZM44 23L51 40H37ZM62 18L64.8 29H59.2ZM62 23L66.3 34H57.7ZM62 28L67.5 40H56.5ZM80 12L83.2 25H76.8ZM80 18L85.1 33H74.9ZM80 25L86.5 40H73.5Z'/%3E%3C/svg%3E") 23px 100% / 45px 20px repeat-x;
+  opacity: .72;
+  -webkit-mask-image: linear-gradient(90deg, #0004 0 160px, #000 300px);
+  mask-image: linear-gradient(90deg, #0004 0 160px, #000 300px);
+}
+[dir='rtl'] [data-member-theme='nordic'] .premium-header-stone::after,
+[dir='rtl'][data-member-theme='nordic'] .premium-header-stone::after {
+  -webkit-mask-image: linear-gradient(270deg, #0004 0 160px, #000 300px);
+  mask-image: linear-gradient(270deg, #0004 0 160px, #000 300px);
+}
+.dark [data-member-theme='nordic'] .premium-header-stone::after,
+.dark[data-member-theme='nordic'] .premium-header-stone::after {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 136 40'%3E%3Cpath fill='%23030710' d='M12 6L16 22H8ZM12 13L18.2 31H5.8ZM12 22L20 40H4ZM40 16L43 28H37ZM40 21L44.7 34H35.3ZM40 27L46 40H34ZM64 2L68.5 20H59.5ZM64 10L71 30H57ZM64 19L73 40H55ZM94 12L97.5 25H90.5ZM94 18L99.5 33H88.5ZM94 25L101 40H87ZM122 20L124.8 30H119.2ZM122 24L126.3 35H117.7ZM122 29L127.5 40H116.5Z'/%3E%3C/svg%3E") 0 100% / 75px 22px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 40'%3E%3Cpath fill='%23142036' d='M8 14L11 26H5ZM8 20L12.7 33H3.3ZM8 26L14 40H2ZM26 20L28.5 30H23.5ZM26 24L29.9 35H22.1ZM26 29L31 40H21ZM44 8L47.5 23H40.5ZM44 15L49.5 32H38.5ZM44 23L51 40H37ZM62 18L64.8 29H59.2ZM62 23L66.3 34H57.7ZM62 28L67.5 40H56.5ZM80 12L83.2 25H76.8ZM80 18L85.1 33H74.9ZM80 25L86.5 40H73.5Z'/%3E%3C/svg%3E") 23px 100% / 45px 20px repeat-x;
+  opacity: .95;
+}
+
+/* Arrival: one frost glint sweeps across. */
+[data-member-theme='nordic'] .member-theme-art::before {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(105deg, transparent 42%, #ffffff00 45%, #ffffffd0 50%, #d7eaf500 55%, transparent 58%);
+  opacity: 0;
+  animation: nordic-frost-glint 1.4s .15s cubic-bezier(.4, 0, .2, 1) both;
+}
+.dark [data-member-theme='nordic'] .member-theme-art::before,
+.dark[data-member-theme='nordic'] .member-theme-art::before {
+  background: linear-gradient(105deg, transparent 44%, #c7fff040 50%, transparent 56%);
+}
+
+/* Snow: three flake layers falling at different depths; the fourth slot twinkles stars at night. */
+[data-member-theme='nordic'] .member-theme-art > i {
+  inset-inline: 0;
+  top: -120px;
+  bottom: 0;
+  will-change: transform;
+  --flake: #93b1c8;
+  --flake-soft: #aac2d580;
+}
+.dark [data-member-theme='nordic'] .member-theme-art > i,
+.dark[data-member-theme='nordic'] .member-theme-art > i {
+  --flake: #eaf4fb;
+  --flake-soft: #9ed2ef33;
+}
+[data-member-theme='nordic'] .member-theme-art > i:nth-child(1) {
+  background:
+    radial-gradient(circle at 12% 14%, var(--flake) 0 2px, var(--flake-soft) 3.1px, transparent 4.7px),
+    radial-gradient(circle at 47% 58%, var(--flake) 0 1.6px, var(--flake-soft) 2.5px, transparent 3.8px),
+    radial-gradient(circle at 81% 26%, var(--flake) 0 1.8px, var(--flake-soft) 2.9px, transparent 4.4px),
+    radial-gradient(circle at 30% 88%, var(--flake) 0 1.4px, var(--flake-soft) 2.3px, transparent 3.4px);
+  background-size: 200px 120px;
+  animation: nordic-snow-near 10s linear infinite;
+}
+[data-member-theme='nordic'] .member-theme-art > i:nth-child(2) {
+  background:
+    radial-gradient(circle at 22% 40%, var(--flake) 0 1.2px, var(--flake-soft) 1.8px, transparent 2.9px),
+    radial-gradient(circle at 64% 12%, var(--flake) 0 1px, var(--flake-soft) 1.7px, transparent 2.5px),
+    radial-gradient(circle at 90% 72%, var(--flake) 0 1.2px, var(--flake-soft) 1.8px, transparent 2.9px);
+  background-size: 150px 120px;
+  background-position: 40px 0;
+  opacity: .75;
+  animation: nordic-snow-far 17s linear infinite;
+}
+[data-member-theme='nordic'] .member-theme-art > i:nth-child(3) {
+  background:
+    radial-gradient(circle at 38% 30%, var(--flake) 0 2.6px, var(--flake-soft) 4.2px, transparent 6.2px),
+    radial-gradient(circle at 86% 80%, var(--flake) 0 2.3px, var(--flake-soft) 3.8px, transparent 5.6px);
+  background-size: 310px 120px;
+  background-position: 90px 0;
+  animation: nordic-snow-near 8s -3s linear infinite;
+}
+[data-member-theme='nordic'] .member-theme-art > i:nth-child(4) {
+  display: none;
+}
+/* Polar night: thinner snow so the aurora leads. */
+.dark [data-member-theme='nordic'] .member-theme-art > i:nth-child(1),
+.dark[data-member-theme='nordic'] .member-theme-art > i:nth-child(1) { opacity: .55; }
+.dark [data-member-theme='nordic'] .member-theme-art > i:nth-child(2),
+.dark[data-member-theme='nordic'] .member-theme-art > i:nth-child(2) { display: none; }
+.dark [data-member-theme='nordic'] .member-theme-art > i:nth-child(3),
+.dark[data-member-theme='nordic'] .member-theme-art > i:nth-child(3) { opacity: .6; }
+.dark [data-member-theme='nordic'] .member-theme-art > i:nth-child(4),
+.dark[data-member-theme='nordic'] .member-theme-art > i:nth-child(4) {
+  display: block;
+  top: 0;
+  background:
+    radial-gradient(circle at 26% 12%, #fff 0 .9px, #ffffff40 1.6px, transparent 2.4px),
+    radial-gradient(circle at 74% 24%, #fff 0 .9px, #ffffff40 1.6px, transparent 2.4px);
+  animation: nordic-twinkle 9s ease-in-out infinite;
+}
+
+@keyframes nordic-snow-near {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-14px, 120px, 0); }
+}
+@keyframes nordic-snow-far {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(8px, 120px, 0); }
+}
+@keyframes nordic-aurora-drift {
+  from { transform: translate3d(-5%, 0, 0); opacity: .6; }
+  to { transform: translate3d(5%, 3%, 0); opacity: 1; }
+}
+@keyframes nordic-aurora-unfurl {
+  from { transform: translate3d(-14%, 6%, 0) scaleY(.35); opacity: 0; }
+  to { transform: translate3d(-12%, 0, 0) scaleY(1); opacity: .85; }
+}
+@keyframes nordic-aurora-night {
+  0% { transform: translate3d(-12%, 0, 0) scaleY(1) skewX(0deg); opacity: .85; }
+  50% { transform: translate3d(0, 3%, 0) scaleY(1.3) skewX(-6deg); opacity: 1; }
+  100% { transform: translate3d(12%, -2%, 0) scaleY(.9) skewX(4deg); opacity: .8; }
+}
+@keyframes nordic-frost-glint {
+  0% { transform: translate3d(-40%, 0, 0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translate3d(40%, 0, 0); opacity: 0; }
+}
+@keyframes nordic-twinkle {
+  0%, 100% { opacity: .2; }
+  40% { opacity: 1; }
+  70% { opacity: .45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='nordic'] .premium-header-stone::before,
+  [data-member-theme='nordic'] .member-theme-art::before,
+  [data-member-theme='nordic'] .member-theme-art > i {
+    animation: none;
+  }
+}
+
+/* ── Loader (components/MemberLoading.tsx) ─────────────────────────────────
+   Light: snowfield with a pine ridge, snow falling, a frost glint over the crest.
+   Polar night: stars, the aurora waving above the crest, light snow. Reduced motion: a still scene. */
+
+[data-member-theme='nordic'] {
+  --mt-loading-bg:
+    linear-gradient(180deg, transparent 96%, #f4f8fb 96%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 136 40'%3E%3Cpath fill='%232a4a40' d='M12 6L16 22H8ZM12 13L18.2 31H5.8ZM12 22L20 40H4ZM40 16L43 28H37ZM40 21L44.7 34H35.3ZM40 27L46 40H34ZM64 2L68.5 20H59.5ZM64 10L71 30H57ZM64 19L73 40H55ZM94 12L97.5 25H90.5ZM94 18L99.5 33H88.5ZM94 25L101 40H87ZM122 20L124.8 30H119.2ZM122 24L126.3 35H117.7ZM122 29L127.5 40H116.5Z'/%3E%3C/svg%3E") 0 calc(100% - 3%) / 150px 46px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%239fb9cb' d='M0 100V78L52 58L96 70L150 46L206 72L262 52L318 74L366 56L400 66V100Z'/%3E%3C/svg%3E") 0 100% / 100% 26% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23c2d5e3' d='M0 100V62L38 40L66 52L112 16L150 48L192 30L238 58L290 20L332 46L372 32L400 44V100Z'/%3E%3Cpath fill='%23f4f8fb' d='M112 16L100 27L108 25L114 30L120 24L126 26ZM290 20L278 31L286 29L292 34L298 28L304 30ZM192 30L184 37L190 36L196 40L202 36Z'/%3E%3C/svg%3E") 0 100% / 100% 40% no-repeat,
+    linear-gradient(166deg, transparent 18%, #7fe0c224 30%, #a99cf01c 40%, transparent 52%),
+    radial-gradient(ellipse 120% 70% at 50% 35%, transparent 60%, #3f5f7a1f),
+    linear-gradient(180deg, #c6dcec, #dfebf4 45%, #eef4f9 70%);
+  --mt-loading-crest-fill: linear-gradient(170deg, #4f98c4 10%, #24658f 48%, #15302a 56%, #2f7aab 92%);
+  --mt-loading-text: #3e5866;
+}
+.dark[data-member-theme='nordic'],
+.dark [data-member-theme='nordic'] {
+  --mt-loading-bg:
+    linear-gradient(180deg, transparent 96%, #0a1424 96%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 136 40'%3E%3Cpath fill='%2302060d' d='M12 6L16 22H8ZM12 13L18.2 31H5.8ZM12 22L20 40H4ZM40 16L43 28H37ZM40 21L44.7 34H35.3ZM40 27L46 40H34ZM64 2L68.5 20H59.5ZM64 10L71 30H57ZM64 19L73 40H55ZM94 12L97.5 25H90.5ZM94 18L99.5 33H88.5ZM94 25L101 40H87ZM122 20L124.8 30H119.2ZM122 24L126.3 35H117.7ZM122 29L127.5 40H116.5Z'/%3E%3C/svg%3E") 0 calc(100% - 3%) / 150px 46px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%230c1628' d='M0 100V78L52 58L96 70L150 46L206 72L262 52L318 74L366 56L400 66V100Z'/%3E%3C/svg%3E") 0 100% / 100% 26% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%2316243c' d='M0 100V62L38 40L66 52L112 16L150 48L192 30L238 58L290 20L332 46L372 32L400 44V100Z'/%3E%3Cpath fill='%238fa6c2' d='M112 16L100 27L108 25L114 30L120 24L126 26ZM290 20L278 31L286 29L292 34L298 28L304 30ZM192 30L184 37L190 36L196 40L202 36Z'/%3E%3C/svg%3E") 0 100% / 100% 40% no-repeat,
+    radial-gradient(circle at 14% 12%, #ffffffb0 0 .8px, transparent 1.4px),
+    radial-gradient(circle at 38% 22%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 63% 8%, #ffffffc0 0 .9px, transparent 1.5px),
+    radial-gradient(circle at 86% 26%, #ffffff80 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 24% 44%, #ffffff70 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 78% 48%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(ellipse 120% 70% at 50% 35%, transparent 55%, #02040a99),
+    linear-gradient(178deg, #0b1222, #070d1b 55%, #0d1830);
+  --mt-loading-crest-fill: linear-gradient(170deg, #ffffff 10%, #d7eaf5 45%, #7fb8da 58%, #e9f5fc 92%);
+  --mt-loading-text: #b5c8d6;
+}
+
+/* Frost glint over the crest. */
+[data-member-theme='nordic'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-crest-silhouette.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-crest-silhouette.webp') center / contain no-repeat;
+}
+[data-member-theme='nordic'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: 0 -100%;
+  background: linear-gradient(105deg, transparent 42%, #ffffffb0 50%, transparent 58%);
+  animation: nordic-loader-glint 3s .2s ease-in-out infinite;
+}
+.dark [data-member-theme='nordic'] .member-loading-glint::before,
+.dark[data-member-theme='nordic'] .member-loading-glint::before {
+  background: linear-gradient(105deg, transparent 42%, #c7fff04d 50%, transparent 58%);
+}
+
+/* Snow layers over the whole screen. */
+[data-member-theme='nordic'] .member-loading-art > i {
+  inset-inline: 0;
+  top: -240px;
+  bottom: 0;
+  --flake: #93b1c8;
+  --flake-soft: #aac2d580;
+}
+.dark [data-member-theme='nordic'] .member-loading-art > i,
+.dark[data-member-theme='nordic'] .member-loading-art > i {
+  --flake: #eaf4fb;
+  --flake-soft: #9ed2ef33;
+}
+[data-member-theme='nordic'] .member-loading-art > i:nth-child(1) {
+  background:
+    radial-gradient(circle at 8% 10%, var(--flake) 0 1.8px, var(--flake-soft) 2.9px, transparent 4.3px),
+    radial-gradient(circle at 36% 48%, var(--flake) 0 1.4px, var(--flake-soft) 2.2px, transparent 3.4px),
+    radial-gradient(circle at 62% 18%, var(--flake) 0 1.6px, var(--flake-soft) 2.6px, transparent 3.8px),
+    radial-gradient(circle at 84% 66%, var(--flake) 0 1.3px, var(--flake-soft) 2.1px, transparent 3.1px),
+    radial-gradient(circle at 22% 82%, var(--flake) 0 1.5px, var(--flake-soft) 2.4px, transparent 3.6px),
+    radial-gradient(circle at 52% 92%, var(--flake) 0 1.2px, var(--flake-soft) 1.9px, transparent 2.9px);
+  background-size: 320px 240px;
+  animation: nordic-loader-snow 7s linear infinite;
+}
+[data-member-theme='nordic'] .member-loading-art > i:nth-child(2) {
+  background:
+    radial-gradient(circle at 16% 30%, var(--flake) 0 1px, var(--flake-soft) 1.6px, transparent 2.4px),
+    radial-gradient(circle at 44% 8%, var(--flake) 0 0.9px, var(--flake-soft) 1.4px, transparent 2.2px),
+    radial-gradient(circle at 70% 52%, var(--flake) 0 1px, var(--flake-soft) 1.6px, transparent 2.4px),
+    radial-gradient(circle at 92% 26%, var(--flake) 0 0.9px, var(--flake-soft) 1.4px, transparent 2.2px),
+    radial-gradient(circle at 30% 70%, var(--flake) 0 1px, var(--flake-soft) 1.6px, transparent 2.4px);
+  background-size: 230px 240px;
+  background-position: 30px 0;
+  opacity: .75;
+  animation: nordic-loader-snow 11s linear infinite;
+}
+[data-member-theme='nordic'] .member-loading-art > i:nth-child(3) {
+  background:
+    radial-gradient(circle at 28% 22%, var(--flake) 0 2.4px, var(--flake-soft) 3.8px, transparent 5.8px),
+    radial-gradient(circle at 74% 64%, var(--flake) 0 2.2px, var(--flake-soft) 3.5px, transparent 5.3px);
+  background-size: 380px 240px;
+  background-position: 70px 0;
+  animation: nordic-loader-snow 6s -2s linear infinite;
+}
+/* Aurora ribbon above the crest: faint by day, bright at night. */
+[data-member-theme='nordic'] .member-loading-art > i:nth-child(4) {
+  inset: -10% -40% 45%;
+  background:
+    linear-gradient(164deg, transparent 34%, #7fe0c226 44%, #a99cf01f 54%, transparent 64%);
+  transform-origin: 50% 40%;
+  animation: nordic-aurora-night 6s ease-in-out infinite alternate;
+}
+.dark [data-member-theme='nordic'] .member-loading-art > i:nth-child(4),
+.dark[data-member-theme='nordic'] .member-loading-art > i:nth-child(4) {
+  background:
+    radial-gradient(ellipse 30% 20% at 55% 55%, #3ee6a659, transparent 70%),
+    linear-gradient(162deg, transparent 32%, #3ee6a666 41%, #2bc9a04d 46%, #8b6cf052 54%, transparent 64%),
+    linear-gradient(170deg, transparent 45%, #6ef0c238 51%, #b28cf540 58%, transparent 67%);
+}
+.dark [data-member-theme='nordic'] .member-loading-art > i:nth-child(2),
+.dark[data-member-theme='nordic'] .member-loading-art > i:nth-child(2) { display: none; }
+
+@keyframes nordic-loader-snow {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-16px, 240px, 0); }
+}
+@keyframes nordic-loader-glint {
+  0%, 15% { transform: translate3d(-35%, 0, 0); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  85%, 100% { transform: translate3d(35%, 0, 0); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='nordic'] .member-loading-glint::before { opacity: 0; }
+}
+
+/* Arrival gate: outside `html.member-theme-arrival` the one-shot parts are dropped,
+   so a header remount (e.g. back from a chat thread) only resumes the loops. */
+@media (prefers-reduced-motion: no-preference) {
+  html.dark:not(.member-theme-arrival)[data-member-theme='nordic'] .premium-header-stone::before {
+    animation: nordic-aurora-night 12s ease-in-out infinite alternate;
+  }
+  html:not(.member-theme-arrival)[data-member-theme='nordic'] .member-theme-art::before {
+    animation: none;
+  }
+}

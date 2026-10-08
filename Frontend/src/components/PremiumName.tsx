@@ -1,28 +1,39 @@
 import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
-import { showsPremiumStatus } from '@/utils/premiumIdentity';
+import { premiumNameClassName, showsPremiumStatus, type PremiumNameTone } from '@/utils/premiumIdentity';
 import { useNameColorClass } from '@/features/collection/useEquippedGoods';
 import '@/styles/premium-name.css';
 import '@/styles/collection.css';
 
 type PremiumNameProps = ComponentProps<'span'> & {
-  user: Pick<BasicUser, 'isPremium' | 'showPremiumStatus'> & { id?: string } | null | undefined;
+  user:
+    | (Pick<BasicUser, 'isPremium' | 'showPremiumStatus'> & Partial<Pick<BasicUser, 'premiumNameStyle'>> & { id?: string })
+    | null
+    | undefined;
+  /** Hero surfaces only (profile header, own preview): a slow sheen. Lists stay static. */
+  animated?: boolean;
+  /** Pin the palette when the name sits on a surface that ignores the app appearance. */
+  tone?: PremiumNameTone;
 };
 
 /**
  * Renders a player's name with whatever identity decoration they are entitled
- * to.
+ * to. Spec: docs/domains/premium-appearance.md § Name styles.
  *
  * PRD 355 — an equipped name colour paints the name everywhere it renders, but
- * **premium gold always wins**: membership is what the glow signals, and a
- * bought colour must not be able to imitate or override it.
+ * **the premium name style always wins**: membership is what the style signals,
+ * and a bought colour must not be able to imitate or override it.
  */
-export function PremiumName({ user, className = '', children, ...props }: PremiumNameProps) {
+export function PremiumName({ user, animated = false, tone = 'auto', className = '', children, ...props }: PremiumNameProps) {
   const { t } = useTranslation();
   const visible = showsPremiumStatus(user);
   const nameColor = useNameColorClass(user?.id, visible);
-  const decoration = visible ? 'premium-name-glow ' : nameColor ? `${nameColor} ` : '';
+  const decoration = visible
+    ? `${premiumNameClassName(user?.premiumNameStyle, { animated, tone })} `
+    : nameColor
+      ? `${nameColor} `
+      : '';
   return (
     <span
       {...props}

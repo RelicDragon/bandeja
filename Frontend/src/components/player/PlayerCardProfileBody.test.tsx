@@ -265,3 +265,29 @@ describe('PlayerCardProfileBody tabs', () => {
     expect(selectorLists(el).length).toBe(0);
   });
 });
+
+describe('PlayerCardProfileBody member backdrop', () => {
+  const withUser = (patch: Partial<UserStats['user']>): UserStats => ({
+    ...stats,
+    user: { ...stats.user, ...patch },
+  });
+  const backdrop = (el: HTMLElement) => el.querySelector('[data-testid="member-profile-backdrop"]');
+
+  it('shows the member theme (not the viewer theme) behind the hero', () => {
+    const el = render(
+      <Harness initialTab="statistics" stats={withUser({ isPremium: true, showPremiumStatus: true, mainTheme: 'nordic' })} />,
+    );
+    expect(backdrop(el)?.getAttribute('data-member-theme')).toBe('nordic');
+  });
+
+  it('stays classic for hidden status, non-members and the classic theme', () => {
+    for (const patch of [
+      { isPremium: true, showPremiumStatus: false, mainTheme: 'nordic' as const },
+      { isPremium: false, mainTheme: 'nordic' as const },
+      { isPremium: true, mainTheme: 'classic' as const },
+    ]) {
+      const el = render(<Harness initialTab="statistics" stats={withUser(patch)} />);
+      expect(backdrop(el)).toBeNull();
+    }
+  });
+});

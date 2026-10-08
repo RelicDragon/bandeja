@@ -33,12 +33,15 @@ function fileFromBlob(blob: Blob, name: string): File {
   });
 }
 
-/** System video picker — works on web and Capacitor (iOS/Android) without broad storage permissions. */
-export function pickVideo(): Promise<VideoPickResult | null> {
+/**
+ * System video picker — works on web and Capacitor (iOS/Android) without broad storage permissions.
+ * `accept` widens it (e.g. `image/*,video/*` for the premium avatar picker); picked images pass through untouched.
+ */
+export function pickVideo(options?: { accept?: string }): Promise<VideoPickResult | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'video/*';
+    input.accept = options?.accept ?? 'video/*';
     input.style.position = 'fixed';
     input.style.top = '-9999px';
     input.style.left = '-9999px';
@@ -88,6 +91,10 @@ export function pickVideo(): Promise<VideoPickResult | null> {
       stopCapacitorPoll();
       stopWebCancelTimer();
       try {
+        if (raw.type.startsWith('image/') && raw.size > 0) {
+          finish(raw);
+          return;
+        }
         if (raw.size > 0 || !isCapacitor()) {
           finish(withNormalizedVideoMime(raw));
           return;

@@ -1,0 +1,399 @@
+/* Wood & Stone — walnut-grain header over a slate tab band (dark in both
+   appearances), a slow warm light moving across the grain and a moss sprig on
+   the ledge. Slate neutrals, moss accent; limestone / dark-slate chat paper.
+   Tokens are scoped to the attribute so the theme picker can preview them. */
+
+[data-member-theme='woodstone'] {
+  --ui-page-background: #f4f5f4;
+  --ui-background: #f4f5f4;
+  --ui-surface: #ffffff;
+
+  /* Slate stone neutrals; 500+ stay AA on the page. */
+  --color-gray-50: #f6f7f6;
+  --color-gray-100: #eceeed;
+  --color-gray-200: #dadddc;
+  --color-gray-300: #bcc1c0;
+  --color-gray-400: #939a99;
+  --color-gray-500: #687070;
+  --color-gray-600: #535a5a;
+  --color-gray-700: #3a4041;
+  --color-gray-800: #262a2b;
+  --color-gray-900: #17191a;
+  --color-gray-950: #0d0f10;
+
+  /* Moss; 500+ AA under white text. */
+  --member-primary-default: #4b6630;
+  --member-primary-50: #f3f6ee;
+  --member-primary-100: #e3ebd7;
+  --member-primary-200: #c8d8b1;
+  --member-primary-300: #a6be86;
+  --member-primary-400: #84a15f;
+  --member-primary-500: #5b7a3a;
+  --member-primary-600: #4b6630;
+  --member-primary-700: #3c5128;
+  --member-primary-800: #314122;
+  --member-primary-900: #29361e;
+  --member-primary-950: #141c0e;
+
+  /* Moss cushion sprite (generated: layered tufts, speckle, spore stalks). */
+  --ws-moss: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 30'%3E%3Cellipse cx='60' cy='29' rx='60' ry='3' fill='%230a0603' opacity='.55'/%3E%3Cellipse cx='8.3' cy='24.1' rx='7.7' ry='6.6' fill='%232f4220'/%3E%3Cellipse cx='18.6' cy='22.0' rx='9.8' ry='8.7' fill='%232f4220'/%3E%3Cellipse cx='37.3' cy='23.7' rx='8.6' ry='7.1' fill='%232f4220'/%3E%3Cellipse cx='43.7' cy='23.4' rx='7.7' ry='5.9' fill='%232f4220'/%3E%3Cellipse cx='62.0' cy='23.2' rx='12.6' ry='8.2' fill='%232f4220'/%3E%3Cellipse cx='69.0' cy='22.4' rx='11.4' ry='7.9' fill='%232f4220'/%3E%3Cellipse cx='86.4' cy='22.9' rx='7.6' ry='7.4' fill='%232f4220'/%3E%3Cellipse cx='94.9' cy='24.1' rx='8.2' ry='6.9' fill='%232f4220'/%3E%3Cellipse cx='111.0' cy='23.6' rx='13.1' ry='7.2' fill='%232f4220'/%3E%3Cellipse cx='15.8' cy='20.8' rx='10.0' ry='7.9' fill='%233d5426'/%3E%3Cellipse cx='25.0' cy='22.0' rx='8.9' ry='6.8' fill='%233d5426'/%3E%3Cellipse cx='34.7' cy='22.1' rx='8.1' ry='7.7' fill='%233d5426'/%3E%3Cellipse cx='47.0' cy='22.6' rx='10.4' ry='5.5' fill='%233d5426'/%3E%3Cellipse cx='65.1' cy='21.5' rx='8.4' ry='8.4' fill='%233d5426'/%3E%3Cellipse cx='78.0' cy='22.2' rx='7.4' ry='6.9' fill='%233d5426'/%3E%3Cellipse cx='90.8' cy='22.4' rx='11.2' ry='5.7' fill='%233d5426'/%3E%3Cellipse cx='110.3' cy='23.5' rx='6.7' ry='4.6' fill='%233d5426'/%3E%3Cellipse cx='15.4' cy='21.7' rx='9.3' ry='4.7' fill='%234b652d'/%3E%3Cellipse cx='23.6' cy='21.6' rx='8.2' ry='4.0' fill='%234b652d'/%3E%3Cellipse cx='47.9' cy='19.7' rx='11.7' ry='6.7' fill='%234b652d'/%3E%3Cellipse cx='52.5' cy='19.4' rx='7.0' ry='7.7' fill='%234b652d'/%3E%3Cellipse cx='72.8' cy='20.1' rx='11.6' ry='6.3' fill='%234b652d'/%3E%3Cellipse cx='86.8' cy='21.5' rx='6.3' ry='5.6' fill='%234b652d'/%3E%3Cellipse cx='103.3' cy='22.0' rx='11.7' ry='5.1' fill='%234b652d'/%3E%3Cellipse cx='6.6' cy='19.2' rx='5.2' ry='6.3' fill='%235a7735'/%3E%3Cellipse cx='28.2' cy='18.6' rx='4.7' ry='7.1' fill='%235a7735'/%3E%3Cellipse cx='45.0' cy='21.1' rx='4.4' ry='3.4' fill='%235a7735'/%3E%3Cellipse cx='69.7' cy='20.6' rx='5.0' ry='3.4' fill='%235a7735'/%3E%3Cellipse cx='81.6' cy='20.4' rx='11.0' ry='3.7' fill='%235a7735'/%3E%3Cellipse cx='107.1' cy='18.6' rx='6.9' ry='7.2' fill='%235a7735'/%3E%3Ccircle cx='33.2' cy='18.1' r='0.42' fill='%238fae5c' opacity='0.57'/%3E%3Ccircle cx='33.9' cy='22.9' r='0.82' fill='%238fae5c' opacity='0.60'/%3E%3Ccircle cx='11.3' cy='16.5' r='0.52' fill='%238fae5c' opacity='0.48'/%3E%3Ccircle cx='32.1' cy='22.7' r='0.47' fill='%238fae5c' opacity='0.42'/%3E%3Ccircle cx='104.5' cy='19.7' r='0.90' fill='%238fae5c' opacity='0.56'/%3E%3Ccircle cx='101.7' cy='20.5' r='0.80' fill='%238fae5c' opacity='0.70'/%3E%3Ccircle cx='59.4' cy='14.9' r='0.51' fill='%238fae5c' opacity='0.75'/%3E%3Ccircle cx='101.6' cy='23.2' r='0.57' fill='%238fae5c' opacity='0.66'/%3E%3Ccircle cx='91.1' cy='20.4' r='0.81' fill='%238fae5c' opacity='0.61'/%3E%3Ccircle cx='76.1' cy='20.9' r='0.53' fill='%238fae5c' opacity='0.77'/%3E%3Ccircle cx='107.5' cy='14.7' r='0.89' fill='%238fae5c' opacity='0.78'/%3E%3Ccircle cx='77.5' cy='14.4' r='0.85' fill='%238fae5c' opacity='0.45'/%3E%3Ccircle cx='108.7' cy='20.7' r='0.43' fill='%238fae5c' opacity='0.47'/%3E%3Ccircle cx='74.1' cy='19.7' r='0.77' fill='%238fae5c' opacity='0.77'/%3E%3Ccircle cx='30.7' cy='14.0' r='0.86' fill='%238fae5c' opacity='0.41'/%3E%3Ccircle cx='99.1' cy='15.2' r='0.80' fill='%238fae5c' opacity='0.71'/%3E%3Ccircle cx='99.3' cy='19.5' r='0.84' fill='%238fae5c' opacity='0.48'/%3E%3Ccircle cx='77.8' cy='17.3' r='0.85' fill='%238fae5c' opacity='0.71'/%3E%3Ccircle cx='57.0' cy='19.3' r='0.41' fill='%238fae5c' opacity='0.41'/%3E%3Ccircle cx='69.8' cy='18.9' r='0.83' fill='%238fae5c' opacity='0.64'/%3E%3Ccircle cx='22.4' cy='17.6' r='0.78' fill='%238fae5c' opacity='0.61'/%3E%3Ccircle cx='9.1' cy='22.4' r='0.81' fill='%238fae5c' opacity='0.43'/%3E%3Ccircle cx='64.5' cy='17.8' r='0.79' fill='%238fae5c' opacity='0.52'/%3E%3Ccircle cx='32.3' cy='18.9' r='0.88' fill='%238fae5c' opacity='0.44'/%3E%3Ccircle cx='19.9' cy='20.2' r='0.84' fill='%238fae5c' opacity='0.60'/%3E%3Ccircle cx='53.1' cy='22.6' r='0.79' fill='%238fae5c' opacity='0.43'/%3E%3Cpath d='M34 18Q33.5 14.4 33.1 8.4' stroke='%237a6a3a' stroke-width='.45' fill='none'/%3E%3Cellipse cx='33.1' cy='7.6' rx='.7' ry='1.1' fill='%23a38a4a'/%3E%3Cpath d='M41 18Q41.5 11.5 42.0 5.5' stroke='%237a6a3a' stroke-width='.45' fill='none'/%3E%3Cellipse cx='42.0' cy='4.7' rx='.7' ry='1.1' fill='%23a38a4a'/%3E%3Cpath d='M78 18Q78.4 12.1 78.9 6.1' stroke='%237a6a3a' stroke-width='.45' fill='none'/%3E%3Cellipse cx='78.9' cy='5.3' rx='.7' ry='1.1' fill='%23a38a4a'/%3E%3Cpath d='M85 18Q85.6 10.8 86.1 4.8' stroke='%237a6a3a' stroke-width='.45' fill='none'/%3E%3Cellipse cx='86.1' cy='4.0' rx='.7' ry='1.1' fill='%23a38a4a'/%3E%3Cpath d='M92 18Q91.5 10.9 90.9 4.9' stroke='%237a6a3a' stroke-width='.45' fill='none'/%3E%3Cellipse cx='90.9' cy='4.1' rx='.7' ry='1.1' fill='%23a38a4a'/%3E%3C/svg%3E");
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 28% 0%, #e8a95a1f, transparent 58%),
+    linear-gradient(170deg, #1a10083d, #0d07045c),
+    url('/themes/woodstone-walnut.webp') 0 0 / 512px 192px repeat,
+    #2a1a10;
+  --mt-chrome-text: #ecdcc0;
+  --mt-chrome-muted: #c2ae90;
+  --mt-chrome-border: #a9875e5c;
+  --mt-chrome-accent: #b9cf93;
+  --mt-chrome-accent-soft: #b9cf931f;
+  --mt-chrome-hairline: linear-gradient(90deg, #6d4a2a20, #d9be8cb3 30%, #9bb87a66 64%, #8a6a4a80);
+  --mt-chrome-shadow: inset 0 1px 0 #ffe2b01a, 0 8px 24px #0d080430;
+  --mt-chrome-button-bg: #ffffff0a;
+  --mt-chrome-edges: #160e0880;
+  --mt-cta-bg: linear-gradient(135deg, #cfe0ac, #93b06a 62%, #b7cd8f);
+  --mt-cta-text: #1b2610;
+  --mt-cta-border: #dcebc27a;
+  --mt-badge-bg: #c5d9a0;
+  --mt-badge-text: #1b2610;
+
+  /* Chrome fine-tuning, set explicitly so a picker tile never inherits another theme's.
+     The tab row is the slate band. */
+  --mt-chrome-button-text: #e3d2b4;
+  --mt-chrome-button-hover: #ecdcc014;
+  --mt-chrome-focus: #cfe0ac;
+  --mt-chrome-focus-halo: #160e08;
+  --mt-chrome-tab-text: #c9bba2;
+  --mt-chrome-tab-active: #dbe9c2;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #b9cf9359, inset 0 1px 0 #ffffff12;
+  --mt-chrome-profile: #ecdcc0;
+  --mt-chrome-profile-ring: 0 0 0 1px #c9b089, 0 0 0 4px #b9cf9312;
+  --mt-chrome-controls-bg:
+    linear-gradient(#ffffff0d, #0000 40%, #00000024),
+    url('/themes/woodstone-slate.webp') 0 0 / 256px 128px repeat,
+    #2c3134;
+  --mt-chrome-controls-border: #0b0705;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #ffffff17, inset 0 -1px 0 #0000004d;
+  --mt-cta-shadow: inset 0 1px 0 #f4fbe699, 0 2px 6px #0005;
+  --mt-tabbar-border: #8a6a4a99;
+  --mt-tabbar-shadow: inset 0 1px 0 #e9cf9f40, inset 0 -1px 0 #00000033, 0 8px 28px #0005;
+  --mt-tabbar-hover: #f4e6cc;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #b9cf9333);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #b9cf9324, transparent 80%), linear-gradient(#b9cf9310, #b9cf9303);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #e3f0cc1f;
+  --mt-badge-ring: 0 0 0 2px #22160d;
+
+  /* Carved light oak / bone; a stone-cutter's humanist face. */
+  --mt-brand-fill: linear-gradient(175deg, #fff6e4 10%, #ead6ae 44%, #b89462 53%, #dcc196 70%, #f6e8cc 92%);
+  --mt-brand-font: Optima, Candara, 'Segoe UI', 'Noto Sans', 'Gill Sans', sans-serif;
+  --mt-brand-tier-text: #d8c3a0;
+  --mt-brand-dash: #b89a70;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #0b0603) drop-shadow(0 -1px 0 #ffffff14);
+  --mt-brand-plate: #24160ce6;
+
+  --chat-paper: #efede6;
+  --chat-panel: #fbfaf7;
+  --chat-line: #8d958f40;
+  --chat-selection: #84a15f17;
+  --chat-selection-edge: #4b6630;
+  --mt-bubble-own: linear-gradient(145deg, #7a4f30, #573420 80%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #6b4429, #452a19 80%);
+  /* Pale limestone: a cool mineral bloom and a breath of moss. */
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #9bb87a14, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #9a958a1c, transparent 55%);
+
+  /* Loader: a lamp-lit walnut wall over a slate ledge with moss (dark in both
+     appearances; a brand moment). */
+  --mt-loading-bg:
+    var(--ws-moss) right -18px bottom calc(22% - 4px) / 168px 42px no-repeat,
+    var(--ws-moss) left -34px bottom calc(22% - 3px) / 124px 31px no-repeat,
+    linear-gradient(to top, #0000 22%, #0b0705 22% calc(22% + 2px), #0a0603a6 calc(22% + 2px), #0000 calc(22% + 14px)),
+    linear-gradient(#ffffff0f, #0000 3%, #00000038) left bottom / 100% 22% no-repeat,
+    url('/themes/woodstone-slate.webp') left bottom / 384px 22% repeat-x,
+    radial-gradient(ellipse 120% 90% at 50% 45%, transparent 50%, #0705039e),
+    radial-gradient(ellipse 55% 40% at 50% 44%, #ffcf8a3d, #ffb8661a 50%, transparent 78%),
+    linear-gradient(170deg, #1a100833, #0d07044d),
+    url('/themes/woodstone-walnut.webp') 0 0 / 768px 288px repeat,
+    #24180f;
+  --mt-loading-crest-fill: linear-gradient(175deg, #fff6e4 10%, #ead6ae 44%, #b89462 53%, #dcc196 70%, #f6e8cc 92%);
+  --mt-loading-text: #d8c3a0;
+
+  --mt-preview-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 18'%3E%3Cg fill='%23516d2e'%3E%3Cellipse cx='14' cy='16' rx='14' ry='6'/%3E%3Cellipse cx='34' cy='14' rx='13' ry='8'/%3E%3Cellipse cx='55' cy='15' rx='17' ry='7'/%3E%3C/g%3E%3Cg fill='%2382a24f'%3E%3Cellipse cx='30' cy='11' rx='8' ry='4'/%3E%3Cellipse cx='52' cy='12' rx='9' ry='4'/%3E%3C/g%3E%3C/svg%3E") right -6px bottom 30% / 46px 12px no-repeat,
+    linear-gradient(to top, #2c3134 0 30%, #0b0603 30% calc(30% + 1px), #0000 0),
+    radial-gradient(ellipse at 55% 10%, #f2b56a33, transparent 55%),
+    url('/themes/woodstone-walnut.webp') 0 0 / 256px 96px repeat,
+    #2a1a10;
+}
+
+.dark[data-member-theme='woodstone'],
+.dark [data-member-theme='woodstone'] {
+  --ui-page-background: #131516;
+  --ui-background: #0c0e0f;
+  --ui-surface: #202425;
+
+  --member-primary-default: #a6c27f;
+
+  /* Dark slate: cleft-stone cool, with a faint moss glow. */
+  --chat-paper: #191c1d;
+  --chat-panel: #24282a;
+  --chat-line: #9aa3a52e;
+  --chat-selection: #b9cf9314;
+  --chat-selection-edge: #b9cf93;
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #84a15f12, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #00000033, transparent 60%);
+}
+
+/* Chat palette follows the moss ramp. */
+[data-member-theme='woodstone'] .premium-chat,
+[data-member-theme='woodstone'].premium-chat {
+  --color-blue-50: #f3f6ee;
+  --color-blue-100: #e3ebd7;
+  --color-blue-200: #c8d8b1;
+  --color-blue-300: #a6be86;
+  --color-blue-400: #84a15f;
+  --color-blue-500: #5b7a3a;
+  --color-blue-600: #4b6630;
+  --color-blue-700: #3c5128;
+  --color-blue-800: #314122;
+  --color-blue-900: #29361e;
+  --color-blue-950: #141c0e;
+}
+
+/* ── Header art ─────────────────────────────────────────────────────────── */
+
+/* Walnut panel; a cast shadow where it meets the slate ledge. */
+[data-member-theme='woodstone'] .premium-header-stone {
+  background:
+    linear-gradient(to top, #0a0603b3, #0000 7px),
+    radial-gradient(ellipse 90% 160% at 50% 130%, #0000004d, transparent 70%),
+    linear-gradient(170deg, #1a100833, #0d07044d),
+    url('/themes/woodstone-walnut.webp') 0 0 / 512px 192px repeat,
+    #2a1a10;
+}
+
+/* Signature: lamplight gliding across the walnut, a slanted warm beam with
+   dust motes glinting in it (i:nth-child(4) rides along). Above the edge fade so
+   the glide reads at a glance. Arrival: the lamp switches on (pool blooms). */
+[data-member-theme='woodstone'] .premium-header-stone::before,
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(4) {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: -60% -20%;
+  transform: translateX(-34%);
+  will-change: transform, opacity;
+  animation:
+    woodstone-lamp-on 1.4s cubic-bezier(.2, .7, .3, 1) both,
+    woodstone-lamp 14s 1.4s ease-in-out infinite alternate;
+}
+[data-member-theme='woodstone'] .premium-header-stone::before {
+  background:
+    linear-gradient(105deg, transparent 41%, #ffd59a24 46%, #ffe0b03d 50%, #ffd59a24 54%, transparent 59%),
+    radial-gradient(ellipse 26% 50% at 50% 46%, #ffcf8a6b, #ffb86629 45%, transparent 72%);
+}
+/* Lacquer sheen: a thin highlight band that brightens as the light passes. */
+[data-member-theme='woodstone'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 18%, #ffe2b014 30%, transparent 44%);
+  opacity: .3;
+  animation: woodstone-sheen 14s 1.4s ease-in-out infinite alternate;
+}
+
+[data-member-theme='woodstone'] .member-theme-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+[data-member-theme='woodstone'] .member-theme-art > i {
+  position: absolute;
+  display: block;
+  bottom: 0;
+  background: center bottom / contain no-repeat;
+}
+/* Moss cushion on the ledge, tucked into the far corner. */
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(1) {
+  z-index: 1;
+  right: -10px;
+  width: 84px;
+  height: 21px;
+  background-image: var(--ws-moss);
+}
+/* Two fern sprigs rising from the moss, swaying a breath out of step. */
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(2),
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(3) {
+  bottom: 9px;
+  width: 16px;
+  height: 26px;
+  opacity: .9;
+  transform-origin: 50% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 26'%3E%3Cpath d='M8 26C8 18 7.4 10 9 1' fill='none' stroke='%23587a32' stroke-width='.9' stroke-linecap='round'/%3E%3Cg fill='%236f9440'%3E%3Cpath d='M8 22Q3 21 1.4 18Q5 18.4 8 20.6Z'/%3E%3Cpath d='M8.1 19Q13 18.4 14.6 15.4Q11 15.8 8.1 17.6Z'/%3E%3Cpath d='M7.9 16Q3.4 15 2.2 12.2Q5.6 12.8 7.9 14.6Z'/%3E%3Cpath d='M8.2 13Q12.4 12.2 13.6 9.6Q10.4 10 8.2 11.7Z'/%3E%3Cpath d='M8.1 10Q4.6 9.2 3.8 7Q6.4 7.4 8.2 8.8Z'/%3E%3Cpath d='M8.5 7.2Q11.6 6.4 12.2 4.4Q10 4.8 8.6 6.1Z'/%3E%3Cpath d='M8.7 4.6Q6.6 3.8 6.4 2.2Q8 2.6 8.9 3.6Z'/%3E%3C/g%3E%3C/svg%3E");
+  will-change: transform;
+}
+/* Sprigs sit in the gaps beside the action buttons (edge, and between them). */
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(2) {
+  right: -1px;
+  bottom: 8px;
+  width: 18px;
+  height: 30px;
+  animation: woodstone-sway 9s ease-in-out infinite alternate;
+}
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(3) {
+  right: 54px;
+  bottom: 8px;
+  width: 12px;
+  height: 20px;
+  opacity: .8;
+  animation: woodstone-sway 11s -4s ease-in-out infinite alternate-reverse;
+}
+/* Dust motes in the beam: the slot glides with the lamp, the pseudo floats and glints. */
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(4) {
+  bottom: -60%;
+  background: none;
+}
+[data-member-theme='woodstone'] .member-theme-art > i:nth-child(4)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 47% 38%, #ffe9c4 0 .8px, #ffe9c400 1.8px),
+    radial-gradient(circle at 52% 47%, #ffe9c4d9 0 .7px, #ffe9c400 1.6px),
+    radial-gradient(circle at 49.5% 55%, #ffe9c4b3 0 .9px, #ffe9c400 2px),
+    radial-gradient(circle at 54% 41%, #ffe9c499 0 .6px, #ffe9c400 1.4px),
+    radial-gradient(circle at 45.5% 50%, #ffe9c4a6 0 .6px, #ffe9c400 1.4px);
+  animation: woodstone-motes 9s ease-in-out infinite alternate;
+}
+
+/* ── Loader ─────────────────────────────────────────────────────────────── */
+
+/* The lamp breathes behind the crest; dust motes rise through its light; two
+   fern sprigs sway on the moss. */
+[data-member-theme='woodstone'] .member-loading-art > i {
+  will-change: transform, opacity;
+}
+[data-member-theme='woodstone'] .member-loading-art > i:nth-child(1) {
+  top: 18%;
+  left: 50%;
+  width: 360px;
+  height: 300px;
+  margin-left: -180px;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, #ffd59a33, #ffb86614 50%, transparent 72%);
+  animation: woodstone-loader-lamp 6s ease-in-out infinite alternate;
+}
+[data-member-theme='woodstone'] .member-loading-art > i:nth-child(2) {
+  top: 22%;
+  left: 50%;
+  width: 220px;
+  height: 46%;
+  margin-left: -110px;
+  background:
+    radial-gradient(circle at 22% 88%, #ffe9c4 0 1px, #ffe9c400 2.2px),
+    radial-gradient(circle at 64% 72%, #ffe9c4cc 0 1px, #ffe9c400 2px),
+    radial-gradient(circle at 40% 54%, #ffe9c4b3 0 1.2px, #ffe9c400 2.4px),
+    radial-gradient(circle at 78% 40%, #ffe9c499 0 .9px, #ffe9c400 1.8px),
+    radial-gradient(circle at 30% 24%, #ffe9c4b3 0 1px, #ffe9c400 2px),
+    radial-gradient(circle at 58% 10%, #ffe9c480 0 .8px, #ffe9c400 1.6px);
+  animation: woodstone-loader-motes 7s linear infinite;
+}
+[data-member-theme='woodstone'] .member-loading-art > i:nth-child(3),
+[data-member-theme='woodstone'] .member-loading-art > i:nth-child(4) {
+  bottom: calc(22% + 8px);
+  width: 26px;
+  height: 42px;
+  transform-origin: 50% 100%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 26'%3E%3Cpath d='M8 26C8 18 7.4 10 9 1' fill='none' stroke='%23587a32' stroke-width='.9' stroke-linecap='round'/%3E%3Cg fill='%236f9440'%3E%3Cpath d='M8 22Q3 21 1.4 18Q5 18.4 8 20.6Z'/%3E%3Cpath d='M8.1 19Q13 18.4 14.6 15.4Q11 15.8 8.1 17.6Z'/%3E%3Cpath d='M7.9 16Q3.4 15 2.2 12.2Q5.6 12.8 7.9 14.6Z'/%3E%3Cpath d='M8.2 13Q12.4 12.2 13.6 9.6Q10.4 10 8.2 11.7Z'/%3E%3Cpath d='M8.1 10Q4.6 9.2 3.8 7Q6.4 7.4 8.2 8.8Z'/%3E%3Cpath d='M8.5 7.2Q11.6 6.4 12.2 4.4Q10 4.8 8.6 6.1Z'/%3E%3Cpath d='M8.7 4.6Q6.6 3.8 6.4 2.2Q8 2.6 8.9 3.6Z'/%3E%3C/g%3E%3C/svg%3E") center bottom / contain no-repeat;
+  animation: woodstone-sway 4.5s ease-in-out infinite alternate;
+}
+[data-member-theme='woodstone'] .member-loading-art > i:nth-child(3) { right: 64px; }
+[data-member-theme='woodstone'] .member-loading-art > i:nth-child(4) {
+  left: 30px;
+  width: 20px;
+  height: 32px;
+  animation-duration: 5.5s;
+  animation-direction: alternate-reverse;
+}
+
+/* Crest: a slow float, warm light passing across the carved lines. */
+[data-member-theme='woodstone'] .member-loading-mark {
+  animation: woodstone-loader-float 5s ease-in-out infinite alternate;
+}
+[data-member-theme='woodstone'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+}
+[data-member-theme='woodstone'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(100deg, transparent 38%, #ffe7bfb3 50%, transparent 62%);
+  transform: translateX(-60%);
+  animation: woodstone-glint 4s .8s ease-in-out infinite;
+}
+
+@keyframes woodstone-loader-lamp {
+  from { transform: scale(.92); opacity: .75; }
+  to { transform: scale(1.08); opacity: 1; }
+}
+@keyframes woodstone-loader-motes {
+  0% { transform: translate3d(0, 24px, 0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: .8; }
+  100% { transform: translate3d(8px, -40px, 0); opacity: 0; }
+}
+@keyframes woodstone-loader-float {
+  from { transform: translateY(3px); }
+  to { transform: translateY(-5px); }
+}
+@keyframes woodstone-glint {
+  0% { transform: translateX(-60%); }
+  55%, 100% { transform: translateX(60%); }
+}
+
+/* RTL: the brand sits on the right, so the moss moves to the left edge. */
+[dir='rtl'] [data-member-theme='woodstone'] .member-theme-art,
+[dir='rtl'][data-member-theme='woodstone'] .member-theme-art { transform: scaleX(-1); }
+/* …and the lamp glides the mirrored way so the motes stay in its beam. */
+[dir='rtl'] [data-member-theme='woodstone'] .premium-header-stone::before,
+[dir='rtl'][data-member-theme='woodstone'] .premium-header-stone::before { scale: -1 1; }
+
+@keyframes woodstone-lamp-on {
+  0% { transform: translateX(-34%) scale(.4); opacity: 0; }
+  35% { opacity: 1; }
+  55% { transform: translateX(-34%) scale(1.06); }
+  100% { transform: translateX(-34%) scale(1); opacity: 1; }
+}
+@keyframes woodstone-motes {
+  0% { transform: translate3d(0, 4px, 0); opacity: .45; }
+  50% { opacity: 1; }
+  100% { transform: translate3d(5px, -6px, 0); opacity: .6; }
+}
+@keyframes woodstone-lamp {
+  from { transform: translateX(-34%); }
+  to { transform: translateX(34%); }
+}
+@keyframes woodstone-sheen {
+  0%, 100% { opacity: .2; }
+  50% { opacity: .7; }
+}
+@keyframes woodstone-sway {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(3deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='woodstone'] .premium-header-stone::before,
+  [data-member-theme='woodstone'] .premium-header-stone::after,
+  [data-member-theme='woodstone'] .member-theme-art > i,
+  [data-member-theme='woodstone'] .member-theme-art > i::before {
+    animation: none;
+  }
+  /* Rest the lamp a little right of the brand. */
+  [data-member-theme='woodstone'] .premium-header-stone::before,
+  [data-member-theme='woodstone'] .member-theme-art > i:nth-child(4) { transform: translateX(8%); }
+}

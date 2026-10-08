@@ -4,6 +4,7 @@ import {
   userAvatarTinyUrlFromStandard,
   isOurCircularAvatarUrl,
   isOurAvatarOriginalUrl,
+  animatedAvatarTinyUrlFromStandard,
 } from '../utils/userAvatarTiny';
 import { isStickerCatalogUrl } from './stickers';
 import { findReferencedChatMediaUrls, rehomeForwardHostsBeforeHardDelete } from './chat/forwardMessage.service';
@@ -27,7 +28,7 @@ export class MediaCleanupService {
       // Get user's avatar files
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { avatar: true, originalAvatar: true }
+        select: { avatar: true, originalAvatar: true, avatarAnimated: true }
       });
 
       if (user) {
@@ -40,6 +41,7 @@ export class MediaCleanupService {
         if (user.originalAvatar && isOurAvatarOriginalUrl(user.originalAvatar)) {
           await ImageProcessor.deleteFile(user.originalAvatar);
         }
+        await ImageProcessor.deleteAnimatedAvatar(user.avatarAnimated);
       }
     } catch (error) {
       console.error(`Error cleaning up user media for user ${userId}:`, error);
@@ -117,7 +119,7 @@ export class MediaCleanupService {
     try {
       // Get all user avatars
       const users = await prisma.user.findMany({
-        select: { avatar: true, originalAvatar: true }
+        select: { avatar: true, originalAvatar: true, avatarAnimated: true }
       });
       users.forEach(user => {
         if (user.avatar) {
@@ -128,6 +130,11 @@ export class MediaCleanupService {
           }
         }
         if (user.originalAvatar) referencedFiles.add(user.originalAvatar);
+        if (user.avatarAnimated) {
+          referencedFiles.add(user.avatarAnimated);
+          const animatedTiny = animatedAvatarTinyUrlFromStandard(user.avatarAnimated);
+          if (animatedTiny) referencedFiles.add(animatedTiny);
+        }
       });
 
       // Get all game media

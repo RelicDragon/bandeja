@@ -41,6 +41,8 @@ const REGULAR_USER_SELECT = {
   avatar: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   isTrainer: true,
   primarySport: true,
 } as const;
@@ -96,6 +98,8 @@ async function loadPublicRegularCandidates(clubId: string): Promise<ClubRegular[
       avatar: u.avatar,
       isPremium: u.isPremium,
       showPremiumStatus: u.showPremiumStatus,
+      premiumNameStyle: u.premiumNameStyle,
+      avatarAnimated: u.avatarAnimated,
       isTrainer: u.isTrainer,
       primarySport: u.primarySport,
     }));

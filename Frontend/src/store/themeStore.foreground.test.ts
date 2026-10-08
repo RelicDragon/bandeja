@@ -31,7 +31,8 @@ const media = vi.hoisted(() => {
   return state;
 });
 
-import { syncThemeOnForeground, useThemeStore, setPremiumAppTheme } from './themeStore';
+import { appPageBackground } from '@/utils/mainTheme';
+import { syncThemeOnForeground, useThemeStore, setMemberAppTheme } from './themeStore';
 
 function htmlIsDark() {
   return document.documentElement.classList.contains('dark');
@@ -136,15 +137,15 @@ it('syncs Premium/Classic backgrounds and native preferences across theme change
   document.head.append(meta);
   try {
     useThemeStore.getState().setTheme('light');
-    setPremiumAppTheme(true);
+    setMemberAppTheme('premium');
     expect(meta.content).toBe('#faf9f6');
-    expect(syncNativeAppBackground).toHaveBeenLastCalledWith('light', true);
+    expect(syncNativeAppBackground).toHaveBeenLastCalledWith('light', 'premium');
     useThemeStore.getState().setTheme('dark');
     expect(meta.content).toBe('#141411');
-    setPremiumAppTheme(false);
+    setMemberAppTheme(null);
     expect(meta.content).toBe('#111827');
-    expect(syncNativeAppBackground).toHaveBeenLastCalledWith('dark', false);
-    setPremiumAppTheme(true);
+    expect(syncNativeAppBackground).toHaveBeenLastCalledWith('dark', null);
+    setMemberAppTheme('premium');
     useThemeStore.getState().setTheme('system');
     media.dark = false;
     syncThemeOnForeground();
@@ -152,14 +153,22 @@ it('syncs Premium/Classic backgrounds and native preferences across theme change
     media.dark = true;
     syncThemeOnForeground();
     expect(meta.content).toBe('#141411');
-    expect(syncNativeAppBackground).toHaveBeenLastCalledWith('system', true);
+    expect(syncNativeAppBackground).toHaveBeenLastCalledWith('system', 'premium');
     document.documentElement.classList.add('premium-navigation');
     useThemeStore.getState().setTheme('light');
     expect(meta.content).toBe('#11100e');
     expect(document.documentElement.classList.contains('dark')).toBe(false);
+    document.documentElement.classList.remove('premium-navigation');
+    setMemberAppTheme('spring');
+    expect(document.documentElement.dataset.memberTheme).toBe('spring');
+    expect(meta.content).toBe(appPageBackground(false, 'spring'));
+    expect(syncNativeAppBackground).toHaveBeenLastCalledWith('light', 'spring');
+    setMemberAppTheme(null);
+    expect(document.documentElement.dataset.memberTheme).toBeUndefined();
+    expect(document.documentElement.classList.contains('premium-theme')).toBe(false);
   } finally {
     meta.remove();
     document.documentElement.classList.remove('premium-navigation');
-    setPremiumAppTheme(false);
+    setMemberAppTheme(null);
   }
 });

@@ -1,6 +1,6 @@
 import type { MentionableUser } from '@/utils/mentionableUsers';
 import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
 
 type MentionSuggestionAvatarProps = {
   user: MentionableUser;
@@ -14,7 +14,7 @@ export function MentionSuggestionAvatar({ user }: MentionSuggestionAvatarProps) 
     <div className="relative h-6 w-6 shrink-0">
       <PlayerAvatarFace
         avatar={user.avatar}
-        tinyUrl={userAvatarTinyUrlFromStandard(user.avatar)}
+        tinyUrl={userFaceTinySrc(user)}
         initials={initials}
         alt={user.display}
         textClassName="text-[9px] leading-none"

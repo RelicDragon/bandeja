@@ -25,6 +25,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import type { Sport } from '@/types';
 import './CourtLobbyArena.css';
+import { animatedAvatarSrc } from '@/utils/animatedAvatar';
 
 type Props = {
   members: PoolMember[];
@@ -1127,6 +1128,7 @@ function CourtLobbyArenaComponent({
               <span className="court-lobby-arena__avatar-image">
                 <CourtLobbyAvatarImage
                   avatar={node.member.avatar}
+                  animatedAvatar={animatedAvatarSrc(node.member, { tiny: true })}
                   initials={initials(node.member)}
                   imgClassName="h-full w-full object-cover"
                   initialsClassName="court-lobby-arena__avatar-initials"

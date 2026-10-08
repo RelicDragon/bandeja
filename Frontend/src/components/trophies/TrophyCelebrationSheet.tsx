@@ -27,6 +27,8 @@ import {
   wasCelebrationShown,
 } from '@/components/trophies/trophyCelebrationGate';
 import { useAuthStore } from '@/store/authStore';
+import { MemberCelebrationBurst, useMemberTheme } from '@/features/memberEffects';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { usersApi } from '@/api/users';
 import { buildUrl } from '@/utils/urlSchema';
 import { getSportConfig } from '@/sport/sportRegistry';
@@ -132,6 +134,8 @@ export function TrophyCelebrationSheet({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
+  const memberTheme = useMemberTheme();
+  const reduceMotion = usePrefersReducedMotion();
   const [open, setOpen] = useState(false);
   const [unlock, setUnlock] = useState<CelebrationUnlock | null>(null);
   const [pinning, setPinning] = useState(false);
@@ -322,7 +326,16 @@ export function TrophyCelebrationSheet({
 
               <DrawerHeader className="relative z-10 space-y-2 text-center sm:text-center">
                 <div className="relative mx-auto mb-1 flex h-36 w-36 items-center justify-center">
-                  {SPARKS.map((spark, i) => (
+                  {memberTheme ? (
+                    open && (
+                      <MemberCelebrationBurst
+                        key={unlock.achievementId ?? unlock.definitionId}
+                        theme={memberTheme}
+                        reduceMotion={reduceMotion}
+                        radius={100}
+                      />
+                    )
+                  ) : SPARKS.map((spark, i) => (
                     <motion.span
                       key={i}
                       className={`absolute rounded-full ${sparkColor}`}

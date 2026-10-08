@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import path from 'path';
 import crypto from 'crypto';
 import { S3Service } from '../services/s3.service';
+import { animatedAvatarTinyUrlFromStandard, isOurAnimatedAvatarUrl } from './userAvatarTiny';
 
 export interface ImageProcessingResult {
   originalPath: string;
@@ -120,6 +121,30 @@ export class ImageProcessor {
     };
   }
   
+  /**
+   * Premium animated avatar (256px) + its 96px list variant at the derived
+   * `_avatar.anim.tiny.webp` key. The still `avatar` is produced separately by processAvatar.
+   */
+  static async uploadAnimatedAvatar(animatedWebp: Buffer, animatedTinyWebp: Buffer): Promise<string> {
+    const base = `uploads/avatars/animated/${crypto.randomUUID()}`;
+    const tinyKey = `${base}_avatar.anim.tiny.webp`;
+    await S3Service.uploadFile(animatedTinyWebp, tinyKey, 'image/webp');
+    try {
+      return await S3Service.uploadFile(animatedWebp, `${base}_avatar.anim.webp`, 'image/webp');
+    } catch (error) {
+      await S3Service.deleteFile(tinyKey);
+      throw error;
+    }
+  }
+
+  /** Deletes `avatarAnimated` and its tiny variant; ignores URLs we did not create. */
+  static async deleteAnimatedAvatar(url: string | null | undefined): Promise<void> {
+    if (!url || !isOurAnimatedAvatarUrl(url)) return;
+    const tiny = animatedAvatarTinyUrlFromStandard(url);
+    if (tiny) await this.deleteFile(tiny);
+    await this.deleteFile(url);
+  }
+
   static async processChatImage(imageBuffer: Buffer, filename: string): Promise<ImageProcessingResult> {
     const uniqueId = crypto.randomUUID();
     const ext = path.extname(filename);

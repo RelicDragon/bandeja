@@ -4,7 +4,7 @@ Capacitor 8 shell. `appId` `com.funified.bandeja`, `webDir` `dist`. iOS/Android 
 
 ## Plugins / capabilities
 
-Camera, photos, geolocation, filesystem, keyboard, network, app lifecycle, share, local/push notifications, secure token storage (Keychain/Keystore refresh credentials). Hardware back. App icon badge = unread. Alternate app icons + sport mascot (`appIcons.ts`, `appIcon.service.ts`). Splash uses primary sport + selected icon.
+Camera, photos, geolocation, filesystem, keyboard, network, app lifecycle, share, local/push notifications, secure token storage (Keychain/Keystore refresh credentials). Hardware back. App icon badge = unread. Alternate app icons + sport mascot (`appIcons.ts`, `appIcon.service.ts`); an active member theme overrides them with `theme_<id>` (docs/domains/premium-appearance.md). Adding an alternate icon touches: `NATIVE_ALTERNATE_ICON_NAMES`, iOS `Assets.xcassets/<name>.appiconset` + `Info.plist` `CFBundleAlternateIcons` + `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` (both App configs in the pbxproj), Android `activity-alias` + `res/drawable/ic_launcher_<name>.png` + the alias lists in `LauncherIconPlugin.java` and `LauncherComponentRepair.java`. Icons are store-shell assets: they ship only with a new native build. Splash uses primary sport + selected icon.
 
 ## Appearance
 

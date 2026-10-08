@@ -1,25 +1,32 @@
-import { syncWebThemeColor } from '@/utils/mainTheme';
+import { memberChromeIsDark, setMemberHeaderMounted, syncWebThemeColor, type MemberThemeId } from '@/utils/mainTheme';
 import { useLayoutEffect } from 'react';
 import { useResolvedAppAppearance } from '@/store/themeStore';
 
-const activePremiumHeaders = new Set<symbol>();
+const darkMemberHeaders = new Set<symbol>();
 
-/** The status bar sits over the dark Premium header even in a light app theme. */
-export function usePremiumNavigationAppearance(isPremium: boolean) {
+/**
+ * While a member header is mounted the theme-color meta follows its chrome, and a dark chrome
+ * (`MEMBER_THEMES[id][appearance].chrome`) sets `html.premium-navigation` for light status-bar text.
+ */
+export function usePremiumNavigationAppearance(theme: MemberThemeId | null) {
   const appearance = useResolvedAppAppearance();
 
   useLayoutEffect(() => {
-    if (!isPremium) return;
+    if (!theme) return;
     const owner = Symbol('premium-header');
-    activePremiumHeaders.add(owner);
+    const darkChrome = memberChromeIsDark(theme, appearance);
     const root = document.documentElement;
-    root.classList.add('premium-navigation');
+    setMemberHeaderMounted(true);
+    if (darkChrome) {
+      darkMemberHeaders.add(owner);
+      root.classList.add('premium-navigation');
+    }
     syncWebThemeColor();
     return () => {
-      activePremiumHeaders.delete(owner);
-      if (activePremiumHeaders.size > 0) return;
-      root.classList.remove('premium-navigation');
+      setMemberHeaderMounted(false);
+      darkMemberHeaders.delete(owner);
+      if (darkMemberHeaders.size === 0) root.classList.remove('premium-navigation');
       syncWebThemeColor();
     };
-  }, [isPremium, appearance]);
+  }, [theme, appearance]);
 }

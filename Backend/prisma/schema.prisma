@@ -9,6 +9,26 @@ datasource db {
 enum MainTheme {
   classic
   premium
+  spring
+  cyberpunk
+  steampunk
+  woodstone
+  ocean
+  nordic
+  alpine
+  summer
+}
+
+/// Premium-only public name decoration. `gold` is the original glow.
+enum PremiumNameStyle {
+  gold
+  platinum
+  rose
+  ember
+  aurora
+  neon
+  holo
+  frost
 }
 
 model User {
@@ -62,6 +82,9 @@ model User {
   canCreateLeague                Boolean                          @default(false)
   isPremium                      Boolean                          @default(false)
   showPremiumStatus              Boolean                          @default(true)
+  premiumNameStyle               PremiumNameStyle                 @default(gold)
+  /// Premium-only looping avatar (animated WebP, 256px). `avatar` stays the still JPEG for tiny sizes, push, Telegram.
+  avatarAnimated                 String?
   premiumOnboardingCompletedAt   DateTime?
   mainTheme                      MainTheme                        @default(premium)
   gender                         Gender                           @default(PREFER_NOT_TO_SAY)

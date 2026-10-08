@@ -1,5 +1,6 @@
-import { syncWebThemeColor } from '@/utils/mainTheme';
+import { documentMemberTheme, persistMemberBootBackground, syncWebThemeColor, type MemberThemeId } from '@/utils/mainTheme';
 import { syncNativeAppBackground } from '@/services/nativeAppBackground';
+import { armMemberThemeArrival, cancelMemberThemeArrival } from '@/utils/memberThemeArrival';
 import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import {
@@ -69,7 +70,7 @@ function writeResolvedTheme(
     root.style.colorScheme = colorScheme;
   }
   syncWebThemeColor();
-  void syncNativeAppBackground(preference, root.classList.contains('premium-theme'));
+  void syncNativeAppBackground(preference, documentMemberTheme());
 }
 
 const applyTheme = (theme: ThemePreference) => {
@@ -160,9 +161,18 @@ export function useResolvedAppAppearance(): ResolvedTheme {
   return theme;
 }
 
-/** Account theme is independent of the device's light/dark/system preference. */
-export function setPremiumAppTheme(premium: boolean): void {
+let appliedOnce = false;
+
+/** Account theme is independent of the device's light/dark/system preference. A newly applied member theme plays its one-shot arrival. */
+export function setMemberAppTheme(theme: MemberThemeId | null): void {
   const root = document.documentElement;
-  root.classList.toggle('premium-theme', premium);
+  const changed = (root.dataset.memberTheme ?? null) !== theme || !appliedOnce;
+  appliedOnce = true;
+  root.classList.toggle('premium-theme', theme !== null);
+  if (theme) root.dataset.memberTheme = theme;
+  else delete root.dataset.memberTheme;
+  persistMemberBootBackground(theme);
   applyTheme(useThemeStore.getState().theme);
+  if (!theme) cancelMemberThemeArrival();
+  else if (changed) armMemberThemeArrival();
 }

@@ -21,6 +21,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
+import type { MediaUploadResponse } from '@/api/media';
+import { animatedAvatarSrc } from '@/utils/animatedAvatar';
 import type { UserStats } from '@/api/users';
 import { patchUserStatsPreferenceFlags } from '@/components/playerProfile/patchUserStatsPreferenceFlags';
 import { queryClient } from '@/queries/queryClient';
@@ -34,7 +36,7 @@ import {
   type OAuthLinkMergePending,
 } from '@/utils/oauthAccountLink';
 import { canUnlinkAuthMethod } from '@/utils/accountAuthMethods';
-import { Gender, User, type GameCardRosterMode } from '@/types';
+import { Gender, User, type GameCardRosterMode, type MainTheme, type PremiumNameStyle } from '@/types';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import type { OAuthLinkResponseData } from '@/utils/oauthAccountLink';
 import {
@@ -65,6 +67,9 @@ import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import { MainThemeSelector } from '@/components/MainThemeSelector';
+import { isMemberThemeId } from '@/utils/mainTheme';
+import { PremiumNameStyleSelector } from '@/components/PremiumNameStyleSelector';
+import { resolvePremiumNameStyle } from '@/utils/premiumIdentity';
 import { CollectionSection } from '@/components/shop/CollectionSection';
 import type { AppIconId } from '@/config/appIcons';
 import { openExternalUrl } from '@/utils/openExternalUrl';
@@ -102,6 +107,7 @@ export const ProfileContent = () => {
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday' | 'saturday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
   const [isSavingMainTheme, setIsSavingMainTheme] = useState(false);
+  const [pendingNameStyle, setPendingNameStyle] = useState<PremiumNameStyle | null>(null);
   const [isSavingPremiumStatus, setIsSavingPremiumStatus] = useState(false);
   const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
   const [verbalStatus, setVerbalStatus] = useState(user?.verbalStatus || '');
@@ -177,8 +183,20 @@ export const ProfileContent = () => {
     }
   };
 
-  const handleMainThemeChange = async (value: string) => {
-    if (isSavingMainTheme || (value !== 'classic' && value !== 'premium')) return;
+  // Optimistic: the tile flips at once; a failed save drops the pending value
+  // (reverting to the stored style) and updateProfile shows the error toast.
+  const handlePremiumNameStyleChange = async (value: PremiumNameStyle) => {
+    if (pendingNameStyle) return;
+    setPendingNameStyle(value);
+    try {
+      await updateProfile({ premiumNameStyle: value });
+    } finally {
+      setPendingNameStyle(null);
+    }
+  };
+
+  const handleMainThemeChange = async (value: MainTheme) => {
+    if (isSavingMainTheme || (value !== 'classic' && !isMemberThemeId(value))) return;
     setIsSavingMainTheme(true);
     try {
       await updateProfile({ mainTheme: value });
@@ -680,12 +698,26 @@ export const ProfileContent = () => {
       updateUser({ 
         ...user!, 
         avatar: response.avatarUrl,
-        originalAvatar: response.originalAvatarUrl
+        originalAvatar: response.originalAvatarUrl,
+        avatarAnimated: response.avatarAnimatedUrl ?? null,
       });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userStatsAll(user!.id) });
       toast.success(t('profile.avatarUploaded'));
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
+  };
+
+  const handleAnimatedAvatarUploaded = (response: MediaUploadResponse) => {
+    updateUser({
+      ...user!,
+      avatar: response.avatarUrl,
+      originalAvatar: response.originalAvatarUrl,
+      avatarAnimated: response.avatarAnimatedUrl ?? null,
+    });
+    // The level card reads the stats query's copy of the user.
+    void queryClient.invalidateQueries({ queryKey: queryKeys.userStatsAll(user!.id) });
+    toast.success(t('profile.animatedAvatarUploaded'));
   };
 
   const handleAvatarRemove = async () => {
@@ -797,7 +829,9 @@ export const ProfileContent = () => {
           <div className="relative pt-2">
             <AvatarUpload
               currentAvatar={user?.avatar || undefined}
+              currentAvatarAnimated={animatedAvatarSrc(user, { own: true })}
               onUpload={handleAvatarUpload}
+              animated={{ enabled: user?.isPremium === true, onUploaded: handleAnimatedAvatarUploaded }}
               disabled={false}
             />
             {!isLoadingProfile && user?.wallet !== undefined && (
@@ -823,6 +857,7 @@ export const ProfileContent = () => {
             {!isLoadingProfile && user?.originalAvatar && (
               <button
                 onClick={() => setShowFullscreenAvatar(true)}
+                data-member-accent="blue"
                 className="absolute top-8 -right-8 w-7 h-7 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors duration-200 z-10"
                 style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}
                 title={t('profile.viewOriginalAvatar')}
@@ -1347,6 +1382,15 @@ export const ProfileContent = () => {
                 value={user.mainTheme ?? 'classic'}
                 onChange={handleMainThemeChange}
                 disabled={isSavingMainTheme}
+              />
+            )}
+            {user?.isPremium === true && (
+              <PremiumNameStyleSelector
+                value={pendingNameStyle ?? resolvePremiumNameStyle(user.premiumNameStyle)}
+                onChange={handlePremiumNameStyleChange}
+                name={user.firstName ?? ''}
+                disabled={pendingNameStyle !== null}
+                hidden={user.showPremiumStatus === false}
               />
             )}
             <div>

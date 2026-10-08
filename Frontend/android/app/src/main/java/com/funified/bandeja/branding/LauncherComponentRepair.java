@@ -12,7 +12,10 @@ import java.util.List;
 public final class LauncherComponentRepair {
     private static final String DEFAULT_ALIAS = "tiger";
     private static final List<String> ALIASES = Arrays.asList(
-        "tiger", "racket", "tennis", "pickleball", "badminton", "table_tennis", "squash"
+        "tiger", "racket", "tennis", "pickleball", "badminton", "table_tennis", "squash",
+            "theme_premium", "theme_spring", "theme_cyberpunk", "theme_steampunk",
+            "theme_woodstone", "theme_ocean", "theme_nordic",
+            "theme_alpine", "theme_summer"
     );
 
     private LauncherComponentRepair() {}

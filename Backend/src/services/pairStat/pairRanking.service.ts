@@ -18,7 +18,7 @@
  * leaderboard unpaginated; this endpoint deliberately does not copy that.
  */
 
-import { Prisma, UserTeamMemberStatus, type Sport } from '@prisma/client';
+import { Prisma, UserTeamMemberStatus, type PremiumNameStyle, type Sport } from '@prisma/client';
 import { countPairDuoMatchWins } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
 import { partnerHabitGameWhere } from '../achievements/partnerGrant.service';
@@ -61,6 +61,8 @@ const PAIR_MEMBER_SELECT = {
   avatar: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
 } as const;
 
 export interface PairMemberDto {
@@ -70,6 +72,8 @@ export interface PairMemberDto {
   avatar: string | null;
   isPremium: boolean;
   showPremiumStatus: boolean;
+  premiumNameStyle: PremiumNameStyle;
+  avatarAnimated: string | null;
   level: number | null;
 }
 
@@ -202,6 +206,8 @@ async function loadMembers(userIds: readonly string[], sport: Sport): Promise<Ma
       avatar: user.avatar,
       isPremium: user.isPremium,
       showPremiumStatus: user.showPremiumStatus,
+      premiumNameStyle: user.premiumNameStyle,
+      avatarAnimated: user.avatarAnimated,
       level: user.sportProfiles[0]?.level ?? null,
     });
   }
@@ -299,6 +305,8 @@ async function hydratePairs(
     avatar: null,
     isPremium: false,
     showPremiumStatus: false,
+    premiumNameStyle: 'gold',
+    avatarAnimated: null,
     level: null,
   });
 

@@ -282,6 +282,8 @@ Stale names (`MESSAGE_CREATE`, `REACTION_ADD`) are **not** in schema.
 | `CostShareMethod` | `MANUAL` `COINS` |
 | `GoodsKind` | `PROFILE_FRAME` `CHAT_ACCENT` `STICKER_PACK` `NAME_COLOR` |
 | `SpotOpenedKind` | `QUEUE` `INTENT` `FOLLOWER` |
+| `MainTheme` | `classic` `premium` `spring` `cyberpunk` `steampunk` `woodstone` `ocean` `nordic` (non-`classic` = member theme, premium-only; see `docs/domains/premium-appearance.md`) |
+| `PremiumNameStyle` | `gold` `platinum` `rose` `ember` `aurora` `neon` `holo` `frost` (`User.premiumNameStyle`, default `gold`) |
 
 ## Patterns
 

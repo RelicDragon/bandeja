@@ -6,6 +6,7 @@ import { frameClass, nameColorClass, chatAccentClass } from '@/features/collecti
 import type { ShopItem } from '@/api/shop';
 import type { ShopPreviewContext } from './shopFormat';
 import '@/styles/collection.css';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 /**
  * PRD 355 — a live preview of one catalogue item, rendered on the viewer's own
@@ -49,7 +50,7 @@ export const ShopItemPreview = ({ item, context, size = 'md', className = '' }: 
     >
       <div className="absolute inset-0 overflow-hidden rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center font-semibold text-white">
         {user?.avatar ? (
-          <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+          <img src={userFaceSrc(user, { own: true }) ?? undefined} onError={fallbackToStillAvatar(user.avatar)} alt="" className="h-full w-full object-cover" />
         ) : (
           initialsOf(user?.firstName, user?.lastName)
         )}

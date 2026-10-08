@@ -1,4 +1,4 @@
-import { showsPremiumStatus } from '@/utils/premiumIdentity';
+import { premiumNameClassName, showsPremiumStatus } from '@/utils/premiumIdentity';
 import '@/styles/premium-name.css';
 import '@/styles/collection.css';
 import { useFrameClass } from '@/features/collection/useEquippedGoods';
@@ -15,6 +15,7 @@ import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import { PlayerAvatarFace } from './PlayerAvatarFace';
+import { animatedAvatarSrc } from '@/utils/animatedAvatar';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { getDisplayLevelForSport, getUserPrimarySport, formatSportLevelBadgeDisplay, isLevelConfirmedForSport } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
@@ -89,8 +90,11 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const useTinyWhenAvailable = superTiny || extrasmall || smallLayout || inlineFace;
-  const tinyAvatarUrl =
-    useTinyWhenAvailable ? userAvatarTinyUrlFromStandard(player?.avatar) : null;
+  // Members showing Premium animate at every size (small faces get the 96px variant);
+  // otherwise small faces load the tiny still. The face falls back to the full still on error.
+  const preferredAvatarUrl =
+    animatedAvatarSrc(player, { tiny: useTinyWhenAvailable }) ??
+    (useTinyWhenAvailable ? userAvatarTinyUrlFromStandard(player?.avatar) : null);
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'));
@@ -228,7 +232,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const avatarFace = (
     <PlayerAvatarFace
       avatar={player.avatar}
-      tinyUrl={tinyAvatarUrl}
+      tinyUrl={preferredAvatarUrl}
       initials={initials}
       alt={avatarAlt}
       textClassName={sizeClasses.text}
@@ -418,7 +422,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
             ? `${smallLayout ? 'max-h-32' : extrasmall ? 'max-h-24' : 'max-h-20'} opacity-100 translate-y-0`
             : 'max-h-0 opacity-0 -translate-y-2'
         }`}>
-          <div className={`${sizeClasses.name} ${showsPremiumStatus(player) ? 'premium-name-glow' : ''} text-gray-700 dark:text-gray-300 text-center leading-tight flex flex-col items-center justify-start`}>
+          <div className={`${sizeClasses.name} ${showsPremiumStatus(player) ? premiumNameClassName(player.premiumNameStyle) : ''} text-gray-700 dark:text-gray-300 text-center leading-tight flex flex-col items-center justify-start`}>
             {isCurrentUser ? (
               <span className={`w-full ${smallLayout || extrasmall ? 'break-words' : 'truncate'} leading-tight`}>
                 {t('createGame.you')}

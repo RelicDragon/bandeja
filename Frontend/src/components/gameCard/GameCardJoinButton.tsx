@@ -118,7 +118,7 @@ export function GameCardJoinButton({
               <UserPlus size={12} strokeWidth={2.75} aria-hidden />
             </span>
           ) : (
-            <Clock size={15} className="ms-0.5 text-sky-500" aria-hidden />
+            <Clock size={15} className="ms-0.5 text-sky-500" data-member-accent="sky" aria-hidden />
           )}
           <span className="whitespace-nowrap">{hasFreeSlots ? t('games.join') : t('games.card.joinQueueShort')}</span>
           {shimmering ? (
@@ -143,6 +143,7 @@ export function GameCardJoinButton({
             setConfirmOpen(true);
           }}
           aria-label={ariaLabel}
+          data-member-accent="sky"
           className={`w-full transition-all duration-300 shadow-md shadow-primary-500/25 hover:shadow-lg hover:shadow-primary-500/35 ${
             hasFreeSlots
               ? 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700'

@@ -1,4 +1,4 @@
-import { usesPremiumTheme } from '@/utils/mainTheme';
+import { activeMemberTheme } from '@/utils/mainTheme';
 import React, { useEffect } from 'react';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useAuthStore } from '@/store/authStore';
@@ -23,7 +23,8 @@ export const GameChat: React.FC<GameChatProps> = (props) => (
 );
 
 const GameChatLayout: React.FC = () => {
-  const isPremium = useAuthStore((s) => usesPremiumTheme(s.user));
+  const memberTheme = useAuthStore((s) => activeMemberTheme(s.user));
+  const isPremium = memberTheme !== null;
   const setBottomTabsVisible = useShellNavStore((s) => s.setBottomTabsVisible);
   const {
     id,
@@ -52,7 +53,7 @@ const GameChatLayout: React.FC = () => {
     isGameChatAccessDenied,
     canViewPublicChat: derived.canViewPublicChat,
   });
-  usePremiumNavigationAppearance(isPremium && !isEmbedded && !containerHidden && viewState === 'thread');
+  usePremiumNavigationAppearance(!isEmbedded && !containerHidden && viewState === 'thread' ? memberTheme : null);
 
   if (viewState === 'denied') {
     return <GameChatAccessDenied id={id} navigate={navigate} />;

@@ -99,4 +99,44 @@ describe('buildRecapSummaryCardSvg', () => {
   });
 });
 
+describe('member theme share art', () => {
+  it('keeps the classic art when the owner shows no member theme', () => {
+    const svg = buildRecapSummaryCardSvg(payload, 'en');
+    expect(svg).not.toContain('tbg-card');
+    expect(svg).not.toContain('csil-card');
+  });
+
+  it('paints the sharer theme scene, frame and crest on the card', () => {
+    for (const theme of ['premium', 'spring', 'summer', 'alpine', 'nordic', 'ocean', 'woodstone', 'steampunk', 'cyberpunk'] as const) {
+      const svg = buildRecapSummaryCardSvg(
+        { ...payload, owner: { ...payload.owner, isPremium: true, memberTheme: theme } },
+        'en',
+      );
+      expect(svg).toContain('url(#tbg-card)');
+      expect(svg).toContain('stroke-width="3" opacity="0.5"');
+      expect(svg).toContain('data:image/png;base64,');
+      // Text block is untouched.
+      expect(svg).toContain('x="80" y="200" text-anchor="start"');
+    }
+  });
+
+  it('ignores classic and unknown theme values', () => {
+    for (const memberTheme of ['classic', 'bogus', null]) {
+      const svg = buildRecapSummaryCardSvg(
+        { ...payload, owner: { ...payload.owner, isPremium: true, memberTheme: memberTheme as never } },
+        'en',
+      );
+      expect(svg).not.toContain('tbg-card');
+    }
+  });
+
+  it('puts the crest on the end side in Arabic', () => {
+    const svg = buildRecapSummaryCardSvg(
+      { ...payload, owner: { ...payload.owner, isPremium: true, memberTheme: 'spring' } },
+      'ar',
+    );
+    expect(svg).toContain('x="80" y="120" width="220"');
+  });
+});
+
 console.log('PASS ' + __filename.split('/').pop());

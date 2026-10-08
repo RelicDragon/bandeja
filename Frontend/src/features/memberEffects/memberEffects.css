@@ -1,0 +1,186 @@
+/* Themed motion for member themes (docs/domains/premium-appearance.md → "Themed motion").
+   transform/opacity only; one-shot bursts finish within 1.8 s; reduced motion → static. */
+
+/* ---------- Celebration burst ---------- */
+
+.mfx-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.mfx-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.mfx-particle > svg,
+.mfx-static-glyph > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mfx-particle--fall { animation-name: mfx-fall; }
+.mfx-particle--rise { animation-name: mfx-rise; }
+.mfx-particle--twinkle { animation-name: mfx-twinkle; animation-timing-function: ease-out; }
+.mfx-particle--flicker { animation-name: mfx-flicker; animation-timing-function: steps(1, end); }
+.mfx-particle--ring { animation-name: mfx-ring; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Steam puffs stay soft. */
+.mfx-particle[data-shape='steam'] { --mfx-peak: 0.55; }
+/* Glitch squares are wide slivers. */
+.mfx-particle[data-shape='glitch'] { --mfx-sx: 2.2; }
+
+@keyframes mfx-fall {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  12% { opacity: var(--mfx-peak, 1); }
+  55% {
+    opacity: var(--mfx-peak, 1);
+    transform: translate(-50%, -50%) translate(var(--mfx-x), var(--mfx-y)) rotate(calc(var(--mfx-r) * 0.6)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(calc(var(--mfx-x) * 1.08), calc(var(--mfx-y) + 34px)) rotate(var(--mfx-r)) scale(0.85);
+  }
+}
+
+@keyframes mfx-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  14% { opacity: var(--mfx-peak, 1); }
+  50% {
+    opacity: var(--mfx-peak, 1);
+    transform: translate(-50%, -50%) translate(var(--mfx-x), var(--mfx-y)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(calc(var(--mfx-x) * 0.9), calc(var(--mfx-y) - 46px)) scale(1.25);
+  }
+}
+
+@keyframes mfx-twinkle {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--mfx-x), var(--mfx-y)) rotate(0deg) scale(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--mfx-x), var(--mfx-y)) rotate(25deg) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--mfx-x), var(--mfx-y)) rotate(60deg) scale(0.2);
+  }
+}
+
+@keyframes mfx-flicker {
+  0% { opacity: 0; transform: translate(-50%, -50%) translate(var(--mfx-x), var(--mfx-y)) scaleX(var(--mfx-sx, 1)); }
+  12% { opacity: 1; }
+  26% { opacity: 0; }
+  36% { opacity: 0.9; transform: translate(-50%, -50%) translate(calc(var(--mfx-x) + 4px), var(--mfx-y)) scaleX(var(--mfx-sx, 1)); }
+  62% { opacity: 1; transform: translate(-50%, -50%) translate(calc(var(--mfx-x) - 2px), calc(var(--mfx-y) + 2px)) scaleX(calc(var(--mfx-sx, 1) * 0.6)); }
+  74% { opacity: 0; }
+  84% { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+
+@keyframes mfx-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+  20% { opacity: 0.95; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7) rotate(30deg); }
+}
+
+.mfx-static-glyph {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  transform: translate(var(--mfx-x, 0), var(--mfx-y, 0));
+  opacity: 0;
+  animation: mfx-glyph-fade 1600ms ease-in-out both;
+}
+
+@keyframes mfx-glyph-fade {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------- Spinner / pull-to-refresh ---------- */
+
+.mfx-spinner {
+  flex-shrink: 0;
+  overflow: visible;
+  color: var(--member-primary-default, currentColor);
+}
+
+.mfx-spinner .mfx-rot,
+.mfx-spinner .mfx-sun {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.mfx-spinner .mfx-alt-fill { fill: var(--mfx-alt, currentColor); }
+.mfx-spinner .mfx-alt-stroke { stroke: var(--mfx-alt, currentColor); }
+
+.mfx-spinner[data-state='spin'] .mfx-rot { animation: mfx-turn 1s linear infinite; }
+.mfx-spinner[data-state='spin'] .mfx-rot--slow { animation-duration: 1.8s; }
+.mfx-spinner[data-state='spin'] .mfx-rot--reverse { animation-direction: reverse; animation-duration: 1.6s; }
+.mfx-spinner[data-state='spin'] .mfx-sun { animation: mfx-sunrise 1.4s ease-in-out infinite alternate; }
+
+.mfx-spinner[data-state='pull'] .mfx-rot {
+  transform: rotate(calc(var(--mfx-p, 0) * 360deg));
+  transition: transform 0.1s ease-out;
+}
+.mfx-spinner[data-state='pull'] .mfx-rot--reverse { transform: rotate(calc(var(--mfx-p, 0) * -360deg)); }
+.mfx-spinner[data-state='pull'] .mfx-sun {
+  transform: translateY(calc((1 - min(var(--mfx-p, 0), 1)) * 11px));
+  opacity: calc(var(--mfx-p, 0) * 2 - 0.4);
+  transition: transform 0.1s ease-out;
+}
+
+@keyframes mfx-turn {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes mfx-sunrise {
+  from { transform: translateY(11px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes mfx-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* Second colour per theme (glint, sun, inner neon ring), legible on page surfaces. */
+[data-member-theme='premium'] .mfx-spinner { --mfx-alt: #e9c46a; }
+[data-member-theme='alpine'] .mfx-spinner { --mfx-alt: #e0a91c; }
+.dark[data-member-theme='alpine'] .mfx-spinner,
+.dark [data-member-theme='alpine'] .mfx-spinner { --mfx-alt: #ff9d7e; }
+[data-member-theme='cyberpunk'] .mfx-spinner { --mfx-alt: #0a95a8; }
+.dark[data-member-theme='cyberpunk'] .mfx-spinner,
+.dark [data-member-theme='cyberpunk'] .mfx-spinner { --mfx-alt: #3ef2ff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mfx-particle { animation: none; opacity: 0; }
+  .mfx-spinner[data-state] .mfx-rot,
+  .mfx-spinner[data-state] .mfx-sun { animation: none; transition: none; }
+  .mfx-spinner[data-state='spin'] { animation: mfx-breathe 1.4s ease-in-out infinite; }
+}

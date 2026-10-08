@@ -21,7 +21,10 @@ import java.util.Set;
 public final class LauncherIconPlugin extends Plugin {
     private static final String DEFAULT_ALIAS = "tiger";
     private static final Set<String> ALIASES = new LinkedHashSet<>(
-        Arrays.asList("tiger", "racket", "tennis", "pickleball", "badminton", "table_tennis", "squash")
+        Arrays.asList("tiger", "racket", "tennis", "pickleball", "badminton", "table_tennis", "squash",
+            "theme_premium", "theme_spring", "theme_cyberpunk", "theme_steampunk",
+            "theme_woodstone", "theme_ocean", "theme_nordic",
+            "theme_alpine", "theme_summer")
     );
 
     @PluginMethod

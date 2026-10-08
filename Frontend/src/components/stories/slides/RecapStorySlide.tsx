@@ -22,9 +22,12 @@ import {
 } from '@/features/recap/recapSlideText';
 import { STORY_SLIDE_SAFE_BOTTOM } from '../storyViewerLayout';
 import {
+  recapOwnerMemberTheme,
   recapSlideBackgroundClass,
   recapSlideGlowClass,
+  recapSlideIsThemedBookend,
 } from './recapSlideTheme';
+import { MemberShareBackdrop, MemberShareCrest, MemberShareFrame } from '@/components/premium/MemberShareArt';
 
 /**
  * PRD 353 — one slide of the monthly recap reel.
@@ -48,6 +51,8 @@ export function RecapStorySlide({ segment, viewerId }: RecapSlideProps) {
   const formatters = useRecapFormatters();
   const recap = segment.recap;
   const alt = recapSlideAltText(recap, t, formatters);
+  const memberTheme = recapOwnerMemberTheme(recap.owner);
+  const themedBackdrop = memberTheme != null && recapSlideIsThemedBookend(recap.kind);
 
   return (
     <div
@@ -55,15 +60,22 @@ export function RecapStorySlide({ segment, viewerId }: RecapSlideProps) {
       role="group"
       aria-label={alt}
     >
-      <div className={`absolute inset-0 ${recapSlideBackgroundClass(recap.kind, recap.owner.isPremium)}`} />
-      <div
-        className={`pointer-events-none absolute -inset-x-10 top-10 h-72 rounded-full blur-3xl ${recapSlideGlowClass(
-          recap.kind,
-          recap.owner.isPremium,
-        )}`}
-        aria-hidden
-      />
+      {themedBackdrop ? (
+        <MemberShareBackdrop theme={memberTheme} className="absolute inset-0" />
+      ) : (
+        <>
+          <div className={`absolute inset-0 ${recapSlideBackgroundClass(recap.kind, recap.owner.isPremium)}`} />
+          <div
+            className={`pointer-events-none absolute -inset-x-10 top-10 h-72 rounded-full blur-3xl ${recapSlideGlowClass(
+              recap.kind,
+              recap.owner.isPremium,
+            )}`}
+            aria-hidden
+          />
+        </>
+      )}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70" aria-hidden />
+      {memberTheme ? <MemberShareFrame theme={memberTheme} /> : null}
 
       <div
         className={`relative flex h-full min-h-0 flex-col items-center justify-center gap-5 overflow-y-auto overscroll-contain px-6 pt-32 text-center ${STORY_SLIDE_SAFE_BOTTOM}`}
@@ -154,8 +166,10 @@ function RecapCoverBody({ recap }: { recap: RecapSegmentPayload }) {
   const { t } = useTranslation();
   const formatters = useRecapFormatters();
   const name = recapOwnerName(recap);
+  const memberTheme = recapOwnerMemberTheme(recap.owner);
   return (
     <>
+      {memberTheme ? <MemberShareCrest theme={memberTheme} /> : null}
       <RecapOwnerFace recap={recap} />
       {name ? <RecapEyebrow>{name}</RecapEyebrow> : null}
       <RecapHeadline>{formatters.monthLong(recap.monthStart)}</RecapHeadline>

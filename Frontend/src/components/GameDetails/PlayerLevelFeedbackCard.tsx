@@ -34,6 +34,7 @@ import {
   runLevelFeedbackRequestWithRetry,
 } from '@/features/player-level-feedback/player-level-feedback';
 import { recordPlayerLevelFeedbackMetric } from '@/services/player-level-feedback-metrics';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 type Props = { gameId: string };
 
@@ -314,7 +315,8 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
                     <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-sky-100 to-violet-100 text-2xl font-black text-sky-700 ring-4 ring-white shadow-md dark:from-sky-500/20 dark:to-violet-500/20 dark:text-sky-200 dark:ring-slate-900">
                       {current.user.avatar || current.user.originalAvatar ? (
                         <img
-                          src={current.user.avatar ?? current.user.originalAvatar ?? ''}
+                          src={userFaceSrc(current.user) ?? current.user.originalAvatar ?? ''}
+                          onError={fallbackToStillAvatar(current.user.avatar)}
                           alt=""
                           className="h-full w-full object-cover"
                         />

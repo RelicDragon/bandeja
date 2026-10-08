@@ -19,6 +19,7 @@ import { useNovice } from '@/hooks/useNovice';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { getViewerPrimarySport } from '@/utils/profileSports';
 import type { Game } from '@/types';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 /** Exit animation before "show me everything" swaps in the full shell. */
 const UNLOCK_EXIT_MS = 320;
@@ -104,7 +105,7 @@ export function NoviceWelcomePage() {
             className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700"
           >
             {user.avatar ? (
-              <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+              <img src={userFaceSrc(user, { own: true }) ?? undefined} onError={fallbackToStillAvatar(user.avatar)} alt="" className="h-full w-full object-cover" />
             ) : (
               <UserIcon size={22} className="text-gray-500 dark:text-gray-400" aria-hidden />
             )}

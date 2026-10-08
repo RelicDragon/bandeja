@@ -1,0 +1,385 @@
+/* Deep Tide — abyss-navy chrome in both appearances: two caustic nets drifting
+   at different scales, a few bioluminescent motes rising, and a slow wave line
+   resting on the bottom edge of the brand area. Content keeps the member's
+   appearance with blue-slate neutrals and a deep-teal ramp (AA). Tokens are
+   scoped to the attribute so the theme picker can preview them. */
+
+[data-member-theme='ocean'] {
+  --ui-page-background: #f2f7f8;
+  --ui-background: #f2f7f8;
+  --ui-surface: #ffffff;
+
+  /* Blue-slate neutrals; 500+ stay AA on white and the page. */
+  --color-gray-50: #f4f7f9;
+  --color-gray-100: #e8eef2;
+  --color-gray-200: #d3dde5;
+  --color-gray-300: #b2c1cd;
+  --color-gray-400: #8496a6;
+  --color-gray-500: #5e7182;
+  --color-gray-600: #485a6a;
+  --color-gray-700: #33424f;
+  --color-gray-800: #1f2b36;
+  --color-gray-900: #121b25;
+  --color-gray-950: #0a1119;
+
+  /* Deep teal: 600 is 5.9:1 on the light page, 400 is 8.6:1 on the dark page. */
+  --member-primary-default: #0e7c73;
+  --member-primary-50: #effcf9;
+  --member-primary-100: #d2f6ee;
+  --member-primary-200: #a6ecdf;
+  --member-primary-300: #6fdccb;
+  --member-primary-400: #3cc4b3;
+  --member-primary-500: #0e7c73;
+  --member-primary-600: #0b6b64;
+  --member-primary-700: #0b5853;
+  --member-primary-800: #0d4744;
+  --member-primary-900: #0e3a39;
+  --member-primary-950: #062322;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse 70% 90% at 30% -20%, #2dd4bf1c, transparent 60%),
+    radial-gradient(ellipse at 90% 120%, #0ea5e914, transparent 60%),
+    linear-gradient(172deg, #0d2238, #071322 55%, #06101d);
+  --mt-chrome-text: #e4f6f6;
+  --mt-chrome-muted: #93aec0;
+  --mt-chrome-border: #5eead433;
+  --mt-chrome-accent: #5eead4;
+  --mt-chrome-accent-soft: linear-gradient(120deg, #5eead41f, #5eead408);
+  --mt-chrome-hairline: linear-gradient(90deg, #2dd4bf10, #5eead4b3 30%, #38bdf880 66%, #2dd4bf18);
+  --mt-chrome-shadow: 0 8px 26px #02081480;
+  --mt-chrome-button-bg: #ffffff08;
+  --mt-chrome-edges: #061120b3;
+  --mt-cta-bg: linear-gradient(135deg, #a7f5e6, #4fd9c4 55%, #2bb5a8);
+  --mt-cta-text: #04201f;
+  --mt-cta-border: #c8fff38a;
+  --mt-badge-bg: #5eead4;
+  --mt-badge-text: #04201f;
+
+  /* Optional chrome fine-tuning — set explicitly so a picker tile never inherits another theme's. */
+  --mt-chrome-button-text: #cfe9ea;
+  --mt-chrome-button-hover: #5eead414;
+  --mt-chrome-focus: #5eead4;
+  --mt-chrome-focus-halo: #061120;
+  --mt-chrome-tab-text: #93aec0;
+  --mt-chrome-tab-active: #8ff5e0;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #5eead455, inset 0 1px 0 #c6fff41f;
+  --mt-chrome-profile: #a6fff0;
+  --mt-chrome-profile-ring: 0 0 0 1px #5eead4, 0 0 0 4px #5eead414;
+  --mt-chrome-controls-bg: radial-gradient(ellipse 75% 32px at 50% 0%, #2dd4bf1f, transparent 85%), #030a1440;
+  --mt-chrome-controls-border: #5eead42e;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #a6fff014;
+  --mt-cta-shadow: inset 0 1px 0 #ffffff90, 0 2px 6px #0006;
+  --mt-tabbar-border: #5eead440;
+  --mt-tabbar-shadow: inset 0 1px 0 #a6fff026, 0 8px 28px #0006;
+  --mt-tabbar-hover: #e4f6f6;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #5eead44d);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #5eead42a, transparent 80%), linear-gradient(#5eead410, #5eead403);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #a6fff021;
+  --mt-badge-ring: 0 0 0 2px #061120;
+  --mt-brand-dash: #5eead4cc;
+  --mt-brand-bg: transparent;
+
+  --mt-chat-header-bg:
+    radial-gradient(ellipse at 20% 0%, #2dd4bf1f, transparent 60%),
+    linear-gradient(172deg, #0d2238, #071322 70%);
+  --mt-chat-header-shadow: 0 4px 16px #02081440;
+  --mt-chat-header-text: #e4f6f6;
+  --mt-chat-header-muted: #93aec0;
+  --mt-chat-header-subtle: #a6d8e0;
+  --mt-chat-header-hover: #5eead414;
+  --mt-chat-header-focus: #5eead4;
+  --mt-chat-cta-bg: linear-gradient(135deg, #a7f5e6, #4fd9c4 60%, #2bb5a8);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff90, 0 2px 6px #04201f26;
+  --mt-chat-meta: #5e7182;
+  --mt-chat-meta-dark: #93aec0;
+  --mt-chat-input-shadow: 0 4px 20px #0b1e3112;
+  --mt-chat-scroll-ring: #3cc4b380;
+
+  --mt-brand-fill: linear-gradient(160deg, #d5fff5 8%, #8ff5e0 36%, #3cc4b3 64%, #1b9aa8 86%, #6fd6e6);
+  --mt-brand-font: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --mt-brand-tier-text: #9fd9d0;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #000a) drop-shadow(0 0 6px #2dd4bf40);
+  --mt-brand-plate: #061120d9;
+
+  --chat-paper: #f1f8f6;
+  --chat-panel: #ffffff;
+  --chat-line: #2dd4bf33;
+  --chat-selection: #0e7c7312;
+  --chat-selection-edge: #0b6b64;
+  --mt-bubble-own: linear-gradient(145deg, #0e7c73, #0a5c78 88%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #0c6a63, #0a425f 88%);
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #5eead41a, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #38bdf812, transparent 55%);
+
+  --mt-loading-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath fill='%23030a14' d='M0 60V34Q40 18 92 30T190 26Q240 14 300 28T400 22V60Z'/%3E%3Cpath fill='%2302070f' d='M0 60V46Q60 34 130 44T260 40Q330 34 400 44V60Z'/%3E%3C/svg%3E") 50% 100% / 100% 14vh no-repeat,
+    conic-gradient(from 168deg at 50% -12%, transparent 0deg, #5eead412 4deg, transparent 9deg, transparent 13deg, #8ff5e00d 17deg, transparent 22deg, #5eead40f 27deg, transparent 31deg),
+    radial-gradient(ellipse 70% 45% at 50% -5%, #2dd4bf3d, transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 95%, #0ea5e926, transparent 70%),
+    linear-gradient(180deg, #1c4d60, #0e2a40 18%, #071526 52%, #040b16);
+  --mt-loading-crest-fill: linear-gradient(160deg, #d5fff5 8%, #8ff5e0 36%, #3cc4b3 64%, #1b9aa8 86%, #6fd6e6);
+
+  --mt-preview-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cpath fill='none' stroke='%23a6fff0' stroke-opacity='.3' stroke-width='1.6' stroke-linecap='round' d='M0 40Q30 18 62 44T124 36T160 40M0 112Q36 92 70 118T128 104T160 112M30 0Q16 38 42 70T26 128T30 160M100 0Q122 30 98 62T114 120T100 160M62 44Q76 66 98 62M42 70Q58 96 70 118'/%3E%3C/svg%3E") 0 0 / 70px 70px,
+    radial-gradient(circle at 72% 62%, #b8fff1 0 1px, #2dd4bf55 2px, transparent 4px),
+    radial-gradient(circle at 58% 40%, #b8fff1aa 0 1px, transparent 3px),
+    radial-gradient(ellipse 70% 90% at 30% -20%, #2dd4bf30, transparent 60%),
+    linear-gradient(172deg, #0d2238, #071322 55%, #06101d);
+}
+
+.dark[data-member-theme='ocean'],
+.dark [data-member-theme='ocean'] {
+  --ui-page-background: #0b141f;
+  --ui-background: #070d16;
+  --ui-surface: #15212e;
+
+  --member-primary-default: #3cc4b3;
+
+  --chat-paper: #08131f;
+  --chat-panel: #15212e;
+  --chat-line: #5eead42b;
+  --chat-selection: #5eead414;
+  --chat-selection-edge: #5eead4;
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #2dd4bf10, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #0ea5e90c, transparent 55%);
+}
+
+/* Chat palette follows the teal ramp. */
+[data-member-theme='ocean'] .premium-chat,
+[data-member-theme='ocean'].premium-chat {
+  --color-blue-50: #effcf9;
+  --color-blue-100: #d2f6ee;
+  --color-blue-200: #a6ecdf;
+  --color-blue-300: #6fdccb;
+  --color-blue-400: #3cc4b3;
+  --color-blue-500: #0e7c73;
+  --color-blue-600: #0b6b64;
+  --color-blue-700: #0b5853;
+  --color-blue-800: #0d4744;
+  --color-blue-900: #0e3a39;
+  --color-blue-950: #062322;
+}
+
+/* ── Header art ─────────────────────────────────────────────────────────────
+   Painting order: abyss (stone) → caustic net A (::before) → motes (i1–i3) →
+   wave line (i4) → caustic net B (::after). Two nets at different scales and
+   speeds interfere, which reads as moving light without any blur. */
+
+[data-member-theme='ocean'] .premium-header-stone {
+  background:
+    radial-gradient(ellipse 60% 120% at 34% -30%, #2dd4bf26, transparent 65%),
+    radial-gradient(ellipse 50% 80% at 85% 120%, #0ea5e91a, transparent 70%),
+    linear-gradient(180deg, #0c2034, #071423 60%, #050e1a);
+}
+
+[data-member-theme='ocean'] .premium-header-stone::before,
+[data-member-theme='ocean'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  inset: -60% -30%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cpath fill='none' stroke='%23a6fff0' stroke-width='1.6' stroke-linecap='round' d='M0 40Q30 18 62 44T124 36T160 40M0 112Q36 92 70 118T128 104T160 112M30 0Q16 38 42 70T26 128T30 160M100 0Q122 30 98 62T114 120T100 160M62 44Q76 66 98 62M42 70Q58 96 70 118M114 120Q132 112 128 104'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-position: center;
+  -webkit-mask-image: linear-gradient(180deg, #000 10%, transparent 85%);
+  mask-image: linear-gradient(180deg, #000 10%, transparent 85%);
+}
+[data-member-theme='ocean'] .premium-header-stone::before {
+  background-size: 120px 120px;
+  opacity: .2;
+  animation: ocean-header-caustic-a 14s linear infinite;
+}
+[data-member-theme='ocean'] .premium-header-stone::after {
+  background-size: 190px 170px;
+  opacity: .15;
+  animation: ocean-header-caustic-b 19s linear infinite;
+}
+
+/* Arrival (html.member-theme-arrival, first apply per session): a wave washes in from the
+   inline start and settles in 1.4 s. */
+html.member-theme-arrival[data-member-theme='ocean'] .member-theme-art {
+  animation: ocean-header-arrive 1.4s cubic-bezier(.2, .7, .2, 1);
+}
+html.member-theme-arrival[dir='rtl'][data-member-theme='ocean'] .member-theme-art {
+  animation-name: ocean-header-arrive-rtl;
+}
+
+/* i1–i3 — bioluminescent motes; each carries smaller companions in its shadow. They rise in the
+   gaps beside the lock-up and buttons, never through the wordmark. */
+[data-member-theme='ocean'] .member-theme-art > i:nth-child(-n + 3) {
+  bottom: 2px;
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: #c6fff4;
+  opacity: 0;
+  animation: ocean-header-mote 15s ease-in-out infinite;
+}
+[data-member-theme='ocean'] .member-theme-art > i:nth-child(1) {
+  inset-inline-start: 62%;
+  box-shadow: 0 0 8px 2px #2dd4bfb3, 16px 14px 0 -.5px #8ff5e0c0, 16px 14px 7px 0 #2dd4bf66, 8px 32px 0 -1px #a6fff0a0;
+  animation-duration: 8s;
+  animation-delay: -2s;
+}
+[data-member-theme='ocean'] .member-theme-art > i:nth-child(2) {
+  inset-inline-start: 68%;
+  box-shadow: 0 0 8px 2px #38bdf8a6, -12px 22px 0 -.5px #a6f0ffb0, -12px 22px 7px 0 #38bdf85c, 4px 36px 0 -1px #8ff5e0a0;
+  animation-duration: 10s;
+  animation-delay: -6s;
+}
+[data-member-theme='ocean'] .member-theme-art > i:nth-child(3) {
+  inset-inline-start: 97%;
+  width: 2.5px;
+  height: 2.5px;
+  box-shadow: 0 0 6px 1px #2dd4bfa6, -6px 26px 0 0 #8ff5e0b0, -12px 12px 0 0 #c6fff490;
+  animation-duration: 12s;
+  animation-delay: -9s;
+}
+
+/* i4 — a gentle wave line on the bottom edge of the brand area. */
+[data-member-theme='ocean'] .member-theme-art > i:nth-child(4) {
+  bottom: 0;
+  left: 0; /* physical: the loop translates toward -x in both directions */
+  width: calc(100% + 96px);
+  height: 8px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 8'%3E%3Cpath fill='none' stroke='%237ff5e0' stroke-width='1' d='M0 5Q24 1 48 5T96 5'/%3E%3C/svg%3E") 0 0 / 96px 8px repeat-x;
+  opacity: .6;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  animation: ocean-header-wave 10s linear infinite;
+}
+
+/* ── Loader: the crest floats in deep water under drifting caustics ──────────
+   The full-screen loader is the abyss in both appearances (like the chrome);
+   the inline loader sits on the page, so its crest switches to deep teal in light. */
+
+[data-member-theme='ocean'] .member-loading--screen { --mt-loading-text: #a9c6d4; }
+[data-member-theme='ocean'] .member-loading--inline {
+  --mt-loading-crest-fill: linear-gradient(160deg, #0b6b64 10%, #0e7c73 50%, #0a5c78 90%);
+}
+.dark [data-member-theme='ocean'] .member-loading--inline,
+.dark[data-member-theme='ocean'] .member-loading--inline {
+  --mt-loading-crest-fill: linear-gradient(160deg, #d5fff5 8%, #8ff5e0 36%, #3cc4b3 64%, #1b9aa8 86%);
+}
+
+/* i1, i2 — two caustic nets at different scales, drifting against each other. */
+[data-member-theme='ocean'] .member-loading-art > i:nth-child(-n + 2) {
+  inset: -30%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cpath fill='none' stroke='%23a6fff0' stroke-width='1.6' stroke-linecap='round' d='M0 40Q30 18 62 44T124 36T160 40M0 112Q36 92 70 118T128 104T160 112M30 0Q16 38 42 70T26 128T30 160M100 0Q122 30 98 62T114 120T100 160M62 44Q76 66 98 62M42 70Q58 96 70 118M114 120Q132 112 128 104'/%3E%3C/svg%3E") center / 180px 180px repeat;
+  opacity: .16;
+  -webkit-mask-image: radial-gradient(ellipse 50% 40% at 50% 22%, #000 20%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 40% at 50% 22%, #000 20%, transparent 100%);
+  animation: ocean-header-caustic-a 9s linear infinite;
+}
+[data-member-theme='ocean'] .member-loading-art > i:nth-child(2) {
+  background-size: 270px 250px;
+  opacity: .11;
+  animation: ocean-header-caustic-b 12s linear infinite;
+}
+
+/* i3, i4 — bioluminescent motes rising past the crest. */
+[data-member-theme='ocean'] .member-loading-art > i:nth-child(n + 3) {
+  bottom: 8%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c6fff4;
+  opacity: 0;
+  animation: ocean-loader-mote 6s ease-in-out infinite;
+}
+[data-member-theme='ocean'] .member-loading-art > i:nth-child(3) {
+  left: 34%;
+  box-shadow: 0 0 10px 2px #2dd4bfb3, 90px 60px 0 -1px #8ff5e0c0, 90px 60px 8px 0 #2dd4bf55, 40px 140px 0 -1px #a6fff0a0, -50px 90px 0 -1.5px #c6fff490;
+}
+[data-member-theme='ocean'] .member-loading-art > i:nth-child(4) {
+  left: 62%;
+  box-shadow: 0 0 10px 2px #38bdf8a6, -70px 50px 0 -1px #a6f0ffb0, -70px 50px 8px 0 #38bdf84d, 60px 120px 0 -1.5px #8ff5e0a0;
+  animation-duration: 7.5s;
+  animation-delay: -3.2s;
+}
+
+/* The crest floats: a slow bob, with a teal shimmer travelling across the ink. */
+[data-member-theme='ocean'] .member-loading-mark {
+  filter: drop-shadow(0 0 12px #2dd4bf40);
+  animation: ocean-loader-float 5s ease-in-out infinite;
+}
+[data-member-theme='ocean'] .member-loading--inline .member-loading-mark { filter: none; }
+[data-member-theme='ocean'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+}
+[data-member-theme='ocean'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: -20% -70%;
+  background: linear-gradient(100deg, transparent 40%, #e6fffa00 45%, #e6fffab0 50%, #e6fffa00 55%, transparent 60%);
+  opacity: 0;
+  animation: ocean-loader-shimmer 4s 600ms cubic-bezier(.45, .05, .25, 1) infinite;
+}
+
+@keyframes ocean-loader-mote {
+  0% { opacity: 0; transform: translateY(0) scale(.6); }
+  15% { opacity: 1; transform: translateY(-6vh) scale(1); }
+  80% { opacity: .6; }
+  100% { opacity: 0; transform: translate(10px, -55vh) scale(.8); }
+}
+/* Sway: a slow bob with a slight roll, like something suspended in a current. */
+@keyframes ocean-loader-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-1.2deg); }
+  50% { transform: translateY(-7px) rotate(0deg); }
+  75% { transform: translateY(-3px) rotate(1.2deg); }
+}
+@keyframes ocean-loader-shimmer {
+  0% { opacity: 0; transform: translateX(-40%); }
+  15%, 55% { opacity: 1; }
+  70%, 100% { opacity: 0; transform: translateX(40%); }
+}
+
+@keyframes ocean-header-caustic-a {
+  from { transform: rotate(0deg) translateX(22px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(22px) rotate(-360deg); }
+}
+@keyframes ocean-header-caustic-b {
+  from { transform: rotate(0deg) translateX(-26px) rotate(0deg) scale(1.04); }
+  to { transform: rotate(-360deg) translateX(-26px) rotate(360deg) scale(1.04); }
+}
+@keyframes ocean-header-mote {
+  0% { opacity: 0; transform: translate(0, 0) scale(.6); }
+  15% { opacity: 1; transform: translate(2px, -12px) scale(1); }
+  50% { transform: translate(7px, -44px) scale(1.1); }
+  80% { opacity: .7; }
+  100% { opacity: 0; transform: translate(-2px, -90px) scale(.8); }
+}
+@keyframes ocean-header-arrive {
+  from { opacity: 0; transform: translate(-28%, 10px); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ocean-header-arrive-rtl {
+  from { opacity: 0; transform: translate(28%, 10px); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ocean-header-wave {
+  from { transform: translateX(0); }
+  to { transform: translateX(-96px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='ocean'] .premium-header-stone::before,
+  [data-member-theme='ocean'] .premium-header-stone::after,
+  html.member-theme-arrival[data-member-theme='ocean'] .member-theme-art,
+  [data-member-theme='ocean'] .member-theme-art > i,
+  [data-member-theme='ocean'] .member-loading-mark,
+  [data-member-theme='ocean'] .member-loading-art > i,
+  [data-member-theme='ocean'] .member-loading-glint::before {
+    animation: none;
+  }
+  [data-member-theme='ocean'] .member-loading-art > i:nth-child(n + 3) { opacity: .6; transform: translateY(-20vh); }
+  [data-member-theme='ocean'] .member-theme-art > i:nth-child(-n + 3) {
+    opacity: .6;
+    transform: translateY(-28px);
+  }
+}

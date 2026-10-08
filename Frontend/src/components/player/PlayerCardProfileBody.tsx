@@ -1,5 +1,5 @@
 import { showsPremiumStatus } from '@/utils/premiumIdentity';
-import '@/styles/premium-name.css';
+import { PremiumName } from '@/components/PremiumName';
 import type { ReactNode } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -32,6 +32,9 @@ import {
   listEnabledSports,
   resolveProfileCardSport,
 } from '@/utils/profileSports';
+import { animatedAvatarSrc, fallbackToStillAvatar } from '@/utils/animatedAvatar';
+import { publicMemberTheme } from '@/utils/memberShowcase';
+import { MemberProfileBackdrop } from '@/components/premium/MemberProfileBackdrop';
 
 export type PlayerCardProfileTab = 'statistics' | 'chart' | 'groups';
 
@@ -102,6 +105,8 @@ const PlayerCardProfileBodyComponent = ({
   const isOwnProfile = authUserId === user.id;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const isOnline = usePresenceStore((state) => state.isOnline(user.id));
+  // Public showcase: the member's theme (not the viewer's) behind the hero; blocked keeps the red card.
+  const backdropTheme = isBlocked ? null : publicMemberTheme(user);
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const hasTelegram = showTelegram && !!(user.telegramId || (user.telegramUsername && user.telegramUsername.trim()));
   const playStreak = user.playStreak;
@@ -242,6 +247,7 @@ const PlayerCardProfileBodyComponent = ({
         className={`relative min-h-48 rounded-2xl ${isBlocked ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'}`}
         variants={itemVariants}
       >
+        {backdropTheme && <MemberProfileBackdrop theme={backdropTheme} />}
         {isOnline && (
           <span className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-white/95 dark:bg-gray-900/95 px-2 py-0.5 text-xs font-medium shadow border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" aria-hidden />
@@ -253,13 +259,13 @@ const PlayerCardProfileBodyComponent = ({
             {user.originalAvatar ? (
               <button type="button" onClick={onAvatarClick} className="cursor-pointer hover:opacity-90 transition-opacity">
                 {user.avatar ? (
-                  <img src={user.avatar || ''} alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'} className={`w-32 h-32 shrink-0 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
+                  <img src={animatedAvatarSrc(user) || user.avatar || ''} onError={fallbackToStillAvatar(user.avatar)} alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'} className={`w-32 h-32 shrink-0 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
                 ) : (
                   <div className={`w-32 h-32 shrink-0 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
                 )}
               </button>
             ) : user.avatar ? (
-              <img src={user.avatar || ''} alt={`${user.firstName} ${user.lastName}`} className={`w-32 h-32 shrink-0 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
+              <img src={animatedAvatarSrc(user) || user.avatar || ''} onError={fallbackToStillAvatar(user.avatar)} alt={`${user.firstName} ${user.lastName}`} className={`w-32 h-32 shrink-0 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`} />
             ) : (
               <div className={`w-32 h-32 shrink-0 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
             )}
@@ -277,12 +283,13 @@ const PlayerCardProfileBodyComponent = ({
                 <NewcomerRankPill user={user} />
               </div>
             )}
-            <div className={showsPremiumStatus(user) ? 'premium-name-glow' : undefined}>
+            <div>
               <h2 className="text-2xl font-bold break-words">
-                {user.firstName}
+                {/* Hero name on the coloured card: premium style only (a bought colour would fight the gradient). */}
+                {showsPremiumStatus(user) ? <PremiumName user={user} animated tone="dark">{user.firstName}</PremiumName> : user.firstName}
                 {isBlocked && <span className="ms-2 text-lg font-semibold opacity-90">({t('blocked') || 'Blocked'})</span>}
               </h2>
-              {user.lastName && <h3 className="text-xl font-semibold break-words">{user.lastName}</h3>}
+              {user.lastName && <h3 className="text-xl font-semibold break-words">{showsPremiumStatus(user) ? <PremiumName user={user} animated tone="dark">{user.lastName}</PremiumName> : user.lastName}</h3>}
             </div>
             {user.verbalStatus && (
               <div className="mt-0 text-white/90 text-[9px] font-medium">

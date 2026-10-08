@@ -12,6 +12,7 @@ import {
 import { getSportConfig } from '@/sport/sportRegistry';
 import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
 import { sharedIntentDays, sharedIntentTime } from './sharedPlayIntentLabels';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 type Props = {
   intent: SharedPlayIntent;
@@ -60,13 +61,15 @@ export function SharedPlayIntentDialog({
     <Dialog open={open} onOpenChange={onOpenChange} modalId="shared-play-intent">
       <DialogContent
         data-testid="shared-play-intent-dialog"
+        data-member-accent="emerald"
         aria-describedby="shared-play-intent-description"
       >
         <DialogHeader className="border-b border-gray-200 p-5 dark:border-gray-800">
           <div className="flex items-center gap-3">
             {intent.creator.avatar ? (
               <img
-                src={intent.creator.avatar}
+                src={userFaceSrc(intent.creator) ?? undefined}
+                onError={fallbackToStillAvatar(intent.creator.avatar)}
                 alt=""
                 className="h-12 w-12 rounded-full object-cover"
               />

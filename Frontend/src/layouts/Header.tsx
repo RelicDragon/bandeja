@@ -1,4 +1,4 @@
-import { usesPremiumTheme } from '@/utils/mainTheme';
+import { activeMemberTheme } from '@/utils/mainTheme';
 import { useTranslation } from 'react-i18next';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -42,8 +42,9 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const isPremiumTheme = usesPremiumTheme(user);
-  usePremiumNavigationAppearance(isPremiumTheme);
+  const memberTheme = activeMemberTheme(user);
+  const isPremiumTheme = memberTheme !== null;
+  usePremiumNavigationAppearance(memberTheme);
   const reduceMotion = usePrefersReducedMotion();
   // Narrow selectors: whole-store subscriptions re-rendered the header on every
   // write to any of these stores (invite polls, tab animations, chat flags).
@@ -194,6 +195,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
       >
         {isPremiumTheme && (
           <div className="premium-header-stone" aria-hidden="true">
+            <div className="member-theme-art"><i /><i /><i /><i /></div>
             <div className="premium-header-stone-edges" />
           </div>
         )}

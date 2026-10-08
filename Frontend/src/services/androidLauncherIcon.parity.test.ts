@@ -11,7 +11,8 @@ describe('Android launcher icon task topology', () => {
       (match) => match[0],
     );
 
-    expect(aliases).toHaveLength(7);
+    // tiger + 6 sport/racket alternates + 9 member-theme icons.
+    expect(aliases).toHaveLength(16);
     for (const alias of aliases) {
       expect(alias).toContain('android:targetActivity=".LauncherActivity"');
     }

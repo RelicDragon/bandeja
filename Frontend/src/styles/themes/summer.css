@@ -1,0 +1,729 @@
+/* Summer Coast — blazing beach-day chrome (cerulean sky, turquoise sea, sand tab row, a palm frond);
+   dark appearance is a warm summer night (moon path on a deep teal sea, a distant bonfire).
+   Tokens are scoped to the attribute so the theme picker can preview them. */
+
+[data-member-theme='summer'] {
+  /* Palm frond silhouette (one copy per appearance; header, loader and picker read it). */
+  --sum-frond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40'%3E%3Cpath fill='%233f7a5c' d='M104 -4.9 L100.8 -4.8 L97.5 -4.6 L94.3 -4.4 L91 -4 L87.6 -3.5 L84.3 -3 L80.9 -2.4 L77.4 -1.7 L74 -0.9 L70.5 0 L67 1 L63.4 2.1 L59.9 3.3 L56.3 4.5 L52.6 5.9 L49 7.3 L45.3 8.9 L41.5 10.5 L37.8 12.2 L34 14 L34 14 L37.8 12.3 L41.5 10.7 L45.3 9.1 L49 7.7 L52.6 6.3 L56.3 5.1 L59.9 3.9 L63.4 2.8 L67 1.9 L70.5 0.9 L74 0.1 L77.4 -0.6 L80.9 -1.2 L84.3 -1.8 L87.6 -2.2 L91 -2.6 L94.3 -2.8 L97.5 -3 L100.8 -3.1 L104 -3.1ZM100.1 -3.9Q92.3 13.4 87.1 21.8Q94.1 14.4 100.1 -3.9ZM100.1 -3.9Q94.7 8.8 92 15.2Q96.6 9.6 100.1 -3.9ZM95.3 -3.7Q87.8 12.8 82.8 20.7Q89.5 13.7 95.3 -3.7ZM95.3 -3.7Q90.2 8.5 87.9 14.6Q92.1 9.2 95.3 -3.7ZM90.3 -3.2Q83.2 12.4 78.5 19.9Q84.9 13.2 90.3 -3.2ZM90.3 -3.2Q85.7 8.4 83.6 14.2Q87.4 9 90.3 -3.2ZM85.3 -2.5Q78.5 12.1 74.2 19.2Q80.2 13 85.3 -2.5ZM85.3 -2.5Q81 8.4 79.2 14Q82.7 9.1 85.3 -2.5ZM80.2 -1.7Q73.8 12.1 69.8 18.8Q75.4 12.9 80.2 -1.7ZM80.2 -1.7Q76.2 8.7 74.7 13.9Q77.9 9.3 80.2 -1.7ZM75 -0.6Q69.1 12.3 65.3 18.6Q70.6 13.1 75 -0.6ZM75 -0.6Q71.4 9.1 70.1 14.1Q73 9.7 75 -0.6ZM69.8 0.7Q64.2 12.7 60.8 18.6Q65.7 13.5 69.8 0.7ZM69.8 0.7Q66.5 9.8 65.4 14.4Q68.1 10.3 69.8 0.7ZM64.5 2.2Q59.3 13.3 56.2 18.8Q60.7 14 64.5 2.2ZM64.5 2.2Q61.5 10.6 60.6 15Q63 11.1 64.5 2.2ZM59.1 3.8Q54.3 14.1 51.5 19.2Q55.7 14.8 59.1 3.8ZM59.1 3.8Q56.4 11.7 55.7 15.7Q57.9 12.1 59.1 3.8ZM53.7 5.7Q49.3 15.1 46.8 19.8Q50.6 15.8 53.7 5.7ZM53.7 5.7Q51.2 12.9 50.7 16.6Q52.6 13.3 53.7 5.7ZM48.2 7.8Q44.2 16.3 42 20.6Q45.5 16.9 48.2 7.8ZM48.2 7.8Q45.9 14.3 45.6 17.7Q47.3 14.7 48.2 7.8ZM42.7 10.1Q39 17.7 37.1 21.5Q40.2 18.3 42.7 10.1ZM42.7 10.1Q40.6 16 40.4 19Q41.9 16.3 42.7 10.1ZM37 12.6Q33.7 19.3 32.1 22.7Q34.9 19.9 37 12.6ZM37 12.6Q35.2 17.8 35.1 20.5Q36.4 18.1 37 12.6Z'/%3E%3Cpath fill='%231f5a45' d='M104 -0.9 L99.8 -0.6 L95.5 -0.1 L91.3 0.4 L87 1.1 L82.6 1.9 L78.3 2.9 L73.9 4 L69.4 5.2 L65 6.6 L60.5 8.1 L56 9.7 L51.4 11.4 L46.9 13.3 L42.3 15.3 L37.6 17.4 L33 19.7 L28.3 22 L23.5 24.6 L18.8 27.2 L14 30 L14 30 L18.8 27.3 L23.5 24.8 L28.3 22.3 L33 20 L37.6 17.9 L42.3 15.8 L46.9 13.9 L51.4 12.1 L56 10.5 L60.5 8.9 L65 7.6 L69.4 6.3 L73.9 5.2 L78.3 4.2 L82.6 3.3 L87 2.6 L91.3 2 L95.5 1.5 L99.8 1.1 L104 0.9ZM98.9 0.3Q90.1 24.4 84.3 35.9Q92.2 25.3 98.9 0.3ZM98.9 0.3Q92.7 17.8 89.6 26.4Q94.9 18.6 98.9 0.3ZM93.8 0.9Q85.3 23.9 79.7 34.9Q87.4 24.8 93.8 0.9ZM93.8 0.9Q88 17.7 85.2 26Q90.2 18.4 93.8 0.9ZM88.7 1.6Q80.4 23.6 75.1 34.2Q82.5 24.5 88.7 1.6ZM88.7 1.6Q83.2 17.7 80.8 25.7Q85.3 18.4 88.7 1.6ZM83.5 2.5Q75.6 23.5 70.5 33.6Q77.6 24.4 83.5 2.5ZM83.5 2.5Q78.4 18 76.2 25.7Q80.4 18.6 83.5 2.5ZM78.3 3.5Q70.7 23.6 65.9 33.3Q72.6 24.4 78.3 3.5ZM78.3 3.5Q73.5 18.4 71.6 25.7Q75.5 19 78.3 3.5ZM73 4.8Q65.8 23.9 61.2 33.1Q67.6 24.7 73 4.8ZM73 4.8Q68.5 19 66.9 26Q70.5 19.5 73 4.8ZM67.7 6.3Q60.8 24.4 56.5 33.1Q62.6 25.1 67.7 6.3ZM67.7 6.3Q63.5 19.8 62.1 26.5Q65.4 20.3 67.7 6.3ZM62.3 7.9Q55.8 25.1 51.8 33.3Q57.5 25.8 62.3 7.9ZM62.3 7.9Q58.4 20.7 57.3 27.1Q60.3 21.2 62.3 7.9ZM56.9 9.7Q50.7 25.9 47 33.7Q52.4 26.6 56.9 9.7ZM56.9 9.7Q53.3 21.8 52.3 27.9Q55.1 22.3 56.9 9.7ZM51.4 11.8Q45.6 26.9 42.2 34.3Q47.3 27.6 51.4 11.8ZM51.4 11.8Q48.1 23.2 47.3 28.8Q49.9 23.6 51.4 11.8ZM45.9 14Q40.5 28.2 37.3 35.1Q42.1 28.8 45.9 14ZM45.9 14Q42.9 24.7 42.3 30Q44.6 25.1 45.9 14ZM40.4 16.4Q35.3 29.6 32.4 36.1Q36.9 30.2 40.4 16.4ZM40.4 16.4Q37.6 26.3 37.1 31.3Q39.2 26.7 40.4 16.4ZM34.8 18.9Q30.1 31.2 27.5 37.2Q31.6 31.8 34.8 18.9ZM34.8 18.9Q32.2 28.2 31.9 32.8Q33.8 28.5 34.8 18.9ZM29.2 21.7Q24.8 33 22.5 38.6Q26.2 33.6 29.2 21.7ZM29.2 21.7Q26.8 30.2 26.6 34.5Q28.4 30.6 29.2 21.7ZM23.5 24.7Q19.5 35 17.4 40.1Q20.9 35.5 23.5 24.7ZM23.5 24.7Q21.4 32.5 21.3 36.4Q22.8 32.8 23.5 24.7ZM17.8 27.8Q14.1 37.1 12.3 41.8Q15.5 37.7 17.8 27.8ZM17.8 27.8Q15.8 34.9 15.9 38.5Q17.3 35.2 17.8 27.8Z'/%3E%3C/svg%3E");
+  --ui-page-background: #fbf9f4;
+  --ui-background: #fbf9f4;
+  --ui-surface: #ffffff;
+
+  /* Sun-warmed sand neutrals; 500+ stay AA on white. */
+  --color-gray-50: #fbf9f4;
+  --color-gray-100: #f6f1e6;
+  --color-gray-200: #ebe2d2;
+  --color-gray-300: #d6c9b3;
+  --color-gray-400: #ad9f88;
+  --color-gray-500: #786d5d;
+  --color-gray-600: #5e5548;
+  --color-gray-700: #443d33;
+  --color-gray-800: #2b2620;
+  --color-gray-900: #1b1814;
+  --color-gray-950: #100e0b;
+
+  /* Hot coral; 600+ AA on white. */
+  --member-primary-default: #b8391e;
+  --member-primary-50: #fff3ef;
+  --member-primary-100: #ffe2d8;
+  --member-primary-200: #ffc3b0;
+  --member-primary-300: #ff9b7f;
+  --member-primary-400: #fb7452;
+  --member-primary-500: #e55233;
+  --member-primary-600: #b8391e;
+  --member-primary-700: #9a301b;
+  --member-primary-800: #7e2a1a;
+  --member-primary-900: #682518;
+  --member-primary-950: #3c0f08;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 78% -30%, #fff6d0b0, transparent 50%),
+    linear-gradient(180deg, #8ad6f5, #d3f1f8 52%, #f9efda);
+  --mt-chrome-text: #0b2a3a;
+  --mt-chrome-muted: #4a5a5c;
+  --mt-chrome-border: #2fb3c459;
+  --mt-chrome-accent: #b8391e;
+  --mt-chrome-accent-soft: #fb745224;
+  --mt-chrome-hairline: linear-gradient(90deg, #18a0a814, #18a0a8cc 30%, #fb7452cc 66%, #f3c06a33);
+  --mt-chrome-shadow: 0 6px 22px #0b3a4a17;
+  --mt-chrome-button-bg: #ffffffa6;
+  --mt-chrome-edges: #e9f8fc40;
+  --mt-cta-bg: linear-gradient(135deg, #c94a26, #a8321c 78%);
+  --mt-cta-text: #ffffff;
+  --mt-cta-border: #8a2a1666;
+  --mt-badge-bg: #0c6f78;
+  --mt-badge-text: #ffffff;
+
+  --mt-brand-fill: linear-gradient(165deg, #d9541f 10%, #b8391e 40%, #0c6f78 62%, #0b4f6c 92%);
+  --mt-brand-font: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+  --mt-brand-tier-text: #0b3f52;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #ffffffc0);
+  --mt-brand-plate: #fffcf4e0;
+
+  --chat-paper: #fcf7ec;
+  --chat-panel: #ffffff;
+  --chat-line: #d6b77a40;
+  --chat-selection: #2fb3c414;
+  --chat-selection-edge: #0c6f78;
+  --mt-bubble-own: linear-gradient(145deg, #117a85, #0c6370 82%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #11717c, #0a4c58 82%);
+  /* Pale sand: fine grains and a hint of sea glass in the corner. */
+  --mt-chat-backdrop:
+    radial-gradient(circle at 20% 30%, #b8945a14 0 .8px, transparent 1.3px) 0 0 / 23px 19px,
+    radial-gradient(circle at 70% 70%, #b8945a10 0 .7px, transparent 1.2px) 0 0 / 31px 27px,
+    radial-gradient(ellipse at 100% 0%, #a6e9ea33, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #ffd9a333, transparent 55%);
+
+  --mt-preview-bg:
+    var(--sum-frond) 104% -4% / 44% auto no-repeat,
+    radial-gradient(ellipse 30% 14% at 50% 79%, #ffffffb0, transparent 70%),
+    linear-gradient(transparent 76%, #eaf9f6 76% 78%, transparent 78%),
+    linear-gradient(180deg, #1c9fc4, #3fd0cf) 0 100% / 100% 24% no-repeat,
+    radial-gradient(circle at 70% 26%, #fffef4 0 5px, #fff2b0d0 7px, #ffe58a40 14px, transparent 26px),
+    linear-gradient(180deg, #2fb0ec, #6ccbf2 50%, #b5e6f6);
+}
+
+.dark[data-member-theme='summer'],
+.dark [data-member-theme='summer'] {
+  --sum-frond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40'%3E%3Cpath fill='%23143640' d='M104 -4.9 L100.8 -4.8 L97.5 -4.6 L94.3 -4.4 L91 -4 L87.6 -3.5 L84.3 -3 L80.9 -2.4 L77.4 -1.7 L74 -0.9 L70.5 0 L67 1 L63.4 2.1 L59.9 3.3 L56.3 4.5 L52.6 5.9 L49 7.3 L45.3 8.9 L41.5 10.5 L37.8 12.2 L34 14 L34 14 L37.8 12.3 L41.5 10.7 L45.3 9.1 L49 7.7 L52.6 6.3 L56.3 5.1 L59.9 3.9 L63.4 2.8 L67 1.9 L70.5 0.9 L74 0.1 L77.4 -0.6 L80.9 -1.2 L84.3 -1.8 L87.6 -2.2 L91 -2.6 L94.3 -2.8 L97.5 -3 L100.8 -3.1 L104 -3.1ZM100.1 -3.9Q92.3 13.4 87.1 21.8Q94.1 14.4 100.1 -3.9ZM100.1 -3.9Q94.7 8.8 92 15.2Q96.6 9.6 100.1 -3.9ZM95.3 -3.7Q87.8 12.8 82.8 20.7Q89.5 13.7 95.3 -3.7ZM95.3 -3.7Q90.2 8.5 87.9 14.6Q92.1 9.2 95.3 -3.7ZM90.3 -3.2Q83.2 12.4 78.5 19.9Q84.9 13.2 90.3 -3.2ZM90.3 -3.2Q85.7 8.4 83.6 14.2Q87.4 9 90.3 -3.2ZM85.3 -2.5Q78.5 12.1 74.2 19.2Q80.2 13 85.3 -2.5ZM85.3 -2.5Q81 8.4 79.2 14Q82.7 9.1 85.3 -2.5ZM80.2 -1.7Q73.8 12.1 69.8 18.8Q75.4 12.9 80.2 -1.7ZM80.2 -1.7Q76.2 8.7 74.7 13.9Q77.9 9.3 80.2 -1.7ZM75 -0.6Q69.1 12.3 65.3 18.6Q70.6 13.1 75 -0.6ZM75 -0.6Q71.4 9.1 70.1 14.1Q73 9.7 75 -0.6ZM69.8 0.7Q64.2 12.7 60.8 18.6Q65.7 13.5 69.8 0.7ZM69.8 0.7Q66.5 9.8 65.4 14.4Q68.1 10.3 69.8 0.7ZM64.5 2.2Q59.3 13.3 56.2 18.8Q60.7 14 64.5 2.2ZM64.5 2.2Q61.5 10.6 60.6 15Q63 11.1 64.5 2.2ZM59.1 3.8Q54.3 14.1 51.5 19.2Q55.7 14.8 59.1 3.8ZM59.1 3.8Q56.4 11.7 55.7 15.7Q57.9 12.1 59.1 3.8ZM53.7 5.7Q49.3 15.1 46.8 19.8Q50.6 15.8 53.7 5.7ZM53.7 5.7Q51.2 12.9 50.7 16.6Q52.6 13.3 53.7 5.7ZM48.2 7.8Q44.2 16.3 42 20.6Q45.5 16.9 48.2 7.8ZM48.2 7.8Q45.9 14.3 45.6 17.7Q47.3 14.7 48.2 7.8ZM42.7 10.1Q39 17.7 37.1 21.5Q40.2 18.3 42.7 10.1ZM42.7 10.1Q40.6 16 40.4 19Q41.9 16.3 42.7 10.1ZM37 12.6Q33.7 19.3 32.1 22.7Q34.9 19.9 37 12.6ZM37 12.6Q35.2 17.8 35.1 20.5Q36.4 18.1 37 12.6Z'/%3E%3Cpath fill='%23020a10' d='M104 -0.9 L99.8 -0.6 L95.5 -0.1 L91.3 0.4 L87 1.1 L82.6 1.9 L78.3 2.9 L73.9 4 L69.4 5.2 L65 6.6 L60.5 8.1 L56 9.7 L51.4 11.4 L46.9 13.3 L42.3 15.3 L37.6 17.4 L33 19.7 L28.3 22 L23.5 24.6 L18.8 27.2 L14 30 L14 30 L18.8 27.3 L23.5 24.8 L28.3 22.3 L33 20 L37.6 17.9 L42.3 15.8 L46.9 13.9 L51.4 12.1 L56 10.5 L60.5 8.9 L65 7.6 L69.4 6.3 L73.9 5.2 L78.3 4.2 L82.6 3.3 L87 2.6 L91.3 2 L95.5 1.5 L99.8 1.1 L104 0.9ZM98.9 0.3Q90.1 24.4 84.3 35.9Q92.2 25.3 98.9 0.3ZM98.9 0.3Q92.7 17.8 89.6 26.4Q94.9 18.6 98.9 0.3ZM93.8 0.9Q85.3 23.9 79.7 34.9Q87.4 24.8 93.8 0.9ZM93.8 0.9Q88 17.7 85.2 26Q90.2 18.4 93.8 0.9ZM88.7 1.6Q80.4 23.6 75.1 34.2Q82.5 24.5 88.7 1.6ZM88.7 1.6Q83.2 17.7 80.8 25.7Q85.3 18.4 88.7 1.6ZM83.5 2.5Q75.6 23.5 70.5 33.6Q77.6 24.4 83.5 2.5ZM83.5 2.5Q78.4 18 76.2 25.7Q80.4 18.6 83.5 2.5ZM78.3 3.5Q70.7 23.6 65.9 33.3Q72.6 24.4 78.3 3.5ZM78.3 3.5Q73.5 18.4 71.6 25.7Q75.5 19 78.3 3.5ZM73 4.8Q65.8 23.9 61.2 33.1Q67.6 24.7 73 4.8ZM73 4.8Q68.5 19 66.9 26Q70.5 19.5 73 4.8ZM67.7 6.3Q60.8 24.4 56.5 33.1Q62.6 25.1 67.7 6.3ZM67.7 6.3Q63.5 19.8 62.1 26.5Q65.4 20.3 67.7 6.3ZM62.3 7.9Q55.8 25.1 51.8 33.3Q57.5 25.8 62.3 7.9ZM62.3 7.9Q58.4 20.7 57.3 27.1Q60.3 21.2 62.3 7.9ZM56.9 9.7Q50.7 25.9 47 33.7Q52.4 26.6 56.9 9.7ZM56.9 9.7Q53.3 21.8 52.3 27.9Q55.1 22.3 56.9 9.7ZM51.4 11.8Q45.6 26.9 42.2 34.3Q47.3 27.6 51.4 11.8ZM51.4 11.8Q48.1 23.2 47.3 28.8Q49.9 23.6 51.4 11.8ZM45.9 14Q40.5 28.2 37.3 35.1Q42.1 28.8 45.9 14ZM45.9 14Q42.9 24.7 42.3 30Q44.6 25.1 45.9 14ZM40.4 16.4Q35.3 29.6 32.4 36.1Q36.9 30.2 40.4 16.4ZM40.4 16.4Q37.6 26.3 37.1 31.3Q39.2 26.7 40.4 16.4ZM34.8 18.9Q30.1 31.2 27.5 37.2Q31.6 31.8 34.8 18.9ZM34.8 18.9Q32.2 28.2 31.9 32.8Q33.8 28.5 34.8 18.9ZM29.2 21.7Q24.8 33 22.5 38.6Q26.2 33.6 29.2 21.7ZM29.2 21.7Q26.8 30.2 26.6 34.5Q28.4 30.6 29.2 21.7ZM23.5 24.7Q19.5 35 17.4 40.1Q20.9 35.5 23.5 24.7ZM23.5 24.7Q21.4 32.5 21.3 36.4Q22.8 32.8 23.5 24.7ZM17.8 27.8Q14.1 37.1 12.3 41.8Q15.5 37.7 17.8 27.8ZM17.8 27.8Q15.8 34.9 15.9 38.5Q17.3 35.2 17.8 27.8Z'/%3E%3C/svg%3E");
+  --ui-page-background: #0f1517;
+  --ui-background: #0a0f11;
+  --ui-surface: #1a2225;
+
+  --member-primary-default: #ff9b7f;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 80% -30%, #f6ead214, transparent 50%),
+    linear-gradient(178deg, #071a2e, #0c2a3e 58%, #1d2a30);
+  --mt-chrome-text: #f3ece2;
+  --mt-chrome-muted: #a9bec2;
+  --mt-chrome-border: #6dd7da2e;
+  --mt-chrome-accent: #ffa585;
+  --mt-chrome-accent-soft: #ffa5851c;
+  --mt-chrome-hairline: linear-gradient(90deg, #6dd7da10, #6dd7da99 30%, #ff9b7f8c 66%, #ffc46a18);
+  --mt-chrome-shadow: 0 8px 26px #0008;
+  --mt-chrome-button-bg: #ffffff0d;
+  --mt-chrome-edges: #0a1d3099;
+  --mt-cta-bg: linear-gradient(135deg, #ffc2a8, #ff8a63 72%);
+  --mt-cta-text: #3c0f08;
+  --mt-cta-border: #ffd9c866;
+  --mt-badge-bg: #6dd7da;
+  --mt-badge-text: #062a30;
+
+  --mt-brand-fill: linear-gradient(165deg, #ffd29a 10%, #ff9b6a 40%, #6fe0dc 62%, #c4f4f0 92%);
+  --mt-brand-tier-text: #c6d8d8;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #000a);
+  --mt-brand-plate: #081a2cd6;
+
+  --chat-paper: #12171a;
+  --chat-panel: #1d2427;
+  --chat-line: #6dd7da26;
+  --chat-selection: #6dd7da12;
+  --chat-selection-edge: #6dd7da;
+  --mt-chat-backdrop:
+    radial-gradient(circle at 20% 30%, #ffffff08 0 .8px, transparent 1.3px) 0 0 / 23px 19px,
+    radial-gradient(ellipse at 100% 0%, #f6ead20c, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #0c3a4466, transparent 60%);
+
+  --mt-preview-bg:
+    var(--sum-frond) 104% -4% / 44% auto no-repeat,
+    radial-gradient(circle at 62% 74%, #ffb25a 0 1.2px, #ff8a3a59 3px, transparent 6px),
+    linear-gradient(90deg, transparent 69%, #f6ead259 70% 72%, transparent 73%) 0 100% / 100% 22% no-repeat,
+    linear-gradient(180deg, #0b3a44, #0f4c55) 0 100% / 100% 24% no-repeat,
+    radial-gradient(circle at 71% 26%, #fbf3df 0 4px, #f6ead2a0 5px, #f6ead226 11px, transparent 22px),
+    radial-gradient(circle at 18% 22%, #fff 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 42% 12%, #fff 0 .6px, transparent 1.2px),
+    linear-gradient(180deg, #06162a, #0c2a3e 70%, #12394a);
+}
+
+/* Fine-tuning tokens, set explicitly so a picker tile never inherits another theme's values. */
+[data-member-theme='summer'] {
+  --mt-chrome-button-text: #0b3f52;
+  --mt-chrome-button-hover: #2fb3c41f;
+  --mt-chrome-focus: #b8391e;
+  --mt-chrome-focus-halo: #ffffff;
+  --mt-chrome-tab-text: #5a4b36;
+  --mt-chrome-tab-active: #9a301b;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #fb745266, inset 0 1px 0 #ffffffb0;
+  --mt-chrome-profile: #b8391e;
+  --mt-chrome-profile-ring: 0 0 0 1px #fb7452a6, 0 0 0 4px #fb745214;
+  /* The tab row is the beach: warm sand under a foam line. */
+  --mt-chrome-controls-bg:
+    radial-gradient(circle at 30% 40%, #c49a5a1c 0 .8px, transparent 1.3px) 0 0 / 17px 11px,
+    linear-gradient(#f9edd2, #f6e6c6);
+  --mt-chrome-controls-border: #ffffffe0;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #bfeef0, inset 0 2px 3px #c49a5a1f;
+  --mt-cta-shadow: inset 0 1px 0 #ffffff4d, 0 2px 6px #8a2a1633;
+  --mt-tabbar-border: #d6b77a73;
+  --mt-tabbar-shadow: inset 0 1px 0 #ffffffc0, 0 8px 26px #0b3a4a1f;
+  --mt-tabbar-hover: #0b2a3a;
+  --mt-tabbar-icon-glow: none;
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #fb74522b, transparent 80%), linear-gradient(#ffffff80, #ffffff1a);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #ffffffc0;
+  --mt-badge-ring: 0 0 0 2px #fbf3e3;
+  --mt-brand-dash: #2fb3c4;
+
+  --mt-chat-header-bg: radial-gradient(ellipse at 80% -40%, #fff6d0b0, transparent 55%), linear-gradient(180deg, #c4ecf8, #f7efdc);
+  --mt-chat-header-shadow: inset 0 -1px 0 #2fb3c440, 0 4px 16px #0b3a4a12;
+  --mt-chat-header-text: #0b2a3a;
+  --mt-chat-header-muted: #3f5558;
+  --mt-chat-header-subtle: #9a301b;
+  --mt-chat-header-hover: #2fb3c41f;
+  --mt-chat-header-focus: #b8391e;
+  --mt-chat-cta-bg: linear-gradient(135deg, #c94a26, #a8321c 78%);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff4d, 0 2px 6px #8a2a162e;
+  --mt-chat-meta: #786d5d;
+  --mt-chat-meta-dark: #ad9f88;
+  --mt-chat-input-shadow: inset 0 1px 0 #ffffff, 0 4px 20px #0b3a4a12;
+  --mt-chat-scroll-ring: #2fb3c480;
+}
+
+.dark[data-member-theme='summer'],
+.dark [data-member-theme='summer'] {
+  --mt-chrome-button-text: #ecf3f2;
+  --mt-chrome-button-hover: #6dd7da17;
+  --mt-chrome-focus: #ffa585;
+  --mt-chrome-focus-halo: #071a2e;
+  --mt-chrome-tab-text: #c2b39c;
+  --mt-chrome-tab-active: #ffc2a8;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #ffa5854d, inset 0 1px 0 #ffffff12;
+  --mt-chrome-profile: #ffc2a8;
+  --mt-chrome-profile-ring: 0 0 0 1px #ffa58599, 0 0 0 4px #ffa58510;
+  /* Night beach: the sand keeps its warmth under a faint moonlit foam line. */
+  --mt-chrome-controls-bg:
+    radial-gradient(circle at 30% 40%, #ffd9a00d 0 .8px, transparent 1.3px) 0 0 / 17px 11px,
+    linear-gradient(#2a241d, #221d18);
+  --mt-chrome-controls-border: #bfeef04d;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #6dd7da1a;
+  --mt-cta-shadow: inset 0 1px 0 #ffffff66, 0 2px 6px #0007;
+  --mt-tabbar-border: #c2a07a33;
+  --mt-tabbar-shadow: inset 0 1px 0 #ffffff10, 0 8px 28px #0007;
+  --mt-tabbar-hover: #f3ece2;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #ffa58540);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #ffa58524, transparent 80%), linear-gradient(#ffffff0a, #ffffff03);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #ffffff12;
+  --mt-badge-ring: 0 0 0 2px #0c2a3e;
+  --mt-brand-dash: #6dd7da99;
+
+  --mt-chat-header-bg: radial-gradient(ellipse at 80% -40%, #f6ead214, transparent 55%), linear-gradient(178deg, #071a2e, #0c2a3e 70%);
+  --mt-chat-header-shadow: inset 0 1px 0 #ffffff0d, 0 4px 16px #0006;
+  --mt-chat-header-text: #f3ece2;
+  --mt-chat-header-muted: #a9bec2;
+  --mt-chat-header-subtle: #ffb89c;
+  --mt-chat-header-hover: #6dd7da17;
+  --mt-chat-header-focus: #ffa585;
+  --mt-chat-cta-bg: linear-gradient(135deg, #ffc2a8, #ff8a63 72%);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff66, 0 2px 6px #0006;
+  --mt-chat-meta: #786d5d;
+  --mt-chat-meta-dark: #b3a691;
+  --mt-chat-input-shadow: inset 0 1px 0 #ffffff0a, 0 4px 20px #0005;
+  --mt-chat-scroll-ring: #6dd7da80;
+}
+
+/* Chat palette: turquoise, matching the sea-glass bubble. */
+[data-member-theme='summer'] .premium-chat,
+[data-member-theme='summer'].premium-chat {
+  --color-blue-50: #edfbfb;
+  --color-blue-100: #d1f4f4;
+  --color-blue-200: #a6e9ea;
+  --color-blue-300: #6dd7da;
+  --color-blue-400: #34bcc2;
+  --color-blue-500: #18a0a8;
+  --color-blue-600: #0c6f78;
+  --color-blue-700: #0e5f68;
+  --color-blue-800: #13535a;
+  --color-blue-900: #14454c;
+  --color-blue-950: #062a30;
+}
+
+/* ── Header art ─────────────────────────────────────────────────────────────
+   Signature (light): waves roll in along the bottom of the art (crests sliding, a shore-break
+   line arriving and foaming out), heat haze shivers under the blazing sun, a gull glides past,
+   a palm frond sways at the edge. Signature (night): the moon path glitters on the sea and a
+   distant bonfire flickers on the far spit. Arrival (one-shot, 1.4s, gated): the sun flares up
+   while one long wave sweeps across. All of it stops under reduced motion. */
+
+[data-member-theme='summer'] .premium-header-stone {
+  --sum-x: 67.5%;
+  background:
+    linear-gradient(180deg, #ffffffb0, #ffffff00) 0 calc(100% - 14px) / 100% 2px no-repeat,
+    linear-gradient(180deg, #1b9cc6, #26b6cb 45%, #44d0cf) 0 100% / 100% 15px no-repeat,
+    linear-gradient(180deg, #31b2ec, #5fc5f0 50%, #a8e2f6);
+}
+.dark [data-member-theme='summer'] .premium-header-stone,
+.dark[data-member-theme='summer'] .premium-header-stone {
+  --sum-x: 70.5%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 6' preserveAspectRatio='none'%3E%3Cpath fill='%23040b14' d='M222 6Q236 1 262 2.4T300 6Z'/%3E%3C/svg%3E") 0 calc(100% - 14px) / 100% 6px no-repeat,
+    linear-gradient(180deg, #0a3240, #0d4450 55%, #145560) 0 100% / 100% 15px no-repeat,
+    radial-gradient(circle at 18% 20%, #ffffffa0 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 38% 8%, #ffffff80 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 56% 26%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 92% 14%, #ffffffa0 0 .7px, transparent 1.3px),
+    linear-gradient(180deg, #06162a, #0b2438 60%, #11374a);
+}
+
+/* The sun: blazing white-gold with a wide bloom (night: the moon). */
+[data-member-theme='summer'] .premium-header-stone::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--sum-x) - 70px);
+  top: calc(env(safe-area-inset-top, 0px) - 52px);
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, #fffef6 0 10px, #fff6c4 12px, #ffe58ab3 18px, #ffd76a40 34px, #ffe9a014 52px, transparent 70px);
+  animation: summer-sun-pulse 12s ease-in-out infinite alternate;
+}
+.dark [data-member-theme='summer'] .premium-header-stone::before,
+.dark[data-member-theme='summer'] .premium-header-stone::before {
+  background: radial-gradient(circle, #fbf3df 0 6px, #f6ead2c0 7px, #f6ead233 14px, #9ed2ef14 32px, transparent 54px);
+}
+html.member-theme-arrival[data-member-theme='summer'] .premium-header-stone::before {
+  animation:
+    summer-sun-flare 1.4s cubic-bezier(.2, .7, .2, 1) both,
+    summer-sun-pulse 12s 1.4s ease-in-out infinite alternate;
+}
+
+/* Palm frond hanging in from the trailing edge, swaying in the sea breeze. */
+[data-member-theme='summer'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: calc(env(safe-area-inset-top, 0px) - 8px);
+  width: 118px;
+  height: 47px;
+  background: var(--sum-frond) center / contain no-repeat;
+  opacity: .9;
+  transform-origin: 100% 0;
+  animation: summer-frond-sway 11s ease-in-out infinite alternate;
+}
+[dir='rtl'] [data-member-theme='summer'] .premium-header-stone::after,
+[dir='rtl'][data-member-theme='summer'] .premium-header-stone::after {
+  right: auto;
+  left: -6px;
+  scale: -1 1;
+  /* Mirror in place; the sway then pivots at the top centre. */
+  transform-origin: 50% 0;
+}
+.dark [data-member-theme='summer'] .premium-header-stone::after,
+.dark[data-member-theme='summer'] .premium-header-stone::after {
+  opacity: 1;
+}
+
+/* Arrival only: one long wave sweeps the sea band. */
+[data-member-theme='summer'] .member-theme-art::before {
+  content: '';
+  position: absolute;
+  inset-inline: -60%;
+  bottom: 2px;
+  height: 10px;
+  background: linear-gradient(90deg, transparent 38%, #ffffff00 42%, #ffffffd9 50%, #ffffff00 56%, transparent 60%);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 10'%3E%3Cpath d='M0 6Q10 1 20 5T40 6V10H0Z'/%3E%3C/svg%3E") 0 0 / 40px 10px repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 10'%3E%3Cpath d='M0 6Q10 1 20 5T40 6V10H0Z'/%3E%3C/svg%3E") 0 0 / 40px 10px repeat-x;
+  opacity: 0;
+}
+.dark [data-member-theme='summer'] .member-theme-art::before,
+.dark[data-member-theme='summer'] .member-theme-art::before {
+  background: linear-gradient(90deg, transparent 40%, #bfeef066 50%, transparent 58%);
+}
+html.member-theme-arrival[data-member-theme='summer'] .member-theme-art::before {
+  animation: summer-wave-sweep 1.4s .1s cubic-bezier(.45, 0, .25, 1) both;
+}
+
+/* Shore foam: a lacy band at the waterline that swells and thins with each set. */
+[data-member-theme='summer'] .member-theme-art::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 4px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 4'%3E%3Cpath fill='%23ffffff' d='M0 4V2Q4 0 8 1.6T16 1.2T25 2T34 .8T46 2V4Z'/%3E%3C/svg%3E") 0 100% / 46px 4px repeat-x;
+  opacity: .85;
+  transform-origin: 50% 100%;
+  animation: summer-foam-wash 9s ease-in-out infinite;
+}
+.dark [data-member-theme='summer'] .member-theme-art::after,
+.dark[data-member-theme='summer'] .member-theme-art::after {
+  opacity: .3;
+}
+
+[data-member-theme='summer'] .member-theme-art > i {
+  will-change: transform, opacity;
+}
+/* Slots 1–2: wave crests. 1 slides along the swell (seamless 96px tile); 2 is the shore break rolling in. */
+[data-member-theme='summer'] .member-theme-art > i:nth-child(1) {
+  left: 0;
+  bottom: 6px;
+  width: calc(100% + 96px);
+  height: 6px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 6'%3E%3Cg fill='none' stroke='%23ffffff' stroke-linecap='round'%3E%3Cpath stroke-width='1.1' d='M4 4Q11 1 19 3.4'/%3E%3Cpath stroke-width='.9' d='M42 2.6Q48 .6 55 2.2'/%3E%3Cpath stroke-width='1' d='M70 4.6Q78 2 87 4'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 96px 6px repeat-x;
+  opacity: .75;
+  animation: summer-swell 15s linear infinite;
+}
+[data-member-theme='summer'] .member-theme-art > i:nth-child(2) {
+  inset-inline: 0;
+  bottom: 2px;
+  height: 6px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 6'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='1.3' stroke-linecap='round' d='M-1 4Q8 1 17 3.2T35 3T51 2.6T61 3.6'/%3E%3C/svg%3E") 0 0 / 60px 6px repeat-x;
+  opacity: 0;
+  animation: summer-shore-break 9s ease-in-out infinite;
+}
+/* Slot 3: a gull gliding across the sky with a lazy wing flex. */
+[data-member-theme='summer'] .member-theme-art > i:nth-child(3) {
+  left: 0;
+  top: calc(env(safe-area-inset-top, 0px) + 2px);
+  width: 17px;
+  height: 8px;
+  opacity: 0;
+  animation: summer-gull-glide 24s 2s linear infinite;
+}
+[data-member-theme='summer'] .member-theme-art > i:nth-child(3)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 10'%3E%3Cpath fill='%23243a48' d='M0 4.2Q5 .4 10.2 4.4L12 5.8L13.8 4.4Q19 .4 24 4.2Q19 2.8 14.2 6.6L12 8.2L9.8 6.6Q5 2.8 0 4.2Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform-origin: 50% 60%;
+  animation: summer-gull-flex 3.2s ease-in-out infinite;
+}
+/* Slot 4: heat haze shivering under the sun. */
+[data-member-theme='summer'] .member-theme-art > i:nth-child(4) {
+  left: calc(var(--sum-x) - 26px);
+  top: calc(env(safe-area-inset-top, 0px) + 22px);
+  width: 52px;
+  height: 14px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 14'%3E%3Cg fill='none' stroke='%23ffffff' stroke-linecap='round'%3E%3Cpath stroke-width='.9' d='M6 3Q12 1 18 3T30 3T44 3'/%3E%3Cpath stroke-width='.7' d='M12 8Q17 6 22 8T32 8T40 8'/%3E%3Cpath stroke-width='.6' d='M18 12.4Q22 11 26 12.4T34 12.4'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: .35;
+  animation: summer-heat-haze 8s ease-in-out infinite alternate;
+}
+
+/* Summer night: no gull or haze; a bonfire on the far spit and the moon path on the water. */
+.dark [data-member-theme='summer'] .member-theme-art > i:nth-child(1),
+.dark[data-member-theme='summer'] .member-theme-art > i:nth-child(1) { opacity: .28; }
+.dark [data-member-theme='summer'] .member-theme-art > i:nth-child(3),
+.dark[data-member-theme='summer'] .member-theme-art > i:nth-child(3) {
+  left: calc(63% - 8px);
+  top: auto;
+  bottom: 14px;
+  width: 16px;
+  height: 12px;
+  background: radial-gradient(ellipse 50% 46% at 50% 82%, #fff1c0 0 8%, #ffb25a 18%, #ff7a2e80 34%, #ff6a2a26 60%, transparent 80%);
+  opacity: 1;
+  transform-origin: 50% 100%;
+  animation: summer-bonfire 8s ease-in-out infinite;
+}
+.dark [data-member-theme='summer'] .member-theme-art > i:nth-child(3)::before,
+.dark[data-member-theme='summer'] .member-theme-art > i:nth-child(3)::before {
+  inset: auto 6px -10px;
+  height: 9px;
+  background: linear-gradient(90deg, transparent, #ffb25a73 40% 60%, transparent);
+  -webkit-mask: repeating-linear-gradient(180deg, #000 0 1px, transparent 1px 2.5px);
+  mask: repeating-linear-gradient(180deg, #000 0 1px, transparent 1px 2.5px);
+  animation: none;
+}
+.dark [data-member-theme='summer'] .member-theme-art > i:nth-child(4),
+.dark[data-member-theme='summer'] .member-theme-art > i:nth-child(4) {
+  left: calc(var(--sum-x) - 12px);
+  top: auto;
+  bottom: 1px;
+  width: 24px;
+  height: 13px;
+  background:
+    linear-gradient(90deg, transparent, #f6ead2 30% 70%, transparent) 50% 0 / 16px 1px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead2b0 30% 70%, transparent) 40% 3px / 10px 1px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead2d0 30% 70%, transparent) 62% 6px / 14px 1px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead290 30% 70%, transparent) 46% 9px / 20px 1px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead2b0 30% 70%, transparent) 56% 12px / 12px 1px no-repeat;
+  opacity: .9;
+  animation: summer-moon-glitter 8s ease-in-out infinite;
+}
+.dark [data-member-theme='summer'] .member-theme-art > i:nth-child(4)::before,
+.dark[data-member-theme='summer'] .member-theme-art > i:nth-child(4)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 20%, #fffbe8 0 .7px, transparent 1.2px),
+    radial-gradient(circle at 70% 45%, #fffbe8 0 .7px, transparent 1.2px),
+    radial-gradient(circle at 44% 70%, #fffbe8 0 .7px, transparent 1.2px),
+    radial-gradient(circle at 60% 92%, #fffbe8 0 .7px, transparent 1.2px);
+  animation: summer-moon-glitter 8s -4s ease-in-out infinite;
+}
+
+@keyframes summer-sun-pulse {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.12); opacity: .86; }
+}
+@keyframes summer-sun-flare {
+  0% { transform: scale(.45); opacity: 0; }
+  55% { transform: scale(1.22); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes summer-frond-sway {
+  0% { transform: rotate(-2.5deg); }
+  40% { transform: rotate(1.5deg); }
+  70% { transform: rotate(-.5deg); }
+  100% { transform: rotate(3deg); }
+}
+@keyframes summer-wave-sweep {
+  0% { transform: translate3d(-35%, 0, 0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translate3d(35%, 0, 0); opacity: 0; }
+}
+@keyframes summer-foam-wash {
+  0%, 100% { transform: scaleY(.55); opacity: .55; }
+  30% { transform: scaleY(1.15); opacity: .95; }
+  55% { transform: scaleY(.8); opacity: .75; }
+}
+@keyframes summer-swell {
+  0% { transform: translate3d(-96px, 0, 0); }
+  50% { transform: translate3d(-48px, 1px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes summer-shore-break {
+  0% { transform: translate3d(0, -6px, 0) scaleX(1); opacity: 0; }
+  30% { opacity: .9; }
+  62% { transform: translate3d(-4px, 1px, 0) scaleX(1.02); opacity: .8; }
+  80%, 100% { transform: translate3d(-6px, 3px, 0) scaleX(1.03); opacity: 0; }
+}
+@keyframes summer-gull-glide {
+  0% { transform: translate3d(-30px, 6px, 0); opacity: 0; }
+  6% { opacity: .85; }
+  30% { transform: translate3d(30vw, 1px, 0); }
+  55% { transform: translate3d(55vw, 5px, 0); }
+  80% { transform: translate3d(80vw, -1px, 0); }
+  90% { opacity: .85; }
+  96%, 100% { transform: translate3d(calc(100vw + 30px), 3px, 0); opacity: 0; }
+}
+@keyframes summer-gull-flex {
+  0%, 60%, 100% { transform: scaleY(1); }
+  72% { transform: scaleY(.55); }
+  84% { transform: scaleY(1.1); }
+}
+@keyframes summer-heat-haze {
+  0% { transform: translate3d(-3px, 0, 0) scaleY(1); opacity: .2; }
+  35% { transform: translate3d(2px, -1px, 0) scaleY(1.5); opacity: .5; }
+  70% { transform: translate3d(-1px, 0, 0) scaleY(.8); opacity: .3; }
+  100% { transform: translate3d(4px, -1px, 0) scaleY(1.3); opacity: .45; }
+}
+@keyframes summer-bonfire {
+  0%, 100% { transform: scale(1); opacity: .95; }
+  9% { transform: scale(1.12, 1.2); opacity: 1; }
+  17% { transform: scale(.94, .9); opacity: .78; }
+  29% { transform: scale(1.06, 1.14); opacity: 1; }
+  41% { transform: scale(.98); opacity: .86; }
+  53% { transform: scale(1.1, 1.22); opacity: 1; }
+  66% { transform: scale(.92, .88); opacity: .74; }
+  78% { transform: scale(1.04, 1.1); opacity: .96; }
+  90% { transform: scale(.97); opacity: .84; }
+}
+@keyframes summer-moon-glitter {
+  0%, 100% { opacity: .9; transform: scaleX(1); }
+  25% { opacity: .45; transform: scaleX(1.15); }
+  50% { opacity: 1; transform: scaleX(.9); }
+  75% { opacity: .55; transform: scaleX(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='summer'] .premium-header-stone::before,
+  [data-member-theme='summer'] .premium-header-stone::after,
+  [data-member-theme='summer'] .member-theme-art::before,
+  [data-member-theme='summer'] .member-theme-art::after,
+  [data-member-theme='summer'] .member-theme-art > i,
+  [data-member-theme='summer'] .member-theme-art > i::before,
+  html.member-theme-arrival[data-member-theme='summer'] .premium-header-stone::before,
+  html.member-theme-arrival[data-member-theme='summer'] .member-theme-art::before {
+    animation: none;
+  }
+  /* A still: the gull parked mid-sky, a shore-break line resting on the sand. */
+  [data-member-theme='summer'] .member-theme-art > i:nth-child(3) { transform: translate3d(64vw, 2px, 0); opacity: .8; }
+  [data-member-theme='summer'] .member-theme-art > i:nth-child(2) { opacity: .7; }
+  .dark [data-member-theme='summer'] .member-theme-art > i:nth-child(3),
+  .dark[data-member-theme='summer'] .member-theme-art > i:nth-child(3) { transform: none; opacity: 1; }
+}
+
+/* ── Loader (components/MemberLoading.tsx) ─────────────────────────────────
+   Light: a beach at noon; the tide washes in and out on the sand under the crest, swell crests
+   slide across the turquoise sea, a gull glides past, heat haze under the sun, a palm frond sways.
+   Night: the moon path glitters on the sea and a bonfire flickers on the beach.
+   Reduced motion: a still scene. */
+
+[data-member-theme='summer'] {
+  --mt-loading-bg:
+    linear-gradient(180deg, #f2d9a8, #f6e4bf 40%, #f9edd2) 0 100% / 100% 24% no-repeat,
+    linear-gradient(180deg, #e2c28c, #e9cd99) 0 100% / 100% 26% no-repeat,
+    linear-gradient(180deg, #1597c4, #22b2c8 45%, #46d2cf) 0 calc(100% - 24%) / 100% 14% no-repeat,
+    radial-gradient(circle at 78% 15%, #fffef6 0 30px, #fff6c4 36px, #ffe58ab0 52px, #ffd76a33 100px, transparent 180px),
+    radial-gradient(ellipse 120% 70% at 50% 40%, transparent 60%, #0b3a4a1f),
+    linear-gradient(180deg, #1aa0e6, #48bdee 34%, #a2def5 56%, #d9f3f8 62%);
+  --mt-loading-crest-fill: linear-gradient(165deg, #d9541f 10%, #b8391e 40%, #0c6f78 62%, #0b4f6c 92%);
+  --mt-loading-text: #0b3f52;
+}
+.dark[data-member-theme='summer'],
+.dark [data-member-theme='summer'] {
+  --mt-loading-bg:
+    linear-gradient(180deg, #2a2219, #30271d 40%, #251f18) 0 100% / 100% 24% no-repeat,
+    linear-gradient(180deg, #1f1a15, #241e17) 0 100% / 100% 26% no-repeat,
+    linear-gradient(180deg, #082a36, #0b3a46 45%, #0f4d56) 0 calc(100% - 24%) / 100% 14% no-repeat,
+    radial-gradient(ellipse 34% 7% at 20% 88.5%, #ff8a3a38, transparent 70%),
+    radial-gradient(circle at 72% 16%, #fbf3df 0 20px, #f6ead2b0 23px, #f6ead233 40px, #9ed2ef14 80px, transparent 140px),
+    radial-gradient(circle at 14% 10%, #ffffffc0 0 .9px, transparent 1.5px),
+    radial-gradient(circle at 36% 22%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 54% 6%, #ffffffd0 0 1px, transparent 1.6px),
+    radial-gradient(circle at 90% 30%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 22% 40%, #ffffff70 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 84% 46%, #ffffff80 0 .7px, transparent 1.3px),
+    radial-gradient(ellipse 120% 70% at 50% 40%, transparent 55%, #02060c99),
+    linear-gradient(180deg, #050f20, #0a2236 44%, #103446 62%);
+  --mt-loading-crest-fill: linear-gradient(165deg, #ffd29a 10%, #ff9b6a 40%, #6fe0dc 62%, #c4f4f0 92%);
+  --mt-loading-text: #d6e6e4;
+}
+
+[data-member-theme='summer'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-crest-silhouette.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-crest-silhouette.webp') center / contain no-repeat;
+}
+[data-member-theme='summer'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: 0 -100%;
+  background: linear-gradient(105deg, transparent 40%, #fffbe099 50%, transparent 60%);
+  animation: summer-loader-glint 3s .3s ease-in-out infinite;
+}
+.dark [data-member-theme='summer'] .member-loading-glint::before,
+.dark[data-member-theme='summer'] .member-loading-glint::before {
+  background: linear-gradient(105deg, transparent 42%, #bfeef040 50%, transparent 58%);
+}
+
+/* Palm frond framing the top corner. */
+[data-member-theme='summer'] .member-loading-art::before {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: -6px;
+  width: min(62vw, 300px);
+  aspect-ratio: 5 / 2;
+  background: var(--sum-frond) center / contain no-repeat;
+  transform-origin: 100% 0;
+  animation: summer-frond-sway 10s ease-in-out infinite alternate;
+}
+[dir='rtl'] [data-member-theme='summer'] .member-loading-art::before,
+[dir='rtl'][data-member-theme='summer'] .member-loading-art::before {
+  right: auto;
+  left: -10px;
+  scale: -1 1;
+  transform-origin: 50% 0;
+}
+/* Slot 1: a gull gliding across (night: a bonfire on the beach). */
+[data-member-theme='summer'] .member-loading-art > i:nth-child(1) {
+  left: 0;
+  top: 24%;
+  width: 34px;
+  height: 14px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 10'%3E%3Cpath fill='%23243a48' d='M0 4.2Q5 .4 10.2 4.4L12 5.8L13.8 4.4Q19 .4 24 4.2Q19 2.8 14.2 6.6L12 8.2L9.8 6.6Q5 2.8 0 4.2Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0;
+  animation: summer-gull-glide 14s linear infinite;
+}
+/* Slot 2: the tide — a foam-edged sheet of water washing up the sand and back. */
+[data-member-theme='summer'] .member-loading-art > i:nth-child(2) {
+  inset-inline: -4%;
+  top: 74.5%;
+  height: 8%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 12' preserveAspectRatio='none'%3E%3Cpath fill='%23ffffff' d='M0 12V5Q8 1 18 4T38 3T58 5T80 4V12Z' opacity='.95'/%3E%3Cpath fill='%2346d2cf' d='M0 12V8Q10 5 20 7.4T40 7T60 8T80 7.4V12Z'/%3E%3C/svg%3E") 0 0 / 80px 12px repeat-x,
+    linear-gradient(180deg, transparent 10px, #46d2cfcc 12px, #8fe3dc80 60%, #ffffff00);
+  transform-origin: 50% 0;
+  animation: summer-tide 9s ease-in-out infinite;
+}
+/* Slot 3: swell crests sliding across the sea (seamless 280px tile; small and faint near the horizon). */
+[data-member-theme='summer'] .member-loading-art > i:nth-child(3) {
+  left: 0;
+  top: 64.4%;
+  width: calc(100% + 280px);
+  height: 10%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 40'%3E%3Cg fill='none' stroke='%23ffffff' stroke-linecap='round'%3E%3Cpath stroke-width='0.7' opacity='0.45' d='M16 6.5Q18.7 4.4 22 5.9'/%3E%3Cpath stroke-width='0.7' opacity='0.45' d='M42 4.7Q46.5 1.9 52 3.9'/%3E%3Cpath stroke-width='0.7' opacity='0.45' d='M86 4.7Q88.7 2.0 92 3.9'/%3E%3Cpath stroke-width='0.7' opacity='0.45' d='M105 4.7Q108.2 2.0 112 3.9'/%3E%3Cpath stroke-width='0.7' opacity='0.45' d='M170 6.7Q175.4 3.2 182 5.7'/%3E%3Cpath stroke-width='0.9' opacity='0.55' d='M19 12.7Q26.2 9.8 35 11.9'/%3E%3Cpath stroke-width='0.9' opacity='0.55' d='M153 15.2Q161.1 12.2 171 14.4'/%3E%3Cpath stroke-width='0.9' opacity='0.55' d='M164 14.6Q169.4 11.1 176 13.6'/%3E%3Cpath stroke-width='0.9' opacity='0.55' d='M165 15.0Q173.1 12.1 183 14.2'/%3E%3Cpath stroke-width='1.1' opacity='0.7' d='M52 22.8Q60.5 18.6 71 21.6'/%3E%3Cpath stroke-width='1.1' opacity='0.7' d='M150 22.1Q160.3 18.7 173 21.1'/%3E%3Cpath stroke-width='1.1' opacity='0.7' d='M152 24.2Q162.8 19.8 176 23.0'/%3E%3Cpath stroke-width='1.1' opacity='0.7' d='M167 24.0Q176.4 20.2 188 22.9'/%3E%3Cpath stroke-width='1.4' opacity='0.85' d='M67 34.5Q77.3 30.4 90 33.3'/%3E%3Cpath stroke-width='1.4' opacity='0.85' d='M80 34.7Q92.2 29.6 107 33.3'/%3E%3Cpath stroke-width='1.4' opacity='0.85' d='M207 34.1Q221.4 28.9 239 32.6'/%3E%3C/g%3E%3C/svg%3E") 0 100% / 280px 100% repeat-x;
+  opacity: .85;
+  animation: summer-loader-swell 22s linear infinite;
+}
+/* Slot 4: heat haze under the sun (night: the moon path glittering). */
+[data-member-theme='summer'] .member-loading-art > i:nth-child(4) {
+  left: calc(78% - 50px);
+  top: calc(15% + 46px);
+  width: 100px;
+  height: 26px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 14'%3E%3Cg fill='none' stroke='%23ffffff' stroke-linecap='round'%3E%3Cpath stroke-width='.5' d='M2 3Q8 2 14 3T26 3T38 3T50 3'/%3E%3Cpath stroke-width='.4' d='M8 8Q13 7 18 8T28 8T38 8T46 8'/%3E%3Cpath stroke-width='.35' d='M16 12.4Q20 11.6 24 12.4T32 12.4T38 12.4'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: .3;
+  animation: summer-heat-haze 8s ease-in-out infinite alternate;
+}
+
+.dark [data-member-theme='summer'] .member-loading-art > i:nth-child(1),
+.dark[data-member-theme='summer'] .member-loading-art > i:nth-child(1) {
+  left: calc(20% - 32px);
+  top: calc(88% - 52px);
+  width: 64px;
+  height: 58px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 36'%3E%3Cpath fill='%23140d08' d='M10 34L30 30L31 32L11 36ZM10 30L30 34L29 36L9 32Z'/%3E%3C/svg%3E") center / contain no-repeat,
+    radial-gradient(ellipse 22% 30% at 50% 74%, #fff1c0 0 12%, #ffb25a 30%, #ff7a2e00 70%),
+    radial-gradient(ellipse 50% 46% at 50% 82%, #ff8a3a73, #ff6a2a26 50%, transparent 80%);
+  opacity: 1;
+  transform-origin: 50% 90%;
+  animation: summer-bonfire 8s ease-in-out infinite;
+}
+.dark [data-member-theme='summer'] .member-loading-art > i:nth-child(2),
+.dark[data-member-theme='summer'] .member-loading-art > i:nth-child(2) {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 12' preserveAspectRatio='none'%3E%3Cpath fill='%23bfeef0' d='M0 12V5Q8 1 18 4T38 3T58 5T80 4V12Z' opacity='.5'/%3E%3Cpath fill='%230f4d56' d='M0 12V8Q10 5 20 7.4T40 7T60 8T80 7.4V12Z'/%3E%3C/svg%3E") 0 0 / 80px 12px repeat-x,
+    linear-gradient(180deg, transparent 10px, #0f4d56cc 12px, #145a6080 60%, #14596000);
+}
+.dark [data-member-theme='summer'] .member-loading-art > i:nth-child(3),
+.dark[data-member-theme='summer'] .member-loading-art > i:nth-child(3) { opacity: .25; }
+.dark [data-member-theme='summer'] .member-loading-art > i:nth-child(4),
+.dark[data-member-theme='summer'] .member-loading-art > i:nth-child(4) {
+  left: calc(72% - 40px);
+  top: 64.6%;
+  width: 80px;
+  height: 10%;
+  background:
+    linear-gradient(90deg, transparent, #f6ead2 30% 70%, transparent) 50% 4% / 50px 2px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead2b0 30% 70%, transparent) 42% 18% / 34px 2px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead2d0 30% 70%, transparent) 60% 33% / 52px 2px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead290 30% 70%, transparent) 46% 50% / 64px 2px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead2b0 30% 70%, transparent) 56% 68% / 46px 2px no-repeat,
+    linear-gradient(90deg, transparent, #f6ead280 30% 70%, transparent) 48% 86% / 72px 2px no-repeat;
+  opacity: .85;
+  animation: summer-moon-glitter 8s ease-in-out infinite;
+}
+
+@keyframes summer-tide {
+  0%, 100% { transform: translate3d(0, 34px, 0) scaleY(.7); opacity: .65; }
+  45% { transform: translate3d(-6px, -6px, 0) scaleY(1.15); opacity: 1; }
+  62% { transform: translate3d(-8px, -2px, 0) scaleY(1); opacity: .9; }
+}
+@keyframes summer-loader-swell {
+  from { transform: translate3d(-280px, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes summer-loader-glint {
+  0%, 15% { transform: translate3d(-35%, 0, 0); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  85%, 100% { transform: translate3d(35%, 0, 0); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='summer'] .member-loading-art::before { animation: none; }
+  [data-member-theme='summer'] .member-loading-art > i:nth-child(1) { transform: translate3d(30vw, 0, 0); opacity: .8; }
+  .dark [data-member-theme='summer'] .member-loading-art > i:nth-child(1),
+  .dark[data-member-theme='summer'] .member-loading-art > i:nth-child(1) { transform: none; opacity: 1; }
+  [data-member-theme='summer'] .member-loading-glint::before { opacity: 0; }
+}
+
+/* RTL: the lock-up sits on the right, so the sun (moon) and the bonfire move to the left gap. */
+[dir='rtl'] [data-member-theme='summer'] .premium-header-stone,
+[dir='rtl'][data-member-theme='summer'] .premium-header-stone { --sum-x: 32.5%; }
+.dark[dir='rtl'] [data-member-theme='summer'] .premium-header-stone,
+.dark[dir='rtl'][data-member-theme='summer'] .premium-header-stone { --sum-x: 29.5%; }
+.dark[dir='rtl'] [data-member-theme='summer'] .member-theme-art > i:nth-child(3),
+.dark[dir='rtl'][data-member-theme='summer'] .member-theme-art > i:nth-child(3) { left: calc(37% - 8px); }

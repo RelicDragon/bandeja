@@ -24,6 +24,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CourtLobbyAvatarImage } from '@/components/playIntent/CourtLobbyAvatarImage';
 import { fitTimeSubtitle } from '@/components/playIntent/mismatchLabel';
 import './CourtLobbyPlayerFitCard.css';
+import { animatedAvatarSrc } from '@/utils/animatedAvatar';
 
 type AnchorRect = { left: number; top: number; width: number; height: number };
 
@@ -335,6 +336,7 @@ export function CourtLobbyPlayerFitCard({
               <span className="court-lobby-fit-card__avatar-img">
                 <CourtLobbyAvatarImage
                   avatar={member.avatar}
+                  animatedAvatar={animatedAvatarSrc(member, { tiny: true })}
                   initials={memberInitials}
                   initialsClassName="court-lobby-fit-card__avatar-initials"
                 />

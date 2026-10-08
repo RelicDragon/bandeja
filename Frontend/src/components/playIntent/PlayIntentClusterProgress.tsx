@@ -19,6 +19,7 @@ export function PlayIntentClusterProgress({ current, needed }: Props) {
         <div
           className="relative h-2 overflow-hidden rounded-full bg-gray-100 ring-1 ring-inset ring-black/[0.025] dark:bg-white/[0.08] dark:ring-white/[0.04]"
           role="progressbar"
+          data-member-accent="emerald sky cyan lime"
           aria-valuenow={safeCurrent}
           aria-valuemin={0}
           aria-valuemax={safeNeeded}

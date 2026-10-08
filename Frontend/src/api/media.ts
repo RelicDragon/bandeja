@@ -7,6 +7,21 @@ export interface MediaUploadResponse {
   originalAvatarUrl: string;
   avatarSize: { width: number; height: number };
   originalSize: { width: number; height: number };
+  /** User avatar routes only: the animated WebP, or null after a still upload. */
+  avatarAnimatedUrl?: string | null;
+}
+
+export type UploadProgressHandler = (fraction: number) => void;
+
+function progressConfig(onProgress?: UploadProgressHandler) {
+  return {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    ...(onProgress && {
+      onUploadProgress: (e: { loaded: number; total?: number }) => {
+        if (e.total) onProgress(Math.min(1, e.loaded / e.total));
+      },
+    }),
+  };
 }
 
 export interface ChatImageUploadResponse {
@@ -61,6 +76,45 @@ async function postMultipartAvatarUpload(
 export const mediaApi = {
   uploadAvatar: (avatarFile: File, originalFile: File) =>
     postMultipartAvatarUpload('/media/upload/avatar', avatarFile, originalFile),
+
+  /** Premium: raw GIF/animated WebP + square crop in source pixels. */
+  uploadAnimatedAvatar: async (
+    file: File,
+    crop: { x: number; y: number; size: number },
+    onProgress?: UploadProgressHandler
+  ): Promise<MediaUploadResponse> => {
+    const formData = new FormData();
+    formData.append('animated', file);
+    formData.append('x', String(crop.x));
+    formData.append('y', String(crop.y));
+    formData.append('size', String(crop.size));
+    const response = await api.post<ApiResponse<MediaUploadResponse>>(
+      '/media/upload/avatar/animated',
+      formData,
+      progressConfig(onProgress)
+    );
+    return response.data.data;
+  },
+
+  /** Premium: 256x256 frames cut client-side from a trimmed video (never the video itself). */
+  uploadAvatarFrames: async (
+    frames: Blob[],
+    fps: number,
+    onProgress?: UploadProgressHandler
+  ): Promise<MediaUploadResponse> => {
+    const formData = new FormData();
+    frames.forEach((frame, i) => {
+      const ext = frame.type === 'image/webp' ? 'webp' : 'jpg';
+      formData.append('frames', frame, `frame_${String(i).padStart(2, '0')}.${ext}`);
+    });
+    formData.append('fps', String(fps));
+    const response = await api.post<ApiResponse<MediaUploadResponse>>(
+      '/media/upload/avatar/frames',
+      formData,
+      progressConfig(onProgress)
+    );
+    return response.data.data;
+  },
 
   uploadGameAvatar: (gameId: string, avatarFile: File, originalFile: File) =>
     postMultipartAvatarUpload('/media/upload/game/avatar', avatarFile, originalFile, { gameId }),

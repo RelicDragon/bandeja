@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, FixedTeamUserTeam, Sport } from '@/types';
+import type { ApiResponse, FixedTeamUserTeam, PremiumNameStyle, Sport } from '@/types';
 import type { PlayStreakView } from '@/types/playStreak';
 
 /** PRD 352 — the pair leaderboard, the pair sheet and Profile → Your partners. */
@@ -16,6 +16,8 @@ export interface PairMember {
   avatar: string | null;
   isPremium: boolean;
   showPremiumStatus: boolean;
+  premiumNameStyle?: PremiumNameStyle;
+  avatarAnimated?: string | null;
   level: number | null;
 }
 

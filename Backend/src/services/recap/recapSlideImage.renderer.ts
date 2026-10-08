@@ -5,6 +5,7 @@ import {
   recapCopy,
   type RecapImageLanguage,
 } from './recapCopy';
+import { shareThemeFor, themeBackdropSvg, themeCrestSvg, themeFrameSvg } from './recapThemeArt';
 
 /**
  * PRD 353 — server-rendered recap images.
@@ -203,10 +204,22 @@ export async function renderRecapSlideImage(
   // pushes centred RTL text off by half a space).
   const eyebrowSpacing = isRecapRtlLanguage(language) ? 0 : 4;
   const cx = RECAP_SLIDE_WIDTH / 2;
+  const id = slide.key.replace(/[^a-zA-Z0-9]/g, '-');
+  // Sharer's member theme: the bookends (cover, outro) carry the theme scene;
+  // every slide gets the themed frame and crest, the middle slides keep their accent.
+  const theme = shareThemeFor(payload.owner);
+  const themedBackdrop = theme && (slide.kind === 'COVER' || slide.kind === 'OUTRO');
+  const background = themedBackdrop
+    ? themeBackdropSvg(theme, id, RECAP_SLIDE_WIDTH, RECAP_SLIDE_HEIGHT)
+    : backdrop(id, accent, RECAP_SLIDE_WIDTH, RECAP_SLIDE_HEIGHT);
+  const themeMarks = theme
+    ? `${themeFrameSvg(theme, RECAP_SLIDE_WIDTH, RECAP_SLIDE_HEIGHT)}${themeCrestSvg(theme, id, cx, 560, 240)}`
+    : '';
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${RECAP_SLIDE_WIDTH}" height="${RECAP_SLIDE_HEIGHT}" viewBox="0 0 ${RECAP_SLIDE_WIDTH} ${RECAP_SLIDE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-  ${backdrop(slide.key.replace(/[^a-zA-Z0-9]/g, '-'), accent, RECAP_SLIDE_WIDTH, RECAP_SLIDE_HEIGHT)}
+  ${background}
+  ${themeMarks}
   <text x="${cx}" y="820" text-anchor="middle" font-family="${FONT_STACK}" font-size="52" fill="#e2e8f0" opacity="0.85" letter-spacing="${eyebrowSpacing}">${escapeXml(
     text.eyebrow.toUpperCase(),
   )}</text>
@@ -299,10 +312,15 @@ export function buildRecapSummaryCardSvg(
   const blockAnchor = isRtl ? 'end' : 'start';
   const blockDir = isRtl ? ' direction="rtl"' : '';
   const titleSpacing = isRtl ? 0 : 6;
+  // Sharer's member theme: scene, frame and crest (top, on the end side of the title block).
+  const theme = shareThemeFor(payload.owner);
+  const background = theme
+    ? `${themeBackdropSvg(theme, 'card', RECAP_CARD_WIDTH, RECAP_CARD_HEIGHT)}${themeFrameSvg(theme, RECAP_CARD_WIDTH, RECAP_CARD_HEIGHT)}${themeCrestSvg(theme, 'card', isRtl ? 190 : RECAP_CARD_WIDTH - 190, 120, 220)}`
+    : backdrop('card', accent, RECAP_CARD_WIDTH, RECAP_CARD_HEIGHT);
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${RECAP_CARD_WIDTH}" height="${RECAP_CARD_HEIGHT}" viewBox="0 0 ${RECAP_CARD_WIDTH} ${RECAP_CARD_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-  ${backdrop('card', accent, RECAP_CARD_WIDTH, RECAP_CARD_HEIGHT)}
+  ${background}
   <text x="${blockX}" y="200" text-anchor="${blockAnchor}"${blockDir} font-family="${FONT_STACK}" font-size="44" fill="#e2e8f0" opacity="0.8" letter-spacing="${titleSpacing}">${escapeXml(
     recapCopy(language, 'summaryTitle').toUpperCase(),
   )}</text>

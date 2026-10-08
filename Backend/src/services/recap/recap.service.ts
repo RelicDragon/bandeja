@@ -12,6 +12,7 @@ import { buildMonthlyRecapPayload } from './recapPayload.builder';
 import { buildRecapStorySegments } from './recapSegments';
 import { loadRecapBuildInput, loadRecapOwner, type RecapOwnerRow } from './recapInputs.loader';
 import { isMonthKey, oldestRetainedMonthKey } from './recapMonth';
+import { withOwnerShowcaseTheme } from './recapOwnerTheme';
 
 /** How many month cards the Profile row can ask for at once (12 months are kept). */
 export const RECAP_LIST_LIMIT = 12;
@@ -106,10 +107,11 @@ export async function getMonthlyRecap(
   if (!row) {
     throw new ApiError(404, 'errors.recap.notFound');
   }
-  const payload = parseRecapPayload(row.payload);
-  if (!payload) {
+  const stored = parseRecapPayload(row.payload);
+  if (!stored) {
     throw new ApiError(404, 'errors.recap.notFound');
   }
+  const payload = await withOwnerShowcaseTheme(userId, stored);
   return {
     recap: toDto(row, payload),
     segments: buildRecapStorySegments(payload, {
@@ -230,5 +232,5 @@ export async function loadRecapPayloadForShare(
   if (!payload) {
     throw new ApiError(404, 'errors.recap.notFound');
   }
-  return payload;
+  return withOwnerShowcaseTheme(userId, payload);
 }

@@ -1,0 +1,237 @@
+/* Obsidian Gold — the original member theme: obsidian stone, gold leaf.
+   Every token is set explicitly (shared rules fall back to these same values) so a picker tile
+   previewing gold inside another theme never inherits that theme's tokens. */
+
+[data-member-theme='premium'] {
+  --ui-page-background: #faf9f6;
+  --ui-background: #faf9f6;
+  --ui-surface: #ffffff;
+
+  --color-gray-50: #faf9f6;
+  --color-gray-100: #f2f0eb;
+  --color-gray-200: #e5e1d8;
+  --color-gray-300: #cec8bc;
+  --color-gray-400: #a7a194;
+  --color-gray-500: #797367;
+  --color-gray-600: #605b51;
+  --color-gray-700: #3c3932;
+  --color-gray-800: #24231f;
+  --color-gray-900: #141411;
+  --color-gray-950: #0c0c0a;
+  --member-primary-default: #8a6427;
+  --member-primary-50: #fbf7ed;
+  --member-primary-100: #f5ead4;
+  --member-primary-200: #eed9b0;
+  --member-primary-300: #e8cd98;
+  --member-primary-400: #d6b978;
+  --member-primary-500: #8a6427;
+  --member-primary-600: #79521e;
+  --member-primary-700: #634318;
+  --member-primary-800: #4b3416;
+  --member-primary-900: #352814;
+  --member-primary-950: #21190e;
+
+  /* Chrome */
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 24% 0%, #a7803c24, transparent 56%),
+    repeating-linear-gradient(112deg, transparent 0 93px, #e7c87b06 94px, transparent 95px 148px),
+    linear-gradient(165deg, #24211b, #11100e 48%, #171613);
+  --mt-chrome-text: #e8c985;
+  --mt-chrome-muted: #b9ad97;
+  --mt-chrome-border: #a8884b70;
+  --mt-chrome-accent: #f3d38d;
+  --mt-chrome-accent-soft: linear-gradient(120deg, #d4af5f20, #d4af5f0a);
+  --mt-chrome-hairline: linear-gradient(90deg, #8b6a2f20, #eacb87b3 28%, #eacb8726 64%, #b08b4a80);
+  --mt-chrome-shadow: inset 0 1px 0 #fff0ba26, 0 8px 24px #100e0b24;
+  --mt-chrome-button-bg: #ffffff06;
+  --mt-chrome-edges: #0c0906a6;
+  --mt-cta-bg: linear-gradient(135deg, #f2dba3, #c69b50 65%, #e4c381);
+  --mt-cta-text: #2a2112;
+  --mt-cta-border: #efdba77a;
+  --mt-badge-bg: #edcf92;
+  --mt-badge-text: #241b0e;
+
+  /* Optional chrome fine-tuning (shared rules derive these from the tokens above when unset). */
+  --mt-chrome-button-text: #dfc894;
+  --mt-chrome-button-hover: #e8c98515;
+  --mt-chrome-focus: #f5d795;
+  --mt-chrome-focus-halo: #17140e;
+  --mt-chrome-tab-text: #bfb4a0;
+  --mt-chrome-tab-active: #f1d699;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #d4af5f66, inset 0 1px 0 #f8dea523;
+  --mt-chrome-profile: #efd59b;
+  --mt-chrome-profile-ring: 0 0 0 1px #e4c17b, 0 0 0 4px #dfb76410;
+  --mt-chrome-controls-bg: radial-gradient(ellipse 75% 32px at 50% 0%, #e5b95935, transparent 85%), #09090740;
+  --mt-chrome-controls-border: #d9b66e40;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #f1ce8530;
+  --mt-cta-shadow: inset 0 1px 0 #fff4d3a0, 0 2px 6px #0005;
+  --mt-tabbar-border: #bd985b9c;
+  --mt-tabbar-shadow: inset 0 1px 0 #fce4aa73, inset 0 -1px 0 #ad874c26, 0 8px 28px #0005;
+  --mt-tabbar-hover: #f5dfb0;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #f0cd8033);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #e9bd5e24, transparent 80%), linear-gradient(#dfbd7910, #dfbd7903);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #f9df9f21;
+  --mt-badge-ring: 0 0 0 2px #171510;
+
+  /* Brand */
+  --mt-brand-fill: linear-gradient(175deg, #fff0c4 15%, #dbb565 52%, #a9803b 56%, #f4dba3 90%);
+  --mt-brand-font: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --mt-brand-tier-text: #d9bd83;
+  --mt-brand-dash: #caa768;
+  --mt-brand-bg: #ffffff06;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #000);
+  --mt-brand-plate: #15120d;
+
+  /* Chat */
+  --chat-paper: #faf8f3;
+  --chat-panel: #fffdf8;
+  --chat-line: #b48c4b38;
+  --chat-selection: #b48c4b14;
+  --chat-selection-edge: #a07b3e;
+  --mt-bubble-own: linear-gradient(145deg, #937034, #725020 80%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #816331, #59411e 80%);
+  --mt-chat-backdrop: radial-gradient(ellipse at 100% 0%, #bc944714, transparent 65%);
+  /* Optional chat fine-tuning (fall back to the chrome/CTA tokens when unset). */
+  --mt-chat-header-bg: radial-gradient(ellipse at 20% 0%, #a7803c26, transparent 65%), linear-gradient(165deg, #24211b, #11100e 70%);
+  --mt-chat-header-shadow: inset 0 1px 0 #fff0ba26, 0 4px 16px #100e0b24;
+  --mt-chat-header-text: #efd59b;
+  --mt-chat-header-muted: #bfb39c;
+  --mt-chat-header-subtle: #cdb88f;
+  --mt-chat-header-hover: #e8c98518;
+  --mt-chat-header-focus: #e8c985;
+  --mt-chat-cta-bg: linear-gradient(135deg, #f5dfa7, #c8a15b 70%, #e3c586);
+  --mt-chat-cta-shadow: inset 0 1px 0 #fff4d399, 0 2px 6px #22190526;
+  --mt-chat-meta: #797367;
+  --mt-chat-meta-dark: #b9b1a0;
+  --mt-chat-input-shadow: inset 0 1px 0 #dfbc7124, 0 4px 20px #251c1014;
+  --mt-chat-scroll-ring: #c5a46680;
+
+  /* Loader: obsidian slab in both appearances, gold crest. */
+  --mt-loading-bg:
+    radial-gradient(ellipse 120% 90% at 50% 46%, transparent 38%, #0a0603c4 100%),
+    radial-gradient(ellipse 70% 42% at 50% 44%, #c28a3a33, transparent 70%),
+    linear-gradient(#0806043d, #0806043d),
+    url('../../assets/premium/obsidian-gold-stone.webp') center / cover no-repeat,
+    linear-gradient(160deg, #1a140c, #0c0906 70%);
+  --mt-loading-crest-fill: linear-gradient(175deg, #fff0c4 15%, #dbb565 52%, #a9803b 56%, #f4dba3 90%);
+  --mt-loading-text: #cdb98f;
+
+  --mt-preview-bg:
+    radial-gradient(ellipse at 26% 0%, #73502255, transparent 65%),
+    linear-gradient(#08060418, #08060418),
+    url('../../assets/premium/obsidian-gold-stone.webp') center / cover no-repeat,
+    linear-gradient(115deg, #110c06, #281d0f 48%, #0e0a06);
+}
+
+.dark[data-member-theme='premium'],
+.dark [data-member-theme='premium'] {
+  --ui-page-background: #141411;
+  --ui-background: #0c0c0a;
+  --ui-surface: #24231f;
+
+  --chat-paper: #171612;
+  --chat-panel: #24221c;
+  --chat-line: #c5a46633;
+  --chat-selection: #dfbc7114;
+  --chat-selection-edge: #dfbc71;
+}
+
+[data-member-theme='premium'] .premium-chat,
+[data-member-theme='premium'].premium-chat {
+  --color-blue-50: #fbf7ed;
+  --color-blue-100: #f5ead4;
+  --color-blue-200: #eed9b0;
+  --color-blue-300: #e8cd98;
+  --color-blue-400: #d6b978;
+  --color-blue-500: #8a6427;
+  --color-blue-600: #79521e;
+  --color-blue-700: #634318;
+  --color-blue-800: #4b3416;
+  --color-blue-900: #352814;
+  --color-blue-950: #21190e;
+}
+
+/* Header art: the obsidian slab drifts slowly while a gold light sweep crosses it. */
+[data-member-theme='premium'] .premium-header-stone {
+  background:
+    radial-gradient(ellipse at 26% 0%, #73502255, transparent 65%),
+    linear-gradient(115deg, #110c06, #281d0f 48%, #0e0a06);
+}
+[data-member-theme='premium'] .premium-header-stone::before {
+  content: '';
+  position: absolute;
+  inset: -25% -8%;
+  /* Same dedicated stone texture and continuous drift as the welcome button. */
+  background-image: linear-gradient(#08060418, #08060418), url('../../assets/premium/obsidian-gold-stone.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: .9;
+  animation: premium-header-obsidian-veins 12s linear infinite;
+}
+[data-member-theme='premium'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  inset: -50% -60%;
+  background: linear-gradient(115deg, transparent 43%, #e3b65a1c 49%, #ffe0a030 50%, #e3b65a1c 51%, transparent 57%);
+  opacity: 0;
+  animation: premium-header-obsidian-light 9s 1500ms cubic-bezier(.45, .05, .25, 1) infinite;
+}
+@keyframes premium-header-obsidian-veins {
+  /* An upright circular drift moves immediately and loops without a pause. */
+  from { transform: rotate(0deg) translateX(12px) rotate(0deg) scale(1.12); }
+  to { transform: rotate(360deg) translateX(12px) rotate(-360deg) scale(1.12); }
+}
+@keyframes premium-header-obsidian-light {
+  0%, 20% { opacity: 0; transform: translateX(-45%); }
+  38% { opacity: .35; }
+  60%, 100% { opacity: 0; transform: translateX(45%); }
+}
+
+/* Wide screens: a faint diamond ornament centred above the brand row. */
+@media (min-width: 768px) {
+  [data-member-theme='premium'] .premium-header::before {
+    content: '';
+    position: absolute;
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 10px);
+    inset-inline-start: 50%;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #dec17f1f;
+    transform: rotate(45deg);
+    box-shadow: 0 0 0 8px #dec17f05;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='premium'] .premium-header-stone::before,
+  [data-member-theme='premium'] .premium-header-stone::after { animation: none; }
+}
+
+/* Loader: the crest breathes while a slow band of gold light crosses it. */
+[data-member-theme='premium'] .member-loading-mark {
+  animation: member-loading-gold-breathe 3.6s ease-in-out infinite;
+}
+[data-member-theme='premium'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-gold-crest.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-gold-crest.webp') center / contain no-repeat;
+}
+[data-member-theme='premium'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: -20% -70%;
+  background: linear-gradient(105deg, transparent 42%, #ffe6a83d 48%, #fff6d88c 50%, #ffe6a83d 52%, transparent 58%);
+  opacity: 0;
+  animation: member-loading-gold-sweep 3.6s 400ms cubic-bezier(.45, .05, .25, 1) infinite;
+}
+@keyframes member-loading-gold-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+@keyframes member-loading-gold-sweep {
+  0% { opacity: 0; transform: translateX(-40%); }
+  15% { opacity: 1; }
+  55% { opacity: 1; }
+  70%, 100% { opacity: 0; transform: translateX(40%); }
+}

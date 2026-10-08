@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { useParticipantsOnlineCount } from '@/hooks/useParticipantsOnlineCount';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 interface ChatParticipantsButtonProps {
   game: Game | null;
@@ -62,7 +63,8 @@ export const ChatParticipantsButton: React.FC<ChatParticipantsButtonProps> = ({ 
           >
             {participant.user.avatar ? (
               <img
-                src={participant.user.avatar || ''}
+                src={userFaceSrc(participant.user) || ''}
+                onError={fallbackToStillAvatar(participant.user.avatar)}
                 alt=""
                 className={`${avatarSize} rounded-full object-cover`}
               />
@@ -79,7 +81,8 @@ export const ChatParticipantsButton: React.FC<ChatParticipantsButtonProps> = ({ 
           >
             {guest.user.avatar ? (
               <img
-                src={guest.user.avatar || ''}
+                src={userFaceSrc(guest.user) || ''}
+                onError={fallbackToStillAvatar(guest.user.avatar)}
                 alt=""
                 className={`${avatarSize} rounded-full object-cover`}
               />

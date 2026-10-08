@@ -1,13 +1,216 @@
-/* Public identity only: the shared visibility helper gates every use. */
-.premium-name-glow {
-  color: #edc766;
-  -webkit-text-stroke: 0.4px #624714;
+/*
+ * Premium name styles — public identity only; `showsPremiumStatus` gates every use.
+ * Spec: docs/domains/premium-appearance.md § Name styles.
+ *
+ * Text treatment only: nothing here may touch size, weight, spacing, padding or
+ * layout, so a styled name never reflows a row and survives `truncate`.
+ *
+ * Each style sets a light palette on `.premium-name--<style>` and a dark one under
+ * `.dark` (or `--on-dark`, for names sitting on a dark/coloured hero). `--on-light`
+ * pins the light palette inside a dark app (the picker's split swatch).
+ *
+ *   --pn-solid   fill colour (solid styles) / fallback colour (painted styles)
+ *   --pn-ink     -webkit-text-stroke colour: the dark edge that keeps light fills legible.
+ *                Painted styles show the stroke's inner half too (the fill is
+ *                transparent), so their dark-palette ink is half-alpha.
+ *   --pn-paint   background-image clipped to the glyphs (painted styles)
+ *   --pn-shadow  text-shadow (solid styles only — it would bleed through a clipped fill)
+ *   --pn-halo    filter glow (painted styles, and every style while animated)
+ */
+
+/* ------------------------------------------------------------------ gold -- */
+/* The original. `premium-name-glow` is kept as an alias for raw-class callers. */
+
+.premium-name-glow,
+.premium-name--gold {
+  --pn-solid: #edc766;
+  --pn-ink: #624714;
+  --pn-shadow: 0 0 3px #dfae5266, 0 0 8px #dcaa3f55, 0 0 14px #e8b74e33;
+  --pn-paint: linear-gradient(#edc766, #edc766);
+  --pn-halo: drop-shadow(0 0 3px #dfae5266) drop-shadow(0 0 6px #dcaa3f44);
+  color: var(--pn-solid);
+  -webkit-text-stroke: 0.4px var(--pn-ink);
   paint-order: stroke fill;
-  text-shadow: 0 0 3px #dfae5266, 0 0 8px #dcaa3f55, 0 0 14px #e8b74e33;
+  text-shadow: var(--pn-shadow);
 }
 
-.dark .premium-name-glow {
-  color: #ffe2a0;
-  -webkit-text-stroke-color: #4b3510;
-  text-shadow: 0 0 3px #edbf6877, 0 0 8px #e3ad4655, 0 0 14px #edbd5333;
+.dark .premium-name-glow,
+:is(.dark .premium-name--gold:not(.premium-name--on-light), .premium-name--gold.premium-name--on-dark) {
+  --pn-solid: #ffe2a0;
+  --pn-ink: #4b3510;
+  --pn-shadow: 0 0 3px #edbf6877, 0 0 8px #e3ad4655, 0 0 14px #edbd5333;
+  --pn-paint: linear-gradient(#ffe2a0, #ffe2a0);
+  --pn-halo: drop-shadow(0 0 3px #edbf6877) drop-shadow(0 0 7px #e3ad4655);
+}
+
+/* ------------------------------------------------------------ mechanics -- */
+
+.premium-name {
+  -webkit-text-stroke: 0.4px var(--pn-ink);
+  paint-order: stroke fill;
+}
+
+:is(.premium-name--platinum, .premium-name--rose, .premium-name--ember,
+    .premium-name--aurora, .premium-name--holo, .premium-name--frost) {
+  color: var(--pn-solid);
+  background-image: var(--pn-paint);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: var(--pn-halo, none);
+}
+
+.premium-name--neon {
+  color: var(--pn-solid);
+  text-shadow: var(--pn-shadow);
+}
+
+/* ------------------------------------------------------------- platinum -- */
+/* Cool brushed metal: a horizontal light band across the cap height. */
+
+.premium-name--platinum {
+  --pn-solid: #4b5563;
+  --pn-ink: #1f2937;
+  --pn-paint: linear-gradient(180deg, #5d6675 0%, #8a94a3 40%, #3d4552 56%, #5b6472 100%);
+}
+
+:is(.dark .premium-name--platinum:not(.premium-name--on-light), .premium-name--platinum.premium-name--on-dark) {
+  --pn-solid: #e2e8f0;
+  --pn-ink: #11182780;
+  --pn-paint: linear-gradient(180deg, #ffffff 0%, #dfe5ee 40%, #9aa6b8 56%, #e9eef5 100%);
+}
+
+/* ----------------------------------------------------------------- rose -- */
+
+.premium-name--rose {
+  --pn-solid: #a85a63;
+  --pn-ink: #4a1a22;
+  --pn-paint: linear-gradient(180deg, #bf6f72 0%, #e2a19a 38%, #974552 58%, #b2606a 100%);
+}
+
+:is(.dark .premium-name--rose:not(.premium-name--on-light), .premium-name--rose.premium-name--on-dark) {
+  --pn-solid: #f6bfae;
+  --pn-ink: #3a151080;
+  --pn-paint: linear-gradient(180deg, #ffe0d4 0%, #f5b8a4 42%, #d98374 58%, #f8c9b8 100%);
+}
+
+/* ---------------------------------------------------------------- ember -- */
+
+.premium-name--ember {
+  --pn-solid: #c2410c;
+  --pn-ink: #3b0d06;
+  --pn-paint: linear-gradient(90deg, #d97706 0%, #ea580c 40%, #dc2626 75%, #be123c 100%);
+  --pn-halo: drop-shadow(0 0 3px #f9731633);
+}
+
+:is(.dark .premium-name--ember:not(.premium-name--on-light), .premium-name--ember.premium-name--on-dark) {
+  --pn-solid: #fb923c;
+  --pn-ink: #2a090480;
+  --pn-paint: linear-gradient(90deg, #fcd34d 0%, #fb923c 40%, #f8574a 75%, #f43f5e 100%);
+  --pn-halo: drop-shadow(0 0 4px #f9731666);
+}
+
+/* --------------------------------------------------------------- aurora -- */
+
+.premium-name--aurora {
+  --pn-solid: #0f766e;
+  --pn-ink: #102a2a;
+  --pn-paint: linear-gradient(90deg, #0d9488 0%, #6d4fd8 50%, #059669 100%);
+}
+
+:is(.dark .premium-name--aurora:not(.premium-name--on-light), .premium-name--aurora.premium-name--on-dark) {
+  --pn-solid: #5eead4;
+  --pn-ink: #07131a80;
+  --pn-paint: linear-gradient(90deg, #5eead4 0%, #c4b5fd 50%, #86efac 100%);
+  --pn-halo: drop-shadow(0 0 4px #5eead42e);
+}
+
+/* ----------------------------------------------------------------- neon -- */
+/* A lit tube: cyan rim (stroke under the fill) + glow. In light mode the core
+   is deep ink so the name still reads on white. */
+
+.premium-name--neon {
+  --pn-solid: #0b4a5c;
+  --pn-ink: #06b6d4;
+  --pn-shadow: 0 0 2px #22d3ee88, 0 0 6px #06b6d455;
+  --pn-paint: linear-gradient(#0b4a5c, #0b4a5c);
+  --pn-halo: drop-shadow(0 0 2px #22d3ee88) drop-shadow(0 0 5px #06b6d455);
+}
+
+:is(.dark .premium-name--neon:not(.premium-name--on-light), .premium-name--neon.premium-name--on-dark) {
+  --pn-solid: #effeff;
+  --pn-ink: #22d3ee;
+  --pn-shadow: 0 0 2px #22d3ee, 0 0 6px #06b6d4aa, 0 0 14px #0891b266;
+  --pn-paint: linear-gradient(#effeff, #effeff);
+  --pn-halo: drop-shadow(0 0 2px #22d3ee) drop-shadow(0 0 6px #06b6d499);
+}
+
+/* ----------------------------------------------------------------- holo -- */
+/* Iridescent foil. Light mode uses mid-tone foil under a dark stroke. */
+
+.premium-name--holo {
+  --pn-solid: #7c5cc4;
+  --pn-ink: #2e2148;
+  --pn-paint: linear-gradient(100deg, #b35fd6 0%, #3aa9cf 28%, #c99a1e 52%, #7d6ff0 76%, #2fae97 100%);
+}
+
+:is(.dark .premium-name--holo:not(.premium-name--on-light), .premium-name--holo.premium-name--on-dark) {
+  --pn-solid: #e9d5ff;
+  --pn-ink: #1b132880;
+  --pn-paint: linear-gradient(100deg, #f5c6fd 0%, #a5f3fc 28%, #fdf0a0 52%, #d6ccff 76%, #a7f5e1 100%);
+}
+
+/* ---------------------------------------------------------------- frost -- */
+/* Icy blue with a crystalline glint along the top of the glyphs. */
+
+.premium-name--frost {
+  --pn-solid: #1e6aa8;
+  --pn-ink: #0a2540;
+  --pn-paint: linear-gradient(180deg, #3d8fd1 0%, #8ccdf0 34%, #1764a6 54%, #2c7fc2 100%);
+}
+
+:is(.dark .premium-name--frost:not(.premium-name--on-light), .premium-name--frost.premium-name--on-dark) {
+  --pn-solid: #bae6fd;
+  --pn-ink: #061a2b80;
+  --pn-paint: linear-gradient(180deg, #ffffff 0%, #d4f1ff 30%, #74c4f0 52%, #a8e1ff 100%);
+  --pn-halo: drop-shadow(0 0 4px #38bdf855);
+}
+
+/* ------------------------------------------------------------- animated -- */
+/*
+ * Hero surfaces only (`<PremiumName animated>`): a soft sheen crosses the name
+ * once every 9 s and rests the rest of the time. Only `background-position`
+ * moves. Solid styles switch to a painted fill so the sheen has a surface, and
+ * swap their text-shadow for the equivalent filter glow.
+ */
+
+.premium-name--animated {
+  --pn-sheen: rgb(255 255 255 / 0.55);
+  color: var(--pn-solid);
+  background-image:
+    linear-gradient(105deg, transparent 40%, var(--pn-sheen) 50%, transparent 60%),
+    var(--pn-paint);
+  background-size: 250% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  background-position: 100% 0, 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: var(--pn-halo, none);
+  animation: premium-name-sheen 9s cubic-bezier(0.45, 0, 0.25, 1) 1.2s infinite;
+}
+
+.dark .premium-name--animated:not(.premium-name--on-light),
+.premium-name--animated.premium-name--on-dark {
+  --pn-sheen: rgb(255 255 255 / 0.8);
+}
+
+@keyframes premium-name-sheen {
+  0% { background-position: 100% 0, 0 0; }
+  24%, 100% { background-position: 0% 0, 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-name--animated { animation: none; }
 }

@@ -1,4 +1,6 @@
-import type { RecapSlideKind } from '@/api/recap';
+import type { RecapOwner, RecapSlideKind } from '@/api/recap';
+import { publicMemberTheme } from '@/utils/memberShowcase';
+import type { MemberThemeId } from '@/utils/mainTheme';
 
 /**
  * PRD 353 — one accent per recap slide on a shared dark base.
@@ -60,6 +62,20 @@ export function recapSlideGlowClass(kind: RecapSlideKind, premium: boolean): str
     default:
       return 'bg-indigo-200/40';
   }
+}
+
+/**
+ * The sharer's member theme, or null for the classic accents. A themed recap
+ * paints the theme scene on its bookends (cover, outro) and a themed frame on
+ * every slide; the middle slides keep their one accent each. Same rule as the
+ * server-rendered share images.
+ */
+export function recapOwnerMemberTheme(owner: RecapOwner): MemberThemeId | null {
+  return publicMemberTheme({ isPremium: owner.isPremium, mainTheme: owner.memberTheme });
+}
+
+export function recapSlideIsThemedBookend(kind: RecapSlideKind): boolean {
+  return kind === 'COVER' || kind === 'OUTRO';
 }
 
 /** The recap rail bubble's ring: sky → violet, not the usual story conic ring. */

@@ -6,6 +6,7 @@ import {
   getPlayerName,
   getRatingNetChangeClass,
 } from '@/components/profileInsights/relationshipDisplay';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 interface RelationshipPersonCardProps {
   entry: PerformanceRelationshipEntry;
@@ -22,7 +23,8 @@ export function RelationshipPersonCard({ entry }: RelationshipPersonCardProps) {
       <div className="flex min-w-0 items-center gap-3">
         {entry.user.avatar ? (
           <img
-            src={entry.user.avatar}
+            src={userFaceSrc(entry.user) ?? undefined}
+            onError={fallbackToStillAvatar(entry.user.avatar)}
             alt={playerName}
             className="h-10 w-10 shrink-0 rounded-full object-cover"
           />

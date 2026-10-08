@@ -13,12 +13,18 @@ import {
   type PixelCrop,
 } from '../utils/avatarCropArea';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
+import { squareCropFromPixels } from '@/utils/animatedAvatar';
+import { AnimatedAvatarPill } from './AnimatedAvatarPill';
 
 interface AvatarCropModalProps {
   imageFile: File;
   onCrop: (avatarFile: File, originalFile: File) => void;
   onCancel: () => void;
   isUploading?: boolean;
+  /** Premium GIF/WebP: crop a square of the live animation (no rotation) and hand back source pixels. */
+  onAnimatedCrop?: (crop: { x: number; y: number; size: number }) => void;
+  /** One quiet line under the crop (e.g. "animated avatars are Premium"). */
+  hint?: string;
 }
 
 const AVATAR_CROP_ASPECT = 1;
@@ -39,7 +45,10 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   onCrop,
   onCancel,
   isUploading = false,
+  onAnimatedCrop,
+  hint,
 }) => {
+  const animated = Boolean(onAnimatedCrop);
   const { t } = useTranslation();
   const [crop, setCrop] = useState<CropPoint>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -148,6 +157,11 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
       return;
     }
 
+    if (onAnimatedCrop) {
+      onAnimatedCrop(squareCropFromPixels(pixelCrop));
+      return;
+    }
+
     processingRef.current = true;
     setIsProcessing(true);
 
@@ -166,7 +180,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
       processingRef.current = false;
       setIsProcessing(false);
     }
-  }, [imageUrl, imageFile.name, onCrop, isUploading, t]);
+  }, [imageUrl, imageFile.name, onCrop, onAnimatedCrop, isUploading, t]);
 
   const closeOnBackdrop = !isProcessing && !isUploading;
 
@@ -179,7 +193,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               image={imageUrl}
               crop={crop}
               zoom={zoom}
-              rotation={rotation}
+              rotation={animated ? 0 : rotation}
               aspect={AVATAR_CROP_ASPECT}
               cropShape="round"
               showGrid={true}
@@ -189,11 +203,18 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               setMediaSize={handleMediaSize}
               setCropSize={handleCropSize}
               onZoomChange={handleZoomChange}
-              onRotationChange={handleRotationChange}
+              onRotationChange={animated ? undefined : handleRotationChange}
             />
           </div>
 
+          {animated && (
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex justify-center p-4">
+              <AnimatedAvatarPill />
+            </div>
+          )}
+
           <div className="absolute bottom-0 left-0 right-0 z-50 p-6 bg-gradient-to-t from-black/80 via-black/60 to-transparent">
+            {hint && <p className="mx-auto mb-3 max-w-md text-center text-xs leading-snug text-white/75">{hint}</p>}
             <div className="flex gap-3 justify-center max-w-md mx-auto">
               <Button
                 variant="secondary"

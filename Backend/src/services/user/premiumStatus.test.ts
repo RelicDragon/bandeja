@@ -18,5 +18,7 @@ for (const value of [true, false]) {
 }
 for (const projection of [USER_SELECT_FIELDS, PROFILE_SELECT_FIELDS, FIND_CARD_USER_SELECT]) {
   assert.equal(projection.showPremiumStatus, true, 'Public and own profile projections must carry the opt-out');
+  assert.equal(projection.premiumNameStyle, true, 'Public and own profile projections must carry the name style');
+  assert.equal(projection.avatarAnimated, true, 'Public and own profile projections must carry the animated avatar');
 }
 console.log('Premium status visibility validation and projections passed');

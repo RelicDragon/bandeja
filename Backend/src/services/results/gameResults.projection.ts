@@ -36,6 +36,8 @@ export const RESULTS_USER_SELECT = {
   isTrainer: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   trainerRating: true,
   trainerReviewCount: true,
   sportsEnabled: true,

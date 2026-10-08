@@ -17,7 +17,7 @@ export function GameCardUserNote({ note, showQueueHint, onOpenNote }: GameCardUs
   return (
     <div className="mt-2 space-y-1">
       {showQueueHint && (
-        <div className="flex items-start gap-1.5 rounded-lg bg-sky-500/10 px-2 py-1.5">
+        <div className="flex items-start gap-1.5 rounded-lg bg-sky-500/10 px-2 py-1.5" data-member-accent="sky">
           <Users size={12} className="mt-0.5 flex-shrink-0 text-sky-500 dark:text-sky-500/80" />
           <p className="flex-1 text-xs leading-snug text-sky-900 dark:text-sky-200">
             {t('games.youHaveUserWaitingInJoinQueue')}

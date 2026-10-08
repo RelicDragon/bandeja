@@ -18,7 +18,13 @@ import {
   toggleSharedSlideKey,
 } from '@/features/recap/recapShareSelection';
 import { recapSlideShareLabel } from '@/features/recap/recapShareLabels';
-import { recapSlideBackgroundClass } from '@/components/stories/slides/recapSlideTheme';
+import {
+  recapOwnerMemberTheme,
+  recapSlideBackgroundClass,
+  recapSlideIsThemedBookend,
+} from '@/components/stories/slides/recapSlideTheme';
+import { MemberShareBackdrop } from '@/components/premium/MemberShareArt';
+import type { MemberThemeId } from '@/utils/mainTheme';
 
 /**
  * PRD 353 — "Share with followers".
@@ -41,6 +47,7 @@ export const RecapShareSheet = ({ open, recap, onClose }: RecapShareSheetProps) 
   const { t } = useTranslation();
   const formatters = useRecapFormatters();
   const share = useShareRecapMutation(recap.monthKey);
+  const memberTheme = recapOwnerMemberTheme(recap.payload.owner);
   useBackButtonModal(open, onClose, MODAL_ID);
 
   const slides = useMemo(
@@ -116,6 +123,7 @@ export const RecapShareSheet = ({ open, recap, onClose }: RecapShareSheetProps) 
                 key={slide.key}
                 slide={slide}
                 premium={recap.payload.owner.isPremium}
+                memberTheme={memberTheme}
                 checked={selected.includes(slide.key)}
                 onToggle={handleToggle}
               />
@@ -128,14 +136,18 @@ export const RecapShareSheet = ({ open, recap, onClose }: RecapShareSheetProps) 
             </p>
             <div className="mt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {previewSlides.map((slide) => (
-                <span
-                  key={slide.key}
-                  className={`h-16 w-10 shrink-0 rounded-lg ${recapSlideBackgroundClass(
-                    slide.kind,
-                    recap.payload.owner.isPremium,
-                  )}`}
-                  aria-hidden
-                />
+                memberTheme && recapSlideIsThemedBookend(slide.kind) ? (
+                  <MemberShareBackdrop key={slide.key} theme={memberTheme} className="h-16 w-10 shrink-0 rounded-lg" />
+                ) : (
+                  <span
+                    key={slide.key}
+                    className={`h-16 w-10 shrink-0 rounded-lg ${recapSlideBackgroundClass(
+                      slide.kind,
+                      recap.payload.owner.isPremium,
+                    )}`}
+                    aria-hidden
+                  />
+                )
               ))}
             </div>
           </div>
@@ -167,11 +179,13 @@ export const RecapShareSheet = ({ open, recap, onClose }: RecapShareSheetProps) 
 function RecapShareSlideRow({
   slide,
   premium,
+  memberTheme,
   checked,
   onToggle,
 }: {
   slide: RecapSlide;
   premium: boolean;
+  memberTheme: MemberThemeId | null;
   checked: boolean;
   onToggle: (key: string) => void;
 }) {
@@ -187,10 +201,14 @@ function RecapShareSlideRow({
         onClick={() => onToggle(slide.key)}
         className="flex min-h-11 w-full items-center gap-3 rounded-2xl border border-gray-200 px-3 py-2 text-start transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
       >
-        <span
-          className={`h-12 w-8 shrink-0 rounded-lg ${recapSlideBackgroundClass(slide.kind, premium)}`}
-          aria-hidden
-        />
+        {memberTheme && recapSlideIsThemedBookend(slide.kind) ? (
+          <MemberShareBackdrop theme={memberTheme} className="h-12 w-8 shrink-0 rounded-lg" />
+        ) : (
+          <span
+            className={`h-12 w-8 shrink-0 rounded-lg ${recapSlideBackgroundClass(slide.kind, premium)}`}
+            aria-hidden
+          />
+        )}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">
             {label}

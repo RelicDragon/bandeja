@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { showsPremiumStatus } from '@/utils/premiumIdentity';
+import { PREMIUM_NAME_STYLES, premiumNameClassName, resolvePremiumNameStyle, showsPremiumStatus } from '@/utils/premiumIdentity';
 import { usesPremiumTheme } from '@/utils/mainTheme';
 import { canViewTournamentTableByAccess } from '@/utils/gameResults';
 
@@ -26,5 +26,22 @@ describe('public premium identity', () => {
     expect(showsPremiumStatus(undefined)).toBe(false);
     expect(showsPremiumStatus({ showPremiumStatus: true })).toBe(false);
     expect(showsPremiumStatus({ isPremium: false, showPremiumStatus: true })).toBe(false);
+  });
+});
+
+describe('premium name style', () => {
+  it('resolves every known style and falls back to gold', () => {
+    for (const style of PREMIUM_NAME_STYLES) expect(resolvePremiumNameStyle(style)).toBe(style);
+    expect(resolvePremiumNameStyle(undefined)).toBe('gold');
+    expect(resolvePremiumNameStyle(null)).toBe('gold');
+    expect(resolvePremiumNameStyle('plasma')).toBe('gold');
+    expect(PREMIUM_NAME_STYLES[0]).toBe('gold');
+  });
+
+  it('builds the class list without touching layout utilities', () => {
+    expect(premiumNameClassName('ember')).toBe('premium-name premium-name--ember');
+    expect(premiumNameClassName(undefined, { animated: true, tone: 'light' })).toBe(
+      'premium-name premium-name--gold premium-name--on-light premium-name--animated',
+    );
   });
 });

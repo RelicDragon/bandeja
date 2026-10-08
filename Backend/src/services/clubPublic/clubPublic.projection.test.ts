@@ -197,6 +197,8 @@ function regularsPrivacy() {
     avatar: null,
     isPremium: false,
     showPremiumStatus: true,
+    premiumNameStyle: 'gold',
+    avatarAnimated: null,
     isTrainer: false,
     primarySport: 'PADEL',
   }));

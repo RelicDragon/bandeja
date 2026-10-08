@@ -29,6 +29,7 @@
     "test:attendance": "../scripts/run-heavy vitest run src/components/GameDetails/roster src/features/attendance/attendanceRoster.test.tsx src/features/attendance/attendanceVisuals.test.ts src/features/attendance/AttendanceLegendSheet.test.tsx src/services/push/registerPushNotificationActionTypes.test.ts src/services/push/answerAttendanceFromPush.test.ts",
     "test:auth": "../scripts/run-heavy vitest run src/api/authRefresh.test.ts src/api/authStartup.test.ts src/api/authTimeoutRotation.test.ts src/api/handleApiUnauthorized.test.ts src/services/appLifecycle.auth.test.ts src/services/refreshTokenPersistence.test.ts src/store/authStore.setAuth.test.ts src/utils/authPersistence.test.ts src/utils/appAttribution.test.ts",
     "test:avatar-crop": "../scripts/run-heavy vitest run src/utils/avatarCropArea.test.ts src/utils/avatarCropExport.test.ts",
+    "test:animated-avatar": "../scripts/run-heavy vitest run src/utils/avatarVideoTrim.test.ts src/utils/animatedAvatar.test.ts src/components/PlayerAvatarFace.test.tsx src/components/PlayerAvatar.levelSport.test.tsx src/i18n/localeParity.test.ts",
     "test:bugs": "../scripts/run-heavy vitest run src/components/bugs/*.test.ts",
     "test:card-enrichment": "../scripts/run-heavy vitest run src/utils/attachAvailableGamesEnrichment.test.ts src/utils/gameCardPropsEqual.test.ts",
     "test:chat-drafts": "../scripts/run-heavy vitest run src/components/chat/messageInputDraftSwitch.test.ts src/components/chat/useMessageInputDraftSync.test.tsx src/components/chat/draftDeleteFlow.test.ts",

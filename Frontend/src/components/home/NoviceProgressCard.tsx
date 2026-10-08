@@ -25,6 +25,7 @@ export function NoviceProgressCard() {
     <section
       className="mb-3 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent p-3 shadow-sm"
       data-testid="novice-progress-card"
+      data-member-accent="emerald"
     >
       <div className="flex items-center gap-3">
         <NoviceProgressRing current={progress.current} target={progress.target} size={56} />

@@ -9,7 +9,16 @@
         const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         document.documentElement.classList.toggle('dark', dark);
-        document.documentElement.classList.toggle('premium-theme', !localStorage.getItem('auth_explicit_logout_at') && user?.isPremium === true && user?.mainTheme === 'premium');
+        // Member themes: keep in sync with MEMBER_THEME_IDS in src/utils/mainTheme.ts.
+        const memberTheme = !localStorage.getItem('auth_explicit_logout_at') && user?.isPremium === true
+          && ['premium', 'spring', 'cyberpunk', 'steampunk', 'woodstone', 'ocean', 'nordic', 'alpine', 'summer'].includes(user?.mainTheme) ? user.mainTheme : null;
+        document.documentElement.classList.toggle('premium-theme', memberTheme !== null);
+        if (memberTheme) document.documentElement.dataset.memberTheme = memberTheme;
+        // First frame = the member loader scene colour cached by persistMemberBootBackground().
+        const boot = memberTheme && JSON.parse(localStorage.getItem('member_boot_background') || 'null');
+        if (boot?.theme === memberTheme && typeof boot[dark ? 'dark' : 'light'] === 'string') {
+          document.documentElement.style.setProperty('--boot-background', boot[dark ? 'dark' : 'light']);
+        }
       } catch { /* Storage may be unavailable; use Classic Light. */ }
     </script>
     <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
@@ -45,8 +54,8 @@
     <style>
       :root { --ui-page-background: #f9fafb; }
       html.dark { --ui-page-background: #111827; }
-      html.premium-theme { --ui-page-background: #faf9f6; }
-      html.premium-theme.dark { --ui-page-background: #141411; }
+      html[data-member-theme='premium'] { --ui-page-background: #faf9f6; }
+      html.dark[data-member-theme='premium'] { --ui-page-background: #141411; }
       html,
       body {
         margin: 0;
@@ -56,6 +65,12 @@
       html.app-ready,
       html.app-ready body {
         background-color: var(--ui-page-background, #f9fafb);
+      }
+
+      html[data-member-theme]:not(.app-ready),
+      html[data-member-theme]:not(.app-ready) body,
+      html[data-member-theme] #boot-splash {
+        background-color: var(--boot-background, var(--ui-page-background, #f9fafb));
       }
 
       #boot-splash {
@@ -68,7 +83,7 @@
         background-color: var(--ui-page-background, #f9fafb);
       }
 
-      #boot-splash img {
+      #boot-splash > img {
         width: 220px;
         height: 220px;
         object-fit: contain;
@@ -93,9 +108,20 @@
       <img src="/bandeja2-white-tr.png" alt="" width="220" height="220" />
     </div>
     <script>
-      if (document.documentElement.classList.contains('premium-theme')) {
-        document.querySelector('#boot-splash img').src = '/premium/bandeja-gold-crest.webp';
-      }
+      // Member themes boot into the same markup as components/MemberLoading.tsx (screen variant),
+      // so the React loader takes over without a visual jump.
+      (function () {
+        const theme = document.documentElement.dataset.memberTheme;
+        const splash = document.getElementById('boot-splash');
+        if (!theme || !splash) return;
+        const crest = theme === 'premium'
+          ? '<img class="member-crest member-loading-crest" src="/premium/bandeja-gold-crest.webp" alt="" width="88" height="56">'
+          : '<span class="member-crest member-crest--mask member-loading-crest"></span>';
+        splash.className = 'member-loading member-loading--screen';
+        splash.innerHTML = '<div class="member-loading-backdrop"></div>'
+          + '<div class="member-loading-art"><i></i><i></i><i></i><i></i></div>'
+          + '<div class="member-loading-mark animate-splash-logo">' + crest + '<span class="member-loading-glint"></span></div>';
+      })();
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

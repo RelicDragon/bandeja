@@ -186,6 +186,8 @@ export const GAME_DETAIL_GUEST_USER_SELECT = {
   isTrainer: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   trainerRating: true,
   trainerReviewCount: true,
   sportsEnabled: true,
@@ -207,6 +209,8 @@ const GAME_DETAIL_GUEST_INVITE_USER_SELECT = {
   isTrainer: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   trainerRating: true,
   trainerReviewCount: true,
 } as const satisfies Prisma.UserSelect;

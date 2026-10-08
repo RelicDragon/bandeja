@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { BasicUser } from '@/types';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { animatedAvatarSrc } from '@/utils/animatedAvatar';
 
 type StoryBubbleFaceProps = {
   user: BasicUser;
@@ -15,7 +16,8 @@ const SIZE_CLASS = {
 
 export function StoryBubbleFace({ user, thumbnailUrl, size = 'rail' }: StoryBubbleFaceProps) {
   const sizeClass = SIZE_CLASS[size];
-  const tinyUrl = userAvatarTinyUrlFromStandard(user.avatar);
+  // Premium members' animated face (96px variant) leads; it falls back to the still like the tiny does.
+  const tinyUrl = animatedAvatarSrc(user, { tiny: true }) ?? userAvatarTinyUrlFromStandard(user.avatar);
   const [tinyFailed, setTinyFailed] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
 

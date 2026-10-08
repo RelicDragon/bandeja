@@ -4,7 +4,7 @@ import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
 import { useFrameClass } from '@/features/collection/useEquippedGoods';
 import { pressScaleGuard } from '@/components/motion/pressScale';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
 
 type ClubRegularsRowProps = {
   regulars: ClubRegular[];
@@ -70,7 +70,7 @@ function RegularFace({ regular, name }: { regular: ClubRegular; name: string }) 
     <span className={`relative block h-12 w-12 rounded-full${frame ? ` ${frame}` : ''}`}>
       <PlayerAvatarFace
         avatar={regular.avatar}
-        tinyUrl={userAvatarTinyUrlFromStandard(regular.avatar)}
+        tinyUrl={userFaceTinySrc(regular)}
         initials={initialsOf(regular)}
         alt={name}
         textClassName="text-sm"

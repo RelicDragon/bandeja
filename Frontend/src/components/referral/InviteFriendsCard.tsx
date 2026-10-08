@@ -11,6 +11,7 @@ import { useReferralSummary, useShareReferral } from '@/features/referral/useRef
 import { copyTextToClipboard } from '@/features/referral/shareReferral';
 import { spellReferralCode } from '@/features/referral/referralCode';
 import { useAuthStore } from '@/store/authStore';
+import { animatedAvatarSrc } from '@/utils/animatedAvatar';
 
 export interface InviteFriendsCardProps {
   className?: string;
@@ -70,6 +71,7 @@ export const InviteFriendsCard = ({ className = '' }: InviteFriendsCardProps) =>
             <ReferrerAvatar
               firstName={user?.firstName ?? null}
               avatar={user?.avatar ?? null}
+              animatedAvatar={animatedAvatarSrc(user, { own: true, tiny: true })}
               size={44}
               className="absolute top-0 shadow-sm"
             />

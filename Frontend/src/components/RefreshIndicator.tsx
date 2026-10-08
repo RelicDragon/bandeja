@@ -1,5 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import { getRefreshIndicatorTopCss } from '@/components/refreshIndicatorLayout';
+import { MemberSpinner, useMemberTheme } from '@/features/memberEffects';
 
 interface RefreshIndicatorProps {
   isRefreshing: boolean;
@@ -12,6 +13,7 @@ export const RefreshIndicator = ({
   pullDistance,
   pullProgress,
 }: RefreshIndicatorProps) => {
+  const memberTheme = useMemberTheme();
   if (pullDistance === 0) return null;
 
   const rotation = isRefreshing ? 0 : pullProgress * 360;
@@ -26,7 +28,9 @@ export const RefreshIndicator = ({
       }}
     >
       <div className="bg-white dark:bg-gray-800 rounded-full p-2.5 shadow-lg border border-gray-200 dark:border-gray-700">
-        {isRefreshing ? (
+        {memberTheme ? (
+          <MemberSpinner theme={memberTheme} progress={isRefreshing ? undefined : pullProgress} />
+        ) : isRefreshing ? (
           <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
         ) : (
           <svg

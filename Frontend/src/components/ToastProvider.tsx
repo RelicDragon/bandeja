@@ -18,6 +18,8 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
         }}
         toastOptions={{
           duration: 4000,
+          // Hooks for member themes (styles/premium-surfaces.css); Classic has no rules for them.
+          className: 'app-toast app-toast--neutral',
           style: {
             background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(12px)',
@@ -34,6 +36,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
           },
           success: {
             duration: 3000,
+            className: 'app-toast app-toast--success',
             style: {
               background: 'rgba(16, 185, 129, 0.95)',
               backdropFilter: 'blur(12px)',
@@ -55,6 +58,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
           },
           error: {
             duration: 5000,
+            className: 'app-toast app-toast--error',
             style: {
               background: 'rgba(239, 68, 68, 0.95)',
               backdropFilter: 'blur(12px)',
@@ -76,6 +80,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
           },
           loading: {
             duration: 4000,
+            className: 'app-toast app-toast--loading',
             style: {
               background: 'rgba(59, 130, 246, 0.95)',
               backdropFilter: 'blur(12px)',

@@ -1,0 +1,89 @@
+/*
+ * Member theme as a public showcase (docs/domains/premium-appearance.md).
+ * Every element here carries `.dark` + `data-member-theme`, so the theme files'
+ * attribute-scoped tokens resolve locally (dusk/night palette for light themes)
+ * whatever the viewer's own theme and appearance. Only custom properties are
+ * read: the theme files' `.premium-header-stone` art rules are not reused,
+ * because the viewer's `html[data-member-theme]` would match them too.
+ * Everything is still: no animation, nothing to stop under reduced motion.
+ */
+
+/* Player card hero: a still of the member's header art behind the hero. */
+.member-profile-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--mt-preview-bg, var(--mt-chrome-bg, #11100e));
+  background-color: var(--mt-brand-plate, #11100e);
+  box-shadow: inset 0 0 0 1px var(--mt-chrome-border, transparent);
+}
+
+/* Scrim: keeps the white hero type (incl. the 9 px status line) AA over any art. */
+.member-profile-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 90% at 22% 40%, rgb(0 0 0 / 0.2), transparent 70%),
+    linear-gradient(180deg, rgb(0 0 0 / 0.3), rgb(0 0 0 / 0.5));
+}
+
+/* The theme's header hairline along the bottom edge. */
+.member-profile-backdrop::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--mt-chrome-hairline, transparent);
+}
+
+/* Recap story bookends and share-sheet swatches: the theme's loader scene. */
+.member-share-backdrop {
+  background: var(--mt-loading-bg, var(--mt-chrome-bg, #11100e));
+  background-color: var(--mt-brand-plate, #11100e);
+}
+
+/* Thin double frame with a diamond in each corner (mirrors the server-rendered share images). */
+.member-share-frame {
+  position: absolute;
+  inset: 0.75rem;
+  border: 1px solid var(--mt-chrome-accent, #f3d38d);
+  border-radius: 1.25rem;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.member-share-frame::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--mt-chrome-accent, #f3d38d);
+  border-radius: 1rem;
+  opacity: 0.35;
+}
+
+.member-share-frame > i {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: var(--mt-chrome-accent, #f3d38d);
+  transform: rotate(45deg);
+}
+
+.member-share-frame > i:nth-child(1) { top: -4px; left: -4px; }
+.member-share-frame > i:nth-child(2) { top: -4px; right: -4px; }
+.member-share-frame > i:nth-child(3) { bottom: -4px; left: -4px; }
+.member-share-frame > i:nth-child(4) { bottom: -4px; right: -4px; }
+
+.member-share-crest {
+  display: inline-flex;
+}
+
+.member-share-crest .member-crest {
+  width: 4.5rem;
+  height: auto;
+  aspect-ratio: 8 / 5;
+}

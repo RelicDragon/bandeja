@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useBrandingFooterIconUrl } from '@/hooks/useBrandingFooterIconUrl';
 import { useAuthStore } from '@/store/authStore';
-import { usesPremiumTheme } from '@/utils/mainTheme';
+import { activeMemberTheme } from '@/utils/mainTheme';
 
 interface MainTabFooterProps {
   isLoading?: boolean;
@@ -11,7 +11,7 @@ interface MainTabFooterProps {
 export const MainTabFooter = ({ isLoading = false, compact = false }: MainTabFooterProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const footerIconUrl = useBrandingFooterIconUrl();
-  const premium = useAuthStore((s) => usesPremiumTheme(s.user));
+  const goldCrest = useAuthStore((s) => activeMemberTheme(s.user) === 'premium');
 
   const handleClick = useCallback(() => {
     if (isAnimating || isLoading) return;
@@ -27,7 +27,7 @@ export const MainTabFooter = ({ isLoading = false, compact = false }: MainTabFoo
         type="button"
         onClick={handleClick}
         disabled={isLoading}
-        className={`auth-mascot-btn cursor-pointer select-none rounded-lg ${premium ? 'bg-[#15130f]' : 'bg-[#abdee3] dark:bg-transparent'} p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-default`}
+        className={`auth-mascot-btn cursor-pointer select-none rounded-lg ${goldCrest ? 'bg-[#15130f]' : 'bg-[#abdee3] dark:bg-transparent'} p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-default`}
         aria-label="Logo"
       >
         <img

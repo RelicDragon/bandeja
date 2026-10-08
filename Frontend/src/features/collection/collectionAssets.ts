@@ -91,8 +91,9 @@ export const SHOP_KIND_ORDER: readonly GoodsKind[] = [
 ];
 
 /**
- * Premium gold always beats an equipped name colour: membership is what the
- * gold glow signals, and a bought colour must not be able to fake it.
+ * A visible premium name style (gold, platinum, …) always beats an equipped
+ * name colour: membership is what the style signals, and a bought colour must
+ * not be able to fake it.
  */
 export function resolveNameClass(options: {
   premiumVisible: boolean;

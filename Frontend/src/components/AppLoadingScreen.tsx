@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { useBrandingFooterIconUrl } from '@/hooks/useBrandingFooterIconUrl';
 import { BOOT_SPLASH_BG, notifyShellPainted } from '@/utils/bootSplash';
+import { useAuthStore } from '@/store/authStore';
+import { activeMemberTheme } from '@/utils/mainTheme';
+import { MemberLoading } from '@/components/MemberLoading';
 
 interface AppLoadingScreenProps {
   isInitializing: boolean;
@@ -8,6 +11,7 @@ interface AppLoadingScreenProps {
 
 export const AppLoadingScreen = ({ isInitializing }: AppLoadingScreenProps) => {
   const iconUrl = useBrandingFooterIconUrl();
+  const memberTheme = useAuthStore((s) => activeMemberTheme(s.user));
 
   useEffect(() => {
     if (!isInitializing) return;
@@ -24,6 +28,10 @@ export const AppLoadingScreen = ({ isInitializing }: AppLoadingScreenProps) => {
   }, [isInitializing]);
 
   if (!isInitializing) return null;
+
+  if (memberTheme) {
+    return <MemberLoading theme={memberTheme} variant="screen" className="fixed inset-0 z-50" />;
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden" style={{ backgroundColor: BOOT_SPLASH_BG }}>

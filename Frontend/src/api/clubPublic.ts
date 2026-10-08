@@ -8,7 +8,7 @@
  * nothing more.
  */
 import api from './axios';
-import type { ApiResponse, City, ClubPhoto, Game, Sport } from '@/types';
+import type { ApiResponse, City, ClubPhoto, Game, PremiumNameStyle, Sport } from '@/types';
 
 export type PublicClubCourt = {
   id: string;
@@ -73,6 +73,8 @@ export type ClubRegular = {
   avatar: string | null;
   isPremium: boolean;
   showPremiumStatus: boolean;
+  premiumNameStyle?: PremiumNameStyle;
+  avatarAnimated?: string | null;
   isTrainer: boolean;
   primarySport: Sport;
 };

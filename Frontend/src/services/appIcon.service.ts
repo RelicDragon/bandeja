@@ -10,7 +10,7 @@ import { syncBrandingLogoToNative } from '@/services/authBridge';
 import { isAndroid, isCapacitor, isIOS } from '@/utils/capacitor';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 import type { User } from '@/types';
-import { usesPremiumTheme } from '@/utils/mainTheme';
+import { activeMemberTheme, type MemberThemeId } from '@/utils/mainTheme';
 
 const ANDROID_LAUNCHER_ALIASES = ['tiger', ...NATIVE_ALTERNATE_ICON_NAMES] as const;
 
@@ -47,7 +47,8 @@ export function resolveAppIconId(user: User | null | undefined): AppIconId {
 }
 
 export function getBrandingFooterIconUrl(user: User | null | undefined): string {
-  if (usesPremiumTheme(user)) return '/premium/bandeja-gold-crest.webp';
+  // Only Obsidian Gold has a raster crest; other member themes keep the classic footer icon.
+  if (activeMemberTheme(user) === 'premium') return '/premium/bandeja-gold-crest.webp';
   return getFooterIconUrl(resolveAppIconId(user), user ? resolveAppIconSport(user) : DEFAULT_SPORT);
 }
 
@@ -59,16 +60,17 @@ export function getBrandingSplashLogoKey(user: User | null | undefined): Brandin
 
 export function getNativeAppIconSyncKey(user: User | null | undefined): string | null {
   if (!user) return null;
-  return `${resolveAppIconId(user)}:${resolveAppIconSport(user)}`;
+  return `${resolveAppIconId(user)}:${resolveAppIconSport(user)}:${activeMemberTheme(user) ?? 'classic'}`;
 }
 
 export async function setNativeAppIcon(
   appIconId: AppIconId,
   primarySport?: User['primarySport'] | null,
+  memberTheme?: MemberThemeId | null,
 ): Promise<void> {
   if (!isCapacitor()) return;
   try {
-    const targetName = resolveNativeAppIconName(appIconId, primarySport);
+    const targetName = resolveNativeAppIconName(appIconId, primarySport, memberTheme);
     if (isAndroid()) {
       const { getAndroidLauncherIconName } = await import(
         '@/services/androidLauncherIconBridge'
@@ -119,6 +121,6 @@ export function syncNativeAppIconForUser(user: User | null | undefined): void {
   if (!user) return;
   const appIconId = resolveAppIconId(user);
   const sport = resolveAppIconSport(user);
-  void setNativeAppIcon(appIconId, sport);
+  void setNativeAppIcon(appIconId, sport, activeMemberTheme(user));
   syncBrandingLogoForUser(user);
 }

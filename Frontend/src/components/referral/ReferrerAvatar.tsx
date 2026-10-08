@@ -5,6 +5,8 @@ import { UserAvatarFallbackImg } from '@/components/UserAvatarFallbackImg';
 export interface ReferrerAvatarProps {
   firstName: string | null;
   avatar: string | null;
+  /** Premium animated face, tried first; falls back to `avatar`. */
+  animatedAvatar?: string | null;
   /** Rendered size in px. 28 for inline chips, 44 for the invite illustration. */
   size?: number;
   className?: string;
@@ -23,10 +25,13 @@ export interface ReferrerAvatarProps {
 export const ReferrerAvatar = ({
   firstName,
   avatar,
+  animatedAvatar = null,
   size = 28,
   className = '',
 }: ReferrerAvatarProps) => {
   const [failed, setFailed] = useState(false);
+  const [animatedFailed, setAnimatedFailed] = useState(false);
+  const useAnimated = Boolean(animatedAvatar) && !animatedFailed;
   const initial = firstName?.trim()?.charAt(0).toUpperCase() ?? '';
   const dimension = { width: size, height: size };
 
@@ -38,10 +43,10 @@ export const ReferrerAvatar = ({
     >
       {avatar && !failed ? (
         <UserAvatarFallbackImg
-          src={avatar}
+          src={useAnimated ? animatedAvatar! : avatar}
           alt=""
           className="h-full w-full object-cover"
-          onError={() => setFailed(true)}
+          onError={() => (useAnimated ? setAnimatedFailed(true) : setFailed(true))}
         />
       ) : initial ? (
         <span className="text-xs font-semibold leading-none">{initial}</span>

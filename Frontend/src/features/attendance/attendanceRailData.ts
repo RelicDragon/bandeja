@@ -7,7 +7,7 @@
 
 import type { AttendanceSummary } from '@/types/gameCardEnrichment';
 import { resolveDotState, type AttendanceDotState } from './attendanceVisuals';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
 
 export interface AttendanceRailPlayer {
   userId: string;
@@ -71,7 +71,7 @@ export function buildAttendanceRailData(
     userId: participant.userId,
     initial: (participant.user?.firstName ?? '?').slice(0, 1).toUpperCase(),
     avatarUrl:
-      userAvatarTinyUrlFromStandard(participant.user?.avatar) ?? participant.user?.avatar ?? null,
+      userFaceTinySrc(participant.user) ?? participant.user?.avatar ?? null,
     state: resolveDotState(byUserId.get(participant.userId), null),
   }));
   return {

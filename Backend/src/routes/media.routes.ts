@@ -4,6 +4,10 @@ import { validate } from '../middleware/validate';
 import { body } from 'express-validator';
 import { 
   uploadAvatar, 
+  uploadAnimatedAvatar,
+  uploadAnimatedAvatarFile,
+  uploadAvatarFrames,
+  uploadAvatarFramesFiles,
   uploadGameAvatar,
   uploadGroupChannelAvatar,
   uploadUserTeamAvatar,
@@ -33,6 +37,18 @@ router.post(
   '/upload/avatar',
   uploadAvatarFiles,
   uploadAvatar
+);
+
+router.post(
+  '/upload/avatar/animated',
+  uploadAnimatedAvatarFile,
+  uploadAnimatedAvatar
+);
+
+router.post(
+  '/upload/avatar/frames',
+  uploadAvatarFramesFiles,
+  uploadAvatarFrames
 );
 
 router.post(

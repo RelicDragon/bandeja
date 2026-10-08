@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
 import { useFrameClass } from '@/features/collection/useEquippedGoods';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import type { PairMember } from '@/api/pairs';
 import { memberDisplayName } from './pairFormat';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
 
 export type PairAvatarsRing = 'none' | 'gold' | 'silver' | 'bronze';
 
@@ -73,7 +73,7 @@ export const PairAvatars = memo(
           >
             <PlayerAvatarFace
               avatar={member.avatar}
-              tinyUrl={userAvatarTinyUrlFromStandard(member.avatar)}
+              tinyUrl={userFaceTinySrc(member)}
               initials={initialsOf(member)}
               alt={memberDisplayName(member)}
               textClassName={size >= 44 ? 'text-sm' : 'text-[10px]'}

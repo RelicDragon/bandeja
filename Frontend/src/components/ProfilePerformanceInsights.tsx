@@ -24,6 +24,7 @@ import {
   type RelationshipPlaceIndex,
   type RelationshipRankingMode,
 } from '@/utils/profileRelationshipRankings';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 interface ProfilePerformanceInsightsProps {
   insights?: UserPerformanceInsights;
@@ -447,7 +448,8 @@ const ProfilePerformanceInsightsComponent = ({
                         <div className="flex min-w-0 items-center gap-2">
                           {entry.user.avatar ? (
                             <img
-                              src={entry.user.avatar}
+                              src={userFaceSrc(entry.user) ?? undefined}
+                              onError={fallbackToStillAvatar(entry.user.avatar)}
                               alt={getPlayerName(entry, t('playerCard:shareProfileFallbackName'))}
                               className="h-8 w-8 shrink-0 rounded-full object-cover"
                             />

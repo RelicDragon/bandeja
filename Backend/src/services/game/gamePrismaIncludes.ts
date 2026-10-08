@@ -260,6 +260,8 @@ const myTabListUserSelect = {
   approvedLevel: true,
   isPremium: true,
   showPremiumStatus: true,
+  premiumNameStyle: true,
+  avatarAnimated: true,
   isTrainer: true,
   primarySport: true,
   sportsEnabled: true,

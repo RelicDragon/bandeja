@@ -141,11 +141,27 @@ import type {
   ParticipantAttendance,
 } from './gameCardEnrichment';
 
+export type MainTheme =
+  | 'classic'
+  | 'premium'
+  | 'spring'
+  | 'cyberpunk'
+  | 'steampunk'
+  | 'woodstone'
+  | 'ocean'
+  | 'nordic'
+  | 'alpine'
+  | 'summer';
+
+export type PremiumNameStyle = 'gold' | 'platinum' | 'rose' | 'ember' | 'aurora' | 'neon' | 'holo' | 'frost';
+
 export interface BasicUser {
   id: string;
   firstName?: string;
   lastName?: string;
   avatar?: string | null;
+  /** Premium-only animated WebP; render only via `PlayerAvatar` (it gates premium, size, reduced motion). */
+  avatarAnimated?: string | null;
   /**
    * Competitive level for the current sport context when API-projected; populated from `sportProfiles` on profile payloads.
    * @deprecated Prefer `sportProfiles` for the relevant sport, or `getDisplayLevelForSport`.
@@ -173,8 +189,10 @@ export interface BasicUser {
   trainerReviewCount?: number;
   isPremium?: boolean;
   showPremiumStatus?: boolean;
+  /** Premium-only public name decoration; absent on old payloads → `gold`. */
+  premiumNameStyle?: PremiumNameStyle;
   premiumOnboardingCompletedAt?: string | null;
-  mainTheme?: 'classic' | 'premium';
+  mainTheme?: MainTheme;
   weeklyAvailability?: WeeklyAvailabilityDoc | null;
   isAdmin?: boolean;
   canCreateTournament?: boolean;

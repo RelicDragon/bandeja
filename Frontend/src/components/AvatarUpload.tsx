@@ -6,6 +6,15 @@ import { Upload, User, Camera } from 'lucide-react';
 import { AvatarCropModal } from './AvatarCropModal';
 import { pickImages } from '@/utils/photoCapture';
 import { isCapacitor } from '@/utils/capacitor';
+import { pickVideo } from '@/utils/videoCapture';
+import { AvatarVideoEditor } from './AvatarVideoEditor';
+import { mediaApi, type MediaUploadResponse } from '@/api/media';
+import {
+  ANIMATED_AVATAR_MAX_UPLOAD_BYTES,
+  fallbackToStillAvatar,
+  isAnimatedImageFile,
+  isVideoFile,
+} from '@/utils/animatedAvatar';
 
 export interface AvatarUploadHandle {
   openPicker: () => void | Promise<void>;
@@ -25,6 +34,16 @@ interface AvatarUploadProps {
   sizeClassName?: string;
   /** When false, tap/drag on preview does nothing — call ref.openPicker() from a button */
   surfaceInteractive?: boolean;
+  /**
+   * User avatars only. `enabled` (Premium): GIF/animated WebP keep their motion and videos open
+   * the trim + crop editor. Disabled: animated picks fall back to a still with a one-line hint.
+   */
+  animated?: {
+    enabled: boolean;
+    onUploaded: (response: MediaUploadResponse) => void | Promise<void>;
+  };
+  /** Animated version of `currentAvatar` to show in the preview. */
+  currentAvatarAnimated?: string | null;
 }
 
 export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(function AvatarUpload(
@@ -37,6 +56,8 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
   emptyBackground,
   sizeClassName,
   surfaceInteractive = true,
+  animated,
+  currentAvatarAnimated,
 },
   ref
 ) {
@@ -45,10 +66,19 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
   const [isUploading, setIsUploading] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedIsAnimated, setSelectedIsAnimated] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const animatedEnabled = animated?.enabled === true;
 
-  const handleFileSelect = useCallback((file: File) => {
+  const handleFileSelect = useCallback(async (file: File) => {
     if (!file || disabled) return;
+
+    if (isVideoFile(file)) {
+      if (animatedEnabled) setVideoFile(file);
+      else toast.error(t('profile.invalidImageType'));
+      return;
+    }
 
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
@@ -62,9 +92,46 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
       return;
     }
 
+    const isAnimated = animated ? await isAnimatedImageFile(file).catch(() => false) : false;
+    if (isAnimated && animatedEnabled && file.size > ANIMATED_AVATAR_MAX_UPLOAD_BYTES) {
+      toast.error(t('profile.animatedAvatarTooLarge'));
+      return;
+    }
+
+    setSelectedIsAnimated(isAnimated);
     setSelectedFile(file);
     setShowCropModal(true);
-  }, [disabled, t]);
+  }, [disabled, t, animated, animatedEnabled]);
+
+  const handleAnimatedCrop = useCallback(async (crop: { x: number; y: number; size: number }) => {
+    if (!selectedFile || !animated) return;
+    setIsUploading(true);
+    try {
+      const response = await mediaApi.uploadAnimatedAvatar(selectedFile, crop);
+      await animated.onUploaded(response);
+      setShowCropModal(false);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Animated avatar upload failed:', error);
+      toast.error(t('profile.animatedAvatarFailed'));
+    } finally {
+      setIsUploading(false);
+    }
+  }, [selectedFile, animated, t]);
+
+  const handleVideoSubmit = useCallback(
+    async (frames: Blob[], fps: number, onProgress: (fraction: number) => void) => {
+      if (!animated) return;
+      try {
+        const response = await mediaApi.uploadAvatarFrames(frames, fps, onProgress);
+        await animated.onUploaded(response);
+      } catch (error) {
+        toast.error(t('profile.animatedAvatarFailed'));
+        throw error;
+      }
+    },
+    [animated, t]
+  );
 
   const handleCropComplete = useCallback(async (avatarFile: File, originalFile: File) => {
     setIsUploading(true);
@@ -105,7 +172,7 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      handleFileSelect(files[0]);
+      void handleFileSelect(files[0]);
     }
   }, [handleFileSelect, disabled]);
 
@@ -117,7 +184,7 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      handleFileSelect(files[0]);
+      void handleFileSelect(files[0]);
     }
     e.target.value = '';
   }, [handleFileSelect]);
@@ -125,11 +192,18 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
   const handleClick = useCallback(async () => {
     if (disabled || isUploading) return;
 
+    if (isCapacitor() && animatedEnabled) {
+      // The camera plugin flattens GIFs and cannot return videos; the system picker does both.
+      const picked = await pickVideo({ accept: 'image/*,video/*' });
+      if (picked) void handleFileSelect(picked.file);
+      return;
+    }
+
     if (isCapacitor()) {
       try {
         const result = await pickImages(1);
         if (result && result.files.length > 0) {
-          handleFileSelect(result.files[0]);
+          void handleFileSelect(result.files[0]);
         }
       } catch (error: any) {
         console.error('Error picking image:', error);
@@ -142,7 +216,7 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
     } else {
       fileInputRef.current?.click();
     }
-  }, [disabled, isUploading, handleFileSelect, t]);
+  }, [disabled, isUploading, handleFileSelect, animatedEnabled, t]);
 
   useImperativeHandle(ref, () => ({ openPicker: () => void handleClick() }), [handleClick]);
 
@@ -172,9 +246,11 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
         >
           {currentAvatar ? (
             <img
-              src={currentAvatar || ''}
+              key={currentAvatarAnimated || currentAvatar}
+              src={currentAvatarAnimated || currentAvatar || ''}
               alt={t('profile.avatar')}
               className="w-full h-full object-cover"
+              onError={currentAvatarAnimated ? fallbackToStillAvatar(currentAvatar) : undefined}
             />
           ) : emptyBackground ? (
             <div className="relative h-full w-full">{emptyBackground}</div>
@@ -210,7 +286,11 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+        accept={
+          animatedEnabled
+            ? 'image/jpeg,image/jpg,image/png,image/gif,image/webp,video/*'
+            : 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
+        }
         onChange={handleFileInputChange}
         className="hidden"
         disabled={disabled || isUploading}
@@ -222,6 +302,17 @@ export const AvatarUpload = forwardRef<AvatarUploadHandle, AvatarUploadProps>(fu
           onCrop={handleCropComplete}
           onCancel={handleCropCancel}
           isUploading={isUploading}
+          onAnimatedCrop={selectedIsAnimated && animatedEnabled ? (crop) => void handleAnimatedCrop(crop) : undefined}
+          hint={selectedIsAnimated && !animatedEnabled ? t('profile.animatedAvatarPremiumHint') : undefined}
+        />,
+        document.body
+      )}
+
+      {videoFile && createPortal(
+        <AvatarVideoEditor
+          videoFile={videoFile}
+          onSubmit={handleVideoSubmit}
+          onCancel={() => setVideoFile(null)}
         />,
         document.body
       )}

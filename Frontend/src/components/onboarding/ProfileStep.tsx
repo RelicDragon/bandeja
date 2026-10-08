@@ -46,6 +46,7 @@ export function ProfileStep(chrome: OnboardingStepChrome) {
           ...user,
           avatar: response.avatarUrl,
           originalAvatar: response.originalAvatarUrl,
+          avatarAnimated: response.avatarAnimatedUrl ?? null,
         });
       }
     } catch (uploadError) {

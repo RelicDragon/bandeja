@@ -1,0 +1,427 @@
+/* Brass Works — riveted brass and copper chrome (dark in both appearances),
+   three meshing gears with true tooth-ratio speeds, a pressure gauge and an
+   occasional wisp of steam. Sepia neutrals; parchment / dark-leather chat.
+   Tokens are scoped to the attribute so the theme picker can preview them. */
+
+[data-member-theme='steampunk'] {
+  --ui-page-background: #f7f2e8;
+  --ui-background: #f7f2e8;
+  --ui-surface: #fffdf8;
+
+  /* Sepia-warm neutrals; 500+ stay AA on the page. */
+  --color-gray-50: #faf7f1;
+  --color-gray-100: #f2ece1;
+  --color-gray-200: #e4dacb;
+  --color-gray-300: #cdbfaa;
+  --color-gray-400: #a89a84;
+  --color-gray-500: #766957;
+  --color-gray-600: #5e5343;
+  --color-gray-700: #40382d;
+  --color-gray-800: #29231c;
+  --color-gray-900: #18140f;
+  --color-gray-950: #0e0b08;
+
+  /* Oxidised copper; 500+ AA under white text. */
+  --member-primary-default: #9a5428;
+  --member-primary-50: #fbf4ec;
+  --member-primary-100: #f5e4d0;
+  --member-primary-200: #ebc9a3;
+  --member-primary-300: #dfa871;
+  --member-primary-400: #cf8a4b;
+  --member-primary-500: #a3592a;
+  --member-primary-600: #8c4a22;
+  --member-primary-700: #713b1d;
+  --member-primary-800: #5a301a;
+  --member-primary-900: #432616;
+  --member-primary-950: #26150c;
+
+  /* Gear sprites (generated: module 2.2, 28/16/11 teeth, mesh phase baked in). */
+  --sp-gear-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 69 69'%3E%3Cdefs%3E%3CradialGradient id='g28'%3E%3Cstop offset='.25' stop-color='%23d6a463'/%3E%3Cstop offset='.75' stop-color='%23a46d35'/%3E%3Cstop offset='1' stop-color='%236a4320'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath fill='url(%23g28)' fill-rule='evenodd' stroke='%232a1a0c' stroke-width='.6' d='M7.17 27.26L2.95 25.22L3.74 22.84L8.34 23.77L9.47 21.36L5.80 18.43L7.11 16.29L11.39 18.22L13.02 16.12L10.10 12.45L11.85 10.65L15.59 13.49L17.65 11.80L15.61 7.57L17.72 6.21L20.74 9.81L23.12 8.62L22.08 4.05L24.44 3.19L26.58 7.36L29.17 6.74L29.17 2.04L31.66 1.73L32.82 6.28L35.48 6.25L36.52 1.67L39.02 1.92L39.14 6.61L41.74 7.17L43.78 2.95L46.16 3.74L45.23 8.34L47.64 9.47L50.57 5.80L52.71 7.11L50.78 11.39L52.88 13.02L56.55 10.10L58.35 11.85L55.51 15.59L57.20 17.65L61.43 15.61L62.79 17.72L59.19 20.74L60.38 23.12L64.95 22.08L65.81 24.44L61.64 26.58L62.26 29.17L66.96 29.17L67.27 31.66L62.72 32.82L62.75 35.48L67.33 36.52L67.08 39.02L62.39 39.14L61.83 41.74L66.05 43.78L65.26 46.16L60.66 45.23L59.53 47.64L63.20 50.57L61.89 52.71L57.61 50.78L55.98 52.88L58.90 56.55L57.15 58.35L53.41 55.51L51.35 57.20L53.39 61.43L51.28 62.79L48.26 59.19L45.88 60.38L46.92 64.95L44.56 65.81L42.42 61.64L39.83 62.26L39.83 66.96L37.34 67.27L36.18 62.72L33.52 62.75L32.48 67.33L29.98 67.08L29.86 62.39L27.26 61.83L25.22 66.05L22.84 65.26L23.77 60.66L21.36 59.53L18.43 63.20L16.29 61.89L18.22 57.61L16.12 55.98L12.45 58.90L10.65 57.15L13.49 53.41L11.80 51.35L7.57 53.39L6.21 51.28L9.81 48.26L8.62 45.88L4.05 46.92L3.19 44.56L7.36 42.42L6.74 39.83L2.04 39.83L1.73 37.34L6.28 36.18L6.25 33.52L1.67 32.48L1.92 29.98L6.61 29.86ZM14.62 19.75A24.75 24.75 0 0 1 22.34 12.94L28.17 23.27A12.89 12.89 0 0 0 24.15 26.82ZM37.33 9.91A24.75 24.75 0 0 1 47.09 13.19L41.05 23.40A12.89 12.89 0 0 0 35.97 21.70ZM57.21 24.66A24.75 24.75 0 0 1 59.25 34.75L47.39 34.63A12.89 12.89 0 0 0 46.33 29.38ZM54.38 49.25A24.75 24.75 0 0 1 46.66 56.06L40.83 45.73A12.89 12.89 0 0 0 44.85 42.18ZM31.67 59.09A24.75 24.75 0 0 1 21.91 55.81L27.95 45.60A12.89 12.89 0 0 0 33.03 47.30ZM11.79 44.34A24.75 24.75 0 0 1 9.75 34.25L21.61 34.37A12.89 12.89 0 0 0 22.67 39.62Z'/%3E%3Ccircle cx='34.50' cy='34.50' r='24.75' fill='none' stroke='%23f3d39a' stroke-opacity='.28' stroke-width='.7'/%3E%3Ccircle cx='34.50' cy='34.50' r='11.09' fill='%237a4f26' stroke='%23f0cd8f' stroke-opacity='.35' stroke-width='.7'/%3E%3Cpath fill='%231c120a' d='M38.20 34.50A3.70 3.70 0 1 0 30.80 34.50A3.70 3.70 0 1 0 38.20 34.50Z'/%3E%3C/svg%3E");
+  --sp-gear-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 43 43'%3E%3Cdefs%3E%3CradialGradient id='g16'%3E%3Cstop offset='.25' stop-color='%23d6a463'/%3E%3Cstop offset='.75' stop-color='%23a46d35'/%3E%3Cstop offset='1' stop-color='%236a4320'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath fill='url(%23g16)' fill-rule='evenodd' stroke='%232a1a0c' stroke-width='.6' d='M35.79 26.28L39.86 28.61L38.75 30.99L34.35 29.38L32.88 31.38L35.74 35.10L33.80 36.87L30.35 33.70L28.23 34.98L29.45 39.51L26.99 40.41L25.01 36.16L22.56 36.53L21.96 41.18L19.33 41.07L19.14 36.38L16.72 35.79L14.39 39.86L12.01 38.75L13.62 34.35L11.62 32.88L7.90 35.74L6.13 33.80L9.30 30.35L8.02 28.23L3.49 29.45L2.59 26.99L6.84 25.01L6.47 22.56L1.82 21.96L1.93 19.33L6.62 19.14L7.21 16.72L3.14 14.39L4.25 12.01L8.65 13.62L10.12 11.62L7.26 7.90L9.20 6.13L12.65 9.30L14.77 8.02L13.55 3.49L16.01 2.59L17.99 6.84L20.44 6.47L21.04 1.82L23.67 1.93L23.86 6.62L26.28 7.21L28.61 3.14L30.99 4.25L29.38 8.65L31.38 10.12L35.10 7.26L36.87 9.20L33.70 12.65L34.98 14.77L39.51 13.55L40.41 16.01L36.16 17.99L36.53 20.44L41.18 21.04L41.07 23.67L36.38 23.86ZM29.44 29.89A11.55 11.55 0 0 1 24.41 32.68L23.55 29.37A8.14 8.14 0 0 0 27.09 27.41ZM15.97 31.64A11.55 11.55 0 0 1 11.77 27.72L14.65 25.88A8.14 8.14 0 0 0 17.61 28.64ZM10.15 19.38A11.55 11.55 0 0 1 12.57 14.17L15.21 16.34A8.14 8.14 0 0 0 13.50 20.00ZM20.01 10.05A11.55 11.55 0 0 1 25.71 10.75L24.47 13.92A8.14 8.14 0 0 0 20.45 13.43ZM31.93 16.55A11.55 11.55 0 0 1 33.03 22.18L29.62 21.98A8.14 8.14 0 0 0 28.85 18.01Z'/%3E%3Ccircle cx='21.50' cy='21.50' r='11.55' fill='none' stroke='%23f3d39a' stroke-opacity='.28' stroke-width='.7'/%3E%3Ccircle cx='21.50' cy='21.50' r='6.34' fill='%237a4f26' stroke='%23f0cd8f' stroke-opacity='.35' stroke-width='.7'/%3E%3Cpath fill='%231c120a' d='M23.61 21.50A2.11 2.11 0 1 0 19.39 21.50A2.11 2.11 0 1 0 23.61 21.50Z'/%3E%3C/svg%3E");
+  --sp-gear-c: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g11'%3E%3Cstop offset='.25' stop-color='%23d6a463'/%3E%3Cstop offset='.75' stop-color='%23a46d35'/%3E%3Cstop offset='1' stop-color='%236a4320'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath fill='url(%23g11)' fill-rule='evenodd' stroke='%232a1a0c' stroke-width='.6' d='M23.25 9.75L27.36 7.50L28.79 9.85L24.89 12.45L25.48 14.67L30.15 14.99L30.08 17.74L25.40 17.82L24.69 20.00L28.45 22.80L26.91 25.08L22.92 22.61L21.15 24.07L22.80 28.45L20.27 29.53L18.25 25.30L15.97 25.57L14.99 30.15L12.27 29.69L12.86 25.04L10.80 24.04L7.50 27.36L5.46 25.50L8.47 21.91L7.28 19.95L2.70 20.96L2.00 18.30L6.47 16.90L6.53 14.61L2.13 12.98L2.98 10.36L7.50 11.61L8.79 9.71L5.97 5.97L8.09 4.22L11.22 7.71L13.33 6.81L12.98 2.13L15.72 1.81L16.47 6.44L18.72 6.83L20.96 2.71L23.43 3.91L21.56 8.21ZM19.75 16.00A3.75 3.75 0 1 0 12.25 16.00A3.75 3.75 0 1 0 19.75 16.00Z'/%3E%3Ccircle cx='16.00' cy='16.00' r='6.05' fill='none' stroke='%23f3d39a' stroke-opacity='.28' stroke-width='.7'/%3E%3Ccircle cx='16.00' cy='16.00' r='4.36' fill='%237a4f26' stroke='%23f0cd8f' stroke-opacity='.35' stroke-width='.7'/%3E%3Cpath fill='%231c120a' d='M17.60 16.00A1.60 1.60 0 1 0 14.40 16.00A1.60 1.60 0 1 0 17.60 16.00Z'/%3E%3C/svg%3E");
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 24% 0%, #c98a4a26, transparent 56%),
+    linear-gradient(165deg, #1a110a59, #0d080480),
+    url('/themes/steampunk-brass.webp') 0 0 / 384px 144px repeat,
+    #1c140c;
+  --mt-chrome-text: #ecca8f;
+  --mt-chrome-muted: #bba585;
+  --mt-chrome-border: #b07c4670;
+  --mt-chrome-accent: #f0c27a;
+  --mt-chrome-accent-soft: #d6a05a24;
+  --mt-chrome-hairline: linear-gradient(90deg, #8a5a2a20, #e0a866b3 28%, #c47a3e40 64%, #b0804a80);
+  --mt-chrome-shadow: inset 0 1px 0 #ffd9a024, 0 8px 24px #120a0430;
+  /* Near-opaque discs: buttons read as mounted dials, not windows onto the gears. */
+  --mt-chrome-button-bg: #1a110ae6;
+  --mt-chrome-edges: #140d0799;
+  --mt-cta-bg: linear-gradient(135deg, #f0cf94, #c88a48 62%, #e2b273);
+  --mt-cta-text: #2a1709;
+  --mt-cta-border: #f3d6a07a;
+  --mt-badge-bg: #e3a868;
+  --mt-badge-text: #24140a;
+
+  /* Chrome fine-tuning, set explicitly so a picker tile never inherits another theme's. */
+  --mt-chrome-button-text: #e2c08a;
+  --mt-chrome-button-hover: #f0c27a17;
+  --mt-chrome-focus: #f6d39a;
+  --mt-chrome-focus-halo: #1a1109;
+  --mt-chrome-tab-text: #c4ae8e;
+  --mt-chrome-tab-active: #f3d29b;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #d6a05a66, inset 0 1px 0 #ffd9a024;
+  --mt-chrome-profile: #f0cf98;
+  --mt-chrome-profile-ring: 0 0 0 1px #d9a462, 0 0 0 4px #c98a4a14;
+  --mt-chrome-controls-bg: radial-gradient(ellipse 75% 32px at 50% 0%, #e0a24e2e, transparent 85%), #0b070459;
+  --mt-chrome-controls-border: #c98f5247;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #f0c07a26;
+  --mt-cta-shadow: inset 0 1px 0 #fff0cf99, 0 2px 6px #0005;
+  --mt-tabbar-border: #b9854e99;
+  --mt-tabbar-shadow: inset 0 1px 0 #f6cf9466, inset 0 -1px 0 #9a643326, 0 8px 28px #0005;
+  --mt-tabbar-hover: #f6d7a6;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #f0b46a33);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #e0a24e24, transparent 80%), linear-gradient(#d69a5810, #d69a5803);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #f6cf9421;
+  --mt-badge-ring: 0 0 0 2px #1c140c;
+
+  /* Engraved brass → copper, Victorian serif from the system stack. */
+  --mt-brand-fill: linear-gradient(175deg, #fde6b8 12%, #e3ad63 44%, #9b5b2b 53%, #d39557 70%, #f4d29a 92%);
+  --mt-brand-font: Baskerville, 'Baskerville Old Face', 'Bodoni 72', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --mt-brand-tier-text: #d6ad74;
+  --mt-brand-dash: #c08a4c;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #0a0603) drop-shadow(0 -1px 0 #ffd9a01f);
+  --mt-brand-plate: #2a1a0ee6;
+
+  --chat-paper: #f5ecdc;
+  --chat-panel: #fffaf0;
+  --chat-line: #a8784a38;
+  --chat-selection: #a8784a14;
+  --chat-selection-edge: #9a5428;
+  --mt-bubble-own: linear-gradient(145deg, #a35c2c, #7a3f1c 80%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #8f4f27, #5f3118 80%);
+  /* Aged parchment: faint foxing at the corners. */
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #c08a4a1f, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #a8784a17, transparent 55%),
+    radial-gradient(circle at 18% 22%, #b07a420a, transparent 18%);
+
+  /* Loader: an engine-room bulkhead (dark in both appearances; a brand moment). */
+  --mt-loading-bg:
+    radial-gradient(circle, #f2cf94 0 1px, #a8743a 1.8px, #2a170a 2.8px, #0000 3.4px) 13px 22px / 30px 10px repeat-x,
+    radial-gradient(circle, #f2cf94 0 1px, #a8743a 1.8px, #2a170a 2.8px, #0000 3.4px) 13px calc(100% - 22px) / 30px 10px repeat-x,
+    linear-gradient(#0000 34px, #0b06038c 35px, #c98f5233 36px, #0000 37px calc(100% - 37px), #c98f5233 calc(100% - 36px), #0b06038c calc(100% - 35px), #0000 calc(100% - 34px)),
+    radial-gradient(ellipse 60% 42% at 50% 50%, #e0843a3d, #b8642a14 55%, transparent 80%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, #0806038c),
+    linear-gradient(165deg, #1a110a40, #0d080473),
+    url('/themes/steampunk-brass.webp') 0 0 / 512px 192px repeat,
+    #1f150c;
+  --mt-loading-crest-fill: linear-gradient(175deg, #fde6b8 12%, #e3ad63 44%, #9b5b2b 53%, #d39557 70%, #f4d29a 92%);
+  --mt-loading-text: #d9b47c;
+
+  --mt-preview-bg:
+    var(--sp-gear-b) right 14px top -4px / 26px 26px no-repeat,
+    var(--sp-gear-a) right -18px top 6px / 42px 42px no-repeat,
+    radial-gradient(ellipse at 24% 0%, #c98a4a33, transparent 60%),
+    url('/themes/steampunk-brass.webp') 0 0 / 256px 96px repeat,
+    #1c140c;
+}
+
+.dark[data-member-theme='steampunk'],
+.dark [data-member-theme='steampunk'] {
+  --ui-page-background: #16110c;
+  --ui-background: #0e0b08;
+  --ui-surface: #241c15;
+
+  --member-primary-default: #d4945a;
+
+  /* Dark leather: a warm pool of lamplight and a soft vignette. */
+  --chat-paper: #1a140f;
+  --chat-panel: #2a2119;
+  --chat-line: #c08a5a33;
+  --chat-selection: #e0a86614;
+  --chat-selection-edge: #e0a866;
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #8a4f2622, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #00000033, transparent 60%);
+}
+
+/* Chat palette follows the copper ramp. */
+[data-member-theme='steampunk'] .premium-chat,
+[data-member-theme='steampunk'].premium-chat {
+  --color-blue-50: #fbf4ec;
+  --color-blue-100: #f5e4d0;
+  --color-blue-200: #ebc9a3;
+  --color-blue-300: #dfa871;
+  --color-blue-400: #cf8a4b;
+  --color-blue-500: #a3592a;
+  --color-blue-600: #8c4a22;
+  --color-blue-700: #713b1d;
+  --color-blue-800: #5a301a;
+  --color-blue-900: #432616;
+  --color-blue-950: #26150c;
+}
+
+/* ── Header art ─────────────────────────────────────────────────────────── */
+
+/* Brushed brass plate with patina; a rivet row seals the seam above the tabs. */
+[data-member-theme='steampunk'] .premium-header-stone {
+  background:
+    radial-gradient(circle, #f2cf94 0 .8px, #a8743a 1.4px, #2a170a 2.3px, #0000 2.9px) 11px calc(100% - 3px) / 22px 7px repeat-x,
+    linear-gradient(to top, #0b0603a6, #0000 9px),
+    radial-gradient(ellipse 70% 120% at 30% -10%, #c98a4a33, transparent 62%),
+    linear-gradient(165deg, #1a110a40, #0d080473),
+    url('/themes/steampunk-brass.webp') 0 0 / 384px 144px repeat,
+    #1c140c;
+}
+
+/* Firebox glow behind the gear train (static; the gears are the motion). */
+[data-member-theme='steampunk'] .premium-header-stone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 150px 90% at 100% 40%, #e0843a2e, transparent 75%);
+}
+
+/* Steam wisp from the gauge's relief valve. */
+[data-member-theme='steampunk'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: calc(env(safe-area-inset-top, 0px) - 8px);
+  right: 117px;
+  width: 18px;
+  height: 22px;
+  background:
+    radial-gradient(ellipse 42% 36% at 50% 70%, #f6ead8b3, transparent 100%),
+    radial-gradient(ellipse 36% 32% at 38% 34%, #f6ead880, transparent 100%);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  /* Arrival: one big puff as pressure comes up, then a wisp every 8s. */
+  animation:
+    steampunk-steam-arrive 1.5s ease-out both,
+    steampunk-steam 8s 2.5s ease-out infinite;
+}
+
+[data-member-theme='steampunk'] .member-theme-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+[data-member-theme='steampunk'] .member-theme-art > i {
+  position: absolute;
+  display: block;
+  background: center / contain no-repeat;
+}
+/* Signature: the gear train. Period ∝ teeth (28s : 16s : 11s), neighbours turn
+   opposite ways, so the teeth stay meshed. Above the edge fade so it reads at a
+   glance. Arrival: the train winds up into its resting phase (meshed throughout:
+   wind-up angles are in the same 28 : 16 : 11 ratio). */
+[data-member-theme='steampunk'] .member-theme-art > i:nth-child(-n + 3) {
+  z-index: 2;
+  opacity: .78;
+  will-change: transform;
+}
+[data-member-theme='steampunk'] .member-theme-art > i:nth-child(1) {
+  top: calc(env(safe-area-inset-top, 0px) + 7.5px);
+  right: -26.5px;
+  width: 69px;
+  height: 69px;
+  background-image: var(--sp-gear-a);
+  animation: steampunk-wind-a 1.4s cubic-bezier(.5, 0, .3, 1) both, steampunk-gear-cw 28s 1.4s linear infinite;
+}
+[data-member-theme='steampunk'] .member-theme-art > i:nth-child(2) {
+  top: env(safe-area-inset-top, 0px);
+  right: 30.4px;
+  width: 43px;
+  height: 43px;
+  background-image: var(--sp-gear-b);
+  animation: steampunk-wind-b 1.4s cubic-bezier(.5, 0, .3, 1) both, steampunk-gear-ccw 16s 1.4s linear infinite;
+}
+[data-member-theme='steampunk'] .member-theme-art > i:nth-child(3) {
+  top: calc(env(safe-area-inset-top, 0px) + 21px);
+  right: 61.3px;
+  width: 32px;
+  height: 32px;
+  background-image: var(--sp-gear-c);
+  animation: steampunk-wind-c 1.4s cubic-bezier(.5, 0, .3, 1) both, steampunk-gear-cw 11s 1.4s linear infinite;
+}
+/* Pressure gauge on a feed pipe that runs behind the small gear. */
+[data-member-theme='steampunk'] .member-theme-art > i:nth-child(4) {
+  z-index: 0;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: 112px;
+  width: 28px;
+  height: 33px;
+  opacity: .82;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 33'%3E%3Cdefs%3E%3CradialGradient id='b' cx='.38' cy='.32'%3E%3Cstop offset='0' stop-color='%23f2cd8e'/%3E%3Cstop offset='.6' stop-color='%23a8743a'/%3E%3Cstop offset='1' stop-color='%235a3618'/%3E%3C/radialGradient%3E%3CradialGradient id='f'%3E%3Cstop offset='.55' stop-color='%23d8c59a'/%3E%3Cstop offset='1' stop-color='%23a68a5c'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect x='12' y='1.5' width='4' height='5' fill='url(%23b)'/%3E%3Crect x='10.5' y='0' width='7' height='2.2' rx='.6' fill='%23c08a4a' stroke='%232a1a0c' stroke-width='.4'/%3E%3Ccircle cx='14' cy='19' r='13' fill='url(%23b)' stroke='%232a1a0c' stroke-width='.6'/%3E%3Ccircle cx='14' cy='19' r='10.2' fill='url(%23f)' stroke='%234a2c14' stroke-width='.5'/%3E%3Cpath d='M20 25A8.4 8.4 0 0 0 22.4 19' fill='none' stroke='%23a8321e' stroke-width='1.3'/%3E%3Cg stroke='%233a2412' stroke-width='.7' stroke-linecap='round'%3E%3Cpath d='M7.6 25.4l1.1-1.1M5.6 19h1.6M7.6 12.6l1.1 1.1M14 10.6v1.6M20.4 12.6l-1.1 1.1M22.4 19h-1.6M20.4 25.4l-1.1-1.1'/%3E%3C/g%3E%3C/svg%3E");
+}
+[data-member-theme='steampunk'] .member-theme-art > i:nth-child(4)::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 16.5px;
+  left: calc(100% - 3px);
+  width: 40px;
+  height: 5px;
+  border-radius: 1px;
+  background: linear-gradient(#e2b06e, #9a6531 45%, #4a2c14);
+  box-shadow: 0 1px 0 #0006;
+}
+[data-member-theme='steampunk'] .member-theme-art > i:nth-child(4)::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cpath d='M13.45 16.2L14 5.6L14.55 16.2Z' fill='%237a2a16'/%3E%3Ccircle cx='14' cy='14' r='1.5' fill='%233a2412'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform: rotate(-40deg);
+  /* Arrival: the needle swings up to pressure; afterwards it breathes and twitches. */
+  animation: steampunk-needle-arrive 1.4s cubic-bezier(.3, 1.5, .5, 1) both, steampunk-needle 12s 1.4s ease-in-out infinite;
+}
+
+/* RTL: the brand sits on the right, so the machinery mirrors to the left (a
+   mirrored mesh is still a valid mesh). */
+[dir='rtl'] [data-member-theme='steampunk'] .member-theme-art,
+[dir='rtl'][data-member-theme='steampunk'] .member-theme-art { transform: scaleX(-1); }
+[dir='rtl'] [data-member-theme='steampunk'] .premium-header-stone::after,
+[dir='rtl'][data-member-theme='steampunk'] .premium-header-stone::after { right: auto; left: 117px; }
+
+/* Narrow phones: the brand and actions need the room, keep only the gears. */
+@media (max-width: 388px) {
+  [data-member-theme='steampunk'] .member-theme-art > i:nth-child(4),
+  [data-member-theme='steampunk'] .premium-header-stone::after { display: none; }
+}
+
+/* ── Loader ─────────────────────────────────────────────────────────────── */
+
+/* The header's gear train at engine-room scale (×3.2, same mesh geometry and
+   28 : 16 : 11 timing), plus a lone flywheel and two steam vents. */
+[data-member-theme='steampunk'] .member-loading-art > i {
+  background: center / contain no-repeat;
+  opacity: .42;
+  will-change: transform;
+}
+[data-member-theme='steampunk'] .member-loading-art > i:nth-child(1) {
+  top: calc(env(safe-area-inset-top, 0px) + 24px);
+  right: -84.8px;
+  width: 221px;
+  height: 221px;
+  background-image: var(--sp-gear-a);
+  animation: steampunk-gear-cw 28s linear infinite;
+}
+[data-member-theme='steampunk'] .member-loading-art > i:nth-child(2) {
+  top: calc(env(safe-area-inset-top, 0px) + .2px);
+  right: 97.2px;
+  width: 137.6px;
+  height: 137.6px;
+  background-image: var(--sp-gear-b);
+  animation: steampunk-gear-ccw 16s linear infinite;
+}
+[data-member-theme='steampunk'] .member-loading-art > i:nth-child(3) {
+  top: calc(env(safe-area-inset-top, 0px) + 67px);
+  right: 196px;
+  width: 102.4px;
+  height: 102.4px;
+  background-image: var(--sp-gear-c);
+  animation: steampunk-gear-cw 11s linear infinite;
+}
+[data-member-theme='steampunk'] .member-loading-art > i:nth-child(4) {
+  bottom: -110px;
+  left: -110px;
+  width: 280px;
+  height: 280px;
+  opacity: .3;
+  background-image: var(--sp-gear-a);
+  animation: steampunk-gear-ccw 40s linear infinite;
+}
+/* Steam vents along the bottom bulkhead. */
+[data-member-theme='steampunk'] .member-loading-art::before,
+[data-member-theme='steampunk'] .member-loading-art::after {
+  content: '';
+  position: absolute;
+  bottom: 30px;
+  width: 110px;
+  height: 140px;
+  background:
+    radial-gradient(ellipse 34% 26% at 50% 76%, #f6ead84d, #f6ead81f 50%, transparent 80%),
+    radial-gradient(ellipse 40% 30% at 44% 46%, #f6ead82e, #f6ead812 50%, transparent 80%),
+    radial-gradient(ellipse 44% 30% at 54% 20%, #f6ead81a, transparent 80%);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  animation: steampunk-vent 5s ease-out infinite;
+}
+[data-member-theme='steampunk'] .member-loading-art::before { left: 26%; }
+[data-member-theme='steampunk'] .member-loading-art::after { right: 22%; animation-delay: 2.4s; }
+
+/* Crest: steady on its mount, a slow pressure pulse, light raking the brass lines. */
+[data-member-theme='steampunk'] .member-loading-mark {
+  animation: steampunk-loader-pulse 3.2s ease-in-out infinite;
+}
+[data-member-theme='steampunk'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+}
+[data-member-theme='steampunk'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(105deg, transparent 40%, #fff3d6d9 50%, transparent 60%);
+  transform: translateX(-60%);
+  animation: steampunk-glint 3.2s 0.6s cubic-bezier(.45, .05, .25, 1) infinite;
+}
+
+@keyframes steampunk-vent {
+  0% { transform: translate3d(0, 20px, 0) scale(.5); opacity: 0; }
+  15% { opacity: .9; }
+  70%, 100% { transform: translate3d(-8px, -70px, 0) scale(1.6); opacity: 0; }
+}
+@keyframes steampunk-loader-pulse {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.035); }
+  24% { transform: scale(.995); }
+  32% { transform: scale(1); }
+}
+@keyframes steampunk-glint {
+  0% { transform: translateX(-60%); }
+  45%, 100% { transform: translateX(60%); }
+}
+
+@keyframes steampunk-gear-cw { to { transform: rotate(360deg); } }
+@keyframes steampunk-gear-ccw { to { transform: rotate(-360deg); } }
+@keyframes steampunk-wind-a { from { transform: rotate(-110deg); } to { transform: rotate(0deg); } }
+@keyframes steampunk-wind-b { from { transform: rotate(192.5deg); } to { transform: rotate(0deg); } }
+@keyframes steampunk-wind-c { from { transform: rotate(-280deg); } to { transform: rotate(0deg); } }
+@keyframes steampunk-needle-arrive {
+  from { transform: rotate(-120deg); }
+  to { transform: rotate(-40deg); }
+}
+@keyframes steampunk-needle {
+  0%, 100% { transform: rotate(-40deg); }
+  30% { transform: rotate(38deg); }
+  34% { transform: rotate(28deg); }
+  38% { transform: rotate(36deg); }
+  42% { transform: rotate(31deg); }
+  70% { transform: rotate(8deg); }
+}
+@keyframes steampunk-steam-arrive {
+  0%, 30% { transform: translate3d(0, 10px, 0) scale(.5); opacity: 0; }
+  45% { opacity: .95; }
+  100% { transform: translate3d(-6px, -10px, 0) scale(1.7); opacity: 0; }
+}
+@keyframes steampunk-steam {
+  0% { transform: translate3d(0, 10px, 0) scale(.5); opacity: 0; }
+  8% { opacity: .85; }
+  32% { transform: translate3d(-5px, -8px, 0) scale(1.35); opacity: 0; }
+  100% { transform: translate3d(-5px, -8px, 0) scale(1.35); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='steampunk'] .premium-header-stone::after,
+  [data-member-theme='steampunk'] .member-theme-art > i,
+  [data-member-theme='steampunk'] .member-theme-art > i::after,
+  [data-member-theme='steampunk'] .member-loading-art::before,
+  [data-member-theme='steampunk'] .member-loading-art::after {
+    animation: none;
+  }
+}

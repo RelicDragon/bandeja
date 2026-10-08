@@ -3,6 +3,9 @@ import { Sports } from '@shared/sport';
 import {
   getAppIconPreviewUrl,
   getFooterIconUrl,
+  getMemberThemeAppIconPreviewUrl,
+  MEMBER_THEME_NATIVE_ICON,
+  NATIVE_ALTERNATE_ICON_NAMES,
   getSportMascotFooterUrl,
   getSportMascotPreviewUrl,
   resolveNativeAppIconName,
@@ -25,6 +28,20 @@ describe('appIcons', () => {
 
   it('keeps racket native icon independent of sport', () => {
     expect(resolveNativeAppIconName('racket', Sports.SQUASH)).toBe('racket');
+  });
+
+  it('lets an active member theme own the native icon', () => {
+    expect(resolveNativeAppIconName('tiger', Sports.TENNIS, 'cyberpunk')).toBe('theme_cyberpunk');
+    expect(resolveNativeAppIconName('racket', Sports.PADEL, 'premium')).toBe('theme_premium');
+    expect(resolveNativeAppIconName('racket', Sports.PADEL, null)).toBe('racket');
+    expect(getMemberThemeAppIconPreviewUrl('nordic')).toBe('/premium/app-icons/theme_nordic.webp');
+    expect(resolveNativeAppIconName('tiger', Sports.PADEL, 'summer')).toBe('theme_summer');
+  });
+
+  it('registers every member theme icon as a native alternate', () => {
+    for (const name of Object.values(MEMBER_THEME_NATIVE_ICON)) {
+      expect(NATIVE_ALTERNATE_ICON_NAMES).toContain(name);
+    }
   });
 
   it('builds sport mascot asset urls', () => {
@@ -67,6 +84,17 @@ describe('appIcon.service sync key', () => {
     const before = getNativeAppIconSyncKey(baseUser);
     const after = getNativeAppIconSyncKey({ ...baseUser, appIcon: 'racket' });
     expect(before).not.toBe(after);
+  });
+
+  it('changes sync key when the member theme changes, ignoring it for non-members', () => {
+    const premium = { ...baseUser, isPremium: true, mainTheme: 'spring' } as User;
+    expect(getNativeAppIconSyncKey(premium)).not.toBe(getNativeAppIconSyncKey(baseUser));
+    expect(getNativeAppIconSyncKey({ ...premium, mainTheme: 'ocean' })).not.toBe(
+      getNativeAppIconSyncKey(premium),
+    );
+    expect(getNativeAppIconSyncKey({ ...premium, isPremium: false })).toBe(
+      getNativeAppIconSyncKey(baseUser),
+    );
   });
 
   it('changes sync key when primary sport changes', () => {

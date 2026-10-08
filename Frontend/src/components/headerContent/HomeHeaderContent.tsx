@@ -11,6 +11,7 @@ import { handleBack } from '@/utils/backNavigation';
 import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { hasNoviceCreateEntries } from '@/utils/noviceShell';
+import { animatedAvatarSrc, fallbackToStillAvatar } from '@/utils/animatedAvatar';
 
 export const HomeHeaderContent = () => {
   const { t } = useTranslation();
@@ -137,7 +138,12 @@ export const HomeHeaderContent = () => {
         }`}
       >
         {user?.avatar ? (
-          <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+          <img
+            src={animatedAvatarSrc(user, { own: true, tiny: true }) || user.avatar}
+            onError={fallbackToStillAvatar(user.avatar)}
+            alt="Profile"
+            className="w-full h-full object-cover"
+          />
         ) : (
           <User size={20} className="text-gray-600 dark:text-gray-400" />
         )}

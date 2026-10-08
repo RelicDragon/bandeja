@@ -59,6 +59,7 @@ export function PlayIntentLookingStrip({
           proposal ? 'border-emerald-500/40 bg-emerald-500/15' : 'border-border/60 bg-muted/40'
         }`}
         data-testid="play-intent-status"
+        data-member-accent="emerald"
       >
         {proposal && proposalArrivalToken > 0 && !reduceMotion && (
           <motion.div

@@ -24,8 +24,8 @@ export function useFrameClass(userId: string | null | undefined, size: 'md' | 's
 }
 
 /**
- * The name-colour class for a user. Premium gold wins: when the viewer's target
- * shows premium status, the bought colour steps aside.
+ * The name-colour class for a user. The premium name style wins: when the
+ * target shows premium status, the bought colour steps aside.
  */
 export function useNameColorClass(
   userId: string | null | undefined,

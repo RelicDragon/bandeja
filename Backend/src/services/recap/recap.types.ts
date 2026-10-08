@@ -1,4 +1,4 @@
-import type { Sport } from '@prisma/client';
+import type { MainTheme, Sport } from '@prisma/client';
 
 /**
  * PRD 353 — the wire/storage shape of a monthly recap.
@@ -115,6 +115,12 @@ export type MonthlyRecapPayload = {
     lastName: string | null;
     avatar: string | null;
     isPremium: boolean;
+    /**
+     * The owner's *current* public member theme (`publicMemberTheme`). Never
+     * stored: overlaid on read and before rendering share images, so a theme
+     * change or a hidden status applies to an old month too. Absent → classic art.
+     */
+    memberTheme?: MainTheme | null;
   };
   /** Ordered slide list. Drives the viewer, the share sheet and the segments. */
   slides: RecapSlide[];

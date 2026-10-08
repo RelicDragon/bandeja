@@ -129,6 +129,8 @@ const user = (id: string, firstName: string) => ({
   bio: null,
   isPremium: false,
   showPremiumStatus: true,
+  premiumNameStyle: 'gold' as const,
+  avatarAnimated: null,
   trainerRating: null,
   trainerReviewCount: 0,
   weeklyAvailability: null,

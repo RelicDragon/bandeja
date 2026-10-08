@@ -1,0 +1,118 @@
+.premium-name-style-selector { min-width: 0; container-type: inline-size; }
+.premium-name-style-selector legend { padding: 0; }
+
+.pns-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+/* Follow the settings column, not the viewport: captions like "Rose gold" need ~150px a tile. */
+@container (min-width: 640px) {
+  .pns-options { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.pns-option {
+  --pns-accent: var(--member-primary-600, #0284c7);
+  --pns-border: var(--color-gray-300, #d1d5db);
+  --pns-caption: var(--color-gray-700, #374151);
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.dark .pns-option {
+  --pns-accent: var(--member-primary-400, #38bdf8);
+  --pns-border: var(--color-gray-700, #374151);
+  --pns-caption: var(--color-gray-200, #e5e7eb);
+}
+
+.pns-choice {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--pns-border);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  background: transparent;
+  transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+}
+
+/* A light strip over a dark strip: the same name as others see it in each appearance. */
+.pns-swatch {
+  display: grid;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+.pns-strip {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 1.875rem;
+  padding: 0 0.625rem;
+}
+.pns-strip--light { background: #ffffff; }
+.pns-strip--dark { background: #111827; }
+.dark .pns-strip--light { background: #f9fafb; }
+
+.pns-name {
+  /* inline-block: the paint spans the name, not the whole strip */
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.pns-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.375rem 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--pns-caption);
+}
+
+.pns-check {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 1px solid var(--pns-border);
+  border-radius: 50%;
+}
+
+.pns-option input:checked + .pns-choice {
+  border-color: var(--pns-accent);
+  box-shadow: 0 0 0 1px var(--pns-accent);
+}
+.pns-option input:checked + .pns-choice .pns-check {
+  background: var(--pns-accent);
+  border-color: var(--pns-accent);
+  color: #ffffff;
+}
+.pns-option input:focus-visible + .pns-choice {
+  outline: 2px solid var(--pns-accent);
+  outline-offset: 3px;
+}
+.pns-option:has(input:enabled):active .pns-choice { transform: scale(0.98); }
+@media (hover: hover) {
+  .pns-option:has(input:enabled):hover .pns-choice { border-color: var(--pns-accent); }
+}
+
+.premium-name-style-selector:disabled .pns-option { cursor: wait; opacity: 0.65; }
+
+/* Premium status hidden: still choosable, visibly "off the record". */
+.premium-name-style-selector--hidden .pns-swatch { opacity: 0.55; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pns-choice { transition: none; }
+  .pns-option:has(input:enabled):active .pns-choice { transform: none; }
+}

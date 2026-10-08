@@ -159,6 +159,7 @@ export function PlayIntentSheet({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
+        data-member-accent="emerald sky"
         className="max-h-[94dvh] overflow-hidden rounded-t-[32px] border-x border-t border-gray-200/80 bg-gray-50 text-gray-950 shadow-[0_-24px_70px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-[#0b111b] dark:text-white"
         accessibleTitle={t(
           mode === 'compose'

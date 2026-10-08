@@ -162,6 +162,132 @@
             </intent-filter>
         </activity-alias>
 
+        <activity-alias
+            android:name=".theme_premium"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_premium"
+            android:roundIcon="@drawable/ic_launcher_theme_premium"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_spring"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_spring"
+            android:roundIcon="@drawable/ic_launcher_theme_spring"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_cyberpunk"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_cyberpunk"
+            android:roundIcon="@drawable/ic_launcher_theme_cyberpunk"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_steampunk"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_steampunk"
+            android:roundIcon="@drawable/ic_launcher_theme_steampunk"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_woodstone"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_woodstone"
+            android:roundIcon="@drawable/ic_launcher_theme_woodstone"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_ocean"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_ocean"
+            android:roundIcon="@drawable/ic_launcher_theme_ocean"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_nordic"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_nordic"
+            android:roundIcon="@drawable/ic_launcher_theme_nordic"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_alpine"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_alpine"
+            android:roundIcon="@drawable/ic_launcher_theme_alpine"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".theme_summer"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_theme_summer"
+            android:roundIcon="@drawable/ic_launcher_theme_summer"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

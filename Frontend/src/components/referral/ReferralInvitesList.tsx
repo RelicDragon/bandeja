@@ -8,6 +8,7 @@ import {
   referralChipSpec,
   referralInviteName,
 } from '@/features/referral/referralInviteChip';
+import { animatedAvatarSrc } from '@/utils/animatedAvatar';
 
 export interface ReferralInvitesListProps {
   invites: ReferralInvite[];
@@ -50,6 +51,7 @@ export const ReferralInvitesList = ({ invites, className = '' }: ReferralInvites
               <ReferrerAvatar
                 firstName={invite.user?.firstName ?? null}
                 avatar={invite.user?.avatar ?? null}
+                animatedAvatar={animatedAvatarSrc(invite.user, { tiny: true })}
                 size={32}
               />
               <span className="min-w-0 flex-1 truncate text-sm text-gray-800 dark:text-gray-200">

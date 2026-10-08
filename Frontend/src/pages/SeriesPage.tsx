@@ -45,6 +45,7 @@ import {
   seriesRegularName,
   type SeriesRegularAction,
 } from '@/features/game-series/seriesRosterActions';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 /**
  * PRD 345 — `/series/:id`, the series destination.
@@ -87,7 +88,8 @@ const RegularRow = ({
     <li className="flex min-h-[44px] items-center gap-3 rounded-xl bg-white/70 p-2 dark:bg-gray-800/50">
       {regular.user?.avatar ? (
         <img
-          src={regular.user.avatar}
+          src={userFaceSrc(regular.user) ?? undefined}
+          onError={fallbackToStillAvatar(regular.user.avatar)}
           alt=""
           loading="lazy"
           className="h-9 w-9 shrink-0 rounded-full object-cover"
@@ -165,7 +167,8 @@ const CandidateRow = ({
     <li className="flex min-h-[44px] items-center gap-3 rounded-xl bg-white/70 p-2 dark:bg-gray-800/50">
       {user.avatar ? (
         <img
-          src={user.avatar}
+          src={userFaceSrc(user) ?? undefined}
+          onError={fallbackToStillAvatar(user.avatar)}
           alt=""
           loading="lazy"
           className="h-9 w-9 shrink-0 rounded-full object-cover"
@@ -443,7 +446,8 @@ export const SeriesPage = () => {
                   <li key={regular.user?.id ?? name} className="relative">
                     {regular.user?.avatar ? (
                       <img
-                        src={regular.user.avatar}
+                        src={userFaceSrc(regular.user) ?? undefined}
+                        onError={fallbackToStillAvatar(regular.user.avatar)}
                         alt=""
                         loading="lazy"
                         className="h-8 w-8 rounded-full object-cover ring-2 ring-white/60"

@@ -51,16 +51,16 @@ describe('PremiumName with an equipped name colour', () => {
     );
     const span = container.querySelector('span');
     expect(span?.className).toContain('collection-name-violet');
-    expect(span?.className).not.toContain('premium-name-glow');
+    expect(span?.className).not.toContain('premium-name');
   });
 
-  it('lets premium gold win over a bought colour', () => {
+  it('lets the premium style win over a bought colour', () => {
     equipped.nameColorAssetKey = 'name-violet';
     render(
       <PremiumName user={{ id: 'u1', isPremium: true, showPremiumStatus: true }}>Ana</PremiumName>,
     );
     const span = container.querySelector('span');
-    expect(span?.className).toContain('premium-name-glow');
+    expect(span?.className).toContain('premium-name--gold');
     expect(span?.className).not.toContain('collection-name-violet');
   });
 
@@ -70,6 +70,16 @@ describe('PremiumName with an equipped name colour', () => {
     );
     const span = container.querySelector('span');
     expect(span?.className.trim()).toBe('');
+  });
+
+  it('lets a non-gold premium style win over a bought colour too', () => {
+    equipped.nameColorAssetKey = 'name-violet';
+    render(
+      <PremiumName user={{ id: 'u1', isPremium: true, showPremiumStatus: true, premiumNameStyle: 'frost' }}>Ana</PremiumName>,
+    );
+    const span = container.querySelector('span');
+    expect(span?.className).toContain('premium-name--frost');
+    expect(span?.className).not.toContain('collection-name');
   });
 
   it('keeps working for a user with no id (embedded projections)', () => {

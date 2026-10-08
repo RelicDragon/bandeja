@@ -11,6 +11,7 @@ import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
 import { TrophyShowcase } from '@/components/trophies/TrophyShowcase';
 import { useAuthStore } from '@/store/authStore';
 import { PlayerActivityCounts } from '@/components/player/PlayerActivityCounts';
+import { animatedAvatarSrc, fallbackToStillAvatar } from '@/utils/animatedAvatar';
 
 export interface LevelHistoryAvatarSectionProps {
   user: User;
@@ -56,7 +57,8 @@ export const LevelHistoryAvatarSection = ({
           <button type="button" className="cursor-pointer transition-opacity hover:opacity-90">
             {user.avatar ? (
               <img
-                src={user.avatar || ''}
+                src={animatedAvatarSrc(user, { own: isOwn }) || user.avatar || ''}
+                onError={fallbackToStillAvatar(user.avatar)}
                 alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}
                 className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-xl dark:border-gray-800"
               />
@@ -68,7 +70,8 @@ export const LevelHistoryAvatarSection = ({
           </button>
         ) : user.avatar ? (
           <img
-            src={user.avatar || ''}
+            src={animatedAvatarSrc(user, { own: isOwn }) || user.avatar || ''}
+            onError={fallbackToStillAvatar(user.avatar)}
             alt={`${user.firstName} ${user.lastName}`}
             className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-xl dark:border-gray-800"
           />

@@ -4,7 +4,6 @@ import { teamAvatarHalfPlaneClipPath } from '@/utils/teamAvatarClipPolygon';
 import { getTeamAvatarPair } from '@/utils/teamAvatarPair';
 import { userTeamColorTones } from '@/utils/userTeamColor';
 import { teamNameInitials, userInitialsFromBasicUser } from '@/utils/teamAvatarText';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import {
   avatarImageOnError,
   avatarImageSrcToLoad,
@@ -12,6 +11,7 @@ import {
 } from '@/utils/userAvatarImageFallback';
 import { TeamAvatarParticipantTipShell } from '@/components/TeamAvatarParticipantTipShell';
 import { UserAvatarFallbackImg } from '@/components/UserAvatarFallbackImg';
+import { animatedAvatarSrc, userFaceTinySrc } from '@/utils/animatedAvatar';
 
 type Tones = { light: string; dark: string } | null;
 
@@ -27,7 +27,7 @@ function SoloFace({
   tones: Tones;
 }) {
   const useTiny = tile;
-  const tinyUrl = useTiny ? userAvatarTinyUrlFromStandard(user.avatar) : null;
+  const tinyUrl = useTiny ? userFaceTinySrc(user) : animatedAvatarSrc(user);
   const [state, setState] = useAvatarImageFallbackState(`${user.id}:${user.avatar ?? ''}:${useTiny}`);
   const src = avatarImageSrcToLoad({ avatar: user.avatar, tinyUrl, state });
   const textCls = tile ? 'text-sm' : 'text-lg';
@@ -73,7 +73,7 @@ function SplitFaceHalf({
   cutAngle: number;
   tones: Tones;
 }) {
-  const tinyUrl = tile ? userAvatarTinyUrlFromStandard(user.avatar) : null;
+  const tinyUrl = tile ? userFaceTinySrc(user) : animatedAvatarSrc(user);
   const [state, setState] = useAvatarImageFallbackState(`${user.id}:${user.avatar ?? ''}:${tile}`);
   const src = avatarImageSrcToLoad({ avatar: user.avatar, tinyUrl, state });
   const textCls = tile ? 'text-[10px]' : 'text-lg';

@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, Sport } from '@/types';
+import type { ApiResponse, MainTheme, Sport } from '@/types';
 import type { StorySegment } from './stories';
 
 /**
@@ -66,6 +66,8 @@ export type RecapOwner = {
   lastName: string | null;
   avatar: string | null;
   isPremium: boolean;
+  /** The owner's current public member theme (absent on older backends → classic art). */
+  memberTheme?: MainTheme | null;
 };
 
 export type RecapTotals = {

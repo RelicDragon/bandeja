@@ -4,7 +4,7 @@
  * Kept free of `config/database` so the rule is unit-testable without a
  * connection string. `clubPublicRegulars.service.ts` owns the queries.
  */
-import type { Sport } from '@prisma/client';
+import type { PremiumNameStyle, Sport } from '@prisma/client';
 
 export type ClubRegular = {
   id: string;
@@ -13,6 +13,8 @@ export type ClubRegular = {
   avatar: string | null;
   isPremium: boolean;
   showPremiumStatus: boolean;
+  premiumNameStyle: PremiumNameStyle;
+  avatarAnimated: string | null;
   isTrainer: boolean;
   primarySport: Sport;
 };

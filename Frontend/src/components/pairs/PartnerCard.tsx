@@ -1,10 +1,10 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import type { PartnerEntry } from '@/api/pairs';
 import { ChemistryChip } from './ChemistryChip';
 import { memberDisplayName, pairSummaryLine, usePairFormatters } from './pairFormat';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
 
 export interface PartnerCardProps {
   partner: PartnerEntry;
@@ -41,7 +41,7 @@ export const PartnerCard = memo(({ partner, onOpen, layout = 'card' }: PartnerCa
     >
       <PlayerAvatarFace
         avatar={partner.partner.avatar}
-        tinyUrl={userAvatarTinyUrlFromStandard(partner.partner.avatar)}
+        tinyUrl={userFaceTinySrc(partner.partner)}
         initials={initials}
         alt={name}
         textClassName="text-[10px]"

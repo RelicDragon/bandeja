@@ -3,9 +3,9 @@ import App from './App';
 import './index.css';
 import { setupCapacitor, setupBrowserKeyboardDetection, setAndroidViewportVars } from './utils/capacitorSetup';
 import { isCapacitor, isAndroid } from './utils/capacitor';
-import { ensureThemeForegroundSync, setPremiumAppTheme } from './store/themeStore';
+import { ensureThemeForegroundSync, setMemberAppTheme } from './store/themeStore';
 import { useAuthStore } from './store/authStore';
-import { usesPremiumTheme } from './utils/mainTheme';
+import { activeMemberTheme } from './utils/mainTheme';
 import { initializeSocialLogin } from './services/socialLoginInit.service';
 import { initChatSyncMetricsSession } from './services/chat/chatSyncMetricsSession';
 import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
@@ -27,10 +27,10 @@ import {
 
 const CACHE_VERSION = 'v1';
 
-setPremiumAppTheme(usesPremiumTheme(useAuthStore.getState().user));
+setMemberAppTheme(activeMemberTheme(useAuthStore.getState().user));
 useAuthStore.subscribe((state, previous) => {
-  const premium = usesPremiumTheme(state.user);
-  if (premium !== usesPremiumTheme(previous.user)) setPremiumAppTheme(premium);
+  const theme = activeMemberTheme(state.user);
+  if (theme !== activeMemberTheme(previous.user)) setMemberAppTheme(theme);
 });
 
 if (isCurrentStagingDeployment()) {

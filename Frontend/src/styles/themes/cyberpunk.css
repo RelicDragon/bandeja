@@ -1,0 +1,426 @@
+/* Neon District — night-city chrome in both appearances: a perspective grid
+   floor glowing magenta, a distant skyline with a few lit windows, faint CRT
+   scanlines and one slow cyan light sweep. Content stays light/dark per the
+   member's appearance; magenta carries the content ramp (AA on both pages),
+   cyan is the chrome accent. Tokens are scoped to the attribute so the theme
+   picker can preview them on a small element. */
+
+[data-member-theme='cyberpunk'] {
+  --ui-page-background: #f5f4fa;
+  --ui-background: #f5f4fa;
+  --ui-surface: #ffffff;
+
+  /* Cool violet-tinted neutrals; 500+ stay AA on white and the page. */
+  --color-gray-50: #f7f6fb;
+  --color-gray-100: #efedf6;
+  --color-gray-200: #e0dcec;
+  --color-gray-300: #c7c1d9;
+  --color-gray-400: #9c94b4;
+  --color-gray-500: #6f6889;
+  --color-gray-600: #565070;
+  --color-gray-700: #3a3550;
+  --color-gray-800: #25213a;
+  --color-gray-900: #16132a;
+  --color-gray-950: #0c0a1a;
+
+  /* Electric magenta: 600 is 6.1:1 on the light page, 400 is 6.4:1 on the dark page. */
+  --member-primary-default: #b8199a;
+  --member-primary-50: #fdf0fa;
+  --member-primary-100: #fbe0f5;
+  --member-primary-200: #f7c1ec;
+  --member-primary-300: #f397e0;
+  --member-primary-400: #ec5fd0;
+  --member-primary-500: #b8199a;
+  --member-primary-600: #a8178c;
+  --member-primary-700: #861371;
+  --member-primary-800: #65105a;
+  --member-primary-900: #470c41;
+  --member-primary-950: #2c0629;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse 80% 60% at 50% 120%, #ff3fd61f, transparent 70%),
+    radial-gradient(ellipse at 18% -10%, #3ef2ff14, transparent 55%),
+    linear-gradient(170deg, #161230, #0b0918 55%, #0e0b1f);
+  --mt-chrome-text: #ece9ff;
+  --mt-chrome-muted: #a59fc6;
+  --mt-chrome-border: #7b5cff40;
+  --mt-chrome-accent: #3ef2ff;
+  --mt-chrome-accent-soft: linear-gradient(180deg, #3ef2ff00 20%, #3ef2ff1f);
+  --mt-chrome-hairline: linear-gradient(90deg, #ff3fd610, #ff3fd6cc 26%, #b06bff99 52%, #3ef2ffcc 76%, #3ef2ff14);
+  --mt-chrome-shadow: 0 8px 26px #05031280;
+  --mt-chrome-button-bg: #ffffff08;
+  --mt-chrome-edges: #07060fb8;
+  --mt-cta-bg: linear-gradient(135deg, #8ff9ff, #3ee8ff 45%, #2bb8e8);
+  --mt-cta-text: #07142a;
+  --mt-cta-border: #b8fbff8a;
+  --mt-badge-bg: #ff3fd6;
+  --mt-badge-text: #1d0418;
+
+  /* Optional chrome fine-tuning — set explicitly so a picker tile never inherits another theme's. */
+  --mt-chrome-button-text: #d9d4ff;
+  --mt-chrome-button-hover: #3ef2ff14;
+  --mt-chrome-focus: #3ef2ff;
+  --mt-chrome-focus-halo: #07060f;
+  --mt-chrome-tab-text: #a59fc6;
+  --mt-chrome-tab-active: #8ff9ff;
+  --mt-chrome-tab-ring: inset 0 -2px 0 #3ef2ff, inset 0 0 0 1px #3ef2ff2e, 0 8px 14px -10px #3ef2ffcc;
+  --mt-chrome-profile: #8ff9ff;
+  --mt-chrome-profile-ring: 0 0 0 1px #3ef2ff, 0 0 0 4px #3ef2ff14;
+  --mt-chrome-controls-bg: radial-gradient(ellipse 75% 32px at 50% 0%, #ff3fd61f, transparent 85%), #05040b66;
+  --mt-chrome-controls-border: #ff3fd633;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #ff8ae61f;
+  --mt-cta-shadow: inset 0 1px 0 #ffffffa0, 0 0 10px #3ef2ff40, 0 2px 6px #0006;
+  --mt-tabbar-border: #7b5cff59;
+  --mt-tabbar-shadow: inset 0 1px 0 #ff3fd633, 0 8px 28px #0006;
+  --mt-tabbar-hover: #ece9ff;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #3ef2ff73);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 100%, #3ef2ff2e, transparent 75%), linear-gradient(#3ef2ff06, #3ef2ff12);
+  --mt-tabbar-active-shadow: inset 0 -1px 0 #3ef2ff99;
+  --mt-badge-ring: 0 0 0 2px #0b0918;
+  --mt-brand-dash: #ff3fd6;
+  --mt-brand-bg: transparent;
+
+  --mt-chat-header-bg:
+    radial-gradient(ellipse at 20% 0%, #3ef2ff12, transparent 60%),
+    radial-gradient(ellipse 80% 70% at 50% 140%, #ff3fd61c, transparent 70%),
+    linear-gradient(170deg, #161230, #0b0918 70%);
+  --mt-chat-header-shadow: 0 4px 16px #05031240;
+  --mt-chat-header-text: #ece9ff;
+  --mt-chat-header-muted: #a59fc6;
+  --mt-chat-header-subtle: #c8b8ff;
+  --mt-chat-header-hover: #3ef2ff14;
+  --mt-chat-header-focus: #3ef2ff;
+  --mt-chat-cta-bg: linear-gradient(135deg, #8ff9ff, #3ee8ff 50%, #22b4e0);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff99, 0 2px 6px #1a0f3326;
+  --mt-chat-meta: #6f6889;
+  --mt-chat-meta-dark: #a59fc6;
+  --mt-chat-input-shadow: 0 4px 20px #1a0f3314;
+  --mt-chat-scroll-ring: #ec5fd080;
+
+  --mt-brand-fill: linear-gradient(150deg, #a8fbff 8%, #3ef2ff 38%, #b86bff 62%, #ff3fd6 84%, #ff8ae6);
+  --mt-brand-font: 'Avenir Next Condensed', 'Roboto Condensed', 'Arial Narrow', 'Helvetica Neue', sans-serif;
+  --mt-brand-tier-text: #f7a6ee;
+  --mt-brand-shadow: drop-shadow(0 0 1px #ff3fd6) drop-shadow(0 0 6px #ff2fd099);
+  --mt-brand-plate: #0b0918d9;
+
+  --chat-paper: #f7f6fc;
+  --chat-panel: #ffffff;
+  --chat-line: #7b5cff2e;
+  --chat-selection: #b8199a12;
+  --chat-selection-edge: #a8178c;
+  --mt-bubble-own: linear-gradient(145deg, #c0189c, #6d28d9 88%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #a3167f, #5b21b6 88%);
+  /* A very faint blueprint grid with a magenta bloom in one corner. */
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #ff3fd612, transparent 60%),
+    repeating-linear-gradient(0deg, #6b4cff08 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, #6b4cff08 0 1px, transparent 1px 28px);
+
+  --mt-loading-bg:
+    radial-gradient(ellipse 80% 22% at 50% 70%, #ff3fd638, transparent 72%),
+    radial-gradient(ellipse 60% 40% at 50% 38%, #7b5cff1f, transparent 70%),
+    linear-gradient(180deg, #05040b, #120c26 40%, #3a1352 69.6%, #0a0818 70%, #07060f);
+  --mt-loading-crest-fill: linear-gradient(150deg, #a8fbff 8%, #3ef2ff 38%, #b86bff 62%, #ff3fd6 84%, #ff8ae6);
+
+  --mt-preview-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40'%3E%3Cpath fill='%2305040c' d='M0 40V26h10v-6h8v8h8V14h4v-4h4v4h4v10h12v-6h12v12h8V8h4V4h2v4h4v14h12v5h12V16h12v8h6V12h8v8h12v9h10V19h8V6h4v13h8v6h14V15h12v8h10V11h6v6h12v10h14v13z'/%3E%3C/svg%3E") 0 56% / 120px 20px repeat-x,
+    repeating-linear-gradient(90deg, #ff3fd640 0 1px, transparent 1px 10px) 0 100% / 100% 32% no-repeat,
+    linear-gradient(180deg, transparent 67%, #ff3fd6aa 68%, transparent 70%),
+    radial-gradient(ellipse 90% 40% at 50% 68%, #ff3fd63a, transparent 70%),
+    linear-gradient(180deg, #07060f, #1a0f33 60%, #0b0918);
+}
+
+.dark[data-member-theme='cyberpunk'],
+.dark [data-member-theme='cyberpunk'] {
+  --ui-page-background: #100e1d;
+  --ui-background: #0b0a16;
+  --ui-surface: #1c1930;
+
+  --member-primary-default: #ec5fd0;
+
+  --chat-paper: #0f0d1c;
+  --chat-panel: #1c1930;
+  --chat-line: #9b83ff2b;
+  --chat-selection: #ec5fd014;
+  --chat-selection-edge: #ec5fd0;
+  --mt-chat-backdrop:
+    radial-gradient(ellipse at 100% 0%, #ff3fd60f, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #3ef2ff0a, transparent 55%),
+    repeating-linear-gradient(0deg, #9b83ff07 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, #9b83ff07 0 1px, transparent 1px 28px);
+}
+
+/* Chat palette follows the magenta ramp. */
+[data-member-theme='cyberpunk'] .premium-chat,
+[data-member-theme='cyberpunk'].premium-chat {
+  --color-blue-50: #fdf0fa;
+  --color-blue-100: #fbe0f5;
+  --color-blue-200: #f7c1ec;
+  --color-blue-300: #f397e0;
+  --color-blue-400: #ec5fd0;
+  --color-blue-500: #b8199a;
+  --color-blue-600: #a8178c;
+  --color-blue-700: #861371;
+  --color-blue-800: #65105a;
+  --color-blue-900: #470c41;
+  --color-blue-950: #2c0629;
+}
+
+/* ── Header art ─────────────────────────────────────────────────────────────
+   Painting order: night sky (stone) → skyline (::before) → grid floor (i1) →
+   lit windows (i2) → horizon line (i3) → scanlines (i4) → cyan sweep (::after).
+   The horizon sits at 64% of the brand area; nothing reaches the tab row. */
+
+[data-member-theme='cyberpunk'] .premium-header-stone {
+  background:
+    radial-gradient(ellipse 70% 38% at 62% 64%, #ff3fd640, transparent 72%),
+    radial-gradient(ellipse 40% 30% at 20% 64%, #7b5cff2e, transparent 70%),
+    linear-gradient(180deg, #05040b 0%, #110b25 28%, #3a1352 62%, #0a0818 64%, #07060f);
+}
+
+[data-member-theme='cyberpunk'] .premium-header-stone::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 36% 0;
+  height: 30px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40'%3E%3Cpath fill='%2306050f' d='M0 40V26h10v-6h8v8h8V14h4v-4h4v4h4v10h12v-6h12v12h8V8h4V4h2v4h4v14h12v5h12V16h12v8h6V12h8v8h12v9h10V19h8V6h4v13h8v6h14V15h12v8h10V11h6v6h12v10h14v13z'/%3E%3C/svg%3E") 0 100% / 180px 30px repeat-x;
+  opacity: 1;
+  animation: none;
+  transform: none;
+}
+
+[data-member-theme='cyberpunk'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(105deg, transparent 44%, #3ef2ff14 48%, #a8fbff3d 50%, #3ef2ff14 52%, transparent 56%);
+  opacity: 0;
+  animation: cyberpunk-header-sweep 9s 1.4s cubic-bezier(.45, .05, .25, 1) infinite;
+}
+
+/* Arrival (html.member-theme-arrival, first apply per session): the scene powers on like a
+   neon sign in 1.2 s. */
+html.member-theme-arrival[data-member-theme='cyberpunk'] .member-theme-art {
+  animation: cyberpunk-neon-ignite 1.2s linear;
+}
+html.member-theme-arrival[data-member-theme='cyberpunk'] .premium-brand-name {
+  animation: cyberpunk-neon-ignite 1.2s linear, cyberpunk-neon-flicker 13s 4s linear infinite;
+}
+
+/* i1 — perspective grid floor gliding toward the viewer. */
+[data-member-theme='cyberpunk'] .member-theme-art > i:nth-child(1) {
+  inset: auto 0 0 0;
+  height: 38%;
+  overflow: hidden;
+  perspective: 70px;
+  perspective-origin: 50% 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent 8%, #0007 40%, #000 80%);
+  mask-image: linear-gradient(180deg, transparent 8%, #0007 40%, #000 80%);
+}
+[data-member-theme='cyberpunk'] .member-theme-art > i:nth-child(1)::before {
+  content: '';
+  position: absolute;
+  bottom: -96px;
+  left: -150%;
+  right: -150%;
+  height: 1400%;
+  transform-origin: 50% 100%;
+  background:
+    repeating-linear-gradient(0deg, #ff3fd6c0 0 1.5px, transparent 1.5px 24px),
+    repeating-linear-gradient(90deg, #ff3fd6a0 0 1.5px, transparent 1.5px 30px);
+  background-position: 50% 0;
+  transform: rotateX(80deg);
+  animation: cyberpunk-header-grid 8s linear infinite;
+}
+
+/* i2 — a handful of lit windows, aligned to the skyline tile. */
+[data-member-theme='cyberpunk'] .member-theme-art > i:nth-child(2) {
+  inset: auto 0 36% 0;
+  height: 30px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40'%3E%3Cg fill='%23ffcf7a'%3E%3Crect x='27' y='17' width='1.6' height='1.6'/%3E%3Crect x='73' y='12' width='1.6' height='1.6'/%3E%3Crect x='125' y='15' width='1.6' height='1.6'/%3E%3Crect x='190' y='19' width='1.6' height='1.6'/%3E%3C/g%3E%3Cg fill='%2366f6ff'%3E%3Crect x='31' y='13' width='1.6' height='1.6'/%3E%3Crect x='107' y='20' width='1.6' height='1.6'/%3E%3Crect x='162' y='10' width='1.6' height='1.6'/%3E%3Crect x='210' y='14' width='1.6' height='1.6'/%3E%3C/g%3E%3Cg fill='%23ff7ae0'%3E%3Crect x='77' y='18' width='1.6' height='1.6'/%3E%3Crect x='56' y='22' width='1.6' height='1.6'/%3E%3Crect x='161' y='15' width='1.6' height='1.6'/%3E%3C/g%3E%3C/svg%3E") 0 100% / 180px 30px repeat-x;
+  opacity: .9;
+  animation: cyberpunk-header-windows 9s linear infinite;
+}
+
+/* i3 — the horizon line where the floor meets the city. */
+[data-member-theme='cyberpunk'] .member-theme-art > i:nth-child(3) {
+  inset: auto 0 36% 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ff3fd6c0 30%, #ff8ae6e0 60%, #ff3fd6a0 80%, transparent);
+  box-shadow: 0 0 8px 1px #ff3fd666;
+  opacity: .9;
+}
+
+/* i4 — faint CRT scanlines over the whole art area (static). */
+[data-member-theme='cyberpunk'] .member-theme-art > i:nth-child(4) {
+  inset: 0;
+  background: repeating-linear-gradient(180deg, #00000038 0 1px, transparent 1px 3px);
+  opacity: .55;
+}
+
+/* ── Brand: neon-tube wordmark, cyan core with a magenta halo ─────────────── */
+
+[data-member-theme='cyberpunk'] .premium-brand-name {
+  font-family: var(--mt-brand-font);
+  font-weight: 600;
+  background: linear-gradient(180deg, #f2ffff 10%, #9ffbff 45%, #3ee8ff 70%, #b8fbff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 1px #ff3fd6) drop-shadow(0 0 5px #ff2fd0b3) drop-shadow(0 0 12px #ff2fd04d);
+  animation: cyberpunk-neon-flicker 13s 4s linear infinite;
+}
+[data-member-theme='cyberpunk'] .premium-brand-dash { box-shadow: 0 0 4px #ff3fd6; }
+
+
+
+/* ── Loader: the crest hangs over the night city while the grid floor rushes in ──
+   The full-screen loader is a night scene in both appearances (like the chrome);
+   the inline loader sits on the page, so its crest switches to an ink ramp in light. */
+
+[data-member-theme='cyberpunk'] .member-loading--screen { --mt-loading-text: #c9c2ec; }
+[data-member-theme='cyberpunk'] .member-loading--inline {
+  --mt-loading-crest-fill: linear-gradient(150deg, #0e7490 10%, #6d28d9 52%, #a8178c 88%);
+}
+.dark [data-member-theme='cyberpunk'] .member-loading--inline,
+.dark[data-member-theme='cyberpunk'] .member-loading--inline {
+  --mt-loading-crest-fill: linear-gradient(150deg, #a8fbff 8%, #3ef2ff 38%, #b86bff 62%, #ff3fd6 84%);
+}
+
+/* i1 — grid floor (faster than the header: loaders are short-lived). */
+[data-member-theme='cyberpunk'] .member-loading-art > i:nth-child(1) {
+  inset: auto 0 0 0;
+  height: 30%;
+  overflow: hidden;
+  perspective: 160px;
+  perspective-origin: 50% 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent 4%, #0008 30%, #000 70%);
+  mask-image: linear-gradient(180deg, transparent 4%, #0008 30%, #000 70%);
+}
+[data-member-theme='cyberpunk'] .member-loading-art > i:nth-child(1)::before {
+  content: '';
+  position: absolute;
+  bottom: -192px;
+  left: -150%;
+  right: -150%;
+  height: 1400%;
+  transform-origin: 50% 100%;
+  background:
+    repeating-linear-gradient(0deg, #ff3fd6c0 0 2px, transparent 2px 48px),
+    repeating-linear-gradient(90deg, #ff3fd6a0 0 2px, transparent 2px 56px);
+  background-position: 50% 0;
+  transform: rotateX(80deg);
+  animation: cyberpunk-loader-grid 4s linear infinite;
+}
+
+/* i2 — skyline on the horizon with its lit windows. */
+[data-member-theme='cyberpunk'] .member-loading-art > i:nth-child(2) {
+  inset: auto 0 30% 0;
+  height: 56px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40'%3E%3Cg fill='%23ffcf7a'%3E%3Crect x='27' y='17' width='1.6' height='1.6'/%3E%3Crect x='73' y='12' width='1.6' height='1.6'/%3E%3Crect x='125' y='15' width='1.6' height='1.6'/%3E%3Crect x='190' y='19' width='1.6' height='1.6'/%3E%3C/g%3E%3Cg fill='%2366f6ff'%3E%3Crect x='31' y='13' width='1.6' height='1.6'/%3E%3Crect x='107' y='20' width='1.6' height='1.6'/%3E%3Crect x='162' y='10' width='1.6' height='1.6'/%3E%3Crect x='210' y='14' width='1.6' height='1.6'/%3E%3C/g%3E%3Cg fill='%23ff7ae0'%3E%3Crect x='77' y='18' width='1.6' height='1.6'/%3E%3Crect x='56' y='22' width='1.6' height='1.6'/%3E%3Crect x='161' y='15' width='1.6' height='1.6'/%3E%3C/g%3E%3C/svg%3E") 0 100% / 336px 56px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 40'%3E%3Cpath fill='%2306050f' d='M0 40V26h10v-6h8v8h8V14h4v-4h4v4h4v10h12v-6h12v12h8V8h4V4h2v4h4v14h12v5h12V16h12v8h6V12h8v8h12v9h10V19h8V6h4v13h8v6h14V15h12v8h10V11h6v6h12v10h14v13z'/%3E%3C/svg%3E") 0 100% / 336px 56px repeat-x;
+}
+
+/* i3 — horizon tube. */
+[data-member-theme='cyberpunk'] .member-loading-art > i:nth-child(3) {
+  inset: auto 0 30% 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff3fd6c0 25%, #ff8ae6f0 50%, #ff3fd6c0 75%, transparent);
+  box-shadow: 0 0 14px 2px #ff3fd666;
+}
+
+/* i4 — scanlines with a slow rolling CRT band. */
+[data-member-theme='cyberpunk'] .member-loading-art > i:nth-child(4) {
+  inset: 0;
+  background: repeating-linear-gradient(180deg, #00000040 0 1px, transparent 1px 3px);
+  overflow: hidden;
+}
+[data-member-theme='cyberpunk'] .member-loading-art > i:nth-child(4)::before {
+  content: '';
+  position: absolute;
+  inset: -20% 0 auto 0;
+  height: 20%;
+  background: linear-gradient(180deg, transparent, #3ef2ff0f 60%, #a8fbff1f, transparent);
+  animation: cyberpunk-loader-roll 5s linear infinite;
+}
+
+/* The crest is a neon sign: it ignites, then hums with a rare stutter. */
+[data-member-theme='cyberpunk'] .member-loading--screen .member-loading-mark {
+  filter: drop-shadow(0 0 2px #ff3fd6) drop-shadow(0 0 14px #ff2fd080);
+  animation: cyberpunk-neon-ignite 1.2s linear, cyberpunk-loader-hum 3.6s 1.2s linear infinite;
+}
+[data-member-theme='cyberpunk'] .member-loading--inline .member-loading-mark {
+  animation: cyberpunk-loader-hum 3.6s linear infinite;
+}
+[data-member-theme='cyberpunk'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-crest-lines.webp') center / contain no-repeat;
+}
+[data-member-theme='cyberpunk'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: -20% -70%;
+  background: linear-gradient(105deg, transparent 42%, #eaffff00 46%, #eaffffd0 50%, #eaffff00 54%, transparent 58%);
+  opacity: 0;
+  animation: cyberpunk-header-sweep 3.6s 1.2s cubic-bezier(.45, .05, .25, 1) infinite;
+}
+
+@keyframes cyberpunk-loader-grid {
+  from { transform: rotateX(80deg) translateY(0); }
+  to { transform: rotateX(80deg) translateY(192px); }
+}
+@keyframes cyberpunk-loader-roll {
+  from { transform: translateY(0); }
+  to { transform: translateY(600%); }
+}
+@keyframes cyberpunk-loader-hum {
+  0%, 62%, 66%, 70%, 100% { opacity: 1; }
+  64% { opacity: .55; }
+  68% { opacity: .8; }
+}
+
+@keyframes cyberpunk-header-grid {
+  from { transform: rotateX(80deg) translateY(0); }
+  to { transform: rotateX(80deg) translateY(96px); }
+}
+@keyframes cyberpunk-header-windows {
+  /* Windows blink out and back on in two beats, like a block switching floors. */
+  0%, 38%, 46%, 74%, 80%, 100% { opacity: .9; }
+  40%, 44% { opacity: .2; }
+  76%, 78% { opacity: .45; }
+}
+@keyframes cyberpunk-header-sweep {
+  0%, 18% { opacity: 0; transform: translateX(-45%); }
+  40% { opacity: 1; }
+  62%, 100% { opacity: 0; transform: translateX(45%); }
+}
+@keyframes cyberpunk-neon-ignite {
+  0% { opacity: 0; }
+  14% { opacity: .85; }
+  20% { opacity: .1; }
+  34% { opacity: 1; }
+  42% { opacity: .35; }
+  56%, 100% { opacity: 1; }
+}
+/* A rare two-frame stutter; the tube is steady for ~96% of the cycle. */
+@keyframes cyberpunk-neon-flicker {
+  0%, 95.4%, 96%, 96.8%, 100% { opacity: 1; }
+  95.6% { opacity: .5; }
+  96.4% { opacity: .72; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='cyberpunk'] .premium-header-stone::after,
+  html.member-theme-arrival[data-member-theme='cyberpunk'] .member-theme-art,
+  html.member-theme-arrival[data-member-theme='cyberpunk'] .premium-brand-name,
+  [data-member-theme='cyberpunk'] .member-theme-art > i,
+  [data-member-theme='cyberpunk'] .member-theme-art > i::before,
+  [data-member-theme='cyberpunk'] .premium-brand-name,
+  [data-member-theme='cyberpunk'] .member-loading-mark,
+  [data-member-theme='cyberpunk'] .member-loading-art > i::before,
+  [data-member-theme='cyberpunk'] .member-loading-glint::before {
+    animation: none;
+  }
+  [data-member-theme='cyberpunk'] .premium-header-stone::after { opacity: 0; }
+}

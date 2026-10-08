@@ -1,4 +1,8 @@
 import { DEFAULT_SPORT, Sports, type Sport } from '@shared/sport';
+import type { MainTheme } from '@/types';
+
+/** Every member theme (`MainTheme` minus `classic`); keyed off the type so the icon map stays exhaustive. */
+type MemberIconTheme = Exclude<MainTheme, 'classic'>;
 
 export type BrandingSplashLogoKey =
   | 'padel'
@@ -19,6 +23,19 @@ export interface AppIconOption {
   nativeName: string | null;
 }
 
+/** Member-theme icons (docs/domains/premium-appearance.md); art from scripts/generate-theme-app-icons.mjs. */
+export const MEMBER_THEME_NATIVE_ICON: Record<MemberIconTheme, string> = {
+  premium: 'theme_premium',
+  spring: 'theme_spring',
+  cyberpunk: 'theme_cyberpunk',
+  steampunk: 'theme_steampunk',
+  woodstone: 'theme_woodstone',
+  ocean: 'theme_ocean',
+  nordic: 'theme_nordic',
+  alpine: 'theme_alpine',
+  summer: 'theme_summer',
+};
+
 export const NATIVE_ALTERNATE_ICON_NAMES = [
   'racket',
   'tennis',
@@ -26,6 +43,15 @@ export const NATIVE_ALTERNATE_ICON_NAMES = [
   'badminton',
   'table_tennis',
   'squash',
+  'theme_premium',
+  'theme_spring',
+  'theme_cyberpunk',
+  'theme_steampunk',
+  'theme_woodstone',
+  'theme_ocean',
+  'theme_nordic',
+  'theme_alpine',
+  'theme_summer',
 ] as const;
 
 export type NativeAlternateIconName = (typeof NATIVE_ALTERNATE_ICON_NAMES)[number];
@@ -60,12 +86,19 @@ export function getSportMascotFooterUrl(sport: Sport | null | undefined): string
   return `/bandeja2-${slug}-white-tr.png`;
 }
 
+/** An active member theme owns the icon; otherwise the tiger/racket × sport choice applies. */
 export function resolveNativeAppIconName(
   appIconId: AppIconId,
   primarySport: Sport | null | undefined,
+  memberTheme?: MemberIconTheme | null,
 ): string {
+  if (memberTheme) return MEMBER_THEME_NATIVE_ICON[memberTheme];
   if (appIconId === 'racket') return 'racket';
   return SPORT_NATIVE_TIGER_ICON[primarySport ?? DEFAULT_SPORT];
+}
+
+export function getMemberThemeAppIconPreviewUrl(theme: MemberIconTheme): string {
+  return `/premium/app-icons/${MEMBER_THEME_NATIVE_ICON[theme]}.webp`;
 }
 
 export const APP_ICONS: AppIconOption[] = [

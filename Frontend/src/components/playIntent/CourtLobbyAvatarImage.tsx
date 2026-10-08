@@ -4,6 +4,8 @@ import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 type Props = {
   /** Standard 256×256 circular avatar URL (CDN `*_avatar.jpg`). */
   avatar?: string | null;
+  /** Premium 96px animated face (`animatedAvatarSrc(user, { tiny: true })`), tried before the tiny still. */
+  animatedAvatar?: string | null;
   /** Pre-computed initials text shown when no avatar URL is available. */
   initials: string;
   imgClassName?: string;
@@ -21,16 +23,17 @@ type Props = {
  */
 export function CourtLobbyAvatarImage({
   avatar,
+  animatedAvatar,
   initials,
   imgClassName,
   initialsClassName,
   initialsStyle,
 }: Props) {
-  const tinyAvatarUrl = userAvatarTinyUrlFromStandard(avatar);
+  const tinyAvatarUrl = animatedAvatar || userAvatarTinyUrlFromStandard(avatar);
   const [tinyFailed, setTinyFailed] = useState(false);
   useEffect(() => {
     setTinyFailed(false);
-  }, [avatar]);
+  }, [avatar, animatedAvatar]);
 
   const src = tinyAvatarUrl && !tinyFailed ? tinyAvatarUrl : avatar ?? null;
 

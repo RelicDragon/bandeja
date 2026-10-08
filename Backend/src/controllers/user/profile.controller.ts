@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
 import { validateShowPremiumStatusUpdate } from '../../services/user/premiumStatus';
 import { validateMainThemeUpdate } from '../../services/user/mainTheme';
+import { validatePremiumNameStyleUpdate } from '../../services/user/premiumNameStyle';
 import { Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
@@ -119,7 +120,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, gameCardRosterMode, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, gameCardRosterMode, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, premiumNameStyle, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
 
   let normalizedWeeklyAvailability =
     weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
@@ -199,10 +200,11 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true, isPremium: true }
+    select: { avatar: true, originalAvatar: true, avatarAnimated: true, firstName: true, lastName: true, isPremium: true }
   });
 
   const validatedMainTheme = validateMainThemeUpdate(mainTheme, currentUser?.isPremium === true);
+  const validatedPremiumNameStyle = validatePremiumNameStyleUpdate(premiumNameStyle, currentUser?.isPremium === true);
   const validatedShowPremiumStatus = validateShowPremiumStatusUpdate(showPremiumStatus, currentUser?.isPremium === true);
 
   const resolvedNames =
@@ -267,6 +269,8 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         }),
         ...(email !== undefined && { email }),
         ...(avatar !== undefined && { avatar }),
+        // The animated avatar belongs to the still it was cut from; any still change drops it.
+        ...(shouldDeletePreviousCircular && { avatarAnimated: null }),
         ...(originalAvatar !== undefined && { originalAvatar }),
         ...(language !== undefined && { language }),
         ...(translateToLanguage !== undefined && { translateToLanguage: translateToLanguage === null || translateToLanguage === '' ? null : String(translateToLanguage).toLowerCase() }),
@@ -291,6 +295,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
         ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
         ...(validatedMainTheme !== undefined && { mainTheme: validatedMainTheme }),
+        ...(validatedPremiumNameStyle !== undefined && { premiumNameStyle: validatedPremiumNameStyle }),
         ...(validatedShowPremiumStatus !== undefined && { showPremiumStatus: validatedShowPremiumStatus }),
         ...(verbalStatus !== undefined && { verbalStatus }),
         ...(bio !== undefined && { bio }),
@@ -304,6 +309,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   if (shouldDeletePreviousCircular) {
     await deleteOurCircularAvatar(currentUser?.avatar);
+    await ImageProcessor.deleteAnimatedAvatar(currentUser?.avatarAnimated);
   }
   if (shouldDeletePreviousOriginal) {
     await deleteOurAvatarOriginal(currentUser?.originalAvatar);
@@ -386,6 +392,7 @@ export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) =
         isActive: false,
         avatar: deletedAvatarUrl,
         originalAvatar: deletedAvatarUrl,
+        avatarAnimated: null,
       },
     }),
   ]);

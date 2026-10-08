@@ -35,6 +35,7 @@ import { getPlayerLevelFeedbackAggregate } from '../../services/player-level-eva
 import { countTrainingAttendance } from '../../services/user/trainingAttendanceCount';
 import { getAttendanceRate } from '../../services/gameAttendance/attendanceCounters.service';
 import { countNewcomersDebutedBy } from '../../services/achievements/noviceHostGrant.service';
+import { publicMemberTheme } from '../../services/user/publicMemberTheme';
 
 const COMPARISON_USER_SELECT = {
   ...USER_SELECT_FIELDS,
@@ -261,6 +262,8 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
 
   const projectedUser = {
     ...projectedUserBase,
+    // Profile backdrop showcase: the member's theme, only while their status is public.
+    mainTheme: publicMemberTheme(user),
     isFavorite: !!isFavorite,
     approvedBy: approvedByUser,
   };

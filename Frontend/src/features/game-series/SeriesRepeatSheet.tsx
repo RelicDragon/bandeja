@@ -24,6 +24,7 @@ import {
   seriesCopyContext,
   weekdayOrderForLocale,
 } from './seriesFormat';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 /**
  * PRD 345 — the organizer "Repeat this game" sheet.
@@ -387,7 +388,8 @@ export const SeriesRepeatSheet = ({
                     >
                       {regular.avatar ? (
                         <img
-                          src={regular.avatar}
+                          src={userFaceSrc(regular) ?? undefined}
+                          onError={fallbackToStillAvatar(regular.avatar)}
                           alt=""
                           loading="lazy"
                           className="h-8 w-8 shrink-0 rounded-full object-cover"

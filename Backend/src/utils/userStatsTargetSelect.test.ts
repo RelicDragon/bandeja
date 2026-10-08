@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { overlaySportProjection } from '../services/user/overlaySportProjection';
+import { publicMemberTheme } from '../services/user/publicMemberTheme';
 
 const PREFERENCE_FLAGS = [
   'preferredHandLeft',
@@ -81,4 +82,18 @@ assert.equal(projected.preferredCourtSideRight, false);
 assert.equal(projected.level, 4);
 assert.equal('sportProfiles' in projected, false);
 
-console.log('ok: public stats select, controller, and projector keep preferred hand/side flags');
+// Profile backdrop showcase: the theme rides only on the single-user stats select,
+// never on the list projection, and the controller always gates it.
+assert.match(statsBlock, /mainTheme: true/);
+assert.equal(userSelectBlock.includes('mainTheme:'), false, 'mainTheme stays off USER_SELECT_FIELDS');
+assert.match(controllerSrc, /mainTheme:\s*publicMemberTheme\(user\)/);
+
+assert.equal(publicMemberTheme({ isPremium: true, showPremiumStatus: true, mainTheme: 'spring' }), 'spring');
+assert.equal(publicMemberTheme({ isPremium: true, mainTheme: 'cyberpunk' }), 'cyberpunk');
+assert.equal(publicMemberTheme({ isPremium: true, showPremiumStatus: false, mainTheme: 'spring' }), null);
+assert.equal(publicMemberTheme({ isPremium: false, showPremiumStatus: true, mainTheme: 'spring' }), null);
+assert.equal(publicMemberTheme({ isPremium: true, showPremiumStatus: true, mainTheme: 'classic' }), null);
+assert.equal(publicMemberTheme({ isPremium: true, showPremiumStatus: true, mainTheme: null }), null);
+assert.equal(publicMemberTheme(null), null);
+
+console.log('ok: public stats select, controller, and projector keep preferred hand/side flags; mainTheme is gated');

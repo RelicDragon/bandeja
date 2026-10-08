@@ -20,6 +20,7 @@ import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
 import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
+import { fallbackToStillAvatar, userFaceSrc } from '@/utils/animatedAvatar';
 
 export const ProfileComparison = () => {
   const { t } = useTranslation();
@@ -117,7 +118,8 @@ export const ProfileComparison = () => {
                 <div className="mb-2">
                   {currentUser?.avatar ? (
                     <img
-                      src={currentUser.avatar || ''}
+                      src={userFaceSrc(currentUser, { own: true }) || ''}
+                      onError={fallbackToStillAvatar(currentUser.avatar)}
                       alt={`${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'User'}
                       className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-lg mx-auto"
                     />
@@ -141,7 +143,8 @@ export const ProfileComparison = () => {
                 >
                   {selectedPlayer.avatar ? (
                     <img
-                      src={selectedPlayer.avatar || ''}
+                      src={userFaceSrc(selectedPlayer) || ''}
+                      onError={fallbackToStillAvatar(selectedPlayer.avatar)}
                       alt={`${selectedPlayer.firstName || ''} ${selectedPlayer.lastName || ''}`.trim() || 'Player'}
                       className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-lg mx-auto"
                     />

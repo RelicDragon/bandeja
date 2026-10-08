@@ -1,0 +1,720 @@
+/* Alpine Valley — warm golden-hour chrome (layered ridgelines, fir band, meadow, still lake);
+   dark appearance is alpenglow dusk (pink-lit peaks, first stars, a cabin light, the moon on the lake).
+   Tokens are scoped to the attribute so the theme picker can preview them. */
+
+[data-member-theme='alpine'] {
+  --ui-page-background: #faf8f4;
+  --ui-background: #faf8f4;
+  --ui-surface: #ffffff;
+
+  /* Warm stone neutrals; 500+ stay AA on white. */
+  --color-gray-50: #faf8f4;
+  --color-gray-100: #f3efe8;
+  --color-gray-200: #e6e0d5;
+  --color-gray-300: #cfc7b9;
+  --color-gray-400: #a69d8e;
+  --color-gray-500: #756c5f;
+  --color-gray-600: #5c5449;
+  --color-gray-700: #433d35;
+  --color-gray-800: #2a2621;
+  --color-gray-900: #1a1714;
+  --color-gray-950: #0f0d0b;
+
+  /* Honey amber; 600+ AA on white. */
+  --member-primary-default: #8f5a12;
+  --member-primary-50: #fdf6e9;
+  --member-primary-100: #faead0;
+  --member-primary-200: #f3d39f;
+  --member-primary-300: #e9b766;
+  --member-primary-400: #dc9a3a;
+  --member-primary-500: #b8761c;
+  --member-primary-600: #8f5a12;
+  --member-primary-700: #774a12;
+  --member-primary-800: #613d13;
+  --member-primary-900: #503312;
+  --member-primary-950: #2e1b07;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 68% 130%, #ffd79a8c, transparent 60%),
+    linear-gradient(180deg, #e4e8ee, #f7ebd8 72%, #fbf2e4);
+  --mt-chrome-text: #2c2a22;
+  --mt-chrome-muted: #635849;
+  --mt-chrome-border: #c9a46a59;
+  --mt-chrome-accent: #8f5a12;
+  --mt-chrome-accent-soft: #dc9a3a24;
+  --mt-chrome-hairline: linear-gradient(90deg, #2f6b4a14, #2f6b4ab3 28%, #dc9a3acc 64%, #dc9a3a1f);
+  --mt-chrome-shadow: 0 6px 22px #4a361a14;
+  --mt-chrome-button-bg: #fffaf2a6;
+  --mt-chrome-edges: #f8eedf73;
+  --mt-cta-bg: linear-gradient(135deg, #9e6416, #7f4f12 78%);
+  --mt-cta-text: #ffffff;
+  --mt-cta-border: #6b430e66;
+  --mt-badge-bg: #2f6b4a;
+  --mt-badge-text: #ffffff;
+
+  --mt-brand-fill: linear-gradient(165deg, #b8761c 10%, #8f5a12 42%, #2f6b4a 62%, #234d37 92%);
+  --mt-brand-font: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --mt-brand-tier-text: #5c4a33;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #fffaf0c8);
+  --mt-brand-plate: #fffaf2db;
+
+  --chat-paper: #fbf7ef;
+  --chat-panel: #ffffff;
+  --chat-line: #c9a46a3d;
+  --chat-selection: #dc9a3a17;
+  --chat-selection-edge: #8f5a12;
+  --mt-bubble-own: linear-gradient(145deg, #34744f, #245639 82%);
+  --mt-bubble-own-dark: linear-gradient(145deg, #2c6545, #1c4330 82%);
+  /* Warm linen: a faint weave plus golden light from the top corner. */
+  --mt-chat-backdrop:
+    repeating-linear-gradient(0deg, #8a6a3a07 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, #8a6a3a06 0 1px, transparent 1px 5px),
+    radial-gradient(ellipse at 100% 0%, #f3d39f30, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #b9d3c226, transparent 55%);
+
+  --mt-preview-bg:
+    linear-gradient(#c9dce0, #b2cbd6) 0 100% / 100% 9% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 13'%3E%3Cpath fill='%232f4a38' d='M6 2L9 8H3ZM6 5L10 13H2ZM19 5L21.5 10H16.5ZM19 8L22.5 13H15.5ZM32 0L35.5 7H28.5ZM32 4L37 13H27ZM45 4L47.5 9H42.5ZM45 7L48.5 13H41.5Z'/%3E%3C/svg%3E") 0 91% / 34px 9px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%238395b0' d='M0 100V64Q40 40 84 58T170 52Q210 30 252 54T340 46Q372 36 400 50V100Z'/%3E%3C/svg%3E") 0 94% / 100% 34% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23b4a7cb' d='M0 100V70L30 52L52 60L88 22L112 40L132 32L170 64L196 50L232 14L262 44L284 36L318 58L350 26L378 46L400 40V100Z'/%3E%3Cpath fill='%23fff1e0' d='M88 22L78 31L84 30L89 34L94 29L99 31ZM232 14L220 25L227 24L233 29L239 23L245 26ZM350 26L340 35L346 34L351 38L356 33L361 35Z'/%3E%3C/svg%3E") 0 92% / 100% 62% no-repeat,
+    radial-gradient(circle at 68% 64%, #fff6dc 0 5px, #ffd98acc 7px, #ffd27a33 16px, transparent 28px),
+    linear-gradient(180deg, #dfe6ee, #f6e3c6 70%, #f9d6a6);
+}
+
+.dark[data-member-theme='alpine'],
+.dark [data-member-theme='alpine'] {
+  --ui-page-background: #15131a;
+  --ui-background: #0f0d13;
+  --ui-surface: #211e27;
+
+  --member-primary-default: #e9b766;
+
+  --mt-chrome-bg:
+    radial-gradient(ellipse at 70% 140%, #e48a6a2e, transparent 60%),
+    linear-gradient(176deg, #191b38, #262345 58%, #352744);
+  --mt-chrome-text: #f4ebe0;
+  --mt-chrome-muted: #bcb0bd;
+  --mt-chrome-border: #e9b76633;
+  --mt-chrome-accent: #f0c27a;
+  --mt-chrome-accent-soft: #f0c27a1c;
+  --mt-chrome-hairline: linear-gradient(90deg, #f3a38210, #f3a382a6 30%, #f0c27a80 66%, #9ec7a818);
+  --mt-chrome-shadow: 0 8px 26px #0008;
+  --mt-chrome-button-bg: #ffffff0d;
+  --mt-chrome-edges: #1a1a3699;
+  --mt-cta-bg: linear-gradient(135deg, #f6d394, #e0a24a 72%);
+  --mt-cta-text: #2e1b07;
+  --mt-cta-border: #fbe2b066;
+  --mt-badge-bg: #f3a382;
+  --mt-badge-text: #2a1209;
+
+  --mt-brand-fill: linear-gradient(165deg, #fbe0a8 10%, #f0c27a 40%, #a7d1b1 62%, #dcefe0 92%);
+  --mt-brand-tier-text: #d6c8bd;
+  --mt-brand-shadow: drop-shadow(0 1px 0 #000a);
+  --mt-brand-plate: #1a1830d6;
+
+  --chat-paper: #17151b;
+  --chat-panel: #221f28;
+  --chat-line: #e9b7662b;
+  --chat-selection: #f0c27a12;
+  --chat-selection-edge: #f0c27a;
+  --mt-chat-backdrop:
+    repeating-linear-gradient(0deg, #ffffff04 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 100% 0%, #f3a38210, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, #26234566, transparent 60%);
+
+  --mt-preview-bg:
+    linear-gradient(#3a3560, #2a2c4c) 0 100% / 100% 9% no-repeat,
+    radial-gradient(circle at 52% 88%, #ffc46a 0 1px, #ffc46a40 2.5px, transparent 5px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 13'%3E%3Cpath fill='%230f1324' d='M6 2L9 8H3ZM6 5L10 13H2ZM19 5L21.5 10H16.5ZM19 8L22.5 13H15.5ZM32 0L35.5 7H28.5ZM32 4L37 13H27ZM45 4L47.5 9H42.5ZM45 7L48.5 13H41.5Z'/%3E%3C/svg%3E") 0 91% / 34px 9px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23262a4a' d='M0 100V64Q40 40 84 58T170 52Q210 30 252 54T340 46Q372 36 400 50V100Z'/%3E%3C/svg%3E") 0 94% / 100% 34% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%233b3560' d='M0 100V70L30 52L52 60L88 22L112 40L132 32L170 64L196 50L232 14L262 44L284 36L318 58L350 26L378 46L400 40V100Z'/%3E%3Cpath fill='%23f3a382' d='M88 22L78 31L84 30L89 34L94 29L99 31ZM232 14L220 25L227 24L233 29L239 23L245 26ZM350 26L340 35L346 34L351 38L356 33L361 35Z'/%3E%3C/svg%3E") 0 92% / 100% 62% no-repeat,
+    radial-gradient(circle at 78% 20%, #f6ead2 0 3px, #f6ead233 5px, transparent 12px),
+    radial-gradient(circle at 20% 18%, #fff 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 44% 10%, #fff 0 .6px, transparent 1.2px),
+    linear-gradient(178deg, #171a38, #2b2650 55%, #6b3f62 82%, #b8665e);
+}
+
+/* Fine-tuning tokens, set explicitly so a picker tile never inherits another theme's values. */
+[data-member-theme='alpine'] {
+  --mt-chrome-button-text: #4a3a22;
+  --mt-chrome-button-hover: #dc9a3a1f;
+  --mt-chrome-focus: #8f5a12;
+  --mt-chrome-focus-halo: #ffffff;
+  --mt-chrome-tab-text: #635849;
+  --mt-chrome-tab-active: #774a12;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #dc9a3a66, inset 0 1px 0 #ffffffb0;
+  --mt-chrome-profile: #8f5a12;
+  --mt-chrome-profile-ring: 0 0 0 1px #dc9a3aa6, 0 0 0 4px #dc9a3a14;
+  --mt-chrome-controls-bg: linear-gradient(#fffaf240, #fffaf2a6);
+  --mt-chrome-controls-border: #c9a46a40;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #ffffffa0;
+  --mt-cta-shadow: inset 0 1px 0 #ffffff47, 0 2px 6px #4a361a33;
+  --mt-tabbar-border: #c9a46a66;
+  --mt-tabbar-shadow: inset 0 1px 0 #ffffffc0, 0 8px 26px #4a361a1f;
+  --mt-tabbar-hover: #2c2a22;
+  --mt-tabbar-icon-glow: none;
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #dc9a3a2e, transparent 80%), linear-gradient(#ffffff66, #ffffff1a);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #ffffffb0;
+  --mt-badge-ring: 0 0 0 2px #fbf2e4;
+  --mt-brand-dash: #c9a46a;
+
+  --mt-chat-header-bg: radial-gradient(ellipse at 70% 140%, #ffd79a7a, transparent 60%), linear-gradient(180deg, #e9ebef, #f8eddc);
+  --mt-chat-header-shadow: inset 0 -1px 0 #c9a46a40, 0 4px 16px #4a361a12;
+  --mt-chat-header-text: #2c2a22;
+  --mt-chat-header-muted: #635849;
+  --mt-chat-header-subtle: #2f6b4a;
+  --mt-chat-header-hover: #dc9a3a1f;
+  --mt-chat-header-focus: #8f5a12;
+  --mt-chat-cta-bg: linear-gradient(135deg, #9e6416, #7f4f12 78%);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff47, 0 2px 6px #4a361a2e;
+  --mt-chat-meta: #756c5f;
+  --mt-chat-meta-dark: #a69d8e;
+  --mt-chat-input-shadow: inset 0 1px 0 #ffffff, 0 4px 20px #4a361a12;
+  --mt-chat-scroll-ring: #dc9a3a80;
+}
+
+.dark[data-member-theme='alpine'],
+.dark [data-member-theme='alpine'] {
+  --mt-chrome-button-text: #f1e6d8;
+  --mt-chrome-button-hover: #f0c27a17;
+  --mt-chrome-focus: #f0c27a;
+  --mt-chrome-focus-halo: #191b38;
+  --mt-chrome-tab-text: #bcb0bd;
+  --mt-chrome-tab-active: #f6d394;
+  --mt-chrome-tab-ring: inset 0 0 0 1px #f0c27a4d, inset 0 1px 0 #ffffff12;
+  --mt-chrome-profile: #f6d394;
+  --mt-chrome-profile-ring: 0 0 0 1px #f0c27a99, 0 0 0 4px #f3a38210;
+  --mt-chrome-controls-bg: #0d0c2040;
+  --mt-chrome-controls-border: #e9b76626;
+  --mt-chrome-controls-shadow: inset 0 1px 0 #ffffff0d;
+  --mt-cta-shadow: inset 0 1px 0 #ffffff66, 0 2px 6px #0006;
+  --mt-tabbar-border: #e9b76638;
+  --mt-tabbar-shadow: inset 0 1px 0 #ffffff12, 0 8px 28px #0007;
+  --mt-tabbar-hover: #f4ebe0;
+  --mt-tabbar-icon-glow: drop-shadow(0 0 5px #f0c27a40);
+  --mt-tabbar-active-bg: radial-gradient(ellipse at 50% 0%, #f3a38224, transparent 80%), linear-gradient(#ffffff0a, #ffffff03);
+  --mt-tabbar-active-shadow: inset 0 1px 0 #ffffff12;
+  --mt-badge-ring: 0 0 0 2px #262345;
+  --mt-brand-dash: #e9b76699;
+
+  --mt-chat-header-bg: radial-gradient(ellipse at 70% 150%, #e48a6a26, transparent 60%), linear-gradient(176deg, #191b38, #262345 70%);
+  --mt-chat-header-shadow: inset 0 1px 0 #ffffff0d, 0 4px 16px #0006;
+  --mt-chat-header-text: #f4ebe0;
+  --mt-chat-header-muted: #bcb0bd;
+  --mt-chat-header-subtle: #f3b8a0;
+  --mt-chat-header-hover: #f0c27a17;
+  --mt-chat-header-focus: #f0c27a;
+  --mt-chat-cta-bg: linear-gradient(135deg, #f6d394, #e0a24a 72%);
+  --mt-chat-cta-shadow: inset 0 1px 0 #ffffff66, 0 2px 6px #0006;
+  --mt-chat-meta: #756c5f;
+  --mt-chat-meta-dark: #b0a698;
+  --mt-chat-input-shadow: inset 0 1px 0 #ffffff0a, 0 4px 20px #0005;
+  --mt-chat-scroll-ring: #f0c27a80;
+}
+
+/* Chat palette: pine green, so links and own-message accents sit beside the forest bubble. */
+[data-member-theme='alpine'] .premium-chat,
+[data-member-theme='alpine'].premium-chat {
+  --color-blue-50: #eef6f0;
+  --color-blue-100: #d6eadb;
+  --color-blue-200: #b0d5ba;
+  --color-blue-300: #82b993;
+  --color-blue-400: #57996d;
+  --color-blue-500: #3d8057;
+  --color-blue-600: #2f6b4a;
+  --color-blue-700: #28583e;
+  --color-blue-800: #234834;
+  --color-blue-900: #1e3c2c;
+  --color-blue-950: #0e2318;
+}
+
+/* ── Header art ─────────────────────────────────────────────────────────────
+   Signature (light): a still lake at the foot of layered ridges; the low sun's reflection
+   shimmers on it, two birds of prey circle a thermal high over the ridge, light clouds drift past.
+   Signature (alpenglow): stars wake over pink-lit peaks, a cabin light flickers by the lake,
+   the moon's reflection ripples. Arrival (one-shot, 1.4s, gated): the sun (or moon) rises from
+   behind the ridge while a band of warm light sweeps the peaks. All of it stops under reduced motion. */
+
+[data-member-theme='alpine'] .premium-header-stone {
+  --alp-x: 68%;
+  --alp-glint: #fff2c4;
+  --alp-glint-soft: #ffd98a99;
+  background:
+    radial-gradient(ellipse 60% 90% at 68% 110%, #ffd28ab3, transparent 70%),
+    linear-gradient(180deg, #dce4ee, #eee6dc 48%, #f8e2c2 82%, #f9d7a8);
+}
+.dark [data-member-theme='alpine'] .premium-header-stone,
+.dark[data-member-theme='alpine'] .premium-header-stone {
+  --alp-x: 71%;
+  --alp-glint: #f6ead2;
+  --alp-glint-soft: #f6ead266;
+  background:
+    radial-gradient(ellipse 60% 80% at 64% 115%, #d0786ea6, transparent 70%),
+    linear-gradient(178deg, #15183a, #26244c 46%, #533660 80%, #9a5862);
+}
+
+/* Low sun behind the ridge (alpenglow: the moon, higher in the sky). */
+[data-member-theme='alpine'] .premium-header-stone::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--alp-x) - 60px);
+  bottom: -20px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, #fffaf0 0 8px, #ffe7a8 10px, #ffd27a80 18px, #ffcf8a2e 36px, transparent 60px);
+  animation: alpine-sun-breathe 16s ease-in-out infinite alternate;
+}
+.dark [data-member-theme='alpine'] .premium-header-stone::before,
+.dark[data-member-theme='alpine'] .premium-header-stone::before {
+  bottom: auto;
+  top: calc(env(safe-area-inset-top, 0px) - 42px);
+  background: radial-gradient(circle, #fbf3df 0 5px, #f6ead2c0 6px, #f6ead233 12px, #c9b8e014 28px, transparent 50px);
+}
+
+/* The valley: far violet peaks with warm snow, a blue ridge, a fir band, the meadow and the lake.
+   Static; kept faint under the brand. */
+[data-member-theme='alpine'] .member-theme-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, #bcd3dc, #d6e2e2) 0 100% / 100% 6px no-repeat,
+    radial-gradient(circle, #f6d35e 0 .9px, transparent 1.4px) 3px calc(100% - 6px) / 11px 3px repeat-x,
+    radial-gradient(circle, #f2a3b5 0 .9px, transparent 1.4px) 8px calc(100% - 6px) / 17px 3px repeat-x,
+    linear-gradient(180deg, #a9bf6a, #c3cc78) 0 calc(100% - 6px) / 100% 3px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 13'%3E%3Cpath fill='%23345240' d='M6 2L9 8H3ZM6 5L10 13H2ZM19 5L21.5 10H16.5ZM19 8L22.5 13H15.5ZM32 0L35.5 7H28.5ZM32 4L37 13H27ZM45 4L47.5 9H42.5ZM45 7L48.5 13H41.5Z'/%3E%3C/svg%3E") 0 calc(100% - 9px) / 52px 13px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%238a97ae' d='M0 100V64Q40 40 84 58T170 52Q210 30 252 54T340 46Q372 36 400 50V100Z'/%3E%3C/svg%3E") 0 calc(100% - 9px) / 100% 24px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23b6a9cc' d='M0 100V70L30 52L52 60L88 22L112 40L132 32L170 64L196 50L232 14L262 44L284 36L318 58L350 26L378 46L400 40V100Z'/%3E%3Cpath fill='%23fff3e2' d='M88 22L78 31L84 30L89 34L94 29L99 31ZM232 14L220 25L227 24L233 29L239 23L245 26ZM350 26L340 35L346 34L351 38L356 33L361 35Z'/%3E%3C/svg%3E") 0 calc(100% - 12px) / 100% 38px no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, #0006 0 150px, #000 280px);
+  mask-image: linear-gradient(90deg, #0006 0 150px, #000 280px);
+}
+[dir='rtl'] [data-member-theme='alpine'] .member-theme-art::before,
+[dir='rtl'][data-member-theme='alpine'] .member-theme-art::before {
+  -webkit-mask-image: linear-gradient(270deg, #0006 0 150px, #000 280px);
+  mask-image: linear-gradient(270deg, #0006 0 150px, #000 280px);
+}
+.dark [data-member-theme='alpine'] .member-theme-art::before,
+.dark[data-member-theme='alpine'] .member-theme-art::before {
+  background:
+    linear-gradient(180deg, #3d3762, #2a2b4c) 0 100% / 100% 6px no-repeat,
+    linear-gradient(180deg, #1c2622, #222c26) 0 calc(100% - 6px) / 100% 3px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 13'%3E%3Cpath fill='%230f1324' d='M6 2L9 8H3ZM6 5L10 13H2ZM19 5L21.5 10H16.5ZM19 8L22.5 13H15.5ZM32 0L35.5 7H28.5ZM32 4L37 13H27ZM45 4L47.5 9H42.5ZM45 7L48.5 13H41.5Z'/%3E%3C/svg%3E") 0 calc(100% - 9px) / 52px 13px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23262a4a' d='M0 100V64Q40 40 84 58T170 52Q210 30 252 54T340 46Q372 36 400 50V100Z'/%3E%3C/svg%3E") 0 calc(100% - 9px) / 100% 24px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23463966' d='M0 100V70L30 52L52 60L88 22L112 40L132 32L170 64L196 50L232 14L262 44L284 36L318 58L350 26L378 46L400 40V100Z'/%3E%3Cpath fill='%23b8667a' opacity='.55' d='M88 22L112 40L132 32L170 64L150 66L118 48L100 34ZM232 14L262 44L284 36L318 58L296 62L270 50L246 30ZM350 26L378 46L400 40V60L372 54Z'/%3E%3Cpath fill='%23f6ab88' d='M88 22L76 33L84 31L89 36L94 30L101 33ZM232 14L218 27L227 25L233 31L239 24L247 28ZM350 26L338 37L346 35L351 40L356 34L363 37Z'/%3E%3C/svg%3E") 0 calc(100% - 12px) / 100% 38px no-repeat;
+}
+
+/* Arrival only: a band of warm light sweeps across the peaks. */
+[data-member-theme='alpine'] .member-theme-art::after {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(100deg, transparent 42%, #ffe2a800 45%, #ffe2a873 50%, #ffd28a00 55%, transparent 58%);
+  opacity: 0;
+}
+.dark [data-member-theme='alpine'] .member-theme-art::after,
+.dark[data-member-theme='alpine'] .member-theme-art::after {
+  background: linear-gradient(100deg, transparent 43%, #f3a38259 50%, transparent 57%);
+}
+html.member-theme-arrival[data-member-theme='alpine'] .member-theme-art::after {
+  animation: alpine-light-sweep 1.4s .15s cubic-bezier(.4, 0, .2, 1) both;
+}
+html.member-theme-arrival[data-member-theme='alpine'] .premium-header-stone::before {
+  animation:
+    alpine-sun-rise 1.4s cubic-bezier(.2, .7, .2, 1) both,
+    alpine-sun-breathe 16s 1.4s ease-in-out infinite alternate;
+}
+
+/* Light clouds drifting past the peaks: one seamless 380px tile crossing every 64s. */
+[data-member-theme='alpine'] .premium-header-stone::after {
+  content: '';
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: 0;
+  width: calc(100% + 380px);
+  height: 26px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 380 26'%3E%3Cg fill='%23fffaf2'%3E%3Cellipse cx='60' cy='16' rx='34' ry='4'/%3E%3Cellipse cx='76' cy='13' rx='18' ry='4.5'/%3E%3Cellipse cx='250' cy='9' rx='26' ry='3'/%3E%3Cellipse cx='262' cy='7' rx='12' ry='3'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 380px 26px repeat-x;
+  opacity: .62;
+  animation: alpine-cloud-drift 64s linear infinite;
+}
+.dark [data-member-theme='alpine'] .premium-header-stone::after,
+.dark[data-member-theme='alpine'] .premium-header-stone::after {
+  filter: brightness(.55) sepia(.6) hue-rotate(-30deg) saturate(1.6);
+  opacity: .32;
+  animation-duration: 90s;
+}
+
+/* Birds of prey circling a thermal: the slot is the (foreshortened) orbit, ::before the bird. */
+[data-member-theme='alpine'] .member-theme-art > i {
+  will-change: transform, opacity;
+}
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(-n + 2) {
+  width: 0;
+  height: 0;
+}
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(-n + 2)::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: -5px;
+  width: 20px;
+  height: 10px;
+  margin-left: -10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 14'%3E%3Cpath fill='%233a2f22' d='M15 13.6L13.6 9.6Q8 9.4 1 8L.4 6.6L2 6.2L1.2 5.2L3 5.1L2.6 4.2Q9 4.6 13.4 5.4L12.6 1.2H17.4L16.6 5.4Q21 4.6 27.4 4.2L27 5.1L28.8 5.2L28 6.2L29.6 6.6L29 8Q22 9.4 16.4 9.6Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: .78;
+}
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(1) {
+  left: 66.5%;
+  top: calc(env(safe-area-inset-top, 0px) + 11px);
+  animation: alpine-orbit 19s linear infinite;
+}
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(2) {
+  left: 69%;
+  top: calc(env(safe-area-inset-top, 0px) + 15px);
+  animation: alpine-orbit 26s -11s linear infinite;
+}
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(2)::before {
+  left: 16px;
+  width: 15px;
+  height: 7px;
+  margin-left: -7px;
+  top: -3px;
+  opacity: .62;
+}
+
+/* The sun's reflection on the lake: two glint layers breathing out of phase. */
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(n + 3) {
+  left: calc(var(--alp-x) - 16px);
+  bottom: 0;
+  width: 32px;
+  height: 6px;
+}
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(3) {
+  background:
+    linear-gradient(90deg, transparent, var(--alp-glint) 30% 70%, transparent) 50% 1px / 24px 1px no-repeat,
+    linear-gradient(90deg, transparent, var(--alp-glint-soft) 25% 75%, transparent) 50% 4px / 14px 1px no-repeat;
+  animation: alpine-glint-a 9s ease-in-out infinite alternate;
+}
+[data-member-theme='alpine'] .member-theme-art > i:nth-child(4) {
+  background:
+    linear-gradient(90deg, transparent, var(--alp-glint-soft) 25% 75%, transparent) 40% 2.5px / 18px 1px no-repeat,
+    linear-gradient(90deg, transparent, var(--alp-glint) 30% 70%, transparent) 58% 5px / 8px 1px no-repeat;
+  animation: alpine-glint-b 11s -3s ease-in-out infinite alternate;
+}
+
+/* Alpenglow: the raptors roost; first stars twinkle, and a cabin light burns by the lake. */
+.dark [data-member-theme='alpine'] .member-theme-art > i:nth-child(1),
+.dark[data-member-theme='alpine'] .member-theme-art > i:nth-child(1) {
+  inset: 0 0 34px;
+  width: auto;
+  height: auto;
+  background:
+    radial-gradient(circle at 63% 26%, #fff 0 .8px, #ffffff40 1.5px, transparent 2.3px),
+    radial-gradient(circle at 76% 54%, #fff 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 88% 30%, #fff 0 .8px, #ffffff40 1.5px, transparent 2.3px),
+    radial-gradient(circle at 96% 62%, #fff 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 67% 8%, #fff 0 .6px, transparent 1.2px);
+  animation: alpine-twinkle 10s ease-in-out infinite;
+}
+.dark [data-member-theme='alpine'] .member-theme-art > i:nth-child(-n + 2)::before,
+.dark[data-member-theme='alpine'] .member-theme-art > i:nth-child(-n + 2)::before {
+  content: none;
+}
+.dark [data-member-theme='alpine'] .member-theme-art > i:nth-child(2),
+.dark[data-member-theme='alpine'] .member-theme-art > i:nth-child(2) {
+  left: 62%;
+  top: auto;
+  bottom: 0;
+  width: 16px;
+  height: 14px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 14'%3E%3Cpath fill='%23090b16' d='M3 8V4.6L7.5 1L12 4.6V8Z'/%3E%3Crect x='5' y='5' width='2' height='1.8' fill='%23ffc46a'/%3E%3Crect x='5.4' y='9' width='1.2' height='4.4' fill='%23ffc46a59'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation: none;
+}
+.dark [data-member-theme='alpine'] .member-theme-art > i:nth-child(2)::before,
+.dark[data-member-theme='alpine'] .member-theme-art > i:nth-child(2)::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: -4px;
+  width: 24px;
+  height: 20px;
+  margin: 0;
+  background: radial-gradient(ellipse at 38% 42%, #ffc46a80, #ffb15a26 30%, transparent 60%);
+  opacity: .9;
+  animation: alpine-cabin-flicker 8s ease-in-out infinite;
+}
+
+@keyframes alpine-sun-rise {
+  from { transform: translate3d(0, 34px, 0) scale(.85); opacity: .2; }
+  to { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
+}
+@keyframes alpine-sun-breathe {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.1); opacity: .82; }
+}
+@keyframes alpine-light-sweep {
+  0% { transform: translate3d(-40%, 0, 0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translate3d(40%, 0, 0); opacity: 0; }
+}
+@keyframes alpine-cloud-drift {
+  from { transform: translate3d(-380px, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+/* scaleY flattens the circle into a foreshortened thermal; the bird turns with its heading. */
+@keyframes alpine-orbit {
+  from { transform: scaleY(.42) rotate(0deg); }
+  to { transform: scaleY(.42) rotate(360deg); }
+}
+@keyframes alpine-glint-a {
+  0% { transform: scaleX(.8); opacity: .55; }
+  45% { transform: scaleX(1.25); opacity: 1; }
+  100% { transform: scaleX(.95) translate3d(1px, 0, 0); opacity: .7; }
+}
+@keyframes alpine-glint-b {
+  0% { transform: translate3d(-3px, 0, 0) scaleX(1.1); opacity: .35; }
+  50% { transform: translate3d(2px, 0, 0) scaleX(.8); opacity: .95; }
+  100% { transform: translate3d(4px, 0, 0) scaleX(1.2); opacity: .5; }
+}
+@keyframes alpine-twinkle {
+  0%, 100% { opacity: .35; }
+  35% { opacity: 1; }
+  60% { opacity: .55; }
+  80% { opacity: .9; }
+}
+@keyframes alpine-cabin-flicker {
+  0%, 100% { opacity: .9; transform: scale(1); }
+  12% { opacity: .7; }
+  20% { opacity: 1; transform: scale(1.08); }
+  34% { opacity: .82; }
+  52% { opacity: 1; transform: scale(1.04); }
+  61% { opacity: .74; }
+  70% { opacity: .95; transform: scale(1); }
+  86% { opacity: .8; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='alpine'] .premium-header-stone::before,
+  [data-member-theme='alpine'] .premium-header-stone::after,
+  [data-member-theme='alpine'] .member-theme-art::after,
+  [data-member-theme='alpine'] .member-theme-art > i,
+  [data-member-theme='alpine'] .member-theme-art > i::before,
+  html.member-theme-arrival[data-member-theme='alpine'] .premium-header-stone::before,
+  html.member-theme-arrival[data-member-theme='alpine'] .member-theme-art::after {
+    animation: none;
+  }
+  /* A still: the thermal birds paused at a slant, clouds parked over the far peaks. */
+  [data-member-theme='alpine'] .member-theme-art > i:nth-child(1) { transform: scaleY(.42) rotate(200deg); }
+  [data-member-theme='alpine'] .member-theme-art > i:nth-child(2) { transform: scaleY(.42) rotate(140deg); }
+  [data-member-theme='alpine'] .premium-header-stone::after { transform: translate3d(-120px, 0, 0); }
+  .dark [data-member-theme='alpine'] .member-theme-art > i:nth-child(1),
+  .dark[data-member-theme='alpine'] .member-theme-art > i:nth-child(1) { transform: none; opacity: .8; }
+  .dark [data-member-theme='alpine'] .member-theme-art > i:nth-child(2),
+  .dark[data-member-theme='alpine'] .member-theme-art > i:nth-child(2) { transform: none; }
+}
+
+/* ── Loader (components/MemberLoading.tsx) ─────────────────────────────────
+   Light: the whole valley at golden hour; the sun rises behind the saddle under the crest,
+   its reflection ripples in the lake, a bird of prey circles, clouds drift.
+   Alpenglow: stars, pink-lit peaks, the moon rising, a cabin light by the lake.
+   Reduced motion: a still scene. */
+
+[data-member-theme='alpine'] {
+  --mt-loading-bg:
+    radial-gradient(ellipse 90% 26% at 50% 66%, #ffd28a8c, transparent 70%),
+    radial-gradient(ellipse 120% 70% at 50% 40%, transparent 60%, #6a4a2a24),
+    linear-gradient(180deg, #a8bed6 0%, #ccd5e2 26%, #eedfcc 50%, #f8d3a0 66%, #f6c98e);
+  --mt-loading-crest-fill: linear-gradient(165deg, #b8761c 10%, #8f5a12 42%, #2f6b4a 62%, #234d37 92%);
+  --mt-loading-text: #4f3d26;
+}
+.dark[data-member-theme='alpine'],
+.dark [data-member-theme='alpine'] {
+  --mt-loading-bg:
+    radial-gradient(circle at 14% 10%, #ffffffc0 0 .9px, transparent 1.5px),
+    radial-gradient(circle at 36% 20%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 62% 7%, #ffffffd0 0 1px, transparent 1.6px),
+    radial-gradient(circle at 84% 18%, #ffffff90 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 24% 34%, #ffffff70 0 .6px, transparent 1.2px),
+    radial-gradient(circle at 76% 36%, #ffffff80 0 .7px, transparent 1.3px),
+    radial-gradient(circle at 50% 28%, #ffffff60 0 .6px, transparent 1.2px),
+    radial-gradient(ellipse 100% 24% at 50% 66%, #e88a6a59, transparent 70%),
+    radial-gradient(ellipse 120% 70% at 50% 40%, transparent 55%, #05040c99),
+    linear-gradient(180deg, #0f1230 0%, #1d1d44 30%, #3b2c56 50%, #7a4560 62%, #b8665e 70%);
+  --mt-loading-crest-fill: linear-gradient(165deg, #fbe0a8 10%, #f0c27a 40%, #a7d1b1 62%, #dcefe0 92%);
+  --mt-loading-text: #e2d4c8;
+}
+
+[data-member-theme='alpine'] .member-loading-glint {
+  -webkit-mask: url('/premium/bandeja-crest-silhouette.webp') center / contain no-repeat;
+  mask: url('/premium/bandeja-crest-silhouette.webp') center / contain no-repeat;
+}
+[data-member-theme='alpine'] .member-loading-glint::before {
+  content: '';
+  position: absolute;
+  inset: 0 -100%;
+  background: linear-gradient(105deg, transparent 40%, #fff2c48c 50%, transparent 60%);
+  animation: alpine-loader-glint 3.4s .3s ease-in-out infinite;
+}
+.dark [data-member-theme='alpine'] .member-loading-glint::before,
+.dark[data-member-theme='alpine'] .member-loading-glint::before {
+  background: linear-gradient(105deg, transparent 42%, #f3a38240 50%, transparent 58%);
+}
+
+/* Slot 1: the sun, behind the landscape slot. */
+[data-member-theme='alpine'] .member-loading-art > i:nth-child(1) {
+  left: calc(50% - 90px);
+  top: calc(68% - 90px);
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, #fffaf0 0 22px, #ffe7a8 25px, #ffd27a99 38px, #ffcf8a33 62px, transparent 90px);
+  animation: alpine-loader-rise 12s ease-in-out infinite alternate;
+}
+/* Slot 2: the valley (static): peaks, ridge, firs, lake and a flowering meadow. */
+[data-member-theme='alpine'] .member-loading-art > i:nth-child(2) {
+  inset: 56% 0 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 36'%3E%3Cg fill='%23f6d35e'%3E%3Ccircle cx='4' cy='6' r='1.4'/%3E%3Ccircle cx='31' cy='20' r='1.3'/%3E%3Ccircle cx='50' cy='9' r='1.2'/%3E%3C/g%3E%3Cg fill='%23f2a3b5'%3E%3Ccircle cx='17' cy='14' r='1.3'/%3E%3Ccircle cx='44' cy='29' r='1.4'/%3E%3C/g%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='24' cy='4' r='1'/%3E%3Ccircle cx='9' cy='27' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 0 100% / 60px 36px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 36'%3E%3Cg fill='%23f6d35e'%3E%3Ccircle cx='4' cy='6' r='1.4'/%3E%3Ccircle cx='31' cy='20' r='1.3'/%3E%3Ccircle cx='50' cy='9' r='1.2'/%3E%3C/g%3E%3Cg fill='%23f2a3b5'%3E%3Ccircle cx='17' cy='14' r='1.3'/%3E%3Ccircle cx='44' cy='29' r='1.4'/%3E%3C/g%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='24' cy='4' r='1'/%3E%3Ccircle cx='9' cy='27' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 27px calc(100% - 36px) / 60px 36px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 36'%3E%3Cg fill='%23f6d35e'%3E%3Ccircle cx='4' cy='6' r='1.4'/%3E%3Ccircle cx='31' cy='20' r='1.3'/%3E%3Ccircle cx='50' cy='9' r='1.2'/%3E%3C/g%3E%3Cg fill='%23f2a3b5'%3E%3Ccircle cx='17' cy='14' r='1.3'/%3E%3Ccircle cx='44' cy='29' r='1.4'/%3E%3C/g%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='24' cy='4' r='1'/%3E%3Ccircle cx='9' cy='27' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 13px calc(100% - 60px) / 52px 22px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%2398b05a' d='M0 100V22Q100 4 200 14T400 10V100Z'/%3E%3C/svg%3E") 0 100% / 100% 30% no-repeat,
+    linear-gradient(180deg, #a6bfcd, #d6cdb4 45%, #9db7c6) 0 calc(100% - 26%) / 100% 13% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 13'%3E%3Cpath fill='%23304b3a' d='M6 2L9 8H3ZM6 5L10 13H2ZM19 5L21.5 10H16.5ZM19 8L22.5 13H15.5ZM32 0L35.5 7H28.5ZM32 4L37 13H27ZM45 4L47.5 9H42.5ZM45 7L48.5 13H41.5Z'/%3E%3C/svg%3E") 0 calc(100% - 38%) / 104px 26px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%238493ad' d='M0 100V48Q50 20 100 40T190 50Q220 54 240 44T320 30Q360 22 400 36V100Z'/%3E%3C/svg%3E") 0 calc(100% - 39%) / 100% 26% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23b2a5ca' d='M0 100V40L44 20L78 34L120 4L160 40L184 52L200 58L218 50L250 22L282 2L318 30L350 16L400 32V100Z'/%3E%3Cpath fill='%23fff3e2' d='M120 4L106 14L114 13L121 18L128 12L135 14ZM282 2L268 13L276 12L283 17L290 11L297 13ZM350 16L340 23L346 22L351 26L356 21L361 23Z'/%3E%3C/svg%3E") 0 calc(100% - 44%) / 100% 46% no-repeat;
+}
+/* Slot 3: the sun's reflection rippling on the lake. */
+[data-member-theme='alpine'] .member-loading-art > i:nth-child(3) {
+  left: calc(50% - 40px);
+  top: 84.6%;
+  width: 80px;
+  height: 4.4%;
+  background:
+    linear-gradient(90deg, transparent, #fffaf0 25% 75%, transparent) 50% 6% / 76px 2px no-repeat,
+    linear-gradient(90deg, transparent, #fff1c4 25% 75%, transparent) 44% 26% / 56px 2px no-repeat,
+    linear-gradient(90deg, transparent, #fffaf0e0 25% 75%, transparent) 56% 46% / 40px 2px no-repeat,
+    linear-gradient(90deg, transparent, #fff1c4c0 25% 75%, transparent) 48% 66% / 28px 2px no-repeat,
+    linear-gradient(90deg, transparent, #fffaf0a0 25% 75%, transparent) 52% 86% / 16px 1.5px no-repeat;
+  animation: alpine-glint-a 8s ease-in-out infinite alternate;
+}
+/* Slot 4: a bird of prey circling over the valley. */
+[data-member-theme='alpine'] .member-loading-art > i:nth-child(4) {
+  left: 30%;
+  top: 17%;
+  width: 0;
+  height: 0;
+  animation: alpine-loader-orbit 22s linear infinite;
+}
+[data-member-theme='alpine'] .member-loading-art > i:nth-child(4)::before {
+  content: '';
+  position: absolute;
+  left: 46px;
+  top: -8px;
+  width: 32px;
+  height: 15px;
+  margin-left: -16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 14'%3E%3Cpath fill='%233a2f22' d='M15 13.6L13.6 9.6Q8 9.4 1 8L.4 6.6L2 6.2L1.2 5.2L3 5.1L2.6 4.2Q9 4.6 13.4 5.4L12.6 1.2H17.4L16.6 5.4Q21 4.6 27.4 4.2L27 5.1L28.8 5.2L28 6.2L29.6 6.6L29 8Q22 9.4 16.4 9.6Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: .7;
+}
+/* Clouds drifting high over the peaks. */
+[data-member-theme='alpine'] .member-loading-art::after {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 0;
+  width: calc(100% + 520px);
+  height: 60px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 60'%3E%3Cg fill='%23fffaf2'%3E%3Cellipse cx='90' cy='40' rx='70' ry='8'/%3E%3Cellipse cx='120' cy='33' rx='34' ry='9'/%3E%3Cellipse cx='380' cy='18' rx='56' ry='6'/%3E%3Cellipse cx='400' cy='13' rx='24' ry='6'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 520px 60px repeat-x;
+  opacity: .6;
+  animation: alpine-loader-clouds 48s linear infinite;
+}
+
+/* Alpenglow loader: the moon instead of the sun, pink-lit snow, a cabin light instead of the raptor. */
+.dark [data-member-theme='alpine'] .member-loading-art > i:nth-child(1),
+.dark[data-member-theme='alpine'] .member-loading-art > i:nth-child(1) {
+  background: radial-gradient(circle, #fbf3df 0 15px, #f6ead2b0 17px, #f6ead233 30px, #c9b8e014 56px, transparent 86px);
+}
+.dark [data-member-theme='alpine'] .member-loading-art > i:nth-child(2),
+.dark[data-member-theme='alpine'] .member-loading-art > i:nth-child(2) {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 36'%3E%3Cg fill='%238a7a4a'%3E%3Ccircle cx='4' cy='6' r='1.4'/%3E%3Ccircle cx='31' cy='20' r='1.3'/%3E%3Ccircle cx='50' cy='9' r='1.2'/%3E%3C/g%3E%3Cg fill='%237a5266'%3E%3Ccircle cx='17' cy='14' r='1.3'/%3E%3Ccircle cx='44' cy='29' r='1.4'/%3E%3C/g%3E%3Cg fill='%234a5a6a'%3E%3Ccircle cx='24' cy='4' r='1'/%3E%3Ccircle cx='9' cy='27' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 0 100% / 60px 36px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 36'%3E%3Cg fill='%238a7a4a'%3E%3Ccircle cx='4' cy='6' r='1.4'/%3E%3Ccircle cx='31' cy='20' r='1.3'/%3E%3Ccircle cx='50' cy='9' r='1.2'/%3E%3C/g%3E%3Cg fill='%237a5266'%3E%3Ccircle cx='17' cy='14' r='1.3'/%3E%3Ccircle cx='44' cy='29' r='1.4'/%3E%3C/g%3E%3Cg fill='%234a5a6a'%3E%3Ccircle cx='24' cy='4' r='1'/%3E%3Ccircle cx='9' cy='27' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 27px calc(100% - 36px) / 60px 36px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 36'%3E%3Cg fill='%238a7a4a'%3E%3Ccircle cx='4' cy='6' r='1.4'/%3E%3Ccircle cx='31' cy='20' r='1.3'/%3E%3Ccircle cx='50' cy='9' r='1.2'/%3E%3C/g%3E%3Cg fill='%237a5266'%3E%3Ccircle cx='17' cy='14' r='1.3'/%3E%3Ccircle cx='44' cy='29' r='1.4'/%3E%3C/g%3E%3Cg fill='%234a5a6a'%3E%3Ccircle cx='24' cy='4' r='1'/%3E%3Ccircle cx='9' cy='27' r='1.1'/%3E%3C/g%3E%3C/svg%3E") 13px calc(100% - 60px) / 52px 22px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%231b2621' d='M0 100V22Q100 4 200 14T400 10V100Z'/%3E%3C/svg%3E") 0 100% / 100% 30% no-repeat,
+    linear-gradient(180deg, #3b3560, #5a3f5c 50%, #2c2b4c) 0 calc(100% - 26%) / 100% 13% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 13'%3E%3Cpath fill='%230d1020' d='M6 2L9 8H3ZM6 5L10 13H2ZM19 5L21.5 10H16.5ZM19 8L22.5 13H15.5ZM32 0L35.5 7H28.5ZM32 4L37 13H27ZM45 4L47.5 9H42.5ZM45 7L48.5 13H41.5Z'/%3E%3C/svg%3E") 0 calc(100% - 38%) / 104px 26px repeat-x,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23242846' d='M0 100V48Q50 20 100 40T190 50Q220 54 240 44T320 30Q360 22 400 36V100Z'/%3E%3C/svg%3E") 0 calc(100% - 39%) / 100% 26% no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath fill='%233b3560' d='M0 100V40L44 20L78 34L120 4L160 40L184 52L200 58L218 50L250 22L282 2L318 30L350 16L400 32V100Z'/%3E%3Cpath fill='%23f3a382' d='M120 4L106 14L114 13L121 18L128 12L135 14ZM282 2L268 13L276 12L283 17L290 11L297 13ZM350 16L340 23L346 22L351 26L356 21L361 23Z'/%3E%3C/svg%3E") 0 calc(100% - 44%) / 100% 46% no-repeat;
+}
+.dark [data-member-theme='alpine'] .member-loading-art > i:nth-child(3),
+.dark[data-member-theme='alpine'] .member-loading-art > i:nth-child(3) {
+  filter: saturate(0) brightness(1.05);
+  opacity: .8;
+}
+.dark [data-member-theme='alpine'] .member-loading-art > i:nth-child(4),
+.dark[data-member-theme='alpine'] .member-loading-art > i:nth-child(4) {
+  left: 22%;
+  top: calc(56% + 44% * .61 - 20px);
+  width: 28px;
+  height: 34px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 17'%3E%3Cpath fill='%23090b16' d='M1 10V5.4L7 1L13 5.4V10Z'/%3E%3Crect x='4' y='6' width='2.2' height='2' fill='%23ffc46a'/%3E%3Crect x='4.5' y='11' width='1.2' height='5.6' fill='%23ffc46a4d'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation: none;
+}
+.dark [data-member-theme='alpine'] .member-loading-art > i:nth-child(4)::before,
+.dark[data-member-theme='alpine'] .member-loading-art > i:nth-child(4)::before {
+  left: -14px;
+  top: -10px;
+  width: 50px;
+  height: 40px;
+  margin: 0;
+  background: radial-gradient(ellipse at 38% 40%, #ffc46a80, #ffb15a26 26%, transparent 56%);
+  opacity: .9;
+  animation: alpine-cabin-flicker 8s ease-in-out infinite;
+}
+.dark [data-member-theme='alpine'] .member-loading-art::after,
+.dark[data-member-theme='alpine'] .member-loading-art::after {
+  filter: brightness(.55) sepia(.6) hue-rotate(-30deg) saturate(1.6);
+  opacity: .18;
+}
+
+@keyframes alpine-loader-rise {
+  from { transform: translate3d(0, 46px, 0); opacity: .75; }
+  to { transform: translate3d(0, 0, 0); opacity: 1; }
+}
+@keyframes alpine-loader-orbit {
+  from { transform: scaleY(.45) rotate(0deg); }
+  to { transform: scaleY(.45) rotate(360deg); }
+}
+@keyframes alpine-loader-clouds {
+  from { transform: translate3d(-520px, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes alpine-loader-glint {
+  0%, 15% { transform: translate3d(-35%, 0, 0); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  85%, 100% { transform: translate3d(35%, 0, 0); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-member-theme='alpine'] .member-loading-art::after { animation: none; transform: translate3d(-200px, 0, 0); }
+  [data-member-theme='alpine'] .member-loading-art > i:nth-child(4) { transform: scaleY(.45) rotate(160deg); }
+  .dark [data-member-theme='alpine'] .member-loading-art > i:nth-child(4),
+  .dark[data-member-theme='alpine'] .member-loading-art > i:nth-child(4) { transform: none; }
+  [data-member-theme='alpine'] .member-loading-glint::before { opacity: 0; }
+}
+
+/* RTL: the lock-up sits on the right, so the sun, the thermal and the cabin move to the left gap. */
+[dir='rtl'] [data-member-theme='alpine'] .premium-header-stone,
+[dir='rtl'][data-member-theme='alpine'] .premium-header-stone { --alp-x: 32%; }
+.dark[dir='rtl'] [data-member-theme='alpine'] .premium-header-stone,
+.dark[dir='rtl'][data-member-theme='alpine'] .premium-header-stone,
+[dir='rtl'] .dark [data-member-theme='alpine'] .premium-header-stone { --alp-x: 29%; }
+[dir='rtl'] [data-member-theme='alpine'] .member-theme-art > i:nth-child(1),
+[dir='rtl'][data-member-theme='alpine'] .member-theme-art > i:nth-child(1) { left: 33.5%; }
+[dir='rtl'] [data-member-theme='alpine'] .member-theme-art > i:nth-child(2),
+[dir='rtl'][data-member-theme='alpine'] .member-theme-art > i:nth-child(2) { left: 31%; }
+.dark[dir='rtl'] [data-member-theme='alpine'] .member-theme-art > i:nth-child(1),
+.dark[dir='rtl'][data-member-theme='alpine'] .member-theme-art > i:nth-child(1) { left: 0; transform: scaleX(-1); }
+.dark[dir='rtl'] [data-member-theme='alpine'] .member-theme-art > i:nth-child(2),
+.dark[dir='rtl'][data-member-theme='alpine'] .member-theme-art > i:nth-child(2) { left: 36%; }

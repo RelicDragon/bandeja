@@ -2,10 +2,10 @@ import { memo, useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import type { GameParticipant } from '@/types';
 import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import { resolveStandingPlaceVisual, type StandingMedalMode } from '@/utils/gameCardStandingPlace';
 import { attendanceDotStyle } from '@/features/attendance/attendanceVisuals';
 import type { AttendanceRailData } from '@/features/attendance/attendanceRailData';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
 
 interface GameCardSeatStackProps {
   participants: readonly GameParticipant[];
@@ -81,7 +81,7 @@ function GameCardSeatStackInner({
           >
             <PlayerAvatarFace
               avatar={user?.avatar}
-              tinyUrl={userAvatarTinyUrlFromStandard(user?.avatar)}
+              tinyUrl={userFaceTinySrc(user)}
               initials={initials}
               alt=""
               textClassName="text-[11px]"
