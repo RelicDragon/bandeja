@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.67 |
-| **Build** | 249 |
-| **Commit** | `849f5c2a8ae8a1a5bcab09126329e0a2212a160a` |
-| **Short** | `849f5c2a8` |
+| **Version** | 0.97.68 |
+| **Build** | 250 |
+| **Commit** | `da993f455adb1f9cf5cc294fdb2b6931f475d2bd` |
+| **Short** | `da993f455` |
 | **Date** | 2026-10-08 |
-| **Message** | fix(chat-list): removed row no longer leaves a gap when the page isn't painting |
+| **Message** | Bump app release to 0.97.68 (build 250) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -70,6 +70,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.68 | 250 | `da993f455` | 2026-10-08 |
 | 0.97.67 | 249 | `849f5c2a8` | 2026-10-08 |
 | 0.97.65 | 247 | `5a1124498` | 2026-10-06 |
 | 0.97.64 | 246 | `447e62ffa` | 2026-10-06 |
