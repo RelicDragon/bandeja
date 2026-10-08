@@ -49,6 +49,8 @@ export function ChatListKindChips({
     { id: 'groups', label: t('chat.list.filterGroups', { defaultValue: 'Groups' }) },
   ];
   const kinds = allKinds.filter(({ id }) => availableKinds[id]);
+  /** No chip with nothing unread; it stays while active so the filter can always be switched off. */
+  const showUnread = unreadCount > 0 || unreadActive;
 
   return (
     <div
@@ -84,25 +86,28 @@ export function ChatListKindChips({
             </motion.button>
           );
         })}
-        <motion.button
-          key="unread"
-          {...motionProps}
-          type="button"
-          aria-pressed={unreadActive}
-          onClick={onUnreadToggle}
-          className={`${chipBase} ${unreadActive ? chipActive : chipIdle}`}
-        >
-          {t('chat.list.filterUnread', { defaultValue: 'Unread' })}
-          {unreadCount > 0 ? (
-            <span
-              className={`rounded-full px-1.5 text-[11px] leading-[18px] tabular-nums ${
-                unreadActive ? 'bg-white/20 dark:bg-gray-900/15' : 'bg-red-500 text-white'
-              }`}
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          ) : null}
-        </motion.button>
+        {showUnread ? (
+          <motion.button
+            key="unread"
+            {...motionProps}
+            {...(reduceMotion ? {} : chipPresence)}
+            type="button"
+            aria-pressed={unreadActive}
+            onClick={onUnreadToggle}
+            className={`${chipBase} ${unreadActive ? chipActive : chipIdle}`}
+          >
+            {t('chat.list.filterUnread', { defaultValue: 'Unread' })}
+            {unreadCount > 0 ? (
+              <span
+                className={`rounded-full px-1.5 text-[11px] leading-[18px] tabular-nums ${
+                  unreadActive ? 'bg-white/20 dark:bg-gray-900/15' : 'bg-red-500 text-white'
+                }`}
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            ) : null}
+          </motion.button>
+        ) : null}
       </AnimatePresence>
     </div>
   );
