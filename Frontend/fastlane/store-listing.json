@@ -1,0 +1,58 @@
+{
+  "_comment": "Localized store listing copy. Push with: bundle exec ruby fastlane/push_store_listing.rb [--apply] (from Frontend/, ASC_* and PLAY_STORE_JSON_KEY_PATH exported). en-US is the source; edit it in the stores or here.",
+  "listings": {
+    "en": {
+      "name": "Bandeja Sports",
+      "subtitle": "Play. Track. Compete.",
+      "shortDescription": "Bandeja Sports is the ultimate app for you, racket sports lovers!",
+      "keywords": "padel, bandeja, racket, sport, ball, tennis",
+      "description": "Bandeja Sports is the ultimate app for you, racket sports lovers!\nWe have Padel, Tennis, Pickleball, Badminton, Table tennis, Squash covered!\nThis is the most feature rich app you can find for racket sports.\nYou can create games with classical, americano, mexicano, round-robin and other scoring systems. \nYou can create your own rules for scoring. \nYou can find games in your city.\nYou can attach photos right into game.\nYou can chat with other players, you can chat in game chats or in private chats.\nYou can create group chats and manage all your communication inside app.\nYou can see your level progress and compare it against other players.\nYou can create teams, leagues, tournaments, trainings.\nYou can add suggestions right in app.",
+      "whatsNew": "• Faster app start and smoother league schedule and standings\n• Court booking: game-only mode, club account check for busy courts, no phantom reservations\n• Pair leaderboard: team identity and challenges from the podium\n• Bug fixes and improvements"
+    },
+    "ru": {
+      "name": "Bandeja Sports",
+      "subtitle": "Играй. Следи. Соревнуйся.",
+      "shortDescription": "Bandeja Sports — лучшее приложение для любителей ракеточных видов спорта!",
+      "keywords": "падел,теннис,ракетка,спорт,сквош,пиклбол,турнир,лига",
+      "description": "Bandeja Sports — лучшее приложение для любителей ракеточных видов спорта!\nПадел, теннис, пиклбол, бадминтон, настольный теннис и сквош — всё в одном месте!\nЭто самое функциональное приложение для ракеточных видов спорта.\nСоздавайте игры с классическим счётом, американо, мексикано, круговой системой и другими форматами.\nЗадавайте собственные правила подсчёта очков.\nНаходите игры в своём городе.\nПрикрепляйте фотографии прямо к игре.\nОбщайтесь с другими игроками в чатах игр и в личных сообщениях.\nСоздавайте групповые чаты и ведите всё общение внутри приложения.\nСледите за прогрессом своего уровня и сравнивайте его с другими игроками.\nСоздавайте команды, лиги, турниры и тренировки.\nПредлагайте идеи прямо в приложении.",
+      "whatsNew": "• Быстрее запуск приложения, плавнее расписание и таблица лиги\n• Бронирование кортов: режим «только игра», проверка аккаунта клуба для занятых кортов, без фантомных броней\n• Рейтинг пар: имя и облик команды, вызовы прямо с пьедестала\n• Исправления ошибок и улучшения"
+    },
+    "es-ES": {
+      "name": "Bandeja Sports",
+      "subtitle": "Juega. Registra. Compite.",
+      "shortDescription": "Bandeja Sports: la app definitiva para los amantes de los deportes de raqueta",
+      "keywords": "pádel,padel,tenis,raqueta,deporte,squash,pickleball,americano,torneo,liga",
+      "description": "¡Bandeja Sports es la app definitiva para los amantes de los deportes de raqueta!\n¡Pádel, tenis, pickleball, bádminton, tenis de mesa y squash, todo en un solo lugar!\nEs la app más completa que encontrarás para deportes de raqueta.\nCrea partidos con sistema clásico, americano, mexicano, round-robin y otros formatos de puntuación.\nDefine tus propias reglas de puntuación.\nEncuentra partidos en tu ciudad.\nAdjunta fotos directamente al partido.\nChatea con otros jugadores en los chats de partido o en privado.\nCrea chats de grupo y gestiona toda tu comunicación dentro de la app.\nSigue la evolución de tu nivel y compárala con la de otros jugadores.\nCrea equipos, ligas, torneos y entrenamientos.\nEnvía sugerencias directamente desde la app.",
+      "whatsNew": "• Inicio de la app más rápido y calendario y clasificación de liga más fluidos\n• Reserva de pistas: modo solo partido, comprobación de la cuenta del club para pistas ocupadas y sin reservas fantasma\n• Clasificación de parejas: identidad de equipo y desafíos desde el podio\n• Corrección de errores y mejoras"
+    },
+    "es-419": {
+      "name": "Bandeja Sports",
+      "subtitle": "Juega. Registra. Compite.",
+      "shortDescription": "Bandeja Sports: la app definitiva para los amantes de los deportes de raqueta",
+      "keywords": "pádel,padel,tenis,raqueta,deporte,squash,pickleball,americano,torneo,liga",
+      "description": "¡Bandeja Sports es la app definitiva para los amantes de los deportes de raqueta!\n¡Pádel, tenis, pickleball, bádminton, tenis de mesa y squash, todo en un solo lugar!\nEs la app más completa que encontrarás para deportes de raqueta.\nCrea partidos con sistema clásico, americano, mexicano, round-robin y otros formatos de puntuación.\nDefine tus propias reglas de puntuación.\nEncuentra partidos en tu ciudad.\nAdjunta fotos directamente al partido.\nChatea con otros jugadores en los chats de partido o en privado.\nCrea chats de grupo y gestiona toda tu comunicación dentro de la app.\nSigue la evolución de tu nivel y compárala con la de otros jugadores.\nCrea equipos, ligas, torneos y entrenamientos.\nEnvía sugerencias directamente desde la app.",
+      "whatsNew": "• Inicio de la app más rápido y calendario y tabla de liga más fluidos\n• Reserva de canchas: modo solo partido, verificación de la cuenta del club para canchas ocupadas y sin reservas fantasma\n• Ranking de parejas: identidad de equipo y desafíos desde el podio\n• Corrección de errores y mejoras"
+    },
+    "sr-Latn": {
+      "name": "Bandeja Sports",
+      "subtitle": "Igraj. Prati. Takmiči se.",
+      "shortDescription": "Bandeja Sports – najbolja aplikacija za ljubitelje sportova sa reketom!",
+      "keywords": "padel,tenis,reket,sport,skvoš,pikleball,badminton,turnir,liga,amerikano",
+      "description": "Bandeja Sports je najbolja aplikacija za vas, ljubitelje sportova sa reketom!\nPadel, tenis, pikleball, badminton, stoni tenis i skvoš – sve na jednom mestu!\nOvo je aplikacija sa najviše funkcija koju možete naći za sportove sa reketom.\nKreirajte igre sa klasičnim bodovanjem, amerikano, meksikano, round-robin i drugim sistemima.\nPostavite sopstvena pravila bodovanja.\nPronađite igre u svom gradu.\nDodajte fotografije direktno u igru.\nDopisujte se sa drugim igračima u četovima igara ili u privatnim porukama.\nKreirajte grupne četove i vodite svu komunikaciju unutar aplikacije.\nPratite napredak svog nivoa i uporedite ga sa drugim igračima.\nKreirajte timove, lige, turnire i treninge.\nŠaljite predloge direktno iz aplikacije.",
+      "whatsNew": "• Brže pokretanje aplikacije i glađi raspored i tabela lige\n• Rezervacija terena: režim samo igra, provera klupskog naloga za zauzete terene, bez fantomskih rezervacija\n• Rang-lista parova: identitet tima i izazovi sa pobedničkog postolja\n• Ispravke grešaka i poboljšanja"
+    }
+  },
+  "ios": {
+    "ru": "ru",
+    "es-ES": "es-ES",
+    "es-MX": "es-419",
+    "hr": "sr-Latn"
+  },
+  "android": {
+    "ru-RU": "ru",
+    "es-ES": "es-ES",
+    "es-419": "es-419",
+    "es-US": "es-419",
+    "sr": "sr-Latn"
+  }
+}
