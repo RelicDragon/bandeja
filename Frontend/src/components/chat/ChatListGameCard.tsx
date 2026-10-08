@@ -277,18 +277,30 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
     );
   }
 
-  return (
+  /**
+   * Invitations get an outline (not the hero's filled surface): it binds the row to its Join / Decline
+   * buttons and sets it apart from chats, while "Next up" stays the strongest card on screen.
+   */
+  const rowClass = showInviteActions
+    ? `chat-list-row flex items-start gap-3 rounded-2xl border p-3 cursor-pointer transition-colors ${
+        isSelected
+          ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-900/20'
+          : 'border-gray-200 hover:bg-gray-50 dark:border-gray-700/70 dark:hover:bg-gray-800/40'
+      }`
+    : `chat-list-row flex items-start gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+        isSelected
+          ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+          : 'hover:bg-gray-100 dark:hover:bg-gray-800/70'
+      }`;
+
+  const row = (
     <div
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
       data-chat-selected={isSelected ? 'true' : undefined}
-      className={`chat-list-row flex items-start gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
-        isSelected
-          ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-800/70'
-      }`}
+      className={rowClass}
     >
       <div className={past ? 'opacity-60' : undefined}>
         <ChatListGameDateTile game={game} tone={tone} Icon={Icon} displaySettings={displaySettings} t={t} />
@@ -326,6 +338,8 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
       </div>
     </div>
   );
+
+  return showInviteActions ? <div className="px-3 pb-2 pt-0.5">{row}</div> : row;
 }
 
 function gameCardPropsEqual(a: ChatListGameCardProps, b: ChatListGameCardProps) {
