@@ -53,20 +53,35 @@ export function useVirtualRowLayoutTransition(
       suppress(false);
     };
 
+    // A transition started while the page is not painting (app backgrounded, resume refetch
+    // dropping a row) can stall on its start frame and leave a row-sized hole. Forcing
+    // `transition: none` on any visibility change cancels in-flight moves so rows snap home.
+    document.addEventListener('visibilitychange', onScroll);
+    window.addEventListener('pageshow', onScroll);
+    const stopVisibility = () => {
+      document.removeEventListener('visibilitychange', onScroll);
+      window.removeEventListener('pageshow', onScroll);
+    };
+
     if (subscribeScroll) {
       const unsubscribe = subscribeScroll(onScroll);
       return () => {
         unsubscribe();
+        stopVisibility();
         stop();
       };
     }
 
     const el = scrollElementRef.current;
-    if (!el) return;
+    if (!el) {
+      stopVisibility();
+      return;
+    }
 
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', onScroll);
+      stopVisibility();
       stop();
     };
   }, [scrollElementRef, enabled, subscribeScroll]);
@@ -74,12 +89,13 @@ export function useVirtualRowLayoutTransition(
   const prev = prevStartByKeyRef.current;
   const cache = styleCacheRef.current;
   const styles = new Map<string, VirtualRowStyle>();
+  const animate = enabled && document.visibilityState === 'visible';
 
   for (const row of rows) {
     const key = String(row.key);
     const prevStart = prev.get(key);
     const moved = prevStart !== undefined && prevStart !== row.start;
-    const transition = enabled && moved ? ROW_TRANSITION : undefined;
+    const transition = animate && moved ? ROW_TRANSITION : undefined;
 
     const cached = cache.get(key);
     if (cached && cached.start === row.start && cached.transition === transition) {
