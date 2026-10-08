@@ -29,7 +29,6 @@ import {
   ensurePrimaryCourtSlot,
   placeLinksOnSlots,
   pruneEmptySlotsAboveCap,
-  syncPrimaryCourtFromSlots,
   type TimePolicy,
 } from '../gameCourt/courtSlots.tx';
 import {
@@ -536,10 +535,26 @@ async function syncGameBookingState(
   patch.hasBookedCourt = computed.hasBookedCourt;
 
   await tx.game.update({ where: { id: gameId }, data: patch });
-  // `Game.courtId` follows the first slot, also after a link patch named another court.
-  if (game.entityType !== EntityType.EVENT) await syncPrimaryCourtFromSlots(tx, gameId);
+  // `Game.courtId` follows the first slot, also after a link patch named another court. Only a
+  // set-but-wrong primary is corrected: a court just cleared (club change) is never refilled
+  // from a slot of the old club before that slot is removed.
+  if (game.entityType !== EntityType.EVENT) await correctPrimaryCourtFromSlots(tx, gameId);
 
   return { previousBookingStatus, bookingStatus };
+}
+
+async function correctPrimaryCourtFromSlots(tx: Tx, gameId: string): Promise<void> {
+  const [current, first] = await Promise.all([
+    tx.game.findUnique({ where: { id: gameId }, select: { courtId: true, clubId: true } }),
+    tx.gameCourt.findFirst({
+      where: { gameId },
+      orderBy: { order: 'asc' },
+      select: { courtId: true, court: { select: { clubId: true } } },
+    }),
+  ]);
+  if (!current?.courtId || !first || first.courtId === current.courtId) return;
+  if (current.clubId && first.court.clubId !== current.clubId) return;
+  await tx.game.update({ where: { id: gameId }, data: { courtId: first.courtId } });
 }
 
 export { syncGameBookingState };

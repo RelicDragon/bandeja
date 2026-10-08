@@ -32,6 +32,22 @@ export function unknownClosing(locale: string): AgentActionClosing {
   };
 }
 
+/**
+ * Server-executed actions (NS Padel / Weltner bookings, every other write) run right after the
+ * confirm. One still CONFIRMED this long after its last update was cut off mid-execute (process
+ * restart): it may or may not have reached the club, so it becomes UNKNOWN instead of staying
+ * "in progress" forever.
+ */
+export const AGENT_SERVER_EXECUTE_STALE_MS = 10 * 60 * 1000;
+
+function serverUnknownClosing(locale: string): AgentActionClosing {
+  return {
+    ...unknownClosing(locale),
+    modelNote:
+      'The user confirmed, but the server was interrupted while doing it, so the outcome is UNKNOWN: it may or may not have happened. Tell the user to check (for a booking: Club bookings in the app or the club). Do not retry without asking.',
+  };
+}
+
 /** CONFIRMED client actions whose lease ran out → UNKNOWN. Bounded per call. */
 export async function sweepExpiredAgentClientLeases(now: Date, scope: { actionId?: string } = {}): Promise<number> {
   const stale = await prisma.agentPendingAction.findMany({
@@ -50,6 +66,23 @@ export async function sweepExpiredAgentClientLeases(now: Date, scope: { actionId
     const { locale } = readStoredActionArgs(action.args);
     const message = await prisma.$transaction((tx) =>
       closeAgentAction(tx, action, [AgentActionStatus.CONFIRMED], unknownClosing(locale)),
+    );
+    if (message) closed += 1;
+  }
+  if (scope.actionId) return closed;
+  const interrupted = await prisma.agentPendingAction.findMany({
+    where: {
+      status: AgentActionStatus.CONFIRMED,
+      attemptId: null,
+      updatedAt: { lte: new Date(now.getTime() - AGENT_SERVER_EXECUTE_STALE_MS) },
+    },
+    orderBy: { updatedAt: 'asc' },
+    take: 100,
+  });
+  for (const action of interrupted) {
+    const { locale } = readStoredActionArgs(action.args);
+    const message = await prisma.$transaction((tx) =>
+      closeAgentAction(tx, action, [AgentActionStatus.CONFIRMED], serverUnknownClosing(locale)),
     );
     if (message) closed += 1;
   }

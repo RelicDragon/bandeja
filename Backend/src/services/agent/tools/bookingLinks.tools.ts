@@ -19,6 +19,7 @@ import { ClubIntegrationType } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
 import { z } from 'zod/v4';
 import type { AgentActionPreview, AgentActionPreviewLine, AgentEntityRef } from '@bandeja/shared/agentContract';
+import { assertGameNeedsCourts } from '../booking/gameCourtNeed';
 import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { canMutateGameBookings } from '../../../shared/gameBooking/bookingLinkAuthorization';
@@ -97,6 +98,7 @@ async function assertLinkable(item: AgentBookingItem, game: GameWriteRow): Promi
   if (linked || item.linkedGameIds.includes(game.id)) {
     throw new ApiError(400, 'This booking is already linked to that game');
   }
+  await assertGameNeedsCourts(game, item.courtIds, item.start, item.end);
 }
 
 async function assertLinkedToGame(item: AgentBookingItem, gameId: string): Promise<void> {

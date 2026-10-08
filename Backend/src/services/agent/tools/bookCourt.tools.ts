@@ -42,6 +42,7 @@ import prisma from '../../../config/database';
 import { ApiError } from '../../../utils/ApiError';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { computeRequiredCourtSlotCount } from '@bandeja/shared/gameBooking/courtReservations';
+import { assertGameNeedsCourts } from '../booking/gameCourtNeed';
 import { canMutateGameBookings } from '../../../shared/gameBooking/bookingLinkAuthorization';
 import { upsertAgentBookedMirrorRows } from '../../bookingMirror/externalBookingMirror.service';
 import { linkBookingToGame } from '../../game/gameExternalBooking.service';
@@ -153,6 +154,55 @@ export type ResolvedSlot = {
   startTime: string;
   endTime: string;
 };
+
+// --- game link -----------------------------------------------------------------------------
+
+/** The card says the game keeps its time; a slot apart from it is called out. */
+function gameLinkWarnings(
+  game: { startTime: Date; endTime: Date; timeIsSet: boolean },
+  slot: Pick<ResolvedSlot, 'start' | 'end'>,
+  locale: string | null | undefined,
+): string[] {
+  const out = [agentBookingT(locale, 'warn.linksToGame')];
+  const overlaps = slot.start.getTime() < game.endTime.getTime() && slot.end.getTime() > game.startTime.getTime();
+  if (game.timeIsSet && !overlaps) out.push(agentBookingT(locale, 'warn.slotOutsideGame'));
+  return out;
+}
+
+/**
+ * Links each booked court on its own (explicit time policy: the game keeps its time, the
+ * agent moves games with its own tools). Reports which refs went through, so a partial failure
+ * is not retried as a whole ("already linked").
+ */
+async function linkBookedCourts(
+  principal: { userId: string; isAdmin: boolean },
+  gameId: string,
+  booked: ReadonlyArray<{ externalBookingId: string; courtId: string | null; start: string; end: string; ref?: string | null }>,
+): Promise<{ linkedRefs: string[]; unlinkedRefs: string[]; failed: boolean }> {
+  const linkedRefs: string[] = [];
+  const unlinkedRefs: string[] = [];
+  let failed = false;
+  for (const b of booked) {
+    try {
+      await linkBookingToGame(
+        gameId,
+        principal.userId,
+        principal.isAdmin,
+        {
+          externalBookingId: b.externalBookingId,
+          snapshot: { externalBookingId: b.externalBookingId, courtId: b.courtId, bookingStart: b.start, bookingEnd: b.end },
+        },
+        { timePolicy: 'explicit' },
+      );
+      if (b.ref) linkedRefs.push(b.ref);
+    } catch (error) {
+      failed = true;
+      if (b.ref) unlinkedRefs.push(b.ref);
+      console.error('[agent] book_court: booked but linking failed', { gameId, externalBookingId: b.externalBookingId, error });
+    }
+  }
+  return { linkedRefs, unlinkedRefs, failed };
+}
 
 // --- guards --------------------------------------------------------------------------------
 
@@ -619,16 +669,14 @@ async function bookCourtClientPostStep(ctx: AgentWriteContext, input: AgentClien
 
   let linked = false;
   let linkFailed = false;
+  let linkRefs: { linkedRefs: string[]; unlinkedRefs: string[] } | null = null;
   if (post.gameId && booked.length) {
     try {
       await authorizeGame(principal, post.gameId, post.clubId);
-      for (const b of booked) {
-        await linkBookingToGame(post.gameId, principal.userId, principal.isAdmin, {
-          externalBookingId: b.externalBookingId,
-          snapshot: { externalBookingId: b.externalBookingId, courtId: b.courtId, bookingStart: b.start, bookingEnd: b.end },
-        });
-      }
-      linked = true;
+      const result = await linkBookedCourts(principal, post.gameId, booked);
+      linkRefs = result;
+      linkFailed = result.failed;
+      linked = !result.failed;
     } catch (error) {
       linkFailed = true;
       console.error('[agent] book_court: booked in the app but linking failed', { gameId: post.gameId, error });
@@ -657,6 +705,7 @@ async function bookCourtClientPostStep(ctx: AgentWriteContext, input: AgentClien
       booked: booked.length,
       bookingRefs: booked.map((b) => b.ref).filter(Boolean),
       ...(post.gameId ? { gameId: post.gameId, linkedToGame: linked } : {}),
+      ...(linkRefs && linkFailed ? { linkedBookingRefs: linkRefs.linkedRefs, unlinkedBookingRefs: linkRefs.unlinkedRefs } : {}),
       cancel: 'in the app (cancel_booking), within the club rules',
     },
   };
@@ -742,6 +791,7 @@ async function proposeClientBooking(
   const { principal, locale } = ctx;
   const provider = slot.club.provider as ClientProvider;
   const game = args.gameId ? assertCourtsFitGame(await authorizeGame(principal, args.gameId, slot.club.id), slot.courts.length) : null;
+  if (game) await assertGameNeedsCourts(game, slot.courts.map((c) => c.id), slot.start, slot.end);
   const refused = await clientBookingRefusal(principal, slot, locale, clubHandoff);
   if (refused) return refused;
 
@@ -752,7 +802,7 @@ async function proposeClientBooking(
   }
   // Snapshot confidence: never "free"; the app re-checks live and quotes the price.
   const warnings = clientBookingWarnings(slot, locale);
-  if (game) warnings.push(agentBookingT(locale, 'warn.linksToGame'));
+  if (game) warnings.push(...gameLinkWarnings(game, slot, locale));
   const preview: AgentActionPreview = {
     title: agentBookingT(locale, 'preview.book.title', { club: clip(slot.club.name, 60) ?? slot.club.name }),
     lines,
@@ -787,6 +837,7 @@ export const bookCourtTool = defineTool({
       return refusal('no_online_booking', agentBookingT(locale, 'refuse.noIntegration'), clubHandoff);
     }
     const game = args.gameId ? assertCourtsFitGame(await authorizeGame(principal, args.gameId, slot.club.id), slot.courts.length) : null;
+    if (game) await assertGameNeedsCourts(game, slot.courts.map((c) => c.id), slot.start, slot.end);
     const refused = await serverBookingRefusal(principal, provider, slot.club.id, locale);
     if (refused) return refused;
 
@@ -796,7 +847,7 @@ export const bookCourtTool = defineTool({
       lines.push(line(agentBookingT(locale, 'field.game'), null, clip(title, 60) ?? title));
     }
     const warnings = serverBookingWarnings(provider, locale);
-    if (game) warnings.push(agentBookingT(locale, 'warn.linksToGame'));
+    if (game) warnings.push(...gameLinkWarnings(game, slot, locale));
     const preview: AgentActionPreview = {
       title: agentBookingT(locale, 'preview.book.title', { club: clip(slot.club.name, 60) ?? slot.club.name }),
       lines,
@@ -854,19 +905,12 @@ export const bookCourtTool = defineTool({
 
       let linked = false;
       let linkFailed = false;
+      let linkRefs: { linkedRefs: string[]; unlinkedRefs: string[] } | null = null;
       if (plan.gameId) {
-        try {
-          for (const b of booked) {
-            await linkBookingToGame(plan.gameId, principal.userId, principal.isAdmin, {
-              externalBookingId: b.externalBookingId,
-              snapshot: { externalBookingId: b.externalBookingId, courtId: b.courtId, bookingStart: b.start, bookingEnd: b.end },
-            });
-          }
-          linked = true;
-        } catch (error) {
-          linkFailed = true;
-          console.error('[agent] book_court: booked but linking failed', { gameId: plan.gameId, error });
-        }
+        const result = await linkBookedCourts(principal, plan.gameId, booked);
+        linkRefs = result;
+        linkFailed = result.failed;
+        linked = !result.failed;
       }
 
       const parts: string[] = [];
@@ -892,6 +936,7 @@ export const bookCourtTool = defineTool({
           booked: booked.length,
           bookingRefs: booked.map((b) => b.ref),
           ...(plan.gameId ? { gameId: plan.gameId, linkedToGame: linked } : {}),
+          ...(linkRefs && linkFailed ? { linkedBookingRefs: linkRefs.linkedRefs, unlinkedBookingRefs: linkRefs.unlinkedRefs } : {}),
           ...(failure ? { notBookedReason: failure } : {}),
           cancel: 'only via the club',
         },
