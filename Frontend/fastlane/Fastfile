@@ -26,7 +26,7 @@ def play_supply_config(track)
   )
 end
 
-def verify_play_release!(track, version_code, expected_changelog)
+def verify_play_release!(track, version_code, expected_changelogs)
   require "supply/reader"
 
   Supply.config = play_supply_config(track)
@@ -45,16 +45,158 @@ def verify_play_release!(track, version_code, expected_changelog)
   end
   UI.user_error!("Google Play track #{track} has no release for version code #{version_code}") unless release
 
-  notes = Array(release.release_notes).find do |note|
-    note.language == "en-US"
-  end
-  UI.user_error!("Google Play release #{version_code} is missing en-US release notes") unless notes
+  UI.user_error!("No planned Google Play changelogs to verify") if expected_changelogs.empty?
+  expected_changelogs.each do |language, expected|
+    notes = Array(release.release_notes).find do |note|
+      note.language == language
+    end
+    UI.user_error!("Google Play release #{version_code} is missing #{language} release notes") unless notes
 
-  if !expected_changelog.to_s.strip.empty? && notes.text.to_s.strip != expected_changelog.to_s.strip
-    UI.user_error!("Google Play en-US release notes do not match the planned changelog")
+    if notes.text.to_s.strip != expected.to_s.strip
+      UI.user_error!("Google Play #{language} release notes do not match the planned changelog")
+    end
   end
 
-  UI.success("Verified Google Play #{track} release #{version_code}: version code and en-US notes match")
+  UI.success(
+    "Verified Google Play #{track} release #{version_code}: version code and " \
+    "#{expected_changelogs.keys.join(', ')} notes match"
+  )
+end
+
+# Reads <metadata_path>/<language>/changelogs/<version_code>.txt for every language folder.
+def planned_play_changelogs(metadata_path, version_code)
+  Dir.glob(File.join(metadata_path, "*", "changelogs", "#{version_code}.txt")).sort.to_h do |path|
+    [File.basename(File.dirname(File.dirname(path))), File.read(path)]
+  end
+end
+
+def emit_listing_state(state)
+  require "json"
+
+  UI.message("APP_RELEASE_LISTING_STATE_JSON:#{JSON.generate(state)}")
+end
+
+def android_listing_state
+  require "supply"
+  require "supply/client"
+
+  Supply.config = play_supply_config("production")
+  client = Supply::Client.make_from_config(params: Supply.config)
+  client.begin_edit(package_name: ANDROID_PACKAGE)
+  begin
+    listings = client.listings
+    source = listings.find { |listing| listing.language == "en-US" }
+    UI.user_error!("Google Play has no en-US store listing to translate from") unless source
+    {
+      platform: "android",
+      locales: listings.map(&:language),
+      source: {
+        title: source.title,
+        shortDescription: source.short_description,
+        fullDescription: source.full_description
+      }
+    }
+  ensure
+    client.abort_current_edit
+  end
+end
+
+def ios_listing_state
+  asc_api_key
+  app = Spaceship::ConnectAPI::App.find(IOS_APP_IDENTIFIER)
+  UI.user_error!("Could not find App Store Connect app #{IOS_APP_IDENTIFIER}") unless app
+
+  platform = Spaceship::ConnectAPI::Platform::IOS
+  version = app.get_edit_app_store_version(platform: platform) || app.get_live_app_store_version(platform: platform)
+  UI.user_error!("Could not find an App Store version for #{IOS_APP_IDENTIFIER}") unless version
+  app_info = app.fetch_edit_app_info || app.fetch_live_app_info
+  UI.user_error!("Could not find App Store app info for #{IOS_APP_IDENTIFIER}") unless app_info
+
+  version_localizations = version.get_app_store_version_localizations
+  info_localizations = app_info.get_app_info_localizations
+  version_source = version_localizations.find { |localization| localization.locale == "en-US" }
+  info_source = info_localizations.find { |localization| localization.locale == "en-US" }
+  UI.user_error!("App Store Connect has no en-US localization to translate from") unless version_source && info_source
+
+  {
+    platform: "ios",
+    # A locale counts as present only when both the app info and the version have it.
+    locales: version_localizations.map(&:locale) & info_localizations.map(&:locale),
+    source: {
+      name: info_source.name,
+      subtitle: info_source.subtitle,
+      privacyUrl: info_source.privacy_policy_url,
+      description: version_source.description,
+      keywords: version_source.keywords,
+      supportUrl: version_source.support_url,
+      marketingUrl: version_source.marketing_url,
+      promotionalText: version_source.promotional_text
+    }.compact
+  }
+end
+
+# Per-locale App Store payload written by Backend/scripts/lib/app-release-upload.ts.
+def read_ios_localizations(localizations_path)
+  require "json"
+
+  UI.user_error!("localizations_path is required") if localizations_path.nil? || localizations_path.empty?
+  UI.user_error!("App Store localizations file not found at #{localizations_path}") unless File.exist?(localizations_path)
+  localizations = JSON.parse(File.read(localizations_path))
+  UI.user_error!("App Store localizations file is empty") if localizations.empty?
+  localizations.each do |locale, payload|
+    UI.user_error!("App Store localization #{locale} has no releaseNotes") if payload["releaseNotes"].to_s.strip.empty?
+  end
+  localizations
+end
+
+# Locales the App Store version deliver will edit already has (a new version inherits the live one's).
+def ios_existing_version_locales(app_version)
+  app = Spaceship::ConnectAPI::App.find(IOS_APP_IDENTIFIER)
+  platform = Spaceship::ConnectAPI::Platform::IOS
+  version = find_ios_app_store_version(app_version) ||
+            app.get_edit_app_store_version(platform: platform) ||
+            app.get_live_app_store_version(platform: platform)
+  version ? version.get_app_store_version_localizations.map(&:locale) : []
+end
+
+# App Store requires whatsNew on every localization of an update. Locales outside the release set
+# (e.g. es-MX) reuse the notes of the same language (es-ES), else en-US.
+def with_ios_release_notes_for_all_locales(localizations, existing_locales)
+  filled = localizations.dup
+  (existing_locales - localizations.keys).each do |locale|
+    language = locale.split("-").first
+    same_language = localizations.find { |candidate, _| candidate.split("-").first == language }
+    notes = (same_language ? same_language.last : localizations.fetch("en-US"))["releaseNotes"]
+    filled[locale] = { "releaseNotes" => notes }
+    UI.message("App Store locale #{locale}: using #{same_language ? same_language.first : 'en-US'} What's New")
+  end
+  filled
+end
+
+IOS_DELIVER_LOCALIZED_FIELDS = {
+  "releaseNotes" => :release_notes,
+  "name" => :name,
+  "subtitle" => :subtitle,
+  "privacyUrl" => :privacy_url,
+  "description" => :description,
+  "keywords" => :keywords,
+  "supportUrl" => :support_url,
+  "marketingUrl" => :marketing_url,
+  "promotionalText" => :promotional_text
+}.freeze
+
+# Turns { locale => { field => value } } into deliver's { field => { locale => value } } options.
+def ios_deliver_localized_options(localizations)
+  options = {}
+  localizations.each do |locale, payload|
+    IOS_DELIVER_LOCALIZED_FIELDS.each do |json_key, option|
+      value = payload[json_key].to_s
+      next if value.strip.empty?
+
+      (options[option] ||= {})[locale] = value
+    end
+  end
+  options
 end
 
 def asc_api_key
@@ -621,20 +763,22 @@ def ios_app_store_version_submitted?(app_store_version)
     submitted_states.include?(app_store_version.app_version_state)
 end
 
-def verify_ios_store_version_metadata!(app_version, build_number, expected_release_notes, expected_submit_for_review)
+def verify_ios_store_version_metadata!(app_version, build_number, expected_localizations, expected_submit_for_review)
   app_store_version = find_ios_app_store_version(app_version)
   UI.user_error!("Could not find App Store Connect version #{app_version} for #{IOS_APP_IDENTIFIER}") unless app_store_version
 
   localizations = app_store_version.get_app_store_version_localizations
-  en_us = localizations.find do |localization|
-    localization.locale == "en-US"
-  end
+  expected_localizations.each do |locale, payload|
+    localization = localizations.find do |candidate|
+      candidate.locale == locale
+    end
 
-  UI.user_error!("App Store Connect version #{app_version} is missing en-US localization") unless en_us
-  UI.user_error!("App Store Connect version #{app_version} is missing en-US whatsNew") if en_us.whats_new.to_s.strip.empty?
+    UI.user_error!("App Store Connect version #{app_version} is missing #{locale} localization") unless localization
+    UI.user_error!("App Store Connect version #{app_version} is missing #{locale} whatsNew") if localization.whats_new.to_s.strip.empty?
 
-  if !expected_release_notes.to_s.strip.empty? && en_us.whats_new.to_s.strip != expected_release_notes.to_s.strip
-    UI.user_error!("App Store Connect en-US whatsNew does not match the planned release notes")
+    if localization.whats_new.to_s.strip != payload["releaseNotes"].to_s.strip
+      UI.user_error!("App Store Connect #{locale} whatsNew does not match the planned release notes")
+    end
   end
 
   selected_build = app_store_version.get_build
@@ -664,7 +808,7 @@ def verify_ios_store_version_metadata!(app_version, build_number, expected_relea
 
   UI.success(
     "Verified App Store Connect metadata for #{app_version} (#{build_number}): " \
-    "en-US whatsNew present, selected build matches, submit-for-review=#{submitted}"
+    "#{expected_localizations.keys.join(', ')} whatsNew match, selected build matches, submit-for-review=#{submitted}"
   )
 end
 
@@ -679,7 +823,12 @@ platform :android do
     emit_store_version_state(android_latest_store_version)
   end
 
-  desc "Upload signed AAB to Google Play with en-US What's new"
+  desc "Report Google Play listing languages and the en-US listing (translation source)"
+  lane :listing_state do
+    emit_listing_state(android_listing_state)
+  end
+
+  desc "Upload signed AAB to Google Play with localized What's new (and new-language listings)"
   lane :upload_release do |options|
     aab = options[:aab]
     track = options[:track] || "internal"
@@ -710,7 +859,8 @@ platform :android do
         track: track,
         json_key: play_json_key_path,
         skip_upload_apk: true,
-        skip_upload_metadata: true,
+        # Only language folders with title/description files carry new listings; the rest are changelogs.
+        skip_upload_metadata: options[:upload_listings].to_s != "true",
         skip_upload_changelogs: false,
         skip_upload_images: true,
         skip_upload_screenshots: true,
@@ -744,13 +894,13 @@ platform :android do
   lane :verify_release do |options|
     track = options[:track] || "internal"
     version_code = options[:version_code].to_s
-    changelog_path = options[:changelog_path]
+    metadata_path = options[:metadata_path]
 
     UI.user_error!("version_code is required") if version_code.empty?
-    UI.user_error!("changelog_path is required") if changelog_path.nil? || changelog_path.empty?
-    UI.user_error!("Google Play changelog not found at #{changelog_path}") unless File.exist?(changelog_path)
+    UI.user_error!("metadata_path is required") if metadata_path.nil? || metadata_path.empty?
+    UI.user_error!("Google Play metadata not found at #{metadata_path}") unless File.directory?(metadata_path)
 
-    verify_play_release!(track, version_code, File.read(changelog_path))
+    verify_play_release!(track, version_code, planned_play_changelogs(metadata_path, version_code))
   end
 end
 
@@ -919,6 +1069,11 @@ platform :ios do
     end
   end
 
+  desc "Report App Store Connect listing locales and the en-US listing (translation source)"
+  lane :listing_state do
+    emit_listing_state(ios_listing_state)
+  end
+
   desc "Set TestFlight notes and optionally distribute to external groups"
   lane :distribute_testflight do |options|
     release_notes_path = options[:release_notes_path]
@@ -984,15 +1139,13 @@ platform :ios do
 
   desc "Update App Store version metadata and optionally submit for review"
   lane :finalize_store_version do |options|
-    release_notes_path = options[:release_notes_path]
     app_version = options[:app_version].to_s
     build_number = options[:build_number].to_s
     submit_for_review = options[:submit_for_review].to_s == "true"
 
-    UI.user_error!("release_notes_path is required") if release_notes_path.nil? || release_notes_path.empty?
     UI.user_error!("app_version is required") if app_version.empty?
     UI.user_error!("build_number is required") if build_number.empty?
-    UI.user_error!("Release notes file not found at #{release_notes_path}") unless File.exist?(release_notes_path)
+    localizations = read_ios_localizations(options[:localizations_path])
 
     if submit_for_review
       guard_no_ios_blocking_review!("before final submission")
@@ -1000,9 +1153,13 @@ platform :ios do
 
     assert_exact_ios_build_selectable!(app_version, build_number)
     assert_ios_store_version_accepts_build!(app_version, build_number)
-    release_notes = File.read(release_notes_path)
+    localizations = with_ios_release_notes_for_all_locales(
+      localizations,
+      ios_existing_version_locales(app_version)
+    )
 
     upload_to_app_store(
+      **ios_deliver_localized_options(localizations),
       api_key: asc_api_key,
       app_version: app_version,
       build_number: build_number,
@@ -1011,11 +1168,7 @@ platform :ios do
       skip_binary_upload: true,
       submit_for_review: submit_for_review,
       force: true,
-      precheck_include_in_app_purchases: false,
-      release_notes: {
-        "default" => release_notes,
-        "en-US" => release_notes
-      }
+      precheck_include_in_app_purchases: false
     )
 
     require "time"
@@ -1032,20 +1185,17 @@ platform :ios do
 
   desc "Verify App Store version metadata after finalizing"
   lane :verify_store_version do |options|
-    release_notes_path = options[:release_notes_path]
     app_version = options[:app_version].to_s
     build_number = options[:build_number].to_s
     expected_submit_for_review = options[:expected_submit_for_review].to_s == "true"
 
-    UI.user_error!("release_notes_path is required") if release_notes_path.nil? || release_notes_path.empty?
     UI.user_error!("app_version is required") if app_version.empty?
     UI.user_error!("build_number is required") if build_number.empty?
-    UI.user_error!("Release notes file not found at #{release_notes_path}") unless File.exist?(release_notes_path)
 
     verify_ios_store_version_metadata!(
       app_version,
       build_number,
-      File.read(release_notes_path),
+      read_ios_localizations(options[:localizations_path]),
       expected_submit_for_review
     )
   end
@@ -1054,6 +1204,7 @@ platform :ios do
   lane :upload_release do |options|
     ipa = options[:ipa]
     release_notes_path = options[:release_notes_path]
+    localizations_path = options[:localizations_path]
     app_version = options[:app_version]
     build_number = options[:build_number]
     submit_for_review = options[:submit_for_review]
@@ -1078,13 +1229,13 @@ platform :ios do
     end
 
     finalize_store_version(
-      release_notes_path: release_notes_path,
+      localizations_path: localizations_path,
       app_version: app_version,
       build_number: build_number,
       submit_for_review: submit_for_review
     )
     verify_store_version(
-      release_notes_path: release_notes_path,
+      localizations_path: localizations_path,
       app_version: app_version,
       build_number: build_number,
       expected_submit_for_review: submit_for_review

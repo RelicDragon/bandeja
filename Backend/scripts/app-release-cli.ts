@@ -10,6 +10,12 @@ import {
   RELEASE_NOTE_TEMPLATES,
 } from './lib/app-release-notes';
 import {
+  hasAllReleaseNoteTranslations,
+  RELEASE_LANGUAGE_LABELS,
+  TRANSLATED_RELEASE_LANGUAGES,
+  withReleaseNoteTranslations,
+} from './lib/app-release-locales';
+import {
   applyPlannedVersions,
   createReleaseSession,
   formatCommitPreview,
@@ -34,6 +40,7 @@ import {
 } from './lib/app-release-finalize';
 import {
   ReleaseUploadError,
+  ensureStoreListings,
   isAndroidAlreadyUploadedError,
   isGoogleReviewConflictError,
   isIosAlreadyUploadedError,
@@ -376,6 +383,55 @@ async function promptAiNotes(session: ReleaseSession): Promise<ReleaseSession | 
   }
 }
 
+function formatTranslationsPreview(notes: NonNullable<ReleaseSession['notes']>): string {
+  return TRANSLATED_RELEASE_LANGUAGES.map((language) => {
+    const translated = notes.translations![language];
+    return [`[${RELEASE_LANGUAGE_LABELS[language]}]`, formatNotesPreview({ ...translated, source: notes.source })].join(
+      '\n',
+    );
+  }).join('\n\n');
+}
+
+/** Translates the chosen English notes into every release language; null when the user goes back. */
+async function promptNoteTranslations(session: ReleaseSession): Promise<ReleaseSession | null> {
+  for (;;) {
+    let notes = session.notes!;
+    if (!hasAllReleaseNoteTranslations(notes)) {
+      const spinner = clack.spinner();
+      spinner.start('Translating release notes (Russian, Serbian Latin, Spanish)…');
+      try {
+        notes = await withReleaseNoteTranslations(notes);
+        spinner.stop('Release notes translated');
+      } catch (error) {
+        spinner.stop('Translation failed');
+        clack.log.error(error instanceof Error ? error.message : String(error));
+        return null;
+      }
+    }
+
+    clack.note(formatTranslationsPreview(notes), 'Translated What\'s New');
+
+    const decision = handleCancel(
+      await clack.select({
+        message: 'Use these translations?',
+        options: [
+          { value: 'accept', label: 'Accept' },
+          { value: 'retry', label: 'Translate again' },
+          { value: 'back', label: 'Back to release notes' },
+        ],
+      }),
+    );
+
+    if (decision === 'accept') {
+      return { ...session, notes };
+    }
+    if (decision === 'back') {
+      return null;
+    }
+    session = { ...session, notes: { ...notes, translations: undefined } };
+  }
+}
+
 async function releaseNotesLoop(session: ReleaseSession): Promise<ReleaseSession> {
   let current = session;
 
@@ -408,7 +464,12 @@ async function releaseNotesLoop(session: ReleaseSession): Promise<ReleaseSession
     }
 
     if (choice === 'continue') {
-      return current;
+      const translated = await promptNoteTranslations(current);
+      if (translated) {
+        persist(translated);
+        return translated;
+      }
+      continue;
     }
 
     if (choice === 'ai') {
@@ -908,6 +969,40 @@ async function runBuildPhase(
   }
 }
 
+/** What's New in every release language, plus store listings for languages a store lacks. */
+async function prepareLocalizedStoreCopy(session: ReleaseSession): Promise<ReleaseSession> {
+  let current = session;
+  const spinner = clack.spinner();
+  try {
+    if (!hasAllReleaseNoteTranslations(current.notes)) {
+      spinner.start('Translating release notes…');
+      current = { ...current, notes: await withReleaseNoteTranslations(current.notes!) };
+      persist(current);
+      spinner.stop('Release notes translated');
+    }
+    spinner.start('Checking store listing languages…');
+    current = await ensureStoreListings(current);
+    persist(current);
+    const created = [
+      ...Object.keys(current.storeListings?.android ?? {}).map((locale) => `Google Play ${locale}`),
+      ...Object.keys(current.storeListings?.ios ?? {}).map((locale) => `App Store ${locale}`),
+    ];
+    spinner.stop(
+      created.length > 0
+        ? `New translated store listings will be uploaded: ${created.join(', ')}`
+        : 'Store listings already cover every release language',
+    );
+  } catch (error) {
+    spinner.stop('Could not prepare localized store copy');
+    clack.log.error(error instanceof Error ? error.message : String(error));
+    if (error instanceof ReleaseUploadError && error.logTail) {
+      clack.note(error.logTail, 'Store listing output');
+    }
+    process.exit(1);
+  }
+  return current;
+}
+
 async function runUploadPhase(
   session: ReleaseSession,
   timer: ReleaseProgressTimer,
@@ -919,7 +1014,7 @@ async function runUploadPhase(
     process.exit(1);
   }
 
-  let current = session;
+  let current = await prepareLocalizedStoreCopy(session);
 
   for (;;) {
     persist(current);

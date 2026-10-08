@@ -11,6 +11,7 @@ import {
   isIosReviewConflictError,
   parseIosAppStoreConnectState,
   parsePendingStoreReview,
+  parseStoreListingState,
   prepareUploadMetadata,
   resolvePlayTrack,
   resolvePlayWhatsNewText,
@@ -67,7 +68,14 @@ const baseSession: ReleaseSession = {
     android: { version: '0.96.40', build: 154 },
     ios: { version: '0.96.40', build: 154 },
   },
-  notes: buildReleaseNotes('• One improvement', 'custom', 'Short Play copy'),
+  notes: {
+    ...buildReleaseNotes('• One improvement', 'custom', 'Short Play copy'),
+    translations: {
+      ru: { main: '• Одно улучшение', short: 'Коротко' },
+      sr: { main: '• Jedno poboljšanje', short: 'Kratko' },
+      es: { main: '• Una mejora' },
+    },
+  },
   artifacts: {
     aab: path.join(os.tmpdir(), 'missing-aab.aab'),
     ipa: path.join(os.tmpdir(), 'missing-ipa.ipa'),
@@ -417,8 +425,62 @@ assert(
   'store verification preflight passes when both stores are already verified',
 );
 
-const metadata = prepareUploadMetadata(sessionWithArtifacts);
+const metadata = prepareUploadMetadata({
+  ...sessionWithArtifacts,
+  storeListings: {
+    android: {
+      'ru-RU': { title: 'Bandeja', shortDescription: 'Кратко', fullDescription: 'Полное' },
+    },
+    ios: {},
+  },
+});
 assert(fs.existsSync(metadata.playMetadataPath), 'play metadata directory exists');
+assert(metadata.uploadPlayListings, 'new Play listings are flagged for upload');
+const playChangelog = (locale: string) =>
+  fs.readFileSync(
+    path.join(metadata.playMetadataPath, locale, 'changelogs', `${baseSession.planned.build}.txt`),
+    'utf-8',
+  );
+assert(playChangelog('ru-RU') === 'Коротко', 'Russian Play changelog uses translated short notes');
+assert(playChangelog('sr') === 'Kratko', 'Serbian Play changelog uses translated short notes');
+assert(playChangelog('es-ES') === 'Una mejora', 'Spanish Play changelog derives from translated main');
+assert(
+  fs.readFileSync(path.join(metadata.playMetadataPath, 'ru-RU', 'title.txt'), 'utf-8') === 'Bandeja',
+  'new Play listing title written',
+);
+assert(
+  !fs.existsSync(path.join(metadata.playMetadataPath, 'en-US', 'title.txt')),
+  'existing Play listings are not rewritten',
+);
+const iosLocalizations = JSON.parse(fs.readFileSync(metadata.iosLocalizationsPath, 'utf-8'));
+assert(
+  JSON.stringify(Object.keys(iosLocalizations).sort()) === JSON.stringify(['en-US', 'es-ES', 'hr', 'ru']),
+  'iOS localizations cover en-US, ru, hr (Serbian Latin), es-ES',
+);
+assert(iosLocalizations.hr.releaseNotes === '• Jedno poboljšanje', 'Serbian notes publish under hr');
+
+const englishOnly = prepareUploadMetadata(sessionWithArtifacts);
+assert(!englishOnly.uploadPlayListings, 'no listing upload without new Play listings');
+assert(
+  !fs.existsSync(path.join(englishOnly.playMetadataPath, 'ru-RU', 'title.txt')),
+  'stale Play listing files are cleared between runs',
+);
+
+const listingState = parseStoreListingState<{ title: string }>(
+  'noise\n[12:00:00]: APP_RELEASE_LISTING_STATE_JSON:{"platform":"android","locales":["en-US"],"source":{"title":"Bandeja"}}',
+  'android',
+);
+assert(listingState.locales.join() === 'en-US', 'listing state locales parsed');
+assert(listingState.source.title === 'Bandeja', 'listing state source parsed');
+
+let missingTranslationError = '';
+try {
+  prepareUploadMetadata({ ...baseSession, notes: buildReleaseNotes('• Only English', 'custom') });
+} catch (error) {
+  missingTranslationError = error instanceof Error ? error.message : String(error);
+}
+assert(missingTranslationError.includes('translation'), 'upload metadata requires translated notes');
+
 assert(fs.existsSync(metadata.iosReleaseNotesPath), 'ios release notes file exists');
 
 const changelogPath = path.join(

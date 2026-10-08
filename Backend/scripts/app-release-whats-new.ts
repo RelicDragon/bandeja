@@ -10,6 +10,12 @@ import {
   commitCountSince,
   gatherCommitLog,
 } from './lib/app-release';
+import { buildReleaseNotes, parseReleaseNotesOutput } from './lib/app-release-notes';
+import {
+  RELEASE_LANGUAGE_LABELS,
+  TRANSLATED_RELEASE_LANGUAGES,
+  translateReleaseNotes,
+} from './lib/app-release-locales';
 
 const SYSTEM_PROMPT = `You write "What's New" release notes for Bandeja — a multisport game scheduling and social app (padel, tennis, table tennis, badminton, pickleball, squash) on iOS and Android.
 
@@ -27,20 +33,24 @@ Rules:
   3) A single paragraph under 500 characters for Google Play short description (no bullets)`;
 
 function usage(): never {
-  console.error(`Usage: app-release-whats-new.ts [--dry-run] [--save <file>]
+  console.error(`Usage: app-release-whats-new.ts [--dry-run] [--en-only] [--save <file>]
+  Prints English plus Russian, Serbian (Latin), and Spanish translations unless --en-only.
 
   Compiles user-facing What's New from commits after docs/app-release-baseline.txt.
   Requires OPENAI_API_KEY or DEEPSEEK_API_KEY in Backend/.env (AI_PROVIDER).`);
   process.exit(1);
 }
 
-function parseArgs(argv: string[]): { dryRun: boolean; savePath: string | null } {
+function parseArgs(argv: string[]): { dryRun: boolean; enOnly: boolean; savePath: string | null } {
   let dryRun = false;
+  let enOnly = false;
   let savePath: string | null = null;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--dry-run') {
       dryRun = true;
+    } else if (arg === '--en-only') {
+      enOnly = true;
     } else if (arg === '--save') {
       const next = argv[i + 1];
       if (!next) usage();
@@ -53,11 +63,11 @@ function parseArgs(argv: string[]): { dryRun: boolean; savePath: string | null }
       usage();
     }
   }
-  return { dryRun, savePath };
+  return { dryRun, enOnly, savePath };
 }
 
 async function main(): Promise<void> {
-  const { dryRun, savePath } = parseArgs(process.argv.slice(2));
+  const { dryRun, enOnly, savePath } = parseArgs(process.argv.slice(2));
   const baseline = readBaseline();
   const count = commitCountSince(baseline);
 
@@ -99,13 +109,29 @@ ${commitLog}`;
     reason: LLM_REASON.APP_RELEASE_NOTES,
   });
 
+  let output = notes;
+  if (!enOnly) {
+    process.stderr.write('Translating into Russian, Serbian (Latin), Spanish...\n');
+    const parsed = parseReleaseNotesOutput(notes);
+    const translations = await translateReleaseNotes(
+      buildReleaseNotes(parsed.main, 'ai', parsed.short),
+    );
+    output = [
+      `[${RELEASE_LANGUAGE_LABELS.en}]\n${notes.trim()}`,
+      ...TRANSLATED_RELEASE_LANGUAGES.map((language) => {
+        const { main, short } = translations[language];
+        return `[${RELEASE_LANGUAGE_LABELS[language]}]\n${main}${short ? `\n\n---SHORT---\n${short}` : ''}`;
+      }),
+    ].join('\n\n');
+  }
+
   if (savePath) {
     const resolved = path.resolve(savePath);
-    fs.writeFileSync(resolved, `${notes}\n`, 'utf-8');
+    fs.writeFileSync(resolved, `${output}\n`, 'utf-8');
     process.stderr.write(`Saved to ${resolved}\n`);
   }
 
-  console.log(notes);
+  console.log(output);
 }
 
 main().catch((err: unknown) => {

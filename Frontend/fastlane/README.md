@@ -31,13 +31,21 @@ Detect whether Google Play already has production changes in review
 
 Read the latest uploaded Google Play version/build
 
+### android listing_state
+
+```sh
+[bundle exec] fastlane android listing_state
+```
+
+Report Google Play listing languages and the en-US listing (translation source)
+
 ### android upload_release
 
 ```sh
 [bundle exec] fastlane android upload_release
 ```
 
-Upload signed AAB to Google Play with en-US What's new
+Upload signed AAB to Google Play with localized What's new (and new-language listings)
 
 ### android verify_release
 
@@ -91,6 +99,14 @@ Upload IPA binary to App Store Connect
 ```
 
 Wait until App Store Connect has processed the exact uploaded iOS build
+
+### ios listing_state
+
+```sh
+[bundle exec] fastlane ios listing_state
+```
+
+Report App Store Connect listing locales and the en-US listing (translation source)
 
 ### ios distribute_testflight
 

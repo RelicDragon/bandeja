@@ -2,6 +2,16 @@ import { execa, execaSync } from 'execa';
 import * as fs from 'fs';
 import * as path from 'path';
 import { derivePlayShortDescription } from './app-release-notes';
+import {
+  IOS_LOCALES,
+  PLAY_LOCALES,
+  RELEASE_LANGUAGES,
+  TRANSLATED_RELEASE_LANGUAGES,
+  releaseNotesForLanguage,
+  translateIosListing,
+  translatePlayListing,
+  type ReleaseLanguage,
+} from './app-release-locales';
 import { ROOT } from './app-release';
 import { FRONTEND_DIR } from './app-release-build';
 import { androidReviewFingerprint, androidReviewNeedsApproval } from './app-release-review';
@@ -9,13 +19,16 @@ import {
   iosDistributesExternally,
   iosIsTestFlightOnly,
   iosSubmitsForReview,
+  iosTouchesAppStoreVersion,
   resolveIosDistribution,
 } from './app-release-ios-distribution';
 import {
   includesAndroid,
   includesIos,
   type IosAppStoreConnectState,
+  type IosStoreListing,
   type PendingStoreReview,
+  type PlayStoreListing,
   type ReleasePlatform,
   type ReleaseSession,
 } from './app-release-session';
@@ -28,6 +41,7 @@ import {
 export const UPLOAD_DIR = path.join(ROOT, '.app-release/upload');
 export const PLAY_METADATA_DIR = path.join(UPLOAD_DIR, 'android');
 export const IOS_RELEASE_NOTES_PATH = path.join(UPLOAD_DIR, 'ios-release-notes.txt');
+export const IOS_LOCALIZATIONS_PATH = path.join(UPLOAD_DIR, 'ios-localizations.json');
 
 /** Google Play Publishing API track ids (not Console UI labels). Closed testing = `alpha`. */
 export const PLAY_TRACKS = ['internal', 'alpha', 'production'] as const;
@@ -42,6 +56,7 @@ export function resolvePlayTrack(value: string): PlayTrack | null {
 const LOG_TAIL_LINES = 40;
 const IOS_STATE_PREFIX = 'APP_RELEASE_IOS_STATE_JSON:';
 const REVIEW_STATE_PREFIX = 'APP_RELEASE_REVIEW_STATE_JSON:';
+const LISTING_STATE_PREFIX = 'APP_RELEASE_LISTING_STATE_JSON:';
 
 export type StoreReviewPlatform = 'android' | 'ios';
 
@@ -57,8 +72,16 @@ export interface UploadPreflight {
 
 export interface UploadMetadataPaths {
   playMetadataPath: string;
+  /** True when new Play listings (title/descriptions) were written and must be uploaded. */
+  uploadPlayListings: boolean;
+  /** English notes only — TestFlight "What to Test". */
   iosReleaseNotesPath: string;
+  /** Per-locale whatsNew (+ full listing for locales ASC does not have yet). */
+  iosLocalizationsPath: string;
 }
+
+/** Deliver-shaped per-locale App Store payload written to IOS_LOCALIZATIONS_PATH. */
+export type IosLocalizationPayload = IosStoreListing & { releaseNotes: string };
 
 export class ReleaseUploadError extends Error {
   readonly logTail: string;
@@ -387,12 +410,33 @@ function formatExecError(error: unknown): ReleaseUploadError {
   return new ReleaseUploadError(message, '');
 }
 
-export function resolvePlayWhatsNewText(session: ReleaseSession): string {
+export function resolvePlayWhatsNewText(
+  session: ReleaseSession,
+  language: ReleaseLanguage = 'en',
+): string {
   if (!session.notes) {
     throw new Error('Release notes are required for store upload');
   }
-  const derived = derivePlayShortDescription(session.notes.main, session.notes.short);
-  return derived ?? session.notes.main;
+  const notes = releaseNotesForLanguage(session.notes, language);
+  const derived = derivePlayShortDescription(notes.main, notes.short);
+  return derived ?? notes.main;
+}
+
+export function buildIosLocalizations(session: ReleaseSession): Record<string, IosLocalizationPayload> {
+  if (!session.notes) {
+    throw new Error('Release notes are required for store upload');
+  }
+  const notes = session.notes;
+  const newListings = session.storeListings?.ios ?? {};
+  return Object.fromEntries(
+    RELEASE_LANGUAGES.map((language) => {
+      const locale = IOS_LOCALES[language];
+      return [
+        locale,
+        { ...newListings[locale], releaseNotes: releaseNotesForLanguage(notes, language).main },
+      ];
+    }),
+  );
 }
 
 export function prepareUploadMetadata(session: ReleaseSession): UploadMetadataPaths {
@@ -400,19 +444,132 @@ export function prepareUploadMetadata(session: ReleaseSession): UploadMetadataPa
     throw new Error('Release notes are required for store upload');
   }
 
-  const changelogDir = path.join(PLAY_METADATA_DIR, 'en-US/changelogs');
-  fs.mkdirSync(changelogDir, { recursive: true });
+  // Resolve every language first so missing translations fail before anything is written.
+  const playChangelogs = RELEASE_LANGUAGES.map((language) => ({
+    locale: PLAY_LOCALES[language],
+    text: resolvePlayWhatsNewText(session, language),
+  }));
+  const iosLocalizations = buildIosLocalizations(session);
+
+  // Start clean: supply uploads every language folder it finds, so stale listing files from an
+  // earlier run must never linger here.
+  fs.rmSync(PLAY_METADATA_DIR, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(IOS_RELEASE_NOTES_PATH), { recursive: true });
 
-  const playWhatsNew = resolvePlayWhatsNewText(session);
-  const changelogPath = path.join(changelogDir, `${session.planned.build}.txt`);
-  fs.writeFileSync(changelogPath, playWhatsNew, 'utf-8');
+  for (const { locale, text } of playChangelogs) {
+    const changelogDir = path.join(PLAY_METADATA_DIR, locale, 'changelogs');
+    fs.mkdirSync(changelogDir, { recursive: true });
+    fs.writeFileSync(path.join(changelogDir, `${session.planned.build}.txt`), text, 'utf-8');
+  }
+
+  const newPlayListings = Object.entries(session.storeListings?.android ?? {});
+  for (const [locale, listing] of newPlayListings) {
+    const dir = path.join(PLAY_METADATA_DIR, locale);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'title.txt'), listing.title, 'utf-8');
+    fs.writeFileSync(path.join(dir, 'short_description.txt'), listing.shortDescription, 'utf-8');
+    fs.writeFileSync(path.join(dir, 'full_description.txt'), listing.fullDescription, 'utf-8');
+  }
+
   fs.writeFileSync(IOS_RELEASE_NOTES_PATH, session.notes.main, 'utf-8');
+  fs.writeFileSync(
+    IOS_LOCALIZATIONS_PATH,
+    `${JSON.stringify(iosLocalizations, null, 2)}\n`,
+    'utf-8',
+  );
 
   return {
     playMetadataPath: PLAY_METADATA_DIR,
+    uploadPlayListings: newPlayListings.length > 0,
     iosReleaseNotesPath: IOS_RELEASE_NOTES_PATH,
+    iosLocalizationsPath: IOS_LOCALIZATIONS_PATH,
   };
+}
+
+interface StoreListingState<T> {
+  locales: string[];
+  source: T;
+}
+
+export function parseStoreListingState<T>(
+  output: string,
+  platform: StoreReviewPlatform,
+): StoreListingState<T> {
+  for (const line of output.split(/\r?\n/).reverse()) {
+    const markerIndex = line.indexOf(LISTING_STATE_PREFIX);
+    if (markerIndex < 0) {
+      continue;
+    }
+    try {
+      const parsed = JSON.parse(line.slice(markerIndex + LISTING_STATE_PREFIX.length).trim()) as {
+        platform?: unknown;
+        locales?: unknown;
+        source?: unknown;
+      };
+      if (
+        parsed.platform === platform &&
+        Array.isArray(parsed.locales) &&
+        parsed.source &&
+        typeof parsed.source === 'object'
+      ) {
+        return {
+          locales: parsed.locales.filter((locale): locale is string => typeof locale === 'string'),
+          source: parsed.source as T,
+        };
+      }
+    } catch {
+      // Keep looking in case an earlier marker is valid.
+    }
+  }
+  throw new ReleaseUploadError(
+    `Could not read the ${platform === 'android' ? 'Google Play' : 'App Store'} listing languages`,
+    tailUploadLog(output),
+  );
+}
+
+function missingTranslatedLanguages(
+  existingLocales: string[],
+  storeLocales: Record<ReleaseLanguage, string>,
+) {
+  return TRANSLATED_RELEASE_LANGUAGES.filter(
+    (language) => !existingLocales.includes(storeLocales[language]),
+  );
+}
+
+/**
+ * Makes sure every release language has a store listing to hang What's New on. Locales the store
+ * does not have yet get a listing translated from the en-US one (saved on the session so a resumed
+ * release does not re-translate). Uploading those listings happens with the release itself.
+ */
+export async function ensureStoreListings(session: ReleaseSession): Promise<ReleaseSession> {
+  let storeListings = { ...session.storeListings };
+
+  const androidPending = includesAndroid(session.targetPlatform) && session.uploads?.android !== true;
+  if (androidPending && !storeListings.android) {
+    const { output } = await runFastlaneLane('android', 'listing_state', {});
+    const state = parseStoreListingState<PlayStoreListing>(output, 'android');
+    const missing = missingTranslatedLanguages(state.locales, PLAY_LOCALES);
+    storeListings = {
+      ...storeListings,
+      android: missing.length > 0 ? await translatePlayListing(state.source, missing) : {},
+    };
+  }
+
+  const iosPending =
+    includesIos(session.targetPlatform) &&
+    iosTouchesAppStoreVersion(session.store.iosDistribution) &&
+    session.uploads?.iosStoreVersion !== true;
+  if (iosPending && !storeListings.ios) {
+    const { output } = await runFastlaneLane('ios', 'listing_state', {});
+    const state = parseStoreListingState<IosStoreListing>(output, 'ios');
+    const missing = missingTranslatedLanguages(state.locales, IOS_LOCALES);
+    storeListings = {
+      ...storeListings,
+      ios: missing.length > 0 ? await translateIosListing(state.source, missing) : {},
+    };
+  }
+
+  return { ...session, storeListings };
 }
 
 export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
@@ -671,6 +828,7 @@ export async function runAndroidUpload(session: ReleaseSession): Promise<void> {
     aab,
     track,
     metadata_path: metadata.playMetadataPath,
+    upload_listings: String(metadata.uploadPlayListings),
     replace_existing_review: String(replaceExistingReview),
     expected_review_version_code: replaceExistingReview ? (review.versionCode ?? '') : '',
     expected_review_version_codes: replaceExistingReview
@@ -712,16 +870,11 @@ export async function runAndroidStoreVerification(session: ReleaseSession): Prom
   }
 
   const metadata = prepareUploadMetadata(session);
-  const changelogPath = path.join(
-    metadata.playMetadataPath,
-    'en-US/changelogs',
-    `${session.planned.build}.txt`,
-  );
 
   await runFastlaneLane('android', 'verify_release', {
     track: resolvePlayTrack(session.store.androidTrack!) ?? session.store.androidTrack!,
     version_code: String(session.planned.build),
-    changelog_path: changelogPath,
+    metadata_path: metadata.playMetadataPath,
   });
 }
 
@@ -773,7 +926,7 @@ export async function runIosStoreVersionFinalize(
 ): Promise<IosAppStoreConnectState> {
   const { metadata, submitForReview } = resolveUploadInputs(session);
   const result = await runFastlaneLane('ios', 'finalize_store_version', {
-    release_notes_path: metadata.iosReleaseNotesPath,
+    localizations_path: metadata.iosLocalizationsPath,
     app_version: session.planned.version,
     build_number: String(session.planned.build),
     submit_for_review: String(submitForReview),
@@ -786,7 +939,7 @@ export async function runIosStoreVersionVerification(
 ): Promise<IosAppStoreConnectState> {
   const { metadata, submitForReview } = resolveUploadInputs(session);
   const result = await runFastlaneLane('ios', 'verify_store_version', {
-    release_notes_path: metadata.iosReleaseNotesPath,
+    localizations_path: metadata.iosLocalizationsPath,
     app_version: session.planned.version,
     build_number: String(session.planned.build),
     expected_submit_for_review: String(submitForReview),

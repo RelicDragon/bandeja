@@ -214,4 +214,32 @@ assert(
   "an unrelated iOS upload failure is not treated as already uploaded"
 )
 
+
+ios_localizations = {
+  "en-US" => { "releaseNotes" => "EN notes" },
+  "es-ES" => { "releaseNotes" => "ES notes" },
+  "hr" => { "releaseNotes" => "SR notes", "description" => "Opis", "supportUrl" => "https://x" }
+}
+filled = fastfile.with_ios_release_notes_for_all_locales(ios_localizations, %w[en-US es-ES es-MX hr fr-FR])
+assert(filled["es-MX"]["releaseNotes"] == "ES notes", "es-MX reuses es-ES What's New")
+assert(filled["fr-FR"]["releaseNotes"] == "EN notes", "other locales fall back to en-US What's New")
+assert(!ios_localizations.key?("es-MX"), "filling leaves the planned localizations untouched")
+
+deliver_options = fastfile.ios_deliver_localized_options(filled)
+assert(deliver_options[:release_notes].keys.sort == %w[en-US es-ES es-MX fr-FR hr], "release notes per locale")
+assert(deliver_options[:description] == { "hr" => "Opis" }, "listing fields only for new locales")
+assert(deliver_options[:support_url] == { "hr" => "https://x" }, "support url mapped")
+assert(!deliver_options.key?(:name), "absent fields are not sent")
+
+require "tmpdir"
+Dir.mktmpdir do |dir|
+  { "en-US" => "EN", "ru-RU" => "RU", "sr" => "SR" }.each do |language, text|
+    FileUtils.mkdir_p(File.join(dir, language, "changelogs"))
+    File.write(File.join(dir, language, "changelogs", "250.txt"), text)
+  end
+  File.write(File.join(dir, "en-US", "changelogs", "249.txt"), "old")
+  changelogs = fastfile.planned_play_changelogs(dir, "250")
+  assert(changelogs == { "en-US" => "EN", "ru-RU" => "RU", "sr" => "SR" }, "planned Play changelogs by language")
+end
+
 puts "fastlane app-release review tests: OK"

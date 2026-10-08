@@ -9,10 +9,49 @@ export const SESSION_FILE = path.join(SESSION_DIR, 'session.json');
 const notesSourceSchema = z.enum(['ai', 'custom', 'template']);
 const releasePlatformSchema = z.enum(['android', 'ios', 'both']);
 
+const localizedReleaseNotesSchema = z.object({
+  main: z.string().min(1),
+  short: z.string().min(1).optional(),
+});
+
+/** Translations of the English notes; keys match TRANSLATED_RELEASE_LANGUAGES in app-release-locales. */
+const releaseNoteTranslationsSchema = z.object({
+  ru: localizedReleaseNotesSchema,
+  sr: localizedReleaseNotesSchema,
+  es: localizedReleaseNotesSchema,
+});
+
 const releaseNotesSchema = z.object({
   main: z.string().min(1),
   short: z.string().min(1).optional(),
   source: notesSourceSchema,
+  translations: releaseNoteTranslationsSchema.optional(),
+});
+
+const playStoreListingSchema = z.object({
+  title: z.string().min(1),
+  shortDescription: z.string().min(1),
+  fullDescription: z.string().min(1),
+});
+
+const iosStoreListingSchema = z.object({
+  name: z.string().min(1).optional(),
+  subtitle: z.string().min(1).optional(),
+  privacyUrl: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  keywords: z.string().min(1).optional(),
+  supportUrl: z.string().min(1).optional(),
+  marketingUrl: z.string().min(1).optional(),
+  promotionalText: z.string().min(1).optional(),
+});
+
+/**
+ * Listings to create for release locales the store does not have yet, keyed by store locale.
+ * A present (possibly empty) record means that platform was already checked this session.
+ */
+const storeListingsSchema = z.object({
+  android: z.record(z.string(), playStoreListingSchema).optional(),
+  ios: z.record(z.string(), iosStoreListingSchema).optional(),
 });
 
 const nativeVersionSchema = z.object({
@@ -110,6 +149,7 @@ export const releaseSessionSchema = z.object({
   storeVersions: storeVersionsSchema,
   localNative: localNativeSchema,
   notes: releaseNotesSchema.nullable(),
+  storeListings: storeListingsSchema.optional(),
   artifacts: artifactsSchema,
   store: storeSchema,
   uploads: uploadStatusSchema,
@@ -121,6 +161,11 @@ export const releaseSessionSchema = z.object({
 export type ReleaseNotesSource = z.infer<typeof notesSourceSchema>;
 export type ReleasePlatform = z.infer<typeof releasePlatformSchema>;
 export type ReleaseNotes = z.infer<typeof releaseNotesSchema>;
+export type LocalizedReleaseNotes = z.infer<typeof localizedReleaseNotesSchema>;
+export type ReleaseNoteTranslations = z.infer<typeof releaseNoteTranslationsSchema>;
+export type PlayStoreListing = z.infer<typeof playStoreListingSchema>;
+export type IosStoreListing = z.infer<typeof iosStoreListingSchema>;
+export type StoreListings = z.infer<typeof storeListingsSchema>;
 export type ReleaseArtifacts = z.infer<typeof artifactsSchema>;
 export type ReleaseStoreConfig = z.infer<typeof storeSchema>;
 export type ReleaseUploadStatus = z.infer<typeof uploadStatusSchema>;
