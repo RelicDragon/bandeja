@@ -1,8 +1,16 @@
 /**
- * Server-side energy VAD over the mic stream of `/agent-voice` (same thresholds as the app's
- * v1 `energyVad.ts` normal mode). Used when the transcription provider does no turn detection:
- * the batch fallback (realtime connection failed) and VAD-less streaming models
- * (`AGENT_VOICE_REALTIME_TURN_DETECTION=none`). The client already applies echo cancellation.
+ * Server-side energy VAD over the mic stream of `/agent-voice`. Used when the transcription
+ * provider does no turn detection: the batch fallback (realtime connection failed) and VAD-less
+ * streaming models (`AGENT_VOICE_REALTIME_TURN_DETECTION=none`). The client already applies echo
+ * cancellation.
+ *
+ * Onset thresholds match the app's v1 `energyVad.ts` normal mode (11 dB margin, ≥ −55 dBFS,
+ * 100 ms start, 250 ms minimum speech, 30 s cap), but timing differs on purpose:
+ * - end silence defaults to 700 ms (v1: 850 ms) and callers pass `AGENT_VOICE_REALTIME_SILENCE_MS`
+ *   (default 550 ms; batch fallback +150 ms): end of turn is on the server's latency path, and the
+ *   app's upload gate already filters out silence before it gets here;
+ * - calibration is 300 ms (v1: 400 ms) so it fits inside the 400 ms pre-roll the upload gate sends
+ *   ahead of the first voiced frame, and the first word isn't swallowed by calibration.
  */
 
 export type EnergyVadEvent = 'start' | 'end' | 'discard' | null;
