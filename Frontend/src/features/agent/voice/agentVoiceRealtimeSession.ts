@@ -65,7 +65,10 @@ export interface AgentVoiceRealtimeSessionDeps {
    * was heard after the SSE stream already ended, so the chat refetches its messages.
    */
   onReplyCut?: () => void;
-  /** Quiet listening this long ends the session (the server has its own idle end too). */
+  /**
+   * Quiet listening this long ends the session (the server has its own idle end too). Default:
+   * the server's `idleMs` (start ack) + 15 s, or 120 s when the server doesn't say.
+   */
   idleTimeoutMs?: number;
   restartTimeoutMs?: number;
   now?: () => number;
@@ -75,6 +78,8 @@ export interface AgentVoiceRealtimeSessionDeps {
 
 const REPORT_INTERVAL_MS = 250;
 const DEFAULT_IDLE_TIMEOUT_MS = 120_000;
+/** The local idle end is a backstop: it fires this long after the server's own. */
+const IDLE_BACKSTOP_MARGIN_MS = 15_000;
 const DEFAULT_RESTART_TIMEOUT_MS = 3_000;
 const MAX_REPLY_LINES = 8;
 const MAX_TIMED_TURNS = 8;
@@ -111,6 +116,8 @@ export class AgentVoiceRealtimeSession {
   private turnId: string | null = null;
   /** The server session (sent as `resumeSessionId` after a reconnect). */
   private sessionId: string | null = null;
+  /** The server's idle end (`idleMs` of the start ack), when it said. */
+  private serverIdleMs: number | null = null;
   private confirmRunId: string | null = null;
   private readonly knownRuns = new Set<string>();
   private reportTimer: unknown = null;
@@ -146,9 +153,10 @@ export class AgentVoiceRealtimeSession {
   }
 
   /** The controller got `{ok: true}`: take over the engine and listen. */
-  activate(outputSampleRate: number = AGENT_VOICE_OUTPUT_SAMPLE_RATE, sessionId?: string): void {
+  activate(outputSampleRate: number = AGENT_VOICE_OUTPUT_SAMPLE_RATE, sessionId?: string, serverIdleMs?: number): void {
     if (this.closed) return;
     this.sessionId = sessionId ?? null;
+    this.noteServerIdle(serverIdleMs);
     if (outputSampleRate !== this.player.sampleRate && this.player.turnId == null) {
       this.player = new PcmStreamPlayer(this.deps.engine, outputSampleRate);
     }
@@ -497,6 +505,7 @@ export class AgentVoiceRealtimeSession {
     }
     if (ack.ok) {
       this.sessionId = ack.sessionId;
+      this.noteServerIdle(ack.idleMs);
       this.player.flush();
       this.serverPhase = 'listening';
       this.set({ reconnecting: false, phase: this.state.phase === 'confirm' ? 'confirm' : 'listening', progress: null, agentCaption: null });
@@ -587,13 +596,22 @@ export class AgentVoiceRealtimeSession {
     else engine.setListening('normal');
   }
 
+  private noteServerIdle(idleMs: number | undefined): void {
+    if (typeof idleMs === 'number' && Number.isFinite(idleMs) && idleMs > 0) this.serverIdleMs = idleMs;
+  }
+
+  private idleTimeoutMs(): number {
+    if (this.deps.idleTimeoutMs != null) return this.deps.idleTimeoutMs;
+    return this.serverIdleMs != null ? this.serverIdleMs + IDLE_BACKSTOP_MARGIN_MS : DEFAULT_IDLE_TIMEOUT_MS;
+  }
+
   private armIdle(): void {
     this.clearIdle();
     if (this.state.muted) return;
     this.idleTimer = this.setTimer(() => {
       this.idleTimer = null;
       if (this.state.phase === 'listening' && !this.gate.sending) this.stop('idle');
-    }, this.deps.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS);
+    }, this.idleTimeoutMs());
   }
 
   private clearIdle(): void {

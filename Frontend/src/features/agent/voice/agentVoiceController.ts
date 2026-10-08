@@ -159,7 +159,7 @@ export class AgentVoiceController {
     if (ack.ok && session) {
       this.v2 = session;
       this.unsubscribeInner = session.subscribe(this.notify);
-      session.activate(ack.outputSampleRate, ack.sessionId);
+      session.activate(ack.outputSampleRate, ack.sessionId, ack.idleMs);
       this.notify();
       return;
     }

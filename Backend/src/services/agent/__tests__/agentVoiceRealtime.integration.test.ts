@@ -323,6 +323,7 @@ void (async () => {
     assert.equal(ack.ok, true, JSON.stringify(ack));
     assert.equal(ack.outputSampleRate, 24_000);
     assert.equal(ack.maxSessionMs, 30 * 60 * 1000);
+    assert.equal(ack.idleMs, 60_000);
     await waitFor(() => c1.phases().includes('listening') && stt.events != null, 'listening');
     assert.equal(stt.options?.model, 'gpt-4o-transcribe');
 

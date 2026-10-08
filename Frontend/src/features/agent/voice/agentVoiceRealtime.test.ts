@@ -585,4 +585,18 @@ describe('AgentVoiceRealtimeSession', () => {
     timers.filter((t) => t.ms === 5000).forEach((t) => t.fn());
     expect(idle.deps.onClose).toHaveBeenCalledWith('idle', null);
   });
+
+  it("the idle backstop follows the server's idleMs (+15 s), 120 s when the ack has none", async () => {
+    const armed = async (ack: { idleMs?: number }) => {
+      const ms: number[] = [];
+      const ctx = setup({ realtime: { setTimer: (_fn, at) => ms.push(at), clearTimer: () => {} } });
+      ctx.transport.ack = { ok: true, sessionId: 's-1', outputSampleRate: 24_000, maxSessionMs: 600_000, ...ack };
+      await ctx.voice.start();
+      await flush();
+      return ms;
+    };
+    expect(await armed({ idleMs: 60_000 })).toContain(75_000);
+    expect(await armed({ idleMs: 60_000 })).not.toContain(120_000);
+    expect(await armed({})).toContain(120_000);
+  });
 });

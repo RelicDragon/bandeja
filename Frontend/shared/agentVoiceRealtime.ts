@@ -90,6 +90,8 @@ export type AgentVoiceStartAck =
       maxSessionMs: number;
       /** `resumeSessionId` was honoured: the server kept the turn state and re-sends `voice:state`. */
       resumed?: boolean;
+      /** Quiet listening this long ends the session server-side (`reason: 'idle'`). */
+      idleMs?: number;
     }
   | { ok: false; code: AgentVoiceErrorCode; message?: string; retryAt?: string };
 

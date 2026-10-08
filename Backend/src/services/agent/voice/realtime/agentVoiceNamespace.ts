@@ -206,7 +206,14 @@ function resumeLocal(socket: VoiceSocket, userId: string, chatId: string, sessio
   const voiceConfig = config.agentVoice;
   void markResumable(sessionId, userId, chatId, voiceConfig.realtime.maxSessionMs + voiceConfig.realtime.resumeGraceMs);
   console.info(`[agent-voice] session resume id=${sessionId} user=${userId}`);
-  return { ok: true, sessionId, outputSampleRate: AGENT_VOICE_OUTPUT_SAMPLE_RATE, maxSessionMs: voiceConfig.realtime.maxSessionMs, resumed: true };
+  return {
+    ok: true,
+    sessionId,
+    outputSampleRate: AGENT_VOICE_OUTPUT_SAMPLE_RATE,
+    maxSessionMs: voiceConfig.realtime.maxSessionMs,
+    idleMs: voiceConfig.realtime.idleMs,
+    resumed: true,
+  };
 }
 
 /** The socket dropped: hold its session for the grace period, then end it as `disconnected`. */
@@ -355,7 +362,13 @@ async function startSession(socket: VoiceSocket, payload: unknown): Promise<Agen
   endOtherSessions(userId, sessionId);
   void publishReplace(userId, sessionId);
   console.info(`[agent-voice] session start id=${sessionId} user=${userId} chat=${chat.id}${reconnect ? ' reconnect' : ''}`);
-  return { ok: true, sessionId, outputSampleRate: AGENT_VOICE_OUTPUT_SAMPLE_RATE, maxSessionMs: voiceConfig.realtime.maxSessionMs };
+  return {
+    ok: true,
+    sessionId,
+    outputSampleRate: AGENT_VOICE_OUTPUT_SAMPLE_RATE,
+    maxSessionMs: voiceConfig.realtime.maxSessionMs,
+    idleMs: voiceConfig.realtime.idleMs,
+  };
 }
 
 async function publishReplace(userId: string, sessionId: string): Promise<void> {
