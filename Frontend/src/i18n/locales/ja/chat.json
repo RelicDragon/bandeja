@@ -676,6 +676,31 @@
           "description": "Bandejaで開く"
         }
       }
+    },
+    "list": {
+      "filterAll": "すべて",
+      "filterGames": "ゲーム",
+      "filterGroups": "グループ",
+      "filterUnread": "未読",
+      "filters": "チャットの絞り込み",
+      "invitationCount": "招待: {{value}}",
+      "live": "進行中",
+      "join": "参加",
+      "decline": "辞退",
+      "findGame": "ゲームを探す",
+      "findGameHint": "近くの募集中ゲーム",
+      "sectionNextUp": "次の予定",
+      "sectionInvitations": "招待",
+      "sectionChats": "チャット",
+      "sectionUpcoming": "今後",
+      "sectionPast": "過去",
+      "emptyGroups": "グループチャットはまだありません",
+      "draft": "下書き:",
+      "cityChat": "都市チャット",
+      "muteShort": "ミュート",
+      "unmuteShort": "解除",
+      "pinShort": "固定",
+      "unpinShort": "固定解除"
     }
   }
 }

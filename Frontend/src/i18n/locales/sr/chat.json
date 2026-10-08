@@ -681,6 +681,31 @@
           "description": "Otvori u Bandeja"
         }
       }
+    },
+    "list": {
+      "filterAll": "Sve",
+      "filterGames": "Igre",
+      "filterGroups": "Grupe",
+      "filterUnread": "Nepročitano",
+      "filters": "Filteri četova",
+      "invitationCount": "Pozivnice: {{value}}",
+      "live": "Uživo",
+      "join": "Prihvati",
+      "decline": "Odbij",
+      "findGame": "Pronađi igru",
+      "findGameHint": "Otvorene igre u blizini",
+      "sectionNextUp": "Sledeća",
+      "sectionInvitations": "Pozivnice",
+      "sectionChats": "Četovi",
+      "sectionUpcoming": "Predstojeće",
+      "sectionPast": "Prošle",
+      "emptyGroups": "Još nema grupnih četova",
+      "draft": "Nacrt:",
+      "cityChat": "Čet grada",
+      "muteShort": "Utišaj",
+      "unmuteShort": "Uključi zvuk",
+      "pinShort": "Zakači",
+      "unpinShort": "Otkači"
     }
   }
 }

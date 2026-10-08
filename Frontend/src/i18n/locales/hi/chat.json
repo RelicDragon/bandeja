@@ -676,6 +676,31 @@
           "description": "Bandeja में खोलें"
         }
       }
+    },
+    "list": {
+      "filterAll": "सभी",
+      "filterGames": "गेम",
+      "filterGroups": "ग्रुप",
+      "filterUnread": "अपठित",
+      "filters": "चैट फ़िल्टर",
+      "invitationCount": "निमंत्रण: {{value}}",
+      "live": "लाइव",
+      "join": "शामिल हों",
+      "decline": "अस्वीकार करें",
+      "findGame": "गेम खोजें",
+      "findGameHint": "आपके पास खुले गेम",
+      "sectionNextUp": "अगला",
+      "sectionInvitations": "निमंत्रण",
+      "sectionChats": "चैट",
+      "sectionUpcoming": "आने वाले",
+      "sectionPast": "पिछले",
+      "emptyGroups": "अभी कोई ग्रुप चैट नहीं",
+      "draft": "ड्राफ़्ट:",
+      "cityChat": "शहर चैट",
+      "muteShort": "म्यूट",
+      "unmuteShort": "अनम्यूट",
+      "pinShort": "पिन",
+      "unpinShort": "अनपिन"
     }
   }
 }

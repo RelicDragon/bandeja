@@ -676,6 +676,31 @@
           "description": "Buka di Bandeja"
         }
       }
+    },
+    "list": {
+      "filterAll": "Semua",
+      "filterGames": "Game",
+      "filterGroups": "Grup",
+      "filterUnread": "Belum dibaca",
+      "filters": "Filter chat",
+      "invitationCount": "Undangan: {{value}}",
+      "live": "Berlangsung",
+      "join": "Gabung",
+      "decline": "Tolak",
+      "findGame": "Cari game",
+      "findGameHint": "Game terbuka di dekatmu",
+      "sectionNextUp": "Berikutnya",
+      "sectionInvitations": "Undangan",
+      "sectionChats": "Chat",
+      "sectionUpcoming": "Mendatang",
+      "sectionPast": "Selesai",
+      "emptyGroups": "Belum ada chat grup",
+      "draft": "Draf:",
+      "cityChat": "Chat kota",
+      "muteShort": "Bisukan",
+      "unmuteShort": "Bunyikan",
+      "pinShort": "Sematkan",
+      "unpinShort": "Lepas"
     }
   }
 }

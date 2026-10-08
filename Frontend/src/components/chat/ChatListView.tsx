@@ -20,6 +20,10 @@ import { useBrowseCityStore } from '@/store/browseCityStore';
 import { ChatListSearchSections, type ChatListSearchSectionsSharedProps } from './ChatListSearchSections';
 import type { ChatListViewModel } from './chatListViewModel.types';
 import { DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } from '@/utils/chatListConstants';
+import { useMemo } from 'react';
+import { ChatListKindChips } from './ChatListKindChips';
+import { useChatListKindStore } from './chatListKindStore';
+import { countChatListInvitations } from './chatListSections';
 
 export type { ChatListViewModel };
 
@@ -84,12 +88,20 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
   } = actions;
   const { showBugModal, setShowBugModal, handleBugCreated, bugsFilterPanelOpen, setBugsFilterPanelOpen } = modals;
   const { selectedChatId, selectedChatType } = selection;
+  const chatListKind = useChatListKindStore((s) => s.kind);
+  const setChatListKind = useChatListKindStore((s) => s.setKind);
+  const allChats = feed.chats;
+  const invitationCount = useMemo(
+    () => (chatsFilter === 'users' ? countChatListInvitations(allChats, user?.id) : 0),
+    [chatsFilter, allChats, user?.id]
+  );
 
   const showListSkeleton =
     loading &&
     !isSearchMode &&
     !(contactsMode && cityUsersLoading) &&
     displayedChats.length === 0;
+  const showKindChips = chatsFilter === 'users' && !contactsMode && !isSearchMode;
 
   const chatListSearchSectionProps: ChatListSearchSectionsSharedProps = {
     scrollElementRef: listBodyScrollRef,
@@ -146,7 +158,22 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             hasCity={Boolean(browseCityName)}
             bugsFilterPanelOpen={bugsFilterPanelOpen}
             onBugsFilterToggle={() => setBugsFilterPanelOpen((o) => !o)}
+            hideUnreadFilter={chatsFilter === 'users'}
+            chipsBelow={showKindChips}
           />
+        )}
+        {showKindChips && (
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <ChatListKindChips
+              kind={chatListKind}
+              onKindChange={setChatListKind}
+              unreadCount={unreadChatsCount}
+              unreadActive={unreadFilterActive}
+              onUnreadToggle={toggleUnreadFilter}
+              invitationCount={invitationCount}
+              disabled={showListSkeleton}
+            />
+          </div>
         )}
         <AnimatePresence>
           {chatsFilter === 'bugs' && bugsFilterPanelOpen && !showListSkeleton && (
@@ -426,6 +453,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                   togglingMuteId={togglingMuteId}
                   onMuteUserChat={handleMuteUserChat}
                   onMuteGroupChannel={handleMuteGroupChannel}
+                  sectionKind={showKindChips ? chatListKind : null}
                 />
               )}
             </>

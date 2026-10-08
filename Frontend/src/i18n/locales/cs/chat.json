@@ -673,6 +673,31 @@
           "description": "Otevřít v Bandeja"
         }
       }
+    },
+    "list": {
+      "filterAll": "Vše",
+      "filterGames": "Hry",
+      "filterGroups": "Skupiny",
+      "filterUnread": "Nepřečtené",
+      "filters": "Filtry chatů",
+      "invitationCount": "Pozvánky: {{value}}",
+      "live": "Probíhá",
+      "join": "Přijmout",
+      "decline": "Odmítnout",
+      "findGame": "Najít hru",
+      "findGameHint": "Otevřené hry poblíž",
+      "sectionNextUp": "Nejbližší",
+      "sectionInvitations": "Pozvánky",
+      "sectionChats": "Chaty",
+      "sectionUpcoming": "Nadcházející",
+      "sectionPast": "Minulé",
+      "emptyGroups": "Zatím žádné skupinové chaty",
+      "draft": "Koncept:",
+      "cityChat": "Chat města",
+      "muteShort": "Ztlumit",
+      "unmuteShort": "Zrušit ztlumení",
+      "pinShort": "Připnout",
+      "unpinShort": "Odepnout"
     }
   }
 }

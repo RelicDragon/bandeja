@@ -683,6 +683,31 @@
           "description": "Открыть в Bandeja"
         }
       }
+    },
+    "list": {
+      "filterAll": "Все",
+      "filterGames": "Игры",
+      "filterGroups": "Группы",
+      "filterUnread": "Непрочитанные",
+      "filters": "Фильтры чатов",
+      "invitationCount": "Приглашения: {{value}}",
+      "live": "Идёт",
+      "join": "Принять",
+      "decline": "Отклонить",
+      "findGame": "Найти игру",
+      "findGameHint": "Открытые игры рядом",
+      "sectionNextUp": "Ближайшая",
+      "sectionInvitations": "Приглашения",
+      "sectionChats": "Чаты",
+      "sectionUpcoming": "Предстоящие",
+      "sectionPast": "Прошедшие",
+      "emptyGroups": "Групповых чатов пока нет",
+      "draft": "Черновик:",
+      "cityChat": "Чат города",
+      "muteShort": "Без звука",
+      "unmuteShort": "Со звуком",
+      "pinShort": "Закрепить",
+      "unpinShort": "Открепить"
     }
   }
 }

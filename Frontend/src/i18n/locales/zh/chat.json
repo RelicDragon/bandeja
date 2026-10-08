@@ -676,6 +676,31 @@
           "description": "Bandeja开业"
         }
       }
+    },
+    "list": {
+      "filterAll": "全部",
+      "filterGames": "比赛",
+      "filterGroups": "群组",
+      "filterUnread": "未读",
+      "filters": "聊天筛选",
+      "invitationCount": "邀请：{{value}}",
+      "live": "进行中",
+      "join": "加入",
+      "decline": "拒绝",
+      "findGame": "查找比赛",
+      "findGameHint": "附近开放的比赛",
+      "sectionNextUp": "即将开始",
+      "sectionInvitations": "邀请",
+      "sectionChats": "聊天",
+      "sectionUpcoming": "即将到来",
+      "sectionPast": "已结束",
+      "emptyGroups": "还没有群聊",
+      "draft": "草稿：",
+      "cityChat": "城市聊天",
+      "muteShort": "静音",
+      "unmuteShort": "取消静音",
+      "pinShort": "置顶",
+      "unpinShort": "取消置顶"
     }
   }
 }

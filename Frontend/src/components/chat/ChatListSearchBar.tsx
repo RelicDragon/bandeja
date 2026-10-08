@@ -29,6 +29,10 @@ interface ChatListSearchBarProps {
   bugsFilterPanelOpen?: boolean;
   onBugsFilterToggle?: () => void;
   disabled?: boolean;
+  /** The Chats feed shows Unread as a chip in the row under the field instead. */
+  hideUnreadFilter?: boolean;
+  /** A chip row follows directly, so the bar drops its bottom rule. */
+  chipsBelow?: boolean;
 }
 
 export const ChatListSearchBar = ({
@@ -47,6 +51,8 @@ export const ChatListSearchBar = ({
   bugsFilterPanelOpen = false,
   onBugsFilterToggle,
   disabled = false,
+  hideUnreadFilter = false,
+  chipsBelow = false,
 }: ChatListSearchBarProps) => {
   const { t } = useTranslation();
 
@@ -94,11 +100,11 @@ export const ChatListSearchBar = ({
             : t('chat.search', { defaultValue: 'Search' });
 
   const showActionButtons = chatsFilter === 'bugs' || chatsFilter === 'users' || chatsFilter === 'market';
-  const showUnreadFilter = shouldShowChatListUnreadFilter(unreadChatsCount);
+  const showUnreadFilter = !hideUnreadFilter && shouldShowChatListUnreadFilter(unreadChatsCount);
 
   return (
     <div
-      className={`px-2 pb-4 pt-4 border-b border-gray-200 dark:border-gray-700 ${disabled ? 'pointer-events-none opacity-60' : ''}`}
+      className={`px-2 pt-4 ${chipsBelow ? 'pb-2.5' : 'pb-4 border-b border-gray-200 dark:border-gray-700'} ${disabled ? 'pointer-events-none opacity-60' : ''}`}
       aria-busy={disabled}
     >
       <motion.div layout={!disabled} className="flex items-center">

@@ -673,6 +673,31 @@
           "description": "Abrir en Bandeja"
         }
       }
+    },
+    "list": {
+      "filterAll": "Todos",
+      "filterGames": "Partidos",
+      "filterGroups": "Grupos",
+      "filterUnread": "No leídos",
+      "filters": "Filtros de chats",
+      "invitationCount": "Invitaciones: {{value}}",
+      "live": "En curso",
+      "join": "Unirme",
+      "decline": "Rechazar",
+      "findGame": "Buscar partido",
+      "findGameHint": "Partidos abiertos cerca",
+      "sectionNextUp": "Próximo",
+      "sectionInvitations": "Invitaciones",
+      "sectionChats": "Chats",
+      "sectionUpcoming": "Próximos",
+      "sectionPast": "Pasados",
+      "emptyGroups": "Aún no hay chats de grupo",
+      "draft": "Borrador:",
+      "cityChat": "Chat de la ciudad",
+      "muteShort": "Silenciar",
+      "unmuteShort": "Activar",
+      "pinShort": "Fijar",
+      "unpinShort": "Desfijar"
     }
   }
 }

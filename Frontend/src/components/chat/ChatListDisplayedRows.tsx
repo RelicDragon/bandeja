@@ -1,10 +1,14 @@
-import { type RefObject, useCallback } from 'react';
+import { type RefObject, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChatListItem } from './ChatListItem';
 import { ChatListVirtualSlice } from './ChatListVirtualSlice';
 import { getChatKey } from '@/utils/chatListHelpers';
 import { getMarketChatDisplayTitle, getMarketChatDisplayParts } from '@/utils/marketChatUtils';
 import type { ChatItem, ChatSelectNavOptions, ChatType } from './chatListTypes';
 import { CHAT_LIST_CHAT_ROW_ESTIMATE_PX } from '@/utils/chatListConstants';
+import { buildChatListEntries, type ChatListEntry, type ChatListKind } from './chatListSections';
+import { ChatListFindGameRow, ChatListSectionHeader } from './ChatListSectionRows';
+import { ChatListInviteActionsProvider, useChatListInviteActions } from './useChatListInviteActions';
 
 export type ChatListDisplayedRowsProps = {
   scrollElementRef: RefObject<HTMLDivElement | null>;
@@ -29,6 +33,8 @@ export type ChatListDisplayedRowsProps = {
   togglingMuteId?: string | null;
   onMuteUserChat?: (chatId: string, isMuted: boolean) => void;
   onMuteGroupChannel?: (channelId: string, isMuted: boolean) => void;
+  /** Chats feed only: sections (Next up, Invitations, …) for the active chip. */
+  sectionKind?: ChatListKind | null;
 };
 
 function marketRowLabels(chat: Extract<ChatItem, { type: 'channel' }>, userId: string, marketChatRole: 'buyer' | 'seller') {
@@ -64,8 +70,17 @@ function chatListRowProps(chat: ChatItem, p: ChatListDisplayedRowsProps) {
   };
 }
 
+const getEntryKey = (entry: ChatListEntry) => entry.key;
+
 export function ChatListDisplayedRows(p: ChatListDisplayedRowsProps) {
+  const { t } = useTranslation();
   const getItemKey = useCallback((chat: ChatItem) => getChatKey(chat), []);
+  const { actions: inviteActions, declineInviteModal } = useChatListInviteActions();
+  const { sectionKind, displayedChats, userId } = p;
+  const entries = useMemo(
+    () => (sectionKind ? buildChatListEntries(displayedChats, sectionKind, userId) : null),
+    [sectionKind, displayedChats, userId]
+  );
   const loadMoreBlock =
     p.showLoadMoreRow ? (
       <div ref={p.loadMoreSentinelRef} className="py-4 flex justify-center">
@@ -76,16 +91,43 @@ export function ChatListDisplayedRows(p: ChatListDisplayedRowsProps) {
     ) : null;
 
   return (
-    <>
-      <ChatListVirtualSlice
-        scrollElementRef={p.scrollElementRef}
-        items={p.displayedChats}
-        getItemKey={getItemKey}
-        estimateSizePx={CHAT_LIST_CHAT_ROW_ESTIMATE_PX}
-        animationResetKey={p.chatsFilter}
-        renderItem={(chat) => <ChatListItem {...chatListRowProps(chat, p)} />}
-      />
+    <ChatListInviteActionsProvider value={inviteActions}>
+      {entries && entries.length === 0 ? (
+        <p className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+          {t('chat.list.emptyGroups', { defaultValue: 'No group chats yet' })}
+        </p>
+      ) : entries ? (
+        <ChatListVirtualSlice
+          scrollElementRef={p.scrollElementRef}
+          items={entries}
+          getItemKey={getEntryKey}
+          estimateSizePx={CHAT_LIST_CHAT_ROW_ESTIMATE_PX}
+          animationResetKey={`${p.chatsFilter}:${sectionKind}`}
+          renderItem={(entry) => {
+            switch (entry.kind) {
+              case 'header':
+                return <ChatListSectionHeader section={entry.section} />;
+              case 'findGame':
+                return <ChatListFindGameRow />;
+              case 'hero':
+                return <ChatListItem {...chatListRowProps(entry.chat, p)} gameVariant="hero" />;
+              default:
+                return <ChatListItem {...chatListRowProps(entry.chat, p)} gamePast={entry.past} />;
+            }
+          }}
+        />
+      ) : (
+        <ChatListVirtualSlice
+          scrollElementRef={p.scrollElementRef}
+          items={p.displayedChats}
+          getItemKey={getItemKey}
+          estimateSizePx={CHAT_LIST_CHAT_ROW_ESTIMATE_PX}
+          animationResetKey={p.chatsFilter}
+          renderItem={(chat) => <ChatListItem {...chatListRowProps(chat, p)} />}
+        />
+      )}
       {loadMoreBlock}
-    </>
+      {declineInviteModal}
+    </ChatListInviteActionsProvider>
   );
 }

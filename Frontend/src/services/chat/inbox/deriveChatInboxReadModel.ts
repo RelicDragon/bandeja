@@ -1,4 +1,5 @@
 import type { GroupChannel } from '@/api/chat';
+import { isChatListInvitation } from '@/utils/chatListInvitation';
 import { getChatKey } from '@/utils/chatListHelpers';
 import { getMarketChatDisplayTitle } from '@/utils/marketChatUtils';
 import { getChatTitle, sortChatItems } from '@/utils/chatListSort';
@@ -121,9 +122,13 @@ function deriveMarketUnreadChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
   return sorted.map((c) => withResolvedUnreadCount(c, unreadOpts)) as ChatItem[];
 }
 
-/** Conversation rows with no message and no draft ("No messages yet") stay out of the list until their first message lands. */
-export function hasThreadActivity(item: ChatItem): boolean {
+/**
+ * Conversation rows with no message and no draft ("No messages yet") stay out of the list until their first message lands.
+ * A pending game invitation always shows: the row is where the viewer answers it.
+ */
+export function hasThreadActivity(item: ChatItem, userId?: string): boolean {
   if (item.type !== 'user' && item.type !== 'group' && item.type !== 'game') return true;
+  if (item.type === 'game' && isChatListInvitation(item.data, userId)) return true;
   return !!item.data.lastMessage || !!item.draft || item.unreadCount > 0;
 }
 
@@ -133,7 +138,7 @@ export function deriveDisplayedChats(opts: DeriveDisplayedChatsOpts): ChatItem[]
     if (unreadFilterActive) return deriveMarketUnreadChats(opts);
     return deriveMarketFilteredByRoleAndSearch(opts);
   }
-  const visible = threads.filter(hasThreadActivity);
+  const visible = threads.filter((c) => hasThreadActivity(c, opts.userId));
   if (!unreadFilterActive) return visible;
   const unreadOpts: UnreadFilterCountOpts = {
     unreadStoreWarm,

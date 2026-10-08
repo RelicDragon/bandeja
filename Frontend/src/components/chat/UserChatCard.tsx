@@ -4,31 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { UnreadBadge } from '@/components/UnreadBadge';
 import { formatChatTime } from '@/utils/dateFormat';
-import {
-  UserChat,
-  ChatDraft,
-  ChatMessage,
-  getLastMessageTime,
-  isLastMessagePreview,
-} from '@/api/chat';
+import { UserChat, ChatDraft, getLastMessageTime, isLastMessagePreview } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { memo, useMemo } from 'react';
-import { convertMentionsToPlaintext } from '@/utils/parseMentions';
-import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
-import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
-import { Loader2, BellOff, Mic } from 'lucide-react';
-import { ChatListPinIcon } from '@/components/chat/ChatListPinIcon';
 import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
-import {
-  ChatListDocumentRow,
-  ChatListGenericMediaRow,
-  ChatListPreviewContent,
-  ChatListStickerRow,
-  ChatListVideoRow,
-} from '@/components/chat/ChatListPreviewContent';
 import type { ChatListOutbox } from '@/utils/chatListSort';
+import { ChatListRowActions } from './ChatListRowActions';
+import { ChatListDraftPreview } from './ChatListDraftPreview';
+import { ChatListGameLinkStrip } from './ChatListGameLinkStrip';
+import { useChatListGameLinkPreview } from './useChatListGameLinkPreview';
+import { chatListLastMessageText, chatListPreviewBody, chatListSenderPrefix } from './ChatListMessagePreview';
 
 interface UserChatCardProps {
   chat: UserChat;
@@ -58,6 +45,11 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
   const otherUser = chat.user1Id === user?.id ? chat.user2 : chat.user1;
+  const lastMessage = chat.lastMessage;
+  const lastMessageTime = getLastMessageTime(lastMessage);
+  const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
+  const showDraft = !!draft && (draftTime > lastMessageTime || !lastMessage);
+  const gameLink = useChatListGameLinkPreview(showDraft ? null : chatListLastMessageText(lastMessage));
 
   const handleClick = () => {
     if (onClick) {
@@ -67,17 +59,34 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
     }
   };
 
+  const timeLabel =
+    lastMessage || draft
+      ? formatChatTime(
+          draftTime > lastMessageTime && draft
+            ? draft.updatedAt
+            : lastMessage
+              ? isLastMessagePreview(lastMessage)
+                ? lastMessage.updatedAt
+                : (lastMessage as { createdAt: string }).createdAt
+              : new Date().toISOString(),
+          displaySettings.locale,
+          displaySettings.hour12
+        )
+      : null;
+
+  const prefix = lastMessage && !showDraft ? chatListSenderPrefix(lastMessage, user?.id, t, { showOthers: false }) : null;
+
   return (
     <div
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
       data-chat-selected={isSelected ? 'true' : undefined}
-      className={`chat-list-row flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${isSelected
+      className={`chat-list-row group flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${isSelected
         ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
-        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+        : 'hover:bg-gray-100 dark:hover:bg-gray-800/70'
         }`}
     >
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 self-start">
         <PlayerAvatar
           player={otherUser}
           subscribePresence={!listPresenceBatched}
@@ -89,190 +98,51 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
-              <PremiumName user={otherUser}>{[otherUser.firstName, otherUser.lastName].filter(Boolean).join(' ') || 'Unknown'}</PremiumName>
-            </h3>
-            {otherUser.verbalStatus && (
-              <p className="verbal-status">
-                {otherUser.verbalStatus}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-1 ms-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            {(chat.lastMessage || draft) && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {formatChatTime(
-                  (() => {
-                    const lastMessageTime = getLastMessageTime(chat.lastMessage);
-                    const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
-                    const msg = chat.lastMessage;
-                    return draftTime > lastMessageTime && draft
-                      ? draft.updatedAt
-                      : msg
-                        ? isLastMessagePreview(msg)
-                          ? msg.updatedAt
-                          : (msg as { createdAt: string }).createdAt
-                        : new Date().toISOString();
-                  })(),
-                  displaySettings.locale,
-                  displaySettings.hour12
-                )}
-              </span>
-            )}
-            {onMuteToggle != null && (isMuted || isTogglingMute) && (
-              <button
-                type="button"
-                onClick={onMuteToggle}
-                disabled={isTogglingMute}
-                className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none transition-colors ${isMuted ? 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                aria-label={isMuted ? t('chat.unmute', { defaultValue: 'Unmute chat' }) : t('chat.mute', { defaultValue: 'Mute chat' })}
-                aria-busy={isTogglingMute}
-              >
-                {isTogglingMute ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                ) : (
-                  <BellOff className="w-4 h-4" aria-hidden />
-                )}
-              </button>
-            )}
-            {onPinToggle != null && (
-              <button
-                type="button"
-                onClick={onPinToggle}
-                disabled={isPinned ? isPinning : !canPin || isPinning}
-                className={`p-1 rounded disabled:opacity-50 disabled:pointer-events-none ${isPinned ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-                aria-label={isPinned ? t('chat.unpinChat') : t('chat.pinChat')}
-                aria-busy={isPinning}
-              >
-                {isPinning ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                ) : (
-                  <ChatListPinIcon isPinned={isPinned} />
-                )}
-              </button>
-            )}
-          </div>
+        <div className="flex items-center gap-2">
+          <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-gray-900 dark:text-white">
+            <PremiumName user={otherUser}>{[otherUser.firstName, otherUser.lastName].filter(Boolean).join(' ') || 'Unknown'}</PremiumName>
+          </h3>
+          <ChatListRowActions
+            isPinned={isPinned}
+            onPinToggle={onPinToggle}
+            canPin={canPin}
+            isPinning={isPinning}
+            isMuted={isMuted}
+            onMuteToggle={onMuteToggle}
+            isTogglingMute={isTogglingMute}
+          />
+          {timeLabel ? (
+            <span
+              className={`shrink-0 whitespace-nowrap text-xs tabular-nums ${
+                unreadCount > 0 && !isMuted ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {timeLabel}
+            </span>
+          ) : null}
         </div>
+        {otherUser.verbalStatus && <p className="verbal-status">{otherUser.verbalStatus}</p>}
         <ChatListOutboxAnimated
           listOutbox={listOutbox}
           onRetry={listOutbox?.state === 'failed' ? onOutboxRetry : undefined}
           onDismiss={listOutbox?.state === 'failed' ? onOutboxDismiss : undefined}
         />
-        {(() => {
-          const lastMessageTime = getLastMessageTime(chat.lastMessage);
-          const draftTime = draft ? new Date(draft.updatedAt).getTime() : 0;
-          const showDraft = draft && (draftTime > lastMessageTime || !chat.lastMessage);
-
-          if (showDraft) {
-            const draftContent = draft.content || '';
-            const displayContent = draftContent.trim()
-              ? (draftContent.length > 50 ? draftContent.substring(0, 50) + '...' : draftContent)
-              : '';
-            return (
-              <div className="flex items-center justify-between">
-                <p className="text-sm line-clamp-2 pe-2">
-                  <span className="text-red-500 dark:text-red-400">Draft:</span>
-                  {displayContent && (
-                    <span className="text-gray-500 dark:text-gray-400 italic ms-1">{displayContent}</span>
-                  )}
-                </p>
-                <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
-              </div>
-            );
-          }
-
-          if (chat.lastMessage) {
-            const lm = chat.lastMessage;
-            const previewOnly = isLastMessagePreview(lm);
-            const fullMessage = !previewOnly ? lm : null;
-            const displayContent = fullMessage
-              ? fullMessage.senderId
-                ? convertMentionsToPlaintext(fullMessage.content || '')
-                : convertMentionsToPlaintext(
-                    formatSystemMessageForDisplay(fullMessage.content || '', t)
-                  )
-              : '';
-            const fullLm = previewOnly ? null : (lm as ChatMessage);
-            const isFullVoice = fullLm?.messageType === 'VOICE';
-            const isFullVideo = fullLm?.messageType === 'VIDEO';
-            const isFullSticker = fullLm?.messageType === 'STICKER';
-            const isFullDocument = fullLm?.messageType === 'DOCUMENT';
-            const voiceAsTextOnly = isFullVoice && !!(fullMessage?.content?.trim());
-            const showVoiceRow = isFullVoice && !voiceAsTextOnly;
-            const showVideoRow = isFullVideo;
-            const showStickerRow = isFullSticker;
-            const showDocumentRow = isFullDocument;
-            const hasMediaUrls = (fullLm?.mediaUrls?.length ?? 0) > 0;
-            const mt = fullLm?.messageType;
-            const showGenericMediaRow =
-              !previewOnly &&
-              !isFullVoice &&
-              !isFullVideo &&
-              !isFullSticker &&
-              !isFullDocument &&
-              hasMediaUrls &&
-              mt === undefined;
-            const showPhotoRow =
-              !previewOnly &&
-              !isFullVoice &&
-              !isFullVideo &&
-              !isFullSticker &&
-              !isFullDocument &&
-              hasMediaUrls &&
-              mt !== undefined;
-
-            return (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pe-2">
-                  {previewOnly ? (
-                    lm.preview?.trim() ? (
-                      <ChatListPreviewContent preview={lm.preview} t={t} />
-                    ) : (
-                      t('chat.noMessage')
-                    )
-                  ) : showVoiceRow ? (
-                    <span className="flex items-center gap-1">
-                      <Mic className="w-4 h-4 shrink-0" aria-hidden />
-                      <span>
-                        {t('chat.voiceMessage', { defaultValue: 'Voice message' })}
-                        {fullMessage?.audioDurationMs != null &&
-                        fullMessage.audioDurationMs > 0
-                          ? ` (${formatVoiceDurationMmSs(fullMessage.audioDurationMs)})`
-                          : ''}
-                      </span>
-                    </span>
-                  ) : showVideoRow ? (
-                    <ChatListVideoRow t={t} durationMs={fullLm?.videoDurationMs} />
-                  ) : showStickerRow ? (
-                    <ChatListStickerRow t={t} emoji={fullLm?.stickerEmoji} />
-                  ) : showDocumentRow ? (
-                    <ChatListDocumentRow t={t} fileName={fullLm?.documentFileName} />
-                  ) : showPhotoRow ? (
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {t('chat.photo')}
-                    </span>
-                  ) : showGenericMediaRow ? (
-                    <ChatListGenericMediaRow t={t} />
-                  ) : (
-                    displayContent || t('chat.noMessage')
-                  )}
-                </p>
-                <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
-              </div>
-            );
-          }
-
-          return (
-            <p className="text-sm text-gray-400 dark:text-gray-500 italic">
-              {t('chat.noMessages')}
-            </p>
-          );
-        })()}
+        <div className="mt-0.5 flex items-center gap-2 min-w-0">
+          <p ref={gameLink.ref} className="min-w-0 flex-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+            {showDraft ? (
+              <ChatListDraftPreview content={draft?.content || ''} />
+            ) : lastMessage ? (
+              <>
+                {prefix ? <span className="text-gray-900 dark:text-gray-200">{prefix}: </span> : null}
+                {chatListPreviewBody(lastMessage, t, gameLink.game ? gameLink.link : null)}
+              </>
+            ) : (
+              <span className="italic text-gray-400 dark:text-gray-500">{t('chat.noMessages')}</span>
+            )}
+          </p>
+          <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
+        </div>
+        {gameLink.game && gameLink.link ? <ChatListGameLinkStrip link={gameLink.link} preview={gameLink.game} /> : null}
       </div>
     </div>
   );

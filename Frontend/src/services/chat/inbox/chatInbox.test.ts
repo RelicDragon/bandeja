@@ -77,6 +77,32 @@ describe('deriveDisplayedChats', () => {
     expect(displayed.map((c) => (c.type === 'contact' ? '' : c.data.id))).toEqual(['active', 'dm-unread']);
   });
 
+  it('keeps a pending game invitation visible before its first message', () => {
+    const invited: ChatItem = {
+      type: 'game',
+      data: {
+        id: 'invite',
+        name: 'invite',
+        updatedAt: '2026-07-09',
+        status: 'ANNOUNCED',
+        lastMessage: null,
+        participants: [{ userId: 'me', role: 'PARTICIPANT', status: 'INVITED' }],
+      } as unknown as Game,
+      lastMessageDate: new Date('2026-07-09'),
+      unreadCount: 0,
+    };
+    const displayed = deriveDisplayedChats({
+      chatsFilter: 'users',
+      threads: [invited],
+      unreadFilterActive: false,
+      marketChatRole: 'buyer',
+      debouncedSearchQuery: '',
+      userId: 'me',
+      ...displayedChatsDefaults(),
+    });
+    expect(displayed).toHaveLength(1);
+  });
+
   it('shows all unread market threads when unread filter overrides role filter', () => {
     const threads = [
       marketChannel('buyer-unread', 2, 'buyer'),

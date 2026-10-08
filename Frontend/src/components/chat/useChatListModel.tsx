@@ -304,7 +304,7 @@ export function useChatListModel({
   const showChatsEmpty =
     !contactsMode &&
     !isSearchMode &&
-    (chatsFilter === 'market' ? readModel.displayedChats.length === 0 : !threads.some(hasThreadActivity)) &&
+    (chatsFilter === 'market' ? readModel.displayedChats.length === 0 : !threads.some((c) => hasThreadActivity(c, user?.id))) &&
     !loading;
 
   return {

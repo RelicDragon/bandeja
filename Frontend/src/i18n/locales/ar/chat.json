@@ -696,6 +696,31 @@
     "archivedOutboxDropped_zero": "لم تُرسل 0 رسائل لأن هذه المباراة أُلغيت والمحادثة أصبحت للقراءة فقط.",
     "archivedOutboxDropped_two": "لم تُرسل {{count}} رسائل لأن هذه المباراة أُلغيت والمحادثة أصبحت للقراءة فقط.",
     "archivedOutboxDropped_few": "لم تُرسل {{count}} رسائل لأن هذه المباراة أُلغيت والمحادثة أصبحت للقراءة فقط.",
-    "archivedOutboxDropped_many": "لم تُرسل {{count}} رسائل لأن هذه المباراة أُلغيت والمحادثة أصبحت للقراءة فقط."
+    "archivedOutboxDropped_many": "لم تُرسل {{count}} رسائل لأن هذه المباراة أُلغيت والمحادثة أصبحت للقراءة فقط.",
+    "list": {
+      "filterAll": "الكل",
+      "filterGames": "المباريات",
+      "filterGroups": "المجموعات",
+      "filterUnread": "غير المقروءة",
+      "filters": "عوامل تصفية الدردشات",
+      "invitationCount": "الدعوات: {{value}}",
+      "live": "مباشر",
+      "join": "انضمام",
+      "decline": "رفض",
+      "findGame": "ابحث عن مباراة",
+      "findGameHint": "مباريات مفتوحة بالقرب منك",
+      "sectionNextUp": "التالية",
+      "sectionInvitations": "الدعوات",
+      "sectionChats": "الدردشات",
+      "sectionUpcoming": "القادمة",
+      "sectionPast": "السابقة",
+      "emptyGroups": "لا توجد دردشات جماعية بعد",
+      "draft": "مسودة:",
+      "cityChat": "دردشة المدينة",
+      "muteShort": "كتم",
+      "unmuteShort": "إلغاء الكتم",
+      "pinShort": "تثبيت",
+      "unpinShort": "إلغاء التثبيت"
+    }
   }
 }

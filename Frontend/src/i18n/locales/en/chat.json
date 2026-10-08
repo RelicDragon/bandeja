@@ -676,6 +676,31 @@
           "description": "Open in Bandeja"
         }
       }
+    },
+    "list": {
+      "filterAll": "All",
+      "filterGames": "Games",
+      "filterGroups": "Groups",
+      "filterUnread": "Unread",
+      "filters": "Chat filters",
+      "invitationCount": "Invitations: {{value}}",
+      "live": "Live",
+      "join": "Join",
+      "decline": "Decline",
+      "findGame": "Find a game",
+      "findGameHint": "Open games near you",
+      "sectionNextUp": "Next up",
+      "sectionInvitations": "Invitations",
+      "sectionChats": "Chats",
+      "sectionUpcoming": "Upcoming",
+      "sectionPast": "Past",
+      "emptyGroups": "No group chats yet",
+      "draft": "Draft:",
+      "cityChat": "City chat",
+      "muteShort": "Mute",
+      "unmuteShort": "Unmute",
+      "pinShort": "Pin",
+      "unpinShort": "Unpin"
     }
   }
 }

@@ -126,6 +126,31 @@ export function getGameChatListDateTimeBlock(
   return { dateLabel, timeLabel };
 }
 
+/**
+ * Day + start time for the chat-list date tile. Short on purpose: the tile is
+ * 56px wide, so "Sunday" / end times never fit ("Today", "Sun 12", "18:00").
+ */
+export function getGameChatListTileLabels(
+  game: Game,
+  displaySettings: ResolvedDisplaySettings,
+  t: TFunction
+): { dayLabel: string; timeLabel: string } | null {
+  if (game.timeIsSet !== true) return null;
+  const clubTz = getClubTimezone(game);
+  const dayLabel = clubTz
+    ? getDateLabelInClubTz(game.startTime, clubTz, displaySettings, t, { compactWeekday: true })
+    : '';
+  const timeLabel = getGameTimeDisplay({
+    game,
+    displaySettings,
+    startTime: game.startTime,
+    kind: 'time',
+    t,
+  }).primaryText;
+  if (!dayLabel && !timeLabel) return null;
+  return { dayLabel, timeLabel };
+}
+
 export function getGameChatListLocationLine(game: Game, t: TFunction): string {
   const clubName = game.court?.club?.name || game.club?.name;
   const courtSuffix = game.court?.name && clubName && game.entityType !== 'EVENT' ? ` · ${game.court.name}` : '';

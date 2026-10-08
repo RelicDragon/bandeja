@@ -9,6 +9,9 @@ import { useChatListItemUnread } from '@/hooks/useUnreadBridge';
 import { useAuthStore } from '@/store/authStore';
 import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
 import { ChatListGameCard } from './ChatListGameCard';
+import { ChatListSwipeRow, type ChatListSwipeAction } from './ChatListSwipeRow';
+import { BellOff, BellRing, Pin, PinOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   dismissFailedOutboxForContext,
   retryFailedOutboxForContext,
@@ -39,6 +42,9 @@ interface ChatListItemProps {
   togglingMuteId?: string | null;
   onMuteUserChat?: (chatId: string, isMuted: boolean) => void;
   onMuteGroupChannel?: (channelId: string, isMuted: boolean) => void;
+  /** Game rows only: the "Next up" card / dimmed past row. */
+  gameVariant?: 'row' | 'hero';
+  gamePast?: boolean;
 }
 
 const ChatListItemInner = ({
@@ -61,7 +67,10 @@ const ChatListItemInner = ({
   togglingMuteId = null,
   onMuteUserChat,
   onMuteGroupChannel,
+  gameVariant = 'row',
+  gamePast = false,
 }: ChatListItemProps) => {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const listItemUnread = useChatListItemUnread(item);
   const userChatId = item.type === 'user' ? item.data.id : '';
@@ -140,6 +149,39 @@ const ChatListItemInner = ({
       onMuteGroupChannel?.(chat.data.id, rowMuted);
   }, [chat, rowMuted, onMuteUserChat, onMuteGroupChannel]);
 
+  const canPinRow =
+    chat.type === 'user'
+      ? !!onPinUserChat
+      : (chat.type === 'group' || chat.type === 'channel') && !chat.data.isCityGroup && !!onPinGroupChannel;
+  const canMuteRow =
+    chat.type === 'user' ? !!onMuteUserChat : (chat.type === 'group' || chat.type === 'channel') && !!onMuteGroupChannel;
+  const pinAllowed = pinnedCount < MAX_PINNED_CHATS || rowPinned;
+  const swipeActions = useMemo((): ChatListSwipeAction[] => {
+    const out: ChatListSwipeAction[] = [];
+    if (canMuteRow) {
+      out.push({
+        id: 'mute',
+        label: rowMuted ? t('chat.list.unmuteShort', { defaultValue: 'Unmute' }) : t('chat.list.muteShort', { defaultValue: 'Mute' }),
+        Icon: rowMuted ? BellRing : BellOff,
+        onClick: handleMuteToggle,
+        className: 'bg-slate-500 dark:bg-slate-600',
+        disabled: togglingMuteId === rowId,
+      });
+    }
+    if (canPinRow) {
+      out.push({
+        id: 'pin',
+        label: rowPinned ? t('chat.list.unpinShort', { defaultValue: 'Unpin' }) : t('chat.list.pinShort', { defaultValue: 'Pin' }),
+        Icon: rowPinned ? PinOff : Pin,
+        onClick: handlePinToggle,
+        className: 'bg-amber-500 dark:bg-amber-600',
+        disabled: !pinAllowed || pinningId === rowId,
+      });
+    }
+    return out;
+  }, [canMuteRow, canPinRow, rowMuted, rowPinned, pinAllowed, togglingMuteId, pinningId, rowId, handleMuteToggle, handlePinToggle, t]);
+  const swipeKey = `${chat.type}-${rowId}`;
+
   const contactMockChat = useMemo((): UserChat | null => {
     if (chat.type !== 'contact') return null;
     const now = new Date().toISOString();
@@ -160,6 +202,7 @@ const ChatListItemInner = ({
     const liveChat = liveUserChat ?? chat.data;
     const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
     return (
+      <ChatListSwipeRow rowKey={swipeKey} actions={swipeActions}>
       <UserChatCard
         chat={liveChat}
         listPresenceBatched={listPresenceBatched}
@@ -179,6 +222,7 @@ const ChatListItemInner = ({
         onMuteToggle={onMuteUserChat ? handleMuteToggle : undefined}
         isTogglingMute={togglingMuteId === chat.data.id}
       />
+      </ChatListSwipeRow>
     );
   }
 
@@ -203,6 +247,8 @@ const ChatListItemInner = ({
           currentUserId={user?.id}
           isSelected={isSelected}
           onClick={handleRowClick}
+          variant={gameVariant}
+          past={gamePast}
         />
       </div>
     );
@@ -211,10 +257,8 @@ const ChatListItemInner = ({
   if (chat.type === 'group' || chat.type === 'channel') {
     const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
     return (
-      <div
-        onMouseEnter={onRowHover}
-        className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-      >
+      <ChatListSwipeRow rowKey={swipeKey} actions={swipeActions}>
+      <div onMouseEnter={onRowHover}>
         <GroupChannelCard
           groupChannel={chat.data}
           listPresenceBatched={listPresenceBatched}
@@ -237,6 +281,7 @@ const ChatListItemInner = ({
           isTogglingMute={togglingMuteId === chat.data.id}
         />
       </div>
+      </ChatListSwipeRow>
     );
   }
 

@@ -676,6 +676,31 @@
           "description": "เปิดใน Bandeja"
         }
       }
+    },
+    "list": {
+      "filterAll": "ทั้งหมด",
+      "filterGames": "เกม",
+      "filterGroups": "กลุ่ม",
+      "filterUnread": "ยังไม่อ่าน",
+      "filters": "ตัวกรองแชท",
+      "invitationCount": "คำเชิญ: {{value}}",
+      "live": "กำลังเล่น",
+      "join": "เข้าร่วม",
+      "decline": "ปฏิเสธ",
+      "findGame": "หาเกม",
+      "findGameHint": "เกมที่เปิดรับใกล้คุณ",
+      "sectionNextUp": "ถัดไป",
+      "sectionInvitations": "คำเชิญ",
+      "sectionChats": "แชท",
+      "sectionUpcoming": "กำลังจะมาถึง",
+      "sectionPast": "ที่ผ่านมา",
+      "emptyGroups": "ยังไม่มีแชทกลุ่ม",
+      "draft": "ฉบับร่าง:",
+      "cityChat": "แชทเมือง",
+      "muteShort": "ปิดเสียง",
+      "unmuteShort": "เปิดเสียง",
+      "pinShort": "ปักหมุด",
+      "unpinShort": "เลิกปักหมุด"
     }
   }
 }
