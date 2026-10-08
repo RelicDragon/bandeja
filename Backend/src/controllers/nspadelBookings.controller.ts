@@ -42,3 +42,11 @@ export const createBooking = asyncHandler(async (req: AuthRequest, res: Response
   });
   res.status(201).json({ success: true, data: result });
 });
+
+export const getBookingClubs = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: await nspadelBookingsService.getNspadelBookingClubs(req.userId!) });
+});
+
+export const listBookings = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: await nspadelBookingsService.listNspadelBookings(req.userId!, req.params.clubId) });
+});

@@ -508,3 +508,63 @@ export async function createNspadelBooking(input: NspadelBookingInput): Promise<
   });
   return receiptResult(confirmed, endLabel);
 }
+
+// --- the user's own receipts (bookings lists) ------------------------------------------------
+
+/**
+ * NS Padel clubs where the user has booking receipts, as connected-club rows: NS Padel has no
+ * account to connect, so this is the only way its bookings reach the app's bookings lists.
+ */
+export async function getNspadelBookingClubs(userId: string) {
+  const receipts = await prisma.nspadelBooking.findMany({
+    where: { userId },
+    select: { clubId: true },
+    distinct: ['clubId'],
+  });
+  if (receipts.length === 0) return { clubs: [] };
+  const clubs = await prisma.club.findMany({
+    where: { id: { in: receipts.map((r) => r.clubId) }, integrationType: ClubIntegrationType.NSPADELSUPABASE },
+    select: {
+      id: true,
+      name: true,
+      avatar: true,
+      city: { select: { timezone: true } },
+      courts: {
+        where: { isActive: true },
+        select: { id: true, name: true, externalCourtId: true, integrationCourtName: true },
+        orderBy: { name: 'asc' },
+      },
+    },
+    orderBy: { name: 'asc' },
+  });
+  return {
+    clubs: clubs.map((club) => ({
+      clubId: club.id,
+      clubName: club.name,
+      avatar: club.avatar,
+      integrationType: 'NSPADELSUPABASE' as const,
+      connected: true,
+      scoutOptIn: false,
+      needsReauth: false,
+      cityTimezone: club.city?.timezone ?? null,
+      courts: club.courts,
+    })),
+  };
+}
+
+/** The user's confirmed receipts at one club (same shape as Weltner receipts). */
+export async function listNspadelBookings(userId: string, clubId: string) {
+  const rows = await prisma.nspadelBooking.findMany({
+    where: { userId, clubId, state: NspadelBookingState.CONFIRMED },
+    orderBy: { bookingStart: 'asc' },
+  });
+  return rows.map((row) => ({
+    externalBookingId: row.externalBookingId,
+    referenceType: 'LOCAL_RECEIPT' as const,
+    courtId: row.courtId,
+    externalCourtId: row.externalCourtId,
+    bookingStart: row.bookingStart.toISOString(),
+    bookingEnd: row.bookingEnd.toISOString(),
+    state: row.state,
+  }));
+}

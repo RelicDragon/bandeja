@@ -1,4 +1,5 @@
 import { weltnerApi, type WeltnerReceipt } from '@/api/weltner';
+import { nspadelApi } from '@/api/nspadel';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 
@@ -6,7 +7,8 @@ export type AggregatedWeltnerBooking = BooktimeBookingRecord & {
   clubId: string;
   clubName: string;
   courts: ConnectedBookingClubRow['courts'];
-  integrationType: 'WELTNER';
+  /** Receipt-only providers: the app lists its own receipts (no provider booking list). */
+  integrationType: 'WELTNER' | 'NSPADELSUPABASE';
 };
 
 export function weltnerReceiptToBooking(
@@ -30,9 +32,21 @@ export async function loadWeltnerBookingsForClubs(
   // One club failing must not hide the other clubs' bookings.
   const settled = await Promise.allSettled(
     clubs
-      .filter((c) => c.integrationType === 'WELTNER' && c.connected)
+      .filter((c) => (c.integrationType === 'WELTNER' || c.integrationType === 'NSPADELSUPABASE') && c.connected)
       .map(async (club) => {
-        const receipts = await weltnerApi.bookings(club.clubId);
+        const receipts: WeltnerReceipt[] =
+          club.integrationType === 'NSPADELSUPABASE'
+            ? (await nspadelApi.bookings(club.clubId)).map((r) => ({
+                externalBookingId: r.externalBookingId,
+                referenceType: r.referenceType,
+                upstreamBookingId: null,
+                // Receipts may predate the court mapping: fall back to the club's court by external id.
+                courtId: r.courtId ?? club.courts.find((c) => c.externalCourtId === r.externalCourtId)?.id ?? '',
+                bookingStart: r.bookingStart,
+                bookingEnd: r.bookingEnd,
+                state: r.state,
+              }))
+            : await weltnerApi.bookings(club.clubId);
         return receipts
           .filter(
             (r) =>
@@ -46,7 +60,7 @@ export async function loadWeltnerBookingsForClubs(
             clubId: club.clubId,
             clubName: club.clubName,
             courts: club.courts,
-            integrationType: 'WELTNER' as const,
+            integrationType: club.integrationType === 'NSPADELSUPABASE' ? ('NSPADELSUPABASE' as const) : ('WELTNER' as const),
           }));
       }),
   );

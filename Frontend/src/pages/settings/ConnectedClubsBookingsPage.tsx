@@ -126,7 +126,8 @@ export function ConnectedClubsBookingsPage() {
           </>
         ) : (
           <ConnectedClubsIntegrationsTab
-            clubs={clubs}
+            // NS Padel rows only carry receipts for the bookings lists: nothing to connect.
+            clubs={clubs.filter((c) => c.integrationType !== 'NSPADELSUPABASE')}
             disconnectBusyId={disconnectBusyId}
             onConnect={setConnectClub}
             onDisconnect={(clubId) => {

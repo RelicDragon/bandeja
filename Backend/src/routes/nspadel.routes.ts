@@ -22,6 +22,9 @@ router.get('/linked-games/:externalBookingId', authenticate, nspadelMyClubsContr
 // Real booking endpoints (server-side Supabase calls; anon key never leaves the backend).
 router.get('/availability', nspadelUpstreamLimiter, optionalAuth, nspadelBookingsController.getAvailability);
 router.post('/bookings', nspadelUpstreamLimiter, authenticate, nspadelBookingsController.createBooking);
+// The user's own receipts (no upstream call): bookings lists in the app.
+router.get('/booking-clubs', authenticate, nspadelBookingsController.getBookingClubs);
+router.get('/clubs/:clubId/bookings', authenticate, nspadelBookingsController.listBookings);
 
 // The club Supabase project is same-origin gated — proxy all FE traffic server-side.
 router.all(

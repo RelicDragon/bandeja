@@ -86,6 +86,8 @@ export function mergeConnectedBookingClubs(
   padeloo: PadelooMyClubRow[],
   klikteren: KlikterenMyClubRow[] = [],
   weltner: ConnectedBookingClubRow[] = [],
+  /** NS Padel clubs with the user's receipts (no account; bookings lists only). */
+  nspadel: ConnectedBookingClubRow[] = [],
 ): ConnectedBookingClubRow[] {
   const byId = new Map<string, ConnectedBookingClubRow>();
   for (const row of booktime) {
@@ -98,6 +100,7 @@ export function mergeConnectedBookingClubs(
     byId.set(row.clubId, mapKlikterenClubRow(row));
   }
   for (const row of weltner) byId.set(row.clubId, row);
+  for (const row of nspadel) if (!byId.has(row.clubId)) byId.set(row.clubId, row);
   return [...byId.values()].sort((a, b) =>
     a.clubName.localeCompare(b.clubName, undefined, { sensitivity: 'base' }),
   );
@@ -160,6 +163,7 @@ export function bookingListClubRowToClub(row: BookingListClubRow): Club {
   }));
 
   if (row.integrationType === 'WELTNER') return { id: row.clubId, name: row.clubName, address: '', cityId: '', integrationType: 'WELTNER', integrationConfig: null, courts };
+  if (row.integrationType === 'NSPADELSUPABASE') return { id: row.clubId, name: row.clubName, address: '', cityId: '', integrationType: 'NSPADELSUPABASE', integrationConfig: null, courts };
 
   if (row.integrationType === 'KLIKTEREN' || row.klikterenVenueId) {
     return {

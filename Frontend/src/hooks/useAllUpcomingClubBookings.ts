@@ -28,7 +28,7 @@ export type AggregatedClubBooking = (
   | AggregatedKlikterenBooking
   | AggregatedWeltnerBooking
 ) & {
-  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'WELTNER';
+  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'WELTNER' | 'NSPADELSUPABASE';
 };
 
 type UpcomingSnapshot = {
@@ -157,7 +157,7 @@ function runSharedLoad(
       const booktimeOnly = toBooktimeRows(clubs);
       const cachedBookings = await peekCachedBooktimeUpcoming(booktimeOnly, enabled);
       if (generation !== cacheGeneration) return;
-      if (cachedBookings && toPadelooRows(clubs).length === 0 && toKlikterenRows(clubs).length === 0 && !clubs.some(c => c.integrationType === 'WELTNER' && c.connected)) {
+      if (cachedBookings && toPadelooRows(clubs).length === 0 && toKlikterenRows(clubs).length === 0 && !clubs.some(c => (c.integrationType === 'WELTNER' || c.integrationType === 'NSPADELSUPABASE') && c.connected)) {
         setKeyState(connectedKey, {
           bookings: cachedBookings.map((booking) => ({
             ...booking,
@@ -214,7 +214,7 @@ export function useAllUpcomingClubBookings(
   const connectedKey = useMemo(
     () =>
       clubs
-        .filter((club) => club.connected && (club.companyId || club.padelooClubId || club.klikterenVenueId || club.integrationType === 'WELTNER'))
+        .filter((club) => club.connected && (club.companyId || club.padelooClubId || club.klikterenVenueId || club.integrationType === 'WELTNER' || club.integrationType === 'NSPADELSUPABASE'))
         .map((club) => `${userId ?? 'guest'}:${club.integrationType}:${club.clubId}`)
         .sort()
         .join('|'),

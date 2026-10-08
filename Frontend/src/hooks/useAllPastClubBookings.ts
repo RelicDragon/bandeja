@@ -16,7 +16,7 @@ export type AggregatedPastClubBooking = {
   bookingEnd: string;
   clubId: string;
   clubName: string;
-  integrationType: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'WELTNER';
+  integrationType: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'WELTNER' | 'NSPADELSUPABASE';
   price?: number;
   status?: string;
   bookingResourceId?: string;
@@ -141,7 +141,7 @@ export function useAllPastClubBookings(
   }, [reloadKlikteren, refreshKey]);
 
   const userId = useAuthStore((state) => state.user?.id);
-  const weltnerRequestKey = `${userId}:${enabled}:${clubs.filter(club => club.integrationType === 'WELTNER').map(club => club.clubId).sort().join(',')}`;
+  const weltnerRequestKey = `${userId}:${enabled}:${clubs.filter(club => club.integrationType === 'WELTNER' || club.integrationType === 'NSPADELSUPABASE').map(club => club.clubId).sort().join(',')}`;
   const [resolvedWeltnerKey, setResolvedWeltnerKey] = useState<string | null>(null);
   const [weltnerPast, setWeltnerPast] = useState<AggregatedPastClubBooking[]>([]);
   const [weltnerLoading, setWeltnerLoading] = useState(false);

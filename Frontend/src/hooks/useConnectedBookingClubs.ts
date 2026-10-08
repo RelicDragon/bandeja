@@ -1,4 +1,5 @@
 import { subscribeBooktimeAllUpcomingCacheInvalidation } from '@/integrations/booktime/booktimeAllUpcomingCacheInvalidation';
+import { nspadelApi } from '@/api/nspadel';
 import { weltnerApi } from '@/api/weltner';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { booktimeApi } from '@/api/booktime';
@@ -48,18 +49,25 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
     setLoading(true);
     setError(false);
     try {
-      const [booktimeRes, padelooRes, klikterenRes, weltnerRes] = await Promise.all([
+      const [booktimeRes, padelooRes, klikterenRes, weltnerRes, nspadelRes] = await Promise.all([
         booktimeApi.getMyClubs().catch(() => null),
         padelooApi.getMyClubs().catch(() => null),
         klikterenApi.getMyClubs().catch(() => null),
         weltnerApi.getMyClubs().catch(() => null),
+        nspadelApi.getBookingClubs().catch(() => null),
       ]);
 
       if (generation.current !== current) return null;
       const booktimeClubs = booktimeRes?.data?.clubs ?? [];
       const padelooClubs = padelooRes?.data?.clubs ?? [];
       const klikterenClubs = klikterenRes?.data?.clubs ?? [];
-      const merged = mergeConnectedBookingClubs(booktimeClubs, padelooClubs, klikterenClubs, weltnerRes?.data?.clubs ?? []);
+      const merged = mergeConnectedBookingClubs(
+        booktimeClubs,
+        padelooClubs,
+        klikterenClubs,
+        weltnerRes?.data?.clubs ?? [],
+        nspadelRes?.data?.clubs ?? [],
+      );
       const reauthMap = getBookingAuthReauthSnapshot();
       for (const club of merged) {
         if (reauthMap.has(club.clubId)) {
@@ -76,7 +84,7 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
       }
       const reauthIds = [...getBookingAuthReauthSnapshot().keys()];
       const clubs = applyBookingAuthNeedsReauth(merged, reauthIds);
-      const activeConnected = clubs.filter((c) => c.connected && !c.needsReauth).length;
+      const activeConnected = clubs.filter((c) => c.connected && !c.needsReauth && c.integrationType !== 'NSPADELSUPABASE').length;
 
       const payload: ConnectedBookingClubsPayload = {
         cityClubCount:
@@ -112,7 +120,7 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
     return {
       ...data,
       clubs,
-      connectedCount: clubs.filter((c) => c.connected && !c.needsReauth).length,
+      connectedCount: clubs.filter((c) => c.connected && !c.needsReauth && c.integrationType !== 'NSPADELSUPABASE').length,
     };
   }, [data, dataUserId, userId, reauthVersion]);
 

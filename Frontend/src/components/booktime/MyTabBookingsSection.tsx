@@ -51,14 +51,16 @@ export function MyTabBookingsSection({ booktime }: Props) {
     return <BooktimeBookingsCardsSkeleton count={PREVIEW_LIMIT} compact />;
   }
 
+  // NS Padel bookings need no connected account: they alone are enough to show the list.
+  const hasNspadelBookings = myClubs.clubs.some((c) => c.integrationType === 'NSPADELSUPABASE');
   const showConnectBanner =
-    myClubs.cityClubCount > 0 && myClubs.connectedCount === 0;
+    myClubs.cityClubCount > 0 && myClubs.connectedCount === 0 && !hasNspadelBookings;
 
   if (showConnectBanner) {
     return <MyTabConnectBanner />;
   }
 
-  if (myClubs.connectedCount === 0) return null;
+  if (myClubs.connectedCount === 0 && !hasNspadelBookings) return null;
 
   const actionFooter = (
     <div className="relative flex items-center justify-center">
