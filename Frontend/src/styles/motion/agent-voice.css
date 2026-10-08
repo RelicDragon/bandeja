@@ -223,6 +223,10 @@
   .agent-voice-ghost[data-final='false'] .agent-voice-ghost-dots > span:nth-child(3) {
     animation-delay: 0.3s;
   }
+  /* A caption line taking over (the filler, the confirm prompt): a calm fade in place. */
+  .agent-voice-caption-swap {
+    animation: agent-caption-swap 0.28s ease-out both;
+  }
   .agent-voice-callout-arrow {
     animation: agent-callout-nudge 1.4s ease-in-out infinite;
   }
@@ -237,6 +241,16 @@
   transition: color 0.18s ease;
 }
 
+@keyframes agent-caption-swap {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 @keyframes agent-stage-in {
   from {
     opacity: 0;

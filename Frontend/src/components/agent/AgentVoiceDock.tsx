@@ -26,6 +26,12 @@ const ERROR_NOTICES = new Set<AgentVoiceNotice>(['transcribeFailed', 'sendFailed
 
 const ORB_SIZE = 92;
 
+function lastConfirmLine(state: AgentVoiceViewState): string | null {
+  const lines = state.reply?.lines ?? [];
+  for (let i = lines.length - 1; i >= 0; i--) if (lines[i].kind === 'confirm') return lines[i].text;
+  return null;
+}
+
 /**
  * Voice mode: replaces the composer at the bottom of the chat. The chat above keeps showing the
  * reply, cards and the Confirm buttons (the scroll area is padded by this stage's height).
@@ -57,9 +63,16 @@ export function AgentVoiceDock({ state, session, onEnd, onTypeInstead, onShowCar
     return p === 'speaking' ? output : p === 'listening' || p === 'hearing' ? input : 0;
   }, [session]);
 
+  const showKaraoke = phase === 'speaking' && state.reply != null && state.reply.activeSeq != null;
+  // The spoken filler ("Checking your games…") while it plays, before any reply line: the caption
+  // line reads it out, so the chip (which carries it while thinking) steps aside instead of repeating it.
+  const progressCaption = phase === 'speaking' && !notice && !showKaraoke && !state.agentCaption ? state.progress : null;
+  const chipText = progressCaption ? null : state.progress;
   // The chip keeps its last text while it fades out.
   const lastProgressRef = useRef<string | null>(null);
-  if (state.progress) lastProgressRef.current = state.progress;
+  if (chipText) lastProgressRef.current = chipText;
+  // The spoken confirm prompt of this reply (only sent when the reply itself said nothing).
+  const confirmPrompt = phase === 'confirm' ? lastConfirmLine(state) : null;
 
   const busy = phase === 'starting' || phase === 'transcribing';
   const orbMode: AgentOrbMode = muted
@@ -78,7 +91,6 @@ export function AgentVoiceDock({ state, session, onEnd, onTypeInstead, onShowCar
         ? t('agent.voice.keepTalking')
         : t('agent.voice.listeningLabel');
 
-  const showKaraoke = phase === 'speaking' && state.reply != null && state.reply.activeSeq != null;
   const userCaption =
     phase === 'hearing' || phase === 'transcribing' || phase === 'thinking'
       ? (state.liveCaption?.text ?? state.userCaption)
@@ -97,8 +109,13 @@ export function AgentVoiceDock({ state, session, onEnd, onTypeInstead, onShowCar
         </span>
         <span className="min-w-0">
           <span className="block text-sm font-semibold text-amber-900 dark:text-amber-100">{t('agent.voice.confirmCallout')}</span>
-          <span className="block truncate text-xs text-amber-700 dark:text-amber-300/80" dir="auto">
-            {state.confirmTitle ?? t('agent.voice.confirmCalloutHint')}
+          <span
+            key={confirmPrompt ?? state.confirmTitle ?? ''}
+            className="agent-voice-caption-swap block truncate text-xs text-amber-700 dark:text-amber-300/80"
+            dir="auto"
+            title={confirmPrompt ?? undefined}
+          >
+            {confirmPrompt ?? state.confirmTitle ?? t('agent.voice.confirmCalloutHint')}
           </span>
         </span>
       </button>
@@ -111,6 +128,19 @@ export function AgentVoiceDock({ state, session, onEnd, onTypeInstead, onShowCar
     caption = (
       <p className="line-clamp-3 text-center text-[15px] font-medium leading-snug text-gray-900 dark:text-white" dir="auto">
         {state.agentCaption}
+      </p>
+    );
+  } else if (progressCaption) {
+    caption = (
+      <p
+        key={progressCaption}
+        className="agent-voice-caption-swap flex min-w-0 max-w-full items-center justify-center gap-1.5 text-[15px] leading-snug text-gray-600 dark:text-gray-300"
+        data-testid="agent-voice-progress-caption"
+      >
+        <Loader2 size={14} className="flex-shrink-0 text-primary-500 motion-safe:animate-spin" aria-hidden />
+        <span className="truncate" dir="auto">
+          {progressCaption}
+        </span>
       </p>
     );
   } else if (userCaption) {
@@ -139,14 +169,15 @@ export function AgentVoiceDock({ state, session, onEnd, onTypeInstead, onShowCar
 
       <div
         className="agent-voice-chip pointer-events-none absolute inset-x-0 -top-9 z-10 flex justify-center px-4"
-        data-state={state.progress ? 'open' : 'closed'}
+        data-state={chipText ? 'open' : 'closed'}
         role="status"
-        aria-hidden={state.progress ? undefined : true}
+        aria-hidden={chipText ? undefined : true}
+        data-testid="agent-voice-progress-chip"
       >
         <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-gray-200 bg-white/95 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-800/95 dark:text-gray-200">
-          <Loader2 size={12} className="flex-shrink-0 animate-spin text-primary-500" aria-hidden />
+          <Loader2 size={12} className="flex-shrink-0 text-primary-500 motion-safe:animate-spin" aria-hidden />
           <span className="truncate" dir="auto">
-            {state.progress ?? lastProgressRef.current}
+            {chipText ?? lastProgressRef.current}
           </span>
         </span>
       </div>

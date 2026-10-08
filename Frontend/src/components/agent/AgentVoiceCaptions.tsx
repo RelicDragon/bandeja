@@ -86,7 +86,7 @@ export function AgentVoiceKaraoke({ reply, session }: { reply: AgentVoiceReply; 
 
   if (!line) return null;
   return (
-    <p className="line-clamp-3 text-center text-[15px] font-medium leading-snug" dir="auto">
+    <p className="agent-voice-caption-swap line-clamp-3 text-center text-[15px] font-medium leading-snug" dir="auto">
       {words.map((w, i) => (
         <span
           key={i}
