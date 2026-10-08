@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { useChatListKindStore } from './chatListKindStore';
 import type { ChatListSectionId } from './chatListSections';
 
 const SECTION_LABEL: Record<ChatListSectionId, { key: string; fallback: string }> = {
@@ -44,6 +45,27 @@ export function ChatListFindGameRow() {
           </span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-gray-400 rtl:rotate-180" aria-hidden />
+      </button>
+    </div>
+  );
+}
+
+/** Expands / collapses the Invitations section past its first row. */
+export function ChatListMoreInvitesRow({ hidden, expanded }: { hidden: number; expanded: boolean }) {
+  const { t } = useTranslation();
+  const toggle = useChatListKindStore((s) => s.toggleInvitesExpanded);
+  return (
+    <div className="px-3 pb-1">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-center gap-1 rounded-xl py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 active:scale-[0.99] dark:text-primary-400 dark:hover:bg-primary-500/10"
+      >
+        {expanded
+          ? t('chat.list.showLess', { defaultValue: 'Show less' })
+          : t('chat.list.showMoreInvites', { value: hidden, defaultValue: 'Show {{value}} more' })}
+        <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden />
       </button>
     </div>
   );

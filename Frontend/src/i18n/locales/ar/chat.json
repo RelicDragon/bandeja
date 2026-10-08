@@ -720,7 +720,10 @@
       "muteShort": "كتم",
       "unmuteShort": "إلغاء الكتم",
       "pinShort": "تثبيت",
-      "unpinShort": "إلغاء التثبيت"
+      "unpinShort": "إلغاء التثبيت",
+      "showMoreInvites": "عرض {{value}} أخرى",
+      "showLess": "عرض أقل",
+      "joinQueue": "الانضمام إلى قائمة الانتظار"
     }
   }
 }

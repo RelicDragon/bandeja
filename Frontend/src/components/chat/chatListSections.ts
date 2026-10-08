@@ -14,7 +14,30 @@ export type ChatListEntry =
   | { kind: 'header'; key: string; section: ChatListSectionId }
   | { kind: 'hero'; key: string; chat: GameChatItem }
   | { kind: 'chat'; key: string; chat: ChatItem; past?: boolean }
-  | { kind: 'findGame'; key: string };
+  | { kind: 'findGame'; key: string }
+  /** "Show N more" / "Show less" under the first invitation. */
+  | { kind: 'moreInvites'; key: string; hidden: number; expanded: boolean };
+
+/** Invitations shown before the "Show N more" row. */
+export const CHAT_LIST_INVITES_COLLAPSED = 1;
+
+export type ChatListEntriesOptions = { invitesExpanded?: boolean };
+
+/** Soonest first, so the one invitation left visible is the most urgent. */
+function invitationEntries(unsorted: GameChatItem[], expanded: boolean): ChatListEntry[] {
+  const invites = [...unsorted].sort((a, b) => startMs(a) - startMs(b));
+  if (invites.length <= CHAT_LIST_INVITES_COLLAPSED) return invites.map((c) => row(c));
+  const shown = expanded ? invites : invites.slice(0, CHAT_LIST_INVITES_COLLAPSED);
+  return [
+    ...shown.map((c) => row(c)),
+    {
+      kind: 'moreInvites',
+      key: 'section:more-invites',
+      hidden: invites.length - CHAT_LIST_INVITES_COLLAPSED,
+      expanded,
+    },
+  ];
+}
 
 /** How far ahead a game may be to become the "Next up" card. */
 export const CHAT_LIST_NEXT_UP_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -69,6 +92,7 @@ export function countChatListInvitations(chats: readonly ChatItem[], userId: str
  *
  * - `all`: "Next up" (nearest game the viewer plays in this week), "Invitations",
  *   then every other chat in feed order.
+ * - Invitations collapse to the first one plus a "Show N more" row unless expanded.
  * - `games`: invitations, upcoming by start time, past by recency, then a Find prompt.
  * - `groups`: group chats and channels in feed order, no headers.
  */
@@ -76,7 +100,8 @@ export function buildChatListEntries(
   chats: readonly ChatItem[],
   kind: ChatListKind,
   userId: string | undefined,
-  now: number = Date.now()
+  now: number = Date.now(),
+  { invitesExpanded = false }: ChatListEntriesOptions = {}
 ): ChatListEntry[] {
   if (kind === 'groups') {
     return chats.filter((c) => c.type === 'group' || c.type === 'channel').map((c) => row(c));
@@ -92,7 +117,7 @@ export function buildChatListEntries(
       .filter((c) => !invites.includes(c) && !past.includes(c))
       .sort((a, b) => startMs(a) - startMs(b));
     const out: ChatListEntry[] = [];
-    if (invites.length) out.push(header('invitations'), ...invites.map((c) => row(c)));
+    if (invites.length) out.push(header('invitations'), ...invitationEntries(invites, invitesExpanded));
     if (upcoming.length) out.push(header('upcoming'), ...upcoming.map((c) => row(c)));
     if (past.length) out.push(header('past'), ...past.map((c) => row(c, true)));
     out.push({ kind: 'findGame', key: 'section:find-game' });
@@ -111,7 +136,7 @@ export function buildChatListEntries(
 
   const out: ChatListEntry[] = [];
   if (hero) out.push(header('nextUp'), { kind: 'hero', key: getChatKey(hero), chat: hero });
-  if (invites.length) out.push(header('invitations'), ...invites.map((c) => row(c)));
+  if (invites.length) out.push(header('invitations'), ...invitationEntries(invites, invitesExpanded));
   if ((hero || invites.length) && rest.length) out.push(header('chats'));
   out.push(...rest.map((c) => row(c)));
   return out;

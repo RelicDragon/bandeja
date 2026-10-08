@@ -697,7 +697,10 @@
       "muteShort": "Ztlumit",
       "unmuteShort": "Zrušit ztlumení",
       "pinShort": "Připnout",
-      "unpinShort": "Odepnout"
+      "unpinShort": "Odepnout",
+      "showMoreInvites": "Zobrazit další: {{value}}",
+      "showLess": "Zobrazit méně",
+      "joinQueue": "Do fronty"
     }
   }
 }

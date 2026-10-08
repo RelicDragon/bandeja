@@ -705,7 +705,10 @@
       "muteShort": "Utišaj",
       "unmuteShort": "Uključi zvuk",
       "pinShort": "Zakači",
-      "unpinShort": "Otkači"
+      "unpinShort": "Otkači",
+      "showMoreInvites": "Još {{value}}",
+      "showLess": "Prikaži manje",
+      "joinQueue": "U red čekanja"
     }
   }
 }

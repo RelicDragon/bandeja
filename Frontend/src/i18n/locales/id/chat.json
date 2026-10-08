@@ -700,7 +700,10 @@
       "muteShort": "Bisukan",
       "unmuteShort": "Bunyikan",
       "pinShort": "Sematkan",
-      "unpinShort": "Lepas"
+      "unpinShort": "Lepas",
+      "showMoreInvites": "Tampilkan {{value}} lagi",
+      "showLess": "Tampilkan lebih sedikit",
+      "joinQueue": "Masuk antrean"
     }
   }
 }

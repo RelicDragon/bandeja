@@ -149,6 +149,11 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
 
   const showInviteActions = !past && !!inviteActions && isChatListInvitation(game, userId);
   const inviteBusy = !!inviteActions?.busyGameIds.has(game.id);
+  /** Accepting a full game's invite puts the viewer in the queue, so say so up front. */
+  const inviteFull =
+    showInviteActions &&
+    game.maxParticipants > 0 &&
+    game.participants.filter((p) => p.status === 'PLAYING').length >= game.maxParticipants;
   const prefix = lastMessage && !showDraft ? senderPrefix(lastMessage, userId, t) : null;
   const playing = hero ? game.participants.filter((p) => p.status === 'PLAYING') : [];
 
@@ -170,6 +175,11 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
   const metaLine = (
     <div className="flex min-w-0 items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
       <ChatListGameStatusPill game={game} userId={userId} withSeats={hero} />
+      {inviteFull ? (
+        <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-red-100 px-2 py-px text-[11px] font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-300">
+          {t('games.card.full')}
+        </span>
+      ) : null}
       {game.entityType !== 'GAME' ? <Icon className="h-3.5 w-3.5 shrink-0" aria-label={t(`games.entityTypes.${game.entityType}`)} /> : null}
       {sportGlyph ? <span className="shrink-0 leading-none" aria-hidden>{sportGlyph}</span> : null}
       {!game.isPublic ? <Lock className="h-3 w-3 shrink-0" aria-label={t('games.private', { defaultValue: 'Private' })} /> : null}
@@ -299,7 +309,9 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
               onClick={() => inviteActions.accept(game)}
               className="h-9 flex-1 rounded-xl bg-primary-600 text-sm font-semibold text-white transition-colors hover:bg-primary-700 active:scale-[0.98] disabled:opacity-60"
             >
-              {t('chat.list.join', { defaultValue: 'Join' })}
+              {inviteFull
+                ? t('chat.list.joinQueue', { defaultValue: 'Join queue' })
+                : t('chat.list.join', { defaultValue: 'Join' })}
             </button>
             <button
               type="button"
@@ -354,6 +366,7 @@ function gameCardPropsEqual(a: ChatListGameCardProps, b: ChatListGameCardProps) 
   if (a.chat.data.sport !== b.chat.data.sport) return false;
   if ((a.chat.data.leagueGroup?.name ?? '') !== (b.chat.data.leagueGroup?.name ?? '')) return false;
   if (participantsSig(a.chat.data) !== participantsSig(b.chat.data)) return false;
+  if (a.chat.data.maxParticipants !== b.chat.data.maxParticipants) return false;
   if (a.onClick !== b.onClick) return false;
   return true;
 }

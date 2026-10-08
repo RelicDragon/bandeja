@@ -7,7 +7,8 @@ import { getMarketChatDisplayTitle, getMarketChatDisplayParts } from '@/utils/ma
 import type { ChatItem, ChatSelectNavOptions, ChatType } from './chatListTypes';
 import { CHAT_LIST_CHAT_ROW_ESTIMATE_PX } from '@/utils/chatListConstants';
 import { buildChatListEntries, type ChatListEntry, type ChatListKind } from './chatListSections';
-import { ChatListFindGameRow, ChatListSectionHeader } from './ChatListSectionRows';
+import { ChatListFindGameRow, ChatListMoreInvitesRow, ChatListSectionHeader } from './ChatListSectionRows';
+import { useChatListKindStore } from './chatListKindStore';
 import { ChatListInviteActionsProvider, useChatListInviteActions } from './useChatListInviteActions';
 
 export type ChatListDisplayedRowsProps = {
@@ -77,9 +78,13 @@ export function ChatListDisplayedRows(p: ChatListDisplayedRowsProps) {
   const getItemKey = useCallback((chat: ChatItem) => getChatKey(chat), []);
   const { actions: inviteActions, declineInviteModal } = useChatListInviteActions();
   const { sectionKind, displayedChats, userId } = p;
+  const invitesExpanded = useChatListKindStore((s) => s.invitesExpanded);
   const entries = useMemo(
-    () => (sectionKind ? buildChatListEntries(displayedChats, sectionKind, userId) : null),
-    [sectionKind, displayedChats, userId]
+    () =>
+      sectionKind
+        ? buildChatListEntries(displayedChats, sectionKind, userId, Date.now(), { invitesExpanded })
+        : null,
+    [sectionKind, displayedChats, userId, invitesExpanded]
   );
   const loadMoreBlock =
     p.showLoadMoreRow ? (
@@ -109,6 +114,8 @@ export function ChatListDisplayedRows(p: ChatListDisplayedRowsProps) {
                 return <ChatListSectionHeader section={entry.section} />;
               case 'findGame':
                 return <ChatListFindGameRow />;
+              case 'moreInvites':
+                return <ChatListMoreInvitesRow hidden={entry.hidden} expanded={entry.expanded} />;
               case 'hero':
                 return <ChatListItem {...chatListRowProps(entry.chat, p)} gameVariant="hero" />;
               default:

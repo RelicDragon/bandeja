@@ -700,7 +700,10 @@
       "muteShort": "静音",
       "unmuteShort": "取消静音",
       "pinShort": "置顶",
-      "unpinShort": "取消置顶"
+      "unpinShort": "取消置顶",
+      "showMoreInvites": "再显示 {{value}} 个",
+      "showLess": "收起",
+      "joinQueue": "加入候补"
     }
   }
 }

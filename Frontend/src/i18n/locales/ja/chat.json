@@ -700,7 +700,10 @@
       "muteShort": "ミュート",
       "unmuteShort": "解除",
       "pinShort": "固定",
-      "unpinShort": "固定解除"
+      "unpinShort": "固定解除",
+      "showMoreInvites": "さらに{{value}}件",
+      "showLess": "閉じる",
+      "joinQueue": "待機列に参加"
     }
   }
 }

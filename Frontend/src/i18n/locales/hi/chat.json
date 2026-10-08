@@ -700,7 +700,10 @@
       "muteShort": "म्यूट",
       "unmuteShort": "अनम्यूट",
       "pinShort": "पिन",
-      "unpinShort": "अनपिन"
+      "unpinShort": "अनपिन",
+      "showMoreInvites": "{{value}} और दिखाएँ",
+      "showLess": "कम दिखाएँ",
+      "joinQueue": "कतार में शामिल हों"
     }
   }
 }

@@ -44,7 +44,7 @@ Unread-only list: URL unread flag via `chatListUnreadUrl`. Pin/mute from inbox. 
 
 - **Chips** under search: All / Games / Groups (`chatListKindStore`, in memory) + Unread (the URL unread flag above). Games shows the pending invitation count.
 - **Sections** come from `buildChatListEntries` (`components/chat/chatListSections.ts`), a pure view step over `displayedChats`: All = "Next up" (nearest timed game the viewer is `PLAYING` in, ≤ 7 days, never a `LEAGUE_SEASON`) + "Invitations" + the rest in feed order; Games = Invitations, Upcoming by start time, Past by recency (dimmed), "Find a game"; Groups = groups/channels only. Search and contacts keep the flat list.
-- **Pending invitations always show** (`hasThreadActivity(item, userId)`), even before the first message — the row is where the viewer answers. Join/Decline reuse `invitesApi` with the My-tab gates (`useChatListInviteActions`); the invite id is the viewer's `GameParticipant.id`.
+- **Pending invitations always show** (`hasThreadActivity(item, userId)`), even before the first message — the row is where the viewer answers. Join/Decline reuse `invitesApi` with the My-tab gates (`useChatListInviteActions`); the invite id is the viewer's `GameParticipant.id`. Invitations sort soonest first and collapse to one row plus "Show N more" (`invitesExpanded` in `chatListKindStore`); a full game is marked "Full" and its button reads "Join queue".
 - **Pin/mute**: swipe toward the start edge on touch screens (`ChatListSwipeRow`), hover buttons on mouse screens (`ChatListRowActions`). There is no hide/archive for chats.
 - **Game links** in DM/group previews resolve through the shared link-preview cache (`useChatListGameLinkPreview`) into a strip; the raw URL is dropped only once the strip shows.
 

@@ -8,7 +8,12 @@ import type { ChatListKind } from './chatListSections';
 export const useChatListKindStore = create<{
   kind: ChatListKind;
   setKind: (kind: ChatListKind) => void;
+  /** "Show N more" under the first invitation. */
+  invitesExpanded: boolean;
+  toggleInvitesExpanded: () => void;
 }>((set) => ({
   kind: 'all',
   setKind: (kind) => set({ kind }),
+  invitesExpanded: false,
+  toggleInvitesExpanded: () => set((s) => ({ invitesExpanded: !s.invitesExpanded })),
 }));

@@ -707,7 +707,10 @@
       "muteShort": "Без звука",
       "unmuteShort": "Со звуком",
       "pinShort": "Закрепить",
-      "unpinShort": "Открепить"
+      "unpinShort": "Открепить",
+      "showMoreInvites": "Ещё {{value}}",
+      "showLess": "Свернуть",
+      "joinQueue": "В очередь"
     }
   }
 }

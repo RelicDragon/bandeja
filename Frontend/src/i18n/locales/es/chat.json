@@ -697,7 +697,10 @@
       "muteShort": "Silenciar",
       "unmuteShort": "Activar",
       "pinShort": "Fijar",
-      "unpinShort": "Desfijar"
+      "unpinShort": "Desfijar",
+      "showMoreInvites": "Ver {{value}} más",
+      "showLess": "Ver menos",
+      "joinQueue": "Unirme a la cola"
     }
   }
 }

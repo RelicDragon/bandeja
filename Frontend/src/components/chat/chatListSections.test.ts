@@ -69,6 +69,43 @@ describe('buildChatListEntries — all', () => {
   });
 });
 
+describe('buildChatListEntries — invitation cap', () => {
+  const invites = [
+    game('i1', { start: NOW + 2 * H, mine: 'INVITED' }),
+    game('i2', { start: NOW + 3 * H, mine: 'INVITED' }),
+    game('i3', { start: NOW + 4 * H, mine: 'INVITED' }),
+  ];
+
+  it('shows the soonest invitation and a "Show N more" row', () => {
+    const entries = buildChatListEntries([invites[2]!, invites[0]!, invites[1]!, group('g1')], 'all', ME, NOW);
+    expect(keys(entries)).toEqual([
+      'section:invitations',
+      'game-i1',
+      'section:more-invites',
+      'section:chats',
+      'group-g1',
+    ]);
+    expect(entries[2]).toMatchObject({ kind: 'moreInvites', hidden: 2, expanded: false });
+  });
+
+  it('lists every invitation when expanded, with a collapse row', () => {
+    const entries = buildChatListEntries(invites, 'games', ME, NOW, { invitesExpanded: true });
+    expect(keys(entries).slice(0, 5)).toEqual([
+      'section:invitations',
+      'game-i1',
+      'game-i2',
+      'game-i3',
+      'section:more-invites',
+    ]);
+    expect(entries[4]).toMatchObject({ kind: 'moreInvites', expanded: true });
+  });
+
+  it('adds no toggle for a single invitation', () => {
+    const entries = buildChatListEntries([invites[0]!], 'all', ME, NOW);
+    expect(entries.some((e) => e.kind === 'moreInvites')).toBe(false);
+  });
+});
+
 describe('buildChatListEntries — games', () => {
   it('orders upcoming by start, past by recency, and ends with the Find prompt', () => {
     const chats = [

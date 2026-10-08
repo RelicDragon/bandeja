@@ -700,7 +700,10 @@
       "muteShort": "Mute",
       "unmuteShort": "Unmute",
       "pinShort": "Pin",
-      "unpinShort": "Unpin"
+      "unpinShort": "Unpin",
+      "showMoreInvites": "Show {{value}} more",
+      "showLess": "Show less",
+      "joinQueue": "Join queue"
     }
   }
 }
