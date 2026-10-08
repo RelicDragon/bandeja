@@ -33,7 +33,7 @@ import { translationIsRedundantOfSource } from './translationRedundant';
 import { DraftService } from './draft.service';
 import { config } from '../../config/env';
 import { invalidateBasicUsersAllowedCacheForMessage } from '../user/basicUsersForMessageAllowedCache';
-import { updateLastMessagePreview } from './lastMessagePreview.service';
+import { extractPreviewFromMessage, updateLastMessagePreview } from './lastMessagePreview.service';
 import { computeContentSearchable, computeVoiceContentSearchable } from '../../utils/messageSearchContent';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { S3Service } from '../s3.service';
@@ -2530,13 +2530,57 @@ export class MessageService {
       }
     });
 
+    // Invitees don't see roster system messages ("X declined the invite"), so when one is the
+    // stored preview, fall back to the newest message they can see instead of "No messages yet".
+    const hiddenPreviewGameIds = games
+      .filter((game) => {
+        const viewer = game.participants.find((participant) => participant.userId === userId);
+        return (
+          isInviteOnlyChatViewerStatus(viewer?.status) &&
+          isRosterLifecycleSystemPreview(game.lastMessagePreview)
+        );
+      })
+      .map((game) => game.id);
+    const visibleFallbacks = new Map(
+      await Promise.all(
+        hiddenPreviewGameIds.map(async (gameId) => {
+          const message = await prisma.chatMessage.findFirst({
+            where: withInviteOnlyRosterMessageFilter(
+              {
+                chatContextType: 'GAME',
+                contextId: gameId,
+                chatType: ChatType.PUBLIC,
+                deletedAt: null,
+              },
+              'INVITED'
+            ),
+            orderBy: { createdAt: 'desc' },
+            select: {
+              content: true,
+              mediaUrls: true,
+              pollId: true,
+              messageType: true,
+              audioDurationMs: true,
+              videoDurationMs: true,
+              stickerEmoji: true,
+              documentFileName: true,
+              storyReply: true,
+              createdAt: true,
+            },
+          });
+          const fallback = message
+            ? { preview: extractPreviewFromMessage(message), updatedAt: message.createdAt }
+            : null;
+          return [gameId, fallback] as const;
+        })
+      )
+    );
+
     return games.map((game) => {
-      const viewer = game.participants.find((participant) => participant.userId === userId);
-      const preview =
-        isInviteOnlyChatViewerStatus(viewer?.status) &&
-        isRosterLifecycleSystemPreview(game.lastMessagePreview)
-          ? null
-          : game.lastMessagePreview;
+      if (visibleFallbacks.has(game.id)) {
+        return { ...game, lastMessage: visibleFallbacks.get(game.id) ?? null };
+      }
+      const preview = game.lastMessagePreview;
       return {
         ...game,
         lastMessage: preview
