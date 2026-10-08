@@ -43,7 +43,11 @@ export type AgentVoiceNotice =
   | 'interrupted'
   | 'unavailable'
   | 'budget'
-  | 'rateLimited';
+  | 'rateLimited'
+  // Realtime voice (v2) only.
+  | 'chatBusy'
+  | 'maxDuration'
+  | 'replaced';
 
 export type AgentVoiceCloseReason = 'user' | 'idle' | 'error' | 'interrupted';
 
