@@ -4,14 +4,15 @@
  *
  * - Handshake: the same JWT as the main namespace (`auth.token` or `Authorization: Bearer`),
  *   active users only.
- * - `voice:start` → checks (v2 available, per-user start limit, chat ownership, daily budget)
- *   then one `AgentVoiceRealtimeSession` per socket. One session per user: a start elsewhere
+ * - `voice:start` → checks (v2 available, per-user start limit shared via Redis, chat ownership,
+ *   daily budget) then one `AgentVoiceRealtimeSession` per socket. One session per user: a start elsewhere
  *   (this process, or another one via Redis pub/sub) ends the old one with `reason: 'replaced'`.
  * - Optional handshake extension `auth.clientCaps` (same format as `X-Agent-Client-Caps`); without
  *   it the chat's latest run's caps are reused.
  * - Nothing of the audio is stored; usage rows hold durations and character counts only.
  */
 import { randomUUID } from 'node:crypto';
+import type { Options } from 'express-rate-limit';
 import type { Namespace, Server as SocketIOServer, Socket } from 'socket.io';
 import { z } from 'zod';
 import {
@@ -31,6 +32,7 @@ import { LLM_REASON } from '../../../ai/llmReasons';
 import { getRedisClient, getRedisSubscriber } from '../../../redis/redisClient';
 import { parseAgentClientCaps } from '../../clientExecution/clientCaps';
 import { assertAgentBudget } from '../../agentGuards';
+import { AgentMessageRateStore, nodeRedisAgentRatePort, type AgentRateRedisPort } from '../../agentMessageRateLimit';
 import { recordVoiceUsage, vocabularyFor } from '../agentVoice.service';
 import { agentVoiceTranscriptionCharge } from '../agentVoiceText';
 import { resolveAgentVoiceRealtimeProviders } from './agentVoiceRealtimeProviders';
@@ -63,7 +65,6 @@ const startSchema = z
 
 const sessions = new Map<string, AgentVoiceRealtimeSession>();
 const sessionsByUser = new Map<string, Set<string>>();
-const startHits = new Map<string, number[]>();
 let runPort: AgentVoiceRunPort = defaultAgentVoiceRunPort;
 
 /** Tests: a fake run port (null = the real one). */
@@ -90,22 +91,42 @@ function endOtherSessions(userId: string, keepSessionId: string): void {
   }
 }
 
-function consumeStart(userId: string): boolean {
-  const { rateLimitWindowMs, realtime } = config.agentVoice;
-  const now = Date.now();
-  const hits = (startHits.get(userId) ?? []).filter((at) => now - at < rateLimitWindowMs);
-  if (hits.length >= realtime.startRateLimitMax) {
-    startHits.set(userId, hits);
-    return false;
-  }
-  hits.push(now);
-  startHits.set(userId, hits);
-  // Keep the map small: drop users with no recent starts.
-  if (startHits.size > 10_000) {
-    for (const [key, value] of startHits) if (!value.some((at) => now - at < rateLimitWindowMs)) startHits.delete(key);
-  }
-  return true;
+export const AGENT_VOICE_START_RATE_PREFIX = 'pp:agent-voice:start-rate:';
+
+export type AgentVoiceStartLimit = { ok: true } | { ok: false; retryAt?: string };
+
+/**
+ * Per-user `voice:start` limit (`AGENT_VOICE_REALTIME_START_RATE_LIMIT_MAX` per
+ * `AGENT_VOICE_RATE_LIMIT_WINDOW_MS`): a fixed window shared by all processes in Redis when
+ * configured (`pp:agent-voice:start-rate:<userId>`, the agent message store), else in memory.
+ */
+export function createAgentVoiceStartLimiter(
+  redis: AgentRateRedisPort | null,
+  limits: () => { windowMs: number; max: number } = () => ({
+    windowMs: config.agentVoice.rateLimitWindowMs,
+    max: config.agentVoice.realtime.startRateLimitMax,
+  }),
+) {
+  const store = new AgentMessageRateStore(redis, AGENT_VOICE_START_RATE_PREFIX);
+  let initializedWindowMs: number | null = null;
+  return {
+    async consume(userId: string): Promise<AgentVoiceStartLimit> {
+      const { windowMs, max } = limits();
+      if (initializedWindowMs !== windowMs) {
+        store.init({ windowMs } as Options);
+        initializedWindowMs = windowMs;
+      }
+      const info = await store.increment(userId);
+      if (info.totalHits <= max) return { ok: true };
+      return { ok: false, ...(info.resetTime ? { retryAt: info.resetTime.toISOString() } : {}) };
+    },
+    shutdown(): void {
+      store.shutdown();
+    },
+  };
 }
+
+const startLimiter = createAgentVoiceStartLimiter(nodeRedisAgentRatePort());
 
 export function classifyAgentVoiceError(error: unknown): AgentVoiceDepError {
   if (error instanceof ApiError) {
@@ -173,7 +194,10 @@ async function startSession(socket: VoiceSocket, payload: unknown): Promise<Agen
   if (!parsed.success) return { ok: false, code: 'BAD_REQUEST', message: 'Invalid voice:start payload' };
   const providers = resolveAgentVoiceRealtimeProviders();
   if (!providers) return { ok: false, code: 'VOICE_V2_UNAVAILABLE', message: 'Realtime voice is not available' };
-  if (!consumeStart(userId)) return { ok: false, code: 'RATE_LIMITED', message: 'Too many voice sessions. Try again in a few minutes.' };
+  const limit = await startLimiter.consume(userId);
+  if (!limit.ok) {
+    return { ok: false, code: 'RATE_LIMITED', message: 'Too many voice sessions. Try again in a few minutes.', ...(limit.retryAt ? { retryAt: limit.retryAt } : {}) };
+  }
   const chat = await prisma.agentChat.findFirst({ where: { id: parsed.data.chatId, userId, deletedAt: null }, select: { id: true } });
   if (!chat) return { ok: false, code: 'NOT_FOUND', message: 'Chat not found' };
   const isAdmin = socket.data.isAdmin === true;

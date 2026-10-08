@@ -16,7 +16,8 @@ import { ApiError } from '../../../utils/ApiError';
 import { agentVoiceConfirmPrompt } from '../i18n/agentVoiceI18n';
 import { EnergyVad } from '../voice/realtime/agentVoiceEnergyVad';
 import { heardReplyOffset, truncateHeardText } from '../voice/realtime/agentVoiceHeard';
-import { classifyAgentVoiceError } from '../voice/realtime/agentVoiceNamespace';
+import type { AgentRateRedisPort } from '../agentMessageRateLimit';
+import { AGENT_VOICE_START_RATE_PREFIX, classifyAgentVoiceError, createAgentVoiceStartLimiter } from '../voice/realtime/agentVoiceNamespace';
 import { PcmRechunker, pcmLevelDb, pcmToWav } from '../voice/realtime/agentVoicePcm';
 import {
   openAiTranscriptionSessionUpdate,
@@ -290,6 +291,40 @@ function pureCases(): void {
   assert.equal(defaults.turnDetection, 'semantic_vad');
   assert.equal(resolveAgentVoiceEnvConfig({ AGENT_VOICE_REALTIME_ENABLED: 'false' }).realtime.enabled, false);
   assert.equal(resolveAgentVoiceEnvConfig({ AGENT_VOICE_REALTIME_TURN_DETECTION: 'bogus' }).realtime.turnDetection, 'semantic_vad');
+}
+
+/** `voice:start` limit: one Redis bucket across processes; in memory without Redis. */
+async function startLimit(): Promise<void> {
+  const limits = () => ({ windowMs: 60_000, max: 2 });
+  const counters = new Map<string, number>();
+  const shared: AgentRateRedisPort = {
+    async increment(key) {
+      const next = (counters.get(key) ?? 0) + 1;
+      counters.set(key, next);
+      return { totalHits: next, ttlMs: 30_000 };
+    },
+    async decrement() {},
+    async reset(key) {
+      counters.delete(key);
+    },
+  };
+  const a = createAgentVoiceStartLimiter(shared, limits);
+  const b = createAgentVoiceStartLimiter(shared, limits);
+  assert.deepEqual(await a.consume('u1'), { ok: true });
+  assert.deepEqual(await b.consume('u1'), { ok: true });
+  const denied = await a.consume('u1');
+  assert.equal(denied.ok, false, 'the second process counted the first one');
+  assert.ok(!denied.ok && denied.retryAt && Date.parse(denied.retryAt) > Date.now() + 20_000, 'retryAt = window end');
+  assert.equal(counters.get(`${AGENT_VOICE_START_RATE_PREFIX}u1`), 3);
+  assert.deepEqual(await b.consume('u2'), { ok: true }, 'per user');
+
+  const local1 = createAgentVoiceStartLimiter(null, limits);
+  const local2 = createAgentVoiceStartLimiter(null, limits);
+  assert.deepEqual(await local1.consume('u1'), { ok: true });
+  assert.deepEqual(await local1.consume('u1'), { ok: true });
+  assert.equal((await local1.consume('u1')).ok, false, 'memory fallback limits');
+  assert.deepEqual(await local2.consume('u1'), { ok: true }, 'memory is per process');
+  for (const limiter of [a, b, local1, local2]) limiter.shutdown();
 }
 
 async function turnAndOrderedSpeech(): Promise<void> {
@@ -671,6 +706,7 @@ void (async () => {
   let exitCode = 0;
   try {
     pureCases();
+    await startLimit();
     await turnAndOrderedSpeech();
     await fillerAndFailures();
     await spokenNarrationCoversTheWait();

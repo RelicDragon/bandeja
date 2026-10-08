@@ -60,13 +60,19 @@ export function nodeRedisAgentRatePort(): AgentRateRedisPort | null {
   };
 }
 
+/**
+ * Fixed-window per-key counter: Redis when given (shared), else / on failure an in-process
+ * `MemoryStore`. Also reused with its own `prefix` by other per-user limits (voice `voice:start`).
+ */
 export class AgentMessageRateStore implements Store {
   readonly localKeys: boolean;
-  readonly prefix = 'pp:agent:msg-rate:';
   private readonly memory = new MemoryStore();
   private windowMs = 60_000;
 
-  constructor(private readonly redis: AgentRateRedisPort | null) {
+  constructor(
+    private readonly redis: AgentRateRedisPort | null,
+    readonly prefix = 'pp:agent:msg-rate:',
+  ) {
     this.localKeys = redis === null;
   }
 
