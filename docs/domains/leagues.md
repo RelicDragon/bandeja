@@ -74,7 +74,7 @@ Test: `npm run test:league-permissions` (`Backend/src/routes/__tests__/league.ro
 | Mid-season player swap | `.../swap-player` (`canEditGame`). Blocked after team withdrawal |
 | Team withdrawal | `POST .../participants/:id/withdraw` |
 
-Fixture create uses `gameCreation.util.ts` (`createLeagueGame` / `createLeaguePlayoffGame`). Match pairing engines for **games** (americano etc.) live under `Backend/src/services/results/generation/`; league RR uses `generation/fixedTeamsRoundRobin.ts`.
+Fixture create uses `gameCreation.util.ts` (`createLeagueGame` / `createLeaguePlayoffGame`). **Default length: 1 hour** — the server creates fixtures 1 h long, and every editor (Edit → When and where, the fixture teams/time editor, create) starts a fixture without a time at 1 h (`defaultGameDurationHours`; other kinds 2 h). Match pairing engines for **games** (americano etc.) live under `Backend/src/services/results/generation/`; league RR uses `generation/fixedTeamsRoundRobin.ts`.
 
 Season fixed teams (Game details → Fixed teams on the `LEAGUE_SEASON` game) normally have `maxParticipants / playersPerTeam` slots. With `allowUserInMultipleTeams` the list is **open-ended** (`hasOpenEndedFixedTeams` / `fixedTeamSlotLimit` in `shared/matchFormat.ts`): organizers add/remove teams, up to the distinct-pair count (cap 64). Clients send `openEndedList: true` with the full list; without it (store builds) teams beyond the legacy slot count are preserved.
 

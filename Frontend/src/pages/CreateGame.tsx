@@ -25,6 +25,7 @@ import { useGameFormat } from '@/hooks/useGameFormat';
 import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { resolveUserCurrency } from '@/utils/currency';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
+import { defaultGameDurationHours } from '@/utils/defaultGameDuration';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import {
@@ -471,6 +472,7 @@ export const CreateGame = ({
     clubs,
     selectedClub,
     initialDate: storedInitialDate,
+    initialDuration: defaultGameDurationHours(entityType),
   });
 
   const selectedClubData = useMemo(

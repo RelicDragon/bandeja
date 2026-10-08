@@ -41,6 +41,7 @@ import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTime
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtMatchesSportFilter } from '@/utils/courtSport';
 import { getClubTimezone } from '@/utils/gameTimeDisplay';
+import { defaultGameDurationHours } from '@/utils/defaultGameDuration';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { defaultCourtSlotCount } from '@shared/gameBooking/courtReservations';
 import { MINUTE_MS, parseInstantMs, type IsoInterval } from '@shared/gameBooking/coverageIntervals';
@@ -144,7 +145,9 @@ function initialWhen(game: Game) {
     date: start,
     time: set ? start.toTimeString().slice(0, 5) : '',
     duration:
-      set && game.endTime ? (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60) : 2,
+      set && game.endTime
+        ? (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60)
+        : defaultGameDurationHours(game.entityType),
   };
 }
 
@@ -212,7 +215,13 @@ export function useWhenWhereEditor({
     getAdjustedStartTime,
     getTimeSlotsForDuration,
     isSlotHighlighted,
-  } = useGameTimeDuration({ clubs, selectedClub: where.clubId, initialDate: when0.date, disableAutoAdjust });
+  } = useGameTimeDuration({
+    clubs,
+    selectedClub: where.clubId,
+    initialDate: when0.date,
+    initialDuration: when0.duration,
+    disableAutoAdjust,
+  });
 
   // Fresh state every time the sheet opens.
   useEffect(() => {

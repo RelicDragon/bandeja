@@ -6,6 +6,8 @@ interface UseGameTimeDurationProps {
   clubs: Club[];
   selectedClub: string;
   initialDate?: Date;
+  /** Length until one is picked (`defaultGameDurationHours`). */
+  initialDuration?: number;
   disableAutoAdjust?: boolean;
 }
 
@@ -158,13 +160,14 @@ export const useGameTimeDuration = ({
   clubs,
   selectedClub,
   initialDate,
+  initialDuration = 2,
   disableAutoAdjust = false,
 }: UseGameTimeDurationProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     return initialDate || new Date();
   });
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [duration, setDuration] = useState<number>(2);
+  const [duration, setDuration] = useState<number>(initialDuration);
 
   // End of the visible grid in minutes, derived from the same closing time as
   // generateTimeOptionsForDate. Duration fit is checked against it Booktime

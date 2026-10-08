@@ -13,7 +13,8 @@ import { Game, Club, Court, EntityType, BasicUser } from '@/types';
 import { gamesApi, invitesApi, LeagueStanding, clubsApi, courtsApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
-import { addHours, differenceInHours } from 'date-fns';
+import { addHours, differenceInMinutes } from 'date-fns';
+import { defaultGameDurationHours } from '@/utils/defaultGameDuration';
 import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
@@ -97,6 +98,7 @@ export const EditLeagueGameTeamsModal = ({
     clubs,
     selectedClub: selectedClubId,
     initialDate: game.startTime ? new Date(game.startTime) : undefined,
+    initialDuration: defaultGameDurationHours('LEAGUE'),
     disableAutoAdjust: true,
   });
 
@@ -204,8 +206,9 @@ export const EditLeagueGameTeamsModal = ({
       setSelectedDate(startDateTime);
       const selectedClubData = clubs.find(c => c.id === game.clubId);
       setSelectedTime(formatTimeInClubTimezone(startDateTime, selectedClubData));
-      const hoursDiff = differenceInHours(endDateTime, startDateTime);
-      setDuration(hoursDiff || 2);
+      // Minutes, not whole hours: a 1.5 h fixture stays 1.5 h.
+      const hoursDiff = differenceInMinutes(endDateTime, startDateTime) / 60;
+      setDuration(hoursDiff > 0 ? hoursDiff : defaultGameDurationHours('LEAGUE'));
     }
     
     setTimeout(() => {
