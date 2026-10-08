@@ -18,7 +18,7 @@
  *   sound, or `voice:interrupt` stops playback, cancels the run and cuts the stored reply to
  *   what was heard. A final transcript that is the reply itself (speaker echo) is dropped.
  * - Transcript guard: a transcript longer than its audio could hold (the model answered the
- *   request instead of transcribing it) is re-transcribed once without the prompt, or dropped.
+ *   request instead of transcribing it) is re-transcribed once without hints, or dropped.
  * - A spoken "yes" never confirms: a run ending AWAITING_CONFIRMATION parks the session in
  *   `confirm` (mic ignored) until `voice:follow-run` / `voice:resume`.
  * - Ending the session never cancels a run: the reply still lands in the chat.
@@ -39,7 +39,13 @@ import { SpeechChunker, type SpeechPiece } from '@bandeja/shared/agentVoiceSpeec
 import type { AgentStreamEvent } from '@bandeja/shared/agentContract';
 import type { AgentVoiceEnvConfig } from '../../../../config/agentVoiceEnv';
 import { agentVoiceConfirmPrompt } from '../../i18n/agentVoiceI18n';
-import { cleanAgentVoiceTranscript, isAgentVoiceEcho, isImplausibleAgentVoiceTranscript, normalizeAgentSpeechText } from '../agentVoiceText';
+import {
+  cleanAgentVoiceTranscript,
+  isAgentVoiceEcho,
+  isImplausibleAgentVoiceTranscript,
+  normalizeAgentSpeechText,
+  type AgentVoiceSttHints,
+} from '../agentVoiceText';
 import { heardReplyOffset, type AgentVoiceSpokenItem } from './agentVoiceHeard';
 import { PcmRechunker, pcmBytesPerMs, pcmDurationMs, pcmToWav } from './agentVoicePcm';
 import {
@@ -78,8 +84,8 @@ export interface AgentVoiceSessionDeps {
   providers: AgentVoiceRealtimeProviders;
   runs: AgentVoiceRunPort;
   emit: AgentVoiceEmit;
-  /** Transcription vocabulary prompt. */
-  vocabulary: () => Promise<string>;
+  /** Transcription hints (keywords, languages). */
+  vocabulary: () => Promise<AgentVoiceSttHints>;
   /** Null = within budget; else the error to report (fatal). */
   checkBudget: () => Promise<AgentVoiceDepError | null>;
   recordUsage: (usage: AgentVoiceUsage) => Promise<void>;
@@ -208,7 +214,7 @@ export class AgentVoiceRealtimeSession {
   private idleTimer: NodeJS.Timeout | null = null;
   private maxTimer: NodeJS.Timeout | null = null;
   private sttBilledSince = 0;
-  private prompt = '';
+  private hints: AgentVoiceSttHints | null = null;
   private readonly now: () => number;
   private readonly log: (line: string) => void;
 
@@ -251,9 +257,9 @@ export class AgentVoiceRealtimeSession {
     this.deps.emit('voice:state', { phase: 'listening' });
     this.armIdle();
     try {
-      this.prompt = await this.deps.vocabulary();
+      this.hints = await this.deps.vocabulary();
     } catch {
-      this.prompt = '';
+      this.hints = null;
     }
     if (this.ended) return;
     try {
@@ -261,8 +267,9 @@ export class AgentVoiceRealtimeSession {
         {
           model: config.realtime.sttModel,
           url: config.realtime.sttUrl,
-          prompt: this.prompt,
+          hints: this.hints,
           turnDetection: config.realtime.turnDetection,
+          delay: config.realtime.sttDelay,
           eagerness: config.realtime.vadEagerness,
           silenceMs: config.realtime.silenceMs,
           timeoutMs: Math.min(config.timeoutMs, 8_000),
@@ -449,7 +456,7 @@ export class AgentVoiceRealtimeSession {
     }
     this.stt = createBatchSttSession({
       batch: providers.batch,
-      prompt: this.prompt,
+      hints: this.hints,
       silenceMs: config.realtime.silenceMs,
       timeoutMs: config.timeoutMs,
       events: this.sttEvents(),
@@ -596,18 +603,18 @@ export class AgentVoiceRealtimeSession {
 
   /**
    * The transcript is longer than its audio could hold: the model answered the request instead
-   * of transcribing it (prompt-induced). Once more through the batch transcriber, without the
-   * prompt. '' = no usable transcript.
+   * of transcribing it (hint-induced). Once more through the batch transcriber, without hints.
+   * '' = no usable transcript.
    */
   private async retranscribe(text: string, audio: AgentVoiceTurnAudio): Promise<string> {
     const { providers, config } = this.deps;
-    console.warn('[agent-voice] implausible transcript, retrying without prompt', { sessionId: this.id, chars: text.length, audioMs: Math.round(audio.ms) });
+    console.warn('[agent-voice] implausible transcript, retrying without hints', { sessionId: this.id, chars: text.length, audioMs: Math.round(audio.ms) });
     const batch = providers.batch;
     if (!batch || !audio.pcm?.length) return '';
     try {
       const raw = await batch.transcribe({
         wav: pcmToWav(audio.pcm, AGENT_VOICE_INPUT_SAMPLE_RATE),
-        prompt: '',
+        hints: null,
         signal: AbortSignal.timeout(config.timeoutMs),
       });
       void this.deps

@@ -131,6 +131,7 @@ export const transcribeVoice = asyncHandler<AuthRequest>(async (req, res) => {
     audio: req.body,
     mimeType: req.get('Content-Type') ?? '',
     clientDurationMs: query?.durationMs ?? null,
+    locale: req.get('X-App-Locale') ?? null,
   });
   res.json({ success: true, data });
 });

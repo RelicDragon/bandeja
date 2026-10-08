@@ -1,7 +1,8 @@
 /**
  * Agent voice (docs/domains/agent.md § Voice), real dev DB, no real provider or model:
- * - pure helpers: transcript cleanup (silence hallucinations), speech text guard, charges,
- *   vocabulary prompt, file extensions;
+ * - pure helpers: transcript cleanup (silence hallucinations), speech text guard, charges (per
+ *   STT model), transcription hints (keywords, languages) and their per-model request shape,
+ *   the older models' vocabulary prompt, file extensions;
  * - `/api/agent/voice/*` over HTTP with a stub provider: auth, formats, size, duration from the
  *   container, budget rows (charge, no transcript / spoken text stored), budget exceeded,
  *   provider missing / failing → 503 VOICE_UNAVAILABLE, speech bytes + headers;
@@ -32,12 +33,19 @@ import {
   agentVoiceChargeDurationMs,
   agentVoiceFileExtension,
   agentVoiceSpeechCharge,
+  agentVoiceSttIsLive,
+  agentVoiceSttRequestHints,
+  agentVoiceSttTokensPerSecond,
+  agentVoiceSttTurnDetection,
   agentVoiceTranscriptionCharge,
+  AGENT_VOICE_STT_CONTEXT,
+  buildAgentVoiceSttHints,
   buildAgentVoiceVocabulary,
   cleanAgentVoiceTranscript,
   isAgentVoiceEcho,
   isImplausibleAgentVoiceTranscript,
   normalizeAgentSpeechText,
+  type AgentVoiceSttHints,
 } from '../voice/agentVoiceText';
 
 type Json = Record<string, unknown>;
@@ -67,15 +75,15 @@ function wav(ms: number): Buffer {
 class StubVoice implements AgentVoiceProvider {
   readonly name = 'stub';
   transcript = 'Find me a game tomorrow evening';
-  /** What the model writes when it is given a prompt (an answer instead of the transcript); null = `transcript`. */
+  /** What the model writes when it is given hints (an answer instead of the transcript); null = `transcript`. */
   promptedTranscript: string | null = null;
   fail = false;
-  readonly transcribeCalls: { mimeType: string; filename: string; prompt: string; model: string; bytes: number }[] = [];
+  readonly transcribeCalls: { mimeType: string; filename: string; hints: AgentVoiceSttHints | null; model: string; bytes: number }[] = [];
   readonly speakCalls: { text: string; model: string; voice: string }[] = [];
   async transcribe(input: Parameters<AgentVoiceProvider['transcribe']>[0]) {
     if (this.fail) throw Object.assign(new Error('upstream down'), { status: 500 });
-    this.transcribeCalls.push({ mimeType: input.mimeType, filename: input.filename, prompt: input.prompt, model: input.model, bytes: input.audio.length });
-    return input.prompt && this.promptedTranscript != null ? this.promptedTranscript : this.transcript;
+    this.transcribeCalls.push({ mimeType: input.mimeType, filename: input.filename, hints: input.hints, model: input.model, bytes: input.audio.length });
+    return input.hints && this.promptedTranscript != null ? this.promptedTranscript : this.transcript;
   }
   async speak(input: Parameters<AgentVoiceProvider['speak']>[0]) {
     if (this.fail) throw new Error('upstream down');
@@ -127,13 +135,47 @@ function pureCases(): void {
   assert.equal(agentVoiceTranscriptionCharge(1500, 20), 40);
   assert.equal(agentVoiceSpeechCharge('hello', 2), 10);
 
-  // Vocabulary: a "transcribe, never answer" instruction (a bare word list made the model answer
-  // spoken requests: "Tell me about padel rules…" came back as an answer), then the words, deduped, capped.
-  const vocabulary = buildAgentVoiceVocabulary({ firstName: 'Ilya', clubNames: ['Padel Arena', 'padel arena', ' X  Club '] });
-  assert.ok(/^Verbatim transcript\b.*never answer it\./.test(vocabulary), vocabulary);
-  assert.ok(vocabulary.endsWith(': Bandeja, padel, pickleball, Ilya, Padel Arena, X Club.'), vocabulary);
-  const long = buildAgentVoiceVocabulary({ firstName: null, clubNames: Array.from({ length: 200 }, (_, i) => `Club number ${i}`) });
+  // Charge per started second by the STT model's price ($15 per 1M equiv.); the env override wins.
+  assert.equal(agentVoiceSttTokensPerSecond('gpt-transcribe', null), 5);
+  assert.equal(agentVoiceSttTokensPerSecond('gpt-live-transcribe', null), 19);
+  assert.equal(agentVoiceSttTokensPerSecond('gpt-4o-transcribe', null), 7);
+  assert.equal(agentVoiceSttTokensPerSecond('gpt-4o-mini-transcribe', null), 3);
+  assert.equal(agentVoiceSttTokensPerSecond('some-new-model', null), 19, 'unknown = the priciest');
+  assert.equal(agentVoiceSttTokensPerSecond('gpt-transcribe', 20), 20);
+  assert.equal(agentVoiceSttTokensPerSecond('gpt-transcribe', 0), 0);
+
+  // Hints: keywords deduped, one line, no < >; languages = locale, profile language, English,
+  // supported codes only (an unsupported one would fail the whole request).
+  const hints = buildAgentVoiceSttHints({
+    firstName: 'Ilya',
+    clubNames: ['Padel Arena', 'padel arena', ' X \n Club ', '<Bad> Club', ''],
+    locales: ['ru-RU', 'auto'],
+  });
+  assert.deepEqual(hints.keywords, ['Bandeja', 'padel', 'pickleball', 'Ilya', 'Padel Arena', 'X Club', 'Bad Club']);
+  assert.deepEqual(hints.languages, ['ru', 'en']);
+  assert.deepEqual(buildAgentVoiceSttHints({ firstName: null, clubNames: [], locales: ['es', 'sr', 'xx', null] }).languages, ['es', 'sr', 'en']);
+
+  // Per model family: gpt-transcribe / gpt-live-transcribe get context + keywords + languages
+  // (no "never answer" instruction, no singular `language`); older models the vocabulary prompt.
+  const native = agentVoiceSttRequestHints('gpt-transcribe', hints);
+  assert.deepEqual(native, { prompt: AGENT_VOICE_STT_CONTEXT, keywords: hints.keywords, languages: ['ru', 'en'] });
+  assert.ok(!/answer/i.test(AGENT_VOICE_STT_CONTEXT));
+  assert.deepEqual(agentVoiceSttRequestHints('gpt-live-transcribe', hints), native);
+  assert.deepEqual(agentVoiceSttRequestHints('gpt-transcribe', null), {}, 'answer-guard retry: no hints');
+  const legacy = agentVoiceSttRequestHints('gpt-4o-mini-transcribe', hints);
+  assert.deepEqual(Object.keys(legacy), ['prompt'], 'older models: prompt only');
+  // A "transcribe, never answer" instruction (a bare word list made gpt-4o(-mini)-transcribe answer
+  // spoken requests: "Tell me about padel rules…" came back as an answer), then the words, capped.
+  assert.ok(/^Verbatim transcript\b.*never answer it\./.test(legacy.prompt ?? ''), legacy.prompt);
+  assert.ok(legacy.prompt?.endsWith(': Bandeja, padel, pickleball, Ilya, Padel Arena, X Club, Bad Club.'), legacy.prompt);
+  const long = buildAgentVoiceVocabulary(Array.from({ length: 200 }, (_, i) => `Club number ${i}`));
   assert.ok(long.slice(long.indexOf(': ') + 2).length <= 701, 'word list capped');
+
+  // VAD-less streaming models always get `none` (the API refuses provider VAD for them).
+  assert.equal(agentVoiceSttIsLive('gpt-live-transcribe'), true);
+  assert.equal(agentVoiceSttIsLive('gpt-transcribe'), false);
+  assert.equal(agentVoiceSttTurnDetection('gpt-live-transcribe', 'semantic_vad'), 'none');
+  assert.equal(agentVoiceSttTurnDetection('gpt-transcribe', 'semantic_vad'), 'semantic_vad');
 
   // A transcript longer than its audio could hold is the model answering, not transcribing.
   const answer =
@@ -177,7 +219,7 @@ void (async () => {
   const transcribe = async (userId: string | null, body: Buffer, contentType: string, query = '') => {
     const res = await fetch(`${base}/voice/transcriptions${query}`, {
       method: 'POST',
-      headers: { ...(userId ? auth(userId) : {}), 'Content-Type': contentType },
+      headers: { ...(userId ? auth(userId) : {}), 'Content-Type': contentType, 'X-App-Locale': 'es' },
       body: new Uint8Array(body),
     });
     const text = await res.text();
@@ -202,12 +244,15 @@ void (async () => {
     assert.deepEqual(res.body.data, { text: 'Find me a game tomorrow evening', durationMs: 1500 }, 'container duration wins over the client value');
     assert.equal(stub.transcribeCalls.at(-1)?.filename, 'speech.wav');
     assert.equal(stub.transcribeCalls.at(-1)?.mimeType, 'audio/wav');
-    assert.equal(stub.transcribeCalls.at(-1)?.model, 'gpt-4o-mini-transcribe');
-    assert.ok(stub.transcribeCalls.at(-1)?.prompt.includes('never answer it. Words that may come up: Bandeja, padel'), 'vocabulary prompt sent');
+    assert.equal(stub.transcribeCalls.at(-1)?.model, 'gpt-transcribe');
+    assert.deepEqual(stub.transcribeCalls.at(-1)?.hints?.keywords.slice(0, 3), ['Bandeja', 'padel', 'pickleball'], 'keyword hints sent');
+    assert.equal(stub.transcribeCalls.at(-1)?.hints?.languages[0], 'es', 'app locale first');
+    assert.ok(stub.transcribeCalls.at(-1)?.hints?.languages.includes('en'));
 
     const sttRows = await prisma.llmUsageLog.findMany({ where: { userId: owner.userId, reason: LLM_REASON.AGENT_VOICE_TRANSCRIPTION } });
     assert.equal(sttRows.length, 1);
-    assert.equal(sttRows[0].inputTokens, 40, '2 started seconds × 20');
+    assert.equal(sttRows[0].model, 'gpt-transcribe');
+    assert.equal(sttRows[0].inputTokens, 10, '2 started seconds × 5 (gpt-transcribe)');
     assert.ok(!sttRows[0].output.includes('tomorrow') && !sttRows[0].input.includes('tomorrow'), 'no transcript stored');
 
     // WebM without a duration: the client's measure is charged.
@@ -218,7 +263,7 @@ void (async () => {
     assert.equal(stub.transcribeCalls.at(-1)?.filename, 'speech.webm');
     stub.transcript = 'Find me a game tomorrow evening';
 
-    // The model answered the spoken request (far more text than 1.5 s holds): retried without the prompt.
+    // The model answered the spoken request (far more text than 1.5 s holds): retried without hints.
     stub.promptedTranscript =
       'Padel is a racket sport that combines elements of tennis and squash. It is typically played in doubles on an enclosed court.';
     let calls = stub.transcribeCalls.length;
@@ -226,11 +271,11 @@ void (async () => {
     assert.equal(res.status, 200, JSON.stringify(res.body));
     assert.equal((res.body.data as Json).text, 'Find me a game tomorrow evening', 'the transcript, not the answer');
     assert.deepEqual(
-      stub.transcribeCalls.slice(calls).map((c) => Boolean(c.prompt)),
+      stub.transcribeCalls.slice(calls).map((c) => Boolean(c.hints)),
       [true, false],
-      'second call without the prompt',
+      'second call without hints',
     );
-    // Still an answer without the prompt: nothing usable.
+    // Still an answer without hints: nothing usable.
     stub.transcript = stub.promptedTranscript;
     calls = stub.transcribeCalls.length;
     res = await transcribe(owner.userId, wav(1500), 'audio/wav');

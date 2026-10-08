@@ -6,6 +6,7 @@
  * `setAgentVoiceProviderForTests`.
  */
 import OpenAI from 'openai';
+import type { TranscriptionCreateParamsNonStreaming } from 'openai/resources/audio/transcriptions';
 import { parseBuffer } from 'music-metadata';
 import {
   AGENT_VOICE_MAX_AUDIO_BYTES,
@@ -23,9 +24,12 @@ import {
   agentVoiceChargeDurationMs,
   agentVoiceFileExtension,
   agentVoiceSpeechCharge,
+  agentVoiceSttRequestHints,
+  agentVoiceSttTokensPerSecond,
   agentVoiceTranscriptionCharge,
-  buildAgentVoiceVocabulary,
+  buildAgentVoiceSttHints,
   cleanAgentVoiceTranscript,
+  type AgentVoiceSttHints,
   isImplausibleAgentVoiceTranscript,
   normalizeAgentSpeechText,
 } from './agentVoiceText';
@@ -36,7 +40,8 @@ export interface AgentVoiceProvider {
     audio: Buffer;
     mimeType: string;
     filename: string;
-    prompt: string;
+    /** Vocabulary / language hints, sent in the model's shape; null = none (answer-guard retry). */
+    hints: AgentVoiceSttHints | null;
     model: string;
     signal: AbortSignal;
   }): Promise<string>;
@@ -56,12 +61,12 @@ function createOpenAiVoiceProvider(apiKey: string): AgentVoiceProvider {
   const client = new OpenAI({ apiKey, maxRetries: 1 });
   return {
     name: 'openai',
-    async transcribe({ audio, mimeType, filename, prompt, model, signal }) {
+    async transcribe({ audio, mimeType, filename, hints, model, signal }) {
       const file = new File([new Uint8Array(audio)], filename, { type: mimeType });
-      const res = await client.audio.transcriptions.create(
-        { file, model, response_format: 'json', ...(prompt ? { prompt } : {}) },
-        { signal },
-      );
+      // `keywords` / `languages` (gpt-transcribe) aren't in the SDK types yet; the multipart body
+      // sends arrays as `keywords[]` / `languages[]`, as the API expects.
+      const params = { file, model, response_format: 'json', ...agentVoiceSttRequestHints(model, hints) } as TranscriptionCreateParamsNonStreaming<'json'>;
+      const res = await client.audio.transcriptions.create(params, { signal });
       return typeof res.text === 'string' ? res.text : '';
     },
     async speak({ text, model, voice, instructions, signal }) {
@@ -148,9 +153,13 @@ function providerFailure(kind: 'transcribe' | 'speak', userId: string, error: un
   return agentVoiceError(503, 'VOICE_UNAVAILABLE', 'Voice is temporarily unavailable. Please try again.');
 }
 
-/** Transcription vocabulary prompt for a user (also the v2 realtime session's prompt). */
-export async function vocabularyFor(userId: string): Promise<string> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, currentCityId: true } });
+/**
+ * Transcription hints for a user (v1 and the v2 session): keywords from their first name and
+ * home-city clubs, languages from the app locale (`X-App-Locale` / `voice:start`) and their
+ * profile language.
+ */
+export async function sttHintsFor(userId: string, locale: string | null): Promise<AgentVoiceSttHints> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, currentCityId: true, language: true } });
   const clubs = user?.currentCityId
     ? await prisma.club.findMany({
         where: { cityId: user.currentCityId, isActive: true },
@@ -159,7 +168,11 @@ export async function vocabularyFor(userId: string): Promise<string> {
         take: CLUB_VOCABULARY_LIMIT,
       })
     : [];
-  return buildAgentVoiceVocabulary({ firstName: user?.firstName ?? null, clubNames: clubs.map((c) => c.name) });
+  return buildAgentVoiceSttHints({
+    firstName: user?.firstName ?? null,
+    clubNames: clubs.map((c) => c.name),
+    locales: [locale, user?.language],
+  });
 }
 
 export async function transcribeAgentVoice(input: {
@@ -168,6 +181,8 @@ export async function transcribeAgentVoice(input: {
   mimeType: string;
   /** `X-Audio-Duration-Ms` from the app (charge fallback when the container has no duration). */
   clientDurationMs: number | null;
+  /** `X-App-Locale` (a language hint). */
+  locale?: string | null;
   now?: Date;
 }): Promise<AgentVoiceTranscriptionDto> {
   const voiceConfig = config.agentVoice;
@@ -186,13 +201,13 @@ export async function transcribeAgentVoice(input: {
   const durationMs = agentVoiceChargeDurationMs({ parsedMs, clientMs: input.clientDurationMs, bytes: input.audio.length });
   await assertAgentBudget(input.userId, config.agent, now);
 
-  const prompt = await vocabularyFor(input.userId);
-  const run = (withPrompt: string) =>
+  const hints = await sttHintsFor(input.userId, input.locale ?? null);
+  const run = (withHints: AgentVoiceSttHints | null) =>
     provider.transcribe({
       audio: input.audio,
       mimeType,
       filename: `speech.${extension}`,
-      prompt: withPrompt,
+      hints: withHints,
       model: voiceConfig.sttModel,
       signal: AbortSignal.timeout(voiceConfig.timeoutMs),
     });
@@ -200,11 +215,11 @@ export async function transcribeAgentVoice(input: {
   const audioMs = parsedMs ?? input.clientDurationMs;
   let raw: string;
   try {
-    raw = await run(prompt);
-    // The model wrote more than the audio holds (it answered the request): once more without the prompt.
+    raw = await run(hints);
+    // The model wrote more than the audio holds (it answered the request): once more without hints.
     if (isImplausibleAgentVoiceTranscript(raw, audioMs)) {
-      console.warn('[agent-voice] implausible transcript, retrying without prompt', { userId: input.userId, chars: raw.length, audioMs });
-      raw = await run('');
+      console.warn('[agent-voice] implausible transcript, retrying without hints', { userId: input.userId, chars: raw.length, audioMs });
+      raw = await run(null);
       if (isImplausibleAgentVoiceTranscript(raw, audioMs)) raw = '';
     }
   } catch (error) {
@@ -218,7 +233,7 @@ export async function transcribeAgentVoice(input: {
     model: voiceConfig.sttModel,
     input: { bytes: input.audio.length, mimeType, durationMs },
     output: { chars: text.length },
-    charge: agentVoiceTranscriptionCharge(durationMs, voiceConfig.sttTokensPerSecond),
+    charge: agentVoiceTranscriptionCharge(durationMs, agentVoiceSttTokensPerSecond(voiceConfig.sttModel, voiceConfig.sttTokensPerSecond)),
     now,
   });
   return { text, durationMs };

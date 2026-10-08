@@ -4,7 +4,9 @@
  * - **Streaming transcription**: an OpenAI Realtime transcription session over WebSocket
  *   (`session.update` with `session.type: 'transcription'`, PCM16 24 kHz `input_audio_buffer.append`,
  *   `semantic_vad` / `server_vad` turn detection, `…input_audio_transcription.delta/completed`).
- *   With `turnDetection: 'none'` (VAD-less models) a server-side energy VAD commits each turn.
+ *   With `turnDetection: 'none'` (and always for VAD-less models such as `gpt-live-transcribe`) a
+ *   server-side energy VAD commits each turn. Hints go in the model's shape
+ *   (`agentVoiceSttRequestHints`: keywords + languages + context, or the older models' prompt).
  * - **Fallback**: when the realtime connection fails (or drops), a server-side energy VAD
  *   segments the PCM and each utterance goes to the v1 batch transcription as WAV. The socket
  *   contract does not change; there are just no partial captions.
@@ -17,8 +19,9 @@ import OpenAI from 'openai';
 import { WebSocket } from 'undici';
 import { AGENT_VOICE_INPUT_SAMPLE_RATE } from '@bandeja/shared/agentVoiceRealtime';
 import { config } from '../../../../config/env';
-import type { AgentVoiceRealtimeEagerness, AgentVoiceRealtimeTurnDetection } from '../../../../config/agentVoiceEnv';
+import type { AgentVoiceRealtimeEagerness, AgentVoiceRealtimeSttDelay, AgentVoiceRealtimeTurnDetection } from '../../../../config/agentVoiceEnv';
 import { resolveProvider } from '../agentVoice.service';
+import { agentVoiceSttIsLive, agentVoiceSttRequestHints, agentVoiceSttTurnDetection, type AgentVoiceSttHints } from '../agentVoiceText';
 import { EnergyVad } from './agentVoiceEnergyVad';
 import { pcmBytesPerMs, pcmDurationMs, pcmLevelDb, pcmToWav } from './agentVoicePcm';
 
@@ -57,9 +60,12 @@ export interface AgentVoiceSttSession {
 export type AgentVoiceSttOptions = {
   model: string;
   url: string;
-  /** Vocabulary prompt (`buildAgentVoiceVocabulary`). */
-  prompt: string;
+  /** Vocabulary / language hints (`buildAgentVoiceSttHints`); null = none. */
+  hints: AgentVoiceSttHints | null;
+  /** Configured turn detection; VAD-less models get `none` whatever is set. */
   turnDetection: AgentVoiceRealtimeTurnDetection;
+  /** `delay` of streaming models (`gpt-live-transcribe`); not sent to others. */
+  delay: AgentVoiceRealtimeSttDelay;
   eagerness: AgentVoiceRealtimeEagerness;
   silenceMs: number;
   timeoutMs: number;
@@ -71,8 +77,8 @@ export interface AgentVoiceRealtimeSttProvider {
   open(options: AgentVoiceSttOptions, events: AgentVoiceSttEvents): Promise<AgentVoiceSttSession>;
 }
 
-/** Batch transcription of one WAV utterance (the v1 provider). */
-export type AgentVoiceBatchTranscribe = (input: { wav: Buffer; prompt: string; signal: AbortSignal }) => Promise<string>;
+/** Batch transcription of one WAV utterance (the v1 provider); null hints = none (answer-guard retry). */
+export type AgentVoiceBatchTranscribe = (input: { wav: Buffer; hints: AgentVoiceSttHints | null; signal: AbortSignal }) => Promise<string>;
 
 // ---------------------------------------------------------------- speech
 
@@ -154,7 +160,7 @@ class EnergySegmenter {
  */
 export function createBatchSttSession(input: {
   batch: NonNullable<AgentVoiceRealtimeProviders['batch']>;
-  prompt: string;
+  hints: AgentVoiceSttHints | null;
   silenceMs: number;
   timeoutMs: number;
   events: AgentVoiceSttEvents;
@@ -193,7 +199,7 @@ export function createBatchSttSession(input: {
           try {
             text = await input.batch.transcribe({
               wav: pcmToWav(pcm, AGENT_VOICE_INPUT_SAMPLE_RATE),
-              prompt: input.prompt,
+              hints: input.hints,
               signal: AbortSignal.any([abort.signal, AbortSignal.timeout(input.timeoutMs)]),
             });
           } catch (error) {
@@ -248,7 +254,16 @@ type RealtimeServerEvent = {
   error?: { message?: string; code?: string; type?: string };
 };
 
-/** Audio kept to re-transcribe a turn without the prompt (`AgentVoiceTurnAudio.pcm`). */
+/**
+ * Streaming models (`gpt-live-transcribe`) get silence after a commit until its transcript is
+ * in (at most this long): without more audio their final stalled for 6–10 s more often, now and
+ * then cut short (measured 2026-10, same run: 3 of 30 turns slow without, 0 of 30 with; it
+ * still stalls at times). Billed like any audio sent.
+ */
+const POST_COMMIT_PAD_MAX_MS = 3_000;
+const POST_COMMIT_PAD_CHUNK_MS = 100;
+
+/** Audio kept to re-transcribe a turn without hints (`AgentVoiceTurnAudio.pcm`). */
 const TURN_AUDIO_HISTORY_MS = 30_000;
 
 /** The last `TURN_AUDIO_HISTORY_MS` of appended PCM, addressed by ms since the first append. */
@@ -286,8 +301,9 @@ export class PcmHistory {
 }
 
 function turnDetectionConfig(options: AgentVoiceSttOptions): Record<string, unknown> | null {
-  if (options.turnDetection === 'none') return null;
-  if (options.turnDetection === 'server_vad') {
+  const turnDetection = agentVoiceSttTurnDetection(options.model, options.turnDetection);
+  if (turnDetection === 'none') return null;
+  if (turnDetection === 'server_vad') {
     return { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: options.silenceMs };
   }
   return { type: 'semantic_vad', eagerness: options.eagerness };
@@ -301,7 +317,11 @@ export function openAiTranscriptionSessionUpdate(options: AgentVoiceSttOptions):
       audio: {
         input: {
           format: { type: 'audio/pcm', rate: AGENT_VOICE_INPUT_SAMPLE_RATE },
-          transcription: { model: options.model, ...(options.prompt ? { prompt: options.prompt } : {}) },
+          transcription: {
+            model: options.model,
+            ...agentVoiceSttRequestHints(options.model, options.hints),
+            ...(agentVoiceSttIsLive(options.model) ? { delay: options.delay } : {}),
+          },
           turn_detection: turnDetectionConfig(options),
           noise_reduction: { type: 'near_field' },
         },
@@ -325,12 +345,36 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
         /** Energy-VAD turns committed, waiting for the provider's `committed` item id. */
         const committing: { startMs: number; endMs: number }[] = [];
         let segmentStartMs = 0;
+        const turnDetection = agentVoiceSttTurnDetection(options.model, options.turnDetection);
+        const live = agentVoiceSttIsLive(options.model);
+        /** Committed turns whose transcript hasn't arrived (live models: pad meanwhile). */
+        let awaitingFinals = 0;
+        let padTimer: ReturnType<typeof setInterval> | null = null;
+        let padStartedAt = 0;
+        const stopPadding = () => {
+          if (padTimer) clearInterval(padTimer);
+          padTimer = null;
+        };
+        const padAfterCommit = () => {
+          if (!live) return;
+          padStartedAt = Date.now();
+          if (padTimer) return;
+          const chunk = Buffer.alloc(POST_COMMIT_PAD_CHUNK_MS * pcmBytesPerMs(AGENT_VOICE_INPUT_SAMPLE_RATE));
+          padTimer = setInterval(() => {
+            if (closed || awaitingFinals === 0 || segmenter?.speaking || Date.now() - padStartedAt > POST_COMMIT_PAD_MAX_MS) {
+              stopPadding();
+              return;
+            }
+            appendRaw(chunk);
+          }, POST_COMMIT_PAD_CHUNK_MS);
+          padTimer.unref?.();
+        };
         const send = (event: Record<string, unknown>) => {
           if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(event));
         };
         // VAD-less models: the server energy VAD decides turns and commits them.
         const segmenter =
-          options.turnDetection === 'none'
+          turnDetection === 'none'
             ? new EnergySegmenter(
                 {
                   start(preRoll) {
@@ -343,6 +387,8 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
                     events.speechStopped();
                     committing.push({ startMs: segmentStartMs, endMs: history.totalMs });
                     send({ type: 'input_audio_buffer.commit' });
+                    awaitingFinals += 1;
+                    padAfterCommit();
                   },
                   discard: () => send({ type: 'input_audio_buffer.clear' }),
                 },
@@ -358,6 +404,7 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
         timer.unref?.();
         const fail = (error: Error) => {
           clearTimeout(timer);
+          stopPadding();
           if (closed) return;
           closed = true;
           try {
@@ -388,6 +435,7 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
           },
           close() {
             clearTimeout(timer);
+            stopPadding();
             if (closed) return;
             closed = true;
             try {
@@ -437,6 +485,7 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
               break;
             case 'conversation.item.input_audio_transcription.completed': {
               if (!event.item_id) break;
+              if (awaitingFinals > 0) awaitingFinals -= 1;
               const span = spans.get(event.item_id);
               spans.delete(event.item_id);
               const audio =
@@ -448,6 +497,7 @@ function createOpenAiRealtimeSttProvider(apiKey: string): AgentVoiceRealtimeSttP
             }
             case 'conversation.item.input_audio_transcription.failed':
               console.error('[agent-voice] realtime transcription item failed', { code: event.error?.code, message: event.error?.message });
+              if (awaitingFinals > 0) awaitingFinals -= 1;
               if (event.item_id) {
                 spans.delete(event.item_id);
                 events.completed(event.item_id, '');
@@ -497,13 +547,13 @@ const v1Batch: NonNullable<AgentVoiceRealtimeProviders['batch']> = {
   get model() {
     return config.agentVoice.sttModel;
   },
-  transcribe: ({ wav, prompt, signal }) => {
+  transcribe: ({ wav, hints, signal }) => {
     const voiceConfig = config.agentVoice;
     return resolveProvider(voiceConfig).transcribe({
       audio: wav,
       mimeType: 'audio/wav',
       filename: 'speech.wav',
-      prompt,
+      hints,
       model: voiceConfig.sttModel,
       signal,
     });

@@ -38,8 +38,8 @@ import { getRedisClient, getRedisSubscriber } from '../../../redis/redisClient';
 import { parseAgentClientCaps } from '../../clientExecution/clientCaps';
 import { assertAgentBudget } from '../../agentGuards';
 import { AgentMessageRateStore, nodeRedisAgentRatePort, type AgentRateRedisPort } from '../../agentMessageRateLimit';
-import { recordVoiceUsage, vocabularyFor } from '../agentVoice.service';
-import { agentVoiceTranscriptionCharge } from '../agentVoiceText';
+import { recordVoiceUsage, sttHintsFor } from '../agentVoice.service';
+import { agentVoiceSttTokensPerSecond, agentVoiceTranscriptionCharge } from '../agentVoiceText';
 import { resolveAgentVoiceRealtimeProviders } from './agentVoiceRealtimeProviders';
 import {
   AgentVoiceRealtimeSession,
@@ -279,7 +279,7 @@ async function recordUsage(userId: string, sessionId: string, usage: AgentVoiceU
     model: usage.model,
     input: { durationMs, v: 2, sessionId },
     output: {},
-    charge: agentVoiceTranscriptionCharge(durationMs, voiceConfig.sttTokensPerSecond),
+    charge: agentVoiceTranscriptionCharge(durationMs, agentVoiceSttTokensPerSecond(usage.model, voiceConfig.sttTokensPerSecond)),
     now: new Date(),
   });
 }
@@ -344,7 +344,7 @@ async function startSession(socket: VoiceSocket, payload: unknown): Promise<Agen
       const target = links.get(sessionId)?.socket ?? socket;
       (target.emit as (event: string, data: unknown) => boolean)(event, data);
     },
-    vocabulary: () => vocabularyFor(userId),
+    vocabulary: () => sttHintsFor(userId, parsed.data.locale?.trim() || null),
     checkBudget: () => budgetError(userId, isAdmin),
     recordUsage: (usage) => recordUsage(userId, sessionId, usage),
     classifyError: classifyAgentVoiceError,

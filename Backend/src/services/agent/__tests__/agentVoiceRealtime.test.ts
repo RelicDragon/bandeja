@@ -1,7 +1,8 @@
 /**
  * Agent voice v2 (`/agent-voice`, docs/domains/agent.md § Voice) without DB, provider or model:
  * - pure helpers: chunker raw offsets, heard offset / truncation, PCM rechunking, WAV, energy
- *   VAD, the OpenAI transcription session config, the confirm prompt, error classification;
+ *   VAD, the OpenAI transcription session config (hints per model family, VAD-less live
+ *   models), the confirm prompt, error classification, config defaults;
  * - `AgentVoiceRealtimeSession` with a fake transcription provider, a fake streaming TTS and a
  *   fake run port: a turn → voice run, ordered audio with two sentences in flight, fillers,
  *   confirm (mic ignored, follow-run, resume), barge-in (cancel + cut to what was heard), echo
@@ -9,7 +10,7 @@
  *   budget, idle, silence padded only mid-speech (billed seconds), suspend / resume after a
  *   dropped link, the batch fallback (energy-VAD
  *   segmentation + WAV), usage records; transcript guards (an answer-length "transcript" is
- *   re-transcribed without the prompt, speaker echo of the reply is dropped).
+ *   re-transcribed without hints, speaker echo of the reply is dropped).
  */
 import assert from 'node:assert/strict';
 import { SpeechChunker } from '@bandeja/shared/agentVoiceSpeech';
@@ -17,6 +18,7 @@ import type { AgentStreamEvent } from '@bandeja/shared/agentContract';
 import { resolveAgentVoiceEnvConfig, type AgentVoiceEnvConfig } from '../../../config/agentVoiceEnv';
 import { ApiError } from '../../../utils/ApiError';
 import { agentVoiceConfirmPrompt } from '../i18n/agentVoiceI18n';
+import { AGENT_VOICE_STT_CONTEXT } from '../voice/agentVoiceText';
 import { EnergyVad } from '../voice/realtime/agentVoiceEnergyVad';
 import { heardReplyOffset, truncateHeardText } from '../voice/realtime/agentVoiceHeard';
 import type { AgentRateRedisPort } from '../agentMessageRateLimit';
@@ -185,7 +187,7 @@ function harness(options: { config?: (c: AgentVoiceEnvConfig) => AgentVoiceEnvCo
     providers: { stt, tts, batch: options.batch ?? null },
     runs,
     emit: (event, payload) => emitted.push({ event, payload: payload as unknown as Record<string, unknown> }),
-    vocabulary: async () => 'Bandeja, padel',
+    vocabulary: async () => ({ keywords: ['Bandeja', 'padel'], languages: ['en'] }),
     checkBudget: async () => options.budget?.() ?? null,
     recordUsage: async (entry) => {
       usage.push(entry);
@@ -262,17 +264,48 @@ function pureCases(): void {
   assert.deepEqual(run(900, -70), ['end']);
   assert.deepEqual([...run(120, -20), ...run(900, -70)], ['start', 'discard']);
 
-  // OpenAI transcription session config (GA shape).
-  const base: AgentVoiceSttOptions = { model: 'gpt-4o-transcribe', url: 'wss://x', prompt: 'Bandeja', turnDetection: 'semantic_vad', eagerness: 'high', silenceMs: 500, timeoutMs: 1000 };
-  const update = openAiTranscriptionSessionUpdate(base) as { type: string; session: { type: string; audio: { input: Record<string, unknown> } } };
+  // OpenAI transcription session config (GA shape), hints in the model's shape.
+  const hints = { keywords: ['Bandeja', 'padel'], languages: ['ru', 'en'] };
+  const base: AgentVoiceSttOptions = {
+    model: 'gpt-transcribe',
+    url: 'wss://x',
+    hints,
+    turnDetection: 'semantic_vad',
+    delay: 'low',
+    eagerness: 'high',
+    silenceMs: 500,
+    timeoutMs: 1000,
+  };
+  type SessionUpdate = { type: string; session: { type: string; audio: { input: Record<string, unknown> } } };
+  const update = openAiTranscriptionSessionUpdate(base) as SessionUpdate;
   assert.equal(update.type, 'session.update');
   assert.equal(update.session.type, 'transcription');
   assert.deepEqual(update.session.audio.input.format, { type: 'audio/pcm', rate: 24_000 });
-  assert.deepEqual(update.session.audio.input.transcription, { model: 'gpt-4o-transcribe', prompt: 'Bandeja' });
+  assert.deepEqual(update.session.audio.input.transcription, {
+    model: 'gpt-transcribe',
+    prompt: AGENT_VOICE_STT_CONTEXT,
+    keywords: ['Bandeja', 'padel'],
+    languages: ['ru', 'en'],
+  });
   assert.deepEqual(update.session.audio.input.turn_detection, { type: 'semantic_vad', eagerness: 'high' });
-  const serverVad = openAiTranscriptionSessionUpdate({ ...base, turnDetection: 'server_vad' }) as typeof update;
+  const serverVad = openAiTranscriptionSessionUpdate({ ...base, turnDetection: 'server_vad' }) as SessionUpdate;
   assert.equal((serverVad.session.audio.input.turn_detection as { silence_duration_ms: number }).silence_duration_ms, 500);
-  assert.equal((openAiTranscriptionSessionUpdate({ ...base, turnDetection: 'none' }) as typeof update).session.audio.input.turn_detection, null);
+  assert.equal((openAiTranscriptionSessionUpdate({ ...base, turnDetection: 'none' }) as SessionUpdate).session.audio.input.turn_detection, null);
+  // gpt-live-transcribe: no provider VAD whatever is configured, `delay` sent.
+  const live = openAiTranscriptionSessionUpdate({ ...base, model: 'gpt-live-transcribe' }) as SessionUpdate;
+  assert.equal(live.session.audio.input.turn_detection, null);
+  assert.deepEqual(live.session.audio.input.transcription, {
+    model: 'gpt-live-transcribe',
+    prompt: AGENT_VOICE_STT_CONTEXT,
+    keywords: ['Bandeja', 'padel'],
+    languages: ['ru', 'en'],
+    delay: 'low',
+  });
+  // Older models: the vocabulary prompt only (no keywords / languages / delay).
+  const old = openAiTranscriptionSessionUpdate({ ...base, model: 'gpt-4o-transcribe' }) as SessionUpdate;
+  const oldTranscription = old.session.audio.input.transcription as Record<string, unknown>;
+  assert.deepEqual(Object.keys(oldTranscription), ['model', 'prompt']);
+  assert.ok(String(oldTranscription.prompt).endsWith('never answer it. Words that may come up: Bandeja, padel.'));
 
   // Spoken confirm prompt, localized.
   assert.equal(agentVoiceConfirmPrompt('en', 'Join "Sunday"'), 'Join "Sunday". Tap Confirm on the screen.');
@@ -291,8 +324,13 @@ function pureCases(): void {
   // Config defaults.
   const defaults = resolveAgentVoiceEnvConfig({}).realtime;
   assert.equal(defaults.enabled, true);
-  assert.equal(defaults.sttModel, 'gpt-4o-transcribe');
+  assert.equal(defaults.sttModel, 'gpt-transcribe');
   assert.equal(defaults.turnDetection, 'semantic_vad');
+  assert.equal(defaults.sttDelay, 'low');
+  assert.equal(resolveAgentVoiceEnvConfig({}).sttModel, 'gpt-transcribe');
+  assert.equal(resolveAgentVoiceEnvConfig({}).sttTokensPerSecond, null, 'charged by the model price');
+  assert.equal(resolveAgentVoiceEnvConfig({ AGENT_VOICE_STT_TOKENS_PER_SECOND: '20' }).sttTokensPerSecond, 20);
+  assert.equal(resolveAgentVoiceEnvConfig({ AGENT_VOICE_REALTIME_STT_MODEL: 'gpt-4o-transcribe' }).realtime.sttModel, 'gpt-4o-transcribe', 'env override');
   assert.equal(resolveAgentVoiceEnvConfig({ AGENT_VOICE_REALTIME_ENABLED: 'false' }).realtime.enabled, false);
   assert.equal(resolveAgentVoiceEnvConfig({ AGENT_VOICE_REALTIME_TURN_DETECTION: 'bogus' }).realtime.turnDetection, 'semantic_vad');
 }
@@ -335,8 +373,9 @@ async function turnAndOrderedSpeech(): Promise<void> {
   const h = harness();
   await h.session.start();
   assert.equal(h.lastPhase(), 'listening');
-  assert.equal(h.stt.options?.model, 'gpt-4o-transcribe');
-  assert.equal(h.stt.options?.prompt, 'Bandeja, padel', 'vocabulary prompt');
+  assert.equal(h.stt.options?.model, 'gpt-transcribe');
+  assert.deepEqual(h.stt.options?.hints, { keywords: ['Bandeja', 'padel'], languages: ['en'] }, 'transcription hints');
+  assert.equal(h.stt.options?.delay, 'low');
 
   await speak(h, 'Find me a game tomorrow', 'i1');
   assert.deepEqual(h.phases().slice(1, 3), ['hearing', 'thinking']);
@@ -809,13 +848,13 @@ async function transcriptGuards(): Promise<void> {
   const answer =
     'The rules of padel are designed to allow for fair play and competitive matches. A standard padel match is played by two teams of two players each. ' +
     'The game is scored similarly to tennis, with points awarded for winning rallies.';
-  const batchCalls: { prompt: string; bytes: number }[] = [];
+  const batchCalls: { hints: unknown; bytes: number }[] = [];
   const h = harness({
     batch: {
       name: 'fake-batch',
       model: 'gpt-4o-mini-transcribe',
-      transcribe: async ({ wav, prompt }) => {
-        batchCalls.push({ prompt, bytes: wav.length });
+      transcribe: async ({ wav, hints }) => {
+        batchCalls.push({ hints, bytes: wav.length });
         return question;
       },
     },
@@ -828,7 +867,7 @@ async function transcriptGuards(): Promise<void> {
   events.completed('q1', answer, { ms: 4400, pcm: pcm(4400, 2000) });
   await waitFor(() => h.runs.sends.length === 1, 'send after the re-transcription');
   assert.equal(h.runs.sends[0].text, question, 'the stored USER message is the transcript, not the answer');
-  assert.deepEqual(batchCalls.map((c) => c.prompt), [''], 're-transcribed once, without the prompt');
+  assert.deepEqual(batchCalls.map((c) => c.hints), [null], 're-transcribed once, without hints');
   assert.equal(batchCalls[0].bytes, 44 + 4400 * 48, 'the turn audio as WAV');
   const final = h.of('voice:caption').filter((e) => e.payload.final === true);
   assert.deepEqual(final.map((e) => e.payload.text), [question]);

@@ -5,7 +5,8 @@
  *   else's chat), VOICE_V2_UNAVAILABLE (flag off / no provider), BUDGET_EXCEEDED with retryAt;
  * - a spoken turn → stored USER message + `AgentRun.voice = true` → reply audio as binary
  *   `voice:audio-out` frames in order → `voice:audio-end` → listening after playback `done`;
- * - usage rows `agent_voice_realtime_transcription` (20 per started second sent) and
+ * - transcription hints from the user and `voice:start` locale; usage rows
+ *   `agent_voice_realtime_transcription` (5 per started second sent, gpt-transcribe) and
  *   `agent_voice_speech` (1 per spoken char), no transcript / text in them;
  * - barge-in: the run is cancelled and the stored reply cut to what was heard (+ "…");
  * - a second session of the same user ends the first (`reason: 'replaced'`);
@@ -325,7 +326,9 @@ void (async () => {
     assert.equal(ack.maxSessionMs, 30 * 60 * 1000);
     assert.equal(ack.idleMs, 60_000);
     await waitFor(() => c1.phases().includes('listening') && stt.events != null, 'listening');
-    assert.equal(stt.options?.model, 'gpt-4o-transcribe');
+    assert.equal(stt.options?.model, 'gpt-transcribe');
+    assert.deepEqual(stt.options?.hints?.keywords.slice(0, 3), ['Bandeja', 'padel', 'pickleball'], 'keyword hints');
+    assert.ok(stt.options?.hints?.languages.includes('en'), 'language hints');
 
     // 1.5 s of mic audio in 20 ms frames (binary).
     for (let i = 0; i < 75; i++) c1.emitBinary('voice:audio', Buffer.alloc(960, 1));
@@ -361,12 +364,12 @@ void (async () => {
     c1.emit('voice:playback', { turnId: turn.turnId, playedMs: 99_999, done: true });
     await waitFor(() => c1.phases().at(-1) === 'listening', 'listening after playback');
 
-    // Usage: realtime transcription (1.5 s → 2 started seconds × 20) and speech (1 per char).
+    // Usage: realtime transcription (1.5 s → 2 started seconds × 5, gpt-transcribe) and speech (1 per char).
     await sleep(100);
     const sttRows = await prisma.llmUsageLog.findMany({ where: { userId: owner.userId, reason: LLM_REASON.AGENT_VOICE_REALTIME_TRANSCRIPTION } });
     assert.equal(sttRows.length, 1);
-    assert.equal(sttRows[0].inputTokens, 40);
-    assert.equal(sttRows[0].model, 'gpt-4o-transcribe');
+    assert.equal(sttRows[0].inputTokens, 10);
+    assert.equal(sttRows[0].model, 'gpt-transcribe');
     const speechRows = await prisma.llmUsageLog.findMany({ where: { userId: owner.userId, reason: LLM_REASON.AGENT_VOICE_SPEECH } });
     assert.equal(speechRows.reduce((sum, row) => sum + (row.inputTokens ?? 0), 0), spoken.join('').length);
     for (const row of [...sttRows, ...speechRows]) {
