@@ -1,4 +1,5 @@
 import { EnergyVad, levelDb, type VadMode } from './energyVad';
+import type { PcmSink, ScheduledPcm } from './pcmStreamPlayer';
 import { framesToWavBlob } from './wavEncoder';
 
 /**
@@ -7,7 +8,10 @@ import { framesToWavBlob } from './wavEncoder';
  *
  * Capture runs through an AudioWorklet (ScriptProcessor fallback) in ~20 ms frames. A short
  * pre-roll ring keeps the audio from just before the VAD fired, so the first syllable is not
- * clipped. Utterances leave as 16 kHz WAV.
+ * clipped. Utterances leave as 16 kHz WAV (v1).
+ *
+ * Realtime voice (v2) uses the same engine in streaming mode: every mic frame goes to a frame
+ * sink (no utterances are recorded), and the reply is scheduled as PCM on the same context.
  */
 
 export type VoiceListenMode = 'off' | VadMode;
@@ -43,6 +47,33 @@ export interface VoiceEngine {
   /** 0..1 microphone and playback loudness, for the dock animation. */
   levels(): { input: number; output: number };
   stop(): void;
+}
+
+/** One mic frame at the context's rate, with its level (dBFS). */
+export type VoiceFrameSink = (frame: Float32Array, sampleRate: number, db: number) => void;
+
+/** The engine as the realtime session (v2) drives it; also hands over to v1 on fallback. */
+export interface RealtimeVoiceEngine extends VoiceEngine, PcmSink {
+  /** Replace the handlers of a started engine (v2 → v1 fallback keeps the unlocked context). */
+  setHandlers(handlers: VoiceEngineHandlers): void;
+  /** Streaming capture: every frame (in any listening mode) goes to `sink`; null = v1 utterances. */
+  setFrameSink(sink: VoiceFrameSink | null): void;
+}
+
+/**
+ * A started engine for a session that calls `start` itself (the v1 loop after a v2 fallback):
+ * `start` only rebinds the handlers, the mic and the unlocked context stay as they are.
+ */
+export function adoptStartedVoiceEngine(engine: RealtimeVoiceEngine): VoiceEngine {
+  engine.setFrameSink(null);
+  return {
+    start: async (handlers) => engine.setHandlers(handlers),
+    setListening: (mode) => engine.setListening(mode),
+    play: (audio) => engine.play(audio),
+    stopPlayback: () => engine.stopPlayback(),
+    levels: () => engine.levels(),
+    stop: () => engine.stop(),
+  };
 }
 
 const FRAME_MS = 20;
@@ -146,7 +177,7 @@ function startErrorKind(error: unknown): VoiceStartErrorKind {
   return 'denied';
 }
 
-export class BrowserVoiceEngine implements VoiceEngine {
+export class BrowserVoiceEngine implements RealtimeVoiceEngine {
   private ctx: AudioContext | null = null;
   private stream: MediaStream | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
@@ -165,6 +196,8 @@ export class BrowserVoiceEngine implements VoiceEngine {
   private finishPlaying: (() => void) | null = null;
   private playbackGen = 0;
   private stopped = false;
+  private frameSink: VoiceFrameSink | null = null;
+  private readonly streamNodes = new Set<AudioBufferSourceNode>();
 
   async start(handlers: VoiceEngineHandlers): Promise<void> {
     this.handlers = handlers;
@@ -212,6 +245,47 @@ export class BrowserVoiceEngine implements VoiceEngine {
     ctx.onstatechange = () => {
       const state = ctx.state as AudioContextState | 'interrupted';
       if (!this.stopped && (state === 'interrupted' || state === 'closed')) this.handlers?.onInterrupted();
+    };
+  }
+
+  setHandlers(handlers: VoiceEngineHandlers): void {
+    this.handlers = handlers;
+  }
+
+  setFrameSink(sink: VoiceFrameSink | null): void {
+    this.frameSink = sink;
+    this.utterance = null;
+  }
+
+  currentTime(): number {
+    return this.ctx?.currentTime ?? 0;
+  }
+
+  schedulePcm(samples: Float32Array, sampleRate: number, at: number): ScheduledPcm {
+    const ctx = this.ctx;
+    const out = this.outAnalyser;
+    if (!ctx || !out || this.stopped) return { stop: () => {} };
+    if (ctx.state !== 'running') void ctx.resume().catch(() => {});
+    const buffer = ctx.createBuffer(1, samples.length, sampleRate);
+    buffer.getChannelData(0).set(samples);
+    const node = ctx.createBufferSource();
+    node.buffer = buffer;
+    node.connect(out);
+    this.streamNodes.add(node);
+    node.onended = () => {
+      node.onended = null;
+      this.streamNodes.delete(node);
+    };
+    node.start(Math.max(at, ctx.currentTime));
+    return {
+      stop: () => {
+        this.streamNodes.delete(node);
+        try {
+          node.stop();
+        } catch {
+          /* not started / already ended */
+        }
+      },
     };
   }
 
@@ -281,7 +355,7 @@ export class BrowserVoiceEngine implements VoiceEngine {
 
   levels(): { input: number; output: number } {
     let output = 0;
-    if (this.outAnalyser && this.outData && this.playing) {
+    if (this.outAnalyser && this.outData && (this.playing || this.streamNodes.size > 0)) {
       this.outAnalyser.getFloatTimeDomainData(this.outData);
       output = dbToUnit(levelDb(this.outData));
     }
@@ -292,6 +366,15 @@ export class BrowserVoiceEngine implements VoiceEngine {
     if (this.stopped) return;
     this.stopped = true;
     this.stopPlayback();
+    for (const node of this.streamNodes) {
+      try {
+        node.stop();
+      } catch {
+        /* already ended */
+      }
+    }
+    this.streamNodes.clear();
+    this.frameSink = null;
     this.mode = 'off';
     this.utterance = null;
     try {
@@ -344,6 +427,7 @@ export class BrowserVoiceEngine implements VoiceEngine {
     const frameMs = (frame.length / sampleRate) * 1000;
     const db = levelDb(frame);
     this.inputLevel = dbToUnit(db);
+    this.frameSink?.(frame, sampleRate, db);
 
     this.preroll.push(frame);
     this.prerollMs += frameMs;
@@ -356,7 +440,8 @@ export class BrowserVoiceEngine implements VoiceEngine {
     if (this.utterance) this.utterance.push(frame);
     const event = this.vad.process(db, frameMs);
     if (event === 'start') {
-      this.utterance = [...this.preroll];
+      // Streaming mode: the server records the turn, only the VAD events matter here.
+      this.utterance = this.frameSink ? null : [...this.preroll];
       this.handlers?.onSpeechStart();
     } else if (event === 'discard') {
       this.utterance = null;
