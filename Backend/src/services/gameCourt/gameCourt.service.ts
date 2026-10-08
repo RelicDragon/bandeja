@@ -67,6 +67,29 @@ export function parseCourtSlotsBody(body: unknown): CourtSlotsBody {
 }
 
 
+/** A court set may not grow past the roster need / `courtSlotCount` (it may keep older extras). */
+async function assertCourtSetWithinCap(
+  db: Pick<Prisma.TransactionClient, 'game' | 'gameCourt'>,
+  gameId: string,
+  courtIds: readonly string[],
+): Promise<void> {
+  const [game, before] = await Promise.all([
+    db.game.findUnique({
+      where: { id: gameId },
+      select: { maxParticipants: true, playersPerMatch: true, sport: true, courtSlotCount: true },
+    }),
+    db.gameCourt.findMany({ where: { gameId }, select: { courtId: true } }),
+  ]);
+  if (!game) throw new ApiError(404, 'Game not found');
+  const rosterNeed = defaultCourtSlotCount({ maxParticipants: game.maxParticipants, playersPerMatch: playersPerMatchOf(game) });
+  const allowed = Math.max(rosterNeed, game.courtSlotCount ?? 0);
+  if (courtIds.length <= allowed) return;
+  const had = new Set(before.map((row) => row.courtId));
+  if (courtIds.length > before.length || courtIds.some((id) => !had.has(id))) {
+    throw new ApiError(400, `This game needs at most ${rosterNeed} court${rosterNeed === 1 ? '' : 's'}`);
+  }
+}
+
 export class GameCourtService {
   static async getGameCourts(gameId: string) {
     const gameCourts = await prisma.gameCourt.findMany({
@@ -99,7 +122,11 @@ export class GameCourtService {
   static async setGameCourts(
     gameId: string,
     courtIds: string[],
-    options: { notify?: boolean; actorUserId?: string | null } = {},
+    /**
+     * `enforceCap`: the court set is a plain choice (old-app court editor), not courts already
+     * booked: same cap as PUT court-slots (the game may keep courts above it, never add one).
+     */
+    options: { notify?: boolean; actorUserId?: string | null; enforceCap?: boolean } = {},
   ) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
@@ -113,6 +140,7 @@ export class GameCourtService {
     let previousBookingStatus: GameBookingStatus | null = null;
 
     await runBookingLinkTransaction(gameId, null, async (tx) => {
+      if (options.enforceCap) await assertCourtSetWithinCap(tx, gameId, uniqueCourtIds);
       for (const courtId of uniqueCourtIds) {
         const court = await tx.court.findUnique({ where: { id: courtId } });
         if (!court) {
@@ -334,7 +362,9 @@ export class GameCourtService {
     if (!court) {
       throw new ApiError(404, 'Court not found');
     }
-    // Old-app endpoint: same club and sport rules as PUT court-slots.
+    // Old-app endpoint: same club, sport and court-cap rules as PUT court-slots.
+    const existingIds = (await prisma.gameCourt.findMany({ where: { gameId }, select: { courtId: true } })).map((r) => r.courtId);
+    await assertCourtSetWithinCap(prisma, gameId, [...existingIds, courtId]);
     const owner = await prisma.game.findUnique({ where: { id: gameId }, select: { clubId: true, sport: true } });
     if (!owner) throw new ApiError(404, 'Game not found');
     if (owner.clubId && court.clubId !== owner.clubId) {

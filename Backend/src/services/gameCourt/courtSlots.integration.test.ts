@@ -359,6 +359,14 @@ void (async () => {
     assert.equal(kept.courtId, c3.id, 'court kept on a partial snapshot');
     assert.equal(kept.bookingStart?.getTime(), start.getTime(), 'times kept on a partial snapshot');
 
+    // Old-app court editor: the same cap (keep extras, never add past it).
+    const gOldApp = await makeGame({ courtId: c1.id, maxParticipants: 4 });
+    await GameCourtService.setGameCourts(gOldApp.id, [c1.id], { enforceCap: true });
+    await expectApiError(GameCourtService.addGameCourt(gOldApp.id, c2.id), 400, 'old app: add a second court');
+    await expectApiError(GameCourtService.setGameCourts(gOldApp.id, [c1.id, c2.id], { enforceCap: true }), 400, 'old app: set two courts');
+    await GameCourtService.setGameCourts(gOldApp.id, [c2.id], { enforceCap: true });
+    assert.deepEqual((await slotsOf(gOldApp.id)).map((r) => r.courtId), [c2.id], 'old app: switching the one court is fine');
+
     // Reorder only accepts this game's own slots.
     const foreignSlots = await slotsOf(g2.id);
     await expectApiError(
