@@ -703,7 +703,8 @@
       "unpinShort": "अनपिन",
       "showMoreInvites": "{{value}} और दिखाएँ",
       "showLess": "कम दिखाएँ",
-      "joinQueue": "कतार में शामिल हों"
+      "joinQueue": "कतार में शामिल हों",
+      "invitedYou": "<b>{{name}}</b> ने आपको आमंत्रित किया"
     }
   }
 }

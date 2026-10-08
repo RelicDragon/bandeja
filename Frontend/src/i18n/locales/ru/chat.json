@@ -710,7 +710,8 @@
       "unpinShort": "Открепить",
       "showMoreInvites": "Ещё {{value}}",
       "showLess": "Свернуть",
-      "joinQueue": "В очередь"
+      "joinQueue": "В очередь",
+      "invitedYou": "Приглашение от <b>{{name}}</b>"
     }
   }
 }

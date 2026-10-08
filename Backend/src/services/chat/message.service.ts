@@ -2576,13 +2576,40 @@ export class MessageService {
       )
     );
 
+    // The chat list's invitation card leads with who invited you. Attach that user to the viewer's
+    // own pending invite only, so the rest of the roster doesn't carry inviter rows it never shows.
+    const inviterIds = new Set<string>();
+    for (const game of games) {
+      const viewer = game.participants.find((participant) => participant.userId === userId);
+      if (viewer?.status === 'INVITED' && viewer.invitedByUserId) inviterIds.add(viewer.invitedByUserId);
+    }
+    const inviters =
+      inviterIds.size > 0
+        ? new Map(
+            (
+              await prisma.user.findMany({ where: { id: { in: [...inviterIds] } }, select: USER_SELECT_FIELDS })
+            ).map((user) => [user.id, user])
+          )
+        : null;
+    const withInviter = (game: (typeof games)[number]) =>
+      inviters
+        ? {
+            ...game,
+            participants: game.participants.map((participant) =>
+              participant.userId === userId && participant.status === 'INVITED' && participant.invitedByUserId
+                ? { ...participant, invitedByUser: inviters.get(participant.invitedByUserId) ?? null }
+                : participant
+            ),
+          }
+        : game;
+
     return games.map((game) => {
       if (visibleFallbacks.has(game.id)) {
-        return { ...game, lastMessage: visibleFallbacks.get(game.id) ?? null };
+        return { ...withInviter(game), lastMessage: visibleFallbacks.get(game.id) ?? null };
       }
       const preview = game.lastMessagePreview;
       return {
-        ...game,
+        ...withInviter(game),
         lastMessage: preview
           ? { preview, updatedAt: game.updatedAt }
           : null

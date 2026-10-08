@@ -703,7 +703,8 @@
       "unpinShort": "Lepas",
       "showMoreInvites": "Tampilkan {{value}} lagi",
       "showLess": "Tampilkan lebih sedikit",
-      "joinQueue": "Masuk antrean"
+      "joinQueue": "Masuk antrean",
+      "invitedYou": "<b>{{name}}</b> mengundang Anda"
     }
   }
 }

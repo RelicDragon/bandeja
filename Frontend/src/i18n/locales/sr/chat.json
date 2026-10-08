@@ -708,7 +708,8 @@
       "unpinShort": "Otkači",
       "showMoreInvites": "Još {{value}}",
       "showLess": "Prikaži manje",
-      "joinQueue": "U red čekanja"
+      "joinQueue": "U red čekanja",
+      "invitedYou": "Poziv od <b>{{name}}</b>"
     }
   }
 }

@@ -723,7 +723,8 @@
       "unpinShort": "إلغاء التثبيت",
       "showMoreInvites": "عرض {{value}} أخرى",
       "showLess": "عرض أقل",
-      "joinQueue": "الانضمام إلى قائمة الانتظار"
+      "joinQueue": "الانضمام إلى قائمة الانتظار",
+      "invitedYou": "دعاك <b>{{name}}</b>"
     }
   }
 }

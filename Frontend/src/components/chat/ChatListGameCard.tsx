@@ -1,6 +1,6 @@
 import { memo, useMemo, type ReactNode } from 'react';
 import { UnreadBadge } from '@/components/UnreadBadge';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { ChatMessage } from '@/api/chat';
 import { getLastMessageTime, isLastMessagePreview } from '@/api/chat';
@@ -30,6 +30,11 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
 import { parseGameSport } from '@/utils/gameSport';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
+import { GameCardSeatStack } from '@/components/gameCard/GameCardSeatStack';
+import { resolveStandingMedalMode } from '@/utils/gameCardStandingPlace';
+import { userFaceTinySrc } from '@/utils/animatedAvatar';
+import { getUserDisplayName } from '@/utils/messageMenuUtils';
 import { ChatListGameDateTile } from './ChatListGameDateTile';
 import { getChatListGameTone } from './chatListGameTone';
 import { ChatListGameStatusPill } from './ChatListGameStatusPill';
@@ -60,7 +65,9 @@ function lastMessageSig(lm: Game['lastMessage']): string {
 }
 
 function participantsSig(game: Game): string {
-  return (game.participants ?? []).map((p) => `${p.userId}:${p.status}:${p.role}`).join('|');
+  return (game.participants ?? [])
+    .map((p) => `${p.userId}:${p.status}:${p.role}:${p.invitedByUser?.id ?? ''}`)
+    .join('|');
 }
 
 function senderPrefix(lastMessage: GameListLastMessage, userId: string | undefined, t: TFunction): string | null {
@@ -154,8 +161,12 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
     showInviteActions &&
     game.maxParticipants > 0 &&
     game.participants.filter((p) => p.status === 'PLAYING').length >= game.maxParticipants;
+  /** Who sent the viewer's pending invite; `/chat/user-games` attaches it to that row only. */
+  const inviter = showInviteActions
+    ? (game.participants.find((p) => p.userId === userId)?.invitedByUser ?? null)
+    : null;
   const prefix = lastMessage && !showDraft ? senderPrefix(lastMessage, userId, t) : null;
-  const playing = hero ? game.participants.filter((p) => p.status === 'PLAYING') : [];
+  const playing = hero || showInviteActions ? game.participants.filter((p) => p.status === 'PLAYING') : [];
 
   const preview = showOutboxOnly ? null : showDraft ? (
     <p className="text-sm line-clamp-1 min-w-0">
@@ -174,7 +185,8 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
 
   const metaLine = (
     <div className="flex min-w-0 items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-      <ChatListGameStatusPill game={game} userId={userId} withSeats={hero} />
+      {/* The inviter line already says "invited you". */}
+      {inviter ? null : <ChatListGameStatusPill game={game} userId={userId} withSeats={hero} />}
       {inviteFull ? (
         <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-red-100 px-2 py-px text-[11px] font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-300">
           {t('games.card.full')}
@@ -201,8 +213,9 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
     />
   );
 
+  /** An invite's title row is about the game; a message date beside the date tile reads as a second game date. */
   const timeLabel =
-    lastActivityIso || draft
+    !showInviteActions && (lastActivityIso || draft)
       ? formatChatTime(lastActivityIso ?? draft?.updatedAt ?? new Date().toISOString(), displaySettings.locale, displaySettings.hour12)
       : null;
 
@@ -282,7 +295,7 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
    * buttons and sets it apart from chats, while "Next up" stays the strongest card on screen.
    */
   const rowClass = showInviteActions
-    ? `chat-list-row flex items-start gap-3 rounded-2xl border p-3 cursor-pointer transition-colors ${
+    ? `chat-list-row flex flex-col gap-2.5 rounded-2xl border p-3 cursor-pointer transition-colors ${
         isSelected
           ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-900/20'
           : 'border-gray-200 hover:bg-gray-50 dark:border-gray-700/70 dark:hover:bg-gray-800/40'
@@ -293,6 +306,75 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
           : 'hover:bg-gray-100 dark:hover:bg-gray-800/70'
       }`;
 
+  const tile = (
+    <div className={past ? 'opacity-60' : undefined}>
+      <ChatListGameDateTile game={game} tone={tone} Icon={Icon} displaySettings={displaySettings} t={t} />
+    </div>
+  );
+
+  /**
+   * Invitation card, in full-width bands: who invited you · what and when · who you'd play with
+   * (the game card's seat row, open seats included) · the answer.
+   */
+  const inviteBody = showInviteActions ? (
+    <>
+      <div className="flex items-center gap-3">
+        {tile}
+        <div className="min-w-0 flex-1">
+          {header}
+          <div className="mt-0.5">{metaLine}</div>
+        </div>
+      </div>
+      {outbox}
+      <div className="flex items-center gap-2.5">
+        <GameCardSeatStack
+          participants={playing}
+          maxParticipants={game.entityType === 'BAR' ? null : game.maxParticipants}
+          viewerId={userId}
+          standingMedalMode={resolveStandingMedalMode(game.entityType)}
+          attendanceRail={null}
+        />
+        <div className="min-w-0 flex-1">{preview}</div>
+        <UnreadBadge count={displayUnread} className="shrink-0" />
+      </div>
+      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          disabled={inviteBusy}
+          onClick={() => inviteActions.accept(game)}
+          className="h-9 flex-1 rounded-xl bg-primary-600 text-sm font-semibold text-white transition-colors hover:bg-primary-700 active:scale-[0.98] disabled:opacity-60"
+        >
+          {inviteFull
+            ? t('chat.list.joinQueue', { defaultValue: 'Join queue' })
+            : t('chat.list.join', { defaultValue: 'Join' })}
+        </button>
+        <button
+          type="button"
+          disabled={inviteBusy}
+          onClick={() => inviteActions.decline(game)}
+          className="h-9 flex-1 rounded-xl bg-gray-100 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 active:scale-[0.98] disabled:opacity-60 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          {t('chat.list.decline', { defaultValue: 'Decline' })}
+        </button>
+      </div>
+    </>
+  ) : null;
+
+  const body = inviteBody ?? (
+    <>
+      {tile}
+      <div className={`min-w-0 flex-1 ${past ? 'opacity-60' : ''}`}>
+        {header}
+        <div className="mt-0.5">{metaLine}</div>
+        {outbox}
+        <div className="mt-0.5 flex items-center gap-2">
+          <div className="min-w-0 flex-1">{preview}</div>
+          <UnreadBadge count={displayUnread} className="shrink-0" />
+        </div>
+      </div>
+    </>
+  );
+
   const row = (
     <div
       onClick={onClick}
@@ -302,40 +384,29 @@ function ChatListGameCardInner({ chat, isSelected, onClick, variant = 'row', pas
       data-chat-selected={isSelected ? 'true' : undefined}
       className={rowClass}
     >
-      <div className={past ? 'opacity-60' : undefined}>
-        <ChatListGameDateTile game={game} tone={tone} Icon={Icon} displaySettings={displaySettings} t={t} />
-      </div>
-      <div className={`min-w-0 flex-1 ${past ? 'opacity-60' : ''}`}>
-        {header}
-        <div className="mt-0.5">{metaLine}</div>
-        {outbox}
-        <div className="mt-0.5 flex items-center gap-2">
-          <div className="min-w-0 flex-1">{preview}</div>
-          <UnreadBadge count={displayUnread} className="shrink-0" />
+      {inviter ? (
+        <div className="flex min-w-0 items-center gap-1.5 text-[11px] leading-4 text-gray-500 dark:text-gray-400">
+          <span className="relative inline-block h-4 w-4 shrink-0 overflow-hidden rounded-full">
+            <PlayerAvatarFace
+              avatar={inviter.avatar}
+              tinyUrl={userFaceTinySrc(inviter)}
+              initials={`${inviter.firstName?.[0] ?? ''}${inviter.lastName?.[0] ?? ''}`.toUpperCase()}
+              alt=""
+              textClassName="text-[7px]"
+              resetKey={inviter.id}
+            />
+          </span>
+          <span className="min-w-0 truncate">
+            <Trans
+              i18nKey="chat.list.invitedYou"
+              defaults="<b>{{name}}</b> invited you"
+              values={{ name: getUserDisplayName(inviter) }}
+              components={{ b: <span className="font-semibold text-gray-700 dark:text-gray-200" /> }}
+            />
+          </span>
         </div>
-        {showInviteActions ? (
-          <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              disabled={inviteBusy}
-              onClick={() => inviteActions.accept(game)}
-              className="h-9 flex-1 rounded-xl bg-primary-600 text-sm font-semibold text-white transition-colors hover:bg-primary-700 active:scale-[0.98] disabled:opacity-60"
-            >
-              {inviteFull
-                ? t('chat.list.joinQueue', { defaultValue: 'Join queue' })
-                : t('chat.list.join', { defaultValue: 'Join' })}
-            </button>
-            <button
-              type="button"
-              disabled={inviteBusy}
-              onClick={() => inviteActions.decline(game)}
-              className="h-9 flex-1 rounded-xl bg-gray-100 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 active:scale-[0.98] disabled:opacity-60 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              {t('chat.list.decline', { defaultValue: 'Decline' })}
-            </button>
-          </div>
-        ) : null}
-      </div>
+      ) : null}
+      {body}
     </div>
   );
 

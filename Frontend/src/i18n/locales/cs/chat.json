@@ -700,7 +700,8 @@
       "unpinShort": "Odepnout",
       "showMoreInvites": "Zobrazit další: {{value}}",
       "showLess": "Zobrazit méně",
-      "joinQueue": "Do fronty"
+      "joinQueue": "Do fronty",
+      "invitedYou": "Pozvánka od <b>{{name}}</b>"
     }
   }
 }

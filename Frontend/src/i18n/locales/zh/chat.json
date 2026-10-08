@@ -703,7 +703,8 @@
       "unpinShort": "取消置顶",
       "showMoreInvites": "再显示 {{value}} 个",
       "showLess": "收起",
-      "joinQueue": "加入候补"
+      "joinQueue": "加入候补",
+      "invitedYou": "<b>{{name}}</b> 邀请了你"
     }
   }
 }

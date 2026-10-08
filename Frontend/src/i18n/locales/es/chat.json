@@ -700,7 +700,8 @@
       "unpinShort": "Desfijar",
       "showMoreInvites": "Ver {{value}} más",
       "showLess": "Ver menos",
-      "joinQueue": "Unirme a la cola"
+      "joinQueue": "Unirme a la cola",
+      "invitedYou": "<b>{{name}}</b> te ha invitado"
     }
   }
 }

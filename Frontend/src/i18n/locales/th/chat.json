@@ -703,7 +703,8 @@
       "unpinShort": "เลิกปักหมุด",
       "showMoreInvites": "ดูเพิ่มอีก {{value}}",
       "showLess": "ดูน้อยลง",
-      "joinQueue": "เข้าคิว"
+      "joinQueue": "เข้าคิว",
+      "invitedYou": "<b>{{name}}</b> เชิญคุณ"
     }
   }
 }

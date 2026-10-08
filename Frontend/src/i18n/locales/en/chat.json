@@ -703,7 +703,8 @@
       "unpinShort": "Unpin",
       "showMoreInvites": "Show {{value}} more",
       "showLess": "Show less",
-      "joinQueue": "Join queue"
+      "joinQueue": "Join queue",
+      "invitedYou": "<b>{{name}}</b> invited you"
     }
   }
 }

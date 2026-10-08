@@ -703,7 +703,8 @@
       "unpinShort": "固定解除",
       "showMoreInvites": "さらに{{value}}件",
       "showLess": "閉じる",
-      "joinQueue": "待機列に参加"
+      "joinQueue": "待機列に参加",
+      "invitedYou": "<b>{{name}}</b>さんから招待"
     }
   }
 }
