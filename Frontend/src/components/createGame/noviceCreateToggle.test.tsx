@@ -32,6 +32,7 @@ vi.mock('@/hooks/useShowSettingsNotes', () => ({
 
 vi.mock('@/components/gameSettings', () => ({
   SettingIcon: () => null,
+  settingAccentClass: () => undefined,
   CollapsibleSettingsShell: ({ children }: { children: React.ReactNode }) => (
     <section>{children}</section>
   ),

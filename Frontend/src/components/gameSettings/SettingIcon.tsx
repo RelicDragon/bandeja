@@ -11,18 +11,7 @@ import {
   UserPlus,
   type LucideIcon,
 } from 'lucide-react';
-
-export type GameSettingIconKey =
-  | 'affectsRating'
-  | 'isPublic'
-  | 'showOnLiveRail'
-  | 'anyoneCanInvite'
-  | 'suitableForNovices'
-  | 'resultsByAnyone'
-  | 'allowDirectJoin'
-  | 'autoFillFromQueue'
-  | 'afterGameGoToBar'
-  | 'participantsOnlyChat';
+import { settingAccentClass, type GameSettingIconKey } from './settingAccent';
 
 const ICONS: Record<GameSettingIconKey, LucideIcon> = {
   affectsRating: TrendingUp,
@@ -40,5 +29,6 @@ const ICONS: Record<GameSettingIconKey, LucideIcon> = {
 /** Leading icon for a game settings toggle row (create flow and game details share it). */
 export function SettingIcon({ setting }: { setting: GameSettingIconKey }) {
   const Icon = ICONS[setting];
-  return <Icon size={16} className="shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />;
+  const tone = settingAccentClass(setting) ?? 'text-gray-400 dark:text-gray-500';
+  return <Icon size={16} className={`shrink-0 ${tone}`} aria-hidden />;
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ToggleSwitch } from '@/components';
-import { CollapsibleSettingsShell, SettingIcon, type GameSettingIconKey } from '@/components/gameSettings';
+import { CollapsibleSettingsShell, SettingIcon, settingAccentClass, type GameSettingIconKey } from '@/components/gameSettings';
 import { Game } from '@/types';
 import { Settings, HelpCircle, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -81,7 +81,8 @@ function SettingToggleRow({
       <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1">
         <span
           className={`flex min-w-0 items-center gap-2 col-start-1 row-start-1 text-sm font-medium ${
-            hasError ? 'text-red-800 dark:text-red-200' : 'text-gray-800 dark:text-gray-200'
+            settingAccentClass(setting) ??
+            (hasError ? 'text-red-800 dark:text-red-200' : 'text-gray-800 dark:text-gray-200')
           }`}
         >
           <SettingIcon setting={setting} />

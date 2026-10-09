@@ -4,7 +4,7 @@ import { Divider } from '../Divider';
 import { EntityType } from '@/types';
 import { HelpCircle, Settings } from 'lucide-react';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
-import { CollapsibleSettingsShell, SettingIcon } from '@/components/gameSettings';
+import { CollapsibleSettingsShell, SettingIcon, settingAccentClass } from '@/components/gameSettings';
 import { getEntityCapabilities } from '@shared/entityCapabilities';
 
 interface GameSettingsSectionProps {
@@ -164,7 +164,9 @@ export const GameSettingsSection = ({
         {showNoviceToggle && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span
+                className={`flex min-w-0 items-center gap-2 pe-2 text-sm font-medium ${settingAccentClass('suitableForNovices')}`}
+              >
                 <SettingIcon setting="suitableForNovices" />
                 <span className="min-w-0">
                   {t('createGame.suitableForNovices.title')}
