@@ -875,6 +875,8 @@
       "linkTitle": "关联预订",
       "linkHint": "你在比赛当天于 {{club}} 的预订",
       "linkEmpty": "你的账户在当天没有 {{club}} 的预订。",
+      "linkOtherCourts": "其他场地",
+      "linkOtherDays_other": "你在这里的其他日期还有 {{count}} 个预订 — 更改日期和时间",
       "needTime": "请先设置比赛时间。",
       "pickCourtFirst": "请先选择场地。",
       "verifyPresent": "俱乐部的预订仍然有效。",
@@ -942,7 +944,13 @@
       "releaseTitleClub_other": "没有俱乐部，这 {{count}} 个预订无法留在比赛中。",
       "releaseTitleTime_other": "没有时间，这 {{count}} 个预订无法留在比赛中。",
       "bookings": "预订",
-      "bookAfterSave": "请先保存，然后在这里或比赛页面预订场地。"
+      "bookAfterSave": "请先保存，然后在这里或比赛页面预订场地。",
+      "ownTitle": "你在 {{club}} 的预订",
+      "ownHint": "点选一个：比赛将采用它的日期、时间和场地。保存时会添加到比赛中。",
+      "ownUse": "使用",
+      "ownPicked": "你的预订 · {{court}}",
+      "ownMore_other": "还有 {{count}} 个",
+      "ownConnect": "使用你在 {{club}} 已有的预订"
     }
   }
 }

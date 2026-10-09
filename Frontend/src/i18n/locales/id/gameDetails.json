@@ -875,6 +875,8 @@
       "linkTitle": "Tautkan reservasi",
       "linkHint": "Reservasi Anda di {{club}} pada hari permainan",
       "linkEmpty": "Tidak ada reservasi di {{club}} pada hari ini di akun Anda.",
+      "linkOtherCourts": "Lapangan lain",
+      "linkOtherDays_other": "{{count}} pesanan lain di sini pada hari lain — ubah tanggal dan waktu",
       "needTime": "Atur waktu permainan terlebih dahulu.",
       "pickCourtFirst": "Pilih lapangan terlebih dahulu.",
       "verifyPresent": "Reservasi di klub masih berlaku.",
@@ -942,7 +944,13 @@
       "releaseTitleClub_other": "Tanpa klub, {{count}} pesanan ini tidak bisa tetap di permainan.",
       "releaseTitleTime_other": "Tanpa waktu, {{count}} pesanan ini tidak bisa tetap di permainan.",
       "bookings": "Pemesanan",
-      "bookAfterSave": "Simpan dulu, lalu pesan lapangan di sini atau di halaman permainan."
+      "bookAfterSave": "Simpan dulu, lalu pesan lapangan di sini atau di halaman permainan.",
+      "ownTitle": "Pesanan Anda di {{club}}",
+      "ownHint": "Ketuk salah satu: permainan memakai tanggal, waktu, dan lapangannya. Ditambahkan ke permainan saat Anda menyimpan.",
+      "ownUse": "Pakai",
+      "ownPicked": "Pesanan Anda · {{court}}",
+      "ownMore_other": "{{count}} lagi",
+      "ownConnect": "Pakai pesanan yang sudah Anda buat di {{club}}"
     }
   }
 }

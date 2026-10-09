@@ -865,6 +865,10 @@
       "linkTitle": "Vincular una reserva",
       "linkHint": "Tus reservas en {{club}} el día del partido",
       "linkEmpty": "No tienes reservas en {{club}} ese día en tu cuenta.",
+      "linkOtherCourts": "Otras pistas",
+      "linkOtherDays_one": "{{count}} reserva más aquí otro día: cambia la fecha y la hora",
+      "linkOtherDays_many": "{{count}} reservas más aquí otros días: cambia la fecha y la hora",
+      "linkOtherDays_other": "{{count}} reservas más aquí otros días: cambia la fecha y la hora",
       "needTime": "Primero fija la hora del partido.",
       "pickCourtFirst": "Primero elige una pista.",
       "verifyPresent": "La reserva sigue activa en el club.",
@@ -942,7 +946,15 @@
       "releaseTitleTime_many": "Sin hora, estas {{count}} reservas no pueden seguir en el partido.",
       "releaseTitleTime_other": "Sin hora, estas {{count}} reservas no pueden seguir en el partido.",
       "bookings": "Reservas",
-      "bookAfterSave": "Guarda primero y luego reserva las pistas aquí o en la página del partido."
+      "bookAfterSave": "Guarda primero y luego reserva las pistas aquí o en la página del partido.",
+      "ownTitle": "Tus reservas en {{club}}",
+      "ownHint": "Toca una: el partido toma su fecha, hora y pista. Se añade al partido al guardar.",
+      "ownUse": "Usar",
+      "ownPicked": "Tu reserva · {{court}}",
+      "ownMore_one": "{{count}} más",
+      "ownMore_many": "{{count}} más",
+      "ownMore_other": "{{count}} más",
+      "ownConnect": "Usar una reserva que ya hiciste en {{club}}"
     }
   }
 }

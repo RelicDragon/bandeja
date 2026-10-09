@@ -3,10 +3,30 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { weltnerApi } from '@/api/weltner';
+import { nspadelApi } from '@/api/nspadel';
 
-export function useWeltnerUpcomingBookings(
+/** A booking receipt kept by the app (Weltner, NS Padel): the club has no list API. */
+type ReceiptRow = {
+  externalBookingId: string;
+  courtId: string | null;
+  externalCourtId?: string;
+  bookingStart: string;
+  bookingEnd: string;
+  state: string;
+};
+
+export function useWeltnerUpcomingBookings(club: Club, enabled: boolean, filterCourts?: Court[], refreshKey = 0) {
+  return useReceiptUpcomingBookings(club, enabled, weltnerApi.bookings, filterCourts, refreshKey);
+}
+
+export function useNspadelUpcomingBookings(club: Club, enabled: boolean, filterCourts?: Court[], refreshKey = 0) {
+  return useReceiptUpcomingBookings(club, enabled, nspadelApi.bookings, filterCourts, refreshKey);
+}
+
+function useReceiptUpcomingBookings(
   club: Club,
   enabled: boolean,
+  load: (clubId: string) => Promise<ReceiptRow[]>,
   filterCourts?: Court[],
   refreshKey = 0,
 ) {
@@ -31,7 +51,7 @@ export function useWeltnerUpcomingBookings(
     }
     setLoading(true);
     try {
-      const rows = await weltnerApi.bookings(club.id);
+      const rows = await load(club.id);
       if (epoch !== sequence.current) return;
       setResolvedKey(requestKey);
       setBookings(
@@ -47,7 +67,7 @@ export function useWeltnerUpcomingBookings(
             bookingStart: r.bookingStart,
             bookingEnd: r.bookingEnd,
             bookingResourceId:
-              courts?.find((c) => c.id === r.courtId)?.externalCourtId ?? undefined,
+              r.externalCourtId ?? courts?.find((c) => c.id === r.courtId)?.externalCourtId ?? undefined,
             status: 'CONFIRMED',
           })),
       );
@@ -59,7 +79,7 @@ export function useWeltnerUpcomingBookings(
         setLoaded(true);
       }
     }
-  }, [club.id, courts, enabled, userId, requestKey]);
+  }, [club.id, courts, enabled, userId, requestKey, load]);
   useEffect(() => {
     const guard = sequence;
     void reload();

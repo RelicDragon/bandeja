@@ -867,6 +867,11 @@
       "linkTitle": "Propojit rezervaci",
       "linkHint": "Vaše rezervace v {{club}} v den hry",
       "linkEmpty": "Ve vašem účtu nejsou na tento den žádné rezervace v {{club}}.",
+      "linkOtherCourts": "Další kurty",
+      "linkOtherDays_one": "Ještě {{count}} rezervace tady v jiný den — změňte datum a čas",
+      "linkOtherDays_few": "Ještě {{count}} rezervace tady v jiné dny — změňte datum a čas",
+      "linkOtherDays_many": "Ještě {{count}} rezervace tady v jiné dny — změňte datum a čas",
+      "linkOtherDays_other": "Ještě {{count}} rezervací tady v jiné dny — změňte datum a čas",
       "needTime": "Nejprve nastavte čas hry.",
       "pickCourtFirst": "Nejprve vyberte kurt.",
       "verifyPresent": "Rezervace v klubu stále platí.",
@@ -949,7 +954,16 @@
       "releaseTitleTime_many": "Bez času nemůžou tyto rezervace ({{count}}) zůstat u hry.",
       "releaseTitleTime_other": "Bez času nemůžou tyto rezervace ({{count}}) zůstat u hry.",
       "bookings": "Rezervace",
-      "bookAfterSave": "Nejprve uložte, pak zarezervujte kurty tady nebo na stránce hry."
+      "bookAfterSave": "Nejprve uložte, pak zarezervujte kurty tady nebo na stránce hry.",
+      "ownTitle": "Vaše rezervace v {{club}}",
+      "ownHint": "Klepněte na jednu: hra převezme její datum, čas a kurt. Ke hře se přidá při uložení.",
+      "ownUse": "Použít",
+      "ownPicked": "Vaše rezervace · {{court}}",
+      "ownMore_one": "Ještě {{count}}",
+      "ownMore_few": "Ještě {{count}}",
+      "ownMore_many": "Ještě {{count}}",
+      "ownMore_other": "Ještě {{count}}",
+      "ownConnect": "Použít rezervaci, kterou už máte v {{club}}"
     }
   }
 }

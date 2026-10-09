@@ -899,6 +899,13 @@
       "linkTitle": "ربط حجز",
       "linkHint": "حجوزاتك في {{club}} في يوم المباراة",
       "linkEmpty": "لا توجد حجوزات في {{club}} في هذا اليوم في حسابك.",
+      "linkOtherCourts": "ملاعب أخرى",
+      "linkOtherDays_zero": "لا توجد حجوزات أخرى هنا في أيام أخرى",
+      "linkOtherDays_one": "حجز واحد آخر هنا في يوم آخر — غيّر التاريخ والوقت",
+      "linkOtherDays_two": "حجزان آخران هنا في أيام أخرى — غيّر التاريخ والوقت",
+      "linkOtherDays_few": "{{count}} حجوزات أخرى هنا في أيام أخرى — غيّر التاريخ والوقت",
+      "linkOtherDays_many": "{{count}} حجزًا آخر هنا في أيام أخرى — غيّر التاريخ والوقت",
+      "linkOtherDays_other": "{{count}} حجز آخر هنا في أيام أخرى — غيّر التاريخ والوقت",
       "needTime": "حدّد وقت المباراة أولًا.",
       "pickCourtFirst": "اختر ملعبًا أولًا.",
       "verifyPresent": "الحجز لا يزال قائمًا في النادي.",
@@ -991,7 +998,18 @@
       "releaseTitleTime_many": "بدون وقت، لا يمكن أن تبقى هذه الحجوزات ({{count}}) في المباراة.",
       "releaseTitleTime_other": "بدون وقت، لا يمكن أن تبقى هذه الحجوزات ({{count}}) في المباراة.",
       "bookings": "الحجوزات",
-      "bookAfterSave": "احفظ أولاً، ثم احجز الملاعب هنا أو في صفحة المباراة."
+      "bookAfterSave": "احفظ أولاً، ثم احجز الملاعب هنا أو في صفحة المباراة.",
+      "ownTitle": "حجوزاتك في {{club}}",
+      "ownHint": "اضغط على حجز: تأخذ المباراة تاريخه ووقته وملعبه. يُضاف إلى المباراة عند الحفظ.",
+      "ownUse": "استخدم",
+      "ownPicked": "حجزك · {{court}}",
+      "ownMore_zero": "{{count}} أخرى",
+      "ownMore_one": "{{count}} أخرى",
+      "ownMore_two": "{{count}} أخرى",
+      "ownMore_few": "{{count}} أخرى",
+      "ownMore_many": "{{count}} أخرى",
+      "ownMore_other": "{{count}} أخرى",
+      "ownConnect": "استخدم حجزًا قمت به مسبقًا في {{club}}"
     }
   }
 }

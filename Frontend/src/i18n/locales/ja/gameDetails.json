@@ -875,6 +875,8 @@
       "linkTitle": "予約を紐づける",
       "linkHint": "ゲーム当日の {{club}} でのあなたの予約",
       "linkEmpty": "この日の {{club}} の予約はあなたのアカウントにありません。",
+      "linkOtherCourts": "ほかのコート",
+      "linkOtherDays_other": "ほかの日にもここで{{count}}件の予約があります — 日時を変更",
       "needTime": "先にゲームの時間を設定してください。",
       "pickCourtFirst": "先にコートを選んでください。",
       "verifyPresent": "クラブの予約はまだ有効です。",
@@ -942,7 +944,13 @@
       "releaseTitleClub_other": "クラブがないと、この予約（{{count}}件）はゲームに残せません。",
       "releaseTitleTime_other": "時間がないと、この予約（{{count}}件）はゲームに残せません。",
       "bookings": "予約",
-      "bookAfterSave": "先に保存してから、ここかゲームページでコートを予約してください。"
+      "bookAfterSave": "先に保存してから、ここかゲームページでコートを予約してください。",
+      "ownTitle": "{{club}}でのあなたの予約",
+      "ownHint": "予約をタップすると、ゲームの日付・時間・コートがその予約に合わせて変わります。保存するとゲームに追加されます。",
+      "ownUse": "使う",
+      "ownPicked": "あなたの予約 · {{court}}",
+      "ownMore_other": "さらに{{count}}件",
+      "ownConnect": "{{club}}で予約済みのものを使う"
     }
   }
 }

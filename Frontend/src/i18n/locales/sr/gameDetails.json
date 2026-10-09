@@ -873,6 +873,10 @@
       "linkTitle": "Poveži rezervaciju",
       "linkHint": "Vaše rezervacije u {{club}} na dan igre",
       "linkEmpty": "Na vašem nalogu nema rezervacija u {{club}} za ovaj dan.",
+      "linkOtherCourts": "Drugi tereni",
+      "linkOtherDays_one": "Još {{count}} rezervacija ovde drugog dana — promenite datum i vreme",
+      "linkOtherDays_few": "Još {{count}} rezervacije ovde drugih dana — promenite datum i vreme",
+      "linkOtherDays_other": "Još {{count}} rezervacija ovde drugih dana — promenite datum i vreme",
       "needTime": "Prvo podesite vreme igre.",
       "pickCourtFirst": "Prvo izaberite teren.",
       "verifyPresent": "Rezervacija u klubu i dalje važi.",
@@ -950,7 +954,15 @@
       "releaseTitleTime_few": "Bez vremena ove rezervacije ({{count}}) ne mogu da ostanu na igri.",
       "releaseTitleTime_other": "Bez vremena ove rezervacije ({{count}}) ne mogu da ostanu na igri.",
       "bookings": "Rezervacije",
-      "bookAfterSave": "Prvo sačuvaj, pa rezerviši terene ovde ili na stranici igre."
+      "bookAfterSave": "Prvo sačuvaj, pa rezerviši terene ovde ili na stranici igre.",
+      "ownTitle": "Vaše rezervacije u {{club}}",
+      "ownHint": "Dodirnite jednu: igra preuzima njen datum, vreme i teren. Dodaje se igri kada sačuvate.",
+      "ownUse": "Koristi",
+      "ownPicked": "Vaša rezervacija · {{court}}",
+      "ownMore_one": "Još {{count}}",
+      "ownMore_few": "Još {{count}}",
+      "ownMore_other": "Još {{count}}",
+      "ownConnect": "Koristi rezervaciju koju već imate u {{club}}"
     }
   }
 }

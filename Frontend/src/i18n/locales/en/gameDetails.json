@@ -875,6 +875,9 @@
       "linkTitle": "Link a reservation",
       "linkHint": "Your reservations at {{club}} on the game's day",
       "linkEmpty": "No reservations at {{club}} on this day in your account.",
+      "linkOtherCourts": "Other courts",
+      "linkOtherDays_one": "{{count}} more booking here on another day — change the date and time",
+      "linkOtherDays_other": "{{count}} more bookings here on other days — change the date and time",
       "needTime": "Set the game's time first.",
       "pickCourtFirst": "Pick a court first.",
       "verifyPresent": "Still reserved at the club.",
@@ -947,7 +950,14 @@
       "releaseTitleTime_one": "Without a time, this booking can't stay on the game.",
       "releaseTitleTime_other": "Without a time, these {{count}} bookings can't stay on the game.",
       "bookings": "Bookings",
-      "bookAfterSave": "Save first, then book the courts here or on the game page."
+      "bookAfterSave": "Save first, then book the courts here or on the game page.",
+      "ownTitle": "Your bookings at {{club}}",
+      "ownHint": "Tap one: the game takes its date, time and court. It's added to the game when you save.",
+      "ownUse": "Use",
+      "ownPicked": "Using your booking · {{court}}",
+      "ownMore_one": "{{count}} more",
+      "ownMore_other": "{{count}} more",
+      "ownConnect": "Use a booking you already made at {{club}}"
     }
   }
 }

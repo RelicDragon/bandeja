@@ -14,6 +14,7 @@ import { WeltnerBookings } from '@/components/booktime/WeltnerBookings';
 const mocks = vi.hoisted(() => ({ userId: 'a' as string | null, getAuth: vi.fn(), putAuth: vi.fn(), bookings: vi.fn(), past: vi.fn(), connected: vi.fn() }));
 vi.mock('@/store/authStore', () => ({ useAuthStore: (select: (state: { user: { id: string; phone: string } | null }) => unknown) => select({ user: mocks.userId ? { id: mocks.userId, phone: '+381601111111' } : null }) }));
 vi.mock('@/api/weltner', () => ({ weltnerApi: mocks }));
+vi.mock('@/api/nspadel', () => ({ nspadelApi: {} }));
 vi.mock('@/api/booktime', () => ({ booktimeApi: {} }));
 vi.mock('@/api/padeloo', () => ({ padelooApi: {} }));
 vi.mock('@/api/klikteren', () => ({ klikterenApi: {} }));

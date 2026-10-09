@@ -2,6 +2,8 @@
  * The body of the Edit dialog's "When and where" tab (`useWhenWhereEditor`),
  * top to bottom: club, date, courts, time and duration, then the courts'
  * bookings. Right where it happens:
+ *  - the organizer's own bookings at the club (`ownBookingsSection`, under the
+ *    club): picking one moves the draft to it, Save links it;
  *  - a court the club shows taken at the new time (`claimSection`);
  *  - the bookings (`bookingsSection`): live booking rows while nothing changed,
  *    what happens to each linked booking when the time moves, or what happens
@@ -49,6 +51,10 @@ type LocationTimeTabProps = {
   clubLocked: boolean;
   /** Courts the organizer booked themselves: the club's block is theirs. */
   ownClubBookingCourtIds?: readonly string[];
+  /** "Use a booking I already made", under the club. */
+  ownBookingsSection?: ReactNode;
+  /** The picked own booking's length: offered even when the club doesn't sell it. */
+  bookingDuration?: number;
   /** A court the club shows taken at the picked time, under the time grid. */
   claimSection?: ReactNode;
   /** What happens to each linked booking when the time moves / the club or time goes. */
@@ -97,6 +103,8 @@ export function LocationTimeTab({
   courtNeed,
   clubLocked,
   ownClubBookingCourtIds,
+  ownBookingsSection,
+  bookingDuration,
   claimSection,
   bookingsSection,
   onClearClub,
@@ -218,6 +226,8 @@ export function LocationTimeTab({
         </div>
       ) : null}
 
+      {ownBookingsSection}
+
       <span data-testid="schedule-time-anchor" aria-hidden className="block h-0 scroll-mt-2" />
       {timeCleared ? (
         <section
@@ -269,7 +279,7 @@ export function LocationTimeTab({
             entityType={entityType}
             dateInputRef={dateInputRef}
             panelMode="edit"
-            keepDuration={savedDuration}
+            keepDuration={bookingDuration ?? savedDuration}
             compact
             hideDateSection
             excludeGameId={game.id}

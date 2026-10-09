@@ -6,6 +6,8 @@
  * this hook (owned by the dialog), so switching tabs keeps the draft.
  *
  * Bookings, in the same tab:
+ *  - under the club, the organizer's upcoming bookings there (any day): one
+ *    tap moves the draft to it, Save links it (`OwnBookingsSection`);
  *  - while the draft matches the saved game, the courts' booking rows are live
  *    (`useGameCourts`): tap a court to book it, use a booking already made,
  *    mark it booked another way, link, remove or cancel — the court sheet
@@ -60,7 +62,9 @@ import {
   timeChanged,
 } from '@/components/GameDetails/editGameInfo/saveEditLocationTime';
 import { ClubBookingClaimCard } from '@/components/GameDetails/editGameInfo/ClubBookingClaimCard';
-import { useOwnClubBookings } from '@/components/GameDetails/editGameInfo/useOwnClubBookings';
+import { useOwnClubBookings, useOwnUpcomingClubBookings } from '@/components/GameDetails/editGameInfo/useOwnClubBookings';
+import { OwnBookingsSection } from '@/components/GameDetails/editGameInfo/OwnBookingsSection';
+import { scheduleSelectionToForm } from '@/components/clubPicker/clubScheduleSelection';
 import {
   findClubBookingConflicts,
   reportedCourtIdsOf,
@@ -190,6 +194,8 @@ export function useWhenWhereEditor({
   const [ownBookingCourtIds, setOwnBookingCourtIds] = useState<string[]>(() => reportedCourtIdsOf(game));
   /** Their own club bookings chosen for linking on save, by court. */
   const [linkChoices, setLinkChoices] = useState<Record<string, OwnClubBooking>>({});
+  /** The booking picked in "Use a booking I already made" (also in `linkChoices`). */
+  const [pickedOwnId, setPickedOwnId] = useState<string | null>(null);
   const [timeCleared, setTimeCleared] = useState(false);
   const [releaseChoices, setReleaseChoices] = useState<Record<string, ReleaseChoice>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -240,6 +246,7 @@ export function useWhenWhereEditor({
       setSelectedCourtIds(initialCourtIds(game));
       setOwnBookingCourtIds(reportedCourtIdsOf(game));
       setLinkChoices({});
+      setPickedOwnId(null);
       setTimeCleared(false);
       setReleaseChoices({});
       setSoftOverlap(null);
@@ -348,17 +355,27 @@ export function useWhenWhereEditor({
     () => new Set(ownBookingCourtIds.filter((id) => selectedCourtIds.includes(id))),
     [ownBookingCourtIds, selectedCourtIds],
   );
-  const linkSet = useMemo(
-    () => new Set(Object.keys(linkChoices).filter((id) => selectedCourtIds.includes(id))),
-    [linkChoices, selectedCourtIds],
-  );
-
   const editedWindow = useMemo(() => {
     if (timeCleared || !whenTime || !whenDuration) return null;
     const start = createDateFromClubTime(whenDate, whenTime, selectedClubData(selectedClub, game));
     return { startTime: start.toISOString(), endTime: addHours(start, whenDuration).toISOString() };
   }, [timeCleared, whenDate, whenTime, whenDuration, selectedClub, game]);
   const windowMoved = editedWindow != null && timeChanged(game, editedWindow);
+  /** Own bookings that will be linked on save: on a picked court and over the game's time. */
+  const linkSet = useMemo(() => {
+    if (!editedWindow) return new Set<string>();
+    const ws = Date.parse(editedWindow.startTime);
+    const we = Date.parse(editedWindow.endTime);
+    return new Set(
+      Object.keys(linkChoices).filter((id) => {
+        const b = linkChoices[id];
+        return selectedCourtIds.includes(id) && Date.parse(b.start) < we && Date.parse(b.end) > ws;
+      }),
+    );
+  }, [linkChoices, selectedCourtIds, editedWindow]);
+  const pickedOwn = pickedOwnId
+    ? Object.entries(linkChoices).find(([courtId, b]) => b.externalBookingId === pickedOwnId && linkSet.has(courtId))?.[1] ?? null
+    : null;
 
   const releaseMode = hasLinks && (clubCleared || timeCleared);
   /** A game with bookings (or several courts) moving in time: the planner says what happens to each court. */
@@ -445,7 +462,10 @@ export function useWhenWhereEditor({
   );
   const initiallyReported = useMemo(() => new Set(initialReportedKey ? initialReportedKey.split(',') : []), [initialReportedKey]);
   const openConflicts = clubConflicts.filter((c) => !ownBookingSet.has(c.courtId) && !linkSet.has(c.courtId));
-  const linkedConflicts = clubConflicts.filter((c) => linkSet.has(c.courtId) && linkChoices[c.courtId]);
+  // The booking picked under the club says so there; the claim card covers the rest.
+  const linkedConflicts = clubConflicts.filter(
+    (c) => linkSet.has(c.courtId) && linkChoices[c.courtId] && linkChoices[c.courtId].externalBookingId !== pickedOwn?.externalBookingId,
+  );
   const claimedConflicts = clubConflicts.filter(
     (c) => ownBookingSet.has(c.courtId) && (clubChanged || !initiallyReported.has(c.courtId)),
   );
@@ -497,6 +517,61 @@ export function useWhenWhereEditor({
     setSelectedCourtIds(ids);
     setWhere((s) => ({ ...s, courtId: ids[0] ?? '' }));
   }, []);
+
+  /* ---------------- "Use a booking I already made" ---------------- */
+
+  const ownUpcoming = useOwnUpcomingClubBookings({
+    game,
+    club: selectedClub,
+    courts: modalCourts,
+    enabled: open && slotModel && !showRun && !releaseMode && !timeCleared && !plannerMode,
+  });
+  const ownOffer = useMemo(() => {
+    if (ownUpcoming.state !== 'ready') return ownUpcoming;
+    const ws = editedWindow ? Date.parse(editedWindow.startTime) : null;
+    const we = editedWindow ? Date.parse(editedWindow.endTime) : null;
+    const bookings = ownUpcoming.bookings.filter((b) => {
+      const court = modalCourts.find((c) => c.id === b.courtId);
+      if (!court || !courtMatchesSportFilter(court, game.sport) || lockedCourtIds.has(b.courtId)) return false;
+      // A game holding bookings keeps its time here (moving them is the planner's job): same time only.
+      if (hasLinks) return ws != null && we != null && Date.parse(b.start) < we && Date.parse(b.end) > ws;
+      return true;
+    });
+    return { state: 'ready' as const, bookings };
+  }, [ownUpcoming, editedWindow, modalCourts, game.sport, lockedCourtIds, hasLinks]);
+
+  const pickOwnBooking = useCallback(
+    (booking: OwnClubBooking) => {
+      if (!selectedClub) return;
+      if (!hasLinks) {
+        const form = scheduleSelectionToForm({ club: selectedClub, courtId: booking.courtId, startTime: booking.start, endTime: booking.end });
+        setTimeCleared(false);
+        setWhenDate(form.selectedDate);
+        setHookDate(form.selectedDate);
+        setWhenTime(form.selectedTime);
+        setHookTime(form.selectedTime);
+        setWhenDuration(form.durationHours);
+        setHookDuration(form.durationHours);
+      }
+      if (!selectedCourtIds.includes(booking.courtId)) toggleCourt(booking.courtId);
+      setLinkChoices((prev) => {
+        const next: Record<string, OwnClubBooking> = {};
+        for (const [courtId, b] of Object.entries(prev)) if (b.externalBookingId !== pickedOwnId) next[courtId] = b;
+        next[booking.courtId] = booking;
+        return next;
+      });
+      setPickedOwnId(booking.externalBookingId);
+    },
+    [selectedClub, hasLinks, selectedCourtIds, toggleCourt, pickedOwnId, setHookDate, setHookTime, setHookDuration],
+  );
+  const undoOwnBooking = useCallback(() => {
+    setLinkChoices((prev) => {
+      const next: Record<string, OwnClubBooking> = {};
+      for (const [courtId, b] of Object.entries(prev)) if (b.externalBookingId !== pickedOwnId) next[courtId] = b;
+      return next;
+    });
+    setPickedOwnId(null);
+  }, [pickedOwnId]);
 
   /* ---------------- dirty / close ---------------- */
 
@@ -590,7 +665,11 @@ export function useWhenWhereEditor({
         .filter((b, i, all) => b && all.findIndex((x) => x.externalBookingId === b.externalBookingId) === i);
       const linkedCourts = new Set(ownLinks.map((b) => b.courtId));
       // Link their own bookings before the time moves: the clash guard then sees them as this game's.
-      for (const booking of ownLinks) await courtSlotsApi.linkBooking(game.id, booking.body);
+      // A new club comes with the first one (its court must be the game's club's).
+      for (const [i, booking] of ownLinks.entries()) {
+        const gamePatch = clubChanged && i === 0 ? { clubId: where.clubId, courtId: booking.courtId } : undefined;
+        await courtSlotsApi.linkBooking(game.id, gamePatch ? { ...booking.body, gamePatch } : booking.body);
+      }
       const reportedCourtIds = new Set([...ownBookingSet].filter((id) => !linkedCourts.has(id)));
       await saveEditLocationTime(
         game.id,
@@ -741,7 +820,23 @@ export function useWhenWhereEditor({
                   courtNeed={courtNeed}
                   clubLocked={hasLinks}
                   courtsLocked={plannerMode}
-                  ownClubBookingCourtIds={[...ownBookingSet]}
+                  ownClubBookingCourtIds={[...ownBookingSet, ...linkSet]}
+                  ownBookingsSection={
+                    selectedClub ? (
+                      <OwnBookingsSection
+                        club={selectedClub}
+                        own={ownOffer}
+                        pickedId={pickedOwn?.externalBookingId ?? null}
+                        courtName={courtNameOf}
+                        formatRange={clubClock.range}
+                        timeZone={timeZone}
+                        locale={displaySettings.locale}
+                        onPick={pickOwnBooking}
+                        onUndo={undoOwnBooking}
+                      />
+                    ) : null
+                  }
+                  bookingDuration={pickedOwn ? whenDuration : undefined}
                   onClearClub={
                     canClear
                       ? () => {

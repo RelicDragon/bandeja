@@ -3085,6 +3085,19 @@
       "th": "การจอง",
       "ja": "予約"
     },
+    "gameDetails.whenWhere.ownTitle": {
+      "en": "Your bookings at {{club}}",
+      "ru": "Ваши брони в {{club}}",
+      "sr": "Vaše rezervacije u {{club}}",
+      "es": "Tus reservas en {{club}}",
+      "cs": "Vaše rezervace v {{club}}",
+      "ar": "حجوزاتك في {{club}}",
+      "zh": "你在 {{club}} 的预订",
+      "id": "Pesanan Anda di {{club}}",
+      "hi": "{{club}} में आपकी बुकिंग",
+      "th": "การจองของคุณที่ {{club}}",
+      "ja": "{{club}}でのあなたの予約"
+    },
     "gameDetails.whenWhere.removeClub": {
       "en": "Remove club",
       "ru": "Убрать клуб",

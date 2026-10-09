@@ -521,10 +521,10 @@ function OrganizerCourts({
   );
 
   const onPickLink = useCallback(
-    async (body: LinkBookingToGameBody) => {
+    async (body: LinkBookingToGameBody, { sameCourt }: { sameCourt: boolean }) => {
       if (!linkSlot) return;
-      // Either way the picker closes; a failure toasts.
-      const outcome = await mutations.linkBooking(linkSlot, body);
+      // Either way the picker closes; a failure toasts. Another court: the server places it on its court.
+      const outcome = await mutations.linkBooking(sameCourt ? linkSlot : { gameCourtId: null }, body);
       if (!outcome.ok) showError(outcome.error);
       setLinkSlot(null);
     },
@@ -919,10 +919,11 @@ function OrganizerCourts({
         onOpenChange={(open) => !open && setLinkSlot(null)}
         game={game}
         club={club}
-        courts={club.courts ?? courts}
+        courts={courts.length > 0 ? courts : (club.courts ?? [])}
         slot={linkSlot}
         busy={mutations.pending === 'link'}
-        onPick={(body) => void onPickLink(body)}
+        onPick={(body, opts) => void onPickLink(body, opts)}
+        onOtherDays={() => openSchedule('club')}
       />
 
       {reserve ? (
