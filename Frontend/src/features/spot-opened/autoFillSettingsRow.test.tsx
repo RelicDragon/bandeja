@@ -24,6 +24,7 @@ vi.mock('@/components', () => ({
 }));
 
 vi.mock('@/components/gameSettings', () => ({
+  SettingIcon: () => null,
   CollapsibleSettingsShell: ({ children }: { children: React.ReactNode }) => (
     <section>{children}</section>
   ),

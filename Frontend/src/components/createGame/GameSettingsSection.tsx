@@ -4,7 +4,7 @@ import { Divider } from '../Divider';
 import { EntityType } from '@/types';
 import { HelpCircle, Settings } from 'lucide-react';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
-import { CollapsibleSettingsShell } from '@/components/gameSettings';
+import { CollapsibleSettingsShell, SettingIcon } from '@/components/gameSettings';
 import { getEntityCapabilities } from '@shared/entityCapabilities';
 
 interface GameSettingsSectionProps {
@@ -86,15 +86,18 @@ export const GameSettingsSection = ({
         {entityType !== 'BAR' && entityType !== 'TRAINING' && !hideRatingGame && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-                {t('createGame.ratingGame.title')}
+              <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                <SettingIcon setting="affectsRating" />
+                <span className="min-w-0">
+                  {t('createGame.ratingGame.title')}
+                </span>
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch checked={isRatingGame} onChange={onRatingGameChange} />
               </div>
             </div>
             {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
                 {isRatingGame
                   ? t('createGame.ratingGame.note.true')
                   : t('createGame.ratingGame.note.false')}
@@ -107,17 +110,20 @@ export const GameSettingsSection = ({
 
         <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-              {entityType === 'TRAINING'
-                ? t('createGame.publicGame.titleTraining')
-                : t('createGame.publicGame.title')}
+            <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+              <SettingIcon setting="isPublic" />
+              <span className="min-w-0">
+                {entityType === 'TRAINING'
+                  ? t('createGame.publicGame.titleTraining')
+                  : t('createGame.publicGame.title')}
+              </span>
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch checked={isPublic} onChange={onPublicChange} />
             </div>
           </div>
           {showNotes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
               {isPublic
                 ? entityType === 'TRAINING'
                   ? t('createGame.publicGame.noteTraining.true')
@@ -130,17 +136,20 @@ export const GameSettingsSection = ({
         </div>
         <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-              {entityType === 'TRAINING'
-                ? t('createGame.anyoneCanInvite.titleTraining')
-                : t('createGame.anyoneCanInvite.title')}
+            <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+              <SettingIcon setting="anyoneCanInvite" />
+              <span className="min-w-0">
+                {entityType === 'TRAINING'
+                  ? t('createGame.anyoneCanInvite.titleTraining')
+                  : t('createGame.anyoneCanInvite.title')}
+              </span>
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch checked={anyoneCanInvite} onChange={onAnyoneCanInviteChange} />
             </div>
           </div>
           {showNotes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
               {anyoneCanInvite
                 ? entityType === 'TRAINING'
                   ? t('createGame.anyoneCanInvite.noteTraining.true')
@@ -151,21 +160,22 @@ export const GameSettingsSection = ({
             </p>
           )}
         </div>
-        {/* PRD 360 — the organizer's own promise, right after "Anyone can invite".
-            The hint stays visible while the switch is on even with notes hidden:
-            the one thing it must never read as is a change to the level gate. */}
+        {/* PRD 360 — the organizer's own promise, right after "Anyone can invite". */}
         {showNoviceToggle && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-                {t('createGame.suitableForNovices.title')}
+              <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                <SettingIcon setting="suitableForNovices" />
+                <span className="min-w-0">
+                  {t('createGame.suitableForNovices.title')}
+                </span>
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch checked={suitableForNovices} onChange={onSuitableForNovicesChange} />
               </div>
             </div>
-            {(showNotes || suitableForNovices) && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+            {showNotes && (
+              <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
                 {t('createGame.suitableForNovices.hint')}
               </p>
             )}
@@ -174,15 +184,18 @@ export const GameSettingsSection = ({
         {entityType !== 'TOURNAMENT' && entityType !== 'TRAINING' && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-                {t('createGame.resultsByAnyone.title')}
+              <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                <SettingIcon setting="resultsByAnyone" />
+                <span className="min-w-0">
+                  {t('createGame.resultsByAnyone.title')}
+                </span>
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch checked={resultsByAnyone} onChange={onResultsByAnyoneChange} />
               </div>
             </div>
             {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
                 {resultsByAnyone
                   ? t('createGame.resultsByAnyone.note.true')
                   : t('createGame.resultsByAnyone.note.false')}
@@ -192,17 +205,20 @@ export const GameSettingsSection = ({
         )}
         <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-              {entityType === 'TRAINING'
-                ? t('createGame.allowDirectJoin.titleTraining')
-                : t('createGame.allowDirectJoin.title')}
+            <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+              <SettingIcon setting="allowDirectJoin" />
+              <span className="min-w-0">
+                {entityType === 'TRAINING'
+                  ? t('createGame.allowDirectJoin.titleTraining')
+                  : t('createGame.allowDirectJoin.title')}
+              </span>
             </span>
             <div className="flex-shrink-0">
               <ToggleSwitch checked={allowDirectJoin} onChange={onAllowDirectJoinChange} />
             </div>
           </div>
           {showNotes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
               {allowDirectJoin
                 ? entityType === 'TRAINING'
                   ? t('createGame.allowDirectJoin.noteTraining.true')
@@ -216,17 +232,20 @@ export const GameSettingsSection = ({
         {entityType !== 'BAR' && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-                {entityType === 'TRAINING'
-                  ? t('createGame.afterGameGoToBar.titleTraining')
-                  : t('createGame.afterGameGoToBar.title')}
+              <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                <SettingIcon setting="afterGameGoToBar" />
+                <span className="min-w-0">
+                  {entityType === 'TRAINING'
+                    ? t('createGame.afterGameGoToBar.titleTraining')
+                    : t('createGame.afterGameGoToBar.title')}
+                </span>
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch checked={afterGameGoToBar} onChange={onAfterGameGoToBarChange} />
               </div>
             </div>
             {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
                 {afterGameGoToBar
                   ? entityType === 'TRAINING'
                     ? t('createGame.afterGameGoToBar.noteTraining.true')
@@ -241,15 +260,18 @@ export const GameSettingsSection = ({
         {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
-                {t('createGame.participantsOnlyChat.title')}
+              <span className="flex min-w-0 items-center gap-2 pe-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                <SettingIcon setting="participantsOnlyChat" />
+                <span className="min-w-0">
+                  {t('createGame.participantsOnlyChat.title')}
+                </span>
               </span>
               <div className="flex-shrink-0">
                 <ToggleSwitch checked={participantsOnlyChat} onChange={onParticipantsOnlyChatChange} />
               </div>
             </div>
             {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="ps-6 text-xs text-gray-500 dark:text-gray-400">
                 {participantsOnlyChat
                   ? t('createGame.participantsOnlyChat.note.true')
                   : t('createGame.participantsOnlyChat.note.false')}

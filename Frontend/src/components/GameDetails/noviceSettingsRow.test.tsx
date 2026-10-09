@@ -4,8 +4,7 @@
  * The row is the only place the promise can be made after creation, so what is
  * asserted here is: it exists on the entity types that have the capability, it
  * is absent on the ones that do not, it locks with the other settings once
- * results entry starts, and the hint that says the level range still applies is
- * on screen whenever the switch is on — hiding notes must not hide it.
+ * results entry starts, and the hint follows the notes button like every other row.
  */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -28,6 +27,7 @@ vi.mock('@/components', () => ({
 }));
 
 vi.mock('@/components/gameSettings', () => ({
+  SettingIcon: () => null,
   CollapsibleSettingsShell: ({ children }: { children: React.ReactNode }) => (
     <section>{children}</section>
   ),
@@ -98,9 +98,11 @@ describe('novices welcome settings row', () => {
     expect(resultsByAnyone).toBeGreaterThan(novices);
   });
 
-  it('keeps the "level range still applies" hint visible while the promise is on', () => {
+  it('shows the hint only when notes are on, like the other rows', () => {
     showNotes = false;
     expect(render(makeGame({ suitableForNovices: false }))).not.toContain(HINT);
+    expect(render(makeGame({ suitableForNovices: true }))).not.toContain(HINT);
+    showNotes = true;
     expect(render(makeGame({ suitableForNovices: true }))).toContain(HINT);
   });
 

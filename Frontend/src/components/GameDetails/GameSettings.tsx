@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ToggleSwitch } from '@/components';
-import { CollapsibleSettingsShell } from '@/components/gameSettings';
+import { CollapsibleSettingsShell, SettingIcon, type GameSettingIconKey } from '@/components/gameSettings';
 import { Game } from '@/types';
 import { Settings, HelpCircle, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +47,7 @@ function readSetting(game: Game, key: SettingKey): boolean {
 }
 
 interface SettingToggleRowProps {
+  setting: GameSettingIconKey;
   title: string;
   checked: boolean;
   hasError: boolean;
@@ -57,6 +58,7 @@ interface SettingToggleRowProps {
 }
 
 function SettingToggleRow({
+  setting,
   title,
   checked,
   hasError,
@@ -78,11 +80,12 @@ function SettingToggleRow({
     >
       <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1">
         <span
-          className={`text-sm font-medium min-w-0 col-start-1 row-start-1 ${
+          className={`flex min-w-0 items-center gap-2 col-start-1 row-start-1 text-sm font-medium ${
             hasError ? 'text-red-800 dark:text-red-200' : 'text-gray-800 dark:text-gray-200'
           }`}
         >
-          {title}
+          <SettingIcon setting={setting} />
+          <span className="min-w-0">{title}</span>
         </span>
         <div className="relative col-start-2 row-start-1 flex-shrink-0 self-center pe-1">
           <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} />
@@ -110,7 +113,7 @@ function SettingToggleRow({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.22, ease: 'easeInOut' }}
-              className="col-start-1 row-start-2 min-w-0 overflow-hidden text-xs text-red-600 dark:text-red-400"
+              className="col-start-1 row-start-2 min-w-0 overflow-hidden ps-6 text-xs text-red-600 dark:text-red-400"
             >
               {t('gameDetails.settings.saveFailed')}
             </motion.p>
@@ -121,7 +124,7 @@ function SettingToggleRow({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.22, ease: 'easeInOut' }}
-              className="col-start-1 row-start-2 min-w-0 overflow-hidden"
+              className="col-start-1 row-start-2 min-w-0 overflow-hidden ps-6"
             >
               {note}
             </motion.div>
@@ -248,6 +251,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
     <div className="space-y-2">
         {!isLeagueSeason && !isTraining && game.entityType !== 'BAR' && (
           <SettingToggleRow
+            setting="affectsRating"
             title={t('createGame.ratingGame.title')}
             checked={getChecked('affectsRating')}
             hasError={errorFields.has('affectsRating')}
@@ -267,6 +271,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
         )}
 
         <SettingToggleRow
+          setting="isPublic"
           title={isTraining ? t('createGame.publicGame.titleTraining') : t('createGame.publicGame.title')}
           checked={getChecked('isPublic')}
           hasError={errorFields.has('isPublic')}
@@ -296,6 +301,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
           game.entityType !== 'BAR' &&
           isRailVisibleGame({ ...game, isPublic: getChecked('isPublic') }) && (
           <SettingToggleRow
+            setting="showOnLiveRail"
             title={t('live.showOnRail')}
             checked={getChecked('showOnLiveRail')}
             hasError={errorFields.has('showOnLiveRail')}
@@ -315,6 +321,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
         )}
 
         <SettingToggleRow
+          setting="anyoneCanInvite"
           title={
             isTraining ? t('createGame.anyoneCanInvite.titleTraining') : t('createGame.anyoneCanInvite.title')
           }
@@ -341,6 +348,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
         {/* PRD 360 — same slot as in create: right after "Anyone can invite". */}
         {showNoviceToggle && (
           <SettingToggleRow
+            setting="suitableForNovices"
             title={t('createGame.suitableForNovices.title')}
             checked={getChecked('suitableForNovices')}
             hasError={errorFields.has('suitableForNovices')}
@@ -348,7 +356,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
             disabled={toggleDisabled}
             onChange={(checked) => void persistSetting('suitableForNovices', checked)}
             note={
-              showNotes || getChecked('suitableForNovices') ? (
+              showNotes ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {t('createGame.suitableForNovices.hint')}
                 </p>
@@ -359,6 +367,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
 
         {!isLeagueSeason && game.entityType !== 'TOURNAMENT' && !isTraining && (
           <SettingToggleRow
+            setting="resultsByAnyone"
             title={t('createGame.resultsByAnyone.title')}
             checked={getChecked('resultsByAnyone')}
             hasError={errorFields.has('resultsByAnyone')}
@@ -378,6 +387,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
         )}
 
         <SettingToggleRow
+          setting="allowDirectJoin"
           title={
             isTraining ? t('createGame.allowDirectJoin.titleTraining') : t('createGame.allowDirectJoin.title')
           }
@@ -403,6 +413,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
 
         {/* PRD 347 — auto-fill only makes sense while the roster can change. */}
         <SettingToggleRow
+          setting="autoFillFromQueue"
           title={t('spots.settings.autoFillTitle')}
           checked={getChecked('autoFillFromQueue')}
           hasError={errorFields.has('autoFillFromQueue')}
@@ -427,6 +438,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
 
         {game.entityType !== 'BAR' && (
           <SettingToggleRow
+            setting="afterGameGoToBar"
             title={
               isTraining
                 ? t('createGame.afterGameGoToBar.titleTraining')

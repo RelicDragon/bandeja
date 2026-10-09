@@ -1,10 +1,9 @@
 /**
  * PRD 360 — "Novices welcome" in the create flow.
  *
- * Covers the three ways this can go wrong without anyone noticing: the row
- * appearing on an entity type that cannot carry the promise, the hint that says
- * the level range still applies being hidden behind the notes button while the
- * switch is on, and the create payload quietly dropping the flag so the game is
+ * Covers the ways this can go wrong without anyone noticing: the row appearing
+ * on an entity type that cannot carry the promise, the hint ignoring the notes
+ * button, and the create payload quietly dropping the flag so the game is
  * created untagged with the switch showing "on".
  */
 import { readFileSync } from 'node:fs';
@@ -32,6 +31,7 @@ vi.mock('@/hooks/useShowSettingsNotes', () => ({
 }));
 
 vi.mock('@/components/gameSettings', () => ({
+  SettingIcon: () => null,
   CollapsibleSettingsShell: ({ children }: { children: React.ReactNode }) => (
     <section>{children}</section>
   ),
@@ -77,9 +77,11 @@ describe('create flow — novices welcome toggle', () => {
     expect(html).toContain('data-toggle="off"');
   });
 
-  it('keeps the "level range still applies" hint on screen while the switch is on', () => {
+  it('shows the hint only when notes are on, like the other rows', () => {
     showNotes = false;
     expect(render('GAME', false)).not.toContain(HINT);
+    expect(render('GAME', true)).not.toContain(HINT);
+    showNotes = true;
     expect(render('GAME', true)).toContain(HINT);
   });
 
