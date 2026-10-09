@@ -46,6 +46,11 @@ const PILL_ENTITY_ORDER: DisplayEntityType[] = ['GAME', 'TOURNAMENT', 'TRAINING'
 
 export interface MonthCalendarProps {
   selectedDate: Date | null;
+  /**
+   * Extra `yyyy-MM-dd` keys drawn as selected alongside `selectedDate` — the
+   * Weekend shortcut selects Saturday and Sunday together.
+   */
+  selectedDayKeys?: readonly string[];
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
   /** Cheap structural day index for accurate busy-city badge counts. */
@@ -117,6 +122,7 @@ const HEADER_TRANSITION_REDUCED = { duration: 0 };
 
 const MonthCalendarView = ({
   selectedDate,
+  selectedDayKeys,
   onDateSelect,
   availableGames,
   dayIndex,
@@ -642,7 +648,7 @@ const MonthCalendarView = ({
           <MonthCalendarDayCell
             key={dateStr}
             {...props}
-            isSelected={selectedDayKey === dateStr}
+            isSelected={selectedDayKey === dateStr || (selectedDayKeys?.includes(dateStr) ?? false)}
             unreadCount={unreadByDay.get(dateStr) ?? 0}
             locale={displaySettings.locale}
             onSelect={handleDateClick}

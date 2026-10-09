@@ -145,25 +145,29 @@ describe('resolveActiveQuickShortcut (the row reflects the calendar)', () => {
     expect(resolveActiveQuickShortcut(shown('2026-09-21'), false, opts)).toBeNull(); // yesterday
   });
 
-  it('highlights Weekend for Saturday or Sunday of the coming weekend, pinned or not', () => {
-    expect(resolveActiveQuickShortcut(shown('2026-09-26'), false, opts)).toBe('weekend');
-    expect(resolveActiveQuickShortcut(shown('2026-09-27'), false, opts)).toBe('weekend');
+  it('highlights Weekend only after tapping Weekend, on its first day', () => {
+    // A weekend day tapped in the calendar is just that day.
+    expect(resolveActiveQuickShortcut(shown('2026-09-26'), false, opts)).toBeNull();
+    expect(resolveActiveQuickShortcut(shown('2026-09-27'), false, opts)).toBeNull();
     expect(resolveActiveQuickShortcut(shown('2026-09-26'), true, opts)).toBe('weekend');
-    // Next weekend is just a day.
-    expect(resolveActiveQuickShortcut(shown('2026-10-03'), false, opts)).toBeNull();
+    // Moving to Sunday leaves the Weekend list (the host then drops the pin).
+    expect(resolveActiveQuickShortcut(shown('2026-09-27'), true, opts)).toBeNull();
+    expect(resolveActiveQuickShortcut(shown('2026-10-03'), true, opts)).toBeNull();
   });
 
-  it('on Friday, tomorrow is Saturday and reads as Weekend', () => {
+  it('on Friday, tomorrow is Saturday: Tomorrow unless Weekend was tapped', () => {
     const friday = { now: new Date('2026-09-25T10:00:00Z'), timezone: BELGRADE };
-    expect(resolveActiveQuickShortcut(shown('2026-09-26'), false, friday)).toBe('weekend');
+    expect(resolveActiveQuickShortcut(shown('2026-09-26'), false, friday)).toBe('tomorrow');
+    expect(resolveActiveQuickShortcut(shown('2026-09-26'), true, friday)).toBe('weekend');
+    // Sunday picked in the calendar shows Sunday alone.
+    expect(resolveActiveQuickShortcut(shown('2026-09-27'), false, friday)).toBeNull();
   });
 
   it('on a weekend day the pin decides between Today and Weekend', () => {
     const saturday = { now: new Date('2026-09-26T10:00:00Z'), timezone: BELGRADE };
     expect(resolveActiveQuickShortcut(shown('2026-09-26'), false, saturday)).toBe('today');
     expect(resolveActiveQuickShortcut(shown('2026-09-26'), true, saturday)).toBe('weekend');
-    // Sunday under a Saturday clock is not today, so it is Weekend regardless.
-    expect(resolveActiveQuickShortcut(shown('2026-09-27'), false, saturday)).toBe('weekend');
+    expect(resolveActiveQuickShortcut(shown('2026-09-27'), false, saturday)).toBe('tomorrow');
     const sunday = { now: new Date('2026-09-27T10:00:00Z'), timezone: BELGRADE };
     expect(resolveActiveQuickShortcut(shown('2026-09-27'), false, sunday)).toBe('today');
     expect(resolveActiveQuickShortcut(shown('2026-09-27'), true, sunday)).toBe('weekend');

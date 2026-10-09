@@ -336,13 +336,12 @@ const AvailableGamesSectionView = ({
   /*
    * PRD 358 — apply / clear / release.
    *
-   * The row reflects the calendar: whichever day is selected, however it was
-   * selected, the row says so — today, tomorrow, or Saturday / Sunday of the
-   * coming weekend, which lists both days under the open calendar. Apply
+   * The row reflects the calendar: today and tomorrow highlight however they
+   * were selected. Weekend (both days listed under the open calendar) is the
+   * one stored bit — the pin: tapping Weekend sets it, and the effect below
+   * drops it once the calendar has moved away or the city day has rolled
+   * over. A weekend day tapped in the calendar lists only that day. Apply
    * just selects the day in calendar view with the setters Find already has.
-   * The only stored bit is the Weekend pin, needed when today is itself a
-   * weekend day: Weekend sets it, Today clears it, and the effect below drops
-   * it once the calendar has moved away or the city day has rolled over.
    */
   const applyQuickShortcut = useCallback(
     (kind: QuickShortcutKind, options?: { fromUrl?: boolean }) => {
@@ -472,8 +471,7 @@ const AvailableGamesSectionView = ({
     ],
   );
 
-  // The weekend's day keys are derived from the clock, not the pin, so a
-  // Saturday tapped on the calendar lists Saturday and Sunday just the same.
+  // Weekend lists — and the calendar highlights — Saturday and Sunday together.
   const todayKey = dateKeyInTimezone(new Date(), cityTimezone);
   const weekendDayKeys = useMemo(
     () => (weekendActive ? resolveWeekendDayKeys(todayKey) : undefined),
@@ -833,6 +831,7 @@ const AvailableGamesSectionView = ({
   const calendarSectionProps = useMemo(
     () => ({
       selectedDate,
+      selectedDayKeys: weekendDayKeys,
       onDateSelect: handleDateSelect,
       availableGames,
       dayIndex,
@@ -858,7 +857,7 @@ const AvailableGamesSectionView = ({
       quickShortcuts: quickShortcutsNode,
     }),
     [
-      selectedDate, handleDateSelect, availableGames, dayIndex, filterAvailableSlotsVal,
+      selectedDate, weekendDayKeys, handleDateSelect, availableGames, dayIndex, filterAvailableSlotsVal,
       filterSuitableRatingVal, hideBarGamesVal, gameFilterVal, trainingFilterVal,
       tournamentFilterVal, leaguesFilterVal, eventsFilterVal, user?.favoriteTrainerId,
       onMonthChange, onDateRangeChange, panelFilterState, showPrivateGamesVal, isAdmin,

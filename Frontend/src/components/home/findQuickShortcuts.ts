@@ -75,15 +75,12 @@ export interface QuickShortcutShownState {
 }
 
 /**
- * Which option the row highlights, read off the calendar itself: whatever
- * day is selected, the row says so. Saturday or Sunday of the coming weekend
- * is Weekend (and lists both days), today is Today, tomorrow is Tomorrow.
- * Nothing highlights in list view or on any other day.
- *
- * The one ambiguity is a weekend day that is also today: then the tap that
- * got here decides. `weekendPinned` is set by the Weekend option and cleared
- * by Today, so Saturday reads as Weekend after tapping Weekend and as Today
- * after tapping Today.
+ * Which option the row highlights, read off the calendar: today is Today,
+ * tomorrow is Tomorrow. Weekend (which lists Saturday and Sunday together)
+ * is only active after tapping Weekend — `weekendPinned` — and only while its
+ * first day is still the selected one. Tapping Saturday or Sunday in the
+ * calendar shows just that day, like any other day. Nothing highlights in
+ * list view or on any other day.
  */
 export function resolveActiveQuickShortcut(
   shown: QuickShortcutShownState,
@@ -92,11 +89,8 @@ export function resolveActiveQuickShortcut(
 ): QuickShortcutAction | null {
   if (shown.view !== 'calendar' || !shown.selectedDay) return null;
   const todayKey = dateKeyInTimezone(now, timezone);
-  const isToday = shown.selectedDay === todayKey;
-  if (resolveWeekendDayKeys(todayKey).includes(shown.selectedDay) && (!isToday || weekendPinned)) {
-    return 'weekend';
-  }
-  if (isToday) return 'today';
+  if (weekendPinned && shown.selectedDay === resolveWeekendDayKeys(todayKey)[0]) return 'weekend';
+  if (shown.selectedDay === todayKey) return 'today';
   if (shown.selectedDay === shiftDayKey(todayKey, 1)) return 'tomorrow';
   return null;
 }

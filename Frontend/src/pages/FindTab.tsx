@@ -77,8 +77,8 @@ export const FindTab = () => {
   const setFindHeaderActions = useShellNavStore((s) => s.setFindHeaderActions);
   // PRD 358 — Weekend keeps the calendar and lists Sat + Sun from the upcoming
   // river, so that query also runs in calendar view while it is active. Active
-  // is read off the calendar (a weekend day selected), the pin only decides a
-  // weekend day that is also today — same rule as the section's row.
+  // only after tapping Weekend (the pin); a weekend day picked in the calendar
+  // lists just that day — same rule as the section's row.
   const weekendPinned = useShellNavStore((s) => s.activeFindQuickShortcut != null);
   const weekendShortcutActive =
     resolveActiveQuickShortcut(
