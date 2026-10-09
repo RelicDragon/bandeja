@@ -55,8 +55,8 @@ const NO_CLUBS: Club[] = [];
 const NO_COURTS: Court[] = [];
 
 const TABS = [
-  { id: 'whenWhere' as const, icon: CalendarClock },
   { id: 'general' as const, icon: Edit3 },
+  { id: 'whenWhere' as const, icon: CalendarClock },
   { id: 'price' as const, icon: Banknote },
   { id: 'participants' as const, icon: Users },
   { id: 'settings' as const, icon: Settings },
@@ -85,7 +85,7 @@ export const EditGameInfoModal = ({
   isOpen,
   onClose,
   game,
-  initialTab = 'whenWhere',
+  initialTab = 'general',
   focus,
   focusKey = 0,
   canEditSettings = true,

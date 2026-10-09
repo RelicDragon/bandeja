@@ -1689,7 +1689,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               onEditCourt={() => openSchedule('courts')}
               onEditClub={() => openSchedule('club')}
               onOpenEditGameInfo={(tab) => {
-                setEditGameInfoInitialTab(tab ?? 'whenWhere');
+                setEditGameInfoInitialTab(tab ?? 'general');
                 setEditFocus((prev) => ({ key: prev.key + 1 }));
                 setIsEditGameInfoModalOpen(true);
               }}
