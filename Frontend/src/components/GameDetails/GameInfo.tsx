@@ -88,7 +88,7 @@ interface GameInfoProps {
   /** Edit → "When and where", on the club. */
   onEditClub?: () => void;
   onOpenEditGameInfo?: (initialTab?: EditGameInfoInitialTabId) => void;
-  /** Date/time taps: Edit → "When and where", on the time. */
+  /** Date/time taps: Edit → "When and where", from the top (no scroll to the time). */
   onChangeTime?: () => void;
   collapsedByDefault?: boolean;
   onInviteTrainer?: () => void;

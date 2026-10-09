@@ -1693,7 +1693,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 setEditFocus((prev) => ({ key: prev.key + 1 }));
                 setIsEditGameInfoModalOpen(true);
               }}
-              onChangeTime={openChangeTime}
+              onChangeTime={() => openSchedule()}
               collapsedByDefault={game.resultsStatus !== 'NONE'}
               onInviteTrainer={() => {
                 setPlayerListMode('trainer');
