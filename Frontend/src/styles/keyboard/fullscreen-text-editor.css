@@ -11,6 +11,9 @@
    class is absent and `fixed inset-0` is already correct — these rules no-op. */
 
 .fullscreen-dialog-root.fullscreen-text-editor {
+  /* Opens from inside hand-rolled modals too (Telegram summary sits at z-101),
+     so it must outrank them rather than use the generic z-50. */
+  z-index: 120;
   transition:
     top 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -27,6 +30,10 @@ html body.keyboard-visible
   .fullscreen-dialog-root
   .cap-fullscreen-dialog-body.fullscreen-text-editor-body {
   padding-bottom: 0;
+}
+
+.fullscreen-backdrop-overlay.fullscreen-text-editor-backdrop {
+  z-index: 120;
 }
 
 .fullscreen-text-editor-body {

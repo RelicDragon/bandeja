@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useMessageInputMultiline(message: string, selectedImagesLength: number) {
   const inputContainerRef = useRef<HTMLDivElement>(null);
-  const [, setIsMultiline] = useState(false);
+  const [isMultiline, setIsMultiline] = useState(false);
 
   const updateMultilineState = useCallback(() => {
     requestAnimationFrame(() => {
@@ -47,5 +47,5 @@ export function useMessageInputMultiline(message: string, selectedImagesLength: 
     return () => resizeObserver.disconnect();
   }, [updateMultilineState]);
 
-  return { inputContainerRef, updateMultilineState };
+  return { inputContainerRef, updateMultilineState, isMultiline };
 }

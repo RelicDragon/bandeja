@@ -6,11 +6,12 @@ import {
   chatApi,
   CreateMessageRequest,
 } from '@/api/chat';
-import { X } from 'lucide-react';
+import { Maximize2, X } from 'lucide-react';
 import { normalizeChatType } from '@/utils/chatType';
 import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { isUserGroupChannelParticipant } from '@/utils/groupChannelParticipation';
 import { MentionInput } from './MentionInput';
+import { FullscreenTextEditor, type TextSelectionRange } from '@/components/ui/FullscreenTextEditor';
 import { MessageInputComposerContextStrip } from '@/components/chat/MessageInputComposerContextStrip';
 import { JoinGroupChannelButton } from './JoinGroupChannelButton';
 import { PollCreationModal } from './chat/PollCreationModal';
@@ -140,6 +141,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isStickerTrayOpen, setIsStickerTrayOpen] = useState(false);
   const [isComposerSearchExpanded, setIsComposerSearchExpanded] = useState(false);
+  const [isComposerFullscreen, setIsComposerFullscreen] = useState(false);
   const voiceRecorder = useAudioRecorder();
   const lastAppliedEditIdRef = useRef<string | null>(null);
   const queueSendRef = useRef(false);
@@ -159,7 +161,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
     };
   }, []);
 
-  const { inputContainerRef, updateMultilineState } = useMessageInputMultiline(message, selectedImages.length);
+  const { inputContainerRef, updateMultilineState, isMultiline } = useMessageInputMultiline(
+    message,
+    selectedImages.length,
+  );
 
   const translation = useMessageInputTranslation({
     message,
@@ -388,6 +393,42 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
     if (newValue.trim()) notifyKeystroke();
     else stopTyping();
   };
+
+  const getComposerSelection = useCallback((): TextSelectionRange | null => {
+    const el = inputContainerRef.current?.querySelector('textarea');
+    return el ? { start: el.selectionStart, end: el.selectionEnd } : null;
+  }, [inputContainerRef]);
+
+  /* Applied after the editor hands focus back, so the caret lands where the user left it. */
+  const restoreComposerSelection = useCallback(
+    (selection: TextSelectionRange) => {
+      requestAnimationFrame(() => {
+        const el = inputContainerRef.current?.querySelector('textarea');
+        if (!el) return;
+        const max = el.value.length;
+        el.setSelectionRange(Math.min(selection.start, max), Math.min(selection.end, max));
+      });
+    },
+    [inputContainerRef],
+  );
+
+  /* Only once the text wraps past two lines: the pill is then tall enough for the
+     control to sit above the send button in the reserved trailing column. */
+  const expandComposerButton =
+    isMultiline && !isDisabled && !inputBlocked ? (
+      <button
+        type="button"
+        /* Keep focus in the field so the iOS keyboard stays up into the overlay. */
+        onPointerDown={(e) => e.preventDefault()}
+        onClick={() => setIsComposerFullscreen(true)}
+        title={t('common.editFullscreen')}
+        aria-label={t('common.editFullscreen')}
+        data-testid="expand-composer"
+        className="absolute right-[8px] top-1.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 active:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:active:bg-gray-700"
+      >
+        <Maximize2 size={15} aria-hidden />
+      </button>
+    ) : null;
 
   const handlePollCreate = async (pollData: {
     question: string;
@@ -797,6 +838,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                       className="w-full"
                       style={{ minHeight: '48px', maxHeight: '120px', paddingLeft: '20px' }}
                     />
+                    {expandComposerButton}
                     {showMic ? (
                       <VoiceRecordButton
                         onClick={() => void voice.handleStartVoice()}
@@ -865,6 +907,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                         className="w-full"
                         style={{ minHeight: '48px', maxHeight: '120px', paddingLeft: '20px' }}
                       />
+                      {expandComposerButton}
                       {showMic ? (
                         <VoiceRecordButton
                           onClick={() => void voice.handleStartVoice()}
@@ -895,6 +938,33 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
           </div>
         </div>
       </form>
+      <FullscreenTextEditor
+        open={isComposerFullscreen}
+        onClose={() => setIsComposerFullscreen(false)}
+        modalId="chat-composer-fullscreen"
+        title={editingMessage ? t('chat.editingLabel') : t('chat.reply.message')}
+        value={message}
+        onValueChange={(value) => handleMessageChange(value, mentionIds)}
+        showCharacterCount={false}
+        getInitialSelection={getComposerSelection}
+        onSelectionCommit={restoreComposerSelection}
+        renderInput={({ inputRef, onKeyDown }) => (
+          <MentionInput
+            fill
+            inputRef={inputRef}
+            value={message}
+            onChange={handleMessageChange}
+            onKeyDown={onKeyDown}
+            placeholder={t('chat.messages.typeMessage')}
+            game={game}
+            bug={bug}
+            groupChannel={groupChannel}
+            userChatId={userChatId}
+            contextType={contextType}
+            chatType={chatType}
+          />
+        )}
+      />
       <PollCreationModal isOpen={isPollModalOpen} onClose={() => setIsPollModalOpen(false)} onSubmit={handlePollCreate} />
       <ChatStickerTray
         open={isStickerTrayOpen}

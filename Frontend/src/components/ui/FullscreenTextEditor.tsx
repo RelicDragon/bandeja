@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Minimize2 } from 'lucide-react';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
@@ -6,6 +6,12 @@ import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 export interface TextSelectionRange {
   start: number;
   end: number;
+}
+
+/** Wiring a custom editor input must apply so focus, caret and Cmd/Ctrl+Enter keep working. */
+export interface FullscreenTextEditorInputProps {
+  inputRef: (el: HTMLTextAreaElement | null) => void;
+  onKeyDown: (e: KeyboardEvent) => void;
 }
 
 interface FullscreenTextEditorProps {
@@ -22,6 +28,10 @@ interface FullscreenTextEditorProps {
   getInitialSelection?: () => TextSelectionRange | null;
   /** Caret the user left behind, so the inline field can adopt it back. */
   onSelectionCommit?: (selection: TextSelectionRange) => void;
+  /** Replaces the plain textarea (e.g. a mention-aware input). Must fill the remaining height. */
+  renderInput?: (props: FullscreenTextEditorInputProps) => ReactNode;
+  /** The raw length is meaningless for markup values such as chat mentions. */
+  showCharacterCount?: boolean;
 }
 
 /**
@@ -43,15 +53,24 @@ export const FullscreenTextEditor = ({
   modalId,
   getInitialSelection,
   onSelectionCommit,
+  renderInput,
+  showCharacterCount = true,
 }: FullscreenTextEditorProps) => {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   /* Take Radix's open-focus: one direct focus keeps the iOS keyboard up, while
      the default hop through the first button would dismiss and re-raise it. */
   const focusEditor = useCallback(
     (event: Event) => {
       event.preventDefault();
+      /* The opener keeps focus on its field (pointerdown is prevented), so this
+         is the inline input to hand focus back to on close. */
+      returnFocusRef.current =
+        document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+          ? document.activeElement
+          : null;
       const el = textareaRef.current;
       if (!el) return;
       const max = el.value.length;
@@ -65,11 +84,35 @@ export const FullscreenTextEditor = ({
     [getInitialSelection],
   );
 
+  /* Radix only refocuses a `Dialog.Trigger`; return focus to the inline field
+     so the caret (restored by `onSelectionCommit`) and the keyboard survive. */
+  const restoreFocus = useCallback((event: Event) => {
+    const target = returnFocusRef.current;
+    returnFocusRef.current = null;
+    if (!target?.isConnected) return;
+    event.preventDefault();
+    target.focus({ preventScroll: true });
+  }, []);
+
   const close = useCallback(() => {
     const el = textareaRef.current;
     if (el) onSelectionCommit?.({ start: el.selectionStart, end: el.selectionEnd });
     onClose();
   }, [onClose, onSelectionCommit]);
+
+  const setTextareaRef = useCallback((el: HTMLTextAreaElement | null) => {
+    textareaRef.current = el;
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        close();
+      }
+    },
+    [close],
+  );
 
   return (
     <FullScreenDialog
@@ -78,10 +121,11 @@ export const FullscreenTextEditor = ({
       modalId={modalId}
       title={title}
       closeOnInteractOutside={false}
-      overlayClassName="fullscreen-backdrop-overlay"
+      overlayClassName="fullscreen-backdrop-overlay fullscreen-text-editor-backdrop"
       contentClassName="fullscreen-text-editor fullscreen-text-editor-animate"
       bodyClassName="fullscreen-text-editor-body"
       onOpenAutoFocus={focusEditor}
+      onCloseAutoFocus={restoreFocus}
     >
       <div
         className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900"
@@ -110,25 +154,28 @@ export const FullscreenTextEditor = ({
           </button>
         </header>
 
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => onValueChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              close();
-            }
-          }}
-          placeholder={placeholder}
-          maxLength={maxLength}
-          className="fullscreen-text-editor-input min-h-0 w-full flex-1 resize-none bg-transparent px-4 py-3 text-base leading-relaxed text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-gray-500"
-          dir="auto"
-        />
+        {renderInput ? (
+          renderInput({ inputRef: setTextareaRef, onKeyDown: handleKeyDown })
+        ) : (
+          <textarea
+            ref={setTextareaRef}
+            value={value}
+            onChange={(e) => onValueChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            className="fullscreen-text-editor-input min-h-0 w-full flex-1 resize-none bg-transparent px-4 py-3 text-base leading-relaxed text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-gray-500"
+            dir="auto"
+          />
+        )}
 
-        <footer className="fullscreen-text-editor-footer shrink-0 border-t border-gray-100 px-4 pt-1.5 text-[11px] tabular-nums text-gray-500 dark:border-gray-800 dark:text-gray-400">
-          {maxLength ? `${value.length}/${maxLength}` : value.length} {t('common.characters')}
-        </footer>
+        {showCharacterCount ? (
+          <footer className="fullscreen-text-editor-footer shrink-0 border-t border-gray-100 px-4 pt-1.5 text-[11px] tabular-nums text-gray-500 dark:border-gray-800 dark:text-gray-400">
+            {maxLength ? `${value.length}/${maxLength}` : value.length} {t('common.characters')}
+          </footer>
+        ) : (
+          <div className="fullscreen-text-editor-footer shrink-0" aria-hidden />
+        )}
       </div>
     </FullScreenDialog>
   );

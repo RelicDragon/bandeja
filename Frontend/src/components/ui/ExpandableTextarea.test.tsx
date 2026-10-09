@@ -88,6 +88,20 @@ describe('ExpandableTextarea', () => {
     expect(editor()).toBeNull();
   });
 
+  it('hands focus back to the inline field on close', async () => {
+    await render();
+    const inline = host.querySelector('textarea')!;
+    inline.focus();
+    await act(async () => expandButton()!.click());
+    expect(document.activeElement).toBe(editorTextarea());
+
+    await act(async () => doneButton()!.click());
+    // Radix runs its close-focus step on the next tick.
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    expect(document.activeElement).toBe(inline);
+  });
+
   it('hides the control when the field cannot be edited', async () => {
     await render({ disabled: true });
     expect(expandButton()).toBeNull();
@@ -115,6 +129,11 @@ describe('fullscreen text editor keyboard CSS', () => {
   it('drops the generic body keyboard padding so the inset is not counted twice', () => {
     expect(editorCss).toContain('.cap-fullscreen-dialog-body.fullscreen-text-editor-body');
     expect(editorCss).toMatch(/fullscreen-text-editor-body\s*\{[^}]*padding-bottom:\s*0;/s);
+  });
+
+  it('stacks above hand-rolled modals it can open from (Telegram summary is z-101)', () => {
+    expect(editorCss).toMatch(/\.fullscreen-dialog-root\.fullscreen-text-editor\s*\{[^}]*z-index:\s*120;/s);
+    expect(editorCss).toMatch(/\.fullscreen-text-editor-backdrop\s*\{[^}]*z-index:\s*120;/s);
   });
 
   it('animates open and closed', () => {

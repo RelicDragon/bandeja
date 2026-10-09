@@ -4,11 +4,18 @@
   overflow: visible;
 }
 
-.mention-input-wrapper div[style*="position: absolute"]:has(.mention-suggestions-shell) {
+/* Composer: the field hugs the bottom edge, so pin the list above the whole field. */
+.mention-input-wrapper:not(.mention-input-wrapper--fill)
+  div[style*="position: absolute"]:has(.mention-suggestions-shell) {
   top: auto !important;
   bottom: calc(100% + 6px) !important;
   left: 0 !important;
   right: auto !important;
+}
+
+/* Fullscreen editor: the field spans the screen, so keep react-mentions' own
+   caret-anchored top/left (above the caret only when it would overflow). */
+.mention-input-wrapper div[style*="position: absolute"]:has(.mention-suggestions-shell) {
   margin-top: 0 !important;
   background: transparent !important;
   border: none !important;

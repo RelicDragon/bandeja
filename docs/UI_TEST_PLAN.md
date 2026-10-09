@@ -197,7 +197,7 @@ Frontend/e2e/
 
 Long free-text fields (game/event/league description, marketplace listing, profile bio,
 club description & policy, FAQ answer, review comment, bug description, game-text
-translation drafts) render an expand control in the field's top trailing corner that opens
+translation drafts, Telegram results summary) render an expand control in the field's top trailing corner that opens
 `FullscreenTextEditor`. The overlay edits the same value live — closing never discards text.
 
 | ID | Test | Steps | Expected |
@@ -214,6 +214,11 @@ translation drafts) render an expand control in the field's top trailing corner 
 | FTE-10 | Disabled / read-only | Field disabled (e.g. translation draft while saving) | No expand control |
 | FTE-11 | Desktop shortcut | Focus the fullscreen textarea → `Cmd/Ctrl+Enter` | Editor closes, text kept |
 | FTE-12 | RTL | App language العربية | Expand control sits top-left (inline-end); editor header mirrors |
+| FTE-13 | Focus returns inline | Open the editor from a focused field → Done / Escape | Inline field is focused again with the caret where it was left in the editor (keyboard stays up on mobile) |
+| FTE-14 | Telegram summary | Results → Send to Telegram → expand the summary text | Editor opens **above** the Telegram dialog; Escape / Done closes only the editor, the dialog stays open and Send posts the edited text |
+| FTE-15 | Chat composer control | Any chat: type until the message wraps past two lines | Expand icon appears top-right of the composer pill, above Send/Mic, never overlapping it; hidden for 1–2 lines, in voice mode, and while disabled/sending |
+| FTE-16 | Chat composer editor | Tap the composer expand icon | Title "Message" (or "Editing" when editing a message); no character counter; Enter inserts a newline (never sends); Done returns to the composer with the text and caret, then Send works as usual |
+| FTE-17 | Chat mentions in fullscreen | Group/game chat → open the editor → type `@` + letters | Suggestions open under the caret inside the editor (not above the header); picking one inserts a highlighted mention that survives Done and is sent with its mention id |
 
 ### 4.2 Onboarding gates & prompts
 

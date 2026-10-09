@@ -22,6 +22,9 @@ interface FullScreenDialogProps {
   /** Radix open-focus hook — `preventDefault()` to focus your own element instead.
       Avoids the extra focus hop that dismisses the iOS software keyboard. */
   onOpenAutoFocus?: (event: Event) => void;
+  /** Radix close-focus hook. Without a `Dialog.Trigger` Radix refocuses nothing,
+      so callers that opened from a field hand focus back here. */
+  onCloseAutoFocus?: (event: Event) => void;
   children: React.ReactNode;
 }
 
@@ -36,6 +39,7 @@ export const FullScreenDialog = ({
   contentClassName,
   bodyClassName,
   onOpenAutoFocus,
+  onCloseAutoFocus,
   children,
 }: FullScreenDialogProps) => {
   const fallbackIdRef = useRef(`fullscreen-${Math.random()}`);
@@ -62,6 +66,7 @@ export const FullScreenDialog = ({
           className={contentClassName ? `${FULL_SCREEN_CONTENT_CLASS} ${contentClassName}` : FULL_SCREEN_CONTENT_CLASS}
           aria-describedby={undefined}
           onOpenAutoFocus={onOpenAutoFocus}
+          onCloseAutoFocus={onCloseAutoFocus}
           {...preventOutside}
         >
           <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>

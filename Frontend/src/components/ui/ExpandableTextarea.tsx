@@ -5,6 +5,7 @@ import {
   useState,
   type ChangeEvent,
   type ElementType,
+  type Ref,
   type TextareaHTMLAttributes,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,8 @@ export interface ExpandableTextareaProps
   wrapperClassName?: string;
   /** Drop-in replacement for `<textarea>` (e.g. `SelectionPreservingTextarea`). */
   textareaComponent?: ElementType;
+  /** Ref to the inline textarea (e.g. to focus it programmatically). */
+  textareaRef?: Ref<HTMLTextAreaElement>;
 }
 
 /**
@@ -36,6 +39,7 @@ export const ExpandableTextarea = ({
   fullscreenTitle,
   wrapperClassName,
   textareaComponent,
+  textareaRef,
   className,
   style,
   disabled,
@@ -56,8 +60,17 @@ export const ExpandableTextarea = ({
     return el ? { start: el.selectionStart, end: el.selectionEnd } : null;
   }, []);
 
-  /* Radix restores focus to the inline field after the overlay closes, so the
-     caret has to be written back on the next frame to survive that focus. */
+  /* The editor hands focus back to the inline field as it closes, so the caret
+     is written back on the next frame to survive that focus. */
+  const setInlineRef = useCallback(
+    (el: HTMLTextAreaElement | null) => {
+      inlineRef.current = el;
+      if (typeof textareaRef === 'function') textareaRef(el);
+      else if (textareaRef) (textareaRef as { current: HTMLTextAreaElement | null }).current = el;
+    },
+    [textareaRef],
+  );
+
   const restoreSelection = useCallback((selection: TextSelectionRange) => {
     requestAnimationFrame(() => {
       const el = inlineRef.current;
@@ -71,7 +84,7 @@ export const ExpandableTextarea = ({
     <div className={wrapperClassName ? `relative ${wrapperClassName}` : 'relative'}>
       <Field
         {...textareaProps}
-        ref={inlineRef}
+        ref={setInlineRef}
         value={value}
         onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onValueChange(e.target.value)}
         disabled={disabled}

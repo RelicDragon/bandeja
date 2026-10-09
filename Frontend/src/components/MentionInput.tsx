@@ -39,6 +39,10 @@ interface MentionInputProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   className?: string;
   style?: React.CSSProperties;
+  /** Fill the parent's height and scroll inside it (fullscreen editor) instead of
+      auto-growing between 48px and 120px like the composer. Parent must be a flex column. */
+  fill?: boolean;
+  inputRef?: (el: HTMLTextAreaElement | null) => void;
 }
 
 export const MentionInput: React.FC<MentionInputProps> = ({
@@ -55,6 +59,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   onKeyDown,
   className = '',
   style,
+  fill = false,
+  inputRef: externalInputRef,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -68,8 +74,9 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const [groupParticipants, setGroupParticipants] = useState<GroupChannelParticipant[] | null>(null);
 
   const syncInputHeight = useCallback(() => {
+    if (fill) return;
     syncMentionTextareaHeight(inputRef.current);
-  }, []);
+  }, [fill]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -282,79 +289,86 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   const inputStyleOverride = useMemo(() => style ?? {}, [style]);
 
-  const customStyle = useMemo(() => ({
-    control: {
-      backgroundColor: 'transparent',
-      fontSize: 14,
-      fontWeight: 'normal',
-      color: 'inherit',
-    },
-    '&multiLine': {
+  /* Fullscreen: the control spans the editor and the textarea scrolls; the
+     highlighter follows its scrollTop (react-mentions syncs it). */
+  const customStyle = useMemo(() => {
+    const fillSize = fill
+      ? { height: '100%', minHeight: 0, maxHeight: 'none' }
+      : { minHeight: 48, maxHeight: 120 };
+    return {
+      ...(fill ? { height: '100%' } : {}),
       control: {
-        fontFamily: 'inherit',
-        minHeight: 48,
-        maxHeight: 120,
-        overflow: 'hidden' as const,
-        wordBreak: 'break-word' as const,
-        overflowWrap: 'break-word' as const,
-      },
-      highlighter: {
-        padding: '12px 16px',
-        paddingRight: '80px',
-        border: 'none',
-        borderRadius: '24px',
-        boxSizing: 'border-box' as const,
-        minHeight: 48,
-        maxHeight: 120,
-        overflow: 'hidden' as const,
-        wordBreak: 'break-word' as const,
-        overflowWrap: 'break-word' as const,
-      },
-      input: {
-        padding: '12px 16px',
-        paddingRight: '80px',
-        border: 'none',
-        borderRadius: '24px',
-        outline: 'none',
         backgroundColor: 'transparent',
-        color: 'rgb(17, 24, 39)',
-        boxSizing: 'border-box' as const,
-        minHeight: 48,
-        maxHeight: 120,
-        overflowX: 'hidden' as const,
-        overflowY: 'auto' as const,
-        WebkitOverflowScrolling: 'touch',
-        resize: 'none' as const,
-        wordBreak: 'break-word' as const,
-        overflowWrap: 'break-word' as const,
-        ...inputStyleOverride,
+        fontSize: fill ? 16 : 14,
+        fontWeight: 'normal',
+        color: 'inherit',
+        ...(fill ? { height: '100%' } : {}),
       },
-    },
-    suggestions: {
-      container: {
-        zIndex: 99999,
-      },
-      list: {
-        backgroundColor: 'transparent',
-        border: 'none',
-        fontSize: 14,
-        maxHeight: 'min(200px, calc(var(--vv-height, 100dvh) - var(--keyboard-height, 0px) - 120px))',
-        overflowY: 'auto' as const,
-        borderRadius: '12px',
-        boxShadow: 'none',
-        width: `${suggestionsWidth}px`,
-        margin: 0,
-        padding: 0,
-      },
-      item: {
-        padding: '8px 12px',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.15)',
-        '&focused': {
-          backgroundColor: '#e3f2fd',
+      '&multiLine': {
+        control: {
+          fontFamily: 'inherit',
+          ...fillSize,
+          overflow: 'hidden' as const,
+          wordBreak: 'break-word' as const,
+          overflowWrap: 'break-word' as const,
+        },
+        highlighter: {
+          padding: '12px 16px',
+          paddingRight: fill ? '16px' : '80px',
+          border: 'none',
+          borderRadius: fill ? 0 : '24px',
+          boxSizing: 'border-box' as const,
+          ...fillSize,
+          overflow: 'hidden' as const,
+          wordBreak: 'break-word' as const,
+          overflowWrap: 'break-word' as const,
+        },
+        input: {
+          padding: '12px 16px',
+          paddingRight: fill ? '16px' : '80px',
+          border: 'none',
+          borderRadius: fill ? 0 : '24px',
+          outline: 'none',
+          backgroundColor: 'transparent',
+          color: 'rgb(17, 24, 39)',
+          boxSizing: 'border-box' as const,
+          ...fillSize,
+          overscrollBehavior: 'contain' as const,
+          overflowX: 'hidden' as const,
+          overflowY: 'auto' as const,
+          WebkitOverflowScrolling: 'touch',
+          resize: 'none' as const,
+          wordBreak: 'break-word' as const,
+          overflowWrap: 'break-word' as const,
+          ...inputStyleOverride,
         },
       },
-    },
-  }), [inputStyleOverride, suggestionsWidth]);
+      suggestions: {
+        container: {
+          zIndex: 99999,
+        },
+        list: {
+          backgroundColor: 'transparent',
+          border: 'none',
+          fontSize: 14,
+          maxHeight: 'min(200px, calc(var(--vv-height, 100dvh) - var(--keyboard-height, 0px) - 120px))',
+          overflowY: 'auto' as const,
+          borderRadius: '12px',
+          boxShadow: 'none',
+          width: `${suggestionsWidth}px`,
+          margin: 0,
+          padding: 0,
+        },
+        item: {
+          padding: '8px 12px',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.15)',
+          '&focused': {
+            backgroundColor: '#e3f2fd',
+          },
+        },
+      },
+    };
+  }, [fill, inputStyleOverride, suggestionsWidth]);
 
   const isDark = document.documentElement.classList.contains('dark');
   const finalStyle = useMemo(() => {
@@ -389,6 +403,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   const setInputRef = (el: HTMLTextAreaElement | null) => {
     (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+    externalInputRef?.(el);
     pasteCleanupRef.current?.();
     pasteCleanupRef.current = null;
     mentionQueryCleanupRef.current?.();
@@ -401,7 +416,10 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={`mention-input-wrapper min-w-0 ${className}`}>
+    <div
+      ref={containerRef}
+      className={`mention-input-wrapper min-w-0 ${fill ? 'mention-input-wrapper--fill flex min-h-0 flex-1 flex-col' : ''} ${className}`}
+    >
       <MentionsInput
         value={value}
         onChange={handleChange}

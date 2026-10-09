@@ -5,6 +5,7 @@ import { RefreshCw, Send, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { gamesApi } from '@/api/games';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 interface TelegramSummaryModalProps {
   isOpen: boolean;
@@ -56,7 +57,9 @@ export const TelegramSummaryModal = ({
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleCancel();
+      /* Radix prevents the Escape that closes a dialog stacked on top of this
+         one (the fullscreen text editor), so only a bare Escape cancels here. */
+      if (e.key === 'Escape' && !e.defaultPrevented) handleCancel();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -159,10 +162,12 @@ export const TelegramSummaryModal = ({
             </div>
 
             <div className="flex-1 relative min-h-[300px]">
-              <textarea
-                ref={textareaRef}
+              <ExpandableTextarea
+                textareaRef={textareaRef}
                 value={summary}
-                onChange={(e) => !isDisabled && setSummary(e.target.value)}
+                onValueChange={setSummary}
+                fullscreenTitle={t('gameResults.editTelegramText') || 'Edit Telegram Text'}
+                wrapperClassName="h-full"
                 disabled={isDisabled}
                 placeholder={t('gameResults.textPlaceholder') || 'Enter text...'}
                 className="w-full h-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"

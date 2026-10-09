@@ -56,6 +56,7 @@ Unread-only list: URL unread flag via `chatListUnreadUrl`. Pin/mute from inbox. 
 - **Stickers** — `MessageType.STICKER` (`stickerId`); `/api/stickers` packs, prefs, recents, personal
 - **GIF** — `/api/giphy` search/trending/import when `GIPHY_API_KEY` and/or `KLIPY_API_KEY`; paste re-host as `IMAGE` for Giphy/Klipy/**Tenor** URLs
 - **Link previews** — `/api/link-preview`; Bandeja deep links → typed app cards; composer chip + remove
+- **Fullscreen composer** — once the text wraps past two lines an expand control opens `FullscreenTextEditor` with a full-height `MentionInput` (`fill`); same live value + mention ids, Enter is a newline, Done returns to the composer (Send stays there)
 - Translate + per-thread auto-translate config (`CHAT_AUTO_TRANSLATE_CONFIG_UPDATED`)
 - Drafts — `draft.service.ts`; expire **30 days** (`DraftScheduler` daily 03:00)
 - Outbox — Dexie `outbox` + `mutationQueue`; retry on reconnect; `chatOutboxEnqueue` / `chatSendCoordinator`
