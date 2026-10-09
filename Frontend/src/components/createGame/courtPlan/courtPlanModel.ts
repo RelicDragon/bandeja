@@ -15,12 +15,13 @@ import type { CourtSlotReservation } from '@shared/gameBooking/courtReservations
 import type { OccupancyBlock } from '@shared/gameBooking/planReschedule';
 
 /**
- * `gameOnly`: the organizer handles the court outside the app — the club's
- * schedule is never checked and never blocks (`Game.courtBookingMode = GAME_ONLY`).
+ * The three court states of the game page: Book now (club integration only) →
+ * linked bookings; Already booked → linked bookings or *Booked by organizer*
+ * (`REPORTED`); Not booked. No "Game only": the editor dropped it too.
  */
-export type AtClubChoice = 'reserveNow' | 'alreadyReserved' | 'notYet' | 'gameOnly';
+export type AtClubChoice = 'reserveNow' | 'alreadyReserved' | 'notYet';
 
-export const AT_CLUB_CHOICES: readonly AtClubChoice[] = ['reserveNow', 'alreadyReserved', 'notYet', 'gameOnly'];
+export const AT_CLUB_CHOICES: readonly AtClubChoice[] = ['reserveNow', 'alreadyReserved', 'notYet'];
 
 export type CourtPlanSlot = {
   courtId: string | null;

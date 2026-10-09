@@ -243,7 +243,7 @@
           "EXTERNAL_FULL": "Booked",
           "EXTERNAL_PARTIAL": "Partly booked",
           "MANUAL": "Booked",
-          "NONE": "Not booked yet"
+          "NONE": "Not booked"
         }
       },
       "TRAINING": {
@@ -303,7 +303,7 @@
         "EXTERNAL_FULL": "All courts booked",
         "EXTERNAL_PARTIAL": "Partly booked",
         "MANUAL": "Booked by organizer",
-        "NONE": "Not booked yet"
+        "NONE": "Not booked"
       },
       "ATTENDANCE_NUDGED": "{{userName}} asked everyone to confirm attendance",
       "USER_NOTED_NO_SHOW": "{{userName}} was noted as a no-show",

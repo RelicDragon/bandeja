@@ -556,9 +556,7 @@
         "reservationsNudge": "この日、このクラブに予約があります。",
         "useThem": "使う",
         "authSkip": "まだ — 後で予約する",
-        "markSkip": "スキップ — コートを予約済みにするだけ",
-        "gameOnly": "ゲームのみ",
-        "gameOnlyHint": "コートはご自身でクラブと調整してください。クラブのスケジュールの確認や時間の確保は行いません。"
+        "markSkip": "スキップ — コートを予約済みにするだけ"
       },
       "reservations": {
         "title": "この日のあなたの予約",
@@ -577,8 +575,7 @@
         "notEnoughCourts": "空きコートが足りません（{{needed}} 面中 {{free}} 面）",
         "softNote": "この時間は別の予定中の試合もコートを使います — 選択はできます。",
         "unavailableAt": "{{time}} は利用できません：{{reason}}",
-        "mineAction": "自分の予約",
-        "gameOnlyAction": "ゲームのみ"
+        "mineAction": "別の方法で予約しました"
       },
       "summary": {
         "willReserve": "作成時に予約",

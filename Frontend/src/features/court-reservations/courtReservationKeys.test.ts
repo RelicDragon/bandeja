@@ -40,8 +40,8 @@ describe('courtReservation i18n keys', () => {
 
   it('says "booked" one way: three court states, never "Game only" or "fully booked"', () => {
     // Every court is Booked · <provider> (checked at the club), Booked by organizer (their word) or
-    // Not booked yet (docs/domains/booking.md "Court states").
-    expect(en.courtReservation.slot.planned).toBe('Not booked yet');
+    // Not booked (docs/domains/booking.md "Court states").
+    expect(en.courtReservation.slot.planned).toBe('Not booked');
     expect(en.courtReservation.slot.reported).toBe('Booked by organizer');
     expect(en.courtReservation.slot.linked).toBe('Booked · {{provider}}');
     const values = (node: unknown): string[] =>

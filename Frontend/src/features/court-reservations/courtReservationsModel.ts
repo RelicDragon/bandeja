@@ -173,7 +173,7 @@ export function courtPickMode(
 
 /**
  * What a court sheet offers, by state (docs/domains/booking.md "Court sheet"):
- *   Not booked yet → Use this booking (found in the organizer's club account) ·
+ *   Not booked → Use this booking (found in the organizer's club account) ·
  *                    Book at the club · Use a booking I already made ·
  *                    I booked it another way (quiet; the main button at a club without a booking system)
  *   Booked by organizer → Link the real booking · Not booked after all

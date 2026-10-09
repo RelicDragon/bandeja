@@ -152,7 +152,7 @@ const translateSystemMessageData = (
   }
   if (type === SystemMessageType.GAME_BOOKING_STATUS_CHANGED && safeVariables.bookingStatus) {
     // The backend sends the legacy `bookingStatus` enum; it is rendered in the
-    // court-reservation vocabulary: NONE → Not booked yet, MANUAL → Booked by organizer,
+    // court-reservation vocabulary: NONE → Not booked, MANUAL → Booked by organizer,
     // EXTERNAL_PARTIAL → Partly booked, EXTERNAL_FULL → All courts booked.
     const status = safeVariables.bookingStatus;
     const labelFor = (key: string, fallback: string) =>
@@ -172,7 +172,7 @@ const translateSystemMessageData = (
             : labelFor('chat.systemMessages.bookingStatuses.MANUAL', 'Booked by organizer');
         break;
       case 'NONE':
-        label = labelFor('chat.systemMessages.bookingStatuses.NONE', 'Not booked yet');
+        label = labelFor('chat.systemMessages.bookingStatuses.NONE', 'Not booked');
         break;
       default:
         label = status;

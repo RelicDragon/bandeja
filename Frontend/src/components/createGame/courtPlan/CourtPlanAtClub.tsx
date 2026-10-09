@@ -1,8 +1,7 @@
 /**
- * "At the club?" — Reserve now · Already reserved · Not yet · Game only, the
- * same answers at every club (Reserve now only where the club has an
- * integration). Game only: the organizer handles the court; the club's
- * schedule is never checked.
+ * "At the club?" — Book now · Already booked · Not booked: the court
+ * states of the game page, the same answers at every club (Book now only where
+ * the club has an integration).
  *
  * Already reserved lists the player's reservations at this club for the date
  * as selectable cards (each fills a court slot); every court without one is
@@ -10,7 +9,7 @@
  * asks once whether to use the reservation's time (already applied).
  */
 import { useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { BadgeCheck, CalendarOff, CalendarPlus, Clock, Store } from 'lucide-react';
+import { BadgeCheck, CalendarPlus, Clock, Store } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
@@ -24,7 +23,7 @@ import { isDocumentRtl, isRovingNavKey, nextRovingIndex, rovingTabIndex } from '
 import type { AtClubChoice } from './courtPlanModel';
 import type { ReservationTimePrompt } from './useCreateGameCourtPlan';
 
-const ICONS = { reserveNow: CalendarPlus, alreadyReserved: BadgeCheck, notYet: Clock, gameOnly: CalendarOff } as const;
+const ICONS = { reserveNow: CalendarPlus, alreadyReserved: BadgeCheck, notYet: Clock } as const;
 
 type Props = {
   club: Club;
@@ -207,12 +206,11 @@ export function CourtPlanAtClub({
         ? t('createGame.courtPlan.atClub.alreadyReservedHint')
         : t('createGame.courtPlan.atClub.alreadyReservedMarkHint');
     }
-    if (choice === 'gameOnly') return t('createGame.courtPlan.atClub.gameOnlyHint');
     return t('createGame.courtPlan.atClub.notYetHint');
   })();
 
   const showNudge =
-    choice !== 'alreadyReserved' && choice !== 'gameOnly' && connected && reservations.loaded && reservations.dateBookings.length > 0;
+    choice !== 'alreadyReserved' && connected && reservations.loaded && reservations.dateBookings.length > 0;
 
   return (
     <section className="space-y-3" aria-label={t('createGame.courtPlan.atClub.title')}>

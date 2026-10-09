@@ -33,7 +33,7 @@ type ReservationSummaryPillProps = {
 
 /**
  * Court reservation summary of a game, read-only:
- * Not booked yet / k of N booked / All courts booked / Booked, gap at HH:MM.
+ * Not booked / k of N booked / All courts booked / Booked, gap at HH:MM.
  */
 export function ReservationSummaryPill({ view, formatTime, variant = 'pill' }: ReservationSummaryPillProps) {
   const { t } = useTranslation();

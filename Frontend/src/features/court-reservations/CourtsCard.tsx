@@ -8,7 +8,7 @@
  * one "Change" button that opens the "When and where" editor. One context
  * line: "Tue 13 Oct · 18:00–20:00 · KSC". Then one row per court with one of
  * three states — Booked · Booktime (green, checked at the club), Booked by
- * organizer (sky, their word), Not booked yet (amber) — or "No time yet"
+ * organizer (sky, their word), Not booked (amber) — or "No time yet"
  * while the game has no time (nothing can be booked then).
  *
  * At most ONE main button, chosen from the state: pick a club, set a time,

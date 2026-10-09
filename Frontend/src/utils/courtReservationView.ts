@@ -77,12 +77,12 @@ export const APPROXIMATE_PARTIAL_I18N_KEY = 'games.reservationPartly';
 // Keys come from the shared constants: `courtReservation` is an owned i18n
 // namespace, and `namespaceCollisions.test.ts` rejects flat dotted literals of an owned namespace in src.
 const ENGLISH_FALLBACKS: Readonly<Record<string, string>> = {
-  [COURT_RESERVATION_I18N_KEYS.slot.planned]: 'Not booked yet',
+  [COURT_RESERVATION_I18N_KEYS.slot.planned]: 'Not booked',
   [COURT_RESERVATION_I18N_KEYS.slot.reported]: 'Booked by organizer',
   [COURT_RESERVATION_I18N_KEYS.slot.linked]: 'Booked · {{provider}}',
   [COURT_RESERVATION_I18N_KEYS.slot.unknownTime]: 'Booked · {{provider}} · time unknown',
   [COURT_RESERVATION_I18N_KEYS.slot.gap]: 'Gap {{from}}–{{to}}',
-  [COURT_RESERVATION_I18N_KEYS.summary.planned]: 'Not booked yet',
+  [COURT_RESERVATION_I18N_KEYS.summary.planned]: 'Not booked',
   [COURT_RESERVATION_I18N_KEYS.summary.partial]: '{{reserved}} of {{total}} booked',
   [COURT_RESERVATION_I18N_KEYS.summary.reserved]: 'All courts booked',
   [COURT_RESERVATION_I18N_KEYS.summary.reservedWithGap]: 'Booked, gap at {{time}}',

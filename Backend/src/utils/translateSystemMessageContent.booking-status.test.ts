@@ -35,7 +35,7 @@ const unbooked = translateSystemMessageContent(
 );
 
 assert(
-  unbooked === 'Court booking status changed to Not booked yet',
+  unbooked === 'Court booking status changed to Not booked',
   `unbooked got: ${unbooked}`,
 );
 

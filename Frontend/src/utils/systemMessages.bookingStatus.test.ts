@@ -9,7 +9,7 @@ const message = (bookingStatus: string) =>
 
 describe('GAME_BOOKING_STATUS_CHANGED — legacy enum in the reservation vocabulary', () => {
   it.each([
-    ['NONE', 'Court booking: Not booked yet'],
+    ['NONE', 'Court booking: Not booked'],
     ['MANUAL', 'Court booking: Booked by organizer'],
     ['EXTERNAL_PARTIAL', 'Court booking: Partly booked'],
     ['EXTERNAL_FULL', 'Court booking: All courts booked'],

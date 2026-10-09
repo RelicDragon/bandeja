@@ -921,7 +921,7 @@
       "driftMissing": "The club no longer has this booking.",
       "driftMoved": "The club moved this booking.",
       "removeTitle": "Remove booking from the game?",
-      "removeMessage": "Your booking at {{club}} stays, and you still pay for it. {{court}} will show \"Not booked yet\".",
+      "removeMessage": "Your booking at {{club}} stays, and you still pay for it. {{court}} will show \"Not booked\".",
       "removeConfirm": "Remove from game",
       "theCourt": "The court",
       "cancelTitle": "Cancel at {{club}}?",

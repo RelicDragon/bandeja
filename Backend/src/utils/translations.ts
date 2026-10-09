@@ -69,7 +69,7 @@ const translations: Record<string, Record<string, string>> = {
     'games.level': 'Level',
     'games.clubNotSet': 'Club is not set',
     'games.datetimeNotSet': 'Time is not set yet',
-    'createGame.notBookedYet': 'Not booked yet',
+    'createGame.notBookedYet': 'Not booked',
     'createGame.hasBookedCourt': 'Court booked',
     'createGame.hasBookedHall': 'Hall booked',
     'gameDetails.linkedBookings.fullyCovered': 'Fully booked',

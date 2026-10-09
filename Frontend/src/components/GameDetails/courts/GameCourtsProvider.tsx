@@ -3,7 +3,7 @@
  * (docs/domains/booking.md "Game page"). There is no separate Courts card:
  *  - Game info shows the courts inside its "where" row (`useGameCourts().card`,
  *    rendered as an embedded `CourtsCard`): one row per court in one of three
- *    states — Booked · <provider>, Booked by organizer, Not booked yet ("No
+ *    states — Booked · <provider>, Booked by organizer, Not booked ("No
  *    time yet" without a time) — notices, and one main button;
  *  - the Edit dialog's "When and where" tab gets the same rows (live, while
  *    its draft matches the saved game), the reschedule planner and its

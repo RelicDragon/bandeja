@@ -114,8 +114,6 @@ export type CourtPlanCreateFields = {
   externalBookingProvider?: ExternalBookingProvider;
   bookingSnapshots?: BookingSnapshotInput[];
   courtSlotsBody: CreateCourtSlotsBody | null;
-  /** Sent only for "Game only" (old servers ignore it; the default is `CLUB`). */
-  courtBookingMode?: 'GAME_ONLY';
 };
 
 export type CourtPlanBookingOverrides = {
@@ -559,7 +557,7 @@ export function useCreateGameCourtPlan({
   const occupancy = useCreateGameOccupancy({
     club,
     selectedDate,
-    enabled: Boolean(club) && !isBar && effectiveChoice !== 'gameOnly',
+    enabled: Boolean(club) && !isBar,
     refreshSnapshot: snapshotEnabled ? refreshSnapshot : undefined,
   });
   const courtIds = useMemo(() => courts.map((c) => c.id), [courts]);
@@ -580,7 +578,6 @@ export function useCreateGameCourtPlan({
 
   const planBlockAt = useCallback(
     (time: string): PlanTimeBlock | null => {
-      if (effectiveChoice === 'gameOnly') return null;
       const states = statesAt(time);
       if (!states) return null;
       return resolvePlanTimeBlock({
@@ -608,18 +605,13 @@ export function useCreateGameCourtPlan({
   );
 
   /**
-   * Ways out of a hard block: the club's booking may be the organizer's own
-   * ("It's my booking" → Already reserved), and "Game only" never checks the club.
+   * Way out of a hard block: the organizer booked it another way (their own club
+   * booking, by phone) → Already booked; reported courts are exempt from the check.
    */
   const blockActions = useCallback(
     (block: PlanTimeBlock): TimeSlotBlock['actions'] => {
       if (block.kind !== 'hard' || (effectiveChoice !== 'notYet' && effectiveChoice !== 'reserveNow')) return undefined;
-      const actions: NonNullable<TimeSlotBlock['actions']>[number][] = [];
-      if (block.reason === 'club') {
-        actions.push({ id: 'mine', label: t('createGame.courtPlan.time.mineAction'), onSelect: () => setChoiceOverride('alreadyReserved') });
-      }
-      actions.push({ id: 'gameOnly', label: t('createGame.courtPlan.time.gameOnlyAction'), onSelect: () => setChoiceOverride('gameOnly') });
-      return actions;
+      return [{ id: 'mine', label: t('createGame.courtPlan.time.mineAction'), onSelect: () => setChoiceOverride('alreadyReserved') }];
     },
     [effectiveChoice, t],
   );
@@ -770,7 +762,6 @@ export function useCreateGameCourtPlan({
         bookingSnapshots:
           snapshots.length > 0 ? applyCourtIdsToBookingSnapshots(snapshots, courtIdsForGame) : undefined,
         courtSlotsBody: buildCreateCourtSlotsBody(planSlots),
-        ...(effectiveChoice === 'gameOnly' && externalBookingIds.length === 0 ? { courtBookingMode: 'GAME_ONLY' as const } : {}),
       };
     },
     [

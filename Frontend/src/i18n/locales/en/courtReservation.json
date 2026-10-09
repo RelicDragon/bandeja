@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Not booked yet",
+      "planned": "Not booked",
       "reported": "Booked by organizer",
       "linked": "Booked · {{provider}}",
       "unknownTime": "Booked · {{provider}} · time unknown",
@@ -9,7 +9,7 @@
       "noTime": "No time yet"
     },
     "summary": {
-      "planned": "Not booked yet",
+      "planned": "Not booked",
       "partial": "{{reserved}} of {{total}} booked",
       "reserved": "All courts booked",
       "reservedWithGap": "Booked, gap at {{time}}",

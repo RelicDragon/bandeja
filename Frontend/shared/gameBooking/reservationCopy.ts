@@ -4,12 +4,12 @@
  * formats them in the club's timezone (see `timeParams`).
  *
  * i18n keys (namespace `courtReservation.*`; English lives in `locales/en/courtReservation.json`):
- *   courtReservation.slot.planned              "Not booked yet"
+ *   courtReservation.slot.planned              "Not booked"
  *   courtReservation.slot.reported             "Booked by organizer"
  *   courtReservation.slot.linked               "Booked · {{provider}}"
  *   courtReservation.slot.unknownTime          "Booked · {{provider}} · time unknown"
  *   courtReservation.slot.gap                  "Gap {{from}}–{{to}}"
- *   courtReservation.summary.planned           "Not booked yet"
+ *   courtReservation.summary.planned           "Not booked"
  *   courtReservation.summary.partial           "{{reserved}} of {{total}} booked"
  *   courtReservation.summary.reserved          "All courts booked"
  *   courtReservation.summary.reservedWithGap   "Booked, gap at {{time}}"

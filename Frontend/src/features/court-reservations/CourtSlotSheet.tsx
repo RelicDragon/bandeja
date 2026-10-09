@@ -4,7 +4,7 @@
  * A mini timeline puts this court's bookings against the game window; games
  * sharing a booking are listed in words. The actions follow the state
  * ({@link slotSheetActions}):
- *   Not booked yet → Use this booking (found in the organizer's club account,
+ *   Not booked → Use this booking (found in the organizer's club account,
  *                    shown first) · Book at the club · Use a booking I already
  *                    made · "I booked it another way" (quiet)
  *   Booked by organizer → Link the real booking · Not booked after all

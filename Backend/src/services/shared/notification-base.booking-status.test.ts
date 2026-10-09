@@ -26,7 +26,7 @@ assert(
   'MANUAL bar',
 );
 assert(
-  formatGameBookingStatusLabel({ bookingStatus: 'NONE' }, en) === 'Not booked yet',
+  formatGameBookingStatusLabel({ bookingStatus: 'NONE' }, en) === 'Not booked',
   'NONE',
 );
 assert(
@@ -34,7 +34,7 @@ assert(
   'fallback hasBookedCourt',
 );
 assert(
-  formatGameBookingStatusLabel({ hasBookedCourt: false }, en) === 'Not booked yet',
+  formatGameBookingStatusLabel({ hasBookedCourt: false }, en) === 'Not booked',
   'fallback not booked',
 );
 

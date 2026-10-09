@@ -548,9 +548,7 @@
         "reservationsNudge": "Imaš rezervaciju u ovom klubu tog dana.",
         "useThem": "Iskoristi",
         "authSkip": "Još ne — rezervisaću kasnije",
-        "markSkip": "Preskoči — samo označi terene kao rezervisane",
-        "gameOnly": "Samo igra",
-        "gameOnlyHint": "Teren sa klubom dogovarate sami. Ne proveravamo raspored kluba niti blokiramo vreme."
+        "markSkip": "Preskoči — samo označi terene kao rezervisane"
       },
       "reservations": {
         "title": "Tvoje rezervacije tog dana",
@@ -569,8 +567,7 @@
         "notEnoughCourts": "Nema dovoljno slobodnih terena ({{free}} od {{needed}})",
         "softNote": "U to vreme je na terenu planiran i drugi meč — i dalje možeš izabrati ovo vreme.",
         "unavailableAt": "{{time}} nije dostupno: {{reason}}",
-        "mineAction": "Moja je",
-        "gameOnlyAction": "Samo igra"
+        "mineAction": "Rezervisao sam na drugi način"
       },
       "summary": {
         "willReserve": "Rezervacija pri kreiranju",

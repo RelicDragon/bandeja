@@ -556,9 +556,7 @@
         "reservationsNudge": "你当天在这家俱乐部有预订。",
         "useThem": "使用",
         "authSkip": "还没有 — 稍后再预订",
-        "markSkip": "跳过 — 仅将场地标记为已预订",
-        "gameOnly": "仅比赛",
-        "gameOnlyHint": "由你自己与俱乐部安排场地。我们不会核对俱乐部的排期，也不会占用任何时间。"
+        "markSkip": "跳过 — 仅将场地标记为已预订"
       },
       "reservations": {
         "title": "你当天的预订",
@@ -577,8 +575,7 @@
         "notEnoughCourts": "空闲场地不足（{{free}}/{{needed}}）",
         "softNote": "该时段还有一场计划中的比赛使用场地 — 你仍可选择此时间。",
         "unavailableAt": "{{time}} 不可用：{{reason}}",
-        "mineAction": "是我的预订",
-        "gameOnlyAction": "仅比赛"
+        "mineAction": "我通过其他方式预订了"
       },
       "summary": {
         "willReserve": "创建时预订",
