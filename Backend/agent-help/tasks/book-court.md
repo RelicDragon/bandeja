@@ -31,10 +31,10 @@ To manage a game's courts, create the game yourself or ask its owner to make you
 1. Tap the create button → "Game"{games.entityTypes.GAME} (or Training / Tournament).
 2. In "Location & time"{createGame.steps.location} pick the club and the date.
 3. Under "Courts"{createGame.courtPlan.courts}, use − / + to set how many courts you need (at most what the player count needs: one court for a 4-player match). Each court starts as "Any court"{createGame.courtPlan.anyCourt}; tap one to pick a specific court and see which are free.
-4. Under "At the club?" choose:
-   - "Reserve now"{createGame.courtPlan.atClub.reserveNow}: the app reserves the courts when you create the game (only at connected clubs; sign in first if asked).
-   - "Already reserved": pick your existing reservations for that day from the list; courts without one are just marked as reserved. If a reservation's time differs, the app asks whether to use the reservation's time.
-   - "Not yet": the game is planned with no court reserved. You can reserve later.
+4. Under "Court booking"{createGame.courtPlan.atClub.title} choose:
+   - "Book now"{createGame.courtPlan.atClub.reserveNow}: the app books the courts when you create the game (only at connected clubs; sign in first if asked).
+   - "Already booked"{createGame.courtPlan.atClub.alreadyReserved}: pick your bookings for that day; courts without one show as "Booked by organizer"{courtReservation.slot.reported}.
+   - "Not booked"{createGame.courtPlan.atClub.notYet}: the game is planned with no court booked. You can book later.
 5. Pick the start time. Times when a needed court is booked at the club, held by the club or taken by another reserved game cannot be chosen.
 6. Tap the main button (it says how many courts it will reserve) and confirm on the review screen. The app reserves each court, then creates the game.
 
@@ -42,10 +42,10 @@ To manage a game's courts, create the game yourself or ask its owner to make you
 Open the club page and use "Court availability": pick a duration and a day, then tap a free slot. It opens game creation with that club, court and time filled in. The app has no button to reserve a court without a game; to reserve now and create the game later, ask the assistant.
 
 ### Book or fix courts on an existing game (organizer)
-1. Open the game. The game info card shows when and where and, under the club, each court as Booked · Booktime (green: a booking the app holds at the club), "Booked by organizer"{courtReservation.slot.reported} (the organizer says they booked it by phone or at the desk; the app can't check it) or "Not booked yet"{courtReservation.slot.planned}. Without a time nothing can be booked; without a club it asks "Pick a club"{courtReservation.action.pickClub}.
+1. Open the game. The game info card shows when and where and, under the club, each court as Booked · Booktime (green: a booking the app holds at the club), "Booked by organizer"{courtReservation.slot.reported} (the organizer says they booked it by phone or at the desk; the app can't check it) or "Not booked"{courtReservation.slot.planned}. Without a time nothing can be booked; without a club it asks "Pick a club"{courtReservation.action.pickClub}.
 2. Under the courts there is one main button for what's next, for example Book Court 7, a button to use your own booking (the app found your own booking for that court and time in your club account) or "Choose the courts to keep"{courtReservation.action.chooseCourts} (more courts than the players need).
 3. Tap a court (also in Edit → "Bookings"{gameDetails.whenWhere.bookings}):
-   - Not booked yet: "Use this booking"{courtReservation.sheet.action.useOwn} (when your own booking was found), Book at the club, "Use a booking I already made"{courtReservation.sheet.action.linkExisting}, or "I booked it another way"{courtReservation.sheet.action.bookedOtherWay} (by phone or at the desk). A club without online booking shows its phone and "I booked it"{courtReservation.sheet.action.bookedIt}.
+   - Not booked: "Use this booking"{courtReservation.sheet.action.useOwn} (when your own booking was found), Book at the club, "Use a booking I already made"{courtReservation.sheet.action.linkExisting}, or "I booked it another way"{courtReservation.sheet.action.bookedOtherWay} (by phone or at the desk). A club without online booking shows its phone and "I booked it"{courtReservation.sheet.action.bookedIt}.
    - Booked by organizer: "Link the real booking"{courtReservation.sheet.action.linkReal} or "Not booked after all"{courtReservation.sheet.action.notBooked}.
    - Booked: "Remove from game"{courtReservation.sheet.action.removeFromGame} (it stays booked and paid at the club), Cancel at the club (Booktime / Padeloo / Klikteren, your own booking), and Check again at the club.
 4. If a booking doesn't cover the whole game, use the fill-the-gap button to book the missing time.
@@ -65,8 +65,8 @@ Profile → "Club bookings"{club.booktime.connectedClubsCardTitle} card → "Boo
 
 ## Settings that matter
 
-- **Number of courts**: set by the players (one court per 4 players, per 2 for singles); the organizer picks which courts. Each court is Booked · <club system>, "Booked by organizer"{courtReservation.slot.reported} or "Not booked yet"{courtReservation.slot.planned}.
-- **"Any court"{createGame.courtPlan.anyCourt}**: with "Reserve now"{createGame.courtPlan.atClub.reserveNow} the app picks a free court for each Any-court slot when it books.
+- **Number of courts**: set by the players (one court per 4 players, per 2 for singles); the organizer picks which courts. Each court is Booked · <club system>, "Booked by organizer"{courtReservation.slot.reported} or "Not booked"{courtReservation.slot.planned}.
+- **"Any court"{createGame.courtPlan.anyCourt}**: with "Book now"{createGame.courtPlan.atClub.reserveNow} the app picks a free court for each Any-court slot when it books.
 - **Durations**: set by the club's system, usually 60, 90 or 120 minutes (Weltner also 180, up to 30 days ahead).
 - **Several courts at once**: if one court fails, Booktime, Padeloo and Klikteren release the ones already booked. NS Padel and Weltner keep what was booked; contact the club to cancel.
 - **Remove from game vs cancel**: "Remove from game" only detaches the booking from the game; it stays booked (and paid) at the club. Cancelling a reservation keeps the game. Deleting a game never cancels its reservations.
@@ -76,7 +76,7 @@ Profile → "Club bookings"{club.booktime.connectedClubsCardTitle} card → "Boo
 
 ## Common mistakes
 
-- **No "Reserve now"{createGame.courtPlan.atClub.reserveNow} option**: the club has no online booking, the court isn't set up for it ("No courts set up for online booking yet."), the club's sync is down, or it's a bar event, event or league season.
+- **No "Book now"{createGame.courtPlan.atClub.reserveNow} option**: the club has no online booking, the court isn't set up for it ("No courts set up for online booking yet."), the club's sync is down, or it's a bar event, event or league season.
 - **Asked to sign in**: your club account isn't connected, or the sign-in expired ("Booking sign-in expired"); reconnect it.
 - **A court is taken at the club when changing the time**: the club's system shows that court booked, usually by someone else. Pick another time or one of the free courts the sheet offers. Only choose "I booked it another way"{gameDetails.courts.clubBusyMine} if you really booked it by phone or at the desk: the court then shows "Booked by organizer"{courtReservation.slot.reported}, not green. With your club account connected the app checks it: your own booking is linked (green); one that isn't in your account is called someone else's.
 - **A time can't be picked**: a court you need is booked at the club, held by the club, or taken by another reserved game, or not enough courts are free. A time with only a planned (unreserved) game is still allowed.

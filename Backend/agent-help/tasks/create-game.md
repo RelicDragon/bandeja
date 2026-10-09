@@ -29,15 +29,15 @@ Create a casual game at a club: pick the sport and format, the club, date, time 
    - "Match"{createGame.intent.match.title}: standard rules, counts toward your level.
    - "Advanced"{createGame.intent.advanced.title}: the full format wizard. "Customize format" lets you change the chosen preset.
    - "Singles"{sport.matchSingles} or "Doubles"{sport.matchDoubles} decides the roster: a game is always 2 or 4 players.
-4. **Location & time.** Tap "Select Club" and pick a club, then the date. Set how many courts you need under "Courts"{createGame.courtPlan.courts} (each court can stay "Any court"{createGame.courtPlan.anyCourt} or be a specific one). Answer "At the club?":
-   - "Reserve now"{createGame.courtPlan.atClub.reserveNow}: the app reserves the courts at the club when you create the game (only at clubs connected to the app; you may need to sign in to the club's booking account).
-   - "Already reserved": link reservations you already have, or just mark the courts as reserved.
-   - "Not yet": plan the game without a court reservation. You can reserve later (see `book-court`).
+4. **Location & time.** Tap "Select Club" and pick a club, then the date. Set how many courts you need under "Courts"{createGame.courtPlan.courts} (each court can stay "Any court"{createGame.courtPlan.anyCourt} or be a specific one). Under "Court booking"{createGame.courtPlan.atClub.title} choose:
+   - "Book now"{createGame.courtPlan.atClub.reserveNow}: the app books the courts at the club when you create the game (only at clubs connected to the app; you may need to sign in to the club's booking account).
+   - "Already booked"{createGame.courtPlan.atClub.alreadyReserved}: link bookings you already have; courts without one show as "Booked by organizer"{courtReservation.slot.reported}.
+   - "Not booked"{createGame.courtPlan.atClub.notYet}: plan the game without a court booking. You can book later (see `book-court`).
    Then pick the start time and duration. Times taken at the club cannot be picked.
 5. If the "Repeat" row appears after you pick a time, you can make it a recurring series: "Once", "Weekly" or "Every 2 weeks", optionally "Until"{series.until} a date.
 6. **Players.** Set the "Player Level"{createGame.playerLevel} range. You are in the game as a player by default; remove yourself from your seat to organize without playing, and tap "Join the game" to take a seat again. Use "Invite Players" to pick people; they get the invite after the game is created.
 7. **Settings & details.** Set the toggles under "Settings"{createGame.settings} (see below). Optionally add a name and photo ("Name & photo"), a description, and the price under "Price"{createGame.price}.
-8. Tap the create button at the bottom. It reads "Create Game" (or "Create Bar Event"), or says it will reserve courts and create when "Reserve now"{createGame.courtPlan.atClub.reserveNow} is chosen.
+8. Tap the create button at the bottom. It reads "Create Game" (or "Create Bar Event"), or says it will book courts and create when "Book now"{createGame.courtPlan.atClub.reserveNow} is chosen.
 9. If you already play another game at that time you get "Already playing"; confirm with "Continue"{games.overlapConfirmProceed} or change the time. If another player's planned (not reserved) game uses that court you get "Another game is planned here" and can tap "Continue anyway".
 
 ### Bar meetup differences
