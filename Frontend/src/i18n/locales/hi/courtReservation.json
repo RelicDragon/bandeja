@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "अभी बुक नहीं",
+      "planned": "बुक नहीं",
       "reported": "आयोजक ने बुक किया",
       "linked": "बुक · {{provider}}",
       "unknownTime": "बुक · {{provider}} · समय अज्ञात",
@@ -9,7 +9,7 @@
       "noTime": "अभी समय नहीं"
     },
     "summary": {
-      "planned": "अभी बुक नहीं",
+      "planned": "बुक नहीं",
       "partial": "{{total}} में से {{reserved}} बुक",
       "reserved": "सभी कोर्ट बुक",
       "reservedWithGap": "बुक, {{time}} पर खाली",

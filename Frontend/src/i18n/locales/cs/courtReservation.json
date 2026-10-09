@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Zatím nerezervováno",
+      "planned": "Nerezervováno",
       "reported": "Rezervoval organizátor",
       "linked": "Rezervováno · {{provider}}",
       "unknownTime": "Rezervováno · {{provider}} · čas neznámý",
@@ -9,7 +9,7 @@
       "noTime": "Zatím bez času"
     },
     "summary": {
-      "planned": "Zatím nerezervováno",
+      "planned": "Nerezervováno",
       "partial": "{{reserved}} z {{total}} rezervováno",
       "reserved": "Všechny kurty rezervovány",
       "reservedWithGap": "Rezervováno, mezera v {{time}}",

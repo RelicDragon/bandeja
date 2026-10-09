@@ -920,7 +920,7 @@
       "driftMissing": "Klub više nema ovu rezervaciju.",
       "driftMoved": "Klub je pomerio ovu rezervaciju.",
       "removeTitle": "Ukloniti rezervaciju iz igre?",
-      "removeMessage": "Vaša rezervacija u {{club}} ostaje i i dalje je plaćate. {{court}} će biti prikazan kao „Još nije rezervisan“.",
+      "removeMessage": "Vaša rezervacija u {{club}} ostaje i i dalje je plaćate. {{court}} će biti prikazan kao „Nije rezervisan“.",
       "removeConfirm": "Ukloni iz igre",
       "theCourt": "Teren",
       "cancelTitle": "Otkazati u {{club}}?",

@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "لم يُحجز بعد",
+      "planned": "غير محجوز",
       "reported": "حجزه المنظّم",
       "linked": "محجوز · {{provider}}",
       "unknownTime": "محجوز · {{provider}} · الوقت غير معروف",
@@ -9,7 +9,7 @@
       "noTime": "لا وقت بعد"
     },
     "summary": {
-      "planned": "لم يُحجز بعد",
+      "planned": "غير محجوز",
       "partial": "{{reserved}} من {{total}} محجوزة",
       "reserved": "كل الملاعب محجوزة",
       "reservedWithGap": "محجوز، فجوة عند {{time}}",

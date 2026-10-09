@@ -541,27 +541,26 @@
         "linkedElsewhere": "由你的预订使用",
         "anyHint": "稍后决定，或由俱乐部分配",
         "anyReserveHint": "预订时我们会选择空闲场地",
-        "reservedToggle": "我已预订此场地",
         "removeReservation": "移除此预订"
       },
       "atClub": {
-        "title": "在俱乐部预订？",
+        "title": "场地预订",
         "reserveNow": "立即预订",
         "alreadyReserved": "已预订",
-        "notYet": "暂不",
+        "notYet": "未预订",
         "reserveNowHint_other": "创建比赛时，我们将在 {{club}} 预订 {{count}} 片场地。",
-        "alreadyReservedHint": "在下方选择你的预订。没有预订的场地将标记为已预订。",
-        "alreadyReservedMarkHint": "我们会将场地标记为已预订。",
+        "alreadyReservedHint": "在下方选择你已有的预订。没有预订的场地将显示为“组织者已预订”。",
+        "alreadyReservedMarkHint": "场地将显示为“组织者已预订”。",
         "notYetHint": "比赛已计划，但未预订场地。你可以稍后预订。",
         "reservationsNudge": "你当天在这家俱乐部有预订。",
         "useThem": "使用",
         "authSkip": "还没有 — 稍后再预订",
-        "markSkip": "跳过 — 仅将场地标记为已预订"
+        "markSkip": "跳过 — 将场地显示为“组织者已预订”"
       },
       "reservations": {
         "title": "你当天的预订",
-        "empty": "你的 {{club}} 账户当天没有预订。场地将标记为已预订。",
-        "markRest": "未关联预订的场地已标记为已预订。"
+        "empty": "你的 {{club}} 账户当天没有预订。场地将显示为“组织者已预订”。",
+        "markRest": "未关联预订的场地将显示为“组织者已预订”。"
       },
       "timePrompt": {
         "question": "使用预订时间 {{range}}？",

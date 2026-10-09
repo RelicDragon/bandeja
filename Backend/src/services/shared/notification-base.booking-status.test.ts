@@ -10,19 +10,19 @@ function assert(cond: boolean, msg: string): void {
 const en = 'en';
 
 assert(
-  formatGameBookingStatusLabel({ bookingStatus: 'EXTERNAL_FULL' }, en) === 'Fully booked',
+  formatGameBookingStatusLabel({ bookingStatus: 'EXTERNAL_FULL' }, en) === 'All courts booked',
   'EXTERNAL_FULL',
 );
 assert(
-  formatGameBookingStatusLabel({ bookingStatus: 'EXTERNAL_PARTIAL' }, en) === 'Not fully booked',
+  formatGameBookingStatusLabel({ bookingStatus: 'EXTERNAL_PARTIAL' }, en) === 'Partly booked',
   'EXTERNAL_PARTIAL',
 );
 assert(
-  formatGameBookingStatusLabel({ bookingStatus: 'MANUAL' }, en) === 'Court booked',
+  formatGameBookingStatusLabel({ bookingStatus: 'MANUAL' }, en) === 'Booked by organizer',
   'MANUAL court',
 );
 assert(
-  formatGameBookingStatusLabel({ bookingStatus: 'MANUAL', entityType: 'BAR' }, en) === 'Hall booked',
+  formatGameBookingStatusLabel({ bookingStatus: 'MANUAL', entityType: 'BAR' }, en) === 'Booked',
   'MANUAL bar',
 );
 assert(
@@ -30,7 +30,7 @@ assert(
   'NONE',
 );
 assert(
-  formatGameBookingStatusLabel({ hasBookedCourt: true }, en) === 'Court booked',
+  formatGameBookingStatusLabel({ hasBookedCourt: true }, en) === 'Booked by organizer',
   'fallback hasBookedCourt',
 );
 assert(

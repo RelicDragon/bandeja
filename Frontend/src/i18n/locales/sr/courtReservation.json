@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Još nije rezervisan",
+      "planned": "Nije rezervisan",
       "reported": "Rezervisao organizator",
       "linked": "Rezervisan · {{provider}}",
       "unknownTime": "Rezervisan · {{provider}} · vreme nepoznato",
@@ -9,7 +9,7 @@
       "noTime": "Još bez vremena"
     },
     "summary": {
-      "planned": "Još nije rezervisano",
+      "planned": "Nije rezervisano",
       "partial": "Rezervisano {{reserved}} od {{total}}",
       "reserved": "Svi tereni rezervisani",
       "reservedWithGap": "Rezervisano, rupa u {{time}}",

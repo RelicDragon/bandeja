@@ -243,7 +243,7 @@
           "EXTERNAL_FULL": "Dipesan",
           "EXTERNAL_PARTIAL": "Dipesan sebagian",
           "MANUAL": "Dipesan",
-          "NONE": "Direncanakan"
+          "NONE": "Tidak dipesan"
         }
       },
       "TRAINING": {
@@ -302,8 +302,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Semua lapangan dipesan",
         "EXTERNAL_PARTIAL": "Dipesan sebagian",
-        "MANUAL": "Ditandai sudah dipesan",
-        "NONE": "Direncanakan"
+        "MANUAL": "Dipesan oleh penyelenggara",
+        "NONE": "Tidak dipesan"
       },
       "ATTENDANCE_NUDGED": "{{userName}} meminta semua orang mengonfirmasi kehadiran",
       "USER_NOTED_NO_SHOW": "{{userName}} ditandai tidak hadir",

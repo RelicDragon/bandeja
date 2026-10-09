@@ -243,7 +243,7 @@
           "EXTERNAL_FULL": "จองแล้ว",
           "EXTERNAL_PARTIAL": "จองบางส่วน",
           "MANUAL": "จองแล้ว",
-          "NONE": "วางแผนไว้"
+          "NONE": "ไม่ได้จอง"
         }
       },
       "TRAINING": {
@@ -302,8 +302,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "จองครบทุกคอร์ตแล้ว",
         "EXTERNAL_PARTIAL": "จองบางส่วน",
-        "MANUAL": "ทำเครื่องหมายว่าจองแล้ว",
-        "NONE": "วางแผนไว้"
+        "MANUAL": "ผู้จัดจองแล้ว",
+        "NONE": "ไม่ได้จอง"
       },
       "ATTENDANCE_NUDGED": "{{userName}} ขอให้ทุกคนยืนยันการมาเล่น",
       "USER_NOTED_NO_SHOW": "{{userName}} ถูกบันทึกว่าไม่มา",

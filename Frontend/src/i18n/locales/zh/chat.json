@@ -243,7 +243,7 @@
           "EXTERNAL_FULL": "已预订",
           "EXTERNAL_PARTIAL": "部分预订",
           "MANUAL": "已预订",
-          "NONE": "已计划"
+          "NONE": "未预订"
         }
       },
       "TRAINING": {
@@ -302,8 +302,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "所有场地已预订",
         "EXTERNAL_PARTIAL": "部分预订",
-        "MANUAL": "已标记为预订",
-        "NONE": "已计划"
+        "MANUAL": "组织者已预订",
+        "NONE": "未预订"
       },
       "ATTENDANCE_NUDGED": "{{userName}} 请大家确认出席",
       "USER_NOTED_NO_SHOW": "{{userName}} 被标记为未到场",

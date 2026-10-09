@@ -245,7 +245,7 @@
           "EXTERNAL_FULL": "Rezervisano",
           "EXTERNAL_PARTIAL": "Delimično rezervisano",
           "MANUAL": "Rezervisano",
-          "NONE": "Planirano"
+          "NONE": "Nije rezervisano"
         }
       },
       "TRAINING": {
@@ -304,8 +304,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Svi tereni rezervisani",
         "EXTERNAL_PARTIAL": "Delimično rezervisano",
-        "MANUAL": "Označeno kao rezervisano",
-        "NONE": "Planirano"
+        "MANUAL": "Rezervisao organizator",
+        "NONE": "Nije rezervisano"
       },
       "ATTENDANCE_NUDGED": "{{userName}} je zamolio sve da potvrde dolazak",
       "USER_NOTED_NO_SHOW": "{{userName}} je označen kao nedolazak",

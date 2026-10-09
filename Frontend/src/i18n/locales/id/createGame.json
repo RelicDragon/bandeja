@@ -530,7 +530,7 @@
       "sheet": {
         "hint": "Ketersediaan untuk waktu yang kamu pilih.",
         "noTime": "Pilih waktu untuk melihat lapangan yang kosong.",
-        "linkedHint": "Lapangan ini berasal dari reservasimu.",
+        "linkedHint": "Lapangan ini berasal dari pesananmu.",
         "free": "Kosong",
         "plannedGame": "Dipakai game terencana — masih bisa dipilih",
         "club": "Dipesan di klub",
@@ -538,33 +538,32 @@
         "reservedGame": "Dipakai game yang sudah dipesan",
         "notBookable": "Tidak bisa dipesan online",
         "onSlot": "Dipilih untuk lapangan {{n}} — ketuk untuk tukar",
-        "linkedElsewhere": "Dipakai reservasimu",
+        "linkedElsewhere": "Dipakai pesananmu",
         "anyHint": "Putuskan nanti, atau biarkan klub menentukan",
         "anyReserveHint": "Kami pilih lapangan kosong saat memesan",
-        "reservedToggle": "Saya sudah memesan lapangan ini",
-        "removeReservation": "Hapus reservasi ini"
+        "removeReservation": "Hapus pesanan ini"
       },
       "atClub": {
-        "title": "Reservasi di klub?",
+        "title": "Pemesanan lapangan",
         "reserveNow": "Pesan sekarang",
         "alreadyReserved": "Sudah dipesan",
-        "notYet": "Belum",
+        "notYet": "Tidak dipesan",
         "reserveNowHint_other": "Kami akan memesan {{count}} lapangan di {{club}} saat kamu membuat game.",
-        "alreadyReservedHint": "Pilih reservasimu di bawah. Lapangan tanpa reservasi ditandai sudah dipesan.",
-        "alreadyReservedMarkHint": "Kami akan menandai lapangan sebagai sudah dipesan.",
-        "notYetHint": "Game direncanakan tanpa reservasi lapangan. Kamu bisa memesan nanti.",
-        "reservationsNudge": "Kamu punya reservasi di klub ini pada hari itu.",
+        "alreadyReservedHint": "Pilih pesanan yang sudah kamu buat di bawah. Lapangan tanpa pesanan akan tampil sebagai “Dipesan oleh penyelenggara”.",
+        "alreadyReservedMarkHint": "Lapangan akan tampil sebagai “Dipesan oleh penyelenggara”.",
+        "notYetHint": "Game direncanakan tanpa pemesanan lapangan. Kamu bisa memesan nanti.",
+        "reservationsNudge": "Kamu punya pesanan di klub ini pada hari itu.",
         "useThem": "Gunakan",
         "authSkip": "Belum — saya pesan nanti",
-        "markSkip": "Lewati — tandai saja lapangan sudah dipesan"
+        "markSkip": "Lewati — tampilkan lapangan sebagai “Dipesan oleh penyelenggara”"
       },
       "reservations": {
-        "title": "Reservasimu hari itu",
-        "empty": "Tidak ada reservasi di akun {{club}} kamu hari itu. Lapangan akan ditandai sudah dipesan.",
-        "markRest": "Lapangan tanpa reservasi tertaut ditandai sudah dipesan."
+        "title": "Pesananmu hari itu",
+        "empty": "Tidak ada pesanan di akun {{club}} kamu hari itu. Lapangan akan tampil sebagai “Dipesan oleh penyelenggara”.",
+        "markRest": "Lapangan tanpa pesanan tertaut akan tampil sebagai “Dipesan oleh penyelenggara”."
       },
       "timePrompt": {
-        "question": "Pakai waktu reservasi {{range}}?",
+        "question": "Pakai waktu pesanan {{range}}?",
         "yes": "Ya",
         "keep": "Tetap {{range}}"
       },
@@ -587,7 +586,7 @@
         "timeBlocked": "Waktu itu terisi di lapangan yang kamu butuhkan. Pilih waktu atau lapangan lain.",
         "courtNotBookable": "Lapangan yang dipilih tidak bisa dipesan online. Pilih lapangan lain atau “Sudah dipesan”.",
         "notEnoughBookableCourts": "Lapangan kosong tidak cukup untuk dipesan pada waktu itu.",
-        "reservationsLoading": "Reservasimu masih dimuat — coba lagi sebentar."
+        "reservationsLoading": "Pesananmu masih dimuat — coba lagi sebentar."
       },
       "cta": {
         "reserve_other": "Pesan {{count}} lapangan dan buat",

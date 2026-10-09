@@ -915,7 +915,7 @@
       "driftMissing": "Klub už tuto rezervaci nemá.",
       "driftMoved": "Klub tuto rezervaci přesunul.",
       "removeTitle": "Odebrat rezervaci ze hry?",
-      "removeMessage": "Vaše rezervace v {{club}} zůstane a stále ji platíte. {{court}} se zobrazí jako „Zatím nerezervováno“.",
+      "removeMessage": "Vaše rezervace v {{club}} zůstane a stále ji platíte. {{court}} se zobrazí jako „Nerezervováno“.",
       "removeConfirm": "Odebrat ze hry",
       "theCourt": "Kurt",
       "cancelTitle": "Zrušit v {{club}}?",

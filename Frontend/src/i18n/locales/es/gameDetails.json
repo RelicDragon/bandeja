@@ -912,7 +912,7 @@
       "driftMissing": "El club ya no tiene esta reserva.",
       "driftMoved": "El club movió esta reserva.",
       "removeTitle": "¿Quitar la reserva del partido?",
-      "removeMessage": "Tu reserva en {{club}} sigue y la sigues pagando. {{court}} se verá como \"Aún sin reservar\".",
+      "removeMessage": "Tu reserva en {{club}} sigue y la sigues pagando. {{court}} se verá como «Sin reservar».",
       "removeConfirm": "Quitar del partido",
       "theCourt": "La pista",
       "cancelTitle": "¿Cancelar en {{club}}?",

@@ -531,29 +531,28 @@
         "linkedElsewhere": "Koristi ga tvoja rezervacija",
         "anyHint": "Odluči kasnije ili neka klub dodeli teren",
         "anyReserveHint": "Pri rezervaciji biramo slobodan teren",
-        "reservedToggle": "Rezervisao/la sam ovaj teren",
         "removeReservation": "Ukloni ovu rezervaciju"
       },
       "atClub": {
-        "title": "Rezervacija u klubu?",
+        "title": "Rezervacija terena",
         "reserveNow": "Rezerviši sada",
         "alreadyReserved": "Već rezervisano",
-        "notYet": "Još ne",
+        "notYet": "Nije rezervisan",
         "reserveNowHint_one": "Rezervisaćemo {{count}} teren u klubu {{club}} kada kreiraš meč.",
         "reserveNowHint_few": "Rezervisaćemo {{count}} terena u klubu {{club}} kada kreiraš meč.",
         "reserveNowHint_other": "Rezervisaćemo {{count}} terena u klubu {{club}} kada kreiraš meč.",
-        "alreadyReservedHint": "Izaberi svoje rezervacije ispod. Tereni bez rezervacije biće označeni kao rezervisani.",
-        "alreadyReservedMarkHint": "Označićemo terene kao rezervisane.",
+        "alreadyReservedHint": "Ispod izaberi rezervacije koje već imaš. Tereni bez rezervacije biće prikazani kao „Rezervisao organizator”.",
+        "alreadyReservedMarkHint": "Tereni će biti prikazani kao „Rezervisao organizator”.",
         "notYetHint": "Meč je planiran bez rezervacije terena. Možeš rezervisati kasnije.",
         "reservationsNudge": "Imaš rezervaciju u ovom klubu tog dana.",
         "useThem": "Iskoristi",
         "authSkip": "Još ne — rezervisaću kasnije",
-        "markSkip": "Preskoči — samo označi terene kao rezervisane"
+        "markSkip": "Preskoči — prikaži terene kao „Rezervisao organizator”"
       },
       "reservations": {
         "title": "Tvoje rezervacije tog dana",
-        "empty": "Nema rezervacija na tvom {{club}} nalogu tog dana. Tereni će biti označeni kao rezervisani.",
-        "markRest": "Tereni bez povezane rezervacije označeni su kao rezervisani."
+        "empty": "Nema rezervacija na tvom {{club}} nalogu tog dana. Tereni će biti prikazani kao „Rezervisao organizator”.",
+        "markRest": "Tereni bez povezane rezervacije biće prikazani kao „Rezervisao organizator”."
       },
       "timePrompt": {
         "question": "Koristiti vreme rezervacije {{range}}?",

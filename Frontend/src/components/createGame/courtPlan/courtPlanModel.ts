@@ -164,12 +164,6 @@ export function setSlotsReported(slots: readonly CourtPlanSlot[], reported: bool
     : (slots as CourtPlanSlot[]);
 }
 
-export function setSlotReported(slots: readonly CourtPlanSlot[], index: number, reported: boolean): CourtPlanSlot[] {
-  const slot = slots[index];
-  if (!slot || slot.bookingId || slot.reported === reported) return slots as CourtPlanSlot[];
-  return slots.map((s, i) => (i === index ? { ...s, reported } : s));
-}
-
 export function isSlotReserved(slot: CourtPlanSlot): boolean {
   return Boolean(slot.bookingId) || slot.reported;
 }

@@ -920,7 +920,7 @@
       "driftMissing": "Klub sudah tidak punya pesanan ini.",
       "driftMoved": "Klub memindahkan pesanan ini.",
       "removeTitle": "Hapus pesanan dari permainan?",
-      "removeMessage": "Pesanan Anda di {{club}} tetap ada dan tetap Anda bayar. {{court}} akan tampil \"Belum dipesan\".",
+      "removeMessage": "Pesanan Anda di {{club}} tetap ada dan tetap Anda bayar. {{court}} akan tampil “Tidak dipesan”.",
       "removeConfirm": "Hapus dari permainan",
       "theCourt": "Lapangan",
       "cancelTitle": "Batalkan di {{club}}?",

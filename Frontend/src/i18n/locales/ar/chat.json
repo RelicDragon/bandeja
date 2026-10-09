@@ -251,7 +251,7 @@
           "EXTERNAL_FULL": "محجوز",
           "EXTERNAL_PARTIAL": "محجوز جزئيًا",
           "MANUAL": "محجوز",
-          "NONE": "مخطط"
+          "NONE": "غير محجوز"
         }
       },
       "TRAINING": {
@@ -310,8 +310,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "كل الملاعب محجوزة",
         "EXTERNAL_PARTIAL": "محجوز جزئيًا",
-        "MANUAL": "مُعلَّم كمحجوز",
-        "NONE": "مخطط"
+        "MANUAL": "حجزه المنظّم",
+        "NONE": "غير محجوز"
       },
       "ATTENDANCE_NUDGED": "طلب {{userName}} من الجميع تأكيد الحضور",
       "USER_NOTED_NO_SHOW": "تم تسجيل {{userName}} كغائب",

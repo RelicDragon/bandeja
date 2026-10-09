@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import type { Court } from '@/types';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/Drawer';
 import { OverlayKeyboardBody } from '@/components/ui/OverlayKeyboardBody';
-import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import type { AtClubChoice, CourtPlanSlot, CourtWindowState } from './courtPlanModel';
@@ -29,7 +28,6 @@ type Props = {
   /** Label of the reservation linked to this slot (time range). */
   linkedLabel?: string | null;
   onPick: (courtId: string | null) => void;
-  onReportedChange: (reported: boolean) => void;
   onRemoveReservation: () => void;
 };
 
@@ -46,7 +44,6 @@ export function CourtPickerSheet({
   bookableCourtIds,
   linkedLabel,
   onPick,
-  onReportedChange,
   onRemoveReservation,
 }: Props) {
   const { t } = useTranslation();
@@ -163,14 +160,6 @@ export function CourtPickerSheet({
             </div>
           ) : (
             <>
-              {choice === 'alreadyReserved' && slot ? (
-                <div className="mb-3 flex min-h-[48px] items-center justify-between gap-3 rounded-2xl bg-gray-50 px-4 dark:bg-gray-900/60">
-                  <span className="text-sm text-gray-800 dark:text-gray-200">
-                    {t('createGame.courtPlan.sheet.reservedToggle')}
-                  </span>
-                  <ToggleSwitch checked={slot.reported} onChange={onReportedChange} />
-                </div>
-              ) : null}
               <ul className="space-y-2 pb-2" role="radiogroup" aria-label={title}>
                 {option(
                   'any',

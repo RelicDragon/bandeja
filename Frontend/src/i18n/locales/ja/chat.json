@@ -243,7 +243,7 @@
           "EXTERNAL_FULL": "予約済み",
           "EXTERNAL_PARTIAL": "一部予約済み",
           "MANUAL": "予約済み",
-          "NONE": "予定"
+          "NONE": "未予約"
         }
       },
       "TRAINING": {
@@ -302,8 +302,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "全コート予約済み",
         "EXTERNAL_PARTIAL": "一部予約済み",
-        "MANUAL": "予約済みとして登録",
-        "NONE": "予定"
+        "MANUAL": "主催者が予約済み",
+        "NONE": "未予約"
       },
       "ATTENDANCE_NUDGED": "{{userName}}が参加確認をお願いしました",
       "USER_NOTED_NO_SHOW": "{{userName}}が不参加として記録されました",

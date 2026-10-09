@@ -70,7 +70,6 @@ import {
   resolveInitialAtClubChoice,
   resolvePlanTimeBlock,
   seedCourtSlots,
-  setSlotReported,
   setSlotsReported,
   syncLinkedBookings,
   validateCourtPlan,
@@ -299,10 +298,6 @@ export function useCreateGameCourtPlan({
 
   const setSlotCourt = useCallback((index: number, courtId: string | null) => {
     setSlots((prev) => assignSlotCourt(prev, index, courtId));
-  }, []);
-
-  const markSlotReported = useCallback((index: number, reported: boolean) => {
-    setSlots((prev) => setSlotReported(prev, index, reported));
   }, []);
 
   /** Put these courts first (deep link, duplicate, club page selection, single-court club). */
@@ -938,7 +933,6 @@ export function useCreateGameCourtPlan({
     countBounds: bounds,
     setCount,
     setSlotCourt,
-    markSlotReported,
     seedCourts,
     assignedCourtIds: assignedIds,
     bookableCourtIds,

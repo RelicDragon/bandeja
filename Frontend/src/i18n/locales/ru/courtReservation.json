@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Ещё не забронирован",
+      "planned": "Не забронирован",
       "reported": "Забронировал организатор",
       "linked": "Забронирован · {{provider}}",
       "unknownTime": "Забронирован · {{provider}} · время неизвестно",
@@ -9,7 +9,7 @@
       "noTime": "Время не задано"
     },
     "summary": {
-      "planned": "Ещё не забронировано",
+      "planned": "Не забронировано",
       "partial": "Забронировано {{reserved}} из {{total}}",
       "reserved": "Все корты забронированы",
       "reservedWithGap": "Забронировано, пробел в {{time}}",

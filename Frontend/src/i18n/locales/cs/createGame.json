@@ -533,30 +533,29 @@
         "linkedElsewhere": "Používá ho vaše rezervace",
         "anyHint": "Rozhodněte později, nebo ať ho přidělí klub",
         "anyReserveHint": "Při rezervaci vybereme volný kurt",
-        "reservedToggle": "Tento kurt mám rezervovaný",
         "removeReservation": "Odebrat tuto rezervaci"
       },
       "atClub": {
-        "title": "Rezervace v klubu?",
+        "title": "Rezervace kurtu",
         "reserveNow": "Rezervovat",
-        "alreadyReserved": "Už mám",
-        "notYet": "Zatím ne",
+        "alreadyReserved": "Už rezervováno",
+        "notYet": "Nerezervováno",
         "reserveNowHint_one": "Při vytvoření hry zarezervujeme {{count}} kurt v {{club}}.",
         "reserveNowHint_few": "Při vytvoření hry zarezervujeme {{count}} kurty v {{club}}.",
         "reserveNowHint_many": "Při vytvoření hry zarezervujeme {{count}} kurtu v {{club}}.",
         "reserveNowHint_other": "Při vytvoření hry zarezervujeme {{count}} kurtů v {{club}}.",
-        "alreadyReservedHint": "Vyberte své rezervace níže. Kurty bez rezervace se označí jako rezervované.",
-        "alreadyReservedMarkHint": "Kurty označíme jako rezervované.",
+        "alreadyReservedHint": "Níže vyberte rezervace, které už máte. Kurty bez rezervace se zobrazí jako „Rezervoval organizátor“.",
+        "alreadyReservedMarkHint": "Kurty se zobrazí jako „Rezervoval organizátor“.",
         "notYetHint": "Hra je naplánovaná bez rezervace kurtu. Rezervovat můžete později.",
         "reservationsNudge": "V tomto klubu máte ten den rezervaci.",
         "useThem": "Použít",
         "authSkip": "Zatím ne — zarezervuji později",
-        "markSkip": "Přeskočit — jen označit kurty jako rezervované"
+        "markSkip": "Přeskočit — zobrazit kurty jako „Rezervoval organizátor“"
       },
       "reservations": {
         "title": "Vaše rezervace v ten den",
-        "empty": "Ve vašem účtu {{club}} nejsou na ten den žádné rezervace. Kurty se označí jako rezervované.",
-        "markRest": "Kurty bez propojené rezervace jsou označené jako rezervované."
+        "empty": "Ve vašem účtu {{club}} nejsou na ten den žádné rezervace. Kurty se zobrazí jako „Rezervoval organizátor“.",
+        "markRest": "Kurty bez propojené rezervace se zobrazí jako „Rezervoval organizátor“."
       },
       "timePrompt": {
         "question": "Použít čas rezervace {{range}}?",
@@ -583,7 +582,7 @@
         "timeRequired": "Nejdřív vyberte čas.",
         "durationRequired": "Nejdřív vyberte délku.",
         "timeBlocked": "Tento čas je obsazený na kurtu, který potřebujete. Vyberte jiný čas nebo kurt.",
-        "courtNotBookable": "Vybraný kurt nelze rezervovat online. Vyberte jiný kurt nebo „Už mám“.",
+        "courtNotBookable": "Vybraný kurt nelze rezervovat online. Vyberte jiný kurt nebo „Už rezervováno“.",
         "notEnoughBookableCourts": "V tu dobu není volných dost kurtů k rezervaci.",
         "reservationsLoading": "Vaše rezervace se ještě načítají — zkuste to za chvíli."
       },

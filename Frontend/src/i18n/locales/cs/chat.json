@@ -241,7 +241,7 @@
           "EXTERNAL_FULL": "Rezervováno",
           "EXTERNAL_PARTIAL": "Částečně rezervováno",
           "MANUAL": "Rezervováno",
-          "NONE": "Naplánováno"
+          "NONE": "Nerezervováno"
         }
       },
       "TRAINING": {
@@ -300,8 +300,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Všechny kurty rezervovány",
         "EXTERNAL_PARTIAL": "Částečně rezervováno",
-        "MANUAL": "Označeno jako rezervované",
-        "NONE": "Naplánováno"
+        "MANUAL": "Rezervoval organizátor",
+        "NONE": "Nerezervováno"
       },
       "ATTENDANCE_NUDGED": "{{userName}} požádal všechny o potvrzení účasti",
       "USER_NOTED_NO_SHOW": "{{userName}} byl označen jako nedostavivší se",

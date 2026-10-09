@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Aún sin reservar",
+      "planned": "Sin reservar",
       "reported": "Reservada por el organizador",
       "linked": "Reservada · {{provider}}",
       "unknownTime": "Reservada · {{provider}} · hora desconocida",
@@ -9,7 +9,7 @@
       "noTime": "Sin hora aún"
     },
     "summary": {
-      "planned": "Aún sin reservar",
+      "planned": "Sin reservar",
       "partial": "{{reserved}} de {{total}} reservadas",
       "reserved": "Todas las pistas reservadas",
       "reservedWithGap": "Reservada, hueco a las {{time}}",

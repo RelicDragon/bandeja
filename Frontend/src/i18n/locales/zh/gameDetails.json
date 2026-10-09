@@ -920,7 +920,7 @@
       "driftMissing": "俱乐部已没有这个预订。",
       "driftMoved": "俱乐部调整了这个预订。",
       "removeTitle": "从比赛中移除预订？",
-      "removeMessage": "你在{{club}}的预订仍然保留，费用也照常。{{court}}将显示为“尚未预订”。",
+      "removeMessage": "你在{{club}}的预订仍然保留，费用也照常。{{court}}将显示为“未预订”。",
       "removeConfirm": "从比赛中移除",
       "theCourt": "该场地",
       "cancelTitle": "在{{club}}取消？",

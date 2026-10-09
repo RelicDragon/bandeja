@@ -19,7 +19,7 @@ const booked = translateSystemMessageContent(
 );
 
 assert(
-  booked === 'Court booking status changed to Court booked',
+  booked === 'Court booking status changed to Booked by organizer',
   `booked got: ${booked}`,
 );
 
@@ -51,7 +51,7 @@ const full = translateSystemMessageContent(
 );
 
 assert(
-  full === 'Court booking status changed to Fully booked',
+  full === 'Court booking status changed to All courts booked',
   `full got: ${full}`,
 );
 
@@ -68,7 +68,7 @@ const bar = translateSystemMessageContent(
 );
 
 assert(
-  bar === 'Hall booking status changed to Hall booked',
+  bar === 'Hall booking status changed to Booked',
   `bar got: ${bar}`,
 );
 

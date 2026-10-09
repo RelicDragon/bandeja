@@ -168,9 +168,6 @@ export function CreateGameCourtPlanSection({
         onPick={(courtId) => {
           if (sheetIndex != null) plan.setSlotCourt(sheetIndex, courtId);
         }}
-        onReportedChange={(value) => {
-          if (sheetIndex != null) plan.markSlotReported(sheetIndex, value);
-        }}
         onRemoveReservation={() => {
           if (sheetRecord) plan.toggleReservation(sheetRecord);
         }}

@@ -1,7 +1,7 @@
 {
   "courtReservation": {
     "slot": {
-      "planned": "Belum dipesan",
+      "planned": "Tidak dipesan",
       "reported": "Dipesan oleh penyelenggara",
       "linked": "Dipesan · {{provider}}",
       "unknownTime": "Dipesan · {{provider}} · waktu tidak diketahui",
@@ -9,7 +9,7 @@
       "noTime": "Belum ada waktu"
     },
     "summary": {
-      "planned": "Belum dipesan",
+      "planned": "Tidak dipesan",
       "partial": "{{reserved}} dari {{total}} dipesan",
       "reserved": "Semua lapangan dipesan",
       "reservedWithGap": "Dipesan, ada celah pukul {{time}}",

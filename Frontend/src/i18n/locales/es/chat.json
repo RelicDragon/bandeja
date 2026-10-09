@@ -241,7 +241,7 @@
           "EXTERNAL_FULL": "Reservado",
           "EXTERNAL_PARTIAL": "Reservado parcialmente",
           "MANUAL": "Reservado",
-          "NONE": "Planificado"
+          "NONE": "Sin reservar"
         }
       },
       "TRAINING": {
@@ -300,8 +300,8 @@
       "bookingStatuses": {
         "EXTERNAL_FULL": "Todas las pistas reservadas",
         "EXTERNAL_PARTIAL": "Reservado parcialmente",
-        "MANUAL": "Marcada como reservada",
-        "NONE": "Planificado"
+        "MANUAL": "Reservada por el organizador",
+        "NONE": "Sin reservar"
       },
       "ATTENDANCE_NUDGED": "{{userName}} pidió a todos que confirmen su asistencia",
       "USER_NOTED_NO_SHOW": "{{userName}} fue marcado como ausente",

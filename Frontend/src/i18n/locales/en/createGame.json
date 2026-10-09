@@ -541,7 +541,6 @@
         "linkedElsewhere": "Used by your booking",
         "anyHint": "Decide later, or let the club assign one",
         "anyReserveHint": "We'll pick a free court when booking",
-        "reservedToggle": "I've booked this court",
         "removeReservation": "Remove this booking"
       },
       "atClub": {

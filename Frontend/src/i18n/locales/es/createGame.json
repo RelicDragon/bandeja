@@ -525,29 +525,28 @@
         "linkedElsewhere": "La usa tu reserva",
         "anyHint": "Decide más tarde o deja que el club asigne una",
         "anyReserveHint": "Elegiremos una pista libre al reservar",
-        "reservedToggle": "He reservado esta pista",
         "removeReservation": "Quitar esta reserva"
       },
       "atClub": {
-        "title": "¿Reserva en el club?",
+        "title": "Reserva de pista",
         "reserveNow": "Reservar ahora",
         "alreadyReserved": "Ya reservada",
-        "notYet": "Todavía no",
+        "notYet": "Sin reservar",
         "reserveNowHint_one": "Reservaremos {{count}} pista en {{club}} al crear el partido.",
         "reserveNowHint_many": "Reservaremos {{count}} pistas en {{club}} al crear el partido.",
         "reserveNowHint_other": "Reservaremos {{count}} pistas en {{club}} al crear el partido.",
-        "alreadyReservedHint": "Elige tus reservas abajo. Las pistas sin reserva se marcan como reservadas.",
-        "alreadyReservedMarkHint": "Marcaremos las pistas como reservadas.",
+        "alreadyReservedHint": "Elige abajo las reservas que ya hiciste. Las pistas sin reserva se verán como «Reservada por el organizador».",
+        "alreadyReservedMarkHint": "Las pistas se verán como «Reservada por el organizador».",
         "notYetHint": "El partido queda planificado sin reserva de pista. Puedes reservar más tarde.",
         "reservationsNudge": "Tienes una reserva en este club ese día.",
         "useThem": "Usarla",
         "authSkip": "Todavía no — reservaré más tarde",
-        "markSkip": "Omitir — solo marcar las pistas como reservadas"
+        "markSkip": "Omitir — mostrar las pistas como «Reservada por el organizador»"
       },
       "reservations": {
         "title": "Tus reservas ese día",
-        "empty": "No hay reservas en tu cuenta de {{club}} ese día. Las pistas se marcarán como reservadas.",
-        "markRest": "Las pistas sin una reserva vinculada se marcan como reservadas."
+        "empty": "No hay reservas en tu cuenta de {{club}} ese día. Las pistas se verán como «Reservada por el organizador».",
+        "markRest": "Las pistas sin una reserva vinculada se verán como «Reservada por el organizador»."
       },
       "timePrompt": {
         "question": "¿Usar la hora de la reserva {{range}}?",

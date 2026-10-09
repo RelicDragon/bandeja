@@ -541,27 +541,26 @@
         "linkedElsewhere": "あなたの予約で使用中",
         "anyHint": "後で決めるか、クラブに割り当ててもらいます",
         "anyReserveHint": "予約時に空いているコートを選びます",
-        "reservedToggle": "このコートは予約済みです",
         "removeReservation": "この予約を外す"
       },
       "atClub": {
-        "title": "クラブで予約？",
+        "title": "コート予約",
         "reserveNow": "今すぐ予約",
         "alreadyReserved": "予約済み",
-        "notYet": "まだ",
+        "notYet": "未予約",
         "reserveNowHint_other": "ゲーム作成時に {{club}} でコートを {{count}} 面予約します。",
-        "alreadyReservedHint": "下から予約を選んでください。予約のないコートは予約済みとして記録されます。",
-        "alreadyReservedMarkHint": "コートを予約済みとして記録します。",
+        "alreadyReservedHint": "済ませた予約を下から選んでください。予約のないコートは「主催者が予約済み」と表示されます。",
+        "alreadyReservedMarkHint": "コートは「主催者が予約済み」と表示されます。",
         "notYetHint": "コート予約なしでゲームを予定します。予約は後からできます。",
         "reservationsNudge": "この日、このクラブに予約があります。",
         "useThem": "使う",
         "authSkip": "まだ — 後で予約する",
-        "markSkip": "スキップ — コートを予約済みにするだけ"
+        "markSkip": "スキップ — コートを「主催者が予約済み」と表示"
       },
       "reservations": {
         "title": "この日のあなたの予約",
-        "empty": "この日の {{club}} アカウントに予約はありません。コートは予約済みとして記録されます。",
-        "markRest": "予約がリンクされていないコートは予約済みとして記録されます。"
+        "empty": "この日の {{club}} アカウントに予約はありません。コートは「主催者が予約済み」と表示されます。",
+        "markRest": "予約がリンクされていないコートは「主催者が予約済み」と表示されます。"
       },
       "timePrompt": {
         "question": "予約の時間 {{range}} を使いますか？",

@@ -256,7 +256,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the training",
         "GAME_CLUB_CHANGED": "Training location changed to {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Training date/time changed to {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Court reservation: {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking: {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} joined the tournament",
@@ -268,7 +268,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the tournament",
         "GAME_CLUB_CHANGED": "Tournament location changed to {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Tournament date/time changed to {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Court reservation: {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking: {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} joined the league",
@@ -280,7 +280,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the league",
         "GAME_CLUB_CHANGED": "League location changed to {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "League date/time changed to {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Court reservation: {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking: {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} joined the league season",
@@ -292,7 +292,7 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the league season",
         "GAME_CLUB_CHANGED": "League season location changed to {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "League season date/time changed to {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Court reservation: {{bookingStatus}}"
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking: {{bookingStatus}}"
       },
       "actions": {
         "joined": "joined the game",
