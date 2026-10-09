@@ -23,7 +23,6 @@ import { SeriesScopeSheet } from '@/features/game-series/SeriesScopeSheet';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
-import type { ScheduleFocus } from '@/features/court-reservations/CourtsCard';
 import { useWhenWhereEditor } from './schedule/useWhenWhereEditor';
 export type EditGameInfoTabId = 'whenWhere' | 'general' | 'price' | 'participants' | 'settings';
 export type EditGameInfoInitialTabId = EditGameInfoTabId;
@@ -38,9 +37,7 @@ interface EditGameInfoModalProps {
   onClose: () => void;
   game: Game;
   initialTab?: EditGameInfoInitialTabId;
-  /** "When and where": the part that was tapped. */
-  focus?: ScheduleFocus;
-  /** Bumped by the page to re-apply `initialTab` / `focus` while the dialog is open. */
+  /** Bumped by the page to re-apply `initialTab` while the dialog is open. */
   focusKey?: number;
   /** Owner/admin with results still open — mirrors shell `canViewSettings`. */
   canEditSettings?: boolean;
@@ -86,7 +83,6 @@ export const EditGameInfoModal = ({
   onClose,
   game,
   initialTab = 'general',
-  focus,
   focusKey = 0,
   canEditSettings = true,
   onGameUpdate,
@@ -179,7 +175,6 @@ export const EditGameInfoModal = ({
   const whenWhere = useWhenWhereEditor({
     open: isOpen,
     active: activeTab === 'whenWhere',
-    focus: activeTab === 'whenWhere' ? focus : undefined,
     focusKey,
     scrollRef: contentScrollRef,
     onActivate: () => setActiveTab('whenWhere'),

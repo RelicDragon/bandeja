@@ -60,7 +60,6 @@ import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
 import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
 import { GameCourtsProvider } from '@/components/GameDetails/courts/GameCourtsProvider';
-import type { ScheduleFocus } from '@/features/court-reservations/CourtsCard';
 import { GameRoster } from '@/components/GameDetails/roster/GameRoster';
 import { canViewGameCost } from '@/features/cost/costViewModel';
 import { SeriesGameSection } from '@/features/game-series/SeriesGameSection';
@@ -221,7 +220,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoInitialTabId>('general');
   /** The "When and where" editor (club, date, time, courts) and the part it opens on. */
   /** "When and where": the part that was tapped; `key` re-applies it while the dialog is open. */
-  const [editFocus, setEditFocus] = useState<{ focus?: ScheduleFocus; key: number }>({ key: 0 });
+  const [editOpenKey, setEditOpenKey] = useState(0);
   const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
   // The switch reacts to `activeTab` at once; the tab body follows as an
   // interruptible render, so a heavy General tab never holds the tap hostage.
@@ -851,14 +850,13 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   /**
    * Every "change time / club / court" entry opens the Edit dialog on "When
    * and where" (docs/domains/booking.md); what a change does to bookings is
-   * shown there. `focus` scrolls to the tapped part.
+   * shown there. It always opens at the top — no scrolling to the tapped part.
    */
-  const openSchedule = useCallback((focus?: ScheduleFocus) => {
+  const openSchedule = useCallback(() => {
     setEditGameInfoInitialTab('whenWhere');
-    setEditFocus((prev) => ({ focus, key: prev.key + 1 }));
+    setEditOpenKey((key) => key + 1);
     setIsEditGameInfoModalOpen(true);
   }, []);
-  const openChangeTime = () => openSchedule('time');
 
   // PRD 346 — attendance. Only fetched once the game actually has a time and is
   // still upcoming, or while an organizer can still note a no-show afterwards.
@@ -1634,7 +1632,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                   setPlayerListGender(undefined);
                   setShowPlayerList(true);
                 }}
-                onEditCourt={() => openSchedule('courts')}
+                onEditCourt={openSchedule}
               />
             </div>
           ) : null}
@@ -1674,7 +1672,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               autoOpenMoveIndoor={weatherDeepLink.autoOpenMoveIndoor}
               autoScrollIntoView={weatherDeepLink.section}
               onAutoOpenConsumed={weatherDeepLink.consume}
-              onChangeTime={openChangeTime}
+              onChangeTime={openSchedule}
             />
           </div>
 
@@ -1686,14 +1684,14 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               courts={courts}
               canEdit={canEdit}
               onToggleFavorite={handleToggleFavorite}
-              onEditCourt={() => openSchedule('courts')}
-              onEditClub={() => openSchedule('club')}
+              onEditCourt={openSchedule}
+              onEditClub={openSchedule}
               onOpenEditGameInfo={(tab) => {
                 setEditGameInfoInitialTab(tab ?? 'general');
-                setEditFocus((prev) => ({ key: prev.key + 1 }));
+                setEditOpenKey((key) => key + 1);
                 setIsEditGameInfoModalOpen(true);
               }}
-              onChangeTime={() => openSchedule()}
+              onChangeTime={openSchedule}
               collapsedByDefault={game.resultsStatus !== 'NONE'}
               onInviteTrainer={() => {
                 setPlayerListMode('trainer');
@@ -2222,8 +2220,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           onClose={() => setIsEditGameInfoModalOpen(false)}
           game={game}
           initialTab={editGameInfoInitialTab}
-          focus={editFocus.focus}
-          focusKey={editFocus.key}
+          focusKey={editOpenKey}
           canEditSettings={canViewSettings}
           onGameUpdate={setGame}
           clubs={clubs}
