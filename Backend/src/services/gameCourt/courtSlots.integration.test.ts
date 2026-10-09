@@ -218,6 +218,29 @@ void (async () => {
     assert.equal(view.courtSlotCount, null);
     assert.equal(view.bookingStatus, 'EXTERNAL_FULL');
 
+    /* --- court-unknown bookings fill an empty slot ------------------------- */
+    // A trainer's 2h booking without a court, linked to two 1h back-to-back games.
+    const gNoCourtA = await makeGame({ courtId: c1.id });
+    const gNoCourtB = await makeGame({ courtId: c1.id });
+    for (const g of [gNoCourtA, gNoCourtB]) {
+      await link(g.id, 'nocourt-shared', { bookingStart: start.toISOString(), bookingEnd: end.toISOString() });
+      const [slot] = await slotsOf(g.id);
+      const [row] = await prisma.gameExternalBooking.findMany({ where: { gameId: g.id } });
+      assert.equal(row.courtId, null, 'court unknown');
+      assert.equal(row.gameCourtId, slot.id, 'court-unknown booking sits on the game court');
+      assert.equal((await gameRow(g.id)).bookingStatus, 'EXTERNAL_FULL', 'covered, not "partly"');
+    }
+    // Two courts: the court-bearing link keeps its court, the unknown one takes the other.
+    const gNoCourt2 = await makeGame({ courtId: c1.id, maxParticipants: 8 });
+    await GameCourtService.setCourtSlots(gNoCourt2.id, owner.id, { slots: [{ courtId: c1.id }, { courtId: c2.id }] });
+    await link(gNoCourt2.id, 'nocourt-2', {});
+    await link(gNoCourt2.id, 'nocourt-2-c1', { courtId: c1.id });
+    const slots2 = await slotsOf(gNoCourt2.id);
+    const links2 = await prisma.gameExternalBooking.findMany({ where: { gameId: gNoCourt2.id } });
+    assert.equal(links2.find((l) => l.courtId === c1.id)?.gameCourtId, slots2.find((s) => s.courtId === c1.id)?.id);
+    assert.equal(links2.find((l) => l.courtId === null)?.gameCourtId, slots2.find((s) => s.courtId === c2.id)?.id);
+    assert.equal((await gameRow(gNoCourt2.id)).bookingStatus, 'EXTERNAL_FULL');
+
     /* --- roster cap: never more courts than the roster needs ---------------- */
     const gCap = await makeGame({ courtId: c1.id, maxParticipants: 4 });
     await expectApiError(

@@ -168,7 +168,7 @@ describe('formatReservationCopy', () => {
       ...base,
       linkedBookings: [link('l1', { bookingEnd: T('11:00') })],
     });
-    expect(formatReservationCopy(view.copy, fakeT, (iso) => iso.slice(11, 16))).toBe('Reserved, gap at 11:00');
+    expect(formatReservationCopy(view.copy, fakeT, (iso) => iso.slice(11, 16))).toBe('Booked, gap at 11:00');
   });
 
   it('interpolates counts', () => {
@@ -177,7 +177,7 @@ describe('formatReservationCopy', () => {
       maxParticipants: 8,
       reportedAnyCourtCount: 1,
     });
-    expect(formatReservationCopy(view.copy, fakeT, (iso) => iso)).toBe('1 of 2 reserved');
+    expect(formatReservationCopy(view.copy, fakeT, (iso) => iso)).toBe('1 of 2 booked');
   });
 
   it('prefers the flat bundle, then the owned namespace', () => {

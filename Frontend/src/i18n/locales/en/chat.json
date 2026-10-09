@@ -238,12 +238,12 @@
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the bar",
         "GAME_CLUB_CHANGED": "Bar location changed to {{clubName}}",
         "GAME_DATE_TIME_CHANGED": "Bar date/time changed to {{dateTime}}",
-        "GAME_BOOKING_STATUS_CHANGED": "Hall reservation: {{bookingStatus}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Hall booking: {{bookingStatus}}",
         "bookingStatuses": {
-          "EXTERNAL_FULL": "Reserved",
-          "EXTERNAL_PARTIAL": "Partly reserved",
-          "MANUAL": "Reserved",
-          "NONE": "Planned"
+          "EXTERNAL_FULL": "Booked",
+          "EXTERNAL_PARTIAL": "Partly booked",
+          "MANUAL": "Booked",
+          "NONE": "Not booked yet"
         }
       },
       "TRAINING": {
@@ -298,12 +298,12 @@
         "joined": "joined the game",
         "left": "left the game"
       },
-      "GAME_BOOKING_STATUS_CHANGED": "Court reservation: {{bookingStatus}}",
+      "GAME_BOOKING_STATUS_CHANGED": "Court booking: {{bookingStatus}}",
       "bookingStatuses": {
-        "EXTERNAL_FULL": "All courts reserved",
-        "EXTERNAL_PARTIAL": "Partly reserved",
-        "MANUAL": "Marked as reserved",
-        "NONE": "Planned"
+        "EXTERNAL_FULL": "All courts booked",
+        "EXTERNAL_PARTIAL": "Partly booked",
+        "MANUAL": "Booked by organizer",
+        "NONE": "Not booked yet"
       },
       "ATTENDANCE_NUDGED": "{{userName}} asked everyone to confirm attendance",
       "USER_NOTED_NO_SHOW": "{{userName}} was noted as a no-show",

@@ -3,25 +3,25 @@
  * outcome → i18n key, tone and icon. Time params are ISO instants; the UI
  * formats them in the club's timezone (see `timeParams`).
  *
- * i18n keys (namespace `courtReservation.*`, proposed English):
- *   courtReservation.slot.planned              "Planned"
- *   courtReservation.slot.reported             "Marked as reserved"
- *   courtReservation.slot.linked               "Reserved · {{provider}}"
- *   courtReservation.slot.unknownTime          "Reserved · {{provider}} · time unknown"
+ * i18n keys (namespace `courtReservation.*`; English lives in `locales/en/courtReservation.json`):
+ *   courtReservation.slot.planned              "Not booked yet"
+ *   courtReservation.slot.reported             "Booked by organizer"
+ *   courtReservation.slot.linked               "Booked · {{provider}}"
+ *   courtReservation.slot.unknownTime          "Booked · {{provider}} · time unknown"
  *   courtReservation.slot.gap                  "Gap {{from}}–{{to}}"
- *   courtReservation.summary.planned           "Planned"
- *   courtReservation.summary.partial           "{{reserved}} of {{total}} reserved"
- *   courtReservation.summary.reserved          "All courts reserved"
- *   courtReservation.summary.reservedWithGap   "Reserved, gap at {{time}}"
- *   courtReservation.summary.reported          "Marked as reserved"
+ *   courtReservation.summary.planned           "Not booked yet"
+ *   courtReservation.summary.partial           "{{reserved}} of {{total}} booked"
+ *   courtReservation.summary.reserved          "All courts booked"
+ *   courtReservation.summary.reservedWithGap   "Booked, gap at {{time}}"
+ *   courtReservation.summary.reported          "Booked by organizer"
  *   courtReservation.reschedule.unchanged      "No change"
- *   courtReservation.reschedule.keep           "Keep reservation"
- *   courtReservation.reschedule.move           "Move reservation"
- *   courtReservation.reschedule.extend         "Extend reservation"
+ *   courtReservation.reschedule.keep           "Keep booking"
+ *   courtReservation.reschedule.move           "Move booking"
+ *   courtReservation.reschedule.extend         "Extend booking"
  *   courtReservation.reschedule.switch_court   "Switch court"
  *   courtReservation.reschedule.blocked        "Court not available"
  *   courtReservation.reschedule.manual         "Ask the club"
- *   courtReservation.blocker.club              "The club has {{court}} reserved at {{time}}."
+ *   courtReservation.blocker.club              "The club has {{court}} booked at {{time}}."
  *   courtReservation.blocker.hold              "The club is holding {{court}} at {{time}}."
  *   courtReservation.blocker.game              "{{name}} has {{court}} at {{time}}."
  *   courtReservation.blocker.gameUnnamed       "Another game has {{court}} at {{time}}."
@@ -135,7 +135,7 @@ export function describeCourtSlot(
 
 /**
  * Every reserved court is only marked reserved by the organizer (no club
- * booking linked): shown as "Marked as reserved", not the green "All courts reserved".
+ * booking linked): shown as "Booked by organizer", not the green "All courts booked".
  */
 export function isReservedByReportOnly(slots: readonly Pick<CourtSlotView, 'state'>[]): boolean {
   return slots.some((s) => s.state === 'reported') && !slots.some((s) => s.state === 'linked');

@@ -12,7 +12,7 @@
  * - **No links in the payload** (Find cards strip `linkedBookings`): the legacy
  *   `bookingStatus` is the only evidence of provider bookings, so
  *   `EXTERNAL_FULL` → all reserved and `EXTERNAL_PARTIAL` → an approximate
- *   "Partly reserved" without counts.
+ *   "Partly booked" without counts.
  */
 import { useMemo } from 'react';
 import type { TFunction } from 'i18next';
@@ -66,28 +66,28 @@ export type CourtReservationView = {
   approximate: boolean;
 };
 
-/** Generic "Partly reserved" for an approximate partial summary (no counts known). */
+/** Generic "Partly booked" for an approximate partial summary (no counts known). */
 export const APPROXIMATE_PARTIAL_I18N_KEY = 'games.reservationPartly';
 
 /**
  * English fallbacks, used only until the `courtReservation` locale bundle is
- * present (it is owned by the court-reservations feature). Mirrors the
- * proposed English in `reservationCopy.ts`.
+ * present (it is owned by the court-reservations feature). Mirrors
+ * `locales/en/courtReservation.json`.
  */
 // Keys come from the shared constants: `courtReservation` is an owned i18n
 // namespace, and `namespaceCollisions.test.ts` rejects flat dotted literals of an owned namespace in src.
 const ENGLISH_FALLBACKS: Readonly<Record<string, string>> = {
-  [COURT_RESERVATION_I18N_KEYS.slot.planned]: 'Planned',
-  [COURT_RESERVATION_I18N_KEYS.slot.reported]: 'Marked as reserved',
-  [COURT_RESERVATION_I18N_KEYS.slot.linked]: 'Reserved · {{provider}}',
-  [COURT_RESERVATION_I18N_KEYS.slot.unknownTime]: 'Reserved · {{provider}} · time unknown',
+  [COURT_RESERVATION_I18N_KEYS.slot.planned]: 'Not booked yet',
+  [COURT_RESERVATION_I18N_KEYS.slot.reported]: 'Booked by organizer',
+  [COURT_RESERVATION_I18N_KEYS.slot.linked]: 'Booked · {{provider}}',
+  [COURT_RESERVATION_I18N_KEYS.slot.unknownTime]: 'Booked · {{provider}} · time unknown',
   [COURT_RESERVATION_I18N_KEYS.slot.gap]: 'Gap {{from}}–{{to}}',
-  [COURT_RESERVATION_I18N_KEYS.summary.planned]: 'Planned',
-  [COURT_RESERVATION_I18N_KEYS.summary.partial]: '{{reserved}} of {{total}} reserved',
-  [COURT_RESERVATION_I18N_KEYS.summary.reserved]: 'All courts reserved',
-  [COURT_RESERVATION_I18N_KEYS.summary.reservedWithGap]: 'Reserved, gap at {{time}}',
-  [COURT_RESERVATION_I18N_KEYS.summary.reported]: 'Marked as reserved',
-  [APPROXIMATE_PARTIAL_I18N_KEY]: 'Partly reserved',
+  [COURT_RESERVATION_I18N_KEYS.summary.planned]: 'Not booked yet',
+  [COURT_RESERVATION_I18N_KEYS.summary.partial]: '{{reserved}} of {{total}} booked',
+  [COURT_RESERVATION_I18N_KEYS.summary.reserved]: 'All courts booked',
+  [COURT_RESERVATION_I18N_KEYS.summary.reservedWithGap]: 'Booked, gap at {{time}}',
+  [COURT_RESERVATION_I18N_KEYS.summary.reported]: 'Booked by organizer',
+  [APPROXIMATE_PARTIAL_I18N_KEY]: 'Partly booked',
 };
 
 /**

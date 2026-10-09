@@ -207,6 +207,21 @@ export async function placeLinksOnSlots(
       await tx.gameExternalBooking.update({ where: { id: link.id }, data: { gameCourtId: next } });
     }
   }
+  // A booking whose court the provider did not report (court unknown) goes on the first
+  // empty slot: the organizer linked it to this game, so it holds one of its courts. After
+  // the court-bearing links, and it yields its slot when a booking with that court arrives.
+  for (const link of links) {
+    if (link.courtId) continue;
+    if (link.gameCourtId && slotCourtById.has(link.gameCourtId)) {
+      const claimed = await tx.gameExternalBooking.count({
+        where: { gameId, gameCourtId: link.gameCourtId, courtId: { not: null } },
+      });
+      if (claimed === 0) continue;
+    }
+    const empty = (await emptySlots(tx, gameId)).at(-1);
+    if (!empty) continue;
+    await tx.gameExternalBooking.update({ where: { id: link.id }, data: { gameCourtId: empty.id } });
+  }
 }
 
 /**

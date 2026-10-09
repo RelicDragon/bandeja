@@ -68,7 +68,7 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.BUG_RATING_CHANGED]: 'Rating changed to {{rating}}',
   [SystemMessageType.GAME_CLUB_CHANGED]: 'Game location changed to {{clubName}}',
   [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}',
-  [SystemMessageType.GAME_BOOKING_STATUS_CHANGED]: 'Court reservation: {{bookingStatus}}',
+  [SystemMessageType.GAME_BOOKING_STATUS_CHANGED]: 'Court booking: {{bookingStatus}}',
   [SystemMessageType.USER_CHAT_REQUEST]: '{{requesterName}} requests to chat with you',
   [SystemMessageType.USER_CHAT_ACCEPTED]: '{{userName}} accepted the chat request',
   [SystemMessageType.USER_CHAT_DECLINED]: '{{userName}} declined the chat request',
@@ -152,27 +152,27 @@ const translateSystemMessageData = (
   }
   if (type === SystemMessageType.GAME_BOOKING_STATUS_CHANGED && safeVariables.bookingStatus) {
     // The backend sends the legacy `bookingStatus` enum; it is rendered in the
-    // court-reservation vocabulary: NONE → Planned, MANUAL → Reserved,
-    // EXTERNAL_PARTIAL → Partly reserved, EXTERNAL_FULL → All courts reserved.
+    // court-reservation vocabulary: NONE → Not booked yet, MANUAL → Booked by organizer,
+    // EXTERNAL_PARTIAL → Partly booked, EXTERNAL_FULL → All courts booked.
     const status = safeVariables.bookingStatus;
     const labelFor = (key: string, fallback: string) =>
       translateFn(key, { defaultValue: fallback });
     let label: string;
     switch (status) {
       case 'EXTERNAL_FULL':
-        label = labelFor('chat.systemMessages.bookingStatuses.EXTERNAL_FULL', 'All courts reserved');
+        label = labelFor('chat.systemMessages.bookingStatuses.EXTERNAL_FULL', 'All courts booked');
         break;
       case 'EXTERNAL_PARTIAL':
-        label = labelFor('chat.systemMessages.bookingStatuses.EXTERNAL_PARTIAL', 'Partly reserved');
+        label = labelFor('chat.systemMessages.bookingStatuses.EXTERNAL_PARTIAL', 'Partly booked');
         break;
       case 'MANUAL':
         label =
           entityType === 'BAR'
-            ? labelFor('chat.systemMessages.BAR.bookingStatuses.MANUAL', 'Reserved')
-            : labelFor('chat.systemMessages.bookingStatuses.MANUAL', 'Reserved');
+            ? labelFor('chat.systemMessages.BAR.bookingStatuses.MANUAL', 'Booked')
+            : labelFor('chat.systemMessages.bookingStatuses.MANUAL', 'Booked by organizer');
         break;
       case 'NONE':
-        label = labelFor('chat.systemMessages.bookingStatuses.NONE', 'Planned');
+        label = labelFor('chat.systemMessages.bookingStatuses.NONE', 'Not booked yet');
         break;
       default:
         label = status;

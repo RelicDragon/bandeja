@@ -9,17 +9,17 @@ const message = (bookingStatus: string) =>
 
 describe('GAME_BOOKING_STATUS_CHANGED — legacy enum in the reservation vocabulary', () => {
   it.each([
-    ['NONE', 'Court reservation: Planned'],
-    ['MANUAL', 'Court reservation: Reserved'],
-    ['EXTERNAL_PARTIAL', 'Court reservation: Partly reserved'],
-    ['EXTERNAL_FULL', 'Court reservation: All courts reserved'],
+    ['NONE', 'Court booking: Not booked yet'],
+    ['MANUAL', 'Court booking: Booked by organizer'],
+    ['EXTERNAL_PARTIAL', 'Court booking: Partly booked'],
+    ['EXTERNAL_FULL', 'Court booking: All courts booked'],
   ])('%s → %s', (status, expected) => {
     expect(formatSystemMessageForDisplay(message(status), fallbackT, 'GAME')).toBe(expected);
   });
 
   it('passes an unknown value through unchanged', () => {
     expect(formatSystemMessageForDisplay(message('SOMETHING_NEW'), fallbackT, 'GAME')).toBe(
-      'Court reservation: SOMETHING_NEW',
+      'Court booking: SOMETHING_NEW',
     );
   });
 });
